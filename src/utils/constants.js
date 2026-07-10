@@ -5,6 +5,5 @@ export const ROLES = {
 };
 
 export const NAV_LINKS = [
-  { label: "Explore", to: "/explore" },
-  { label: "Creators", to: "/creators/demo-creator" },
+  { label: "Creators", to: "/" },
 ];

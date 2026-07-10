@@ -6,6 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 function Navbar() {
   const { user, logout } = useAuth();
+  const dashboardPath = user?.role === "creator" ? "/creator/studio" : user?.role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-brand-dark/90 backdrop-blur">
@@ -27,7 +28,7 @@ function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
-              <span className="text-sm text-brand-mist/70">{user.role}</span>
+              <Link className="text-sm font-semibold capitalize text-brand-secondary" to={dashboardPath}>{user.role} dashboard</Link>
               <Button onClick={logout} variant="ghost">
                 Logout
               </Button>

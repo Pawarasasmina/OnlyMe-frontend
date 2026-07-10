@@ -47,7 +47,6 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<HomePage />} />
         <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/creators/:username" element={<CreatorProfilePage />} />
       </Route>
 
       <Route element={<AuthLayout />}>
@@ -57,6 +56,9 @@ function AppRoutes() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path="/creators/:username" element={<CreatorProfilePage />} />
+        </Route>
         <Route
           element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}
         >

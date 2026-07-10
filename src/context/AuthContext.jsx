@@ -9,6 +9,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
+    if (!localStorage.getItem("onlyme_access_token")) {
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
     authService
       .getProfile()
       .then((response) => {
@@ -38,11 +45,22 @@ export function AuthProvider({ children }) {
       loading,
       login: async (credentials) => {
         const response = await authService.login(credentials);
+        localStorage.setItem("onlyme_access_token", response.data.data.accessToken);
+        setUser(response.data?.data?.user ?? null);
+        return response;
+      },
+      register: async (details) => {
+        const response = await authService.register(details);
+        localStorage.setItem("onlyme_access_token", response.data.data.accessToken);
         setUser(response.data?.data?.user ?? null);
         return response;
       },
       logout: async () => {
-        await authService.logout();
+        try {
+          await authService.logout();
+        } finally {
+          localStorage.removeItem("onlyme_access_token");
+        }
         setUser(null);
       },
       setUser,
