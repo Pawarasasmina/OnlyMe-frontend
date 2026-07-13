@@ -17,8 +17,22 @@ axiosInstance.interceptors.request.use((config) => {
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const request = error.config;
+    const isRefreshRequest = request?.url?.includes("/auth/refresh");
+
+    if (error.response?.status === 401 && !request?._retried && !isRefreshRequest) {
+      request._retried = true;
+      try {
+        const response = await axiosInstance.post("/auth/refresh");
+        const accessToken = response.data.data.accessToken;
+        localStorage.setItem("onlyme_access_token", accessToken);
+        request.headers.Authorization = `Bearer ${accessToken}`;
+        return axiosInstance(request);
+      } catch {
+        localStorage.removeItem("onlyme_access_token");
+      }
+    } else if (error.response?.status === 401 && isRefreshRequest) {
       localStorage.removeItem("onlyme_access_token");
     }
 
