@@ -26,7 +26,7 @@ function AdminLayout() {
           <p className="px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Workspace</p>
           {links.map((item) => <NavLink className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-orange-50 text-orange-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`} key={item.to} onClick={() => setOpen(false)} to={item.to}><item.icon className="text-lg" />{item.label}</NavLink>)}
           <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Account</p>
-          <NavLink className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50" to="/settings/profile"><FiSettings className="text-lg" />Profile settings</NavLink>
+          <NavLink className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${isActive ? "bg-orange-50 text-orange-600" : "text-slate-600 hover:bg-slate-50"}`} to="/admin/profile"><FiSettings className="text-lg" />Profile settings</NavLink>
           <Link className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50" to="/"><FiActivity className="text-lg" />View platform</Link>
         </nav>
         <div className="border-t border-slate-100 p-3"><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50" onClick={logout} type="button"><FiLogOut className="text-lg" />Log out</button></div>

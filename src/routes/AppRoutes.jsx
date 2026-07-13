@@ -22,6 +22,7 @@ import EarningsPage from "../pages/creator/EarningsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserManagement from "../pages/admin/UserManagement";
 import ContentModeration from "../pages/admin/ContentModeration";
+import AdminProfilePage from "../pages/admin/AdminProfilePage";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 
@@ -97,6 +98,7 @@ function AppRoutes() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/moderation" element={<ContentModeration />} />
+            <Route path="/admin/profile" element={<AdminProfilePage />} />
           </Route>
         </Route>
       </Route>

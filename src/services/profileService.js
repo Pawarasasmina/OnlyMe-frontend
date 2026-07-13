@@ -3,6 +3,7 @@ import axiosInstance from "../api/axiosInstance";
 export const profileService = {
   getMe: () => axiosInstance.get("/profile/me"),
   updateMe: (payload) => axiosInstance.patch("/profile/me", payload),
+  changePassword: (payload) => axiosInstance.patch("/profile/me/password", payload),
   getCompletion: () => axiosInstance.get("/profile/me/completion"),
   checkUsername: (username) => axiosInstance.get("/profile/username-availability", { params: { username } }),
   uploadAvatar: (file) => {

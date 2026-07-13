@@ -42,10 +42,6 @@ const emptyForm = {
   socialLinks: [],
 };
 
-function normalizeUsername(value) {
-  return value.trim().replace(/^@/, "").toLowerCase();
-}
-
 function profileToForm(data) {
   const profile = data?.profile || {};
 
@@ -98,7 +94,6 @@ function ProfileSettingsPage() {
   const [success, setSuccess] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
-  const [debouncedUsername, setDebouncedUsername] = useState("");
   const accessToken = localStorage.getItem("onlyme_access_token");
   const hasApiToken = Boolean(accessToken);
 
@@ -111,8 +106,6 @@ function ProfileSettingsPage() {
 
   const profileData = profileQuery.data || null;
   const role = profileData?.account?.role;
-  const originalUsername = profileData?.account?.username || "";
-  const usernameChanged = normalizeUsername(form.username) && normalizeUsername(form.username) !== originalUsername;
 
   useEffect(() => {
     if (user && !hasApiToken) {
@@ -136,14 +129,6 @@ function ProfileSettingsPage() {
   }, [dirty, profileData]);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedUsername(usernameChanged ? normalizeUsername(form.username) : "");
-    }, 450);
-
-    return () => window.clearTimeout(timeout);
-  }, [form.username, usernameChanged]);
-
-  useEffect(() => {
     const warnBeforeUnload = (event) => {
       if (!dirty) {
         return;
@@ -156,13 +141,6 @@ function ProfileSettingsPage() {
     window.addEventListener("beforeunload", warnBeforeUnload);
     return () => window.removeEventListener("beforeunload", warnBeforeUnload);
   }, [dirty]);
-
-  const usernameQuery = useQuery({
-    queryKey: ["profile", "username", debouncedUsername],
-    queryFn: () => profileService.checkUsername(debouncedUsername).then((response) => response.data.data),
-    enabled: Boolean(debouncedUsername),
-    retry: false,
-  });
 
   const updateMutation = useMutation({
     mutationFn: (payload) => profileService.updateMe(payload),
@@ -300,16 +278,8 @@ function ProfileSettingsPage() {
 
   const validateForm = () => {
     const errors = {};
-    const username = normalizeUsername(form.username);
-
     if (!form.displayName.trim()) {
       errors.displayName = "Display name is required.";
-    }
-
-    if (!username) {
-      errors.username = "Username is required.";
-    } else if (!/^[a-z0-9_.]+$/.test(username)) {
-      errors.username = "Use letters, numbers, underscores, and periods only.";
     }
 
     if (role === "creator") {
@@ -337,10 +307,6 @@ function ProfileSettingsPage() {
       }
     }
 
-    if (usernameQuery.data?.available === false) {
-      errors.username = "That username is already taken.";
-    }
-
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -356,7 +322,6 @@ function ProfileSettingsPage() {
 
     const payload = {
       displayName: form.displayName.trim(),
-      username: normalizeUsername(form.username),
       preferredLanguage: form.preferredLanguage.trim() || "en",
       timezone: form.timezone.trim() || "UTC",
       notificationPreferences: form.notificationPreferences,
@@ -497,10 +462,7 @@ function ProfileSettingsPage() {
               <FieldError message={fieldErrors.displayName} />
             </div>
             <div>
-              <Input label="Username" name="username" onChange={updateField} value={form.username} />
-              {usernameQuery.isFetching ? <p className="mt-2 text-sm text-brand-mist/55">Checking username...</p> : null}
-              {usernameQuery.data?.available ? <p className="mt-2 text-sm text-emerald-300">Username is available.</p> : null}
-              <FieldError message={fieldErrors.username || usernameQuery.error?.response?.data?.message} />
+              <Input disabled label="Username (cannot be changed)" value={form.username} />
             </div>
           </div>
 
@@ -672,7 +634,7 @@ function ProfileSettingsPage() {
           <Button disabled={!dirty || updateMutation.isPending} onClick={reset} type="button" variant="ghost">
             Cancel
           </Button>
-          <Button disabled={updateMutation.isPending || usernameQuery.data?.available === false} type="submit">
+          <Button disabled={updateMutation.isPending} type="submit">
             {updateMutation.isPending ? "Saving..." : "Save profile"}
           </Button>
         </div>
