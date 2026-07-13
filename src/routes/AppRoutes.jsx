@@ -21,11 +21,13 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserManagement from "../pages/admin/UserManagement";
 import ContentModeration from "../pages/admin/ContentModeration";
 import { ROLES } from "../utils/constants";
+import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 
 const fanLinks = [
   { label: "Overview", to: "/fan/dashboard" },
   { label: "Wallet", to: "/fan/wallet" },
   { label: "Subscriptions", to: "/fan/subscriptions" },
+  { label: "Profile", to: "/settings/profile" },
 ];
 
 const creatorLinks = [
@@ -33,12 +35,14 @@ const creatorLinks = [
   { label: "Studio", to: "/creator/studio" },
   { label: "Content", to: "/creator/content" },
   { label: "Earnings", to: "/creator/earnings" },
+  { label: "Profile", to: "/settings/profile" },
 ];
 
 const adminLinks = [
   { label: "Overview", to: "/admin/dashboard" },
   { label: "Users", to: "/admin/users" },
   { label: "Moderation", to: "/admin/moderation" },
+  { label: "Profile", to: "/settings/profile" },
 ];
 
 function AppRoutes() {
@@ -47,6 +51,7 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<HomePage />} />
         <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/creators/:username" element={<CreatorProfilePage />} />
       </Route>
 
       <Route element={<AuthLayout />}>
@@ -57,7 +62,10 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route path="/creators/:username" element={<CreatorProfilePage />} />
+          <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+          <Route path="/settings/account" element={<ProfileSettingsPage />} />
+          <Route path="/settings/privacy" element={<ProfileSettingsPage />} />
+          <Route path="/settings/notifications" element={<ProfileSettingsPage />} />
         </Route>
         <Route
           element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}

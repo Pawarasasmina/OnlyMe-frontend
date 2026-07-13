@@ -3,6 +3,7 @@ import { FiMenu } from "react-icons/fi";
 import Button from "../common/Button";
 import { NAV_LINKS } from "../../utils/constants";
 import { useAuth } from "../../hooks/useAuth";
+import { resolveMediaUrl } from "../../utils/media";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -28,6 +29,16 @@ function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              <Link className="flex items-center gap-3 text-sm font-semibold text-brand-secondary" to="/settings/profile">
+                <span className="h-9 w-9 overflow-hidden rounded-full bg-white/10">
+                  {user.avatar ? (
+                    <img alt="" className="h-full w-full object-cover" src={resolveMediaUrl(user.avatar)} />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-xs uppercase">{user.name?.slice(0, 1)}</span>
+                  )}
+                </span>
+                <span className="hidden max-w-32 truncate lg:inline">{user.name || user.username}</span>
+              </Link>
               <Link className="text-sm font-semibold capitalize text-brand-secondary" to={dashboardPath}>{user.role} dashboard</Link>
               <Button onClick={logout} variant="ghost">
                 Logout
