@@ -88,65 +88,6 @@ function CheckboxField({ checked, disabled, label, name, onChange }) {
   );
 }
 
-function buildDemoProfileData(user) {
-  const now = new Date().toISOString();
-  const username = user.username || user.email?.split("@")[0] || "demo_user";
-  const role = user.role || "fan";
-
-  return {
-    account: {
-      id: user.id,
-      displayName: user.name || username,
-      username,
-      email: user.email,
-      role,
-      profilePhoto: user.avatar || "",
-      isVerified: false,
-      status: "demo",
-      createdAt: now,
-      updatedAt: now,
-    },
-    profile: {
-      id: `${user.id}-profile`,
-      role,
-      displayName: user.name || username,
-      username,
-      profilePhoto: user.avatar || "",
-      coverPhoto: "",
-      bio: "",
-      categories: role === "creator" ? ["demo"] : [],
-      city: "",
-      country: "",
-      socialLinks: [],
-      subscriptionPriceCents: 300,
-      nsfwEnabled: false,
-      freePreviewEnabled: true,
-      messagingEnabled: true,
-      ppmEnabled: false,
-      ppmPrice: 10,
-      profileVisibility: role === "creator" ? "public" : "private",
-      preferredLanguage: "en",
-      timezone: "UTC",
-      notificationPreferences: {
-        email: true,
-        inApp: true,
-        marketing: false,
-        security: true,
-      },
-      verificationStatus: "not_submitted",
-      phoneNumber: "",
-      lastLoginAt: null,
-      createdAt: now,
-      updatedAt: now,
-    },
-    completion: {
-      percentage: role === "admin" ? 100 : user.avatar ? 100 : 67,
-      completed: role === "admin" ? 1 : user.avatar ? 3 : 2,
-      total: role === "admin" ? 1 : 3,
-    },
-  };
-}
-
 function ProfileSettingsPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -159,8 +100,7 @@ function ProfileSettingsPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const accessToken = localStorage.getItem("onlyme_access_token");
-  const hasDemoToken = Boolean(accessToken?.startsWith("demo-token"));
-  const hasApiToken = Boolean(accessToken && !accessToken.startsWith("demo-token"));
+  const hasApiToken = Boolean(accessToken);
 
   const profileQuery = useQuery({
     queryKey: ["profile", "me"],
@@ -169,13 +109,13 @@ function ProfileSettingsPage() {
     retry: false,
   });
 
-  const profileData = profileQuery.data || (user && hasDemoToken ? buildDemoProfileData(user) : null);
+  const profileData = profileQuery.data || null;
   const role = profileData?.account?.role;
   const originalUsername = profileData?.account?.username || "";
   const usernameChanged = normalizeUsername(form.username) && normalizeUsername(form.username) !== originalUsername;
 
   useEffect(() => {
-    if (user && !hasApiToken && !hasDemoToken) {
+    if (user && !hasApiToken) {
       setUser(null);
       queryClient.removeQueries({ queryKey: ["profile", "me"] });
       navigate("/login", { replace: true, state: { from: location } });
@@ -187,7 +127,7 @@ function ProfileSettingsPage() {
       queryClient.removeQueries({ queryKey: ["profile", "me"] });
       navigate("/login", { replace: true, state: { from: location } });
     }
-  }, [hasApiToken, hasDemoToken, location, navigate, profileQuery.error, queryClient, setUser, user]);
+  }, [hasApiToken, location, navigate, profileQuery.error, queryClient, setUser, user]);
 
   useEffect(() => {
     if (profileData && !dirty) {
@@ -410,12 +350,6 @@ function ProfileSettingsPage() {
     setSuccess("");
     setGlobalError("");
 
-    if (hasDemoToken) {
-      setDirty(false);
-      setSuccess("Demo profile preview only. Register or sign in with a real account to save profile changes.");
-      return;
-    }
-
     if (!validateForm()) {
       return;
     }
@@ -518,11 +452,6 @@ function ProfileSettingsPage() {
 
       {role !== "admin" ? <ProfileCompletionCard completion={profileData.completion} /> : null}
 
-      {hasDemoToken ? (
-        <p className="rounded-2xl bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          You are viewing a demo profile. Changes and image uploads are disabled for demo accounts.
-        </p>
-      ) : null}
       {success ? <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{success}</p> : null}
       {globalError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{globalError}</p> : null}
 
@@ -535,37 +464,29 @@ function ProfileSettingsPage() {
           {role === "creator" ? (
             <ImageUploader
               aspect="cover"
-              disabled={uploading || hasDemoToken}
+              disabled={uploading}
               label="Cover photo"
               onRemove={() => {
                 if (window.confirm("Remove your cover photo?")) {
-                  if (!hasDemoToken) {
-                    removeCoverMutation.mutate();
-                  }
+                  removeCoverMutation.mutate();
                 }
               }}
               onUpload={(file) => {
-                if (!hasDemoToken) {
-                  coverMutation.mutate(file);
-                }
+                coverMutation.mutate(file);
               }}
               value={profile.coverPhoto}
             />
           ) : null}
           <ImageUploader
-            disabled={uploading || hasDemoToken}
+            disabled={uploading}
             label="Profile photo"
             onRemove={() => {
               if (window.confirm("Remove your profile photo?")) {
-                if (!hasDemoToken) {
-                  removeAvatarMutation.mutate();
-                }
+                removeAvatarMutation.mutate();
               }
             }}
             onUpload={(file) => {
-              if (!hasDemoToken) {
-                avatarMutation.mutate(file);
-              }
+              avatarMutation.mutate(file);
             }}
             value={account.profilePhoto}
           />

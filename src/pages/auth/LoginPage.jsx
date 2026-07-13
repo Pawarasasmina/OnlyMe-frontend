@@ -2,18 +2,13 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
-import { demoAccounts } from "../../data/demoAccounts";
 import { useAuth } from "../../hooks/useAuth";
 
 const destinationFor = (role) =>
   role === "creator" ? "/creator/studio" : role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
 
-const destinationAfterLogin = (user, fromPath, accessToken) => {
+const destinationAfterLogin = (user, fromPath) => {
   const defaultDestination = destinationFor(user.role);
-
-  if (accessToken?.startsWith("demo-token")) {
-    return defaultDestination;
-  }
 
   if (!fromPath || fromPath === "/login" || fromPath.startsWith("/settings")) {
     return defaultDestination;
@@ -31,11 +26,6 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const update = ({ target }) => setForm((value) => ({ ...value, [target.name]: target.value }));
-  const fillDemoAccount = (account) => {
-    setError("");
-    setForm({ email: account.email, password: account.password });
-  };
-
   const submit = async (event) => {
     event.preventDefault();
     setError("");
@@ -44,7 +34,7 @@ function LoginPage() {
     try {
       const response = await login(form);
       const user = response.data.data.user;
-      navigate(destinationAfterLogin(user, location.state?.from?.pathname, response.data.data.accessToken), { replace: true });
+      navigate(destinationAfterLogin(user, location.state?.from?.pathname), { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to sign in. Please try again.");
     } finally {
@@ -78,25 +68,10 @@ function LoginPage() {
           {submitting ? "Signing in..." : "Sign in"}
         </Button>
       </form>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {demoAccounts.map((account) => (
-          <button
-            className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-brand-mist/75 transition hover:border-brand-secondary/60 hover:text-white"
-            key={account.email}
-            onClick={() => fillDemoAccount(account)}
-            type="button"
-          >
-            Use {account.label} Login
-          </button>
-        ))}
-      </div>
       <div className="mt-6 flex justify-between text-sm text-brand-mist/70">
         <Link to="/forgot-password">Forgot password?</Link>
-        <Link to="/register">Create fan account</Link>
+        <Link to="/register">Create account</Link>
       </div>
-      <Link className="mt-4 block text-center text-sm font-semibold text-brand-secondary" to="/register?role=creator">
-        Want to become a creator?
-      </Link>
     </div>
   );
 }
