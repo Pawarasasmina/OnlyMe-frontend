@@ -12,6 +12,10 @@ function RoleProtectedRoute({ allowedRoles = [] }) {
     return <Navigate replace to="/" />;
   }
 
+  if (user.role === "creator" && user.creatorApprovalStatus !== "approved") {
+    return <Navigate replace to="/creator/application" />;
+  }
+
   return <Outlet />;
 }
 

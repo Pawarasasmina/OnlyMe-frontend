@@ -10,6 +10,10 @@ const destinationFor = (role) =>
 const destinationAfterLogin = (user, fromPath) => {
   const defaultDestination = destinationFor(user.role);
 
+  if (user.role === "creator" && user.creatorApprovalStatus !== "approved") {
+    return "/creator/application";
+  }
+
   if (!fromPath || fromPath === "/login" || fromPath.startsWith("/settings")) {
     return defaultDestination;
   }

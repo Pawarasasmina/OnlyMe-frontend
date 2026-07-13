@@ -7,7 +7,9 @@ import { resolveMediaUrl } from "../../utils/media";
 
 function Navbar() {
   const { user, logout } = useAuth();
-  const dashboardPath = user?.role === "creator" ? "/creator/studio" : user?.role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
+  const dashboardPath = user?.role === "creator"
+    ? user.creatorApprovalStatus === "approved" ? "/creator/studio" : "/creator/application"
+    : user?.role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-brand-dark/90 backdrop-blur">

@@ -17,7 +17,7 @@ function RegisterPage() {
     event.preventDefault(); setError(""); setSubmitting(true);
     try {
       const response = await register({ ...form, username: form.username.replace(/^@/, "") });
-      navigate(response.data.data.user.role === "creator" ? "/creator/studio" : "/", { replace: true });
+      navigate(response.data.data.user.role === "creator" ? "/creator/application" : "/", { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to create your account. Please try again.");
     } finally { setSubmitting(false); }

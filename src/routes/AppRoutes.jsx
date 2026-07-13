@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
+import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 import HomePage from "../pages/public/HomePage";
@@ -15,6 +16,7 @@ import WalletPage from "../pages/fan/WalletPage";
 import SubscriptionsPage from "../pages/fan/SubscriptionsPage";
 import CreatorDashboard from "../pages/creator/CreatorDashboard";
 import CreatorStudio from "../pages/creator/CreatorStudio";
+import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
 import ContentManager from "../pages/creator/ContentManager";
 import EarningsPage from "../pages/creator/EarningsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -38,13 +40,6 @@ const creatorLinks = [
   { label: "Profile", to: "/settings/profile" },
 ];
 
-const adminLinks = [
-  { label: "Overview", to: "/admin/dashboard" },
-  { label: "Users", to: "/admin/users" },
-  { label: "Moderation", to: "/admin/moderation" },
-  { label: "Profile", to: "/settings/profile" },
-];
-
 function AppRoutes() {
   return (
     <Routes>
@@ -61,6 +56,9 @@ function AppRoutes() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path="/creator/application" element={<CreatorApplicationPage />} />
+        </Route>
         <Route element={<MainLayout />}>
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
           <Route path="/settings/account" element={<ProfileSettingsPage />} />
@@ -95,12 +93,10 @@ function AppRoutes() {
         <Route
           element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} />}
         >
-          <Route element={<MainLayout />}>
-            <Route element={<DashboardLayout links={adminLinks} title="Admin Dashboard" />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<UserManagement />} />
-              <Route path="/admin/moderation" element={<ContentModeration />} />
-            </Route>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/moderation" element={<ContentModeration />} />
           </Route>
         </Route>
       </Route>
