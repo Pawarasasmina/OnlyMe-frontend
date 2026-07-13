@@ -49,7 +49,7 @@ function LoginPage() {
       </Link>
       <h1 className="text-3xl font-bold">Welcome back</h1>
       <p className="mt-2 text-sm text-brand-mist/70">
-        One login for fans and creators. We will take you to the right place.
+        One secure login for fans, creators, and admins. We will take you to the right place.
       </p>
       <form className="mt-8 space-y-4" onSubmit={submit}>
         <Input autoComplete="email" label="Email" name="email" onChange={update} required type="email" value={form.email} />
