@@ -1,0 +1,2 @@
+import { FiAlertCircle } from "react-icons/fi";
+export default function ModerationFeedbackPanel({ status, feedback }) { if (!["CHANGES_REQUESTED", "REJECTED"].includes(status) || !feedback) return null; return <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4 text-orange-100"><div className="flex items-center gap-2 font-bold"><FiAlertCircle /> {status === "REJECTED" ? "Rejection feedback" : "Changes requested"}</div><p className="mt-2 whitespace-pre-wrap text-sm">{feedback}</p></div>; }

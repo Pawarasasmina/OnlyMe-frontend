@@ -1,26 +1,11 @@
-import { FiBarChart2, FiCalendar, FiEdit3, FiPlus, FiUsers } from "react-icons/fi";
-import Button from "../../components/common/Button";
-import { useAuth } from "../../hooks/useAuth";
-
-function CreatorStudio() {
-  const { user } = useAuth();
-  const metrics = [
-    { label: "Total members", value: "0", icon: FiUsers },
-    { label: "Monthly revenue", value: "$0.00", icon: FiBarChart2 },
-    { label: "Published posts", value: "0", icon: FiEdit3 },
-  ];
-
-  return <div>
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="text-sm text-brand-secondary">Welcome, {user?.name}</p><h2 className="mt-1 text-3xl font-black">Your creator studio</h2><p className="mt-2 text-sm text-brand-mist/60">Create, publish, and grow your membership from one place.</p></div>
-      <Button className="gap-2"><FiPlus /> Create new post</Button>
-    </div>
-    <div className="mt-8 grid gap-4 md:grid-cols-3">{metrics.map((metric) => <div className="rounded-3xl border border-white/10 bg-brand-dark/60 p-5" key={metric.label}><metric.icon className="text-xl text-brand-secondary" /><p className="mt-5 text-3xl font-black">{metric.value}</p><p className="mt-1 text-sm text-brand-mist/55">{metric.label}</p></div>)}</div>
-    <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <div className="rounded-3xl border border-white/10 bg-brand-dark/60 p-6"><h3 className="text-xl font-bold">Start sharing</h3><p className="mt-2 text-sm text-brand-mist/60">Your published content will appear here. Share a welcome post to introduce fans to your new space.</p><button className="mt-8 flex min-h-44 w-full flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 text-brand-mist/60" type="button"><FiPlus className="mb-3 text-3xl text-brand-primary" /><span className="font-semibold text-white">Create your first post</span><span className="mt-1 text-xs">Photo, video, audio, or text</span></button></div>
-      <div className="rounded-3xl border border-white/10 bg-brand-dark/60 p-6"><FiCalendar className="text-2xl text-brand-secondary" /><h3 className="mt-4 text-xl font-bold">Publishing schedule</h3><p className="mt-2 text-sm text-brand-mist/60">No posts scheduled yet.</p><div className="mt-6 rounded-2xl bg-white/5 p-4 text-sm text-brand-mist/60">Consistency helps your community grow. Plan your next member update here.</div></div>
-    </div>
-  </div>;
-}
-
-export default CreatorStudio;
+import { useEffect, useState } from "react"; import { Link } from "react-router-dom"; import { FiArrowRight, FiEdit3, FiPlus } from "react-icons/fi";
+import Button from "../../components/common/Button"; import ContentStatusBadge from "../../components/content/ContentStatusBadge"; import { useAuth } from "../../hooks/useAuth"; import { contentService } from "../../services/contentService"; import { contentError, formatContentLabel } from "../../utils/content";
+const statuses = ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED", "REJECTED", "ARCHIVED"];
+export default function CreatorStudio() { const { user } = useAuth(); const [items, setItems] = useState([]); const [total, setTotal] = useState(0); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  const [counts, setCounts] = useState({});
+  useEffect(() => { Promise.all([contentService.listMyContent({ limit: 5 }), ...statuses.map((status) => contentService.listMyContent({ limit: 1, status }))]).then(([recent, ...statusResponses]) => { setItems(recent.data.data.items || []); setTotal(recent.data.data.pagination?.total || 0); setCounts(Object.fromEntries(statuses.map((status, index) => [status, statusResponses[index].data.data.pagination?.total || 0]))); }).catch((requestError) => setError(contentError(requestError, "Unable to load studio"))).finally(() => setLoading(false)); }, []);
+  return <div><div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm text-brand-secondary">Welcome, {user?.name}</p><h1 className="mt-1 text-3xl font-black">Your creator studio</h1><p className="mt-2 text-sm text-brand-mist/60">Create drafts and track manual review from one place.</p></div><Link to="/creator/content/new"><Button className="gap-2"><FiPlus /> Create new content</Button></Link></div>
+    {error ? <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-red-200">{error}</p> : null}
+    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-3xl border border-white/10 bg-brand-dark/60 p-5"><FiEdit3 className="text-xl text-brand-secondary" /><p className="mt-4 text-3xl font-black">{loading ? "—" : total}</p><p className="text-sm text-brand-mist/55">Total content</p></div>{statuses.map((status) => <div className="rounded-3xl border border-white/10 bg-brand-dark/60 p-5" key={status}><p className="text-3xl font-black">{loading ? "—" : counts[status]}</p><p className="mt-1 text-sm text-brand-mist/55">{formatContentLabel(status)}</p></div>)}</div>
+    <section className="mt-6 rounded-3xl border border-white/10 bg-brand-dark/60 p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-bold">Recent content</h2><Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand-secondary" to="/creator/content">View all <FiArrowRight /></Link></div>{!loading && !items.length ? <div className="mt-5 rounded-2xl border border-dashed border-white/15 p-10 text-center"><p className="text-brand-mist/60">No content yet.</p><Link className="mt-3 inline-block text-brand-secondary" to="/creator/content/new">Create your first draft</Link></div> : <div className="mt-5 divide-y divide-white/10">{items.slice(0, 5).map((item) => <Link className="flex items-center justify-between gap-4 py-4" key={item.id} to={`/creator/content/${item.id}`}><div className="min-w-0"><p className="truncate font-semibold">{item.title}</p><p className="mt-1 text-xs text-brand-mist/45">{formatContentLabel(item.contentType)} · {new Date(item.createdAt).toLocaleDateString()}</p></div><ContentStatusBadge status={item.status} /></Link>)}</div>}</section>
+  </div>; }

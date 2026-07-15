@@ -20,10 +20,13 @@ import CreatorStudio from "../pages/creator/CreatorStudio";
 import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
 import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
 import ContentManager from "../pages/creator/ContentManager";
+import ContentComposerPage from "../pages/creator/ContentComposerPage";
+import ContentDetailPage from "../pages/creator/ContentDetailPage";
 import EarningsPage from "../pages/creator/EarningsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserManagement from "../pages/admin/UserManagement";
 import ContentModeration from "../pages/admin/ContentModeration";
+import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
 import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
 import CreatorVerificationDetail from "../pages/admin/CreatorVerificationDetail";
@@ -93,6 +96,9 @@ function AppRoutes() {
           <Route element={<DashboardLayout links={creatorLinks} title="Creator Dashboard" />}>
             <Route path="/creator/studio" element={<CreatorStudio />} />
             <Route path="/creator/content" element={<ContentManager />} />
+            <Route path="/creator/content/new" element={<ContentComposerPage />} />
+            <Route path="/creator/content/:id/edit" element={<ContentComposerPage />} />
+            <Route path="/creator/content/:id" element={<ContentDetailPage />} />
             <Route path="/creator/earnings" element={<EarningsPage />} />
           </Route>
         </Route>
@@ -106,7 +112,9 @@ function AppRoutes() {
           <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
-          <Route path="/admin/moderation" element={<ContentModeration />} />
+          <Route path="/admin/content-moderation" element={<ContentModeration />} />
+          <Route path="/admin/content-moderation/:id" element={<ContentModerationDetail />} />
+          <Route path="/admin/moderation" element={<Navigate replace to="/admin/content-moderation" />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
         </Route>
       </Route>

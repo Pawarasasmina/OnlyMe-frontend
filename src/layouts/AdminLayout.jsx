@@ -9,7 +9,7 @@ const links = [
   { label: "Fans", to: "/admin/fans", icon: FiUsers },
   { label: "Creators", to: "/admin/creators", icon: FiStar },
   { label: "Creator verifications", to: "/admin/creator-verifications", icon: FiShield },
-  { label: "Moderation", to: "/admin/moderation", icon: FiFileText },
+  { label: "Content moderation", to: "/admin/content-moderation", icon: FiFileText },
 ];
 
 function AdminLayout() {

@@ -8,7 +8,7 @@ import { resolveMediaUrl } from "../../utils/media";
 function Navbar() {
   const { user, logout } = useAuth();
   const dashboardPath = user?.role === "creator"
-    ? "/creator/dashboard"
+    ? (user.creatorApprovalStatus === "approved" ? "/creator/studio" : "/creator/dashboard")
     : user?.role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
 
   return (
