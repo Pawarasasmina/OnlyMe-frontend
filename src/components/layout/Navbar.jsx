@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+﻿import { Link, NavLink } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import Button from "../common/Button";
 import { NAV_LINKS } from "../../utils/constants";
@@ -8,7 +8,7 @@ import { resolveMediaUrl } from "../../utils/media";
 function Navbar() {
   const { user, logout } = useAuth();
   const dashboardPath = user?.role === "creator"
-    ? user.creatorApprovalStatus === "approved" ? "/creator/studio" : "/creator/application"
+    ? "/creator/dashboard"
     : user?.role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
 
   return (
@@ -66,3 +66,4 @@ function Navbar() {
 }
 
 export default Navbar;
+

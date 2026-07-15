@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
 import { AuthContext } from "./AuthContext";
 
@@ -54,7 +54,12 @@ export function AuthProvider({ children }) {
       setUser(response.data?.data?.user ?? null);
       return response;
     },
-    logout: async () => {
+    refreshUser: async () => {
+      const response = await authService.getProfile();
+      const nextUser = response.data?.data?.user ?? null;
+      setUser(nextUser);
+      return nextUser;
+    },    logout: async () => {
       try {
         await authService.logout();
       } finally {
@@ -67,3 +72,4 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+

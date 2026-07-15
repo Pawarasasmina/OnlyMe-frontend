@@ -24,3 +24,12 @@ a {
 #root {
   min-height: 100vh;
 }
+
+.dark-auth-input:-webkit-autofill,
+.dark-auth-input:-webkit-autofill:hover,
+.dark-auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f7fb;
+  caret-color: #f5f7fb;
+  box-shadow: 0 0 0 1000px #1a2739 inset;
+  transition: background-color 9999s ease-out 0s;
+}

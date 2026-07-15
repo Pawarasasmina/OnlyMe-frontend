@@ -5,6 +5,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
+import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
 import HomePage from "../pages/public/HomePage";
 import ExplorePage from "../pages/public/ExplorePage";
 import CreatorProfilePage from "../pages/public/CreatorProfilePage";
@@ -17,12 +18,15 @@ import SubscriptionsPage from "../pages/fan/SubscriptionsPage";
 import CreatorDashboard from "../pages/creator/CreatorDashboard";
 import CreatorStudio from "../pages/creator/CreatorStudio";
 import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
+import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
 import ContentManager from "../pages/creator/ContentManager";
 import EarningsPage from "../pages/creator/EarningsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserManagement from "../pages/admin/UserManagement";
 import ContentModeration from "../pages/admin/ContentModeration";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
+import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
+import CreatorVerificationDetail from "../pages/admin/CreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 
@@ -35,77 +39,83 @@ const fanLinks = [
 
 const creatorLinks = [
   { label: "Overview", to: "/creator/dashboard" },
-  { label: "Studio", to: "/creator/studio" },
-  { label: "Content", to: "/creator/content" },
-  { label: "Earnings", to: "/creator/earnings" },
+  { label: "Verification", to: "/creator/verification" },
+  { label: "Studio", to: "/creator/studio", requiresApproval: true },
+  { label: "Content", to: "/creator/content", requiresApproval: true },
+  { label: "Earnings", to: "/creator/earnings", requiresApproval: true },
   { label: "Profile", to: "/settings/profile" },
 ];
 
 function AppRoutes() {
-  return (
-    <Routes>
+  return <Routes>
+    <Route element={<MainLayout />}>
+      <Route index element={<HomePage />} />
+      <Route path="/explore" element={<ExplorePage />} />
+      <Route path="/creators/:username" element={<CreatorProfilePage />} />
+    </Route>
+
+    <Route element={<AuthLayout />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    </Route>
+
+    <Route element={<ProtectedRoute />}>
       <Route element={<MainLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/creators/:username" element={<CreatorProfilePage />} />
+        <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+        <Route path="/settings/account" element={<ProfileSettingsPage />} />
+        <Route path="/settings/privacy" element={<ProfileSettingsPage />} />
+        <Route path="/settings/notifications" element={<ProfileSettingsPage />} />
       </Route>
 
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      </Route>
-
-      <Route element={<ProtectedRoute />}>
+      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}>
         <Route element={<MainLayout />}>
-          <Route path="/creator/application" element={<CreatorApplicationPage />} />
-        </Route>
-        <Route element={<MainLayout />}>
-          <Route path="/settings/profile" element={<ProfileSettingsPage />} />
-          <Route path="/settings/account" element={<ProfileSettingsPage />} />
-          <Route path="/settings/privacy" element={<ProfileSettingsPage />} />
-          <Route path="/settings/notifications" element={<ProfileSettingsPage />} />
-        </Route>
-        <Route
-          element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}
-        >
-          <Route element={<MainLayout />}>
-            <Route element={<DashboardLayout links={fanLinks} title="Fan Dashboard" />}>
-              <Route path="/fan/dashboard" element={<FanDashboard />} />
-              <Route path="/fan/wallet" element={<WalletPage />} />
-              <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
-            </Route>
-          </Route>
-        </Route>
-
-        <Route
-          element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} />}
-        >
-          <Route element={<MainLayout />}>
-            <Route element={<DashboardLayout links={creatorLinks} title="Creator Dashboard" />}>
-              <Route path="/creator/dashboard" element={<CreatorDashboard />} />
-              <Route path="/creator/studio" element={<CreatorStudio />} />
-              <Route path="/creator/content" element={<ContentManager />} />
-              <Route path="/creator/earnings" element={<EarningsPage />} />
-            </Route>
-          </Route>
-        </Route>
-
-        <Route
-          element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} />}
-        >
-          <Route element={<AdminLayout />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<UserManagement />} />
-            <Route path="/admin/moderation" element={<ContentModeration />} />
-            <Route path="/admin/profile" element={<AdminProfilePage />} />
+          <Route element={<DashboardLayout links={fanLinks} title="Fan Dashboard" />}>
+            <Route path="/fan/dashboard" element={<FanDashboard />} />
+            <Route path="/fan/wallet" element={<WalletPage />} />
+            <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
           </Route>
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate replace to="/" />} />
-    </Routes>
-  );
+      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
+        <Route element={<MainLayout />}>
+          <Route element={<DashboardLayout links={creatorLinks} title="Creator Dashboard" />}>
+            <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+            <Route path="/creator/verification" element={<CreatorVerificationPage />} />
+            <Route path="/creator/application" element={<CreatorApplicationPage />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route element={<ApprovedCreatorRoute />}>
+        <Route element={<MainLayout />}>
+          <Route element={<DashboardLayout links={creatorLinks} title="Creator Dashboard" />}>
+            <Route path="/creator/studio" element={<CreatorStudio />} />
+            <Route path="/creator/content" element={<ContentManager />} />
+            <Route path="/creator/earnings" element={<EarningsPage />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/fans" element={<UserManagement fixedRole="fan" />} />
+          <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />
+          <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
+          <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
+          <Route path="/admin/moderation" element={<ContentModeration />} />
+          <Route path="/admin/profile" element={<AdminProfilePage />} />
+        </Route>
+      </Route>
+    </Route>
+
+    <Route path="*" element={<Navigate replace to="/" />} />
+  </Routes>;
 }
 
 export default AppRoutes;
+
+

@@ -1,20 +1,24 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import { useAuth } from "../../hooks/useAuth";
 
 const destinationFor = (role) =>
-  role === "creator" ? "/creator/studio" : role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
+  role === "creator" ? "/creator/dashboard" : role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
 
 const destinationAfterLogin = (user, fromPath) => {
   const defaultDestination = destinationFor(user.role);
 
-  if (user.role === "creator" && user.creatorApprovalStatus !== "approved") {
-    return "/creator/application";
-  }
 
-  if (!fromPath || fromPath === "/login" || fromPath.startsWith("/settings")) {
+  const roleRoute = fromPath?.match(/^\/(admin|creator|fan)(?:\/|$)/)?.[1];
+
+  if (
+    !fromPath
+    || fromPath === "/login"
+    || fromPath.startsWith("/settings")
+    || (roleRoute && roleRoute !== user.role)
+  ) {
     return defaultDestination;
   }
 
@@ -81,3 +85,5 @@ function LoginPage() {
 }
 
 export default LoginPage;
+
+
