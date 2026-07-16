@@ -7,11 +7,6 @@ import EmptyState from "../../components/fanWeb/shared/EmptyState";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
-import {
-  atseenCreators,
-  atseenDirectAccessRequests,
-  atseenMockConversations,
-} from "../../data/atseenMockData";
 import { fanService } from "../../services/fanService";
 import { formatDateTime } from "../../utils/fanDashboardFormatters";
 
@@ -25,12 +20,12 @@ function getCreatorFromConversation(conversation) {
     };
   }
 
-  return atseenCreators[conversation.creatorId] || atseenCreators.lina;
+  return { avatar: "", name: conversation.creatorId || "Creator", username: conversation.creatorId, verified: false };
 }
 
 function DirectAccessCard({ request }) {
   const { showToast } = useFanToast();
-  const rawCreator = request.creator || atseenCreators[request.creatorId] || atseenCreators.lina;
+  const rawCreator = request.creator || { name: request.creatorId || "Creator" };
   const creator = {
     avatar: rawCreator.avatar || rawCreator.avatarUrl,
     name: rawCreator.name || rawCreator.displayName || rawCreator.username || "Creator",
@@ -115,12 +110,12 @@ function MessagesPage() {
 
   const directAccess = useMemo(() => {
     const backend = messagesQuery.data?.directAccessRequests || messagesQuery.data?.directAccess || [];
-    return backend.length ? backend : atseenDirectAccessRequests;
+    return backend;
   }, [messagesQuery.data]);
 
   const conversations = useMemo(() => {
     const backend = messagesQuery.data?.recentConversations || [];
-    return backend.length ? backend : atseenMockConversations;
+    return backend;
   }, [messagesQuery.data]);
 
   const pending = directAccess.filter((request) => (request.state || request.status || "pending") === "pending");

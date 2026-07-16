@@ -64,8 +64,8 @@ function RegisterPage() {
     }
     setSubmitting(true);
     try {
-      const response = await register(form);
-      navigate(response.data.data.user.role === "creator" ? "/creator/dashboard" : "/", { replace: true });
+      await register(form);
+      navigate("/wall", { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to create your account. Please try again.");
     } finally {

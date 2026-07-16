@@ -10,7 +10,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { profileService } from "../../services/profileService";
 
 const settingsTabs = [
-  { label: "Profile", to: "/settings/profile" },
+  { label: "Profile", to: "/settings" },
   { label: "Account", to: "/settings/account" },
   { label: "Privacy", to: "/settings/privacy" },
   { label: "Notifications", to: "/settings/notifications" },
@@ -401,7 +401,7 @@ function ProfileSettingsPage({ creatorMode = false }) {
 
   return (
     <div className="space-y-6">
-      {creatorMode ? <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="creator-eyebrow">Creator profile</p><h1 className="creator-page-title">Shape your public presence</h1><p className="creator-muted mt-2">Keep your identity, creator details, and membership options up to date.</p></div>{account.username ? <Link className="rounded-xl border border-sky-300/20 px-4 py-2 text-sm font-semibold text-sky-300 hover:bg-sky-300/10" target="_blank" to={`/creators/${account.username}`}>Preview public profile</Link> : null}</div> : null}
+      {creatorMode ? <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="creator-eyebrow">Creator profile</p><h1 className="creator-page-title">Shape your public presence</h1><p className="creator-muted mt-2">Keep your identity, creator details, and membership options up to date.</p></div>{account.username ? <Link className="rounded-xl border border-sky-300/20 px-4 py-2 text-sm font-semibold text-sky-300 hover:bg-sky-300/10" target="_blank" to={`/profile/${account.username}`}>Preview public profile</Link> : null}</div> : null}
       {!creatorMode ? <div className="flex flex-wrap gap-2">
         {settingsTabs.map((tab) => (
           <Link

@@ -3,12 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import { useAuth } from "../../hooks/useAuth";
-
-const destinationFor = (role) =>
-  role === "creator" ? "/creator/dashboard" : role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
+import { defaultDestinationFor } from "../../utils/socialAccess";
 
 const destinationAfterLogin = (user, fromPath) => {
-  const defaultDestination = destinationFor(user.role);
+  const defaultDestination = defaultDestinationFor(user.role);
 
 
   const roleRoute = fromPath?.match(/^\/(admin|creator|fan)(?:\/|$)/)?.[1];
@@ -17,7 +15,9 @@ const destinationAfterLogin = (user, fromPath) => {
     !fromPath
     || fromPath === "/login"
     || fromPath.startsWith("/settings")
-    || (roleRoute && roleRoute !== user.role)
+    || (roleRoute === "admin" && user.role !== "admin")
+    || (roleRoute === "creator" && user.role !== "creator")
+    || (roleRoute === "fan" && user.role !== "fan")
   ) {
     return defaultDestination;
   }

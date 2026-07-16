@@ -9,10 +9,8 @@ import { resolveMediaUrl } from "../../utils/media";
 function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
-  const dashboardPath = user?.role === "creator"
-    ? (user.creatorApprovalStatus === "approved" ? "/creator/studio" : "/creator/dashboard")
-    : user?.role === "admin" ? "/admin/dashboard" : "/fan/dashboard";
-  const profilePath = user?.role === "fan" ? "/fan/profile" : "/settings/profile";
+  const dashboardPath = user?.role === "admin" ? "/admin/dashboard" : "/wall";
+  const profilePath = user?.role === "admin" ? "/admin/profile" : "/profile";
 
   const closeMobile = () => setMobileOpen(false);
   const logoutAndClose = async () => {

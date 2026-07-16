@@ -1,9 +1,9 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import CreatorAppShell from "../layouts/CreatorAppShell";
 import AdminLayout from "../layouts/AdminLayout";
-import FanWebLayout from "../layouts/FanWebLayout";
+import SocialAppShell from "../layouts/SocialAppShell";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
@@ -18,10 +18,8 @@ import SubscriptionsPage from "../pages/fan/SubscriptionsPage";
 import PurchasesPage from "../pages/fan/PurchasesPage";
 import MessagesPage from "../pages/fan/MessagesPage";
 import ActivityPage from "../pages/fan/ActivityPage";
-import OrbitPage from "../pages/fan/OrbitPage";
 import WorldsPage from "../pages/fan/WorldsPage";
 import FanProfilePage from "../pages/fan/FanProfilePage";
-import CreatorDashboard from "../pages/creator/CreatorDashboard";
 import CreatorStudio from "../pages/creator/CreatorStudio";
 import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
 import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
@@ -40,13 +38,29 @@ import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
+import UnavailableFeaturePage from "../pages/social/UnavailableFeaturePage";
+import FanBackedSocialPage from "../pages/social/FanBackedSocialPage";
+import { useAuth } from "../hooks/useAuth";
+
+function RootRedirect() {
+  const { loading, user } = useAuth();
+  if (loading) return null;
+  if (user?.role === ROLES.ADMIN) return <Navigate replace to="/admin/dashboard" />;
+  return <Navigate replace to={user ? "/wall" : "/login"} />;
+}
+
+function LegacyCreatorProfileRedirect() {
+  const { username } = useParams();
+  return <Navigate replace to={`/profile/${encodeURIComponent(username)}`} />;
+}
 
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
-      <Route index element={<Navigate replace to="/fan/dashboard" />} />
+      <Route index element={<RootRedirect />} />
       <Route path="/explore" element={<ExplorePage />} />
-      <Route path="/creators/:username" element={<CreatorProfilePage />} />
+      <Route path="/profile/:username" element={<CreatorProfilePage />} />
+      <Route path="/creators/:username" element={<LegacyCreatorProfileRedirect />} />
     </Route>
 
     <Route element={<AuthLayout />}>
@@ -63,30 +77,43 @@ function AppRoutes() {
         <Route path="/settings/notifications" element={<ProfileSettingsPage />} />
       </Route>
 
-      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}>
-        <Route element={<FanWebLayout />}>
-          <Route path="/fan/dashboard" element={<FanHomePage />} />
-          <Route path="/fan/orbit" element={<OrbitPage />} />
-          <Route path="/fan/worlds" element={<WorldsPage />} />
-          <Route path="/fan/messages" element={<MessagesPage />} />
-          <Route path="/fan/activity" element={<ActivityPage />} />
-          <Route path="/fan/profile" element={<FanProfilePage />} />
-          <Route path="/fan/wallet" element={<WalletPage />} />
-          <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
-          <Route path="/fan/purchases" element={<PurchasesPage />} />
+      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
+        <Route element={<SocialAppShell />}>
+          <Route path="/wall" element={<FanHomePage />} />
+          <Route path="/seen" element={<UnavailableFeaturePage description="Seen recommendations will be connected when the Seen domain is implemented." title="Seen" />} />
+          <Route path="/orbit" element={<UnavailableFeaturePage description="Orbit is still a visual prototype and is not connected to live account data yet." title="Orbit" />} />
+          <Route path="/messages" element={<FanBackedSocialPage description="Creator messaging is not connected to the shared social shell yet." title="Messages"><MessagesPage /></FanBackedSocialPage>} />
+          <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
+          <Route path="/profile" element={<FanProfilePage />} />
+          <Route path="/settings" element={<ProfileSettingsPage />} />
+          <Route element={<ApprovedCreatorRoute />}>
+            <Route path="/studio" element={<CreatorStudio />} />
+          </Route>
+          <Route path="/fan/dashboard" element={<Navigate replace to="/wall" />} />
+          <Route path="/fan/home" element={<Navigate replace to="/wall" />} />
+          <Route path="/fan/orbit" element={<Navigate replace to="/orbit" />} />
+          <Route path="/fan/messages" element={<Navigate replace to="/messages" />} />
+          <Route path="/fan/activity" element={<Navigate replace to="/activity" />} />
+          <Route path="/fan/profile" element={<Navigate replace to="/profile" />} />
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}>
+            <Route path="/fan/worlds" element={<WorldsPage />} />
+            <Route path="/fan/wallet" element={<WalletPage />} />
+            <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
+            <Route path="/fan/purchases" element={<PurchasesPage />} />
+          </Route>
         </Route>
       </Route>
 
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<CreatorAppShell />}>
-            <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+            <Route path="/creator/dashboard" element={<Navigate replace to="/wall" />} />
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
             <Route path="/creator/application" element={<CreatorApplicationPage />} />
-            <Route path="/creator/profile" element={<ProfileSettingsPage creatorMode />} />
+            <Route path="/creator/profile" element={<Navigate replace to="/profile" />} />
             <Route path="/creator/settings" element={<CreatorSettingsPage />} />
             <Route path="/creator/settings/security" element={<CreatorSecurityPage />} />
             <Route element={<ApprovedCreatorRoute />}>
-              <Route path="/creator/studio" element={<CreatorStudio />} />
+              <Route path="/creator/studio" element={<Navigate replace to="/studio" />} />
               <Route path="/creator/content" element={<ContentManager />} />
               <Route path="/creator/content/new" element={<ContentComposerPage />} />
               <Route path="/creator/content/:id/edit" element={<ContentComposerPage />} />

@@ -3,10 +3,8 @@ import { useAuth } from "../hooks/useAuth";
 
 const dashboardFor = (user) => {
   if (user.role === "admin") return "/admin/dashboard";
-  if (user.role === "creator") {
-    return "/creator/dashboard";
-  }
-  return "/fan/dashboard";
+  if (user.role === "creator" || user.role === "fan") return "/wall";
+  return "/login";
 };
 
 function RoleProtectedRoute({ allowedRoles = [], requireCreatorApproval = true }) {
@@ -21,7 +19,7 @@ function RoleProtectedRoute({ allowedRoles = [], requireCreatorApproval = true }
   }
 
   if (requireCreatorApproval && user.role === "creator" && user.creatorApprovalStatus !== "approved") {
-    return <Navigate replace to="/creator/dashboard" />;
+    return <Navigate replace to="/creator/verification" />;
   }
 
   return <Outlet />;
