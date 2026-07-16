@@ -148,6 +148,7 @@ function ProfileSettingsPage({ creatorMode = false }) {
       const data = response.data.data;
 
       queryClient.setQueryData(["profile", "me"], data);
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       setUser({
         id: data.account.id,
         name: data.account.displayName,
@@ -157,6 +158,7 @@ function ProfileSettingsPage({ creatorMode = false }) {
         avatar: data.account.profilePhoto,
         isVerified: data.account.isVerified,
         status: data.account.status,
+        creatorApprovalStatus: user?.creatorApprovalStatus,
       });
       setForm(profileToForm(data));
       setDirty(false);
@@ -199,6 +201,7 @@ function ProfileSettingsPage({ creatorMode = false }) {
       const data = response.data.data;
 
       queryClient.setQueryData(["profile", "me"], data);
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       setUser({
         id: data.account.id,
         name: data.account.displayName,
@@ -208,6 +211,7 @@ function ProfileSettingsPage({ creatorMode = false }) {
         avatar: data.account.profilePhoto,
         isVerified: data.account.isVerified,
         status: data.account.status,
+        creatorApprovalStatus: user?.creatorApprovalStatus,
       });
       setForm(profileToForm(data));
       setDirty(false);

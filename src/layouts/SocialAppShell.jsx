@@ -24,7 +24,7 @@ function SocialAppShell() {
 
   const outletContext = useMemo(() => ({ status, setStatus }), [status]);
   const mobileAction = capabilities.canCreate
-    ? { label: "Create", to: "/creator/content/new" }
+    ? { label: "Create", to: "/create" }
     : capabilities.canAccessVerification && !capabilities.isApprovedCreator
       ? { label: "Verify", to: "/creator/verification" }
       : null;

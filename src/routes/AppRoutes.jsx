@@ -8,7 +8,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
 import ExplorePage from "../pages/public/ExplorePage";
-import CreatorProfilePage from "../pages/public/CreatorProfilePage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
@@ -19,7 +18,6 @@ import PurchasesPage from "../pages/fan/PurchasesPage";
 import MessagesPage from "../pages/fan/MessagesPage";
 import ActivityPage from "../pages/fan/ActivityPage";
 import WorldsPage from "../pages/fan/WorldsPage";
-import FanProfilePage from "../pages/fan/FanProfilePage";
 import CreatorStudio from "../pages/creator/CreatorStudio";
 import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
 import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
@@ -38,9 +36,19 @@ import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
+import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
 import UnavailableFeaturePage from "../pages/social/UnavailableFeaturePage";
 import FanBackedSocialPage from "../pages/social/FanBackedSocialPage";
+import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
+import CreateHubPage from "../pages/create/CreateHubPage";
+import SeenComposerPage from "../pages/creator/SeenComposerPage";
+import SeenManagerPage from "../pages/creator/SeenManagerPage";
+import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
+import SeenFeedPage from "../pages/social/SeenFeedPage";
+import SeenReaderPage from "../pages/social/SeenReaderPage";
+import PublicationModeration from "../pages/admin/PublicationModeration";
+import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -59,7 +67,6 @@ function AppRoutes() {
     <Route element={<MainLayout />}>
       <Route index element={<RootRedirect />} />
       <Route path="/explore" element={<ExplorePage />} />
-      <Route path="/profile/:username" element={<CreatorProfilePage />} />
       <Route path="/creators/:username" element={<LegacyCreatorProfileRedirect />} />
     </Route>
 
@@ -80,14 +87,20 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<FanHomePage />} />
-          <Route path="/seen" element={<UnavailableFeaturePage description="Seen recommendations will be connected when the Seen domain is implemented." title="Seen" />} />
+          <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/orbit" element={<UnavailableFeaturePage description="Orbit is still a visual prototype and is not connected to live account data yet." title="Orbit" />} />
           <Route path="/messages" element={<FanBackedSocialPage description="Creator messaging is not connected to the shared social shell yet." title="Messages"><MessagesPage /></FanBackedSocialPage>} />
           <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
-          <Route path="/profile" element={<FanProfilePage />} />
+          <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/settings" element={<ProfileSettingsPage />} />
+          <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
+            <Route path="/create" element={<CreateHubPage />} />
+            <Route path="/create/seen" element={<SeenComposerPage />} />
+            <Route path="/studio/seens" element={<SeenManagerPage />} />
+            <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
+            <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
           </Route>
           <Route path="/fan/dashboard" element={<Navigate replace to="/wall" />} />
           <Route path="/fan/home" element={<Navigate replace to="/wall" />} />
@@ -133,11 +146,16 @@ function AppRoutes() {
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
           <Route path="/admin/content-moderation" element={<ContentModeration />} />
           <Route path="/admin/content-moderation/:id" element={<ContentModerationDetail />} />
+          <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
+          <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/content-moderation" />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
         </Route>
       </Route>
     </Route>
+
+    <Route path="/profile/:username" element={<UnifiedProfilePage />} />
+    <Route path="/seen/:id" element={<SeenReaderPage />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />
   </Routes>;

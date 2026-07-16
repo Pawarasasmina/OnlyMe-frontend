@@ -12,7 +12,7 @@ export const socialPrimaryNavItems = [
 export function socialSecondaryNavItems(capabilities) {
   const items = [{ label: "Activity", to: "/activity", icon: FiActivity }];
 
-  if (capabilities.canCreate) items.push({ label: "Create", to: "/creator/content/new", icon: FiEdit3, emphasis: true });
+  if (capabilities.canCreate) items.push({ label: "Create", to: "/create", icon: FiEdit3, emphasis: true });
   if (capabilities.canAccessStudio) items.push({ label: "Studio", to: "/studio", icon: FiGrid });
   if (capabilities.canAccessVerification && !capabilities.isApprovedCreator) {
     items.push({ label: "Verification", to: "/creator/verification", icon: FiCheckCircle, emphasis: true });

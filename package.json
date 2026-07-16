@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/utils/socialAccess.test.js",
+    "test": "node --test src/utils/socialAccess.test.js src/utils/profileCapabilities.test.js src/utils/publicationValidation.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
