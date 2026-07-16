@@ -84,7 +84,7 @@ function CheckboxField({ checked, disabled, label, name, onChange }) {
   );
 }
 
-function ProfileSettingsPage() {
+function ProfileSettingsPage({ creatorMode = false }) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -401,7 +401,8 @@ function ProfileSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
+      {creatorMode ? <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="creator-eyebrow">Creator profile</p><h1 className="creator-page-title">Shape your public presence</h1><p className="creator-muted mt-2">Keep your identity, creator details, and membership options up to date.</p></div>{account.username ? <Link className="rounded-xl border border-sky-300/20 px-4 py-2 text-sm font-semibold text-sky-300 hover:bg-sky-300/10" target="_blank" to={`/creators/${account.username}`}>Preview public profile</Link> : null}</div> : null}
+      {!creatorMode ? <div className="flex flex-wrap gap-2">
         {settingsTabs.map((tab) => (
           <Link
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -413,7 +414,7 @@ function ProfileSettingsPage() {
             {tab.label}
           </Link>
         ))}
-      </div>
+      </div> : null}
 
       {role !== "admin" ? <ProfileCompletionCard completion={profileData.completion} /> : null}
 

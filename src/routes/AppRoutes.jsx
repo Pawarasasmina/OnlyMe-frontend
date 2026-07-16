@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
+import CreatorAppShell from "../layouts/CreatorAppShell";
 import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
@@ -32,20 +33,13 @@ import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
 import CreatorVerificationDetail from "../pages/admin/CreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
+import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
+import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
 
 const fanLinks = [
   { label: "Overview", to: "/fan/dashboard" },
   { label: "Wallet", to: "/fan/wallet" },
   { label: "Subscriptions", to: "/fan/subscriptions" },
-  { label: "Profile", to: "/settings/profile" },
-];
-
-const creatorLinks = [
-  { label: "Overview", to: "/creator/dashboard" },
-  { label: "Verification", to: "/creator/verification" },
-  { label: "Studio", to: "/creator/studio", requiresApproval: true },
-  { label: "Content", to: "/creator/content", requiresApproval: true },
-  { label: "Earnings", to: "/creator/earnings", requiresApproval: true },
   { label: "Profile", to: "/settings/profile" },
 ];
 
@@ -82,25 +76,21 @@ function AppRoutes() {
       </Route>
 
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
-        <Route element={<MainLayout />}>
-          <Route element={<DashboardLayout links={creatorLinks} title="Creator Dashboard" />}>
+        <Route element={<CreatorAppShell />}>
             <Route path="/creator/dashboard" element={<CreatorDashboard />} />
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
             <Route path="/creator/application" element={<CreatorApplicationPage />} />
-          </Route>
-        </Route>
-      </Route>
-
-      <Route element={<ApprovedCreatorRoute />}>
-        <Route element={<MainLayout />}>
-          <Route element={<DashboardLayout links={creatorLinks} title="Creator Dashboard" />}>
-            <Route path="/creator/studio" element={<CreatorStudio />} />
-            <Route path="/creator/content" element={<ContentManager />} />
-            <Route path="/creator/content/new" element={<ContentComposerPage />} />
-            <Route path="/creator/content/:id/edit" element={<ContentComposerPage />} />
-            <Route path="/creator/content/:id" element={<ContentDetailPage />} />
-            <Route path="/creator/earnings" element={<EarningsPage />} />
-          </Route>
+            <Route path="/creator/profile" element={<ProfileSettingsPage creatorMode />} />
+            <Route path="/creator/settings" element={<CreatorSettingsPage />} />
+            <Route path="/creator/settings/security" element={<CreatorSecurityPage />} />
+            <Route element={<ApprovedCreatorRoute />}>
+              <Route path="/creator/studio" element={<CreatorStudio />} />
+              <Route path="/creator/content" element={<ContentManager />} />
+              <Route path="/creator/content/new" element={<ContentComposerPage />} />
+              <Route path="/creator/content/:id/edit" element={<ContentComposerPage />} />
+              <Route path="/creator/content/:id" element={<ContentDetailPage />} />
+              <Route path="/creator/earnings" element={<EarningsPage />} />
+            </Route>
         </Route>
       </Route>
 
