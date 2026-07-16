@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
-import DashboardLayout from "../layouts/DashboardLayout";
 import CreatorAppShell from "../layouts/CreatorAppShell";
 import AdminLayout from "../layouts/AdminLayout";
 import FanWebLayout from "../layouts/FanWebLayout";
@@ -42,13 +41,6 @@ import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
 
-const fanLinks = [
-  { label: "Overview", to: "/fan/dashboard" },
-  { label: "Wallet", to: "/fan/wallet" },
-  { label: "Subscriptions", to: "/fan/subscriptions" },
-  { label: "Profile", to: "/settings/profile" },
-];
-
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
@@ -72,12 +64,16 @@ function AppRoutes() {
       </Route>
 
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}>
-        <Route element={<MainLayout />}>
-          <Route element={<DashboardLayout links={fanLinks} title="Fan Dashboard" />}>
-            <Route path="/fan/dashboard" element={<FanDashboard />} />
-            <Route path="/fan/wallet" element={<WalletPage />} />
-            <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
-          </Route>
+        <Route element={<FanWebLayout />}>
+          <Route path="/fan/dashboard" element={<FanHomePage />} />
+          <Route path="/fan/orbit" element={<OrbitPage />} />
+          <Route path="/fan/worlds" element={<WorldsPage />} />
+          <Route path="/fan/messages" element={<MessagesPage />} />
+          <Route path="/fan/activity" element={<ActivityPage />} />
+          <Route path="/fan/profile" element={<FanProfilePage />} />
+          <Route path="/fan/wallet" element={<WalletPage />} />
+          <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
+          <Route path="/fan/purchases" element={<PurchasesPage />} />
         </Route>
       </Route>
 
