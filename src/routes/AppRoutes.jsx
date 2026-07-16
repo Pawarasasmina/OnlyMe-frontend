@@ -4,18 +4,24 @@ import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import CreatorAppShell from "../layouts/CreatorAppShell";
 import AdminLayout from "../layouts/AdminLayout";
+import FanWebLayout from "../layouts/FanWebLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
-import HomePage from "../pages/public/HomePage";
 import ExplorePage from "../pages/public/ExplorePage";
 import CreatorProfilePage from "../pages/public/CreatorProfilePage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
-import FanDashboard from "../pages/fan/FanDashboard";
+import FanHomePage from "../pages/fan/FanHomePage";
 import WalletPage from "../pages/fan/WalletPage";
 import SubscriptionsPage from "../pages/fan/SubscriptionsPage";
+import PurchasesPage from "../pages/fan/PurchasesPage";
+import MessagesPage from "../pages/fan/MessagesPage";
+import ActivityPage from "../pages/fan/ActivityPage";
+import OrbitPage from "../pages/fan/OrbitPage";
+import WorldsPage from "../pages/fan/WorldsPage";
+import FanProfilePage from "../pages/fan/FanProfilePage";
 import CreatorDashboard from "../pages/creator/CreatorDashboard";
 import CreatorStudio from "../pages/creator/CreatorStudio";
 import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
@@ -46,7 +52,7 @@ const fanLinks = [
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
-      <Route index element={<HomePage />} />
+      <Route index element={<Navigate replace to="/fan/dashboard" />} />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/creators/:username" element={<CreatorProfilePage />} />
     </Route>

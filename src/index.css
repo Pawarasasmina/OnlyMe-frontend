@@ -3,17 +3,22 @@
 @tailwind utilities;
 
 :root {
-  color: #f5f7fb;
-  background: #09111f;
+  color: #f3f4f6;
+  background: #06080b;
   font-family: Inter, system-ui, sans-serif;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #09111f;
-  color: #f5f7fb;
+  background: #06080b;
+  color: #f3f4f6;
 }
 
 a {
@@ -64,4 +69,78 @@ a {
   caret-color: #f5f7fb;
   box-shadow: 0 0 0 1000px #1a2739 inset;
   transition: background-color 9999s ease-out 0s;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #8ab8ff;
+  outline-offset: 3px;
+}
+
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: #06080b;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border: 2px solid #06080b;
+  border-radius: 999px;
+}
+
+.atseen-hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.atseen-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.atseen-orbit-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotateX(64deg);
+  border: 1px solid rgba(138, 184, 255, 0.14);
+  border-radius: 9999px;
+}
+
+.atseen-twinkle {
+  animation: atseen-twinkle 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes atseen-twinkle {
+  from {
+    opacity: 0.18;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 0.75;
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
