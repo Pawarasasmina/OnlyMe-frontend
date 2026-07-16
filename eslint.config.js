@@ -6,7 +6,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 
 export default [
   {
-    ignores: ["dist"],
+    ignores: ["dist", "OnlyMe-backend"],
   },
   js.configs.recommended,
   react.configs.flat.recommended,
