@@ -12,7 +12,7 @@ import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import FanCard from "../../components/fanWeb/shared/FanCard";
 import { profileService } from "../../services/profileService";
 
-function UnifiedProfilePage({ owner = false }) {
+function UnifiedProfilePage({ embedded = false, owner = false }) {
   const { username } = useParams();
   const [tab, setTab] = useState("seens");
   const profileQuery = useQuery({
@@ -43,13 +43,13 @@ function UnifiedProfilePage({ owner = false }) {
         {["seens", "shared", "content", "about"].map((value) => <button className={`flex-1 border-b-2 px-3 py-3 text-xs font-bold uppercase tracking-wide ${tab === value ? "border-atseen-blue text-atseen-blue" : "border-transparent text-atseen-muted"}`} key={value} onClick={() => setTab(value)} type="button">{value}</button>)}
       </div>
       {tab === "seens" ? <div className="mt-4"><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Published Seens</h2>{viewerCapabilities.isOwner && profile.role === "creator" ? <Link className="text-xs font-bold text-atseen-blue" to="/studio/seens">Manage Seens</Link> : null}</div><ProfileContentGrid content={data.seens || []} kind="seens" /></div> : null}
-      {tab === "shared" ? <div className="mt-4"><h2 className="mb-3 text-sm font-bold">Shared Seens</h2><ProfileContentGrid content={data.sharedSeens || []} kind="seens" /></div> : null}
+      {tab === "shared" ? <div className="mt-4"><h2 className="mb-3 text-sm font-bold">Shared Seens</h2><ProfileContentGrid content={data.sharedSeens || []} kind="seens" /><h2 className="mb-3 mt-6 text-sm font-bold">Shared Wall posts</h2><div className="space-y-3">{data.sharedWallPosts?.map((post) => <FanCard key={post.id}><div className="flex items-center justify-between"><Link className="text-xs font-bold text-atseen-blue" to={`/profile/${post.creator.username}`}>@{post.creator.username}</Link><time className="text-[10px] text-atseen-muted">{new Date(post.createdAt).toLocaleDateString()}</time></div><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{post.text}</p>{post.media?.[0]?.url ? <img alt="Shared Wall post" className="mt-3 max-h-80 w-full rounded-xl object-cover" src={post.media[0].url} /> : null}</FanCard>)}{!data.sharedWallPosts?.length ? <p className="text-sm text-atseen-muted">No shared Wall posts yet.</p> : null}</div></div> : null}
       {tab === "content" ? <div className="mt-4"><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Published content</h2>{Number.isFinite(publicMetrics?.publishedContentCount) ? <span className="text-xs text-atseen-muted">{publicMetrics.publishedContentCount}</span> : null}</div><ProfileContentGrid content={publicContent} /></div> : null}
       {tab === "about" ? <FanCard className="mt-4"><h2 className="text-sm font-bold">About</h2>{profile.bio ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-white/80">{profile.bio}</p> : <p className="mt-3 text-sm text-atseen-muted">No public bio provided.</p>}{profile.joinedAt ? <p className="mt-4 flex items-center gap-2 text-xs text-atseen-muted"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}</FanCard> : null}
     </>;
   })();
 
-  if (owner) return body;
+  if (owner || embedded) return body;
   return <div className="min-h-screen bg-atseen-bg px-4 py-6 text-atseen-text sm:px-6"><main className="mx-auto max-w-[660px]">{body}</main></div>;
 }
 

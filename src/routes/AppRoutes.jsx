@@ -68,6 +68,13 @@ function LegacyCreatorProfileRedirect() {
   return <Navigate replace to={`/profile/${encodeURIComponent(username)}`} />;
 }
 
+function ProfileRoute() {
+  const { loading, user } = useAuth();
+  if (loading) return null;
+  if (user && [ROLES.FAN, ROLES.CREATOR].includes(user.role)) return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
+  return <UnifiedProfilePage />;
+}
+
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
@@ -170,7 +177,7 @@ function AppRoutes() {
       </Route>
     </Route>
 
-    <Route path="/profile/:username" element={<UnifiedProfilePage />} />
+    <Route path="/profile/:username" element={<ProfileRoute />} />
     <Route path="/seen/:id" element={<SeenReaderPage />} />
     <Route path="/world/:id" element={<WorldReaderPage />} />
     <Route path="/planet/:id" element={<WorldReaderPage />} />

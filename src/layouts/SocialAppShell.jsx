@@ -11,7 +11,7 @@ import { useSocialCapabilities } from "../hooks/useSocialCapabilities";
 
 const STATUS_KEY = "atseen_social_status";
 
-function SocialAppShell() {
+function SocialAppShell({ children = null }) {
   const { user } = useAuth();
   const capabilities = useSocialCapabilities();
   const [status, setStatus] = useState(() => localStorage.getItem(STATUS_KEY) || "");
@@ -44,7 +44,7 @@ function SocialAppShell() {
               )}
             </header>
             <main className="mx-auto min-w-0 max-w-[660px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-[34px] md:pb-20 md:pt-[30px]">
-              <Outlet context={outletContext} />
+              {children || <Outlet context={outletContext} />}
             </main>
           </div>
           <FanWebRightRail capabilities={capabilities} status={status} user={user} />

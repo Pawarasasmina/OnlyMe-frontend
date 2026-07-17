@@ -1,99 +1,38 @@
-import { useState } from "react";
-import { FiEdit3, FiImage, FiLayers, FiPenTool } from "react-icons/fi";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FiChevronRight, FiImage, FiMapPin, FiNavigation, FiSearch, FiX } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import { useFanToast } from "../shared/FanToastContext";
 import { atseenStatuses } from "../../../data/atseenMockData";
 import { useAuth } from "../../../hooks/useAuth";
-import { canCreateStory } from "../../../utils/storyPermissions";
+import { wallService } from "../../../services/wallService";
 
-const createOptions = [
-  { label: "Seen", description: "A quick public note for the feed.", icon: FiPenTool },
-  { label: "Story", description: "A temporary moment for your orbit.", icon: FiImage, requiresStoryPermission: true },
-  { label: "Home", description: "A longer note, ask, or useful sighting.", icon: FiEdit3 },
-  { label: "World", description: "A chaptered experience people can step into.", icon: FiLayers },
-];
+const contexts = [["RIGHT_NOW", "⚡ Right now"], ["COFFEE", "☕ Coffee"], ["NEED_HELP", "🆘 Need help"], ["PLACE", "📍 Place"], ["RESTAURANT", "🍜 Restaurant"], ["BOOK", "📚 Book"], ["MOVIE", "🎬 Movie"], ["TRAVEL", "✈️ Travel"], ["BUSINESS", "💼 Business"], ["FITNESS", "💪 Fitness"], ["WELLNESS", "🌿 Wellness"], ["LIFESTYLE", "✨ Lifestyle"], ["BEAUTY", "💄 Beauty"]];
+const popularLocations = ["Dubai, United Arab Emirates", "Colombo, Sri Lanka", "Kandy, Sri Lanka", "Galle, Sri Lanka", "Singapore", "London, United Kingdom", "Paris, France", "Tokyo, Japan", "New York, United States", "Barcelona, Spain", "Sydney, Australia", "Toronto, Canada"];
 
-function PostComposer({ currentUser, onStatusChange, status }) {
-  const { user } = useAuth();
-  const { showToast } = useFanToast();
-  const [statusOpen, setStatusOpen] = useState(false);
-  const [postingOpen, setPostingOpen] = useState(false);
-  const visibleCreateOptions = createOptions.filter((option) => !option.requiresStoryPermission || canCreateStory(user));
-
-  const chooseStatus = (nextStatus) => {
-    onStatusChange(nextStatus);
-    setStatusOpen(false);
-    showToast(`Status: ${nextStatus}`);
+function LocationPicker({ onClose, onSelect, selected }) {
+  const [query, setQuery] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState("");
+  const choices = useMemo(() => popularLocations.filter((item) => item.toLowerCase().includes(query.trim().toLowerCase())), [query]);
+  const chooseCurrent = () => {
+    if (!navigator.geolocation) return setGeoError("Current location is not supported by this browser.");
+    setLocating(true); setGeoError("");
+    navigator.geolocation.getCurrentPosition(({ coords }) => { onSelect(`Current location · ${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`); setLocating(false); }, (error) => { setGeoError(error.code === 1 ? "Location permission was denied. Search for a place instead." : "Current location could not be detected."); setLocating(false); }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
   };
-
-  return (
-    <>
-      <div className="my-[18px] flex items-center gap-3 rounded-2xl border border-atseen-line bg-atseen-surface px-4 py-3.5 text-sm text-atseen-dim">
-        <button
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
-          onClick={() => setPostingOpen(true)}
-          type="button"
-        >
-          <FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} />
-          <span className="truncate">Share what you&apos;ve seen...</span>
-        </button>
-        <button
-          className="shrink-0 rounded-full border border-atseen-blue/25 bg-atseen-blue/10 px-3 py-1.5 text-[11px] font-bold text-atseen-blue transition hover:bg-atseen-blue/15"
-          onClick={() => setStatusOpen(true)}
-          type="button"
-        >
-          {status}
-        </button>
-      </div>
-
-      <FanModal isOpen={statusOpen} onClose={() => setStatusOpen(false)} title="Choose a status">
-        <div className="grid gap-2 sm:grid-cols-2">
-          {atseenStatuses.map((item) => (
-            <button
-              className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
-                status === item
-                  ? "border-atseen-blue/50 bg-atseen-blue/10 text-atseen-blue"
-                  : "border-atseen-line bg-atseen-surface-2 text-atseen-text hover:border-atseen-blue/40"
-              }`}
-              key={item}
-              onClick={() => chooseStatus(item)}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </FanModal>
-
-      <FanModal isOpen={postingOpen} onClose={() => setPostingOpen(false)} title="Create">
-        <p className="text-sm leading-6 text-atseen-muted">
-          Choose what you want to make. Desktop creation is staged here; publishing stays connected to the existing product flow.
-        </p>
-        <div className="mt-4 grid gap-2">
-          {visibleCreateOptions.map(({ description, icon: Icon, label }) => (
-            <button
-              className="flex items-center gap-3 rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4 py-3 text-left transition hover:border-atseen-blue/45 hover:bg-atseen-blue/10"
-              key={label}
-              onClick={() => {
-                setPostingOpen(false);
-                showToast(`${label} creation will open here when publishing is enabled.`);
-              }}
-              type="button"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-atseen-blue/25 bg-atseen-blue/10 text-atseen-blue">
-                <Icon aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-bold text-atseen-text">{label}</span>
-                <span className="mt-0.5 block text-[11px] leading-5 text-atseen-muted">{description}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </FanModal>
-    </>
-  );
+  const select = (value) => { onSelect(value); onClose(); };
+  return <div><div className="flex items-center gap-3"><button className="text-sm text-atseen-blue" onClick={onClose} type="button">Back</button><h3 className="font-black">Add location</h3></div><label className="mt-4 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-bg px-4"><FiSearch className="text-atseen-muted" /><input autoFocus className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none" maxLength={100} onChange={(event) => setQuery(event.target.value)} placeholder="Search cities and places" value={query} /></label><button className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-atseen-blue/30 bg-atseen-blue/10 p-4 text-left" disabled={locating} onClick={chooseCurrent} type="button"><span className="grid h-10 w-10 place-items-center rounded-full bg-atseen-blue text-atseen-bg"><FiNavigation /></span><span><strong className="block text-sm">{locating ? "Finding your location…" : "Use current location"}</strong><small className="text-atseen-muted">Uses browser location permission</small></span></button>{geoError ? <p className="mt-2 text-xs text-red-300">{geoError}</p> : null}{selected ? <button className="mt-3 flex w-full items-center justify-between rounded-xl border border-atseen-line p-3 text-left" onClick={() => select(selected)}><span><small className="block text-atseen-muted">Currently selected</small><strong className="text-sm">{selected}</strong></span><FiChevronRight /></button> : null}<p className="mb-2 mt-5 text-[10px] font-bold uppercase tracking-widest text-atseen-muted">{query ? "Search results" : "Popular places"}</p><div className="max-h-64 divide-y divide-atseen-line overflow-y-auto">{choices.map((item) => <button className="flex w-full items-center gap-3 py-3 text-left text-sm hover:text-atseen-blue" key={item} onClick={() => select(item)}><FiMapPin className="shrink-0" />{item}</button>)}{query.trim() && !popularLocations.some((item) => item.toLowerCase() === query.trim().toLowerCase()) ? <button className="flex w-full items-center gap-3 py-3 text-left text-sm text-atseen-blue" onClick={() => select(query.trim())}><FiMapPin />Use “{query.trim()}”</button> : null}</div></div>;
 }
 
-export default PostComposer;
+export default function PostComposer({ currentUser, onStatusChange, status }) {
+  const { user } = useAuth(); const queryClient = useQueryClient(); const { showToast } = useFanToast(); const input = useRef(null);
+  const [open, setOpen] = useState(false), [statusOpen, setStatusOpen] = useState(false), [locationOpen, setLocationOpen] = useState(false), [text, setText] = useState(""), [context, setContext] = useState("RIGHT_NOW"), [location, setLocation] = useState(""), [image, setImage] = useState(null), [imageUrl, setImageUrl] = useState(""), [error, setError] = useState("");
+  useEffect(() => { if (!image) { setImageUrl(""); return; } const url = URL.createObjectURL(image); setImageUrl(url); return () => URL.revokeObjectURL(url); }, [image]);
+  const approvedCreator = user?.role === "creator" && user?.creatorApprovalStatus === "approved";
+  const publish = useMutation({ mutationFn: () => wallService.create({ text: text.trim(), context, location, image }), onSuccess: async () => { setText(""); setLocation(""); setImage(null); setContext("RIGHT_NOW"); setOpen(false); await queryClient.invalidateQueries({ queryKey: ["wall-posts"] }); showToast("Published to the Wall."); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to publish this post.") });
+  return <>{approvedCreator ? <div className="my-[18px] flex items-center gap-3 rounded-2xl border border-atseen-line bg-atseen-surface px-4 py-3.5 text-sm text-atseen-dim"><button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => setOpen(true)} type="button"><FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} /><span className="truncate">Share what you&apos;ve seen...</span></button><button className="rounded-full border border-atseen-blue/25 bg-atseen-blue/10 px-3 py-1.5 text-[11px] font-bold text-atseen-blue" onClick={() => setStatusOpen(true)}>{status}</button></div> : null}
+    <FanModal isOpen={statusOpen} onClose={() => setStatusOpen(false)} title="Choose a status"><div className="grid gap-2 sm:grid-cols-2">{atseenStatuses.map((item) => <button className="rounded-2xl border border-atseen-line px-4 py-3 text-left" key={item} onClick={() => { onStatusChange(item); setStatusOpen(false); }}>{item}</button>)}</div></FanModal>
+    <FanModal isOpen={open} onClose={() => { setOpen(false); setLocationOpen(false); }} title={locationOpen ? "Location" : "Share what you’ve seen"}>{locationOpen ? <LocationPicker onClose={() => setLocationOpen(false)} onSelect={(value) => { setLocation(value); setLocationOpen(false); }} selected={location} /> : <><textarea autoFocus className="min-h-32 w-full resize-none rounded-2xl border border-atseen-line bg-atseen-bg p-4 text-sm outline-none focus:border-atseen-blue" maxLength={1200} onChange={(event) => setText(event.target.value)} placeholder="What did you notice, discover, need, or recommend?" value={text} /><p className="mt-1 text-right text-[10px] text-atseen-muted">{text.length}/1200</p><div className="mt-3 flex flex-wrap gap-2">{contexts.map(([value, label]) => <button className={`rounded-full border px-3 py-2 text-xs font-bold ${context === value ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line"}`} key={value} onClick={() => setContext(value)}>{label}</button>)}</div><button className={`mt-4 flex w-full items-center gap-3 rounded-xl border p-3 text-left ${location ? "border-atseen-blue/40 bg-atseen-blue/10" : "border-atseen-line"}`} onClick={() => setLocationOpen(true)} type="button"><FiMapPin className="text-atseen-blue" /><span className="min-w-0 flex-1"><strong className="block text-sm">{location || "Add location"}</strong><small className="text-atseen-muted">Search places or use your current location</small></span><FiChevronRight />{location ? <span aria-label="Clear location" className="rounded-full p-1" onClick={(event) => { event.stopPropagation(); setLocation(""); }} role="button"><FiX /></span> : null}</button>{imageUrl ? <div className="relative mt-4"><img alt="Post preview" className="max-h-64 w-full rounded-2xl object-cover" src={imageUrl} /><button aria-label="Remove image" className="absolute right-2 top-2 rounded-full bg-black/70 p-2" onClick={() => setImage(null)}><FiX /></button></div> : null}<input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => setImage(event.target.files?.[0] || null)} ref={input} type="file" /><div className="mt-5 flex items-center gap-3"><button className="rounded-xl border border-atseen-line p-3" onClick={() => input.current?.click()} title="Add image"><FiImage /></button><button className="ml-auto text-sm text-atseen-muted" onClick={() => setOpen(false)}>Cancel</button><button className="rounded-xl bg-atseen-blue px-5 py-3 text-sm font-black text-atseen-bg" disabled={!text.trim() || publish.isPending} onClick={() => { setError(""); publish.mutate(); }}>{publish.isPending ? "Publishing…" : "Publish"}</button></div>{error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}</>}</FanModal>
+  </>;
+}

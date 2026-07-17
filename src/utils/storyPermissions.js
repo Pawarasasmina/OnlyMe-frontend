@@ -5,7 +5,7 @@ export function getUserRole(user) {
 }
 
 export function canCreateStory(user) {
-  return getUserRole(user) === ROLES.CREATOR;
+  return getUserRole(user) === ROLES.CREATOR && user?.creatorApprovalStatus === "approved";
 }
 
 export function canDeleteStory(user, story) {

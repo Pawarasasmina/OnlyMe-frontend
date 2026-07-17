@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiImage,
   FiPause,
@@ -65,12 +65,10 @@ function StoriesRow({ currentUser }) {
   const { showToast } = useFanToast();
   const fileInputRef = useRef(null);
   const viewedThisSessionRef = useRef(new Set());
-  const userStoriesRef = useRef([]);
   const [activeIndex, setActiveIndex] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [draft, setDraft] = useState(null);
   const [caption, setCaption] = useState("");
-  const [userStories, setUserStories] = useState([]);
   const [seen, setSeen] = useState(() => readStoredMap(SEEN_KEY));
   const [reactions, setReactions] = useState(() => readStoredMap(REACTIONS_KEY));
   const [recentReaction, setRecentReaction] = useState(null);
@@ -78,6 +76,7 @@ function StoriesRow({ currentUser }) {
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const canCreate = canCreateStory(user);
+  const queryClient = useQueryClient();
 
   const storiesQuery = useQuery({
     queryKey: ["stories", "active"],
@@ -87,8 +86,8 @@ function StoriesRow({ currentUser }) {
 
   const activeStories = useMemo(() => {
     const remoteStories = Array.isArray(storiesQuery.data) ? storiesQuery.data : [];
-    return canCreate ? [...remoteStories, ...userStories] : remoteStories;
-  }, [canCreate, storiesQuery.data, userStories]);
+    return remoteStories;
+  }, [storiesQuery.data]);
   const activeStory = activeIndex == null ? null : activeStories[activeIndex];
   const activeStoryId = activeStory?.id;
 
@@ -122,11 +121,17 @@ function StoriesRow({ currentUser }) {
     },
   });
 
-  const revokeStoryUrl = (story) => {
-    if (story?.isOwn && story.image?.startsWith("blob:")) {
-      URL.revokeObjectURL(story.image);
-    }
-  };
+  const publishMutation = useMutation({
+    mutationFn: () => storyService.createStory(draft.file, caption.trim(), setProgress),
+    onSuccess: async () => { closeUpload(); await queryClient.invalidateQueries({ queryKey: ["stories", "active"] }); showToast("Your story is live for 24 hours."); },
+    onError: (error) => showToast(error.response?.data?.message || "Story could not be published."),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (storyId) => storyService.deleteStory(storyId),
+    onSuccess: async () => { setActiveIndex(null); await queryClient.invalidateQueries({ queryKey: ["stories", "active"] }); showToast("Story deleted."); },
+    onError: () => showToast("Story could not be deleted."),
+  });
 
   const clearDraft = useCallback((shouldRevoke = true) => {
     setDraft((current) => {
@@ -151,14 +156,14 @@ function StoriesRow({ currentUser }) {
   }, []);
 
   const markSeen = useCallback((story) => {
-    if (!story || seen[story.id] || viewedThisSessionRef.current.has(story.id)) {
+    if (!story || user?.role !== "fan" || seen[story.id] || viewedThisSessionRef.current.has(story.id)) {
       return;
     }
 
     viewedThisSessionRef.current.add(story.id);
     markSeenLocally(story.id);
     viewMutation.mutate(story.id);
-  }, [markSeenLocally, seen, viewMutation]);
+  }, [markSeenLocally, seen, user?.role, viewMutation]);
 
   const openStory = (index) => {
     setActiveIndex(index);
@@ -197,8 +202,8 @@ function StoriesRow({ currentUser }) {
       return;
     }
 
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      showToast("Choose an image or video for your story.");
+    if (!file.type.startsWith("image/")) {
+      showToast("Choose an image for your story.");
       return;
     }
 
@@ -215,8 +220,9 @@ function StoriesRow({ currentUser }) {
 
       return {
         url: objectUrl,
-        mediaType: file.type.startsWith("video/") ? "video" : "image",
+        mediaType: "image",
         name: file.name,
+        file,
       };
     });
   };
@@ -232,29 +238,7 @@ function StoriesRow({ currentUser }) {
       return;
     }
 
-    const nextStory = {
-      id: `you-${Date.now()}`,
-      name: "You",
-      caption: caption.trim() || "New moment",
-      image: draft.url,
-      avatar: currentUser?.avatar || draft.url,
-      statusEmoji: "+",
-      mediaType: draft.mediaType,
-      isOwn: true,
-      timeAgo: "Now",
-    };
-    const nextStories = [...userStories, nextStory].slice(-5);
-    const removedStories = userStories.filter((story) => !nextStories.some((next) => next.id === story.id));
-
-    removedStories.forEach(revokeStoryUrl);
-    setUserStories(nextStories);
-    setUploadOpen(false);
-    clearDraft(false);
-    setCaption("");
-    showToast("Your story is live.");
-    const nextIndex = (storiesQuery.data?.length || 0) + nextStories.length - 1;
-    setActiveIndex(nextIndex);
-    markSeen(nextStory);
+    publishMutation.mutate();
   };
 
   const deleteOwnStory = () => {
@@ -263,11 +247,7 @@ function StoriesRow({ currentUser }) {
       return;
     }
 
-    const nextStories = userStories.filter((story) => story.id !== activeStory.id);
-    revokeStoryUrl(activeStory);
-    setUserStories(nextStories);
-    setActiveIndex(null);
-    showToast("Story deleted.");
+    deleteMutation.mutate(activeStory.id);
   };
 
   const closeStory = () => setActiveIndex(null);
@@ -354,15 +334,7 @@ function StoriesRow({ currentUser }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeIndex, goStory]);
 
-  useEffect(() => {
-    userStoriesRef.current = userStories;
-  }, [userStories]);
-
-  useEffect(() => () => {
-    userStoriesRef.current.forEach(revokeStoryUrl);
-  }, []);
-
-  const hasOwnStories = canCreate && userStories.length > 0;
+  const hasOwnStories = canCreate && activeStories.some((story) => story.isOwn);
   const selectedReaction = activeStory ? reactions[activeStory.id]?.reaction : null;
 
   if (storiesQuery.isLoading) {
@@ -389,7 +361,7 @@ function StoriesRow({ currentUser }) {
     );
   }
 
-  if (activeStories.length === 0) {
+  if (activeStories.length === 0 && !canCreate) {
     return (
       <div className="mt-[18px] rounded-2xl border border-atseen-line bg-atseen-surface p-4 text-sm font-semibold text-atseen-muted" role="status">
         No active Stories right now.
@@ -473,7 +445,7 @@ function StoriesRow({ currentUser }) {
                   <span className="flex h-14 w-14 items-center justify-center rounded-full border border-atseen-line bg-atseen-surface-2 text-2xl">
                     <FiImage aria-hidden="true" />
                   </span>
-                  <span className="text-sm font-bold">Add photo or video</span>
+                  <span className="text-sm font-bold">Add photo</span>
                 </button>
               )}
               <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent" />
@@ -489,7 +461,7 @@ function StoriesRow({ currentUser }) {
             </div>
 
             <input
-              accept="image/*,video/*"
+              accept="image/jpeg,image/png,image/webp"
               className="sr-only"
               onChange={chooseFile}
               ref={fileInputRef}
@@ -506,11 +478,11 @@ function StoriesRow({ currentUser }) {
               </button>
               <button
                 className="inline-flex flex-1 items-center justify-center rounded-[13px] bg-gradient-to-br from-atseen-blue to-atseen-blue-strong px-4 py-3 text-sm font-bold text-atseen-bg disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!draft}
+                disabled={!draft || publishMutation.isPending}
                 onClick={publishStory}
                 type="button"
               >
-                Share story
+                {publishMutation.isPending ? `Uploading ${progress}%` : "Share for 24 hours"}
               </button>
             </div>
             <label className="block">
@@ -598,7 +570,7 @@ function StoriesRow({ currentUser }) {
                 {recentReaction}
               </span>
             ) : null}
-            <div className="absolute bottom-5 left-4 right-4 rounded-full border border-white/10 bg-black/35 p-1.5 backdrop-blur">
+            {user?.role === "fan" ? <div className="absolute bottom-5 left-4 right-4 rounded-full border border-white/10 bg-black/35 p-1.5 backdrop-blur">
               <div className="flex items-center justify-between gap-1">
                 {QUICK_REACTIONS.map(({ label, value }) => (
                   <button
@@ -616,7 +588,7 @@ function StoriesRow({ currentUser }) {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> : null}
             <button
               aria-label="Previous story"
               className="absolute bottom-20 left-0 top-20 w-1/3 cursor-default opacity-0"
