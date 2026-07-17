@@ -12,9 +12,6 @@ import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import FanHomePage from "../pages/fan/FanHomePage";
-import WalletPage from "../pages/fan/WalletPage";
-import SubscriptionsPage from "../pages/fan/SubscriptionsPage";
-import PurchasesPage from "../pages/fan/PurchasesPage";
 import MessagesPage from "../pages/fan/MessagesPage";
 import ActivityPage from "../pages/fan/ActivityPage";
 import WorldsPage from "../pages/fan/WorldsPage";
@@ -49,6 +46,15 @@ import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
 import PublicationModeration from "../pages/admin/PublicationModeration";
 import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
+import WorldComposerPage from "../pages/creator/WorldComposerPage";
+import WorldManagerPage from "../pages/creator/WorldManagerPage";
+import WorldOwnerDetailPage from "../pages/creator/WorldOwnerDetailPage";
+import WorldReaderPage from "../pages/social/WorldReaderPage";
+import WalletPage from "../pages/social/WalletPage";
+import WalletLedgerPage from "../pages/social/WalletLedgerPage";
+import PurchasesPage from "../pages/social/PurchasesPage";
+import MembershipsPage from "../pages/social/MembershipsPage";
+import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -94,13 +100,22 @@ function AppRoutes() {
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/settings" element={<ProfileSettingsPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
+          <Route path="/purchases" element={<PurchasesPage />} />
+          <Route path="/memberships" element={<MembershipsPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create" element={<CreateHubPage />} />
             <Route path="/create/seen" element={<SeenComposerPage />} />
+            <Route path="/create/world" element={<WorldComposerPage />} />
+            <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
             <Route path="/studio/seens" element={<SeenManagerPage />} />
             <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
             <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
+            <Route path="/studio/worlds" element={<WorldManagerPage />} />
+            <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
+            <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
           </Route>
           <Route path="/fan/dashboard" element={<Navigate replace to="/wall" />} />
           <Route path="/fan/home" element={<Navigate replace to="/wall" />} />
@@ -110,9 +125,9 @@ function AppRoutes() {
           <Route path="/fan/profile" element={<Navigate replace to="/profile" />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN]} />}>
             <Route path="/fan/worlds" element={<WorldsPage />} />
-            <Route path="/fan/wallet" element={<WalletPage />} />
-            <Route path="/fan/subscriptions" element={<SubscriptionsPage />} />
-            <Route path="/fan/purchases" element={<PurchasesPage />} />
+            <Route path="/fan/wallet" element={<Navigate replace to="/wallet" />} />
+            <Route path="/fan/subscriptions" element={<Navigate replace to="/memberships" />} />
+            <Route path="/fan/purchases" element={<Navigate replace to="/purchases" />} />
           </Route>
         </Route>
       </Route>
@@ -150,12 +165,15 @@ function AppRoutes() {
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/content-moderation" />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
+          <Route path="/admin/financial" element={<FinancialAdminPage />} />
         </Route>
       </Route>
     </Route>
 
     <Route path="/profile/:username" element={<UnifiedProfilePage />} />
     <Route path="/seen/:id" element={<SeenReaderPage />} />
+    <Route path="/world/:id" element={<WorldReaderPage />} />
+    <Route path="/planet/:id" element={<WorldReaderPage />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />
   </Routes>;

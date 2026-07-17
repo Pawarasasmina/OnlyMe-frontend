@@ -1,4 +1,4 @@
-import { FiActivity, FiCheckCircle, FiEdit3, FiGrid, FiHome, FiMessageCircle, FiSettings, FiUser } from "react-icons/fi";
+import { FiActivity, FiCheckCircle, FiCreditCard, FiEdit3, FiGrid, FiHome, FiMessageCircle, FiSettings, FiShoppingBag, FiStar, FiUser } from "react-icons/fi";
 import OrbitIcon from "../fanWeb/OrbitIcon";
 
 export const socialPrimaryNavItems = [
@@ -10,7 +10,12 @@ export const socialPrimaryNavItems = [
 ];
 
 export function socialSecondaryNavItems(capabilities) {
-  const items = [{ label: "Activity", to: "/activity", icon: FiActivity }];
+  const items = [
+    { label: "Activity", to: "/activity", icon: FiActivity },
+    { label: "Wallet", to: "/wallet", icon: FiCreditCard },
+    { label: "Purchases", to: "/purchases", icon: FiShoppingBag },
+    { label: "Memberships", to: "/memberships", icon: FiStar },
+  ];
 
   if (capabilities.canCreate) items.push({ label: "Create", to: "/create", icon: FiEdit3, emphasis: true });
   if (capabilities.canAccessStudio) items.push({ label: "Studio", to: "/studio", icon: FiGrid });

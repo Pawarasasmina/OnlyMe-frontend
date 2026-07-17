@@ -1,0 +1,1 @@
+import api from"../api/axiosInstance";export const walletService={getWallet:()=>api.get("/wallet"),getLedger:(params={})=>api.get("/wallet/ledger",{params}),getWorldEntitlements:()=>api.get("/entitlements/worlds"),getMemberships:()=>api.get("/memberships")};

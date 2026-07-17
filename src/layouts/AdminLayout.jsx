@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { FiActivity, FiFileText, FiHome, FiLogOut, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
+import { FiActivity, FiCreditCard, FiFileText, FiHome, FiLogOut, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 
@@ -11,6 +11,7 @@ const links = [
   { label: "Creator verifications", to: "/admin/creator-verifications", icon: FiShield },
   { label: "Content moderation", to: "/admin/content-moderation", icon: FiFileText },
   { label: "Publication moderation", to: "/admin/publication-moderation", icon: FiFileText },
+  { label: "Financial operations", to: "/admin/financial", icon: FiCreditCard },
 ];
 
 function AdminLayout() {

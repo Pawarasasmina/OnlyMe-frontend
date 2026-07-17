@@ -1,0 +1,1 @@
+export default function LockedChapterCard({chapter,index}){return <div aria-label={`Chapter ${index+1} locked`} className="rounded-xl border border-atseen-line bg-black/20 p-4"><strong>🔒 {index+1}. {chapter.title}</strong><p className="mt-1 text-xs text-atseen-muted">Locked chapter · content unavailable</p></div>}
