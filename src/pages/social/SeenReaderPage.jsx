@@ -1,1 +1,51 @@
-import{useState}from"react";import{Link,useParams}from"react-router-dom";import{useQuery}from"@tanstack/react-query";import{publicationService}from"../../services/publicationService";function Block({b}){if(["TEXT","KEY_POINT","HIGHLIGHT"].includes(b.type))return <p className={`whitespace-pre-wrap leading-7 ${b.type!=="TEXT"?"rounded-xl bg-atseen-blue/10 p-4":""}`}>{b.text}</p>;if(b.type==="LINK")return <a className="text-atseen-blue underline" href={b.url} rel="noreferrer" target="_blank">{b.label}</a>;const u=b.media?.secureUrl;if(!u)return <p>Preview unavailable</p>;if(b.type==="IMAGE")return <img alt="Chapter media" className="w-full rounded-xl" src={u}/>;if(b.type==="VIDEO")return <video className="w-full" controls src={u}/>;return <audio className="w-full" controls src={u}/>}export default function SeenReaderPage(){const{id}=useParams(),[n,setN]=useState(0);const q=useQuery({queryKey:["seen",id],queryFn:()=>publicationService.getPublicPublication(id).then(r=>r.data.data.publication),retry:false});if(q.isLoading)return <p>Loading Seen…</p>;if(q.isError)return <div className="min-h-screen bg-atseen-bg p-8 text-white"><h1>Seen unavailable</h1><Link to="/seen">Browse Seen</Link></div>;const p=q.data,c=p.chapters[n];return <div className="min-h-screen bg-atseen-bg p-4 text-atseen-text"><main className="mx-auto max-w-2xl"><Link to="/seen">← Seen</Link>{p.creator?.username?<Link className="mt-4 block" to={`/profile/${p.creator.username}`}>@{p.creator.username}</Link>:null}{p.coverMedia?.secureUrl?<img alt={`${p.title} cover`} className="mt-4 aspect-video w-full rounded-2xl object-cover" src={p.coverMedia.secureUrl}/>:null}<p className="mt-6 text-xs font-black text-atseen-blue">SEEN · FREE AND PUBLIC</p><h1 className="mt-2 text-4xl font-black">{p.title}</h1><p className="mt-3 text-atseen-muted">{p.summary}</p><nav className="mt-5 flex gap-2 overflow-x-auto">{p.chapters.map((x,i)=><button className="rounded-full border px-3 py-2" key={x.stableChapterId} onClick={()=>setN(i)}>{i+1}. {x.title}</button>)}</nav><section className="mt-8"><h2 className="text-2xl font-black">{c.title}</h2><div className="mt-5 space-y-5">{c.blocks.map(b=><Block b={b} key={b.id}/>)}</div></section><div className="mt-8 flex justify-between"><button disabled={!n} onClick={()=>setN(n-1)}>Previous</button>{n<p.chapters.length-1?<button onClick={()=>setN(n+1)}>Next</button>:<strong>Seen complete</strong>}</div></main></div>}
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { FiHeart, FiMessageCircle, FiShare2 } from "react-icons/fi";
+import { publicationService } from "../../services/publicationService";
+
+function Block({ block }) {
+  if (["TEXT", "KEY_POINT", "HIGHLIGHT"].includes(block.type)) return <p className={`whitespace-pre-wrap leading-7 ${block.type !== "TEXT" ? "rounded-xl bg-atseen-blue/10 p-4" : ""}`}>{block.text}</p>;
+  if (block.type === "LINK") return <a className="text-atseen-blue underline" href={block.url} rel="noreferrer" target="_blank">{block.label}</a>;
+  const url = block.media?.secureUrl;
+  if (!url) return <p>Preview unavailable</p>;
+  if (block.type === "IMAGE") return <img alt="Chapter media" className="w-full rounded-xl" src={url} />;
+  if (block.type === "VIDEO") return <video className="w-full" controls src={url} />;
+  return <audio className="w-full" controls src={url} />;
+}
+
+export default function SeenReaderPage() {
+  const { id } = useParams();
+  const [chapterIndex, setChapterIndex] = useState(0);
+  const [comment, setComment] = useState("");
+  const [actionError, setActionError] = useState("");
+  const publicationQuery = useQuery({ queryKey: ["seen", id], queryFn: () => publicationService.getPublicPublication(id).then((response) => response.data.data.publication), retry: false });
+  const engagementQuery = useQuery({ queryKey: ["seen-engagement", id], queryFn: () => publicationService.getSeenEngagement(id).then((response) => response.data.data.engagement), retry: false });
+  const updateEngagement = (request) => request.then((response) => { engagementQuery.refetch(); return response.data.data.engagement; }).catch((error) => { setActionError(error.response?.status === 403 ? "Only fan accounts can use Seen social actions." : error.response?.data?.message || "Unable to complete this action."); throw error; });
+  const reactionMutation = useMutation({ mutationFn: (reaction) => updateEngagement(engagementQuery.data?.viewerReaction === reaction ? publicationService.removeSeenReaction(id) : publicationService.reactToSeen(id, reaction)) });
+  const shareMutation = useMutation({ mutationFn: () => updateEngagement(engagementQuery.data?.viewerShared ? publicationService.removeSeenShare(id) : publicationService.shareSeen(id)) });
+  const commentMutation = useMutation({ mutationFn: (text) => updateEngagement(publicationService.commentOnSeen(id, text)), onSuccess: () => setComment("") });
+
+  if (publicationQuery.isLoading) return <p>Loading Seen…</p>;
+  if (publicationQuery.isError) return <div className="min-h-screen bg-atseen-bg p-8 text-white"><h1>Seen unavailable</h1><Link to="/seen">Browse Seen</Link></div>;
+  const publication = publicationQuery.data;
+  const chapter = publication.chapters[chapterIndex];
+  const engagement = engagementQuery.data || { reactionCount: 0, commentCount: 0, shareCount: 0, comments: [] };
+  const submitComment = (event) => { event.preventDefault(); const text = comment.trim(); if (text) { setActionError(""); commentMutation.mutate(text); } };
+
+  return <div className="min-h-screen bg-atseen-bg p-4 text-atseen-text"><main className="mx-auto max-w-2xl">
+    <Link to="/seen">← Seen</Link>{publication.creator?.username ? <Link className="mt-4 block" to={`/profile/${publication.creator.username}`}>@{publication.creator.username}</Link> : null}
+    {publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} className="mt-4 aspect-video w-full rounded-2xl object-cover" src={publication.coverMedia.secureUrl} /> : null}
+    <p className="mt-6 text-xs font-black text-atseen-blue">SEEN · FREE AND PUBLIC</p><h1 className="mt-2 text-4xl font-black">{publication.title}</h1><p className="mt-3 text-atseen-muted">{publication.summary}</p>
+    <nav className="mt-5 flex gap-2 overflow-x-auto">{publication.chapters.map((item, index) => <button className={`rounded-full border px-3 py-2 ${index === chapterIndex ? "border-atseen-blue text-atseen-blue" : "border-atseen-line"}`} key={item.stableChapterId} onClick={() => setChapterIndex(index)}>{index + 1}. {item.title}</button>)}</nav>
+    <section className="mt-8"><h2 className="text-2xl font-black">{chapter.title}</h2><div className="mt-5 space-y-5">{chapter.blocks.map((block) => <Block block={block} key={block.id} />)}</div></section>
+    <div className="mt-8 flex justify-between"><button disabled={!chapterIndex} onClick={() => setChapterIndex(chapterIndex - 1)}>Previous</button>{chapterIndex < publication.chapters.length - 1 ? <button onClick={() => setChapterIndex(chapterIndex + 1)}>Next</button> : <strong>Seen complete</strong>}</div>
+
+    <section className="mt-10 rounded-2xl border border-atseen-line bg-atseen-surface p-5"><h2 className="text-lg font-black">Join the conversation</h2>
+      <div className="mt-4 flex flex-wrap gap-2">{[["LIKE", "Like"], ["LOVE", "Love"], ["INSIGHTFUL", "Insightful"]].map(([value, label]) => <button className={`rounded-full border px-4 py-2 text-sm ${engagement.viewerReaction === value ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line"}`} disabled={reactionMutation.isPending} key={value} onClick={() => { setActionError(""); reactionMutation.mutate(value); }}><FiHeart className="mr-2 inline" />{label}</button>)}<button className={`rounded-full border px-4 py-2 text-sm ${engagement.viewerShared ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line"}`} disabled={shareMutation.isPending} onClick={() => { setActionError(""); shareMutation.mutate(); }}><FiShare2 className="mr-2 inline" />{engagement.viewerShared ? "Shared" : "Share to profile"}</button></div>
+      <p className="mt-3 text-xs text-atseen-muted">{engagement.reactionCount} reactions · {engagement.commentCount} comments · {engagement.shareCount} shares</p>{actionError ? <p className="mt-3 text-sm text-red-300" role="alert">{actionError}</p> : null}
+      <form className="mt-5 flex gap-2" onSubmit={submitComment}><input className="min-w-0 flex-1 rounded-xl border border-atseen-line bg-atseen-bg p-3" maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Write a comment…" value={comment} /><button className="rounded-xl bg-atseen-blue px-4 font-bold text-atseen-bg" disabled={!comment.trim() || commentMutation.isPending} type="submit">Post</button></form>
+      <div className="mt-5 space-y-3">{engagement.comments?.map((item) => <article className="rounded-xl border border-atseen-line p-3" key={item.id}><div className="flex items-center justify-between"><Link className="text-sm font-bold" to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || "Fan"}</Link><time className="text-xs text-atseen-muted">{new Date(item.createdAt).toLocaleDateString()}</time></div><p className="mt-2 whitespace-pre-wrap text-sm">{item.text}</p></article>)}{!engagement.comments?.length ? <p className="text-sm text-atseen-muted"><FiMessageCircle className="mr-2 inline" />Be the first to comment.</p> : null}</div>
+    </section>
+  </main></div>;
+}

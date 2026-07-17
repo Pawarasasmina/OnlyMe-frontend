@@ -34,7 +34,6 @@ import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
 import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
-import UnavailableFeaturePage from "../pages/social/UnavailableFeaturePage";
 import FanBackedSocialPage from "../pages/social/FanBackedSocialPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
@@ -50,6 +49,7 @@ import WorldComposerPage from "../pages/creator/WorldComposerPage";
 import WorldManagerPage from "../pages/creator/WorldManagerPage";
 import WorldOwnerDetailPage from "../pages/creator/WorldOwnerDetailPage";
 import WorldReaderPage from "../pages/social/WorldReaderPage";
+import OrbitPage from "../pages/social/OrbitPage";
 import WalletPage from "../pages/social/WalletPage";
 import WalletLedgerPage from "../pages/social/WalletLedgerPage";
 import PurchasesPage from "../pages/social/PurchasesPage";
@@ -94,7 +94,7 @@ function AppRoutes() {
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<FanHomePage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
-          <Route path="/orbit" element={<UnavailableFeaturePage description="Orbit is still a visual prototype and is not connected to live account data yet." title="Orbit" />} />
+          <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<FanBackedSocialPage description="Creator messaging is not connected to the shared social shell yet." title="Messages"><MessagesPage /></FanBackedSocialPage>} />
           <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />

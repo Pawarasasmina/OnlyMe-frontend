@@ -37,12 +37,13 @@ function UnifiedProfilePage({ owner = false }) {
       <ProfileOwnerActions capabilities={viewerCapabilities} role={profile.role} username={profile.username} />
       <ProfileVerificationSummary capabilities={viewerCapabilities} profile={profile} />
       {viewerCapabilities.isOwner && data.profileCompletion ? <div className="mt-4"><ProfileCompletionCard completion={data.profileCompletion} /></div> : null}
-      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} role={profile.role} />
+      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} />
 
       <div className="mt-6 flex border-b border-atseen-line">
-        {["seens", "content", "about"].map((value) => <button className={`flex-1 border-b-2 px-3 py-3 text-xs font-bold uppercase tracking-wide ${tab === value ? "border-atseen-blue text-atseen-blue" : "border-transparent text-atseen-muted"}`} key={value} onClick={() => setTab(value)} type="button">{value}</button>)}
+        {["seens", "shared", "content", "about"].map((value) => <button className={`flex-1 border-b-2 px-3 py-3 text-xs font-bold uppercase tracking-wide ${tab === value ? "border-atseen-blue text-atseen-blue" : "border-transparent text-atseen-muted"}`} key={value} onClick={() => setTab(value)} type="button">{value}</button>)}
       </div>
       {tab === "seens" ? <div className="mt-4"><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Published Seens</h2>{viewerCapabilities.isOwner && profile.role === "creator" ? <Link className="text-xs font-bold text-atseen-blue" to="/studio/seens">Manage Seens</Link> : null}</div><ProfileContentGrid content={data.seens || []} kind="seens" /></div> : null}
+      {tab === "shared" ? <div className="mt-4"><h2 className="mb-3 text-sm font-bold">Shared Seens</h2><ProfileContentGrid content={data.sharedSeens || []} kind="seens" /></div> : null}
       {tab === "content" ? <div className="mt-4"><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Published content</h2>{Number.isFinite(publicMetrics?.publishedContentCount) ? <span className="text-xs text-atseen-muted">{publicMetrics.publishedContentCount}</span> : null}</div><ProfileContentGrid content={publicContent} /></div> : null}
       {tab === "about" ? <FanCard className="mt-4"><h2 className="text-sm font-bold">About</h2>{profile.bio ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-white/80">{profile.bio}</p> : <p className="mt-3 text-sm text-atseen-muted">No public bio provided.</p>}{profile.joinedAt ? <p className="mt-4 flex items-center gap-2 text-xs text-atseen-muted"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}</FanCard> : null}
     </>;

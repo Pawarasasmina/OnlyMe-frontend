@@ -4,6 +4,7 @@ export const profileService = {
   getMe: () => axiosInstance.get("/profile/me"),
   getUnifiedMe: () => axiosInstance.get("/profiles/me"),
   getUnifiedProfile: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}`),
+  getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),
   updateMe: (payload) => axiosInstance.patch("/profile/me", payload),
   changePassword: (payload) => axiosInstance.patch("/profile/me/password", payload),
   getCompletion: () => axiosInstance.get("/profile/me/completion"),
