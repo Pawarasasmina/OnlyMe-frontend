@@ -293,6 +293,28 @@ main:has(> div > button.fixed.bottom-16.right-4) section > .flex.flex-wrap butto
 .chapter-upload-empty > span { font-size: 30px; }
 .chapter-upload-empty strong { margin-top: 8px; font-size: 13px; }
 .chapter-upload-empty small { max-width: 280px; margin-top: 4px; color: rgba(255,255,255,.4); font-size: 10px; font-weight: 500; }
+.chapter-voice-recorder { border: 1px solid rgba(156,203,255,.14); background: rgba(3,8,15,.4); padding: 14px; }
+.voice-recording-panel, .voice-preview-panel, .voice-upload-row { display: flex; align-items: center; gap: 12px; }
+.voice-recording-panel { justify-content: space-between; min-height: 88px; padding: 14px; border: 1px solid rgba(156,203,255,.2); border-radius: 14px; background: linear-gradient(135deg, rgba(81,153,230,.1), rgba(17,25,36,.75)); }
+.voice-recording-panel.is-recording { border-color: rgba(248,113,113,.45); background: linear-gradient(135deg, rgba(127,29,29,.18), rgba(17,25,36,.75)); }
+.voice-recording-status { display: flex; align-items: center; gap: 11px; }
+.voice-recording-status strong, .voice-preview-panel strong { display: block; color: #f5f8fc; font-size: 13px; }
+.voice-recording-status small, .voice-preview-panel small { display: block; margin-top: 3px; color: rgba(220,232,246,.55); font-size: 10px; }
+.voice-recording-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: rgba(116,174,239,.14); color: #9ccbff; font-size: 10px; font-weight: 800; }
+.is-recording .voice-recording-icon { color: #fb7185; animation: voice-pulse 1.2s ease-in-out infinite; }
+.voice-action { min-height: 36px; padding: 0 14px; border: 1px solid rgba(156,203,255,.24); border-radius: 999px; color: #cfe5ff; font-size: 11px; font-weight: 700; }
+.voice-action:disabled { cursor: not-allowed; opacity: .5; }
+.voice-action-primary { border-color: #86bdf8; background: #86bdf8; color: #07101b; }
+.voice-action-stop, .voice-action-danger { border-color: rgba(248,113,113,.4); color: #fca5a5; }
+.voice-preview-panel { margin-top: 12px; flex-wrap: wrap; padding: 14px; border-radius: 14px; background: rgba(156,203,255,.055); }
+.voice-preview-panel > div:first-child { min-width: 130px; }
+.voice-preview-panel audio { min-width: 220px; flex: 1; height: 38px; }
+.voice-preview-actions { display: flex; gap: 8px; }
+.voice-upload-row { justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; color: rgba(220,232,246,.48); font-size: 10px; }
+.voice-upload-row > span { margin-right: auto; }
+.voice-recording-error { margin: 10px 2px 0; color: #fca5a5; font-size: 11px; }
+@keyframes voice-pulse { 50% { box-shadow: 0 0 0 8px rgba(248,113,113,.08); transform: scale(.94); } }
+@media (max-width: 640px) { .voice-recording-panel { align-items: stretch; flex-direction: column; } .voice-preview-panel audio { min-width: 100%; width: 100%; } }
 
 /* Creator profile Orbit: published Worlds are the fan entry surface. */
 .profile-planet-orbit { margin-top: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 24px; background: #0a0d12; }
@@ -320,10 +342,125 @@ main:has(> div > button.fixed.bottom-16.right-4) section > .flex.flex-wrap butto
 .planet-slot-orb::after { content: ""; position: absolute; width: 130%; height: 35%; border: 1px solid rgba(156,203,255,.4); border-radius: 50%; transform: rotate(-14deg); }
 .planet-slot-orb > span { position: relative; z-index: 1; font-size: 36px; filter: drop-shadow(0 5px 8px rgba(0,0,0,.45)); }
 .planet-slot.is-premium .planet-slot-orb { border-color: rgba(232,244,255,.58); background: radial-gradient(circle at 32% 25%, rgba(232,244,255,.5), #172239 70%); box-shadow: 0 0 34px rgba(191,227,255,.28); }
+
+/* Immersive World entrance. Dedicated rules prevent shared button/card styles from leaking in. */
+.world-entry {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 48px 32px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(138,184,255,.16), transparent 23%),
+    radial-gradient(circle at 18% 20%, rgba(94,155,255,.10), transparent 27%),
+    radial-gradient(circle at 88% 82%, rgba(139,92,246,.09), transparent 28%),
+    linear-gradient(180deg, #0d121b 0%, #070a0f 54%, #040609 100%);
+}
+.world-entry::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .22;
+  background-image: radial-gradient(circle, rgba(255,255,255,.8) 0 1px, transparent 1.5px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at center, #000, transparent 72%);
+  pointer-events: none;
+}
+.world-entry::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 420px;
+  height: 420px;
+  border: 1px solid rgba(138,184,255,.07);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 110px rgba(94,155,255,.09), inset 0 0 90px rgba(138,184,255,.035);
+  pointer-events: none;
+}
+.world-entry-content { position: relative; z-index: 2; width: 100%; max-width: 520px; }
+.world-entry-planet {
+  position: relative;
+  display: grid;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  place-items: center;
+  filter: drop-shadow(0 0 30px rgba(138,184,255,.38));
+}
+.world-entry-planet::before {
+  content: "";
+  position: absolute;
+  width: 185px;
+  height: 55px;
+  border: 1px solid rgba(138,184,255,.28);
+  border-radius: 50%;
+  transform: rotate(-13deg);
+  box-shadow: 0 0 28px rgba(138,184,255,.10);
+}
+.world-entry-planet span { position: relative; z-index: 1; font-size: 104px; line-height: 1; }
+.world-entry-content h1 { margin-top: 28px; color: #fff; font-size: 40px; font-weight: 900; letter-spacing: -.045em; line-height: 1.08; }
+.world-entry-content p { margin-top: 13px; color: rgba(255,255,255,.46); font-size: 14px; }
+.world-entry-button {
+  display: inline-flex !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  min-height: 52px !important;
+  margin-top: 38px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(138,184,255,.42) !important;
+  border-radius: 999px !important;
+  background: rgba(138,184,255,.09) !important;
+  padding: 0 30px !important;
+  color: #9ccbff !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  box-shadow: 0 12px 45px rgba(0,0,0,.32), inset 0 0 24px rgba(138,184,255,.04);
+  transition: .2s ease;
+}
+.world-entry-button:hover { background: #8ab8ff !important; color: #06080b !important; box-shadow: 0 12px 50px rgba(94,155,255,.22); transform: translateY(-1px); }
+@media (max-width: 639px) {
+  .world-entry { padding: 36px 24px 90px; }
+  .world-entry::after { width: 310px; height: 310px; }
+  .world-entry-planet { width: 125px; height: 125px; }
+  .world-entry-planet::before { width: 152px; height: 46px; }
+  .world-entry-planet span { font-size: 82px; }
+  .world-entry-content h1 { margin-top: 24px; font-size: 29px; }
+  .world-entry-button { margin-top: 34px !important; }
+}
 .planet-slot-empty { display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; border: 1px dashed rgba(156,203,255,.28); border-radius: 50%; color: #9ccbff; }
 .planet-slot-empty span { display: none; }
 .profile-world-list { display: grid; gap: 10px; padding: 12px; }
 .profile-world-card { display: grid; overflow: hidden; grid-template-columns: 96px minmax(0,1fr); border: 1px solid rgba(255,255,255,.07); border-radius: 17px; background: #12151b; }
+.profile-world-owner-actions { display: flex; grid-column: 1/-1; border-top: 1px solid rgba(255,255,255,.06); background: rgba(3,8,15,.24); padding: 8px 11px; }
+.profile-world-owner-actions { align-items: center; flex-wrap: wrap; gap: 7px; }
+.profile-world-owner-actions a,.profile-world-owner-actions span,.profile-world-owner-actions button { display: inline-flex; min-height: 32px; align-items: center; gap: 6px; border: 1px solid rgba(156,203,255,.18); border-radius: 999px; padding: 0 11px; color: #9ccbff; font-size: 9.5px; font-weight: 800; }
+.profile-world-owner-actions button { background: rgba(156,203,255,.08); }
+.profile-world-owner-actions button:disabled { opacity: .55; }
+.profile-world-owner-actions span { border-color: rgba(255,255,255,.08); color: rgba(255,255,255,.42); }
+.profile-world-action-error { flex-basis: 100%; color: #fca5a5; font-size: 9px; }
+.premium-price-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+.premium-price-option { position: relative; display: flex; min-width: 0; min-height: 76px; align-items: center; justify-content: center; flex-direction: column; border: 1px solid rgba(156,203,255,.16); border-radius: 15px; background: rgba(156,203,255,.025); padding: 11px 4px 9px; transition: border-color .18s ease,background .18s ease,transform .18s ease; }
+.premium-price-option:hover:not(:disabled) { border-color: rgba(156,203,255,.42); background: rgba(156,203,255,.07); transform: translateY(-1px); }
+.premium-price-option.is-selected { border-color: #8fc5ff; background: linear-gradient(145deg,rgba(92,158,230,.2),rgba(156,203,255,.07)); box-shadow: inset 0 0 0 1px rgba(156,203,255,.08),0 8px 22px rgba(29,91,159,.12); }
+.premium-price-stars { color: #f4f8ff; font-size: 12px; font-weight: 900; white-space: nowrap; }
+.premium-price-option small { margin-top: 5px; color: rgba(220,232,246,.46); font-size: 7.5px; font-weight: 700; white-space: nowrap; }
+.premium-price-option.is-selected small { color: #9ccbff; }
+.premium-price-check { position: absolute; right: 6px; top: 6px; display: grid; width: 15px; height: 15px; place-items: center; border-radius: 50%; background: #8fc5ff; color: #06101b; font-size: 9px; font-weight: 900; opacity: 0; }
+.premium-price-option.is-selected .premium-price-check { opacity: 1; }
+@media (max-width: 420px) { .premium-price-options { grid-template-columns: 1fr; } .premium-price-option { min-height: 58px; } }
+@media (min-width: 768px) {
+  .social-center-scroll,.social-fixed-rail { -ms-overflow-style: none; scrollbar-width: none; }
+  .social-center-scroll::-webkit-scrollbar,.social-fixed-rail::-webkit-scrollbar { display: none; width: 0; height: 0; }
+}
 .profile-world-cover { position: relative; min-height: 112px; overflow: hidden; }
 .profile-world-cover img { width: 100%; height: 100%; object-fit: cover; }
 .profile-world-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, transparent, rgba(18,21,27,.28)); }

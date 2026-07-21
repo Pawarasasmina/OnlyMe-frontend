@@ -12,6 +12,8 @@ export const publicationService = {
   uploadMedia: (id, file, fields, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/media-upload`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },
   submitPublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/submit`, { statusVersion }),
   resubmitPublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/resubmit`, { statusVersion }),
+  startPublishedRevision: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/start-revision`, { statusVersion }),
+  cancelPublishedRevision: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/cancel-revision`, { statusVersion }),
   archivePublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/archive`, { statusVersion }),
   listPublishedSeens: (params) => axiosInstance.get("/publications/seen", { params }),
   getPublicPublication: (id) => axiosInstance.get(`/publications/${id}`),

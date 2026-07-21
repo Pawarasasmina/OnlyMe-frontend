@@ -76,6 +76,13 @@ function ProfileRoute() {
   return <UnifiedProfilePage />;
 }
 
+function WorldRoute() {
+  const { loading, user } = useAuth();
+  if (loading) return null;
+  if (user && [ROLES.FAN, ROLES.CREATOR].includes(user.role)) return <SocialAppShell><WorldReaderPage /></SocialAppShell>;
+  return <WorldReaderPage />;
+}
+
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
@@ -113,6 +120,9 @@ function AppRoutes() {
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
+            <Route path="/creator/verification" element={<CreatorVerificationPage />} />
+          </Route>
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create" element={<CreateHubPage />} />
@@ -144,7 +154,6 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<CreatorAppShell />}>
             <Route path="/creator/dashboard" element={<Navigate replace to="/wall" />} />
-            <Route path="/creator/verification" element={<CreatorVerificationPage />} />
             <Route path="/creator/application" element={<CreatorApplicationPage />} />
             <Route path="/creator/profile" element={<Navigate replace to="/profile" />} />
             <Route path="/creator/settings" element={<CreatorSettingsPage />} />
@@ -181,8 +190,8 @@ function AppRoutes() {
 
     <Route path="/profile/:username" element={<ProfileRoute />} />
     <Route path="/seen/:id" element={<SeenReaderPage />} />
-    <Route path="/world/:id" element={<WorldReaderPage />} />
-    <Route path="/planet/:id" element={<WorldReaderPage />} />
+    <Route path="/world/:id" element={<WorldRoute />} />
+    <Route path="/planet/:id" element={<WorldRoute />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />
   </Routes>;

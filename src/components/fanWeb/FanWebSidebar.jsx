@@ -19,7 +19,7 @@ function FanWebSidebar({ capabilities, onGetApp, status }) {
   };
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[76px] shrink-0 flex-col border-r border-white/[0.05] px-[10px] pb-6 pt-[34px] md:flex min-[1020px]:w-[240px] min-[1020px]:px-[18px]">
+    <aside className="social-fixed-rail hidden h-screen w-[76px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[10px] pb-6 pt-[34px] md:flex min-[1020px]:w-[240px] min-[1020px]:px-[18px]">
       <NavLink aria-label="Atseen home" className="mb-[30px] flex items-center justify-center py-1.5 [&_span]:hidden min-[1020px]:justify-start min-[1020px]:px-3 min-[1020px]:[&_span]:inline" to="/wall">
         <AtseenLogo />
       </NavLink>

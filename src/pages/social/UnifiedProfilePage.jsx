@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FiArrowLeft, FiCalendar } from "react-icons/fi";
 import ProfileCompletionCard from "../../components/profile/ProfileCompletionCard";
+import ProfileConnectionsModal from "../../components/profile/ProfileConnectionsModal";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
@@ -18,6 +19,7 @@ import { profileService } from "../../services/profileService";
 function UnifiedProfilePage({ embedded = false, owner = false }) {
   const { username } = useParams();
   const [tab, setTab] = useState("seens");
+  const [connectionsType, setConnectionsType] = useState("");
   const profileQuery = useQuery({
     queryKey: ["unified-profile", owner ? "me" : username],
     queryFn: () => (owner ? profileService.getUnifiedMe() : profileService.getUnifiedProfile(username)).then((response) => response.data.data),
@@ -39,7 +41,8 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     const profileSeens = isFan ? data.sharedSeens || [] : data.seens || [];
     return <>
       {!owner ? <Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/"><FiArrowLeft /> Back</Link> : null}
-      <ProfileHeader metrics={publicMetrics} profile={profile} />
+      <ProfileHeader metrics={publicMetrics} onConnectionsOpen={setConnectionsType} profile={profile} showConnections={viewerCapabilities.isOwner && profile.role === "creator"} />
+      <ProfileConnectionsModal onClose={() => setConnectionsType("")} type={connectionsType} />
       <ProfileSocialActions capabilities={viewerCapabilities} profile={profile} relationship={data.viewerRelationship} />
       <ProfileOwnerActions capabilities={viewerCapabilities} role={profile.role} username={profile.username} />
       <ProfileVerificationSummary capabilities={viewerCapabilities} profile={profile} />

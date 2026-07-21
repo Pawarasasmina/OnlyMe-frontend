@@ -3,6 +3,7 @@ import axiosInstance from "../api/axiosInstance";
 export const profileService = {
   getMe: () => axiosInstance.get("/profile/me"),
   getUnifiedMe: () => axiosInstance.get("/profiles/me"),
+  getOwnConnections: (type) => axiosInstance.get("/profiles/me/connections", { params: { type } }),
   getUnifiedProfile: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}`),
   getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),
   toggleFollow: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/follow`),

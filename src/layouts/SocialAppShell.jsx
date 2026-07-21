@@ -1,5 +1,5 @@
-import { Link, Outlet } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AtseenLogo from "../components/branding/AtseenLogo";
 import FanMobileNav from "../components/fanWeb/FanMobileNav";
 import FanWebRightRail from "../components/fanWeb/FanWebRightRail";
@@ -14,6 +14,8 @@ const STATUS_KEY = "atseen_social_status";
 function SocialAppShell({ children = null }) {
   const { user } = useAuth();
   const capabilities = useSocialCapabilities();
+  const location = useLocation();
+  const contentScrollRef = useRef(null);
   const [status, setStatus] = useState(() => localStorage.getItem(STATUS_KEY) || "");
   const [appModalOpen, setAppModalOpen] = useState(false);
 
@@ -21,6 +23,11 @@ function SocialAppShell({ children = null }) {
     if (status) localStorage.setItem(STATUS_KEY, status);
     else localStorage.removeItem(STATUS_KEY);
   }, [status]);
+
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 768px)").matches)
+      contentScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [location.pathname]);
 
   const outletContext = useMemo(() => ({ status, setStatus }), [status]);
   const mobileAction = capabilities.canCreate
@@ -31,10 +38,10 @@ function SocialAppShell({ children = null }) {
 
   return (
     <FanToastProvider>
-      <div className="min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text">
-        <div className="mx-auto flex min-h-screen w-full max-w-[1240px]">
+      <div className="min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden">
+        <div className="mx-auto flex min-h-screen w-full max-w-[1240px] md:h-screen md:min-h-0">
           <FanWebSidebar capabilities={capabilities} onGetApp={() => setAppModalOpen(true)} status={status} />
-          <div className="min-w-0 flex-1">
+          <div className="social-center-scroll min-w-0 flex-1 md:h-screen md:overflow-y-auto md:overscroll-contain" ref={contentScrollRef}>
             <header className="sticky top-0 z-30 flex items-center justify-between border-b border-atseen-line bg-atseen-bg/92 px-4 py-3 backdrop-blur md:hidden">
               <AtseenLogo size={28} />
               {mobileAction ? (

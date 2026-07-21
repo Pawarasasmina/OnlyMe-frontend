@@ -13,7 +13,7 @@ function RailLink({ icon: Icon, label, to }) {
 function FanWebRightRail({ capabilities, status, user }) {
   const display = getUserDisplay(user, status);
   return (
-    <aside className="sticky top-0 hidden h-screen w-[300px] shrink-0 overflow-y-auto px-5 pb-6 pt-[34px] min-[1020px]:block">
+    <aside className="social-fixed-rail hidden h-screen w-[300px] shrink-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-[34px] min-[1020px]:block">
       <FanCard className="mb-3 flex items-center gap-3 p-4">
         <FanAvatar name={display.name} size="h-[46px] w-[46px]" src={display.avatar} />
         <div className="min-w-0 flex-1">
