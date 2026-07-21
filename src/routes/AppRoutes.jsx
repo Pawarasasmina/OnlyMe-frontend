@@ -55,6 +55,7 @@ import WalletLedgerPage from "../pages/social/WalletLedgerPage";
 import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
+import SavedPage from "../pages/social/SavedPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -104,6 +105,7 @@ function AppRoutes() {
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<FanBackedSocialPage description="Creator messaging is not connected to the shared social shell yet." title="Messages"><MessagesPage /></FanBackedSocialPage>} />
           <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
+          <Route path="/saved" element={<SavedPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/settings" element={<ProfileSettingsPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />

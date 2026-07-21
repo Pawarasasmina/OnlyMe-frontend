@@ -6,6 +6,8 @@ const messages = {
   PUBLICATION_NOT_PURCHASABLE: "This publication is not currently available for purchase.", SELF_PURCHASE_NOT_REQUIRED: "You already have creator access to this publication.",
   ENTITLEMENT_REVOKED: "This World entitlement is no longer active.", MEMBERSHIP_EXPIRED: "This Premium membership is no longer active.", TRANSACTIONS_REQUIRED: "The financial service is temporarily unavailable.",
   WALLET_REQUIRES_MIGRATION: "This Wallet requires administrator review before it can be used.", WALLET_MIGRATION_REQUIRED: "This Wallet requires administrator review before it can be used.",
+  WALLET_ALREADY_ACTIVATED: "This Wallet is already active.", WALLET_LEDGER_NOT_EMPTY: "This Wallet has ledger entries and requires manual reconciliation.", INVALID_OPENING_BALANCE: "Enter a valid non-negative opening balance.", FAN_WALLET_REQUIRED: "Select a fan account.", FAN_ACCOUNT_INACTIVE: "Activate this fan account before changing its Wallet.",
+  WALLET_RESET_CONFIRMATION_REQUIRED: "Confirm the legacy Wallet reset before adding Stars.",
   DUPLICATE_WALLETS: "Duplicate Wallet records require administrator review.", WALLET_DUPLICATE: "Duplicate Wallet records require administrator review.",
   ADMIN_CREDITS_DISABLED: "Manual Stars credits are disabled in this environment.", ADMIN_STAR_CREDITS_DISABLED: "Manual Stars credits are disabled in this environment.",
   REFUND_ALREADY_PROCESSED: "This refund was already processed.", FINANCIAL_RATE_LIMITED: "Too many financial requests. Retry shortly with the same action.", INVALID_FINANCIAL_ID: "Enter a valid record identifier.",

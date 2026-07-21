@@ -2,13 +2,18 @@ import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
 import HomeHeader from "../../components/fanWeb/home/HomeHeader";
-import PostComposer from "../../components/fanWeb/home/PostComposer";
+import PostComposerView from "../../components/fanWeb/home/PostComposer";
 import StoriesRow from "../../components/fanWeb/home/StoriesRow";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { useAuth } from "../../hooks/useAuth";
 import { profileService } from "../../services/profileService";
 import { wallService } from "../../services/wallService";
 import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
+
+function PostComposer(props) {
+  const { user } = useAuth();
+  return user?.role === "creator" ? <PostComposerView {...props} /> : null;
+}
 
 export default function FanHomePage() {
   const { status, setStatus } = useOutletContext(); const { user, loading } = useAuth(); const display = getUserDisplay(user, status);

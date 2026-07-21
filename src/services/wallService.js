@@ -5,5 +5,6 @@ export const wallService = {
   comments: (id) => api.get(`/wall/${id}/comments`),
   react: (id) => api.put(`/wall/${id}/reaction`),
   comment: (id, text) => api.post(`/wall/${id}/comments`, { text }),
-  share: (id) => api.put(`/wall/${id}/share`),
+  share: (id, caption = "") => api.put(`/wall/${id}/share`, { caption }),
+  save: (id) => api.put(`/wall/${id}/save`),
 };

@@ -2,7 +2,7 @@ import { FiCheckCircle, FiExternalLink, FiMapPin } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import { resolveMediaUrl } from "../../utils/media";
 
-function ProfileHeader({ profile }) {
+function ProfileHeader({ metrics = {}, profile }) {
   const cover = resolveMediaUrl(profile.cover);
   const avatar = resolveMediaUrl(profile.avatar);
   return (
@@ -18,6 +18,7 @@ function ProfileHeader({ profile }) {
           <span className="rounded-full border border-atseen-line px-2.5 py-1 text-[10px] font-bold uppercase text-atseen-muted">{profile.role}</span>
         </div>
         <p className="mt-1 text-sm text-atseen-muted">@{profile.username}</p>
+        {profile.role === "creator" ? <div className="mt-3 flex gap-6 text-xs text-atseen-muted"><span><strong className="text-sm text-atseen-text">{(metrics.followerCount || 0).toLocaleString()}</strong> followers</span><span><strong className="text-sm text-atseen-text">{(metrics.followingCount || 0).toLocaleString()}</strong> following</span></div> : null}
         {profile.location ? <p className="mt-3 flex items-center gap-2 text-xs text-atseen-muted"><FiMapPin /> {profile.location}</p> : null}
         {profile.bio ? <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/85">{profile.bio}</p> : null}
         {profile.categories?.length ? <div className="mt-4 flex flex-wrap gap-2">{profile.categories.map((category) => <span className="rounded-full bg-atseen-blue/10 px-3 py-1 text-xs font-semibold text-atseen-blue" key={category}>{category}</span>)}</div> : null}

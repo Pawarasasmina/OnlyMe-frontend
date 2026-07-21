@@ -19,6 +19,7 @@ export const publicationService = {
   reactToSeen: (id, reaction) => axiosInstance.put(`/publications/${id}/reaction`, { reaction }),
   removeSeenReaction: (id) => axiosInstance.delete(`/publications/${id}/reaction`),
   commentOnSeen: (id, text) => axiosInstance.post(`/publications/${id}/comments`, { text }),
-  shareSeen: (id) => axiosInstance.put(`/publications/${id}/share`),
+  shareSeen: (id, caption = "") => axiosInstance.put(`/publications/${id}/share`, { caption }),
   removeSeenShare: (id) => axiosInstance.delete(`/publications/${id}/share`),
+  toggleSeenSave: (id) => axiosInstance.put(`/publications/${id}/save`),
 };
