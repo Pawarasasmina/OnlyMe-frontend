@@ -15,6 +15,7 @@ function SocialAppShell({ children = null }) {
   const { user } = useAuth();
   const capabilities = useSocialCapabilities();
   const location = useLocation();
+  const isMessagesPage = location.pathname === "/messages";
   const contentScrollRef = useRef(null);
   const [status, setStatus] = useState(() => localStorage.getItem(STATUS_KEY) || "");
   const [appModalOpen, setAppModalOpen] = useState(false);
@@ -50,7 +51,9 @@ function SocialAppShell({ children = null }) {
                 <button className="rounded-full border border-atseen-line px-3 py-2 text-xs font-bold text-atseen-muted" onClick={() => setAppModalOpen(true)} type="button">Get app</button>
               )}
             </header>
-            <main className="mx-auto min-w-0 max-w-[660px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-[34px] md:pb-20 md:pt-[30px]">
+            <main className={isMessagesPage
+              ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-[660px] px-2 py-2 sm:px-3 md:h-screen md:px-4 md:py-0"
+              : "mx-auto min-w-0 max-w-[660px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-[34px] md:pb-20 md:pt-[30px]"}>
               {children || <Outlet context={outletContext} />}
             </main>
           </div>

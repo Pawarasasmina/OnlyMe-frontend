@@ -321,12 +321,6 @@ export const atseenDirectAccessRequests = [
   },
 ];
 
-export const atseenMockConversations = [
-  { id: "chat-lina", creatorId: "lina", lastMessagePreview: "Thank you for the support yesterday ✦", lastMessageAt: "2h", unread: true },
-  { id: "chat-ethan", creatorId: "ethan", lastMessagePreview: "Week 2 plan is up — check chapter two", lastMessageAt: "5h", unread: false },
-  { id: "chat-omar", creatorId: "omar", lastMessagePreview: "Tennis Saturday? Court is booked", lastMessageAt: "1d", unread: false },
-];
-
 export const atseenMockActivity = [
   { id: "act-lina", creatorId: "lina", description: "Lina has seen you", time: "2h", type: "seen" },
   { id: "act-omar", creatorId: "omar", description: "Omar shook hands on your note", time: "4h", type: "handshake" },

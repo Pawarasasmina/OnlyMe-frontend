@@ -110,7 +110,7 @@ function AppRoutes() {
           <Route path="/wall" element={<FanHomePage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
-          <Route path="/messages" element={<FanBackedSocialPage description="Creator messaging is not connected to the shared social shell yet." title="Messages"><MessagesPage /></FanBackedSocialPage>} />
+          <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
