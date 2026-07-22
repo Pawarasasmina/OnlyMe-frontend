@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
 import { AuthContext } from "./AuthContext";
+import { disconnectMessageSocket } from "../services/messageSocket";
 
 const ACCESS_TOKEN_KEY = "onlyme_access_token";
 
@@ -63,6 +64,7 @@ export function AuthProvider({ children }) {
       try {
         await authService.logout();
       } finally {
+        disconnectMessageSocket();
         localStorage.removeItem(ACCESS_TOKEN_KEY);
         setUser(null);
       }
