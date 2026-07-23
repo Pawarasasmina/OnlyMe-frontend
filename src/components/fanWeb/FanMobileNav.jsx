@@ -1,7 +1,11 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useUnreadMessageCount } from "../../hooks/useUnreadMessageCount";
 import { socialPrimaryNavItems } from "../social/socialNavItems";
 
 function FanMobileNav() {
+  const { user } = useAuth();
+  const unreadMessageCount = useUnreadMessageCount(Boolean(user));
   return (
     <nav
       aria-label="Mobile fan navigation"
@@ -21,7 +25,10 @@ function FanMobileNav() {
               key={item.to}
               to={item.to}
             >
-              <Icon aria-hidden="true" className="h-5 w-5" />
+              <span className="relative">
+                <Icon aria-hidden="true" className="h-5 w-5" />
+                {item.to === "/messages" && unreadMessageCount > 0 ? <span aria-label={`${unreadMessageCount} unread chats`} className="absolute -right-3 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">{unreadMessageCount > 99 ? "99+" : unreadMessageCount}</span> : null}
+              </span>
               <span>{item.label}</span>
             </NavLink>
           );

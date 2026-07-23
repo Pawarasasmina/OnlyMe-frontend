@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiEdit, FiMessageCircle, FiSearch, FiSend, FiSmile, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCornerUpLeft, FiEdit, FiMessageCircle, FiSearch, FiSend, FiSmile, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useAuth } from "../../hooks/useAuth";
+import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
 import { getMessageSocket } from "../../services/messageSocket";
 import { storyService } from "../../services/storyService";
@@ -20,6 +21,7 @@ const relative = (value) => {
 };
 
 const MESSAGE_EMOJIS = ["😀", "😂", "🥰", "😍", "😊", "😉", "😎", "🥳", "😭", "😮", "😅", "🤔", "🙌", "👏", "🙏", "👍", "👎", "💪", "❤️", "🔥", "✨", "🎉", "💯", "👀", "🌍", "🪐", "⭐", "💙"];
+const MESSAGE_REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
 function Identity({ person, presence, compact = false, subtitle = "" }) {
   const online = presence?.online;
@@ -52,6 +54,8 @@ export default function MessagesPage() {
   });
   const [draft, setDraft] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [reactionFor, setReactionFor] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [newChat, setNewChat] = useState(false);
@@ -63,17 +67,50 @@ export default function MessagesPage() {
   const [presence, setPresence] = useState({});
   const [socketConnected, setSocketConnected] = useState(false);
   const bottomRef = useRef(null);
-  const conversationsQuery = useQuery({ queryKey: ["messages", "conversations"], queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations), staleTime: 30000 });
-  const messagesQuery = useQuery({ queryKey: ["messages", selected?.id], queryFn: () => messageService.getMessages(selected.id).then((r) => r.data.data), enabled: Boolean(selected?.id), staleTime: 30000 });
+  const conversationsQuery = useQuery({
+    queryKey: ["messages", "conversations"],
+    queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: "always",
+    staleTime: 0,
+  });
+  const messagesQuery = useQuery({
+    queryKey: ["messages", selected?.id],
+    queryFn: () => messageService.getMessages(selected.id).then((r) => r.data.data),
+    enabled: Boolean(selected?.id),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: "always",
+    staleTime: 0,
+  });
   const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat && user?.role === "fan" });
   const conversations = useMemo(() => conversationsQuery.data || [], [conversationsQuery.data]);
   const participant = messagesQuery.data?.participant || selected?.participant || selected;
-  const messages = messagesQuery.data?.messages || [];
+  const messages = useMemo(() => messagesQuery.data?.messages || [], [messagesQuery.data?.messages]);
+  const lastReadOutgoingMessageId = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (message.senderId === myId && message.readAt) return message.id;
+    }
+    return null;
+  }, [messages, myId]);
+
+  useEffect(() => {
+    const unreadChats = conversations.filter(
+      (conversation) => (Number(conversation.unreadCount) || 0) > 0,
+    ).length;
+    window.dispatchEvent(new CustomEvent(UNREAD_MESSAGE_COUNT_EVENT, { detail: unreadChats }));
+  }, [conversations]);
 
   useEffect(() => {
     const socket = getMessageSocket();
     if (!socket) return undefined;
-    const connected = () => setSocketConnected(true);
+    const connected = () => {
+      setSocketConnected(true);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      if (selected?.id) queryClient.invalidateQueries({ queryKey: ["messages", selected.id] });
+    };
     const disconnected = () => setSocketConnected(false);
     const receiveMessage = ({ message, participant: sender, conversationStatus = "ACTIVE" }) => {
       const otherId = message.senderId === myId ? message.recipientId : message.senderId;
@@ -103,11 +140,56 @@ export default function MessagesPage() {
     socket.on("disconnect", disconnected);
     socket.on("connect_error", disconnected);
     socket.on("message:new", receiveMessage);
-    socket.on("messages:read", () => selected?.id && queryClient.invalidateQueries({ queryKey: ["messages", selected.id] }));
+    const markMessagesRead = ({ byUserId, readAt }) => {
+      if (!byUserId) return;
+      queryClient.setQueryData(["messages", byUserId], (current) => current ? {
+        ...current,
+        messages: current.messages.map((message) => (
+          message.senderId === myId && message.recipientId === byUserId && !message.readAt
+            ? { ...message, readAt: readAt || new Date().toISOString() }
+            : message
+        )),
+      } : current);
+      queryClient.setQueryData(["messages", "conversations"], (current = []) => current.map((conversation) => (
+        conversation.id === byUserId
+          && conversation.lastMessage?.senderId === myId
+          && !conversation.lastMessage.readAt
+          ? { ...conversation, lastMessage: { ...conversation.lastMessage, readAt: readAt || new Date().toISOString() } }
+          : conversation
+      )));
+    };
+    const updateReaction = ({ messageId, reactions = [] }) => {
+      if (!selected?.id) return;
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.map((message) => message.id === messageId ? { ...message, reactions } : message),
+      } : current);
+    };
+    socket.on("messages:read", markMessagesRead);
+    socket.on("message:reaction", updateReaction);
     socket.on("presence:update", updatePresence);
     socket.on("conversation:status", updateConversationStatus);
-    return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("messages:read"); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); };
+    return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("messages:read", markMessagesRead); socket.off("message:reaction", updateReaction); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); };
   }, [myId, queryClient, selected?.id]);
+
+  useEffect(() => {
+    if (!selected?.id) return;
+    queryClient.invalidateQueries({ queryKey: ["messages", selected.id], exact: true });
+  }, [queryClient, selected?.id]);
+
+  useEffect(() => {
+    const syncAfterResume = () => {
+      if (document.visibilityState !== "visible") return;
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      if (selected?.id) queryClient.invalidateQueries({ queryKey: ["messages", selected.id], exact: true });
+    };
+    document.addEventListener("visibilitychange", syncAfterResume);
+    window.addEventListener("online", syncAfterResume);
+    return () => {
+      document.removeEventListener("visibilitychange", syncAfterResume);
+      window.removeEventListener("online", syncAfterResume);
+    };
+  }, [queryClient, selected?.id]);
 
   useEffect(() => {
     const ids = conversations.map((item) => item.participant.id);
@@ -125,7 +207,13 @@ export default function MessagesPage() {
       if (inboxTab === "requests") return user?.role === "creator" && item.status === "REQUEST";
       return user?.role === "fan" ? item.status !== "DECLINED" : !["REQUEST", "DECLINED"].includes(item.status);
     }), [conversations, inboxTab, user?.role]);
-  const chooseConversation = (conversation) => { setSelected(conversation); setSearchParams({ with: conversation.id }, { replace: true }); };
+  const chooseConversation = (conversation) => {
+    queryClient.setQueryData(["messages", "conversations"], (current = []) => current.map((item) => (
+      item.id === conversation.id ? { ...item, unreadCount: 0 } : item
+    )));
+    setSelected(conversation);
+    setSearchParams({ with: conversation.id }, { replace: true });
+  };
   const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
   const openPerson = (person) => { chooseConversation({ id: person.id, participant: person }); setNewChat(false); setSearch(""); };
   const send = async (event) => {
@@ -134,7 +222,7 @@ export default function MessagesPage() {
     if (!body || !selected?.id || sending) return;
     setSending(true); setError("");
     try {
-      const response = await messageService.send(selected.id, body);
+      const response = await messageService.send(selected.id, body, replyTo?.id || null);
       const { message: sentMessage, conversationStatus = "ACTIVE" } = response.data.data;
       queryClient.setQueryData(["messages", selected.id], (current) => {
         if (!current || current.messages.some((item) => item.id === sentMessage.id)) return current;
@@ -148,6 +236,7 @@ export default function MessagesPage() {
         return [next, ...current.filter((item) => item.id !== selected.id)];
       });
       setDraft("");
+      setReplyTo(null);
       setEmojiOpen(false);
       queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
     } catch (requestError) {
@@ -156,6 +245,23 @@ export default function MessagesPage() {
         : requestError.response?.data?.message || "Could not send this message.");
     }
     finally { setSending(false); }
+  };
+  const reactToMessage = async (message, emoji) => {
+    setReactionFor(null);
+    setError("");
+    const mine = (message.reactions || []).find((reaction) => reaction.userId === myId);
+    try {
+      const response = mine?.emoji === emoji
+        ? await messageService.removeReaction(message.id)
+        : await messageService.setReaction(message.id, emoji);
+      const reactions = response.data.data.reactions || [];
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.map((item) => item.id === message.id ? { ...item, reactions } : item),
+      } : current);
+    } catch (reactionError) {
+      setError(reactionError.response?.data?.message || "Could not update this reaction.");
+    }
   };
   const handleRequest = async (accept) => {
     setRequestBusy(true); setError("");
@@ -210,14 +316,33 @@ export default function MessagesPage() {
           <header className="flex shrink-0 items-center gap-3 border-b border-atseen-line bg-atseen-bg-2/95 px-4 py-3 backdrop-blur">
             <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
             {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => participant.username && navigate(`/profile/${encodeURIComponent(participant.username)}`)} type="button"><Identity person={participant} presence={presence[selected.id]} /></button> : null}
-            <span className={`ml-auto hidden text-[10px] font-semibold sm:block ${socketConnected ? "text-atseen-success" : "text-atseen-warning"}`}>{socketConnected ? "Live" : "Reconnecting…"}</span>
+            {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
           </header>
           <section className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-4 py-6 sm:px-8">
             <p className="mx-auto mb-7 max-w-sm text-center text-[11px] leading-5 text-atseen-dim">Text messages are private between you and this {participant?.role === "creator" ? "creator" : "fan"}.</p>
             {messagesQuery.isLoading ? <p className="text-center text-sm text-atseen-muted">Loading messages…</p> : null}
             {messages.map((message) => {
               const mine = message.senderId === myId;
-              return <div className={`mb-2 flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}><div className={`max-w-[78%] rounded-[19px] px-4 py-2.5 text-sm leading-6 ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`}>{message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}<p className="whitespace-pre-wrap break-words">{message.body}</p><p className={`mt-0.5 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine ? ` · ${message.readAt ? "Seen" : "Sent"}` : ""}</p></div></div>;
+              const showReadAvatar = mine && message.id === lastReadOutgoingMessageId;
+              const reactions = message.reactions || [];
+              const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
+              return <div className={`group mb-2 flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}>
+                <div className={`flex max-w-[82%] flex-col ${mine ? "items-end" : "items-start"}`}>
+                  <div className={`rounded-[19px] px-4 py-2.5 text-sm leading-6 ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`}>
+                    {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
+                    {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
+                    <p className="whitespace-pre-wrap break-words" data-message-id={message.id}>{message.body}</p>
+                    <p className={`mt-0.5 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && !message.readAt ? " · Sent" : ""}</p>
+                  </div>
+                  {groupedReactions.length ? <div className={`-mt-1 flex flex-wrap gap-1 ${mine ? "mr-2 justify-end" : "ml-2"}`}>{groupedReactions.map(([emoji, count]) => <button aria-label={`${emoji} reaction, ${count}`} className={`rounded-full border px-1.5 py-0.5 text-xs shadow ${reactions.some((reaction) => reaction.userId === myId && reaction.emoji === emoji) ? "border-atseen-blue bg-atseen-blue/20" : "border-atseen-line bg-atseen-bg-2"}`} key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}{count > 1 ? <span className="ml-1 text-[9px]">{count}</span> : null}</button>)}</div> : null}
+                  <div className={`relative mt-0.5 flex items-center gap-1 text-atseen-muted opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 ${mine ? "flex-row-reverse" : ""}`}>
+                    <button aria-label="Reply to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => { setReplyTo(message); setReactionFor(null); }} title="Reply" type="button"><FiCornerUpLeft /></button>
+                    <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setReactionFor((current) => current === message.id ? null : message.id)} title="React" type="button"><FiSmile /></button>
+                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`}>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:bg-white/10 hover:scale-110" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
+                  </div>
+                  {showReadAvatar && participant ? <span aria-label={`Seen by ${participant.displayName}`} className="mt-1 block" title={`Seen by ${participant.displayName}`}><FanAvatar name={participant.displayName} size="h-4 w-4" src={participant.avatarUrl} /></span> : null}
+                </div>
+              </div>;
             })}
             <div ref={bottomRef} />
           </section>
@@ -227,6 +352,7 @@ export default function MessagesPage() {
             <div className="flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-3 text-sm font-bold" disabled={requestBusy} onClick={() => handleRequest(false)} type="button">Delete</button><button className="flex-[1.4] rounded-full bg-atseen-blue py-3 text-sm font-bold text-atseen-bg" disabled={requestBusy} onClick={() => handleRequest(true)} type="button">Accept</button></div>
           </div> : messagesQuery.data?.conversationStatus === "REQUEST" && user?.role === "fan" ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-4 text-center text-xs text-atseen-muted">Message request sent. You can continue after the creator accepts it.</div> : <form className="relative shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-3 sm:p-4" onSubmit={send}>
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
+            {replyTo ? <div className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-atseen-blue bg-atseen-surface-2 px-3 py-2"><FiCornerUpLeft className="shrink-0 text-atseen-blue" /><div className="min-w-0 flex-1"><p className="text-[10px] font-bold text-atseen-blue">Replying to {replyTo.senderId === myId ? "yourself" : participant?.displayName}</p><p className="truncate text-xs text-atseen-muted">{replyTo.body}</p></div><button aria-label="Cancel reply" className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-white/5" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
             {emojiOpen ? <div className="absolute bottom-[4.5rem] left-3 z-20 w-[min(19rem,calc(100%-1.5rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-3 shadow-2xl"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-7 gap-1">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 w-9 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
             <div className="flex items-end gap-2"><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60" maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending}><FiSend /></button></div>
           </form>}

@@ -5,6 +5,7 @@ import {
 import AtseenLogo from "../branding/AtseenLogo";
 import FanAvatar from "./shared/FanAvatar";
 import { useAuth } from "../../hooks/useAuth";
+import { useUnreadMessageCount } from "../../hooks/useUnreadMessageCount";
 import { getUserDisplay } from "./shared/userDisplay";
 import { socialPrimaryNavItems, socialSecondaryNavItems } from "../social/socialNavItems";
 
@@ -12,6 +13,7 @@ function FanWebSidebar({ capabilities, onGetApp, status }) {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const display = getUserDisplay(user, status);
+  const unreadMessageCount = useUnreadMessageCount(Boolean(user));
 
   const logoutAndNavigate = async () => {
     await logout();
@@ -34,8 +36,14 @@ function FanWebSidebar({ capabilities, onGetApp, status }) {
             key={item.to}
             to={item.to}
           >
-            <item.icon className="h-5 w-5 shrink-0" />
-            <span className="truncate max-[1019px]:sr-only">{item.label}</span>
+            <span className="relative shrink-0">
+              <item.icon className="h-5 w-5" />
+              {item.to === "/messages" && unreadMessageCount > 0 ? <span aria-hidden="true" className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg min-[1020px]:hidden">{unreadMessageCount > 99 ? "99+" : unreadMessageCount}</span> : null}
+            </span>
+            <span className="flex min-w-0 items-center gap-2 max-[1019px]:sr-only">
+              <span className="truncate">{item.label}</span>
+              {item.to === "/messages" && unreadMessageCount > 0 ? <span aria-label={`${unreadMessageCount} unread chats`} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">{unreadMessageCount > 99 ? "99+" : unreadMessageCount}</span> : null}
+            </span>
           </NavLink>
         ))}
       </nav>
