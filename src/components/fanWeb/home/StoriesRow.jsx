@@ -6,6 +6,7 @@ import {
   FiPlay,
   FiPlus,
   FiRefreshCw,
+  FiSend,
   FiTrash2,
   FiUpload,
   FiVolume2,
@@ -72,6 +73,7 @@ function StoriesRow({ currentUser }) {
   const [seen, setSeen] = useState(() => readStoredMap(SEEN_KEY));
   const [reactions, setReactions] = useState(() => readStoredMap(REACTIONS_KEY));
   const [recentReaction, setRecentReaction] = useState(null);
+  const [replyText, setReplyText] = useState("");
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -119,6 +121,18 @@ function StoriesRow({ currentUser }) {
       const status = error?.response?.status;
       showToast(status === 403 ? "You do not have permission to react to this story." : "Reaction could not be sent.");
     },
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: ({ body, storyId }) => storyService.replyToStory(storyId, body),
+    retry: false,
+    onSuccess: () => {
+      setReplyText("");
+      setActiveIndex(null);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      showToast("Reply sent to messages.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Story reply could not be sent."),
   });
 
   const publishMutation = useMutation({
@@ -271,6 +285,13 @@ function StoriesRow({ currentUser }) {
     reactionMutation.mutate({ reaction, storyId: activeStory.id });
   };
 
+  const replyToActiveStory = (event) => {
+    event.preventDefault();
+    const body = replyText.trim();
+    if (!activeStory || !body || replyMutation.isPending) return;
+    replyMutation.mutate({ body, storyId: activeStory.id });
+  };
+
   useEffect(() => {
     if (!canCreate && uploadOpen) {
       setUploadOpen(false);
@@ -306,8 +327,9 @@ function StoriesRow({ currentUser }) {
     const interval = window.setInterval(() => {
       setProgress((current) => {
         const next = Math.min(100, current + (100 / (STORY_DURATION_MS / 100)));
-        if (next >= 100 && activeIndex < activeStories.length - 1) {
-          window.setTimeout(() => goStory(1), 0);
+        if (next >= 100) {
+          if (activeIndex < activeStories.length - 1) window.setTimeout(() => goStory(1), 0);
+          else window.setTimeout(() => setActiveIndex(null), 0);
         }
         return next;
       });
@@ -561,7 +583,7 @@ function StoriesRow({ currentUser }) {
                 </button>
               ) : null}
             </div>
-            <p className="absolute bottom-24 left-5 right-5 text-base font-bold leading-7 text-white">{activeStory.caption}</p>
+            <p className="absolute bottom-40 left-5 right-5 text-base font-bold leading-7 text-white">{activeStory.caption}</p>
             {recentReaction ? (
               <span
                 aria-live="polite"
@@ -570,7 +592,8 @@ function StoriesRow({ currentUser }) {
                 {recentReaction}
               </span>
             ) : null}
-            {user?.role === "fan" ? <div className="absolute bottom-5 left-4 right-4 rounded-full border border-white/10 bg-black/35 p-1.5 backdrop-blur">
+            {user?.role === "fan" ? <div className="absolute bottom-4 left-4 right-4 z-10 space-y-2">
+              <div className="rounded-full border border-white/10 bg-black/35 p-1.5 backdrop-blur">
               <div className="flex items-center justify-between gap-1">
                 {QUICK_REACTIONS.map(({ label, value }) => (
                   <button
@@ -588,7 +611,13 @@ function StoriesRow({ currentUser }) {
                   </button>
                 ))}
               </div>
+              </div>
+              <form className="flex items-center gap-2" onSubmit={replyToActiveStory}>
+                <input className="min-w-0 flex-1 rounded-full border border-white/15 bg-black/45 px-4 py-3 text-sm text-white outline-none backdrop-blur placeholder:text-white/55 focus:border-atseen-blue" maxLength={1000} onBlur={() => setPaused(false)} onChange={(event) => setReplyText(event.target.value)} onFocus={() => setPaused(true)} placeholder={`Reply to ${activeStory.name}…`} value={replyText} />
+                <button aria-label="Send story reply" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!replyText.trim() || replyMutation.isPending} type="submit"><FiSend /></button>
+              </form>
             </div> : null}
+            {user?.role === "creator" && activeStory.isOwn ? <div className="absolute bottom-4 left-4 right-4 z-10 rounded-2xl border border-white/10 bg-black/50 p-3 backdrop-blur"><div className="flex items-center justify-between"><p className="text-xs font-bold text-white">Story activity</p><p className="text-[10px] text-white/60">{activeStory.insights?.viewCount || 0} views</p></div>{activeStory.insights?.reactions?.length ? <div className="atseen-hide-scrollbar mt-2 flex gap-2 overflow-x-auto">{activeStory.insights.reactions.map((item) => <div className="flex shrink-0 items-center gap-2 rounded-full bg-white/10 py-1.5 pl-1.5 pr-3" key={`${item.fan.id}-${item.reactedAt}`}><FanAvatar name={item.fan.name} size="h-7 w-7" src={item.fan.avatar} /><span className="max-w-24 truncate text-[11px] font-semibold text-white">{item.fan.name}</span><span className="text-lg">{item.reaction}</span></div>)}</div> : <p className="mt-2 text-[11px] text-white/55">No reactions yet.</p>}</div> : null}
             <button
               aria-label="Previous story"
               className="absolute bottom-20 left-0 top-20 w-1/3 cursor-default opacity-0"
