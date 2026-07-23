@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowLeft, FiCornerUpLeft, FiEdit, FiMessageCircle, FiSearch, FiSend, FiSmile, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
+import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
+import VoiceRecorder from "../../components/messaging/VoiceRecorder";
 import { useAuth } from "../../hooks/useAuth";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
@@ -55,6 +57,7 @@ export default function MessagesPage() {
   const [draft, setDraft] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [reactionFor, setReactionFor] = useState(null);
+  const [reactionDetails, setReactionDetails] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -263,6 +266,23 @@ export default function MessagesPage() {
       setError(reactionError.response?.data?.message || "Could not update this reaction.");
     }
   };
+  const sendVoice = async (blob, waveform) => {
+    if (!selected?.id) return;
+    const response = await messageService.sendVoice(selected.id, blob, waveform);
+    const { message: sentMessage, conversationStatus = "ACTIVE" } = response.data.data;
+    queryClient.setQueryData(["messages", selected.id], (current) => {
+      if (!current || current.messages.some((item) => item.id === sentMessage.id)) return current;
+      return { ...current, messages: [...current.messages, sentMessage], conversationStatus, requestRequired: false };
+    });
+    queryClient.setQueryData(["messages", "conversations"], (current = []) => {
+      const existing = current.find((item) => item.id === selected.id);
+      const next = existing
+        ? { ...existing, lastMessage: sentMessage, status: conversationStatus }
+        : { id: selected.id, participant, lastMessage: sentMessage, status: conversationStatus, unreadCount: 0 };
+      return [next, ...current.filter((item) => item.id !== selected.id)];
+    });
+    queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+  };
   const handleRequest = async (accept) => {
     setRequestBusy(true); setError("");
     try {
@@ -327,18 +347,29 @@ export default function MessagesPage() {
               const reactions = message.reactions || [];
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
               return <div className={`group mb-2 flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}>
-                <div className={`flex max-w-[82%] flex-col ${mine ? "items-end" : "items-start"}`}>
-                  <div className={`rounded-[19px] px-4 py-2.5 text-sm leading-6 ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`}>
+                <div className={`relative flex max-w-[78%] flex-col ${mine ? "items-end" : "items-start"}`}>
+                  <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
-                    <p className="whitespace-pre-wrap break-words" data-message-id={message.id}>{message.body}</p>
+                    {message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
                     <p className={`mt-0.5 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && !message.readAt ? " · Sent" : ""}</p>
                   </div>
-                  {groupedReactions.length ? <div className={`-mt-1 flex flex-wrap gap-1 ${mine ? "mr-2 justify-end" : "ml-2"}`}>{groupedReactions.map(([emoji, count]) => <button aria-label={`${emoji} reaction, ${count}`} className={`rounded-full border px-1.5 py-0.5 text-xs shadow ${reactions.some((reaction) => reaction.userId === myId && reaction.emoji === emoji) ? "border-atseen-blue bg-atseen-blue/20" : "border-atseen-line bg-atseen-bg-2"}`} key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}{count > 1 ? <span className="ml-1 text-[9px]">{count}</span> : null}</button>)}</div> : null}
-                  <div className={`relative mt-0.5 flex items-center gap-1 text-atseen-muted opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 ${mine ? "flex-row-reverse" : ""}`}>
+                  {groupedReactions.length ? <div className={`-mt-1 flex flex-wrap gap-1 ${mine ? "mr-2 justify-end" : "ml-2"}`}>{groupedReactions.map(([emoji, count]) => {
+                    const matching = reactions.filter((reaction) => reaction.emoji === emoji);
+                    const names = matching.map((reaction) => reaction.userId === myId ? "You" : participant?.displayName || "Participant");
+                    const detailsOpen = reactionDetails?.messageId === message.id && reactionDetails?.emoji === emoji;
+                    return <span className="relative" key={emoji}>
+                      <button aria-expanded={detailsOpen} aria-label={`${emoji} reaction by ${names.join(" and ")}`} className={`rounded-full border px-1.5 py-0.5 text-xs shadow ${matching.some((reaction) => reaction.userId === myId) ? "border-atseen-blue bg-atseen-blue/20" : "border-atseen-line bg-atseen-bg-2"}`} onClick={() => setReactionDetails((current) => current?.messageId === message.id && current?.emoji === emoji ? null : { messageId: message.id, emoji })} title={names.join(", ")} type="button">{emoji}{count > 1 ? <span className="ml-1 text-[9px]">{count}</span> : null}</button>
+                      {detailsOpen ? <span className={`absolute bottom-7 z-30 block min-w-40 rounded-xl border border-atseen-line bg-atseen-bg-2 p-2 text-left shadow-2xl ${mine ? "right-0" : "left-0"}`}>{matching.map((reaction) => {
+                        const isMine = reaction.userId === myId;
+                        return <span className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs" key={reaction.userId}><FanAvatar name={isMine ? user?.name || "You" : participant?.displayName} size="h-6 w-6" src={isMine ? user?.avatar || user?.avatarUrl : participant?.avatarUrl} /><span className="min-w-0 flex-1 truncate font-semibold">{isMine ? "You" : participant?.displayName}</span><span>{emoji}</span>{isMine ? <button className="ml-1 text-[10px] font-bold text-atseen-danger hover:underline" onClick={() => { setReactionDetails(null); reactToMessage(message, emoji); }} type="button">Remove</button> : null}</span>;
+                      })}<span className="block px-2 pt-1 text-[9px] text-atseen-dim">{matching.some((reaction) => reaction.userId === myId) ? "Remove is available for your reaction." : "Reactions from this chat."}</span></span> : null}
+                    </span>;
+                  })}</div> : null}
+                  <div className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5 text-atseen-muted opacity-100 transition sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "right-full mr-1 flex-row-reverse" : "left-full ml-1"}`}>
                     <button aria-label="Reply to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => { setReplyTo(message); setReactionFor(null); }} title="Reply" type="button"><FiCornerUpLeft /></button>
                     <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setReactionFor((current) => current === message.id ? null : message.id)} title="React" type="button"><FiSmile /></button>
-                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`}>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:bg-white/10 hover:scale-110" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
+                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`}>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
                   </div>
                   {showReadAvatar && participant ? <span aria-label={`Seen by ${participant.displayName}`} className="mt-1 block" title={`Seen by ${participant.displayName}`}><FanAvatar name={participant.displayName} size="h-4 w-4" src={participant.avatarUrl} /></span> : null}
                 </div>
@@ -354,7 +385,7 @@ export default function MessagesPage() {
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
             {replyTo ? <div className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-atseen-blue bg-atseen-surface-2 px-3 py-2"><FiCornerUpLeft className="shrink-0 text-atseen-blue" /><div className="min-w-0 flex-1"><p className="text-[10px] font-bold text-atseen-blue">Replying to {replyTo.senderId === myId ? "yourself" : participant?.displayName}</p><p className="truncate text-xs text-atseen-muted">{replyTo.body}</p></div><button aria-label="Cancel reply" className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-white/5" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
             {emojiOpen ? <div className="absolute bottom-[4.5rem] left-3 z-20 w-[min(19rem,calc(100%-1.5rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-3 shadow-2xl"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-7 gap-1">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 w-9 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
-            <div className="flex items-end gap-2"><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60" maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending}><FiSend /></button></div>
+            <div className="flex items-end gap-2"><VoiceRecorder disabled={sending} onSend={sendVoice} /><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60" maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending}><FiSend /></button></div>
           </form>}
         </> : null}
       </main>
