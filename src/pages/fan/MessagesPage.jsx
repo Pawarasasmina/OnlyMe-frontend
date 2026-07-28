@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiCornerUpLeft, FiEdit, FiMessageCircle, FiSearch, FiSend, FiSmile, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCornerUpLeft, FiEdit, FiFlag, FiImage, FiMessageCircle, FiMoreVertical, FiRefreshCw, FiSearch, FiSend, FiShield, FiSmile, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -23,8 +23,44 @@ const relative = (value) => {
   return `Last seen ${new Date(value).toLocaleDateString()}`;
 };
 
+const chatDateKey = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "unknown";
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
+const chatDateLabel = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const dayDifference = Math.round((todayStart - dateStart) / 86400000);
+  if (dayDifference === 0) return "Today";
+  if (dayDifference === 1) return "Yesterday";
+  return date.toLocaleDateString([], {
+    day: "numeric",
+    month: "long",
+    year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+  });
+};
+
 const MESSAGE_EMOJIS = ["😀", "😂", "🥰", "😍", "😊", "😉", "😎", "🥳", "😭", "😮", "😅", "🤔", "🙌", "👏", "🙏", "👍", "👎", "💪", "❤️", "🔥", "✨", "🎉", "💯", "👀", "🌍", "🪐", "⭐", "💙"];
 const MESSAGE_REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+
+const STORY_REACTIONS = ["❤️", "🔥", "😂", "👏", "👁️"];
+const REPORT_REASONS = [
+  ["SPAM", "Spam"],
+  ["HARASSMENT", "Harassment or bullying"],
+  ["HATE", "Hate speech"],
+  ["SEXUAL_CONTENT", "Sexual content"],
+  ["VIOLENCE", "Violence or threats"],
+  ["SCAM", "Scam or fraud"],
+  ["OTHER", "Something else"],
+];
+
+const newClientMessageId = () => globalThis.crypto?.randomUUID?.()
+  || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 
 function Identity({ person, presence, compact = false, subtitle = "" }) {
   const online = presence?.online;
@@ -70,7 +106,22 @@ export default function MessagesPage() {
   const [search, setSearch] = useState("");
   const [presence, setPresence] = useState({});
   const [socketConnected, setSocketConnected] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [scrollDate, setScrollDate] = useState({ label: "", visible: false });
+  const [chatMenuOpen, setChatMenuOpen] = useState(false);
+  const [messageMenu, setMessageMenu] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState(null);
+  const [reportTarget, setReportTarget] = useState(null);
+  const [reportReason, setReportReason] = useState("SPAM");
+  const [reportDetails, setReportDetails] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [storyReplyDraft, setStoryReplyDraft] = useState("");
+  const [storyActionBusy, setStoryActionBusy] = useState(false);
   const bottomRef = useRef(null);
+  const threadRef = useRef(null);
+  const scrollDateTimerRef = useRef(null);
+  const imageInputRef = useRef(null);
   const conversationsQuery = useQuery({
     queryKey: ["messages", "conversations"],
     queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
@@ -81,12 +132,26 @@ export default function MessagesPage() {
   });
   const messagesQuery = useQuery({
     queryKey: ["messages", selected?.id],
-    queryFn: () => messageService.getMessages(selected.id).then((r) => r.data.data),
+    queryFn: async () => {
+      const fresh = await messageService.getMessages(selected.id).then((response) => response.data.data);
+      const current = queryClient.getQueryData(["messages", selected.id]);
+      if (!current?.messages?.length) return fresh;
+      const messageKey = (message) => message.clientMessageId
+        ? `client:${message.clientMessageId}`
+        : `server:${message.id}`;
+      const reconciled = new Map(current.messages.map((message) => [messageKey(message), message]));
+      fresh.messages.forEach((message) => reconciled.set(messageKey(message), message));
+      return {
+        ...fresh,
+        messages: [...reconciled.values()].sort((left, right) => (
+          new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+        )),
+        pageInfo: current.pageInfo?.nextCursor ? current.pageInfo : fresh.pageInfo,
+      };
+    },
     enabled: Boolean(selected?.id),
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
     refetchOnWindowFocus: "always",
-    staleTime: 0,
+    staleTime: 10000,
   });
   const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat && user?.role === "fan" });
   const conversations = useMemo(() => conversationsQuery.data || [], [conversationsQuery.data]);
@@ -169,11 +234,37 @@ export default function MessagesPage() {
         messages: current.messages.map((message) => message.id === messageId ? { ...message, reactions } : message),
       } : current);
     };
+    const deleteRealtimeMessage = ({ messageId, message }) => {
+      if (!selected?.id) return;
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.map((item) => item.id === messageId ? { ...item, ...message, deliveryState: "sent" } : item),
+      } : current);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+    };
+    const hideRealtimeMessage = ({ messageId, hiddenForUserId }) => {
+      if (hiddenForUserId !== myId || !selected?.id) return;
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.filter((item) => item.id !== messageId),
+      } : current);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+    };
+    const updateBlock = ({ otherUserId, blocked }) => {
+      if (!otherUserId) return;
+      queryClient.setQueryData(["messages", otherUserId], (current) => current ? {
+        ...current,
+        blockStatus: { ...(current.blockStatus || {}), blockedMe: Boolean(blocked) },
+      } : current);
+    };
     socket.on("messages:read", markMessagesRead);
     socket.on("message:reaction", updateReaction);
     socket.on("presence:update", updatePresence);
     socket.on("conversation:status", updateConversationStatus);
-    return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("messages:read", markMessagesRead); socket.off("message:reaction", updateReaction); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); };
+    socket.on("message:deleted", deleteRealtimeMessage);
+    socket.on("message:hidden", hideRealtimeMessage);
+    socket.on("account:block", updateBlock);
+    return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("messages:read", markMessagesRead); socket.off("message:reaction", updateReaction); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); socket.off("message:deleted", deleteRealtimeMessage); socket.off("message:hidden", hideRealtimeMessage); socket.off("account:block", updateBlock); };
   }, [myId, queryClient, selected?.id]);
 
   useEffect(() => {
@@ -202,7 +293,27 @@ export default function MessagesPage() {
     if (socket && ids.length) socket.emit("presence:query", ids, (rows) => setPresence((current) => ({ ...current, ...Object.fromEntries(rows.map((row) => [row.userId, { ...current[row.userId], ...row }])) })));
   }, [conversations, selected?.id]);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
+  const latestMessageId = messages[messages.length - 1]?.id || null;
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [latestMessageId]);
+  useEffect(() => () => window.clearTimeout(scrollDateTimerRef.current), []);
+
+  const handleThreadScroll = (event) => {
+    const container = event.currentTarget;
+    const markerLine = container.getBoundingClientRect().top + 72;
+    const messageNodes = [...container.querySelectorAll("[data-chat-date-label]")];
+    let activeNode = messageNodes[0];
+    for (const node of messageNodes) {
+      if (node.getBoundingClientRect().top <= markerLine) activeNode = node;
+      else break;
+    }
+    const label = activeNode?.dataset.chatDateLabel || "";
+    if (!label) return;
+    setScrollDate({ label, visible: true });
+    window.clearTimeout(scrollDateTimerRef.current);
+    scrollDateTimerRef.current = window.setTimeout(() => {
+      setScrollDate((current) => ({ ...current, visible: false }));
+    }, 1100);
+  };
 
   const orderedPeople = useMemo(() => peopleQuery.data || [], [peopleQuery.data]);
   const shownConversations = useMemo(() => inboxTab === "direct"
@@ -220,18 +331,42 @@ export default function MessagesPage() {
   };
   const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
   const openPerson = (person) => { chooseConversation({ id: person.id, participant: person }); setNewChat(false); setSearch(""); };
-  const send = async (event) => {
-    event.preventDefault();
-    const body = draft.trim();
-    if (!body || !selected?.id || sending) return;
-    setSending(true); setError("");
+  const loadOlder = async () => {
+    const cursor = messagesQuery.data?.pageInfo?.nextCursor;
+    if (!selected?.id || !cursor || loadingOlder) return;
+    setLoadingOlder(true);
+    setError("");
     try {
-      const response = await messageService.send(selected.id, body, replyTo?.id || null);
+      const response = await messageService.getMessages(selected.id, { cursor });
+      const older = response.data.data;
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: [
+          ...older.messages.filter((incoming) => !current.messages.some((item) => item.id === incoming.id)),
+          ...current.messages,
+        ],
+        pageInfo: older.pageInfo,
+      } : older);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Could not load older messages.");
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+  const deliverText = async ({ body, clientMessageId, optimisticId, reply }) => {
+    try {
+      const response = await messageService.send(selected.id, body, reply?.id || null, clientMessageId);
       const { message: sentMessage, conversationStatus = "ACTIVE" } = response.data.data;
-      queryClient.setQueryData(["messages", selected.id], (current) => {
-        if (!current || current.messages.some((item) => item.id === sentMessage.id)) return current;
-        return { ...current, messages: [...current.messages, sentMessage], conversationStatus, requestRequired: false };
-      });
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.map((item) => (
+          item.id === optimisticId || item.clientMessageId === clientMessageId
+            ? { ...sentMessage, deliveryState: "sent" }
+            : item
+        )),
+        conversationStatus,
+        requestRequired: false,
+      } : current);
       queryClient.setQueryData(["messages", "conversations"], (current = []) => {
         const existing = current.find((item) => item.id === selected.id);
         const next = existing
@@ -239,16 +374,66 @@ export default function MessagesPage() {
           : { id: selected.id, participant, lastMessage: sentMessage, status: conversationStatus, unreadCount: 0 };
         return [next, ...current.filter((item) => item.id !== selected.id)];
       });
-      setDraft("");
-      setReplyTo(null);
-      setEmojiOpen(false);
       queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
     } catch (requestError) {
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.map((item) => (
+          item.id === optimisticId || item.clientMessageId === clientMessageId
+            ? { ...item, deliveryState: "failed" }
+            : item
+        )),
+      } : current);
       setError(requestError.response?.status === 429
         ? requestError.response?.data?.message || "You are sending messages too quickly. Please wait a moment."
-        : requestError.response?.data?.message || "Could not send this message.");
+        : requestError.response?.data?.message || "Message failed. Tap retry beside the message.");
     }
-    finally { setSending(false); }
+  };
+  const send = async (event) => {
+    event.preventDefault();
+    const body = draft.trim();
+    if (!body || !selected?.id || sending) return;
+    setSending(true);
+    setError("");
+    const clientMessageId = newClientMessageId();
+    const optimisticId = `pending:${clientMessageId}`;
+    const reply = replyTo;
+    const optimisticMessage = {
+      id: optimisticId,
+      clientMessageId,
+      senderId: myId,
+      recipientId: selected.id,
+      body,
+      mediaType: "text",
+      createdAt: new Date().toISOString(),
+      readAt: null,
+      replyTo: reply ? { id: reply.id, senderId: reply.senderId, body: reply.body } : null,
+      reactions: [],
+      deliveryState: "sending",
+    };
+    queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+      ...current,
+      messages: [...current.messages, optimisticMessage],
+    } : current);
+    setDraft("");
+    setReplyTo(null);
+    setEmojiOpen(false);
+    setSending(false);
+    await deliverText({ body, clientMessageId, optimisticId, reply });
+  };
+  const retryText = async (message) => {
+    if (message.deliveryState !== "failed") return;
+    setError("");
+    queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+      ...current,
+      messages: current.messages.map((item) => item.id === message.id ? { ...item, deliveryState: "sending" } : item),
+    } : current);
+    await deliverText({
+      body: message.body,
+      clientMessageId: message.clientMessageId,
+      optimisticId: message.id,
+      reply: message.replyTo,
+    });
   };
   const reactToMessage = async (message, emoji) => {
     setReactionFor(null);
@@ -317,6 +502,127 @@ export default function MessagesPage() {
     } catch (requestError) { setError(requestError.response?.data?.message || "Unable to update this message request."); }
     finally { setRequestBusy(false); }
   };
+  const deleteSelectedMessage = async (selection = null) => {
+    const message = selection?.message || deleteDialog?.message;
+    const scope = selection?.scope || deleteDialog?.scope;
+    if (!message || !scope) return;
+    setActionBusy(true);
+    setMessageMenu(null);
+    setError("");
+    try {
+      const response = await messageService.deleteMessage(message.id, scope);
+      if (scope === "me") {
+        queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+          ...current,
+          messages: current.messages.filter((item) => item.id !== message.id),
+        } : current);
+      } else {
+        const deleted = response.data.data.message;
+        queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+          ...current,
+          messages: current.messages.map((item) => item.id === message.id ? { ...item, ...deleted } : item),
+        } : current);
+      }
+      setDeleteDialog(null);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Could not delete this message.");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+  const toggleBlock = async () => {
+    const blocked = Boolean(messagesQuery.data?.blockStatus?.blockedByMe);
+    if (!blocked && !window.confirm(`Block ${participant?.displayName || "this account"}? They will not be able to message you.`)) return;
+    setActionBusy(true);
+    setChatMenuOpen(false);
+    setError("");
+    try {
+      if (blocked) await messageService.unblock(selected.id);
+      else await messageService.block(selected.id);
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        blockStatus: { ...(current.blockStatus || {}), blockedByMe: !blocked },
+      } : current);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || `Could not ${blocked ? "unblock" : "block"} this account.`);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+  const submitReport = async (event) => {
+    event.preventDefault();
+    if (!reportTarget) return;
+    setActionBusy(true);
+    setError("");
+    try {
+      const payload = { reason: reportReason, details: reportDetails };
+      if (reportTarget.type === "message") await messageService.reportMessage(reportTarget.message.id, payload);
+      else await messageService.reportConversation(selected.id, payload);
+      setReportTarget(null);
+      setReportReason("SPAM");
+      setReportDetails("");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Could not submit this report.");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+  const sendImage = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !selected?.id) return;
+    setImageBusy(true);
+    setError("");
+    try {
+      const response = await messageService.sendImage(selected.id, file, newClientMessageId());
+      const { message, conversationStatus = "ACTIVE" } = response.data.data;
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: [...current.messages.filter((item) => item.id !== message.id), message],
+        conversationStatus,
+        requestRequired: false,
+      } : current);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Could not send this image.");
+    } finally {
+      setImageBusy(false);
+    }
+  };
+  const reactToOpenStory = async (reaction) => {
+    if (!storyViewer?.story?.id || storyActionBusy) return;
+    setStoryActionBusy(true);
+    try {
+      await storyService.reactToStory(storyViewer.story.id, reaction);
+      setStoryViewer((current) => ({ ...current, reactionSent: reaction }));
+    } catch (requestError) {
+      setStoryViewer((current) => ({ ...current, actionError: requestError.response?.data?.message || "Reaction failed." }));
+    } finally {
+      setStoryActionBusy(false);
+    }
+  };
+  const replyToOpenStory = async (event) => {
+    event.preventDefault();
+    const body = storyReplyDraft.trim();
+    if (!body || !storyViewer?.story?.id || storyActionBusy) return;
+    setStoryActionBusy(true);
+    try {
+      const response = await storyService.replyToStory(storyViewer.story.id, body);
+      const message = response.data.data.message;
+      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
+        ...current,
+        messages: current.messages.some((item) => item.id === message.id) ? current.messages : [...current.messages, message],
+      } : current);
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      setStoryReplyDraft("");
+      setStoryViewer((current) => ({ ...current, replySent: true }));
+    } catch (requestError) {
+      setStoryViewer((current) => ({ ...current, actionError: requestError.response?.data?.message || "Reply failed." }));
+    } finally {
+      setStoryActionBusy(false);
+    }
+  };
   const openStoryReply = async (reply, knownExpired = false) => {
     if (knownExpired) return setStoryViewer({ expired: true });
     setStoryViewer({ loading: true });
@@ -341,10 +647,10 @@ export default function MessagesPage() {
         </nav>
         <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {conversationsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading conversations…</p> : null}
-          {conversationsQuery.isError ? <p className="p-6 text-sm text-atseen-danger">Conversations are unavailable. Please retry.</p> : null}
+          {conversationsQuery.isError ? <div className="p-6 text-sm text-atseen-danger"><p>Conversations are unavailable.</p><button className="mt-3 rounded-full border border-atseen-danger/30 px-4 py-2 text-xs font-bold" onClick={() => conversationsQuery.refetch()} type="button">Retry</button></div> : null}
           {!conversationsQuery.isLoading && !shownConversations.length ? <div className="grid place-items-center px-8 py-20 text-center"><FiMessageCircle className="text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">{inboxTab === "requests" ? "No message requests" : inboxTab === "direct" ? user?.role === "fan" ? "No Priority messages" : "No Direct Access messages" : "No conversations yet"}</h2><p className="mt-2 text-sm text-atseen-muted">{inboxTab === "direct" ? user?.role === "fan" ? "Priority messaging will be available later." : "Direct Access will be available later." : inboxTab === "requests" ? "Messages from non-following fans appear here." : user?.role === "fan" ? "Start a private chat with a creator." : "Accepted fan conversations appear here."}</p></div> : null}
           {shownConversations.map((conversation) => <button className={`flex w-full items-center gap-3 border-b border-white/[0.05] px-4 py-4 text-left transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={conversation.id} onClick={() => chooseConversation(conversation)}>
-            <Identity compact person={conversation.participant} presence={presence[conversation.id]} subtitle={`${conversation.lastMessage.senderId === myId ? "You: " : ""}${conversation.lastMessage.body}`} />
+            <Identity compact person={conversation.participant} presence={presence[conversation.id]} subtitle={conversation.lastMessage.deletedAt ? conversation.lastMessage.senderId === myId ? "You deleted this message" : "This message was deleted" : `${conversation.lastMessage.senderId === myId ? "You: " : ""}${conversation.lastMessage.body}`} />
             <span className="ml-auto flex max-w-[95px] flex-col items-end gap-1"><span className="text-[10px] text-atseen-muted">{new Date(conversation.lastMessage.createdAt).toLocaleDateString()}</span>{conversation.unreadCount ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-atseen-blue px-1 text-[10px] font-black text-atseen-bg">{conversation.unreadCount}</span> : null}</span>
           </button>)}
         </div>
@@ -356,22 +662,40 @@ export default function MessagesPage() {
             <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
             {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => participant.username && navigate(`/profile/${encodeURIComponent(participant.username)}`)} type="button"><Identity person={participant} presence={presence[selected.id]} /></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
+            <div className="relative">
+              <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setChatMenuOpen((current) => !current)} type="button"><FiMoreVertical /></button>
+              {chatMenuOpen ? <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl">
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setReportTarget({ type: "conversation" }); }} type="button"><FiFlag className="text-atseen-warning" /> Report conversation</button>
+                <button className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5 ${messagesQuery.data?.blockStatus?.blockedByMe ? "text-atseen-blue" : "text-atseen-danger"}`} disabled={actionBusy} onClick={toggleBlock} type="button"><FiShield /> {messagesQuery.data?.blockStatus?.blockedByMe ? "Unblock account" : "Block account"}</button>
+              </div> : null}
+            </div>
           </header>
-          <section className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-4 py-6 sm:px-8">
+          <section className="atseen-hide-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-4 py-6 sm:px-8" onScroll={handleThreadScroll} ref={threadRef}>
+            <div className={`pointer-events-none sticky top-2 z-30 mx-auto -mb-7 flex h-7 w-fit items-center rounded-full border border-atseen-line bg-atseen-bg-2/95 px-3 text-[10px] font-bold text-atseen-muted shadow-lg backdrop-blur transition-all duration-200 ${scrollDate.visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>{scrollDate.label}</div>
+            {messagesQuery.data?.pageInfo?.hasMore ? <div className="mb-4 text-center"><button className="inline-flex items-center gap-2 rounded-full border border-atseen-line px-4 py-2 text-xs font-bold text-atseen-muted hover:border-atseen-blue/40 hover:text-white disabled:opacity-50" disabled={loadingOlder} onClick={loadOlder} type="button"><FiRefreshCw className={loadingOlder ? "animate-spin" : ""} />{loadingOlder ? "Loading…" : "Load older messages"}</button></div> : null}
             <p className="mx-auto mb-7 max-w-sm text-center text-[11px] leading-5 text-atseen-dim">Text messages are private between you and this {participant?.role === "creator" ? "creator" : "fan"}.</p>
             {messagesQuery.isLoading ? <p className="text-center text-sm text-atseen-muted">Loading messages…</p> : null}
-            {messages.map((message) => {
+            {messagesQuery.isError ? <div className="mx-auto max-w-sm text-center text-sm text-atseen-danger"><p>Messages could not be loaded.</p><button className="mt-3 rounded-full border border-atseen-danger/30 px-4 py-2 text-xs font-bold" onClick={() => messagesQuery.refetch()} type="button">Retry</button></div> : null}
+            {!messagesQuery.isLoading && !messagesQuery.isError && !messages.length ? <div className="mx-auto max-w-sm py-16 text-center"><FiMessageCircle className="mx-auto text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">Start the conversation</h2><p className="mt-2 text-sm text-atseen-muted">Send a message when you are ready.</p></div> : null}
+            {messages.map((message, index) => {
               const mine = message.senderId === myId;
+              const dateLabel = chatDateLabel(message.createdAt);
+              const startsDay = index === 0 || chatDateKey(messages[index - 1].createdAt) !== chatDateKey(message.createdAt);
               const showReadAvatar = mine && message.id === lastReadOutgoingMessageId;
               const reactions = message.reactions || [];
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
-              return <div className={`group mb-2 flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}>
+              return <Fragment key={message.id}>
+                {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
+                <div className={`group mb-2 flex ${mine ? "justify-end" : "justify-start"}`} data-chat-date-label={dateLabel}>
                 <div className={`relative flex max-w-[78%] flex-col ${mine ? "items-end" : "items-start"}`}>
                   <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
-                    {message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
-                    <p className={`mt-0.5 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && !message.readAt ? " · Sent" : ""}</p>
+                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
+                    <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
+                      <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : mine && !message.readAt ? " · Sent" : ""}</span>
+                      {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}
+                    </p>
                   </div>
                   {groupedReactions.length ? <div className={`-mt-1 flex flex-wrap gap-1 ${mine ? "mr-2 justify-end" : "ml-2"}`}>{groupedReactions.map(([emoji, count]) => {
                     const matching = reactions.filter((reaction) => reaction.emoji === emoji);
@@ -385,18 +709,24 @@ export default function MessagesPage() {
                       })}<span className="block px-2 pt-1 text-[9px] text-atseen-dim">{matching.some((reaction) => reaction.userId === myId) ? "Remove is available for your reaction." : "Reactions from this chat."}</span></span> : null}
                     </span>;
                   })}</div> : null}
-                  <div className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5 text-atseen-muted opacity-100 transition sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "right-full mr-1 flex-row-reverse" : "left-full ml-1"}`}>
+                  {!message.deletedAt ? <div className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5 text-atseen-muted opacity-100 transition sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "right-full mr-1 flex-row-reverse" : "left-full ml-1"}`}>
                     <button aria-label="Reply to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => { setReplyTo(message); setReactionFor(null); }} title="Reply" type="button"><FiCornerUpLeft /></button>
                     <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setReactionFor((current) => current === message.id ? null : message.id)} title="React" type="button"><FiSmile /></button>
+                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setMessageMenu((current) => current === message.id ? null : message.id)} title="More" type="button"><FiMoreVertical /></button>
                     {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`}>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
-                  </div>
+                    {messageMenu === message.id ? <div className={`absolute bottom-8 z-30 w-40 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl ${mine ? "right-0" : "left-0"}`}>
+                      {!message.id.startsWith("pending:") ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-atseen-danger hover:bg-white/5" disabled={actionBusy} onClick={() => { setMessageMenu(null); setDeleteDialog({ message, scope: null }); }} type="button"><FiTrash2 /> Delete</button> : null}
+                      {!mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-atseen-warning hover:bg-white/5" onClick={() => { setMessageMenu(null); setReportTarget({ type: "message", message }); }} type="button"><FiFlag /> Report</button> : null}
+                    </div> : null}
+                  </div> : null}
                   {showReadAvatar && participant ? <span aria-label={`Seen by ${participant.displayName}`} className="mt-1 block" title={`Seen by ${participant.displayName}`}><FanAvatar name={participant.displayName} size="h-4 w-4" src={participant.avatarUrl} /></span> : null}
                 </div>
-              </div>;
+              </div>
+              </Fragment>;
             })}
             <div ref={bottomRef} />
           </section>
-          {messagesQuery.data?.conversationStatus === "REQUEST" && user?.role === "creator" ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-3 sm:p-4">
+          {messagesQuery.data?.blockStatus?.blockedByMe || messagesQuery.data?.blockStatus?.blockedMe ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-4 text-center"><p className="text-xs text-atseen-muted">{messagesQuery.data.blockStatus.blockedByMe ? "You blocked this account. Unblock them to send messages." : "Messaging is unavailable for this conversation."}</p>{messagesQuery.data.blockStatus.blockedByMe ? <button className="mt-3 rounded-full border border-atseen-blue/40 px-4 py-2 text-xs font-bold text-atseen-blue" disabled={actionBusy} onClick={toggleBlock} type="button">Unblock</button> : null}</div> : messagesQuery.data?.conversationStatus === "REQUEST" && user?.role === "creator" ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-3 sm:p-4">
             <p className="mb-3 text-center text-xs text-atseen-muted">Accept this request before replying.</p>
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
             <div className="flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-3 text-sm font-bold" disabled={requestBusy} onClick={() => handleRequest(false)} type="button">Delete</button><button className="flex-[1.4] rounded-full bg-atseen-blue py-3 text-sm font-bold text-atseen-bg" disabled={requestBusy} onClick={() => handleRequest(true)} type="button">Accept</button></div>
@@ -404,13 +734,16 @@ export default function MessagesPage() {
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
             {replyTo ? <div className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-atseen-blue bg-atseen-surface-2 px-3 py-2"><FiCornerUpLeft className="shrink-0 text-atseen-blue" /><div className="min-w-0 flex-1"><p className="text-[10px] font-bold text-atseen-blue">Replying to {replyTo.senderId === myId ? "yourself" : participant?.displayName}</p><p className="truncate text-xs text-atseen-muted">{replyTo.body}</p></div><button aria-label="Cancel reply" className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-white/5" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
             {emojiOpen ? <div className="absolute bottom-[4.5rem] left-3 z-20 w-[min(19rem,calc(100%-1.5rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-3 shadow-2xl"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-7 gap-1">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 w-9 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
-            <div className="flex items-end gap-2"><VoiceRecorder disabled={sending} onSend={sendVoice} /><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60" maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending}><FiSend /></button></div>
+            <div className="flex items-end gap-2"><VoiceRecorder disabled={sending || imageBusy} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:text-white disabled:opacity-40" disabled={sending || imageBusy} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60" maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending || imageBusy}><FiSend /></button></div>
           </form>}
         </> : null}
       </main>
     </div>
 
     {newChat ? <div className="absolute inset-0 z-40 flex items-end bg-black/70 p-3 sm:items-center sm:justify-center"><div className="max-h-[75vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between p-5"><h2 className="text-lg font-bold">New message</h2><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setNewChat(false)}><FiX /></button></header><label className="mx-4 mb-3 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4"><FiSearch className="text-atseen-muted" /><input autoFocus className="w-full bg-transparent py-3 text-sm outline-none" onChange={(e) => setSearch(e.target.value)} placeholder="Search creators" value={search} /></label><div className="atseen-hide-scrollbar max-h-[52vh] overflow-y-auto pb-3">{peopleQuery.isLoading ? <p className="p-5 text-sm text-atseen-muted">Finding creators…</p> : null}{orderedPeople.map((person) => <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" key={person.id} onClick={() => openPerson(person)}><Identity compact person={person} presence={presence[person.id]} /></button>)}{!peopleQuery.isLoading && !orderedPeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No message-enabled creators found.</p> : null}</div></div></div> : null}
+    {deleteDialog ? <div className="absolute inset-0 z-[75] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div aria-labelledby="delete-message-title" aria-modal="true" className="w-full max-w-[300px] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-4 shadow-2xl" role="dialog"><div className="flex items-center justify-between"><h2 className="text-base font-bold" id="delete-message-title">{deleteDialog.scope ? "Confirm deletion" : "Delete message"}</h2><button aria-label="Close delete message" className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => setDeleteDialog(null)} type="button"><FiX /></button></div>{deleteDialog.scope ? <><p className="mt-2 text-xs leading-5 text-atseen-muted">This disappears only from your chat.</p><div className="mt-4 flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-2 text-xs font-bold" disabled={actionBusy} onClick={() => setDeleteDialog((current) => ({ ...current, scope: null }))} type="button">Back</button><button className="flex-[1.3] rounded-full bg-atseen-danger px-3 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={actionBusy} onClick={deleteSelectedMessage} type="button">{actionBusy ? "Deleting…" : "Delete"}</button></div></> : <><p className="mt-1 text-xs text-atseen-muted">Choose an option.</p><div className="mt-3 grid gap-1"><button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/5" onClick={() => setDeleteDialog((current) => ({ ...current, scope: "me" }))} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs">Delete for me</b><span className="mt-0.5 block text-[10px] text-atseen-muted">Only removes it from your chat.</span></span></button>{deleteDialog.message.senderId === myId ? <button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-atseen-danger/5 disabled:opacity-50" disabled={actionBusy} onClick={() => deleteSelectedMessage({ message: deleteDialog.message, scope: "everyone" })} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs text-atseen-danger">{actionBusy ? "Unsending…" : "Unsend for everyone"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">Replaces it for both people.</span></span></button> : null}</div></>}</div></div> : null}
+    {reportTarget ? <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/75 p-3 sm:items-center"><form className="w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-bg-2 p-5 shadow-2xl" onSubmit={submitReport}><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">Report {reportTarget.type === "message" ? "message" : "conversation"}</h2><p className="mt-1 text-xs text-atseen-muted">Your report is private and will be reviewed.</p></div><button aria-label="Close report" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setReportTarget(null)} type="button"><FiX /></button></div><label className="mt-5 block text-xs font-bold text-atseen-muted">Reason<select className="mt-2 w-full rounded-xl border border-atseen-line bg-atseen-surface-2 px-3 py-3 text-sm text-white outline-none" onChange={(event) => setReportReason(event.target.value)} value={reportReason}>{REPORT_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="mt-4 block text-xs font-bold text-atseen-muted">Additional details <span className="font-normal">(optional)</span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface-2 p-3 text-sm text-white outline-none" maxLength={1000} onChange={(event) => setReportDetails(event.target.value)} value={reportDetails} /></label><button className="mt-5 w-full rounded-full bg-atseen-danger py-3 text-sm font-bold text-white disabled:opacity-50" disabled={actionBusy} type="submit">{actionBusy ? "Submitting…" : "Submit report"}</button></form></div> : null}
     {storyViewer ? <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 p-4"><div className="relative flex h-[min(78vh,620px)] w-full max-w-sm items-center justify-center overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg shadow-2xl"><button aria-label="Close story" className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white" onClick={() => setStoryViewer(null)} type="button"><FiX /></button>{storyViewer.loading ? <p className="text-sm text-atseen-muted">Loading story…</p> : storyViewer.expired ? <div className="px-8 text-center"><div className="text-5xl">⌛</div><h2 className="mt-5 text-xl font-bold">Story unavailable</h2><p className="mt-2 text-sm leading-6 text-atseen-muted">This story expired after 24 hours or was deleted by its creator.</p></div> : storyViewer.error ? <div className="px-8 text-center"><h2 className="text-xl font-bold">Unable to open story</h2><p className="mt-2 text-sm text-atseen-muted">Please check your connection and try again.</p></div> : storyViewer.story ? <><img alt={storyViewer.story.caption || "Story"} className="h-full w-full object-cover" src={resolveMediaUrl(storyViewer.story.image)} /><div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" /><div className="absolute left-5 right-14 top-5 flex items-center gap-3"><FanAvatar name={storyViewer.story.name} size="h-10 w-10" src={storyViewer.story.avatar} /><div><p className="text-sm font-bold text-white">{storyViewer.story.name}</p><p className="text-[10px] text-white/65">Story</p></div></div>{storyViewer.story.caption ? <p className="absolute bottom-7 left-5 right-5 text-base font-bold leading-7 text-white">{storyViewer.story.caption}</p> : null}</> : null}</div></div> : null}
+    {storyViewer?.story && !storyViewer.story.isOwn ? <div className="absolute bottom-6 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-white/15 bg-black/70 p-3 shadow-2xl backdrop-blur"><div className="mb-2 flex items-center justify-center gap-3">{STORY_REACTIONS.map((reaction) => <button aria-label={`React ${reaction}`} className={`grid h-9 w-9 place-items-center rounded-full text-lg transition hover:scale-110 ${storyViewer.reactionSent === reaction ? "bg-atseen-blue/30 ring-1 ring-atseen-blue" : "bg-white/10"}`} disabled={storyActionBusy} key={reaction} onClick={() => reactToOpenStory(reaction)} type="button">{reaction}</button>)}</div><form className="flex gap-2" onSubmit={replyToOpenStory}><input className="min-w-0 flex-1 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/55" maxLength={1000} onChange={(event) => setStoryReplyDraft(event.target.value)} placeholder={`Reply to ${storyViewer.story.name}…`} value={storyReplyDraft} /><button aria-label="Send story reply" className="grid h-10 w-10 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!storyReplyDraft.trim() || storyActionBusy} type="submit"><FiSend /></button></form>{storyViewer.replySent ? <p className="mt-2 text-center text-[10px] text-atseen-success">Reply sent</p> : null}{storyViewer.actionError ? <p className="mt-2 text-center text-[10px] text-atseen-danger">{storyViewer.actionError}</p> : null}</div> : null}
   </div>;
 }
