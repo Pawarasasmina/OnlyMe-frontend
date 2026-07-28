@@ -11,6 +11,17 @@ export const messageService = {
     data.append("waveform", JSON.stringify(waveform));
     return axiosInstance.post(`/messages/conversations/${userId}/voice`, data);
   },
+  sendVideoNote: (userId, blob, onProgress) => {
+    const data = new FormData();
+    const extension = blob.type.includes("mp4") ? "mp4" : "webm";
+    const uploadBlob = new Blob([blob], { type: extension === "mp4" ? "video/mp4" : "video/webm" });
+    data.append("video", uploadBlob, `video-note-${Date.now()}.${extension}`);
+    return axiosInstance.post(`/messages/conversations/${userId}/video-note`, data, {
+      onUploadProgress: (event) => {
+        if (event.total) onProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      },
+    });
+  },
   setReaction: (messageId, emoji) => axiosInstance.put(`/messages/${messageId}/reaction`, { emoji }),
   removeReaction: (messageId) => axiosInstance.delete(`/messages/${messageId}/reaction`),
   searchPeople: (q = "") => axiosInstance.get("/messages/people", { params: { q } }),

@@ -6,6 +6,7 @@ import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceRecorder from "../../components/messaging/VoiceRecorder";
+import VideoNoteBubble from "../../components/messaging/VideoNoteBubble";
 import { useAuth } from "../../hooks/useAuth";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
@@ -266,9 +267,27 @@ export default function MessagesPage() {
       setError(reactionError.response?.data?.message || "Could not update this reaction.");
     }
   };
-  const sendVoice = async (blob, waveform) => {
+  const sendVoice = async (blob, waveform, mediaType = "audio") => {
+    if (mediaType === "video") return sendVideoNote(blob, waveform);
     if (!selected?.id) return;
     const response = await messageService.sendVoice(selected.id, blob, waveform);
+    const { message: sentMessage, conversationStatus = "ACTIVE" } = response.data.data;
+    queryClient.setQueryData(["messages", selected.id], (current) => {
+      if (!current || current.messages.some((item) => item.id === sentMessage.id)) return current;
+      return { ...current, messages: [...current.messages, sentMessage], conversationStatus, requestRequired: false };
+    });
+    queryClient.setQueryData(["messages", "conversations"], (current = []) => {
+      const existing = current.find((item) => item.id === selected.id);
+      const next = existing
+        ? { ...existing, lastMessage: sentMessage, status: conversationStatus }
+        : { id: selected.id, participant, lastMessage: sentMessage, status: conversationStatus, unreadCount: 0 };
+      return [next, ...current.filter((item) => item.id !== selected.id)];
+    });
+    queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+  };
+  const sendVideoNote = async (blob, onProgress) => {
+    if (!selected?.id) return;
+    const response = await messageService.sendVideoNote(selected.id, blob, onProgress);
     const { message: sentMessage, conversationStatus = "ACTIVE" } = response.data.data;
     queryClient.setQueryData(["messages", selected.id], (current) => {
       if (!current || current.messages.some((item) => item.id === sentMessage.id)) return current;
@@ -351,7 +370,7 @@ export default function MessagesPage() {
                   <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
-                    {message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
+                    {message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
                     <p className={`mt-0.5 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && !message.readAt ? " · Sent" : ""}</p>
                   </div>
                   {groupedReactions.length ? <div className={`-mt-1 flex flex-wrap gap-1 ${mine ? "mr-2 justify-end" : "ml-2"}`}>{groupedReactions.map(([emoji, count]) => {
