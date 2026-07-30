@@ -39,6 +39,7 @@ export const messageService = {
     });
   },
   deleteMessage: (messageId, scope = "me") => axiosInstance.delete(`/messages/${messageId}`, { params: { scope } }),
+  deleteConversation: (userId) => axiosInstance.delete(`/messages/conversations/${userId}`),
   reportMessage: (messageId, payload) => axiosInstance.post(`/messages/${messageId}/report`, payload),
   reportConversation: (userId, payload) => axiosInstance.post(`/messages/conversations/${userId}/report`, payload),
   block: (userId) => axiosInstance.put(`/messages/blocks/${userId}`),

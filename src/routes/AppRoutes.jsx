@@ -56,6 +56,7 @@ import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
+import MessageReportsPage from "../pages/admin/MessageReportsPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -184,6 +185,7 @@ function AppRoutes() {
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/content-moderation" />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
+          <Route path="/admin/message-reports" element={<MessageReportsPage />} />
         </Route>
       </Route>
     </Route>
