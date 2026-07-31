@@ -1,9 +1,10 @@
-import { FiActivity, FiBookmark, FiCheckCircle, FiCreditCard, FiEdit3, FiGrid, FiHome, FiMessageCircle, FiSettings, FiShoppingBag, FiStar, FiUser } from "react-icons/fi";
+import { FiActivity, FiBookmark, FiCheckCircle, FiCompass, FiCreditCard, FiEdit3, FiGrid, FiHome, FiMessageCircle, FiSettings, FiShoppingBag, FiStar, FiUser } from "react-icons/fi";
 import OrbitIcon from "../fanWeb/OrbitIcon";
 
 export const socialPrimaryNavItems = [
   { label: "Wall", to: "/wall", icon: FiHome },
   { label: "Seen", to: "/seen", icon: FiGrid },
+  { label: "Search", to: "/search", icon: FiCompass },
   { label: "Orbit", to: "/orbit", icon: OrbitIcon },
   { label: "Messages", to: "/messages", icon: FiMessageCircle },
   { label: "Profile", to: "/profile", icon: FiUser },

@@ -57,6 +57,12 @@ import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
 import MessageReportsPage from "../pages/admin/MessageReportsPage";
+import SearchPage from "../pages/social/SearchPage";
+import OnboardingPage from "../pages/onboarding/OnboardingPage";
+import WelcomePage from "../pages/onboarding/WelcomePage";
+import AccountSettingsPage from "../pages/settings/AccountSettingsPage";
+import PrivacySettingsPage from "../pages/settings/PrivacySettingsPage";
+import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -98,17 +104,22 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     </Route>
 
+    <Route path="/welcome" element={<WelcomePage />} />
+
     <Route element={<ProtectedRoute />}>
+      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/onboarding/:step" element={<OnboardingPage />} />
       <Route element={<MainLayout />}>
         <Route path="/settings/profile" element={<ProfileSettingsPage />} />
-        <Route path="/settings/account" element={<ProfileSettingsPage />} />
-        <Route path="/settings/privacy" element={<ProfileSettingsPage />} />
-        <Route path="/settings/notifications" element={<ProfileSettingsPage />} />
+        <Route path="/settings/account" element={<AccountSettingsPage />} />
+        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+        <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
       </Route>
 
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<FanHomePage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />

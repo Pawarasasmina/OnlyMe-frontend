@@ -3,11 +3,11 @@ export function resolveMediaUrl(url) {
     return "";
   }
 
-  if (/^https?:\/\//i.test(url)) {
+  if (/^(https?:|blob:|data:)/i.test(url)) {
     return url;
   }
 
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
   const origin = apiBase.replace(/\/api\/?$/, "");
 
   return `${origin}${url.startsWith("/") ? url : `/${url}`}`;
