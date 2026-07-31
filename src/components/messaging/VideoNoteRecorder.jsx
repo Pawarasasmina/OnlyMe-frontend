@@ -190,6 +190,6 @@ export default function VideoNoteRecorder({ disabled = false, onSend }) {
       {mode === "uploading" ? <span className="flex items-center gap-2 text-xs font-bold text-atseen-blue"><FiCheck /> Keep this chat open</span> : null}
     </div>
     {mode === "failed" ? <p className="mt-2 text-center text-[10px] leading-4 text-atseen-danger">{error}</p> : null}
-    {mode === "ready" ? <p className="mt-2 text-center text-[10px] text-atseen-muted">Tap to record · front camera · up to 60 seconds</p> : null}
+    {mode === "ready" ? <p className="mt-2 text-center text-[10px] text-atseen-muted">Eye to eye — they see you · up to 60 seconds</p> : null}
   </div>;
 }
