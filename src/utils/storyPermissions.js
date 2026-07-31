@@ -43,5 +43,5 @@ export function canReplyToStory(user, story) {
     return false;
   }
 
-  return story.allowReplies === true;
+  return story.allowReplies !== false;
 }

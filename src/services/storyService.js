@@ -87,7 +87,8 @@ function normalizeStory(story = {}) {
     },
     audience: story.audience || "everyone",
     allowReactions: story.allowReactions !== false,
-    allowReplies: story.allowReplies === true,
+    // Existing backend stories predate this flag and historically allowed replies.
+    allowReplies: story.allowReplies !== false,
     allowSharing: story.allowSharing !== false,
     createdAt,
     expiresAt: story.expiresAt || addHours(new Date(createdAt), 24),
@@ -153,6 +154,11 @@ function requireMocks() {
 }
 
 export const storyService = {
+  getStory: async (storyId) => {
+    const response = await axiosInstance.get(`/stories/${storyId}`);
+    return normalizeStory(response.data?.data?.story || response.data?.data || response.data);
+  },
+
   getActiveStories: async () => {
     if (STORY_API_ENABLED) {
       return axiosInstance.get("/stories/active").then((response) => normalizeApiList(response.data));

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FiBarChart2, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiTrash2, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FiBarChart2, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiSend, FiTrash2, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useDeleteStory, useMarkStoryViewed, useReactToStory } from "../../hooks/useStories";
-import { canCreateStory, canDeleteStory, canReactToStory, canViewStoryInsights } from "../../utils/storyPermissions";
+import { storyService } from "../../services/storyService";
+import { canCreateStory, canDeleteStory, canReactToStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
 import StoryInsightsModal from "./StoryInsightsModal";
 import StoryReactionTray from "./StoryReactionTray";
 
@@ -103,6 +105,7 @@ function StoryOverlays({ story }) {
 function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = [] }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
+  const queryClient = useQueryClient();
   const videoRef = useRef(null);
   const viewedRef = useRef(new Set());
   const [index, setIndex] = useState(initialIndex);
@@ -116,6 +119,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [recentReaction, setRecentReaction] = useState(null);
   const [reactions, setReactions] = useState(readReactions);
+  const [replyText, setReplyText] = useState("");
   const markViewedMutation = useMarkStoryViewed();
   const reactionMutation = useReactToStory();
   const deleteMutation = useDeleteStory();
@@ -124,9 +128,20 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
   const activeStory = stories[index] || null;
   const selectedReaction = activeStory ? reactions[activeStory.id]?.reaction : null;
   const canReact = canReactToStory(user, activeStory);
+  const canReply = canReplyToStory(user, activeStory);
   const canDelete = canDeleteStory(user, activeStory);
   const canViewInsights = canViewStoryInsights(user, activeStory);
   const canAdd = canCreateStory(user);
+  const replyMutation = useMutation({
+    mutationFn: ({ body, storyId }) => storyService.replyToStory(storyId, body),
+    onSuccess: () => {
+      setReplyText("");
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      showToast("Reply sent to Messages.");
+      onClose();
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Story reply could not be sent."),
+  });
 
   const boundedIndex = useMemo(() => Math.max(0, Math.min(stories.length - 1, initialIndex)), [initialIndex, stories.length]);
 
@@ -280,6 +295,13 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
     });
   };
 
+  const submitReply = (event) => {
+    event.preventDefault();
+    const body = replyText.trim();
+    if (!activeStory || !canReply || !body || replyMutation.isPending) return;
+    replyMutation.mutate({ body, storyId: activeStory.id });
+  };
+
   if (!activeStory) {
     return null;
   }
@@ -379,9 +401,34 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
           {activeStory.caption ? <p className="absolute bottom-24 left-5 right-5 z-30 rounded-2xl bg-black/20 px-3 py-2 text-center text-base font-bold leading-7 text-white backdrop-blur">{activeStory.caption}</p> : null}
           {recentReaction ? <span aria-live="polite" className="pointer-events-none absolute bottom-32 left-1/2 z-30 -translate-x-1/2 animate-bounce text-5xl motion-reduce:animate-none">{recentReaction}</span> : null}
           {canReact ? (
-            <div className="absolute bottom-[max(20px,env(safe-area-inset-bottom))] left-4 right-4 z-30">
+            <div className={`absolute left-4 right-4 z-30 ${canReply ? "bottom-[84px]" : "bottom-[max(20px,env(safe-area-inset-bottom))]"}`}>
               <StoryReactionTray disabled={!canReact} onReact={react} pending={reactionMutation.isPending} selectedReaction={selectedReaction} />
             </div>
+          ) : null}
+          {canReply ? (
+            <form
+              className="absolute bottom-[max(16px,env(safe-area-inset-bottom))] left-4 right-4 z-40 flex gap-2"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onSubmit={submitReply}
+            >
+              <input
+                aria-label="Reply to story"
+                className="min-w-0 flex-1 rounded-full border border-white/25 bg-black/45 px-4 py-3 text-sm text-white outline-none backdrop-blur placeholder:text-white/55 focus:border-atseen-blue"
+                maxLength={1000}
+                onChange={(event) => setReplyText(event.target.value)}
+                placeholder="Reply to Story…"
+                value={replyText}
+              />
+              <button
+                aria-label="Send story reply"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-45"
+                disabled={!replyText.trim() || replyMutation.isPending}
+                type="submit"
+              >
+                <FiSend aria-hidden="true" />
+              </button>
+            </form>
           ) : null}
           <button aria-label="Previous story" className="absolute bottom-20 left-0 top-24 z-10 w-1/3 cursor-default opacity-0" disabled={index === 0} onClick={() => goStory(-1)} type="button" />
           <button aria-label="Next story" className="absolute bottom-20 right-0 top-24 z-10 w-2/3 cursor-default opacity-0" onClick={() => goStory(1)} type="button" />

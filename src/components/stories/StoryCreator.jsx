@@ -109,7 +109,7 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
   const [editor, setEditor] = useState(initialEditor);
   const [caption, setCaption] = useState("");
   const [audience, setAudience] = useState("everyone");
-  const [settings, setSettings] = useState({ allowReactions: true, allowReplies: false, allowSharing: true });
+  const [settings, setSettings] = useState({ allowReactions: true, allowReplies: true, allowSharing: true });
   const [error, setError] = useState("");
   const [tool, setTool] = useState("move");
   const [selectedTextId, setSelectedTextId] = useState(null);
@@ -135,7 +135,7 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
     setEditor(initialEditor);
     setCaption("");
     setAudience("everyone");
-    setSettings({ allowReactions: true, allowReplies: false, allowSharing: true });
+    setSettings({ allowReactions: true, allowReplies: true, allowSharing: true });
     setTool("move");
     setSelectedTextId(null);
     setUpload({ error: "", progress: 0, step: "" });
