@@ -6,11 +6,13 @@ import { useFanToast } from "../shared/FanToastContext";
 import { atseenStatuses } from "../../../data/atseenMockData";
 import { useAuth } from "../../../hooks/useAuth";
 import { canCreateStory } from "../../../utils/storyPermissions";
+import { canCreateFeedPost } from "../../../utils/postPermissions";
+import FeedPostComposer from "../../posts/FeedPostComposer";
 
 const createOptions = [
   { label: "Seen", description: "A quick public note for the feed.", icon: FiPenTool },
   { label: "Story", description: "A temporary moment for your orbit.", icon: FiImage, requiresStoryPermission: true },
-  { label: "Home", description: "A longer note, ask, or useful sighting.", icon: FiEdit3 },
+  { label: "Home", description: "A longer note, ask, or useful sighting.", icon: FiEdit3, requiresFeedPostPermission: true },
   { label: "World", description: "A chaptered experience people can step into.", icon: FiLayers },
 ];
 
@@ -19,7 +21,13 @@ function PostComposer({ currentUser, onStatusChange, status }) {
   const { showToast } = useFanToast();
   const [statusOpen, setStatusOpen] = useState(false);
   const [postingOpen, setPostingOpen] = useState(false);
-  const visibleCreateOptions = createOptions.filter((option) => !option.requiresStoryPermission || canCreateStory(user));
+  const [feedComposerOpen, setFeedComposerOpen] = useState(false);
+  const canPostToHome = canCreateFeedPost(user);
+  const visibleCreateOptions = createOptions.filter((option) => {
+    if (option.requiresStoryPermission) return canCreateStory(user);
+    if (option.requiresFeedPostPermission) return canPostToHome;
+    return true;
+  });
 
   const chooseStatus = (nextStatus) => {
     onStatusChange(nextStatus);
@@ -32,7 +40,13 @@ function PostComposer({ currentUser, onStatusChange, status }) {
       <div className="my-[18px] flex items-center gap-3 rounded-2xl border border-atseen-line bg-atseen-surface px-4 py-3.5 text-sm text-atseen-dim">
         <button
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
-          onClick={() => setPostingOpen(true)}
+          onClick={() => {
+            if (!canPostToHome) {
+              showToast("Home post creation is only available for creator accounts.");
+              return;
+            }
+            setFeedComposerOpen(true);
+          }}
           type="button"
         >
           <FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} />
@@ -77,6 +91,10 @@ function PostComposer({ currentUser, onStatusChange, status }) {
               key={label}
               onClick={() => {
                 setPostingOpen(false);
+                if (label === "Home") {
+                  setFeedComposerOpen(true);
+                  return;
+                }
                 showToast(`${label} creation will open here when publishing is enabled.`);
               }}
               type="button"
@@ -92,6 +110,8 @@ function PostComposer({ currentUser, onStatusChange, status }) {
           ))}
         </div>
       </FanModal>
+
+      <FeedPostComposer currentUser={currentUser} isOpen={feedComposerOpen} onClose={() => setFeedComposerOpen(false)} />
     </>
   );
 }

@@ -22,7 +22,7 @@ function FanAvatar({ alt, brand = false, className = "", name = "Atseen", src, s
       {!brand && imageUrl && !failed ? (
         <img
           alt={alt || `${name} avatar`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-[center_35%]"
           onError={() => setFailed(true)}
           src={imageUrl}
         />

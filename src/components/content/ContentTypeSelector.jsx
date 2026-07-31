@@ -1,0 +1,4 @@
+import { FiFileText, FiHeadphones, FiImage, FiVideo } from "react-icons/fi";
+import { CONTENT_TYPES, formatContentLabel } from "../../utils/content";
+const icons = { IMAGE: FiImage, VIDEO: FiVideo, AUDIO: FiHeadphones, TEXT: FiFileText };
+export default function ContentTypeSelector({ value, onChange, disabled }) { return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{CONTENT_TYPES.map((type) => { const Icon = icons[type]; return <button className={`rounded-2xl border p-5 text-left transition ${value === type ? "border-brand-primary bg-brand-primary/15" : "border-white/10 bg-white/5 hover:border-white/25"}`} disabled={disabled} key={type} onClick={() => onChange(type)} type="button"><Icon className="text-2xl text-brand-secondary" /><strong className="mt-3 block">{formatContentLabel(type)}</strong></button>; })}</div>; }

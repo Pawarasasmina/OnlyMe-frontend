@@ -93,6 +93,19 @@ body::-webkit-scrollbar-thumb {
   }
 }
 
+@keyframes atseen-eye-pulse {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

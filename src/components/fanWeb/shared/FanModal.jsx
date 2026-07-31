@@ -4,6 +4,11 @@ import { FiX } from "react-icons/fi";
 function FanModal({ children, className = "", isOpen, onClose, title }) {
   const titleId = useId();
   const dialogRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -13,7 +18,7 @@ function FanModal({ children, className = "", isOpen, onClose, title }) {
     const previousFocus = document.activeElement;
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
 
       if (event.key === "Tab") {
@@ -49,7 +54,7 @@ function FanModal({ children, className = "", isOpen, onClose, title }) {
         previousFocus.focus();
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;

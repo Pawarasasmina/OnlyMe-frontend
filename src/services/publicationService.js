@@ -1,0 +1,18 @@
+import axiosInstance from "../api/axiosInstance";
+
+export const publicationService = {
+  listMyPublications: (params) => axiosInstance.get("/publications/mine", { params }),
+  getMyPublication: (id) => axiosInstance.get(`/publications/mine/${id}`),
+  createPublicationDraft: (payload) => axiosInstance.post("/publications/drafts", payload),
+  updatePublicationDraft: (id, payload) => axiosInstance.put(`/publications/mine/${id}`, payload),
+  addChapter: (id, payload) => axiosInstance.post(`/publications/mine/${id}/chapters`, payload),
+  updateChapter: (id, chapterId, payload) => axiosInstance.put(`/publications/mine/${id}/chapters/${chapterId}`, payload),
+  deleteChapter: (id, chapterId, statusVersion) => axiosInstance.delete(`/publications/mine/${id}/chapters/${chapterId}`, { data: { statusVersion } }),
+  reorderChapters: (id, chapterIds, statusVersion) => axiosInstance.post(`/publications/mine/${id}/reorder-chapters`, { chapterIds, statusVersion }),
+  uploadMedia: (id, file, fields, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/media-upload`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },
+  submitPublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/submit`, { statusVersion }),
+  resubmitPublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/resubmit`, { statusVersion }),
+  archivePublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/archive`, { statusVersion }),
+  listPublishedSeens: (params) => axiosInstance.get("/publications/seen", { params }),
+  getPublicPublication: (id) => axiosInstance.get(`/publications/${id}`),
+};
