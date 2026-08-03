@@ -1,6 +1,14 @@
+import { Link } from "react-router-dom";
+import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
 import LoadingSkeleton from "../fanWeb/shared/LoadingSkeleton";
+import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { useStoryInsights } from "../../hooks/useStories";
+
+function viewedTime(value) {
+  if (!value) return "Viewed";
+  return new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+}
 
 function StoryInsightsModal({ isOpen, onClose, story }) {
   const insightsQuery = useStoryInsights(story?.id, { enabled: isOpen && Boolean(story?.id) });
@@ -16,11 +24,6 @@ function StoryInsightsModal({ isOpen, onClose, story }) {
       ) : null}
       {insights ? (
         <div className="space-y-5">
-          {insights.unavailable ? (
-            <p className="rounded-2xl border border-atseen-line bg-atseen-surface p-4 text-sm text-atseen-muted">
-              Insights are not available yet. The component is ready for backend view, reaction, reply, and completion data.
-            </p>
-          ) : null}
           <div className="grid grid-cols-2 gap-3">
             {[
               ["Views", insights.totalViews ?? 0],
@@ -49,14 +52,15 @@ function StoryInsightsModal({ isOpen, onClose, story }) {
             )}
           </section>
           <section>
-            <h3 className="text-sm font-bold text-atseen-text">Viewers</h3>
+            <div className="flex items-end justify-between"><div><h3 className="text-sm font-bold text-atseen-text">Viewers</h3><p className="mt-1 text-[11px] text-atseen-muted">People who reacted appear first.</p></div><span className="text-xs font-bold text-atseen-blue">{insights.reactionTotal || 0} reacted</span></div>
             {insights.viewers?.length ? (
-              <div className="mt-3 divide-y divide-atseen-line rounded-2xl border border-atseen-line">
+              <div className="mt-3 divide-y divide-atseen-line overflow-hidden rounded-2xl border border-atseen-line">
                 {insights.viewers.map((viewer) => (
-                  <div className="flex items-center justify-between p-3 text-sm" key={viewer.id}>
-                    <span>{viewer.name || viewer.username}</span>
-                    <span className="text-atseen-muted">{viewer.reaction || viewer.viewedAt || "Viewed"}</span>
-                  </div>
+                  <Link className="flex items-center gap-3 p-3 transition hover:bg-white/[0.04]" key={viewer.id} onClick={onClose} to={`/profile/${viewer.username}`}>
+                    <div className="relative"><FanAvatar name={viewer.name || viewer.username} size="h-10 w-10" src={viewer.avatar} />{viewer.reaction ? <span className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full border-2 border-atseen-surface bg-atseen-bg text-sm">{viewer.reaction}</span> : null}</div>
+                    <div className="min-w-0 flex-1"><p className="flex items-center gap-1 truncate text-sm font-bold text-atseen-text">{viewer.name || viewer.username}{viewer.verified ? <VerifiedBadge /> : null}</p><p className="truncate text-[11px] text-atseen-muted">@{viewer.username} · {viewedTime(viewer.viewedAt)}</p></div>
+                    <span className={`shrink-0 text-xs font-bold ${viewer.reaction ? "text-atseen-blue" : "text-atseen-muted"}`}>{viewer.reaction || "Viewed"}</span>
+                  </Link>
                 ))}
               </div>
             ) : (

@@ -38,6 +38,7 @@ function groupStories(stories, user) {
 
   groups.forEach((group) => {
     group.stories.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    group.firstUnseenIndex = group.stories.findIndex((story) => !story.viewed);
   });
 
   return groups.sort((a, b) => Number(b.isOwn) - Number(a.isOwn));
@@ -130,7 +131,7 @@ function StoriesRow({ currentUser }) {
             key={group.id}
             label={`View ${group.isOwn ? "your" : group.owner.name + "'s"} Story`}
             onAdd={openCreator}
-            onOpen={() => setViewer({ groupId: group.id, index: 0 })}
+            onOpen={() => setViewer({ groupId: group.id, index: group.firstUnseenIndex >= 0 ? group.firstUnseenIndex : 0 })}
             owner={group.owner}
             statusEmoji={group.statusEmoji}
           />

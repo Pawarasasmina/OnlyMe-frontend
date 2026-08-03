@@ -63,6 +63,7 @@ function StoryOverlays({ story }) {
           style={{
             color: overlay.color || "#fff",
             fontSize: `${overlay.fontSize || 28}px`,
+            fontWeight: overlay.fontWeight || 800,
             left: `${overlay.x || 50}%`,
             textAlign: overlay.align || "center",
             top: `${overlay.y || 50}%`,
@@ -308,7 +309,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
 
   return (
     <>
-      <FanModal className="max-h-[100dvh] max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-[440px] sm:rounded-[26px]" isOpen={isOpen} onClose={onClose} title="Story viewer">
+      <FanModal className="h-[100dvh] max-h-[100dvh] max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:h-auto sm:max-w-[440px] sm:rounded-[26px]" hideHeader isOpen={isOpen} onClose={onClose} overlayClassName="p-0 sm:p-4" title="Story viewer">
         <div
           className="relative h-[100dvh] overflow-hidden bg-black sm:h-[min(88vh,760px)] sm:rounded-[26px]"
           onPointerDown={() => setHoldPaused(true)}
@@ -400,6 +401,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
           ) : null}
           {activeStory.caption ? <p className="absolute bottom-24 left-5 right-5 z-30 rounded-2xl bg-black/20 px-3 py-2 text-center text-base font-bold leading-7 text-white backdrop-blur">{activeStory.caption}</p> : null}
           {recentReaction ? <span aria-live="polite" className="pointer-events-none absolute bottom-32 left-1/2 z-30 -translate-x-1/2 animate-bounce text-5xl motion-reduce:animate-none">{recentReaction}</span> : null}
+          {canViewInsights ? <button className="absolute bottom-[max(18px,env(safe-area-inset-bottom))] left-4 right-4 z-40 flex items-center rounded-2xl border border-white/15 bg-black/50 px-3 py-2.5 text-left text-white shadow-xl backdrop-blur transition hover:bg-black/65" onClick={(event) => { event.stopPropagation(); setInsightsOpen(true); }} onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} type="button"><span className="flex -space-x-2">{(activeStory.insights?.viewers || []).slice(0, 4).map((viewer) => <span className="relative" key={viewer.id}><FanAvatar name={viewer.name || viewer.username} size="h-8 w-8" src={viewer.avatar} />{viewer.reaction ? <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full border border-black bg-atseen-bg text-[9px]">{viewer.reaction}</span> : null}</span>)}</span><span className={`${activeStory.insights?.viewers?.length ? "ml-3" : ""} min-w-0 flex-1`}><strong className="block text-xs">{activeStory.insights?.viewCount ? `Seen by ${activeStory.insights.viewCount}` : "No viewers yet"}</strong><small className="block truncate text-[10px] text-white/60">{activeStory.insights?.viewers?.some((viewer) => viewer.reaction) ? "Reactors shown first · View all" : "View story insights"}</small></span><span className="ml-2 text-xs font-bold text-atseen-blue">View</span></button> : null}
           {canReact ? (
             <div className={`absolute left-4 right-4 z-30 ${canReply ? "bottom-[84px]" : "bottom-[max(20px,env(safe-area-inset-bottom))]"}`}>
               <StoryReactionTray disabled={!canReact} onReact={react} pending={reactionMutation.isPending} selectedReaction={selectedReaction} />

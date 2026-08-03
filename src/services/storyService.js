@@ -45,12 +45,12 @@ function timeAgo(value) {
 }
 
 function normalizeOwner(story = {}) {
-  const sourceId = story.owner?.id || story.ownerId || story.creatorId || story.id;
+  const sourceId = story.owner?.id || story.ownerId || story.creatorId;
   const creator = atseenCreators[sourceId] || {};
   const name = story.owner?.name || story.owner?.displayName || story.name || creator.name || "Creator";
 
   return {
-    id: sourceId || story.id,
+    id: sourceId || story.owner?.username || story.username || name.toLowerCase().replace(/\s+/g, ""),
     name,
     username: story.owner?.username || story.username || creator.username || name.toLowerCase().replace(/\s+/g, ""),
     avatar: resolveMediaUrl(story.owner?.avatar || story.avatar || creator.avatar || story.image || story.mediaUrl),
@@ -96,6 +96,7 @@ function normalizeStory(story = {}) {
     viewCount: Number(story.viewCount) || 0,
     reactionCount: Number(story.reactionCount) || 0,
     replyCount: Number(story.replyCount) || 0,
+    insights: story.insights || null,
     statusEmoji: story.statusEmoji || "",
     timeAgo: story.timeAgo || timeAgo(createdAt),
     isOwner: Boolean(story.isOwner || story.isOwn),

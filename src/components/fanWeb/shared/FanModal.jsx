@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { FiX } from "react-icons/fi";
 
-function FanModal({ children, className = "", isOpen, onClose, title }) {
+function FanModal({ children, className = "", hideHeader = false, isOpen, onClose, overlayClassName = "", title }) {
   const titleId = useId();
   const dialogRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -59,9 +59,10 @@ function FanModal({ children, className = "", isOpen, onClose, title }) {
 
   return (
     <div
-      aria-labelledby={titleId}
+      aria-label={hideHeader ? title : undefined}
+      aria-labelledby={hideHeader ? undefined : titleId}
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md ${overlayClassName}`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -74,7 +75,7 @@ function FanModal({ children, className = "", isOpen, onClose, title }) {
         ref={dialogRef}
         tabIndex={-1}
       >
-        <div className="mb-4 flex items-center gap-4">
+        {!hideHeader ? <div className="mb-4 flex items-center gap-4">
           <h2 className="min-w-0 flex-1 text-lg font-bold text-atseen-text" id={titleId}>
             {title}
           </h2>
@@ -86,7 +87,7 @@ function FanModal({ children, className = "", isOpen, onClose, title }) {
           >
             <FiX aria-hidden="true" />
           </button>
-        </div>
+        </div> : null}
         {children}
       </div>
     </div>
