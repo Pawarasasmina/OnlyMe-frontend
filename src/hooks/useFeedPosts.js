@@ -19,7 +19,14 @@ function insertPostIntoFeed(queryClient, post) {
 function replacePostInCaches(queryClient, post) {
   queryClient.setQueriesData({ queryKey: ["feed-posts"] }, (current) => {
     if (!current?.items) return current;
-    return { ...current, items: current.items.map((item) => (item.id === post.id ? post : item)) };
+    return {
+      ...current,
+      items: current.items.map((item) => (
+        item.id === post.id || item.originalPostId === post.id
+          ? { ...item, ...post, id: item.id, originalPostId: item.originalPostId || post.id, shareId: item.shareId || post.shareId || null, sharedBy: item.sharedBy || post.sharedBy || null, shareCaption: item.shareCaption || post.shareCaption || "", feedCreatedAt: item.feedCreatedAt || post.feedCreatedAt }
+          : item
+      )),
+    };
   });
 }
 
@@ -131,6 +138,19 @@ export function useToggleFeedPostSave() {
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
+    },
+  });
+}
+
+export function useToggleFeedPostShare() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ caption = "", postId }) => postService.toggleShare(postId, caption),
+    retry: false,
+    onSuccess: (post) => {
+      replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
     },
   });
 }

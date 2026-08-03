@@ -30,6 +30,7 @@ function normalizeList(response) {
 
 export const postService = {
   getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params })),
+  getPost: async (postId) => normalizePost((await axiosInstance.get(`/posts/${encodeURIComponent(postId)}`)).data?.data?.post),
   getMyPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts/mine", { params })),
   getDrafts: async () => normalizeList(await axiosInstance.get("/posts/drafts")),
   createPost: async (formData, options = {}) => {
@@ -60,6 +61,10 @@ export const postService = {
   },
   toggleSave: async (postId) => {
     const response = await axiosInstance.put(`/posts/${postId}/save`);
+    return normalizePost(response.data?.data?.post);
+  },
+  toggleShare: async (postId, caption = "") => {
+    const response = await axiosInstance.put(`/posts/${postId}/share`, { caption });
     return normalizePost(response.data?.data?.post);
   },
   hidePost: async (postId, reason = "NOT_USEFUL") => {

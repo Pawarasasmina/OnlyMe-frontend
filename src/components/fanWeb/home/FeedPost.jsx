@@ -15,6 +15,7 @@ import {
   useReactToFeedPost,
   useReportFeedPost,
   useToggleFeedPostSave,
+  useToggleFeedPostShare,
 } from "../../../hooks/useFeedPosts";
 import { canManageFeedPost } from "../../../utils/postPermissions";
 
@@ -50,7 +51,7 @@ function relativeTime(value, fallback = "now") {
 
 function normalizeFeedPost(post = {}) {
   const mockCreator = post.creatorId ? atseenCreators[post.creatorId] : null;
-  const author = post.author || mockCreator || { name: "Creator", username: "creator" };
+  const author = post.author || post.creator || mockCreator || { name: "Creator", username: "creator" };
   const media = post.media?.length ? post.media : (post.images || []).map((url) => ({ id: url, type: "image", url }));
   const comments = post.comments?.length
     ? post.comments.map((comment) => ({
@@ -63,6 +64,11 @@ function normalizeFeedPost(post = {}) {
 
   return {
     id: post.id,
+    originalPostId: post.originalPostId || post.id,
+    shareId: post.shareId || null,
+    sharedBy: post.sharedBy || null,
+    shareCaption: post.shareCaption || "",
+    feedCreatedAt: post.feedCreatedAt || post.publishedAt || post.createdAt,
     author: {
       id: author.id || author._id || post.creatorId,
       avatar: author.avatar || "",
@@ -81,10 +87,12 @@ function normalizeFeedPost(post = {}) {
     result: post.result || "",
     seededComments: comments,
     supportCount: Number(post.supportCount ?? post.handshakes ?? 0),
+    shareCount: Number(post.shareCount ?? 0),
     text: post.text || "",
     timestamp: post.timestamp || relativeTime(post.createdAt || post.publishedAt),
     viewerReaction: post.viewerReaction || null,
     viewerSaved: Boolean(post.viewerSaved),
+    viewerShared: Boolean(post.viewerShared),
   };
 }
 
@@ -97,6 +105,7 @@ function FeedPost({ post }) {
   const reactionMutation = useReactToFeedPost();
   const commentMutation = useCreateFeedPostComment();
   const saveMutation = useToggleFeedPostSave();
+  const shareMutation = useToggleFeedPostShare();
   const hideMutation = useHideFeedPost();
   const reportMutation = useReportFeedPost();
   const blockMutation = useBlockFeedPostAuthor();
@@ -104,8 +113,11 @@ function FeedPost({ post }) {
   const [reaction, setReaction] = useState(normalized.viewerReaction);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [saved, setSaved] = useState(normalized.viewerSaved);
+  const [shared, setShared] = useState(normalized.viewerShared);
   const [comments, setComments] = useState(normalized.seededComments);
   const [commentText, setCommentText] = useState("");
+  const [shareCaption, setShareCaption] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
   const [emojiPanelOpen, setEmojiPanelOpen] = useState(false);
   const [activeEmojiGroupKey, setActiveEmojiGroupKey] = useState(commentEmojiGroups[0].key);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -114,7 +126,6 @@ function FeedPost({ post }) {
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const isDatabasePost = mongoIdPattern.test(String(normalized.id || ""));
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
   const selectedReaction = reactions.find((item) => item.key === reaction);
@@ -129,7 +140,11 @@ function FeedPost({ post }) {
   const reactionCount = reactionSummary.reduce((total, item) => total + item.count, 0);
   const activeEmojiGroup = commentEmojiGroups.find((group) => group.key === activeEmojiGroupKey) || commentEmojiGroups[0];
   const commentCount = Math.max(normalized.commentCount, comments.length);
-  const atseenUrl = useMemo(() => `https://atseen.com/posts/${normalized.id}`, [normalized.id]);
+  const actionPostId = normalized.originalPostId || normalized.id;
+  const postUrl = useMemo(() => {
+    const origin = typeof window === "undefined" ? "" : window.location.origin;
+    return `${origin}/posts/${actionPostId}`;
+  }, [actionPostId]);
 
   useEffect(() => {
     setReaction(normalized.viewerReaction);
@@ -143,26 +158,72 @@ function FeedPost({ post }) {
     setSaved(normalized.viewerSaved);
   }, [normalized.viewerSaved]);
 
+  useEffect(() => {
+    setShared(normalized.viewerShared);
+  }, [normalized.viewerShared]);
+
   const syncSavedPost = (savedPost) => {
     const next = normalizeFeedPost(savedPost);
     setReaction(next.viewerReaction);
     setComments(next.seededComments);
     setSaved(next.viewerSaved);
+    setShared(next.viewerShared);
   };
 
   const requireDatabasePost = () => {
-    if (isDatabasePost) return true;
+    if (mongoIdPattern.test(String(actionPostId || ""))) return true;
     showToast("This prototype post is not stored in the database yet.");
     return false;
   };
 
-  const share = async () => {
+  const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(atseenUrl);
-      showToast("Link copied - atseen.com");
+      await navigator.clipboard.writeText(postUrl);
+      showToast("Post link copied.");
     } catch {
       showToast("Could not copy the link. Try again from your browser.");
     }
+  };
+
+  const toggleShare = () => {
+    if (shareMutation.isPending) return;
+    if (!requireDatabasePost()) return;
+
+    if (shared) {
+      shareMutation.mutate(
+        { postId: actionPostId },
+        {
+          onError: (error) => showToast(error?.response?.data?.message || "Post could not be unshared."),
+          onSuccess: (savedPost) => {
+            syncSavedPost(savedPost);
+            setShareOpen(false);
+            setShareCaption("");
+            showToast("Removed from your profile.");
+          },
+        }
+      );
+      return;
+    }
+
+    setShareOpen(true);
+  };
+
+  const submitShare = () => {
+    if (shareMutation.isPending) return;
+    if (!requireDatabasePost()) return;
+
+    shareMutation.mutate(
+      { caption: shareCaption.trim(), postId: actionPostId },
+      {
+        onError: (error) => showToast(error?.response?.data?.message || "Post could not be shared."),
+        onSuccess: (savedPost) => {
+          syncSavedPost(savedPost);
+          setShareOpen(false);
+          setShareCaption("");
+          showToast("Shared to your profile.");
+        },
+      }
+    );
   };
 
   const submitComment = () => {
@@ -175,7 +236,7 @@ function FeedPost({ post }) {
     if (!requireDatabasePost()) return;
 
     commentMutation.mutate(
-      { postId: normalized.id, text: trimmed },
+      { postId: actionPostId, text: trimmed },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Comment could not be saved."),
         onSuccess: (savedPost) => {
@@ -192,7 +253,7 @@ function FeedPost({ post }) {
     if (!requireDatabasePost()) return;
 
     reactionMutation.mutate(
-      { postId: normalized.id, reaction: nextReaction },
+      { postId: actionPostId, reaction: nextReaction },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Reaction could not be saved."),
         onSuccess: syncSavedPost,
@@ -204,7 +265,7 @@ function FeedPost({ post }) {
     if (saveMutation.isPending) return;
     if (!requireDatabasePost()) return;
 
-    saveMutation.mutate(normalized.id, {
+    saveMutation.mutate(actionPostId, {
       onError: (error) => showToast(error?.response?.data?.message || "Post could not be saved."),
       onSuccess: (savedPost) => {
         const next = normalizeFeedPost(savedPost);
@@ -219,7 +280,7 @@ function FeedPost({ post }) {
     if (!requireDatabasePost()) return;
 
     hideMutation.mutate(
-      { postId: normalized.id, reason: "NOT_USEFUL" },
+      { postId: actionPostId, reason: "NOT_USEFUL" },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Post could not be hidden."),
         onSuccess: () => showToast("Thanks. We will tune your feed."),
@@ -231,7 +292,7 @@ function FeedPost({ post }) {
     if (blockMutation.isPending) return;
     if (!requireDatabasePost()) return;
 
-    blockMutation.mutate(normalized.id, {
+    blockMutation.mutate(actionPostId, {
       onError: (error) => showToast(error?.response?.data?.message || "Account could not be blocked."),
       onSuccess: () => showToast(`${creator.name.split(" ")[0]} is blocked. They will not know.`),
     });
@@ -275,7 +336,10 @@ function FeedPost({ post }) {
       toggleSave();
       setMoreOpen(false);
     } else if (action === "share") {
-      share();
+      toggleShare();
+      setMoreOpen(false);
+    } else if (action === "copy") {
+      copyLink();
       setMoreOpen(false);
     } else if (action === "not-useful") {
       hidePost();
@@ -293,7 +357,7 @@ function FeedPost({ post }) {
       setMoreOpen(false);
       setDeleteOpen(true);
     } else if (action === "view") {
-      showToast("Post view opens when public permalink pages are enabled.");
+      window.location.assign(postUrl);
       setMoreOpen(false);
     }
   };
@@ -301,6 +365,17 @@ function FeedPost({ post }) {
   return (
     <>
       <article className="border-b border-white/[0.05] py-[18px]">
+        {normalized.sharedBy ? (
+          <div className="mb-3 flex items-center gap-2 text-[11px] text-atseen-muted">
+            <FiShare2 className="text-atseen-blue" />
+            <span className="font-bold text-atseen-text">{normalized.sharedBy.name || `@${normalized.sharedBy.username}`}</span>
+            <span>shared this · {relativeTime(normalized.feedCreatedAt)}</span>
+          </div>
+        ) : null}
+        {normalized.shareCaption ? (
+          <p className="mb-3 whitespace-pre-wrap text-sm leading-7 text-white/90">{normalized.shareCaption}</p>
+        ) : null}
+        <div className={normalized.sharedBy ? "rounded-2xl border border-atseen-line bg-atseen-surface/45 p-3" : ""}>
         <div className="flex items-center gap-2.5">
           <button className="shrink-0" onClick={() => showToast(`${creator.name}'s profile preview opens from Orbit.`)} type="button">
             <FanAvatar name={creator.name} size="h-[38px] w-[38px]" src={creator.avatar} />
@@ -340,6 +415,7 @@ function FeedPost({ post }) {
             ))}
           </div>
         ) : null}
+        </div>
 
         <div className="mt-3 flex items-center gap-5 text-[11.5px] font-semibold text-atseen-dim">
           <div
@@ -399,8 +475,8 @@ function FeedPost({ post }) {
           <button className="inline-flex items-center gap-1.5 transition hover:text-white" onClick={() => setCommentsOpen(true)} type="button">
             <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>
           </button>
-          <button className="inline-flex items-center gap-1.5 transition hover:text-white" onClick={share} type="button">
-            <FiShare2 aria-hidden="true" /> <span>Share</span>
+          <button className={`inline-flex items-center gap-1.5 transition hover:text-white ${shared ? "text-atseen-blue" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} type="button">
+            <FiShare2 aria-hidden="true" /> <span>{shared ? "Shared" : "Share"}{normalized.shareCount ? ` ${normalized.shareCount}` : ""}</span>
           </button>
           <button
             aria-label={saved ? "Remove saved post" : "Save post"}
@@ -501,18 +577,69 @@ function FeedPost({ post }) {
         </div>
       </FanModal>
 
+      <FanModal
+        isOpen={shareOpen}
+        onClose={() => {
+          setShareOpen(false);
+          setShareCaption("");
+        }}
+        title="Share to profile"
+      >
+        <p className="text-sm leading-6 text-atseen-muted">Add your own note before this appears on your profile and in the Wall feed.</p>
+        <label className="mt-4 block text-xs font-bold text-atseen-muted">
+          Caption <span className="font-normal">(optional)</span>
+          <textarea
+            className="mt-2 min-h-28 w-full resize-y rounded-xl border border-atseen-line bg-atseen-bg p-3 text-sm text-white outline-none focus:border-atseen-blue"
+            maxLength={500}
+            onChange={(event) => setShareCaption(event.target.value)}
+            placeholder="Say something about this post..."
+            value={shareCaption}
+          />
+        </label>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg">
+          <div className="flex items-center gap-3 p-3">
+            <FanAvatar name={creator.name} size="h-9 w-9" src={creator.avatar} />
+            <div className="min-w-0">
+              <p className="flex items-center gap-1 truncate text-xs font-bold">{creator.name}{creator.verified ? <VerifiedBadge /> : null}</p>
+              <p className="text-[10px] text-atseen-muted">@{creator.username} · Original post</p>
+            </div>
+          </div>
+          <div className="border-t border-atseen-line p-3">
+            <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-white/90">{normalized.text}</p>
+            {normalized.media?.[0]?.url ? <img alt="Post preview" className="mt-3 max-h-52 w-full rounded-xl object-cover" src={normalized.media[0].url} /> : null}
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <button className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text" onClick={copyLink} type="button">Copy Link</button>
+          <button
+            className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text"
+            onClick={() => {
+              setShareOpen(false);
+              setShareCaption("");
+            }}
+            type="button"
+          >
+            Cancel
+          </button>
+          <button className="rounded-xl bg-atseen-blue px-4 py-2 text-sm font-bold text-atseen-bg disabled:opacity-60" disabled={shareMutation.isPending} onClick={submitShare} type="button">
+            {shareMutation.isPending ? "Sharing..." : "Share"}
+          </button>
+        </div>
+      </FanModal>
+
       <FanModal isOpen={moreOpen} onClose={() => setMoreOpen(false)} title="More">
         <div className="divide-y divide-white/[0.05]">
           {(ownsPost
             ? [
               ["edit", "Edit Post", FiMoreHorizontal],
               ["delete", "Delete Post", FiFlag],
-              ["share", "Copy Link", FiShare2],
+              ["copy", "Copy Link", FiShare2],
               ["view", "View Post", FiMoreHorizontal],
             ]
             : [
               ["save", saved ? "Remove saved post" : "Save post", FiBookmark],
-              ["share", "Share", FiShare2],
+              ["share", shared ? "Remove from profile" : "Share to profile", FiShare2],
+              ["copy", "Copy Link", FiShare2],
               ["not-useful", "Not useful", FiMoreHorizontal],
               ["report", "Report", FiFlag],
               ["block", `Block ${creator.name.split(" ")[0]}`, FiFlag],
@@ -529,7 +656,7 @@ function FeedPost({ post }) {
         </div>
       </FanModal>
 
-      <FeedPostComposer currentUser={creator} initialPost={normalized} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
+      <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
 
       <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Post">
         <p className="text-sm leading-6 text-atseen-muted">This removes the post from Home and your public posts. This action cannot be undone.</p>
@@ -539,7 +666,7 @@ function FeedPost({ post }) {
             className="rounded-xl bg-atseen-danger px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
             disabled={deleteMutation.isPending}
             onClick={() => {
-              deleteMutation.mutate(normalized.id, {
+              deleteMutation.mutate(actionPostId, {
                 onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
                 onSuccess: () => {
                   setDeleteOpen(false);

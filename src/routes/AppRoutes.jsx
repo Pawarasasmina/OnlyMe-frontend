@@ -58,6 +58,7 @@ import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
 import MessageReportsPage from "../pages/admin/MessageReportsPage";
 import SearchPage from "../pages/social/SearchPage";
+import PostDetailPage from "../pages/social/PostDetailPage";
 import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import WelcomePage from "../pages/onboarding/WelcomePage";
 import AccountSettingsPage from "../pages/settings/AccountSettingsPage";
@@ -119,6 +120,7 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<FanHomePage />} />
+          <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
