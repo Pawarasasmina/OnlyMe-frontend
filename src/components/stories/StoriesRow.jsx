@@ -16,7 +16,8 @@ function groupStories(stories, user) {
   const byOwner = new Map();
 
   stories.forEach((story) => {
-    const ownerId = getStoryOwnerId(story) || story.owner?.username || story.id;
+    const isOwnStory = Boolean(story.isOwner || story.isOwn);
+    const ownerId = isOwnStory && userId ? userId : getStoryOwnerId(story) || story.owner?.username || story.username || story.id;
     const isOwn = Boolean(canUserCreate && (story.isOwner || story.isOwn || (userId && ownerId === userId)));
     const displayStory = isOwn ? story : { ...story, isOwner: false, isOwn: false };
 

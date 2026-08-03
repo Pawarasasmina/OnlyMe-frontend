@@ -16,6 +16,20 @@ const IMAGE_DURATION_MS = 5000;
 const VIEW_THRESHOLD_MS = 1000;
 const REACTIONS_KEY = "atseen_story_reactions";
 
+function formatStoryTimeAgo(value) {
+  const created = new Date(value).getTime();
+  if (!created) return "Now";
+
+  const minutes = Math.max(0, Math.floor((Date.now() - created) / 60000));
+  if (minutes < 1) return "Now";
+  if (minutes < 60) return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+
+  return `${Math.floor(hours / 24)}d`;
+}
+
 function readReactions() {
   try {
     return JSON.parse(localStorage.getItem(REACTIONS_KEY) || "{}");
@@ -340,7 +354,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
                 <span className="truncate">{activeStory.owner.name}</span>
                 {activeStory.owner.verified ? <VerifiedBadge className="h-3.5 w-3.5 shrink-0" /> : null}
               </p>
-              <p className="truncate text-[10px] font-semibold text-white/65">{activeStory.timeAgo || "Now"}</p>
+              <p className="truncate text-[10px] font-semibold text-white/65">{formatStoryTimeAgo(activeStory.createdAt)}</p>
             </div>
             <button
               aria-label={paused ? "Resume story" : "Pause story"}

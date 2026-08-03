@@ -122,3 +122,53 @@ export function useCreateFeedPostComment() {
     },
   });
 }
+
+export function useToggleFeedPostSave() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: postService.toggleSave,
+    retry: false,
+    onSuccess: (post) => {
+      replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: ["saved-content"] });
+    },
+  });
+}
+
+export function useHideFeedPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, reason }) => postService.hidePost(postId, reason),
+    retry: false,
+    onSuccess: (_data, { postId }) => {
+      removePostFromCaches(queryClient, postId);
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+    },
+  });
+}
+
+export function useReportFeedPost() {
+  return useMutation({
+    mutationFn: ({ payload, postId }) => postService.reportPost(postId, payload),
+    retry: false,
+  });
+}
+
+export function useBlockFeedPostAuthor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: postService.blockPostAuthor,
+    retry: false,
+    onSuccess: (data) => {
+      if (data?.blockedUserId) {
+        queryClient.setQueriesData({ queryKey: ["feed-posts"] }, (current) => {
+          if (!current?.items) return current;
+          return { ...current, items: current.items.filter((item) => String(item.author?.id || item.authorId || item.creatorId) !== String(data.blockedUserId)) };
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["orbit"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+    },
+  });
+}

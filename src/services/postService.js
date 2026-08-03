@@ -58,5 +58,21 @@ export const postService = {
     const response = await axiosInstance.post(`/posts/${postId}/comments`, { text });
     return normalizePost(response.data?.data?.post);
   },
+  toggleSave: async (postId) => {
+    const response = await axiosInstance.put(`/posts/${postId}/save`);
+    return normalizePost(response.data?.data?.post);
+  },
+  hidePost: async (postId, reason = "NOT_USEFUL") => {
+    const response = await axiosInstance.post(`/posts/${postId}/hide`, { reason });
+    return response.data?.data;
+  },
+  reportPost: async (postId, payload) => {
+    const response = await axiosInstance.post(`/posts/${postId}/report`, payload);
+    return response.data?.data;
+  },
+  blockPostAuthor: async (postId) => {
+    const response = await axiosInstance.put(`/posts/${postId}/block-author`);
+    return response.data?.data;
+  },
   deletePost: async (postId) => axiosInstance.delete(`/posts/${postId}`).then((response) => response.data?.data),
 };

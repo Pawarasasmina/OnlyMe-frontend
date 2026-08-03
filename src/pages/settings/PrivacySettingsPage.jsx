@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FiUserX } from "react-icons/fi";
 import Button from "../../components/common/Button";
 import Loader from "../../components/common/Loader";
+import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import SettingsNav from "./SettingsNav";
@@ -53,6 +55,11 @@ function PrivacySettingsPage() {
     queryFn: () => profileService.getPrivacySettings().then((response) => response.data.data),
   });
 
+  const blockedQuery = useQuery({
+    queryKey: ["settings", "blocked-accounts"],
+    queryFn: () => profileService.getBlockedAccounts().then((response) => response.data.data.items || []),
+  });
+
   useEffect(() => {
     if (query.data && !dirty) {
       setForm({
@@ -75,6 +82,22 @@ function PrivacySettingsPage() {
     onError: (err) => {
       setMessage("");
       setError(normalizeApiError(err, "Your settings could not be saved. Please try again.").message);
+    },
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: (userId) => profileService.unblockAccount(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings", "blocked-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["orbit"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      setMessage("Account unblocked.");
+      setError("");
+    },
+    onError: (err) => {
+      setMessage("");
+      setError(normalizeApiError(err, "Unable to unblock this account. Please try again.").message);
     },
   });
 
@@ -129,6 +152,44 @@ function PrivacySettingsPage() {
               <Toggle checked={Boolean(form.privacySettings[key])} key={key} label={label} name={key} onChange={updateToggle} />
             ))}
           </div>
+        </section>
+        <section className="space-y-4 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-brand-primary">
+              <FiUserX />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold">Blocked accounts</h2>
+              <p className="mt-1 text-sm text-brand-mist/60">Accounts you blocked will not appear in your social spaces.</p>
+            </div>
+          </div>
+          {blockedQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">Loading blocked accounts...</p> : null}
+          {blockedQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">Unable to load blocked accounts.</p> : null}
+          {!blockedQuery.isLoading && !blockedQuery.isError && !blockedQuery.data?.length ? (
+            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">No blocked accounts.</p>
+          ) : null}
+          {blockedQuery.data?.length ? (
+            <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
+              {blockedQuery.data.map((account) => (
+                <div className="flex items-center gap-3 bg-white/[0.03] px-4 py-3" key={account.id}>
+                  <FanAvatar name={account.displayName || account.username} src={account.profilePhoto} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{account.displayName || `@${account.username}`}</p>
+                    <p className="truncate text-xs text-brand-mist/50">@{account.username} · {account.role}</p>
+                  </div>
+                  <Button
+                    className="px-4 py-2"
+                    disabled={unblockMutation.isPending}
+                    onClick={() => unblockMutation.mutate(account.id)}
+                    type="button"
+                    variant="ghost"
+                  >
+                    Unblock
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </section>
         {message ? <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
         {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p> : null}
