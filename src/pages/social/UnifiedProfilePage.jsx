@@ -48,6 +48,7 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
       <ProfileVerificationSummary capabilities={viewerCapabilities} profile={profile} />
       {viewerCapabilities.isOwner && data.profileCompletion ? <div className="mt-4"><ProfileCompletionCard completion={data.profileCompletion} /></div> : null}
       <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} />
+      {profile.pinnedMessageGroup ? <Link className="mt-4 flex items-center gap-3 rounded-2xl border border-atseen-blue/25 bg-atseen-blue/[0.06] p-4 transition hover:bg-atseen-blue/10" to={`/messages?group=${encodeURIComponent(profile.pinnedMessageGroup.id)}`}><img alt="" className="h-11 w-11 rounded-full border border-atseen-line object-cover" src={profile.pinnedMessageGroup.avatarUrl || "/default-avatar.png"} /><span className="min-w-0 flex-1"><span className="block text-[10px] font-black uppercase tracking-widest text-atseen-blue">Pinned group</span><span className="mt-1 block truncate text-sm font-bold">{profile.pinnedMessageGroup.name}</span><span className="text-[11px] text-atseen-muted">{profile.pinnedMessageGroup.memberCount} members</span></span></Link> : null}
 
       <div className="mt-6 flex border-b border-atseen-line">
         {tabs.map((value) => <button className={`flex-1 border-b-2 px-3 py-3 text-xs font-bold uppercase tracking-wide ${tab === value ? "border-atseen-blue text-atseen-blue" : "border-transparent text-atseen-muted"}`} key={value} onClick={() => setTab(value)} type="button">{value}</button>)}

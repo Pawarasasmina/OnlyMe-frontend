@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import axiosInstance from "../api/axiosInstance";
 
 let socket;
 let presenceInterval;
@@ -20,6 +21,21 @@ function startPresenceTracking(activeSocket) {
   }, 10000);
   sync();
 }
+
+function startGlobalMessageReceipts(activeSocket) {
+  const syncDeliveries = () => {
+    axiosInstance.put("/messages/groups/receipts/delivered").catch(() => {
+      // The next reconnect can retry safely.
+    });
+  };
+  activeSocket.on("connect", syncDeliveries);
+  activeSocket.on("group:message", ({ message }) => {
+    if (!message?.id) return;
+    axiosInstance.put(`/messages/groups/messages/${message.id}/delivered`, { read: false }).catch(() => {
+      // A reconnect or opening the group will retry the receipt safely.
+    });
+  });
+}
 export function getMessageSocket() {
   const token = localStorage.getItem("onlyme_access_token");
   if (!token) return null;
@@ -35,6 +51,7 @@ export function getMessageSocket() {
       transports: ["websocket", "polling"],
     });
     startPresenceTracking(socket);
+    startGlobalMessageReceipts(socket);
   } else {
     if (!socket.connected) socket.connect();
   }

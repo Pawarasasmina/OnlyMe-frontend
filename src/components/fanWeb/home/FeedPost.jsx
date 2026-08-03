@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FiBookmark, FiCheck, FiFlag, FiMessageCircle, FiMoreHorizontal, FiShare2, FiSmile } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import FanAvatar from "../shared/FanAvatar";
@@ -97,6 +98,7 @@ function normalizeFeedPost(post = {}) {
 }
 
 function FeedPost({ post }) {
+  const navigate = useNavigate();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
   const creator = normalized.author;
   const { user } = useAuth();
@@ -610,6 +612,7 @@ function FeedPost({ post }) {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <button className="rounded-xl border border-atseen-blue/40 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/posts/${actionPostId}`)}`)} type="button">Send in message</button>
           <button className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text" onClick={copyLink} type="button">Copy Link</button>
           <button
             className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text"
