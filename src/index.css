@@ -109,6 +109,289 @@ body::-webkit-scrollbar-thumb {
   display: none;
 }
 
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.discover-page {
+  animation: fin .45s cubic-bezier(.25,.8,.3,1);
+}
+
+@keyframes fin {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.discover-prototype {
+  position: relative;
+  margin: 2px -4px 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 22px;
+  background:
+    radial-gradient(520px 260px at 80% -20%, rgba(94,155,255,.12), transparent 70%),
+    #0a0c0f;
+  padding: 14px 10px 10px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.22);
+}
+
+.discover-prototype-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 6px 10px;
+}
+
+.discover-prototype-top span {
+  display: block;
+  color: rgba(255,255,255,.62);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.discover-prototype-top p {
+  margin-top: 2px;
+  color: rgba(255,255,255,.4);
+  font-size: 8.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-prototype-top button,
+.discover-more {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.055);
+  color: rgba(255,255,255,.62);
+}
+
+.discover-prototype-top button {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.discover-prototype-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.discover-mosaic-card {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: #181d25;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  user-select: none;
+}
+
+.discover-mosaic-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(156,203,255,.35);
+  box-shadow: 0 18px 50px rgba(0,0,0,.28), 0 0 28px rgba(94,155,255,.12);
+}
+
+.discover-mosaic-card:active {
+  transform: scale(.98);
+}
+
+.discover-mosaic-card > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: discover-kb 18s ease-in-out infinite alternate;
+}
+
+.discover-mosaic-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 28% 16%, rgba(156,203,255,.28), transparent 34%), linear-gradient(135deg, #1a2435, #090c12);
+  color: rgba(255,255,255,.22);
+  font-size: 42px;
+  font-weight: 900;
+}
+
+.discover-mosaic-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 46%, rgba(6,8,11,.94));
+}
+
+.discover-live-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6ecf97;
+  box-shadow: 0 0 8px rgba(110,207,151,.9);
+}
+
+.discover-more {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(8,10,13,.44);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+
+.discover-mosaic-card:hover .discover-more {
+  opacity: 1;
+}
+
+.discover-card-copy {
+  position: absolute;
+  left: 10px;
+  right: 54px;
+  bottom: 9px;
+  min-width: 0;
+}
+
+.discover-card-name {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+}
+
+.discover-card-copy p {
+  margin-top: 3px;
+  overflow: hidden;
+  color: rgba(255,255,255,.4);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-card-copy strong {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #9ccbff;
+  font-size: 8.5px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-card-actions {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.discover-card-actions button,
+.discover-card-actions a {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  color: rgba(255,255,255,.82);
+  text-align: center;
+}
+
+.discover-card-actions span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  background: rgba(8,10,13,.5);
+  backdrop-filter: blur(10px);
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.discover-card-actions svg {
+  width: 15px;
+  height: 15px;
+}
+
+.discover-card-actions i {
+  max-width: 42px;
+  overflow: hidden;
+  color: rgba(255,255,255,.82);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+
+.discover-card-actions button:active span,
+.discover-card-actions a:active span {
+  transform: scale(.88);
+}
+
+.discover-card-actions .is-on span {
+  border-color: #9ccbff;
+  background: rgba(156,203,255,.28);
+  color: #9ccbff;
+}
+
+@keyframes discover-kb {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+@media (max-width: 420px) {
+  .discover-prototype-grid {
+    gap: 10px;
+  }
+
+  .discover-card-actions i {
+    display: none;
+  }
+
+  .discover-card-copy {
+    right: 46px;
+  }
+}
+
 .atseen-orbit-ring {
   position: absolute;
   left: 50%;
