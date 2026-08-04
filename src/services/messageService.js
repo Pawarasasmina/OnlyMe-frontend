@@ -87,9 +87,9 @@ export const messageService = {
     `/messages/direct-access/windows/${creatorId}`,
     { idempotencyKey, source, creatorQuestionMessageId },
   ),
-  updateDirectAccessSettings: (enabled, priceStars) => axiosInstance.put(
+  updateDirectAccessSettings: (enabled, priceStars, callSettings = {}) => axiosInstance.put(
     "/messages/direct-access/settings",
-    { enabled, priceStars },
+    { enabled, priceStars, callEnabled: callSettings.callEnabled, callPriceStars: callSettings.callPriceStars, callDurationMinutes: callSettings.callDurationMinutes, callAutoDeclineAway: callSettings.callAutoDeclineAway },
   ),
   askDirectAccessQuestion: (fanId, body, clientMessageId) => axiosInstance.post(
     `/messages/direct-access/ask/${fanId}`,
