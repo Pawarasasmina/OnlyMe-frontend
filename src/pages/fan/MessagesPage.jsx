@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArchive, FiArrowLeft, FiBell, FiCopy, FiCornerUpLeft, FiFlag, FiImage, FiMessageCircle, FiMoreVertical, FiPlus, FiRefreshCw, FiSearch, FiSend, FiShare2, FiShield, FiSmile, FiTrash2, FiX, FiZap } from "react-icons/fi";
+import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCopy, FiCornerUpLeft, FiEye, FiFlag, FiImage, FiLogOut, FiMessageCircle, FiMoreVertical, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiTrash2, FiUserPlus, FiX, FiZap } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -101,6 +101,46 @@ function MessageText({ body, mine }) {
   return <a className={`block min-w-52 overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank"><span className="block px-3 py-3"><span className={`block text-[10px] font-black uppercase tracking-wider ${mine ? "text-atseen-bg/60" : "text-atseen-blue"}`}>{profileShare ? "Shared profile" : "Shared post"}</span><span className="mt-1 block text-sm font-bold">Open this {profileShare ? "profile" : "post"}</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{sharedUrl}</span></span></a>;
 }
 
+function GroupImageCropper({ source, onCancel, onSave, saving }) {
+  const [zoom, setZoom] = useState(1);
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  const save = async () => {
+    const image = new Image();
+    image.src = source.url;
+    await image.decode();
+    const size = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext("2d");
+    const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight) * zoom;
+    const width = image.naturalWidth * scale;
+    const height = image.naturalHeight * scale;
+    const offsetX = (x / 100) * Math.max(0, width - size) / 2;
+    const offsetY = (y / 100) * Math.max(0, height - size) / 2;
+    context.drawImage(image, (size - width) / 2 + offsetX, (size - height) / 2 + offsetY, width, height);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (blob) onSave(new File([blob], "group-avatar.jpg", { type: "image/jpeg" }));
+  };
+  return <div className="absolute inset-0 z-[80] flex items-end bg-black/80">
+    <section aria-modal="true" className="w-full rounded-t-[24px] border border-b-0 border-atseen-line bg-[#1b212c] p-5 shadow-2xl" role="dialog">
+      <div className="mx-auto mb-5 h-1 w-8 rounded-full bg-white/35" />
+      <div className="flex items-center justify-between"><div><h2 className="text-base font-black">Position group photo</h2><p className="mt-1 text-[11px] text-atseen-muted">Zoom and move the image inside the circle.</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={onCancel} type="button"><FiX /></button></div>
+      <div className="relative mx-auto mt-5 aspect-square w-[min(72vw,290px)] overflow-hidden rounded-full bg-black ring-4 ring-white/10">
+        <img alt="Group crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source.url} style={{ objectPosition: `${50 - x / 2}% ${50 - y / 2}%`, transform: `scale(${zoom})` }} />
+        <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/40" />
+      </div>
+      <div className="mx-auto mt-5 max-w-sm space-y-3">
+        <label className="flex items-center gap-3 text-[11px] font-bold text-atseen-muted"><span className="w-12">Zoom</span><input className="w-full accent-[#9CCBFF]" max="2.5" min="1" onChange={(event) => setZoom(Number(event.target.value))} step="0.01" type="range" value={zoom} /></label>
+        <label className="flex items-center gap-3 text-[11px] font-bold text-atseen-muted"><span className="w-12">Left/right</span><input className="w-full accent-[#9CCBFF]" max="100" min="-100" onChange={(event) => setX(Number(event.target.value))} type="range" value={x} /></label>
+        <label className="flex items-center gap-3 text-[11px] font-bold text-atseen-muted"><span className="w-12">Up/down</span><input className="w-full accent-[#9CCBFF]" max="100" min="-100" onChange={(event) => setY(Number(event.target.value))} type="range" value={y} /></label>
+      </div>
+      <div className="mt-6 flex gap-2"><button className="flex-1 rounded-xl border border-atseen-line py-3 text-sm font-bold" disabled={saving} onClick={onCancel} type="button">Cancel</button><button className="flex-1 rounded-xl bg-atseen-blue py-3 text-sm font-black text-atseen-bg disabled:opacity-50" disabled={saving} onClick={save} type="button">{saving ? "Uploading…" : "Use photo"}</button></div>
+    </section>
+  </div>;
+}
+
 export default function MessagesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -127,6 +167,12 @@ export default function MessagesPage() {
   const [groupName, setGroupName] = useState("");
   const [groupMembers, setGroupMembers] = useState([]);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
+  const [groupInfoName, setGroupInfoName] = useState("");
+  const [groupMemberPickerOpen, setGroupMemberPickerOpen] = useState(false);
+  const [groupPhotoMenuOpen, setGroupPhotoMenuOpen] = useState(false);
+  const [groupImageViewerOpen, setGroupImageViewerOpen] = useState(false);
+  const [groupCropSource, setGroupCropSource] = useState(null);
+  const [groupPermissionsOpen, setGroupPermissionsOpen] = useState(false);
   const [forwardingMessage, setForwardingMessage] = useState(null);
   const [forwardSelection, setForwardSelection] = useState(() => new Set());
   const [groupMessageInfo, setGroupMessageInfo] = useState(null);
@@ -142,6 +188,7 @@ export default function MessagesPage() {
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
   const [messageMenu, setMessageMenu] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState(null);
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
   const [reportReason, setReportReason] = useState("SPAM");
   const [reportDetails, setReportDetails] = useState("");
@@ -620,9 +667,9 @@ export default function MessagesPage() {
     } catch (requestError) { setError(requestError.response?.data?.message || "Could not update this member."); }
     finally { setActionBusy(false); }
   };
-  const renameSelectedGroup = async () => {
-    const name = window.prompt("Group name", participant?.displayName || "");
-    if (!name?.trim()) return;
+  const saveSelectedGroupName = async () => {
+    const name = groupInfoName.trim();
+    if (!name || name === participant?.displayName) return;
     setActionBusy(true);
     try { await messageService.updateGroup(selected.id, { name: name.trim() }); await refreshSelectedGroup(); }
     catch (requestError) { setError(requestError.response?.data?.message || "Could not rename this group."); }
@@ -632,16 +679,39 @@ export default function MessagesPage() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || selected?.type !== "group") return;
+    if (file.size > 10 * 1024 * 1024) return setError("Choose an image smaller than 10 MB.");
+    setGroupPhotoMenuOpen(false);
+    setGroupCropSource({ file, url: URL.createObjectURL(file) });
+  };
+  const uploadCroppedGroupAvatar = async (file) => {
     setActionBusy(true);
     setError("");
     try {
       await messageService.updateGroupAvatar(selected.id, file);
       await refreshSelectedGroup();
+      if (groupCropSource?.url) URL.revokeObjectURL(groupCropSource.url);
+      setGroupCropSource(null);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Could not update the group photo.");
     } finally {
       setActionBusy(false);
     }
+  };
+  const removeSelectedGroupAvatar = async () => {
+    if (!participant?.avatarUrl || actionBusy || !window.confirm("Remove this group photo?")) return;
+    setActionBusy(true);
+    setError("");
+    try { await messageService.removeGroupAvatar(selected.id); setGroupPhotoMenuOpen(false); await refreshSelectedGroup(); }
+    catch (requestError) { setError(requestError.response?.data?.message || "Could not remove the group photo."); }
+    finally { setActionBusy(false); }
+  };
+  const updateGroupPermission = async (key, value) => {
+    if (actionBusy) return;
+    setActionBusy(true);
+    setError("");
+    try { await messageService.updateGroup(selected.id, { permissions: { [key]: value } }); await refreshSelectedGroup(); }
+    catch (requestError) { setError(requestError.response?.data?.message || "Could not update group permissions."); }
+    finally { setActionBusy(false); }
   };
   const leaveOrDeleteSelectedGroup = async (removeForEveryone = false) => {
     if (!window.confirm(removeForEveryone ? "Delete this group for every member?" : "Leave this group?")) return;
@@ -1015,6 +1085,38 @@ export default function MessagesPage() {
       setActionBusy(false);
     }
   };
+  const deleteSelectedMessages = async (scope) => {
+    const selectedMessages = bulkDeleteDialog?.messages || [];
+    if (!selectedMessages.length || !["me", "everyone"].includes(scope)) return;
+    if (scope === "everyone" && !selectedMessages.every((message) => message.senderId === myId && !message.deletedAt)) return;
+    setActionBusy(true);
+    setError("");
+    const cacheKey = selected.type === "group" ? ["messages", "group", selected.id] : ["messages", selected.id];
+    try {
+      const results = [];
+      for (const message of selectedMessages) {
+        const response = selected.type === "group" ? await messageService.deleteGroupMessage(message.id, scope) : await messageService.deleteMessage(message.id, scope);
+        results.push({ id: message.id, data: response.data.data });
+      }
+      queryClient.setQueryData(cacheKey, (current) => {
+        if (!current) return current;
+        if (scope === "me") return { ...current, messages: current.messages.filter((message) => !selectedMessages.some((selectedMessage) => selectedMessage.id === message.id)) };
+        return { ...current, messages: current.messages.map((message) => {
+          const result = results.find((item) => item.id === message.id);
+          if (!result) return message;
+          return { ...message, ...(result.data.message || {}), deletedAt: result.data.message?.deletedAt || result.data.deletedAt || new Date().toISOString(), body: "This message was deleted", reactions: [] };
+        }) };
+      });
+      setBulkDeleteDialog(null);
+      setForwardSelection(new Set());
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+    } catch (requestError) {
+      await queryClient.invalidateQueries({ queryKey: cacheKey });
+      setError(requestError.response?.data?.message || "Some selected messages could not be deleted.");
+    } finally {
+      setActionBusy(false);
+    }
+  };
   const archiveSelectedConversation = async () => {
     if (!selected?.id || actionBusy) return;
     setActionBusy(true);
@@ -1215,7 +1317,7 @@ export default function MessagesPage() {
         {selected ? <>
           <header className="relative z-50 flex shrink-0 items-center gap-3 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-4 py-3 backdrop-blur">
             <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
-            {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => selected.type === "group" ? setGroupInfoOpen(true) : participant.username && navigate(`/profile/${encodeURIComponent(participant.username)}`)} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members` : ""} /></button> : null}
+            {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else if (participant.username) navigate(`/profile/${encodeURIComponent(participant.username)}`); }} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members${participant.admins?.includes(myId) ? " · you're admin" : ""}` : ""} /></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
             <div className="relative">
               <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setChatMenuOpen((current) => !current)} type="button"><FiMoreVertical /></button>
@@ -1248,7 +1350,7 @@ export default function MessagesPage() {
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
               return <Fragment key={message.id}>
                 {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
-                <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
+                <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
                 <div className={`relative flex max-w-[78%] flex-col ${mine ? "items-end" : "items-start"}`}>
                   <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
                     {selected.type === "group" && !mine && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
@@ -1316,7 +1418,7 @@ export default function MessagesPage() {
             })}
             <div ref={bottomRef} />
           </section>
-          {forwardSelection.size ? <div className="flex shrink-0 items-center gap-3 border-t border-atseen-line bg-atseen-bg-2 p-3"><button className="rounded-full border border-atseen-line px-4 py-2 text-xs font-bold" onClick={() => setForwardSelection(new Set())} type="button">Cancel</button><span className="flex-1 text-center text-xs font-bold text-atseen-blue">{forwardSelection.size} selected</span><button className="rounded-full bg-atseen-blue px-5 py-2 text-xs font-black text-atseen-bg" onClick={() => { const selectedMessages = messages.filter((message) => forwardSelection.has(message.id)); setForwardingMessage({ id: selectedMessages[0]?.id, body: `${selectedMessages.length} messages selected`, messages: selectedMessages }); }} type="button">Forward</button></div> : null}
+          {forwardSelection.size ? <div className="flex shrink-0 items-center gap-2 border-t border-atseen-line bg-atseen-bg-2 p-3"><button className="rounded-full border border-atseen-line px-3 py-2 text-xs font-bold" onClick={() => setForwardSelection(new Set())} type="button">Cancel</button><span className="min-w-0 flex-1 text-center text-xs font-bold text-atseen-blue">{forwardSelection.size} selected</span><button aria-label="Delete selected messages" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-atseen-danger/35 text-atseen-danger hover:bg-atseen-danger/10" onClick={() => { const selectedMessages = messages.filter((message) => forwardSelection.has(message.id) && !message.id.startsWith("pending:")); if (selectedMessages.length) setBulkDeleteDialog({ messages: selectedMessages }); }} type="button"><FiTrash2 /></button><button className="rounded-full bg-atseen-blue px-4 py-2 text-xs font-black text-atseen-bg" onClick={() => { const selectedMessages = messages.filter((message) => forwardSelection.has(message.id) && !message.id.startsWith("pending:")); setForwardingMessage({ id: selectedMessages[0]?.id, body: `${selectedMessages.length} messages selected`, messages: selectedMessages }); }} type="button">Forward</button></div> : null}
           {!forwardSelection.size && (messagesQuery.data?.blockStatus?.blockedByMe || messagesQuery.data?.blockStatus?.blockedMe ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-4 text-center"><p className="text-xs text-atseen-muted">{messagesQuery.data.blockStatus.blockedByMe ? "You blocked this account. Unblock them to send messages." : "Messaging is unavailable for this conversation."}</p>{messagesQuery.data.blockStatus.blockedByMe ? <button className="mt-3 rounded-full border border-atseen-blue/40 px-4 py-2 text-xs font-bold text-atseen-blue" disabled={actionBusy} onClick={toggleBlock} type="button">Unblock</button> : null}</div> : messagesQuery.data?.conversationStatus === "REQUEST" && messagesQuery.data?.requestReceived ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-3 sm:p-4">
             <p className="mb-3 text-center text-xs text-atseen-muted">Accept this request before replying.</p>
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
@@ -1346,10 +1448,60 @@ export default function MessagesPage() {
 
     {groupMessageInfo && selected?.type === "group" ? <div className="absolute inset-0 z-[66] flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><div className="max-h-[78vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between border-b border-atseen-line p-5"><div><h2 className="text-lg font-bold">Message info</h2><p className="mt-1 max-w-[280px] truncate text-xs text-atseen-muted">{groupMessageInfo.body}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setGroupMessageInfo(null)} type="button"><FiX /></button></header><div className="atseen-hide-scrollbar max-h-[60vh] overflow-y-auto p-4">{[{ label: "SEEN BY", rows: (groupMessageInfo.readBy || []).filter((receipt) => receipt.userId !== myId).map((receipt) => ({ ...receipt, at: receipt.readAt })) }, { label: "DELIVERED TO", rows: (groupMessageInfo.deliveredBy || []).filter((receipt) => receipt.userId !== myId && !(groupMessageInfo.readBy || []).some((read) => read.userId === receipt.userId)).map((receipt) => ({ ...receipt, at: receipt.deliveredAt })) }].map((section) => <section className="mb-5" key={section.label}><h3 className="mb-2 text-[10px] font-black tracking-[0.16em] text-atseen-muted">{section.label} <span className="text-atseen-blue">{section.rows.length}</span></h3>{section.rows.length ? section.rows.map((receipt) => { const member = participant.members?.find((item) => item.id === receipt.userId); return <div className="flex items-center gap-3 rounded-xl px-2 py-2" key={receipt.userId}><Identity compact person={member || { displayName: "Former member" }} subtitle="" /><span className="ml-auto text-[10px] text-atseen-muted">{receipt.at ? new Date(receipt.at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</span></div>; }) : <p className="px-2 py-2 text-xs text-atseen-muted">No members yet.</p>}</section>)}</div></div></div> : null}
     {forwardingMessage ? <div className="absolute inset-0 z-[65] flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><div className="max-h-[78vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between p-5"><div><h2 className="text-lg font-bold">Forward message</h2><p className="mt-1 max-w-[280px] truncate text-xs text-atseen-muted">{forwardingMessage.body}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setForwardingMessage(null)} type="button"><FiX /></button></header><label className="mx-4 mb-3 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4"><FiSearch className="text-atseen-muted" /><input className="w-full bg-transparent py-3 text-sm outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search people" value={search} /></label><div className="atseen-hide-scrollbar max-h-[50vh] overflow-y-auto pb-3">{(groupsQuery.data || []).filter((group) => group.id !== selected?.id).map((group) => <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" disabled={actionBusy} key={`group:${group.id}`} onClick={() => forwardSelectedMessage(group)} type="button"><Identity compact person={{ displayName: group.name, avatarUrl: group.avatarUrl }} subtitle={`${group.members?.length || 0} members`} /><FiShare2 /></button>)}{orderedPeople.filter((person) => person.id !== selected?.id).map((person) => <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" disabled={actionBusy} key={person.id} onClick={() => forwardSelectedMessage({ ...person, type: "direct" })} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiShare2 /></button>)}</div></div></div> : null}
-    {groupInfoOpen && selected?.type === "group" ? <div className="absolute inset-0 z-50 flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><div className="max-h-[82vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between p-5"><div><h2 className="text-lg font-bold">{participant.displayName}</h2><p className="mt-1 text-xs text-atseen-muted">{participant.members?.length || 0} members</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setGroupInfoOpen(false)} type="button"><FiX /></button></header>{participant.admins?.includes(myId) ? <button className="mx-5 mb-2 rounded-full border border-atseen-line px-4 py-2 text-xs font-bold" disabled={actionBusy} onClick={renameSelectedGroup} type="button">Rename group</button> : null}<div className="atseen-hide-scrollbar max-h-[46vh] overflow-y-auto px-2 pb-3">{participant.members?.map((member) => { const admin = participant.admins?.includes(member.id); const canManage = participant.admins?.includes(myId) && member.id !== myId; return <div className="flex items-center gap-3 rounded-xl px-3 py-2" key={member.id}><Identity compact person={member} presence={presence[member.id]} subtitle={admin ? "Admin" : "Member"} />{canManage ? <div className="flex gap-1"><button className="rounded-full border border-atseen-line px-2 py-1 text-[9px] font-bold" disabled={actionBusy} onClick={() => updateSelectedGroupMember(member.id, admin ? "member" : "admin")} type="button">{admin ? "Remove admin" : "Make admin"}</button><button className="rounded-full px-2 py-1 text-[9px] font-bold text-atseen-danger" disabled={actionBusy} onClick={() => updateSelectedGroupMember(member.id, "remove")} type="button">Remove</button></div> : null}</div>; })}<p className="px-3 pb-2 pt-4 text-[10px] font-black uppercase tracking-widest text-atseen-muted">Add members</p>{participant.admins?.includes(myId) ? orderedPeople.filter((person) => !participant.members?.some((member) => member.id === person.id)).slice(0, 12).map((person) => <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-white/[0.04]" disabled={actionBusy} key={person.id} onClick={() => addSelectedGroupMember(person.id)} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiPlus /></button>) : <p className="px-3 text-xs text-atseen-muted">Only admins can add members.</p>}</div><div className="flex gap-2 border-t border-atseen-line p-4"><button className="flex-1 rounded-full border border-atseen-danger/30 py-2.5 text-xs font-bold text-atseen-danger" disabled={actionBusy} onClick={() => leaveOrDeleteSelectedGroup(false)} type="button">Leave group</button>{participant.createdBy === myId ? <button className="flex-1 rounded-full bg-atseen-danger py-2.5 text-xs font-bold text-white" disabled={actionBusy} onClick={() => leaveOrDeleteSelectedGroup(true)} type="button">Delete group</button> : null}</div></div></div> : null}
+    {groupInfoOpen && selected?.type === "group" ? <div className="absolute inset-0 z-50 flex items-end bg-black/60" onMouseDown={(event) => { if (event.target === event.currentTarget) setGroupInfoOpen(false); }} role="presentation">
+      <section aria-label="Group details" aria-modal="true" className="relative max-h-[86%] w-full overflow-hidden rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] shadow-[0_-22px_60px_rgba(0,0,0,.45)]" role="dialog">
+        <div className="mx-auto mt-2.5 h-1 w-8 rounded-full bg-white/35" />
+        <div className="atseen-hide-scrollbar max-h-[calc(86vh-14px)] overflow-y-auto px-5 pb-8 pt-4">
+          <div className="flex items-center gap-3">
+            <button aria-label="Group photo options" className="shrink-0 rounded-full ring-offset-2 ring-offset-[#1b212c] hover:ring-2 hover:ring-atseen-blue/50" disabled={actionBusy} onClick={() => setGroupPhotoMenuOpen(true)} type="button">
+              <FanAvatar name={participant.displayName} size="h-11 w-11" src={participant.avatarUrl} />
+            </button>
+            {participant.admins?.includes(myId) || participant.permissions?.editGroupInfo === "ALL_MEMBERS" ? <>
+              <input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={changeSelectedGroupAvatar} ref={groupAvatarInputRef} type="file" />
+              <input aria-label="Group name" className="min-w-0 flex-1 rounded-xl border border-atseen-line bg-[#10141c] px-3.5 py-3 text-sm font-bold text-white outline-none transition focus:border-atseen-blue/60" maxLength={60} onChange={(event) => setGroupInfoName(event.target.value)} value={groupInfoName} />
+              <button className="rounded-xl border border-atseen-line bg-white/[0.025] px-4 py-2.5 text-xs font-black text-white disabled:opacity-40" disabled={actionBusy || !groupInfoName.trim() || groupInfoName.trim() === participant.displayName} onClick={saveSelectedGroupName} type="button">Save</button>
+            </> : <h2 className="min-w-0 flex-1 truncate text-base font-bold">{participant.displayName}</h2>}
+          </div>
+
+          <h3 className="mt-4 text-sm font-black">Members · {participant.members?.length || 0}</h3>
+          <div className="mt-1">
+            {[...(participant.members || [])].sort((a, b) => Number(b.id === myId) - Number(a.id === myId)).map((member) => {
+              const admin = participant.admins?.includes(member.id);
+              const canManage = participant.admins?.includes(myId) && member.id !== myId;
+              return <div className="flex min-h-[52px] items-center gap-3 border-b border-white/[0.07] py-2.5" key={member.id}>
+                <FanAvatar name={member.displayName} size="h-9 w-9" src={member.avatarUrl} />
+                <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{member.displayName}{member.id === myId ? " (you)" : ""}</p>{admin ? <p className="mt-1 text-[10px] text-atseen-muted">Admin</p> : null}</div>
+                {canManage ? <div className="flex items-center gap-1">
+                  <button className="rounded-lg px-2 py-1 text-[9px] font-bold text-atseen-muted hover:bg-white/5 hover:text-white" disabled={actionBusy} onClick={() => updateSelectedGroupMember(member.id, admin ? "member" : "admin")} type="button">{admin ? "Remove admin" : "Make admin"}</button>
+                  <button aria-label={`Remove ${member.displayName}`} className="rounded-lg px-2 py-1 text-xs text-atseen-muted hover:bg-atseen-danger/10 hover:text-atseen-danger" disabled={actionBusy} onClick={() => updateSelectedGroupMember(member.id, "remove")} type="button">›</button>
+                </div> : member.id !== myId ? <span className="text-xs text-atseen-muted">›</span> : null}
+              </div>;
+            })}
+          </div>
+
+          {participant.admins?.includes(myId) || participant.permissions?.addMembers === "ALL_MEMBERS" ? <>
+            <button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left text-sm font-bold text-atseen-blue" onClick={() => setGroupMemberPickerOpen((current) => !current)} type="button"><FiUserPlus className="text-base" /> Add members</button>
+            {groupMemberPickerOpen ? <div className="border-b border-white/[0.07] bg-black/10 py-2">
+              <label className="mb-2 flex items-center gap-2 rounded-xl border border-atseen-line bg-[#10141c] px-3"><FiSearch className="text-atseen-muted" /><input className="min-w-0 flex-1 bg-transparent py-2.5 text-xs outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Find people" value={search} /></label>
+              {orderedPeople.filter((person) => !participant.members?.some((member) => member.id === person.id)).slice(0, 12).map((person) => <button className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" disabled={actionBusy} key={person.id} onClick={() => addSelectedGroupMember(person.id)} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiPlus /></button>)}
+            </div> : null}
+          </> : null}
+
+          {participant.admins?.includes(myId) ? <button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left" onClick={() => setGroupPermissionsOpen(true)} type="button"><FiSettings className="text-base text-atseen-muted" /><span className="min-w-0 flex-1"><b className="block text-sm">Group permissions</b><span className="mt-1 block text-[10px] text-atseen-muted">Choose who can edit group info and add members</span></span><span className="text-xs text-atseen-muted">›</span></button> : null}
+          <button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left" disabled={actionBusy} onClick={pinSelectedGroup} type="button"><FiZap className="text-base text-atseen-muted" /><span><b className="block text-sm">{participant.pinnedToProfile ? "Remove from Profile" : "Add to Profile"}</b><span className="mt-1 block text-[10px] text-atseen-muted">{participant.pinnedToProfile ? "Stop showing this group on your profile" : "Show this group on your profile"}</span></span></button>
+          <button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left text-sm font-bold" disabled={actionBusy} onClick={() => leaveOrDeleteSelectedGroup(false)} type="button"><FiLogOut className="text-base text-atseen-muted" /> Leave group</button>
+          {participant.createdBy === myId ? <button className="flex w-full items-center gap-4 py-3.5 text-left" disabled={actionBusy} onClick={() => leaveOrDeleteSelectedGroup(true)} type="button"><FiTrash2 className="text-base text-atseen-danger" /><span><b className="block text-sm text-atseen-danger">Delete group</b><span className="mt-1 block text-[10px] text-atseen-muted">Creator only · removes it for everyone</span></span></button> : null}
+        </div>
+      </section>
+    </div> : null}
+    {groupPhotoMenuOpen && selected?.type === "group" ? <div className="absolute inset-0 z-[70] flex items-end bg-black/65" onMouseDown={(event) => { if (event.target === event.currentTarget) setGroupPhotoMenuOpen(false); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><h2 className="mb-2 text-base font-black">Group photo</h2>{participant.avatarUrl ? <button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left text-sm font-bold" onClick={() => { setGroupPhotoMenuOpen(false); setGroupImageViewerOpen(true); }} type="button"><FiEye className="text-atseen-muted" /> View photo</button> : null}{participant.admins?.includes(myId) || participant.permissions?.editGroupInfo === "ALL_MEMBERS" ? <><button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left text-sm font-bold" onClick={() => groupAvatarInputRef.current?.click()} type="button"><FiCamera className="text-atseen-blue" /> {participant.avatarUrl ? "Change photo" : "Add photo"}</button>{participant.avatarUrl ? <button className="flex w-full items-center gap-4 py-3.5 text-left text-sm font-bold text-atseen-danger" disabled={actionBusy} onClick={removeSelectedGroupAvatar} type="button"><FiTrash2 /> Remove photo</button> : null}</> : <p className="py-3 text-xs text-atseen-muted">Only permitted group members can change this photo.</p>}</section></div> : null}
+    {groupImageViewerOpen && participant?.avatarUrl ? <div className="absolute inset-0 z-[75] flex items-center justify-center bg-black/95 p-5"><button aria-label="Close photo" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10" onClick={() => setGroupImageViewerOpen(false)} type="button"><FiX /></button><img alt={`${participant.displayName} group`} className="aspect-square w-full max-w-md rounded-full object-cover shadow-2xl" src={participant.avatarUrl} /></div> : null}
+    {groupCropSource ? <GroupImageCropper onCancel={() => { URL.revokeObjectURL(groupCropSource.url); setGroupCropSource(null); }} onSave={uploadCroppedGroupAvatar} saving={actionBusy} source={groupCropSource} /> : null}
+    {groupPermissionsOpen && selected?.type === "group" ? <div className="absolute inset-0 z-[72] flex items-end bg-black/65" onMouseDown={(event) => { if (event.target === event.currentTarget) setGroupPermissionsOpen(false); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-8 pt-2.5" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-center justify-between"><div><h2 className="text-base font-black">Group permissions</h2><p className="mt-1 text-[11px] text-atseen-muted">Admins can always perform these actions.</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setGroupPermissionsOpen(false)} type="button"><FiX /></button></div>{[["editGroupInfo", "Edit group info", "Change the group name and photo"], ["addMembers", "Add members", "Invite new people to this group"]].map(([key, title, description]) => <div className="border-b border-white/[0.07] py-4 last:border-0" key={key}><div><b className="text-sm">{title}</b><p className="mt-1 text-[10px] text-atseen-muted">{description}</p></div><div className="mt-3 grid grid-cols-2 gap-2">{[["ADMINS", "Admins only"], ["ALL_MEMBERS", "All members"]].map(([value, label]) => { const selectedPermission = (participant.permissions?.[key] || "ADMINS") === value; return <button className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition ${selectedPermission ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted"}`} disabled={actionBusy} key={value} onClick={() => updateGroupPermission(key, value)} type="button">{label}{selectedPermission ? " ✓" : ""}</button>; })}</div></div>)}</section></div> : null}
     {newChat ? <div className="absolute inset-0 z-40 flex items-end bg-black/70 p-3 sm:items-center sm:justify-center"><div className="max-h-[75vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between p-5"><h2 className="text-lg font-bold">New message</h2><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setNewChat(false)}><FiX /></button></header><button className="mx-4 mb-3 flex w-[calc(100%-2rem)] items-center gap-3 rounded-2xl border border-atseen-blue/25 bg-atseen-blue/[0.06] px-4 py-3 text-left" onClick={() => setNewGroup(true)} type="button"><span className="grid h-9 w-9 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiPlus /></span><span><b className="block text-sm">New group</b><span className="text-[11px] text-atseen-muted">Create a conversation with multiple people</span></span></button><label className="mx-4 mb-3 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4"><FiSearch className="text-atseen-muted" /><input autoFocus className="w-full bg-transparent py-3 text-sm outline-none" onChange={(e) => setSearch(e.target.value)} placeholder="Search people" value={search} /></label><div className="atseen-hide-scrollbar max-h-[45vh] overflow-y-auto pb-3">{peopleQuery.isLoading ? <p className="p-5 text-sm text-atseen-muted">Finding people…</p> : null}{orderedPeople.map((person) => <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" key={person.id} onClick={() => openPerson(person)}><Identity compact person={person} presence={presence[person.id]} /></button>)}{!peopleQuery.isLoading && !orderedPeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No people found.</p> : null}</div></div></div> : null}
     {newGroup ? <div className="absolute inset-0 z-50 flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><form className="max-h-[82vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl" onSubmit={createGroup}><header className="flex items-center justify-between p-5"><div><h2 className="text-lg font-bold">New group</h2><p className="mt-1 text-xs text-atseen-muted">Choose a name and at least one member.</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setNewGroup(false)} type="button"><FiX /></button></header><div className="px-4"><input className="w-full rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4 py-3 text-sm outline-none" maxLength={60} onChange={(event) => setGroupName(event.target.value)} placeholder="Group name" value={groupName} /><label className="mt-3 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4"><FiSearch className="text-atseen-muted" /><input className="w-full bg-transparent py-3 text-sm outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Find members" value={search} /></label></div><div className="atseen-hide-scrollbar mt-2 max-h-[44vh] overflow-y-auto pb-3">{orderedPeople.map((person) => { const checked = groupMembers.includes(person.id); return <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" key={person.id} onClick={() => setGroupMembers((current) => checked ? current.filter((id) => id !== person.id) : [...current, person.id])} type="button"><Identity compact person={person} presence={presence[person.id]} /><span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${checked ? "border-atseen-blue bg-atseen-blue text-atseen-bg" : "border-atseen-line"}`}>{checked ? "✓" : ""}</span></button>; })}</div><div className="border-t border-atseen-line p-4"><button className="w-full rounded-full bg-atseen-blue py-3 text-sm font-black text-atseen-bg disabled:opacity-40" disabled={!groupName.trim() || !groupMembers.length || actionBusy} type="submit">{actionBusy ? "Creating…" : `Create group · ${groupMembers.length} selected`}</button></div></form></div> : null}
     {deleteDialog ? <div className="absolute inset-0 z-[75] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div aria-labelledby="delete-message-title" aria-modal="true" className="w-full max-w-[300px] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-4 shadow-2xl" role="dialog"><div className="flex items-center justify-between"><h2 className="text-base font-bold" id="delete-message-title">{deleteDialog.scope ? "Confirm deletion" : "Delete message"}</h2><button aria-label="Close delete message" className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => setDeleteDialog(null)} type="button"><FiX /></button></div>{deleteDialog.scope ? <><p className="mt-2 text-xs leading-5 text-atseen-muted">This disappears only from your chat.</p><div className="mt-4 flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-2 text-xs font-bold" disabled={actionBusy} onClick={() => setDeleteDialog((current) => ({ ...current, scope: null }))} type="button">Back</button><button className="flex-[1.3] rounded-full bg-atseen-danger px-3 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={actionBusy} onClick={deleteSelectedMessage} type="button">{actionBusy ? "Deleting…" : "Delete"}</button></div></> : <><p className="mt-1 text-xs text-atseen-muted">Choose an option.</p><div className="mt-3 grid gap-1"><button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/5" onClick={() => setDeleteDialog((current) => ({ ...current, scope: "me" }))} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs">Delete for me</b><span className="mt-0.5 block text-[10px] text-atseen-muted">Only removes it from your chat.</span></span></button>{deleteDialog.message.senderId === myId ? <button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-atseen-danger/5 disabled:opacity-50" disabled={actionBusy} onClick={() => deleteSelectedMessage({ message: deleteDialog.message, scope: "everyone" })} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs text-atseen-danger">{actionBusy ? "Unsending…" : "Unsend for everyone"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">Replaces it for both people.</span></span></button> : null}</div></>}</div></div> : null}
+    {bulkDeleteDialog ? <div className="absolute inset-0 z-[76] flex items-end bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget && !actionBusy) setBulkDeleteDialog(null); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-8 pt-2.5 shadow-2xl" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-center justify-between"><div><h2 className="text-base font-black">Delete {bulkDeleteDialog.messages.length} messages?</h2><p className="mt-1 text-[11px] text-atseen-muted">Choose where the selected messages should disappear.</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setBulkDeleteDialog(null)} type="button"><FiX /></button></div><button className="mt-4 flex w-full items-center gap-4 border-b border-white/[0.07] py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("me")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm">Delete for me</b><span className="mt-1 block text-[10px] text-atseen-muted">Only removes the selected messages from your chat.</span></span></button>{bulkDeleteDialog.messages.every((message) => message.senderId === myId && !message.deletedAt) ? <button className="flex w-full items-center gap-4 py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("everyone")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm text-atseen-danger">Delete for everyone</b><span className="mt-1 block text-[10px] text-atseen-muted">All selected messages were sent by you.</span></span></button> : null}{actionBusy ? <p className="pt-3 text-center text-xs font-bold text-atseen-muted">Deleting messages…</p> : null}</section></div> : null}
     {reportTarget ? <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/75 p-3 sm:items-center"><form className="w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-bg-2 p-5 shadow-2xl" onSubmit={submitReport}><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">Report {reportTarget.type === "message" ? "message" : "conversation"}</h2><p className="mt-1 text-xs text-atseen-muted">Your report is private and will be reviewed.</p></div><button aria-label="Close report" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setReportTarget(null)} type="button"><FiX /></button></div><label className="mt-5 block text-xs font-bold text-atseen-muted">Reason<select className="mt-2 w-full rounded-xl border border-atseen-line bg-atseen-surface-2 px-3 py-3 text-sm text-white [color-scheme:dark] outline-none" onChange={(event) => setReportReason(event.target.value)} value={reportReason}>{REPORT_REASONS.map(([value, label]) => <option className="bg-atseen-bg-2 text-white" key={value} value={value}>{label}</option>)}</select></label><label className="mt-4 block text-xs font-bold text-atseen-muted">Additional details <span className="font-normal">(optional)</span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface-2 p-3 text-sm text-white outline-none" maxLength={1000} onChange={(event) => setReportDetails(event.target.value)} value={reportDetails} /></label><button className="mt-5 w-full rounded-full bg-atseen-danger py-3 text-sm font-bold text-white disabled:opacity-50" disabled={actionBusy} type="submit">{actionBusy ? "Submitting…" : "Submit report"}</button></form></div> : null}
     {storyViewer ? <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 p-4"><div className="relative flex h-[min(78vh,620px)] w-full max-w-sm items-center justify-center overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg shadow-2xl"><button aria-label="Close story" className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white" onClick={() => setStoryViewer(null)} type="button"><FiX /></button>{storyViewer.loading ? <p className="text-sm text-atseen-muted">Loading story…</p> : storyViewer.expired ? <div className="px-8 text-center"><div className="text-5xl">⌛</div><h2 className="mt-5 text-xl font-bold">Story unavailable</h2><p className="mt-2 text-sm leading-6 text-atseen-muted">This story expired after 24 hours or was deleted by its creator.</p></div> : storyViewer.error ? <div className="px-8 text-center"><h2 className="text-xl font-bold">Unable to open story</h2><p className="mt-2 text-sm text-atseen-muted">Please check your connection and try again.</p></div> : storyViewer.story ? <><img alt={storyViewer.story.caption || "Story"} className="h-full w-full object-cover" src={resolveMediaUrl(storyViewer.story.image)} /><div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" /><div className="absolute left-5 right-14 top-5 flex items-center gap-3"><FanAvatar name={storyViewer.story.name} size="h-10 w-10" src={storyViewer.story.avatar} /><div><p className="text-sm font-bold text-white">{storyViewer.story.name}</p><p className="text-[10px] text-white/65">Story</p></div></div>{storyViewer.story.caption ? <p className="absolute bottom-7 left-5 right-5 text-base font-bold leading-7 text-white">{storyViewer.story.caption}</p> : null}</> : null}</div></div> : null}
     {storyViewer?.story && !storyViewer.story.isOwn ? <div className="absolute bottom-6 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-white/15 bg-black/70 p-3 shadow-2xl backdrop-blur"><div className="mb-2 flex items-center justify-center gap-3">{STORY_REACTIONS.map((reaction) => <button aria-label={`React ${reaction}`} className={`grid h-9 w-9 place-items-center rounded-full text-lg transition hover:scale-110 ${storyViewer.reactionSent === reaction ? "bg-atseen-blue/30 ring-1 ring-atseen-blue" : "bg-white/10"}`} disabled={storyActionBusy} key={reaction} onClick={() => reactToOpenStory(reaction)} type="button">{reaction}</button>)}</div><form className="flex gap-2" onSubmit={replyToOpenStory}><input className="min-w-0 flex-1 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/55" maxLength={1000} onChange={(event) => setStoryReplyDraft(event.target.value)} placeholder={`Reply to ${storyViewer.story.name}…`} value={storyReplyDraft} /><button aria-label="Send story reply" className="grid h-10 w-10 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!storyReplyDraft.trim() || storyActionBusy} type="submit"><FiSend /></button></form>{storyViewer.replySent ? <p className="mt-2 text-center text-[10px] text-atseen-success">Reply sent</p> : null}{storyViewer.actionError ? <p className="mt-2 text-center text-[10px] text-atseen-danger">{storyViewer.actionError}</p> : null}</div> : null}

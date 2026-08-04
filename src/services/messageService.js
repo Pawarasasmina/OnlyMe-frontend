@@ -65,6 +65,7 @@ export const messageService = {
     data.append("avatar", file);
     return axiosInstance.post(`/messages/groups/${groupId}/avatar`, data);
   },
+  removeGroupAvatar: (groupId) => axiosInstance.delete(`/messages/groups/${groupId}/avatar`),
   archiveGroup: (groupId, archived = true) => axiosInstance.put(`/messages/groups/${groupId}/archive`, { archived }),
   muteGroup: (groupId, muted = true) => axiosInstance.put(`/messages/groups/${groupId}/mute`, { muted }),
   pinGroupToProfile: (groupId, pinned = true) => axiosInstance.put(`/messages/groups/${groupId}/profile-pin`, { pinned }),
