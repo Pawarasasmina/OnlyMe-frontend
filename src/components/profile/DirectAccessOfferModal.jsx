@@ -38,8 +38,11 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
     startCall({ id: creatorId, displayName: profile.displayName, username: profile.username, avatarUrl: profile.avatar, role: "creator" }, type);
   };
 
-  return <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/80 sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section aria-labelledby="direct-access-offer-title" aria-modal="true" className="relative flex max-h-[94dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-atseen-line bg-atseen-bg shadow-2xl sm:rounded-3xl" role="dialog">
+  return <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/80" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section aria-labelledby="direct-access-offer-title" aria-modal="true" className="relative flex max-h-[88dvh] w-full max-w-[640px] flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-atseen-line bg-atseen-bg shadow-2xl" role="dialog">
+      <div className="flex h-5 shrink-0 items-center justify-center bg-atseen-bg-2">
+        <span aria-hidden="true" className="h-1 w-8 rounded-full bg-white/30" />
+      </div>
       <header className="flex shrink-0 items-center gap-3 border-b border-atseen-line bg-atseen-bg-2 px-5 py-4">
         <img alt="" className="h-10 w-10 rounded-full border border-atseen-line object-cover" src={profile.avatar || "/default-avatar.png"} />
         <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black" id="direct-access-offer-title">{profile.displayName}</h2><p className="text-[11px] text-atseen-muted">Direct Access</p></div>
@@ -69,7 +72,7 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
         <p className="mt-4 text-center text-[11px] text-atseen-muted">Stars are held securely and only captured after {firstName} replies.</p>
       </div>
 
-      <footer className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-atseen-bg via-atseen-bg to-transparent px-5 pb-5 pt-10">
+      <footer className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-atseen-bg via-atseen-bg to-transparent px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-10">
         <button className="w-full rounded-2xl bg-atseen-blue py-3.5 text-sm font-black text-atseen-bg disabled:opacity-40" disabled={messageOffer.isLoading || !offer?.enabled} onClick={openMessages} type="button">{offer?.premiumAllowance?.available ? "Open your included window" : offer ? `Unlock Direct Access · ✦${offer.priceStars}` : "Loading offer…"}</button>
         {offer && !offer.premiumAllowance?.available && Number(offer.walletBalance || 0) < Number(offer.priceStars) ? <button className="mt-2 w-full text-xs font-bold text-atseen-warning" onClick={() => { onClose(); navigate("/fan/wallet"); }} type="button">Not enough Stars · Open Wallet</button> : null}
       </footer>

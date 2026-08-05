@@ -59,6 +59,9 @@ export const messageService = {
   createGroup: (name, memberIds, avatarUrl = "") => axiosInstance.post("/messages/groups", { name, memberIds, avatarUrl }),
   getGroupMessages: (groupId, { cursor = null, limit = 50 } = {}) => axiosInstance.get(`/messages/groups/${groupId}`, { params: { limit, ...(cursor ? { cursor } : {}) } }),
   sendGroupMessage: (groupId, body, replyToId, clientMessageId) => axiosInstance.post(`/messages/groups/${groupId}`, { body, replyToId, clientMessageId }),
+  sendGroupVoice: (groupId, blob, waveform, clientMessageId) => { const data = new FormData(); data.append("voice", blob, `voice-${Date.now()}.webm`); data.append("waveform", JSON.stringify(waveform)); data.append("clientMessageId", clientMessageId); return axiosInstance.post(`/messages/groups/${groupId}/voice`, data); },
+  sendGroupImage: (groupId, file, clientMessageId, onProgress) => { const data = new FormData(); data.append("image", file); data.append("clientMessageId", clientMessageId); return axiosInstance.post(`/messages/groups/${groupId}/image`, data, { onUploadProgress: (event) => event.total && onProgress?.(Math.round((event.loaded / event.total) * 100)) }); },
+  sendGroupVideoNote: (groupId, blob, clientMessageId, onProgress) => { const data = new FormData(); data.append("video", blob, `video-note-${Date.now()}.webm`); data.append("clientMessageId", clientMessageId); return axiosInstance.post(`/messages/groups/${groupId}/video-note`, data, { onUploadProgress: (event) => event.total && onProgress?.(Math.round((event.loaded / event.total) * 100)) }); },
   updateGroup: (groupId, payload) => axiosInstance.patch(`/messages/groups/${groupId}`, payload),
   updateGroupAvatar: (groupId, file) => {
     const data = new FormData();
@@ -95,4 +98,6 @@ export const messageService = {
     `/messages/direct-access/ask/${fanId}`,
     { body, clientMessageId },
   ),
+  sendFreeDirectAccessFollowup: (creatorId, body, clientMessageId, idempotencyKey) => axiosInstance.post(`/messages/direct-access/follow-up/${creatorId}`, { body, clientMessageId, idempotencyKey }),
+  replyToFreeDirectAccessFollowup: (messageId, body, clientMessageId, idempotencyKey) => axiosInstance.post(`/messages/direct-access/follow-up/${messageId}/reply`, { body, clientMessageId, idempotencyKey }),
 };
