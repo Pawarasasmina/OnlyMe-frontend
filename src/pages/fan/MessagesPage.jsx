@@ -723,6 +723,21 @@ export default function MessagesPage() {
       setActionBusy(false);
     }
   };
+  const handleInboxRequest = async (conversation, accept) => {
+    if (requestBusy) return;
+    setRequestBusy(true);
+    setError("");
+    try {
+      if (accept) await messageService.acceptRequest(conversation.id);
+      else await messageService.declineRequest(conversation.id);
+      await queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      if (accept) chooseConversation({ ...conversation, status: "ACTIVE", requestReceived: false });
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Unable to update this message request.");
+    } finally {
+      setRequestBusy(false);
+    }
+  };
   const refreshSelectedGroup = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["messages", "group", selected.id] }),
@@ -1402,6 +1417,7 @@ export default function MessagesPage() {
             return <button className={`rounded-lg px-2 py-2.5 text-xs font-bold transition ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => setInboxTab(tab.id)} type="button">{tab.label}{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
           })}
         </nav>
+        {inboxTab === "requests" ? <p className="px-5 pb-2 pt-3 text-[10px] leading-4 text-atseen-muted">People you don’t follow yet. They won’t know you’ve seen it until you accept.</p> : null}
         <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {inboxTab === "direct" && user?.role === "creator" ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border border-dashed border-atseen-blue/45 bg-atseen-blue/[0.025] p-4 text-left transition hover:bg-atseen-blue/[0.06]" onClick={() => { setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-atseen-blue"><FiPlus /></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-atseen-blue">Set up Direct Access</span><span className="mt-0.5 block text-[11px] text-atseen-muted">Your prices for priority messages and calls</span></span></button> : null}
           {inboxTab === "direct" && directWindowsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading Direct Access…</p> : null}
@@ -1420,7 +1436,18 @@ export default function MessagesPage() {
           {inboxTab === "direct" && !directWindowsQuery.isLoading && !directConversations.length ? <div className="grid place-items-center px-8 py-20 text-center"><FiMessageCircle className="text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">{user?.role === "fan" ? "No Priority messages" : "No Direct Access messages"}</h2><p className="mt-2 text-sm text-atseen-muted">Direct Access conversations will appear here.</p></div> : null}
           {inboxTab === "all" && archivedConversations.length ? <button className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm hover:bg-white/[0.03]" onClick={() => setShowArchived((current) => !current)} type="button"><span className="grid h-10 w-10 place-items-center rounded-full border border-atseen-line bg-white/[0.03] text-atseen-muted"><FiArchive /></span><span className="flex-1 font-bold">{showArchived ? "Back to messages" : "Archived"}</span><span className="text-xs text-atseen-muted">{archivedConversations.length}</span></button> : null}
           {inboxTab !== "direct" && !conversationsQuery.isLoading && !shownConversations.length ? <div className="grid place-items-center px-8 py-20 text-center"><FiMessageCircle className="text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">{inboxTab === "requests" ? "No message requests" : "No conversations yet"}</h2><p className="mt-2 text-sm text-atseen-muted">{inboxTab === "requests" ? "Messages from non-following fans appear here." : user?.role === "fan" ? "Start a private chat with a creator." : "Accepted fan conversations appear here."}</p></div> : null}
-          {(showArchived && inboxTab === "all" ? archivedConversations : shownConversations).map((conversation) => {
+          {inboxTab === "requests" ? shownConversations.map((conversation) => {
+            const person = conversation.participant;
+            const last = conversation.lastMessage;
+            return <article className="flex items-center gap-3 px-5 py-4" key={`request:${conversation.id}`}>
+              <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={person} presence={presence[conversation.id]} subtitle={last?.body || "Message request"} /></button>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="mr-1 text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>
+                <button className="min-h-10 rounded-full bg-atseen-blue px-4 py-2 text-xs font-black text-atseen-bg shadow-[0_7px_18px_rgba(112,169,255,0.25)] disabled:opacity-50" disabled={requestBusy} onClick={() => handleInboxRequest(conversation, true)} type="button">Accept</button>
+                <button className="min-h-10 rounded-full border border-atseen-line bg-atseen-surface-2 px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={requestBusy} onClick={() => handleInboxRequest(conversation, false)} type="button">Delete</button>
+              </div>
+            </article>;
+          }) : (showArchived && inboxTab === "all" ? archivedConversations : shownConversations).map((conversation) => {
             const isGroup = conversation.type === "group";
             const rowPerson = isGroup ? { displayName: conversation.name, avatarUrl: conversation.avatarUrl } : conversation.participant;
             const last = conversation.lastMessage;
