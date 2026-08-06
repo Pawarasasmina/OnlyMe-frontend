@@ -11,6 +11,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCalls } from "../../context/callContextBase";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
+import { postService } from "../../services/postService";
 import { getMessageSocket } from "../../services/messageSocket";
 import { storyService } from "../../services/storyService";
 import { resolveMediaUrl } from "../../utils/media";
@@ -96,10 +97,35 @@ function StoryReplyPreview({ forceExpired = false, mine, onOpen, reply }) {
   return <button className={`mb-2 block w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/15 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`} onClick={() => onOpen(reply, expired)} type="button"><div className="flex items-center gap-2 p-2">{expired ? <span className={`grid h-12 w-10 shrink-0 place-items-center rounded-lg text-lg ${mine ? "bg-atseen-bg/10" : "bg-white/5"}`}>⌛</span> : <img alt="Story replied to" className="h-12 w-10 shrink-0 rounded-lg object-cover" src={resolveMediaUrl(reply.imageUrl)} />}<div className="min-w-0"><p className={`text-[10px] font-bold uppercase tracking-wide ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{expired ? "Story unavailable" : mine ? "You replied to their story" : "Replied to your story"}</p><p className={`truncate text-xs ${mine ? "text-atseen-bg/75" : "text-atseen-muted"}`}>{expired ? "This story has expired" : reply.caption || "Tap to view story"}</p></div></div></button>;
 }
 
+function PostMessagePreview({ mine, postId, sharedUrl }) {
+  const postQuery = useQuery({
+    queryKey: ["message-post-preview", postId],
+    queryFn: () => postService.getPost(postId),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const post = postQuery.data;
+  if (postQuery.isLoading) return <div className={`min-w-56 animate-pulse overflow-hidden rounded-xl border ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`}><div className="h-28 bg-white/10" /><div className="space-y-2 p-3"><div className="h-3 w-28 rounded bg-white/10" /><div className="h-3 w-44 rounded bg-white/10" /></div></div>;
+  if (!post) return <a className={`block min-w-52 overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank"><span className="block px-3 py-3"><span className={`block text-[10px] font-black uppercase tracking-wider ${mine ? "text-atseen-bg/60" : "text-atseen-blue"}`}>Shared post</span><span className="mt-1 block text-sm font-bold">Open this post</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{sharedUrl}</span></span></a>;
+  const previewMedia = post.media?.find((item) => item.type === "image") || post.media?.[0];
+  const authorName = post.author?.name || post.author?.displayName || "OnlyMe creator";
+  const authorAvatar = post.author?.avatar || post.author?.avatarUrl || "";
+  return <a className={`block w-[min(18rem,72vw)] overflow-hidden rounded-xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank">
+    {previewMedia?.url ? previewMedia.type === "video" ? <div className="grid h-32 place-items-center bg-black/40 text-xs font-bold">Video post</div> : <img alt="Shared post preview" className="h-32 w-full object-cover" loading="lazy" src={resolveMediaUrl(previewMedia.url)} /> : null}
+    <span className="block p-3">
+      <span className="flex items-center gap-2"><FanAvatar name={authorName} size="h-7 w-7" src={authorAvatar} /><span className="min-w-0"><span className="block truncate text-xs font-black">{authorName}</span>{post.author?.username ? <span className={`block truncate text-[9px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>@{post.author.username}</span> : null}</span></span>
+      {post.text ? <span className="mt-2 block line-clamp-3 whitespace-pre-wrap text-xs leading-5">{post.text}</span> : <span className={`mt-2 block text-xs ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>Shared an OnlyMe post</span>}
+      <span className={`mt-2 block text-[10px] font-bold ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Open post</span>
+    </span>
+  </a>;
+}
+
 function MessageText({ body, mine }) {
   const value = String(body || "");
   const sharedUrl = /^https?:\/\/\S+\/(?:posts|profile|worlds?|publications?)\/[^\s]+$/i.test(value) ? value : null;
   if (!sharedUrl) return <p className="whitespace-pre-wrap break-words">{value}</p>;
+  const postId = sharedUrl.match(/\/posts\/([^/?#]+)/i)?.[1];
+  if (postId) return <PostMessagePreview mine={mine} postId={decodeURIComponent(postId)} sharedUrl={sharedUrl} />;
   const profileShare = /\/profile\//i.test(sharedUrl);
   const worldShare = /\/(?:worlds?|publications?)\//i.test(sharedUrl);
   const sharedKind = profileShare ? "profile" : worldShare ? "world" : "note";
@@ -168,6 +194,7 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [newChat, setNewChat] = useState(false);
+  const [sharePickerOpen, setSharePickerOpen] = useState(false);
   const [newDirectChat, setNewDirectChat] = useState(false);
   const [newGroup, setNewGroup] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -220,6 +247,18 @@ export default function MessagesPage() {
   const imageInputRef = useRef(null);
   const groupAvatarInputRef = useRef(null);
   const newGroupAvatarInputRef = useRef(null);
+  useEffect(() => {
+    if (!inboxRowMenu && !chatMenuOpen && !messageMenu && !reactionFor) return undefined;
+    const dismissPopovers = (event) => {
+      if (event.target.closest?.("[data-chat-popover]")) return;
+      setInboxRowMenu(null);
+      setChatMenuOpen(false);
+      setMessageMenu(null);
+      setReactionFor(null);
+    };
+    document.addEventListener("pointerdown", dismissPopovers);
+    return () => document.removeEventListener("pointerdown", dismissPopovers);
+  }, [chatMenuOpen, inboxRowMenu, messageMenu, reactionFor]);
   const conversationsQuery = useQuery({
     queryKey: ["messages", "conversations"],
     queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
@@ -257,7 +296,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (selected?.id) messagesQuery.refetch();
   }, [selected?.directAccessWindowId]);
-  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
+  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || sharePickerOpen || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
   const groupsQuery = useQuery({
     queryKey: ["messages", "groups"],
     queryFn: () => messageService.getGroups().then((response) => response.data.data.groups),
@@ -342,7 +381,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!pendingShare) return;
     if (!selected?.id) {
-      setNewChat(true);
+      setSharePickerOpen(true);
       return;
     }
     setDraft(pendingShare);
@@ -460,8 +499,10 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const unreadChats = conversations.filter(
-      (conversation) => (Number(conversation.unreadCount) || 0) > 0,
-    ).length + (groupsQuery.data || []).filter((group) => (Number(group.unreadCount) || 0) > 0).length;
+      (conversation) => !conversation.muted && (Number(conversation.unreadCount) || 0) > 0,
+    ).length + (groupsQuery.data || []).filter(
+      (group) => !group.muted && (Number(group.unreadCount) || 0) > 0,
+    ).length;
     window.dispatchEvent(new CustomEvent(UNREAD_MESSAGE_COUNT_EVENT, { detail: unreadChats }));
   }, [conversations, groupsQuery.data]);
 
@@ -682,6 +723,25 @@ export default function MessagesPage() {
     ...(groupsQuery.data || []).filter((item) => item.archived),
     ...conversations.filter((item) => item.archived),
   ], [conversations, groupsQuery.data]);
+  const recentShareTargets = useMemo(() => [
+    ...(groupsQuery.data || []).filter((item) => !item.archived),
+    ...conversations.filter((item) => !item.archived && item.status !== "DECLINED"),
+  ].sort((left, right) => {
+    const leftTime = new Date(left.lastMessage?.createdAt || left.updatedAt || left.createdAt || 0).getTime();
+    const rightTime = new Date(right.lastMessage?.createdAt || right.updatedAt || right.createdAt || 0).getTime();
+    return rightTime - leftTime;
+  }), [conversations, groupsQuery.data]);
+  const shareSearch = search.trim().toLowerCase();
+  const filteredRecentShareTargets = useMemo(() => recentShareTargets.filter((target) => {
+    if (!shareSearch) return true;
+    const name = target.type === "group" ? target.name : target.participant?.displayName;
+    const username = target.type === "group" ? "" : target.participant?.username;
+    return `${name || ""} ${username || ""}`.toLowerCase().includes(shareSearch);
+  }), [recentShareTargets, shareSearch]);
+  const remainingSharePeople = useMemo(() => {
+    const existingDirectIds = new Set(conversations.map((item) => String(item.id)));
+    return orderedPeople.filter((person) => !existingDirectIds.has(String(person.id)));
+  }, [conversations, orderedPeople]);
   const chooseConversation = (conversation) => {
     if (conversation.type === "group") {
       setSelected(conversation);
@@ -697,6 +757,21 @@ export default function MessagesPage() {
   };
   const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
   const openPerson = (person) => { chooseConversation({ id: person.id, type: "direct", participant: person }); setNewChat(false); setNewDirectChat(false); setSearch(""); };
+  const chooseShareTarget = (target) => {
+    setSharePickerOpen(false);
+    setSearch("");
+    chooseConversation(target.type === "group" ? target : { ...target, type: "direct" });
+  };
+  const closeSharePicker = () => {
+    setSharePickerOpen(false);
+    setPendingShare("");
+    setSearch("");
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("share");
+      return next;
+    }, { replace: true });
+  };
   const createGroup = async (event) => {
     event.preventDefault();
     if (!groupName.trim() || !groupMembers.length || actionBusy) return;
@@ -1401,6 +1476,17 @@ export default function MessagesPage() {
 
   return <div className="relative h-full min-h-0 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2">
     <div className="flex h-full min-h-0">
+      {sharePickerOpen ? <div className="absolute inset-0 z-[80] flex items-end bg-black/75" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSharePicker(); }}><section aria-modal="true" className="flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5 shadow-2xl" role="dialog">
+        <div className="mx-auto mb-4 h-1 w-8 shrink-0 rounded-full bg-white/35" />
+        <div className="mb-3 flex shrink-0 items-center justify-between"><div><h2 className="text-lg font-black">Send in message</h2><p className="mt-1 text-[11px] text-atseen-muted">Choose a recent chat, group, or another person.</p></div><button aria-label="Close share picker" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={closeSharePicker} type="button"><FiX /></button></div>
+        <label className="mb-3 flex shrink-0 items-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 px-3"><FiSearch className="text-atseen-muted" /><input autoFocus className="w-full bg-transparent py-2.5 text-sm outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search chats and people" value={search} /></label>
+        <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto">
+          {filteredRecentShareTargets.length ? <><h3 className="sticky top-0 z-10 bg-[#1b212c] pb-2 pt-1 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Recent</h3>{filteredRecentShareTargets.map((target) => { const isGroup = target.type === "group"; const person = isGroup ? { displayName: target.name, avatarUrl: target.avatarUrl } : target.participant; return <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`${isGroup ? "group" : "direct"}:${target.id}`} onClick={() => chooseShareTarget(target)} type="button"><Identity compact person={person} presence={isGroup ? null : presence[target.id]} subtitle={isGroup ? `${target.members?.length || 0} members` : target.lastMessage?.body || "Recent chat"} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>; })}</> : null}
+          {remainingSharePeople.length ? <><h3 className="sticky top-0 z-10 mt-3 border-t border-white/[0.07] bg-[#1b212c] pb-2 pt-3 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Other people</h3>{remainingSharePeople.map((person) => <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`person:${person.id}`} onClick={() => chooseShareTarget({ id: person.id, participant: person, type: "direct" })} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>)}</> : null}
+          {peopleQuery.isLoading ? <p className="p-5 text-center text-sm text-atseen-muted">Loading people…</p> : null}
+          {!peopleQuery.isLoading && !filteredRecentShareTargets.length && !remainingSharePeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No chats or people found.</p> : null}
+        </div>
+      </section></div> : null}
       <aside className={`${selected ? "hidden" : "flex"} h-full min-h-0 w-full flex-col`}>
         <header className="flex items-center justify-end gap-2 px-5 pb-4 pt-5">
           <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
@@ -1455,8 +1541,8 @@ export default function MessagesPage() {
             const requestPending = conversation.status === "REQUEST";
             return <div className={`relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-2 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={rowPerson} presence={isGroup ? null : presence[conversation.id]} subtitle={subtitle} /><span className="ml-auto flex max-w-[95px] flex-col items-end gap-1"><span className="text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>{requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">Pending</span> : conversation.unreadCount ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-atseen-blue px-1 text-[10px] font-black text-atseen-bg">{conversation.unreadCount}</span> : null}</span></button>
-              <button aria-label={`Actions for ${rowPerson.displayName}`} className="grid h-11 w-10 shrink-0 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setInboxRowMenu((current) => current?.id === conversation.id ? null : conversation)} type="button"><FiMoreVertical /></button>
-              {inboxRowMenu?.id === conversation.id ? <div className="absolute right-4 top-12 z-50 w-44 rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl"><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold hover:bg-white/5" onClick={() => archiveInboxRow(conversation)} type="button"><FiArchive />{conversation.archived ? "Unarchive" : "Archive"}</button><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-atseen-muted hover:bg-white/5" onClick={() => { setInboxRowMenu(null); chooseConversation(conversation); }} type="button"><FiMessageCircle />Open chat</button></div> : null}
+              <button aria-label={`Actions for ${rowPerson.displayName}`} className="grid h-11 w-10 shrink-0 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setChatMenuOpen(false); setMessageMenu(null); setReactionFor(null); setInboxRowMenu((current) => current?.id === conversation.id ? null : conversation); }} type="button"><FiMoreVertical /></button>
+              {inboxRowMenu?.id === conversation.id ? <div className="absolute right-4 top-12 z-50 w-44 rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl" data-chat-popover><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold hover:bg-white/5" onClick={() => archiveInboxRow(conversation)} type="button"><FiArchive />{conversation.archived ? "Unarchive" : "Archive"}</button><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-atseen-muted hover:bg-white/5" onClick={() => { setInboxRowMenu(null); chooseConversation(conversation); }} type="button"><FiMessageCircle />Open chat</button></div> : null}
             </div>;
           })}
         </div>
@@ -1471,8 +1557,8 @@ export default function MessagesPage() {
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
             {selected.type !== "group" && user?.role === "fan" && participant?.role === "creator" && participant?.callEnabled ? <button aria-label={`Call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-atseen-line text-sm text-atseen-blue transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button> : null}
             <div className="relative">
-              <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setChatMenuOpen((current) => !current)} type="button"><FiMoreVertical /></button>
-              {chatMenuOpen ? <div className="absolute right-0 top-11 z-[70] w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl">
+              <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setMessageMenu(null); setReactionFor(null); setChatMenuOpen((current) => !current); }} type="button"><FiMoreVertical /></button>
+              {chatMenuOpen ? <div className="absolute right-0 top-11 z-[70] w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl" data-chat-popover>
                 <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={muteSelectedConversation} type="button"><FiBell /> {selectedConversationMuted ? "Unmute notifications" : "Mute notifications"}</button>
                 {selected.type === "group" ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); pinSelectedGroup(); }} type="button"><FiZap /> {participant?.pinnedToProfile ? "Remove from profile" : "Add group to profile"}</button> : null}
                 {selected.type === "group" && participant?.admins?.includes(myId) ? <><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={changeSelectedGroupAvatar} ref={groupAvatarInputRef} type="file" /><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => groupAvatarInputRef.current?.click()} type="button"><FiImage /> Change group photo</button></> : null}
@@ -1546,10 +1632,10 @@ export default function MessagesPage() {
                   })}</div> : null}
                   {!message.deletedAt ? <div className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5 text-atseen-muted opacity-100 transition sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "right-full mr-1 flex-row-reverse" : "left-full ml-1"}`}>
                     <button aria-label="Reply to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => { setReplyTo(message); setReactionFor(null); }} title="Reply" type="button"><FiCornerUpLeft /></button>
-                    <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setReactionFor((current) => current === message.id ? null : message.id)} title="React" type="button"><FiSmile /></button>
-                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setMessageMenu((current) => current === message.id ? null : message.id)} title="More" type="button"><FiMoreVertical /></button>
-                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`}>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
-                    {messageMenu === message.id ? <div className={`absolute bottom-8 z-30 w-40 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl ${mine ? "right-0" : "left-0"}`}>
+                    <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setChatMenuOpen(false); setMessageMenu(null); setReactionFor((current) => current === message.id ? null : message.id); }} title="React" type="button"><FiSmile /></button>
+                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setChatMenuOpen(false); setReactionFor(null); setMessageMenu((current) => current === message.id ? null : message.id); }} title="More" type="button"><FiMoreVertical /></button>
+                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
+                    {messageMenu === message.id ? <div className={`absolute bottom-8 z-30 w-40 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>
                       {message.body && !message.deletedAt ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => copyMessage(message)} type="button"><FiCopy /> Copy</button> : null}
                       {selected.type === "group" && mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setGroupMessageInfo(message); }} type="button">Message info</button> : null}
                       {!message.id.startsWith("pending:") ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setForwardSelection(new Set([message.id])); }} type="button"><FiShare2 /> Select messages</button> : null}
@@ -1587,8 +1673,7 @@ export default function MessagesPage() {
             {creatorCanReplyToFreeFanAsk ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Free fan question</b> · Your reply opens and settles a new paid window at your configured price.</div> : null}
             {user?.role === "creator" && directAccessWindow?.settlementStatus === "HELD" ? <p className="mb-2 text-center text-[11px] text-atseen-dim">Answer the actual question — specific and real. Your reply remains available even after the fan reaches 3/3.</p> : null}
             {directAccessFanLocked && !fanCanAskAfterWindowEnded && !awaitingFollowupCreatorReply ? <p className="mb-2 text-center text-xs font-bold text-atseen-warning">This Direct Access window is closed. Its message history remains visible to both people.</p> : null}
-            {selected.type === "group" ? <div className="mb-2 flex items-center gap-2"><VoiceRecorder disabled={sending || imageBusy} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send group image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/40 hover:text-white disabled:opacity-40" disabled={sending || imageBusy} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button><span className="text-[10px] text-atseen-muted">Voice, video notes and images</span></div> : null}
-            <div className="flex items-end gap-2">{selected.type !== "group" ? <><VoiceRecorder disabled={sending || imageBusy || directAccessFanLocked} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:text-white disabled:opacity-40" disabled={sending || imageBusy || directAccessFanLocked} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button></> : null}<button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60 disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending || imageBusy || directAccessFanLocked}><FiSend /></button></div>
+            <div className="flex items-end gap-2"><VoiceRecorder disabled={sending || imageBusy || directAccessFanLocked} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:text-white disabled:opacity-40" disabled={sending || imageBusy || directAccessFanLocked} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60 disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending || imageBusy || directAccessFanLocked}><FiSend /></button></div>
           </form>)}
         </> : null}
       </main>

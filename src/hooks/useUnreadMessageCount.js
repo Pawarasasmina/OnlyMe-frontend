@@ -15,10 +15,20 @@ export function useUnreadMessageCount(enabled = true) {
     let active = true;
     const refresh = async () => {
       try {
-        const response = await messageService.getConversations();
+        const [conversationResponse, groupResponse] = await Promise.all([
+          messageService.getConversations(),
+          messageService.getGroups(),
+        ]);
         if (!active) return;
-        const conversations = response.data.data.conversations || [];
-        setCount(conversations.filter((conversation) => (Number(conversation.unreadCount) || 0) > 0).length);
+        const conversations = conversationResponse.data.data.conversations || [];
+        const groups = groupResponse.data.data.groups || [];
+        const unreadDirectChats = conversations.filter((conversation) => (
+          !conversation.muted && (Number(conversation.unreadCount) || 0) > 0
+        )).length;
+        const unreadGroups = groups.filter((group) => (
+          !group.muted && (Number(group.unreadCount) || 0) > 0
+        )).length;
+        setCount(unreadDirectChats + unreadGroups);
       } catch {
         // Keep the last known count during a temporary connection failure.
       }
@@ -32,6 +42,7 @@ export function useUnreadMessageCount(enabled = true) {
     const interval = window.setInterval(refresh, 3000);
     socket?.on("connect", refresh);
     socket?.on("message:new", refresh);
+    socket?.on("group:message", refresh);
     socket?.on("conversation:status", refresh);
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("online", refresh);
@@ -41,6 +52,7 @@ export function useUnreadMessageCount(enabled = true) {
       window.clearInterval(interval);
       socket?.off("connect", refresh);
       socket?.off("message:new", refresh);
+      socket?.off("group:message", refresh);
       socket?.off("conversation:status", refresh);
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("online", refresh);
