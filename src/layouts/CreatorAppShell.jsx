@@ -3,6 +3,7 @@ import { FiCheckCircle, FiDollarSign, FiFileText, FiGrid, FiHome, FiLogOut, FiMe
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
+import { CallProvider } from "../context/CallContext";
 
 const nav = [
   { to: "/creator/dashboard", label: "Overview", icon: FiHome },
@@ -30,7 +31,7 @@ export default function CreatorAppShell() {
     </NavLink>
   ));
 
-  return <div className="creator-shell">
+  return <CallProvider user={user}><div className="creator-shell">
     <header className="creator-mobile-header"><NavLink className="creator-logo" to="/creator/studio">ONLYME</NavLink><button aria-label="Open navigation" onClick={() => setOpen(true)}><FiMenu /></button></header>
     <aside className={`creator-sidebar ${open ? "is-open" : ""}`}>
       <div className="flex items-center justify-between"><NavLink className="creator-logo" to="/creator/studio">ONLYME</NavLink><button className="lg:hidden" aria-label="Close navigation" onClick={() => setOpen(false)}><FiX /></button></div>
@@ -44,5 +45,5 @@ export default function CreatorAppShell() {
     {open ? <button aria-label="Close navigation" className="creator-backdrop" onClick={() => setOpen(false)} /> : null}
     <main className="creator-main"><Outlet /></main>
     <nav className="creator-bottom-nav">{visibleNav.slice(0, 5).map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => isActive ? "active" : ""}><Icon /><span>{label}</span></NavLink>)}</nav>
-  </div>;
+  </div></CallProvider>;
 }

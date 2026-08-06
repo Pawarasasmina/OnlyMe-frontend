@@ -11,6 +11,8 @@ const labels = {
   inApp: "In-app notifications",
   marketing: "Product announcements",
   security: "Security alerts",
+  messages: "Messages",
+  directAccess: "Direct Access requests",
 };
 
 function NotificationSettingsPage() {
@@ -48,7 +50,7 @@ function NotificationSettingsPage() {
   if (query.isError) return <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load notification settings.</p>;
 
   const role = query.data?.role || "fan";
-  const keys = role === "admin" ? ["email", "inApp", "security"] : ["email", "inApp", "marketing"];
+  const keys = role === "admin" ? ["email", "inApp", "security"] : ["email", "inApp", "messages", "directAccess", "marketing"];
 
   const update = ({ target }) => {
     setDirty(true);

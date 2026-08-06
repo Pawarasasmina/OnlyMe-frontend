@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
 import { AuthContext } from "./AuthContext";
-import { disconnectMessageSocket } from "../services/messageSocket";
+import { disconnectMessageSocket, getMessageSocket } from "../services/messageSocket";
 
 const ACCESS_TOKEN_KEY = "onlyme_access_token";
 
@@ -14,6 +14,15 @@ export function AuthProvider({ children }) {
     window.addEventListener("onlyme-auth-cleared", clearAuthState);
     return () => window.removeEventListener("onlyme-auth-cleared", clearAuthState);
   }, []);
+
+  useEffect(() => {
+    if (user && localStorage.getItem(ACCESS_TOKEN_KEY)) {
+      getMessageSocket();
+      return undefined;
+    }
+    if (!loading) disconnectMessageSocket();
+    return undefined;
+  }, [loading, user]);
 
   useEffect(() => {
     let mounted = true;

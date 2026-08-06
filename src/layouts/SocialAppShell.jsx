@@ -8,6 +8,7 @@ import FanModal from "../components/fanWeb/shared/FanModal";
 import { FanToastProvider } from "../components/fanWeb/shared/FanToast";
 import { useAuth } from "../hooks/useAuth";
 import { useSocialCapabilities } from "../hooks/useSocialCapabilities";
+import { CallProvider } from "../context/CallContext";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -39,6 +40,7 @@ function SocialAppShell({ children = null }) {
 
   return (
     <FanToastProvider>
+      <CallProvider user={user}>
       <div className="min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden">
         <div className="mx-auto flex min-h-screen w-full max-w-[1240px] md:h-screen md:min-h-0">
           <FanWebSidebar capabilities={capabilities} onGetApp={() => setAppModalOpen(true)} status={status} />
@@ -64,6 +66,7 @@ function SocialAppShell({ children = null }) {
       <FanModal isOpen={appModalOpen} onClose={() => setAppModalOpen(false)} title="Get the app">
         <p className="text-center text-sm leading-6 text-atseen-muted">Mobile app availability will be announced when it is ready.</p>
       </FanModal>
+      </CallProvider>
     </FanToastProvider>
   );
 }

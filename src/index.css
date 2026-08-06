@@ -567,3 +567,19 @@ main:has(> div > button.fixed.bottom-16.right-4) section > .flex.flex-wrap butto
   .planet-stage { min-height: 205px; }
   .chapter-state { max-width: 72px; text-align: center; }
 }
+
+/* Messaging actions are always bottom sheets, including wide desktop layouts. */
+div.absolute.inset-0.flex.items-end[class*="bg-black"] {
+  align-items: flex-end !important;
+  padding-bottom: 0 !important;
+}
+
+div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form) {
+  width: 100%;
+  max-width: 640px !important;
+  margin-right: auto;
+  margin-left: auto;
+  border-bottom-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
