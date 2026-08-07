@@ -35,15 +35,20 @@ function FriendAvatarContent({ friend }) {
   );
 }
 
-function DiscoverFriendsSection({ friends = [], onOpenFriendStories }) {
+function DiscoverFriendsSection({
+  friends = [],
+  onOpenFriendStories,
+  title = "Friends",
+  subtitle = "People you follow who follow you back",
+}) {
   if (!friends.length) return null;
 
   return (
     <section className="discover-orb-section" aria-labelledby="discover-friends-title">
       <div className="discover-orb-heading-row">
         <div className="discover-orb-heading-copy">
-          <h2 id="discover-friends-title">Friends</h2>
-          <p>People you follow who follow you back</p>
+          <h2 id="discover-friends-title">{title}</h2>
+          <p>{subtitle}</p>
         </div>
       </div>
       <div className="discover-friends-strip atseen-hide-scrollbar" role="list">
@@ -181,10 +186,22 @@ function DiscoverFollowingSection({ following = [], onOpenFollowingStories }) {
   );
 }
 
-function DiscoverPeopleSections({ friends, following, onOpenFriendStories, onOpenFollowingStories }) {
+function DiscoverPeopleSections({
+  friends,
+  friendSectionTitle,
+  friendSectionSubtitle,
+  following,
+  onOpenFriendStories,
+  onOpenFollowingStories,
+}) {
   return (
     <>
-      <DiscoverFriendsSection friends={friends} onOpenFriendStories={onOpenFriendStories} />
+      <DiscoverFriendsSection
+        friends={friends}
+        onOpenFriendStories={onOpenFriendStories}
+        subtitle={friendSectionSubtitle}
+        title={friendSectionTitle}
+      />
       <DiscoverFollowingSection following={following} onOpenFollowingStories={onOpenFollowingStories} />
     </>
   );

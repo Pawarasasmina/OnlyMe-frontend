@@ -27,6 +27,8 @@ function StoriesRow({ currentUser }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
+  const isFanViewer = String(user?.role || currentUser?.role || "").toLowerCase() === "fan";
+  const showStoryPublishing = !isFanViewer;
   const viewerId = getUserId(user);
   const storiesQuery = useWallStories({ fallbackUser: { ...currentUser, ...user }, viewerId });
   const [creatorOpen, setCreatorOpen] = useState(false);
@@ -70,14 +72,16 @@ function StoriesRow({ currentUser }) {
     <>
       <div className="wall-story-strip atseen-hide-scrollbar" aria-label="Home stories and statuses">
         <OwnSeenPresenceItem activeStatus={me.activeStatus} onOpen={() => setSeenStoryOpen(true)} />
-        <OwnStoryItem
-          activeStatus={me.activeStatus}
-          hasStories={ownStories.length > 0}
-          onAdd={openCreator}
-          onOpen={openOwnStory}
-          storyCount={ownStories.length}
-          user={me}
-        />
+        {showStoryPublishing ? (
+          <OwnStoryItem
+            activeStatus={me.activeStatus}
+            hasStories={ownStories.length > 0}
+            onAdd={openCreator}
+            onOpen={openOwnStory}
+            storyCount={ownStories.length}
+            user={me}
+          />
+        ) : null}
         {storiesQuery.isError ? (
           <button className="wall-story-error" onClick={() => storiesQuery.refetch()} type="button">
             <FiRefreshCw aria-hidden="true" />
@@ -97,20 +101,22 @@ function StoriesRow({ currentUser }) {
       </div>
 
       <OfficialSeenStoryViewer isOpen={seenStoryOpen} onClose={() => setSeenStoryOpen(false)} />
-      <StoryCreator
-        isOpen={creatorOpen}
-        onClose={() => setCreatorOpen(false)}
-        onPublished={(story) => {
-          setCreatorOpen(false);
-          const ownerId = getStoryOwnerId(story);
-          if (ownerId && String(ownerId) !== String(me.id)) return;
-          storiesQuery.refetch();
-        }}
-      />
+      {showStoryPublishing ? (
+        <StoryCreator
+          isOpen={creatorOpen}
+          onClose={() => setCreatorOpen(false)}
+          onPublished={(story) => {
+            setCreatorOpen(false);
+            const ownerId = getStoryOwnerId(story);
+            if (ownerId && String(ownerId) !== String(me.id)) return;
+            storiesQuery.refetch();
+          }}
+        />
+      ) : null}
       <StoryViewer
         initialIndex={viewer.index}
         isOpen={Boolean(activeGroup?.stories?.length)}
-        onAddStory={openCreator}
+        onAddStory={showStoryPublishing ? openCreator : undefined}
         onClose={() => setViewer({ groupId: null, index: 0 })}
         stories={activeGroup?.stories || []}
       />
