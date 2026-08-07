@@ -20,6 +20,10 @@ const MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO", "VOICE"];
 // Voice supports both live recording and audio-file upload. Keep AUDIO readable
 // for older drafts, but do not offer it when adding a new chapter block.
 const ADDABLE_BLOCK_TYPES = BLOCK_TYPES.filter((type) => type !== "AUDIO");
+const PENCOLORS = [
+  ["ICE_BLUE", "#9CCBFF"], ["AMBER", "#F2C76E"], ["CORAL", "#F18A78"],
+  ["MINT", "#6ECF97"], ["LILAC", "#B7A5FF"], ["WHITE", "#F4F7FB"],
+];
 const emptyBlock = (type, order) => ({
   id: crypto.randomUUID(),
   type,
@@ -472,7 +476,7 @@ export default function PublicationComposerShell({ kind }) {
     pricing: {
       mode: cfg.pricingMode,
       starsAmount: cfg.defaultPrice,
-      presetId: kind === "PREMIUM_WORLD" ? "MONTHLY_90" : null,
+      presetId: kind === "PREMIUM_WORLD" ? "MONTHLY_190" : null,
     },
     chapters: [],
   });
@@ -554,11 +558,11 @@ export default function PublicationComposerShell({ kind }) {
           statusVersion: publication.statusVersion,
         })
       ).data.data.publication;
-      for (const chapter of snapshot.chapters) {
+      for (const [chapterIndex, chapter] of snapshot.chapters.entries()) {
         await api.updateChapter(publication.id, chapter.stableChapterId, {
           title: chapter.title || "Untitled",
           blocks: chapter.blocks,
-          isPreview: Boolean(chapter.isPreview),
+          isPreview: kind === "WORLD" || chapterIndex === 0,
           releaseMode: "IMMEDIATE",
           statusVersion: publication.statusVersion,
         });
@@ -648,7 +652,7 @@ export default function PublicationComposerShell({ kind }) {
       await api.addChapter(publication.id, {
         title: `Chapter ${publication.chapters.length + 1}`,
         blocks: [],
-        isPreview: publication.chapters.length === 0,
+        isPreview: kind === "WORLD" || publication.chapters.length === 0,
         releaseMode: "IMMEDIATE",
         statusVersion: publication.statusVersion,
       });
@@ -1000,18 +1004,13 @@ export default function PublicationComposerShell({ kind }) {
           </section>
           <section className="rounded-2xl border border-atseen-line p-5">
             <h2 className="font-black">Verified cover</h2>
-            {p.coverMedia?.secureUrl ? (
-              <img
-                alt={`${cfg.label} cover`}
-                className="my-3 aspect-video w-full rounded-2xl object-cover"
-                src={p.coverMedia.secureUrl}
-              />
-            ) : null}
+            {p.coverMedia?.secureUrl ? (p.coverMedia.resourceType === "video" ? <video className="my-3 aspect-video w-full rounded-2xl object-cover" controls playsInline src={p.coverMedia.secureUrl} /> : <img alt={`${cfg.label} cover`} className="my-3 aspect-video w-full rounded-2xl object-cover" src={p.coverMedia.secureUrl} />) : null}
             <input
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
               onChange={uploadCover}
               type="file"
             />
+            <p className="mt-2 text-[10px] text-atseen-muted">Photo cover or a 15–30 second preview video.</p>
             <ValidationMessages messages={validation.cover} />
           </section>
         </div>
@@ -1091,7 +1090,7 @@ export default function PublicationComposerShell({ kind }) {
                 </button>
               </div>
               {["TEXT", "KEY_POINT", "HIGHLIGHT"].includes(block.type) ? (
-                <textarea
+                <><textarea
                   className="mt-3 min-h-28 w-full border p-3"
                   onChange={(event) =>
                     update({
@@ -1104,7 +1103,7 @@ export default function PublicationComposerShell({ kind }) {
                     })
                   }
                   value={block.text}
-                />
+                />{block.type === "HIGHLIGHT" ? <div className="mt-3"><p className="text-[10px] font-black uppercase tracking-wider text-atseen-muted">Marker pen · 6 brand colors</p><div className="mt-2 flex flex-wrap gap-2">{PENCOLORS.map(([color, hex]) => <button aria-label={`${color.replaceAll("_", " ")} marker`} className={`h-8 w-8 rounded-full border-2 ${block.metadata?.color === color || (!block.metadata?.color && color === "ICE_BLUE") ? "border-white" : "border-transparent"}`} key={color} onClick={() => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { color } } : item) })} style={{ backgroundColor: hex }} type="button" />)}</div></div> : null}</>
               ) : block.type === "LINK" ? (
                 <div>
                   <input

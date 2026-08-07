@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCopy, FiCornerUpLeft, FiEye, FiFlag, FiImage, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiTrash2, FiUserPlus, FiX, FiZap } from "react-icons/fi";
+import { FiExternalLink } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -11,6 +12,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCalls } from "../../context/callContextBase";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
+import { postService } from "../../services/postService";
 import { getMessageSocket } from "../../services/messageSocket";
 import { storyService } from "../../services/storyService";
 import { resolveMediaUrl } from "../../utils/media";
@@ -96,14 +98,39 @@ function StoryReplyPreview({ forceExpired = false, mine, onOpen, reply }) {
   return <button className={`mb-2 block w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/15 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`} onClick={() => onOpen(reply, expired)} type="button"><div className="flex items-center gap-2 p-2">{expired ? <span className={`grid h-12 w-10 shrink-0 place-items-center rounded-lg text-lg ${mine ? "bg-atseen-bg/10" : "bg-white/5"}`}>⌛</span> : <img alt="Story replied to" className="h-12 w-10 shrink-0 rounded-lg object-cover" src={resolveMediaUrl(reply.imageUrl)} />}<div className="min-w-0"><p className={`text-[10px] font-bold uppercase tracking-wide ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{expired ? "Story unavailable" : mine ? "You replied to their story" : "Replied to your story"}</p><p className={`truncate text-xs ${mine ? "text-atseen-bg/75" : "text-atseen-muted"}`}>{expired ? "This story has expired" : reply.caption || "Tap to view story"}</p></div></div></button>;
 }
 
+function PostMessagePreview({ mine, postId, sharedUrl }) {
+  const postQuery = useQuery({
+    queryKey: ["message-post-preview", postId],
+    queryFn: () => postService.getPost(postId),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const post = postQuery.data;
+  if (postQuery.isLoading) return <div className={`w-[min(14rem,68vw)] max-w-full animate-pulse overflow-hidden rounded-xl border ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`}><div className="h-28 bg-white/10" /><div className="space-y-2 p-3"><div className="h-3 w-28 max-w-full rounded bg-white/10" /><div className="h-3 w-44 max-w-full rounded bg-white/10" /></div></div>;
+  if (!post) return <a className={`block w-[min(13rem,68vw)] max-w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank"><span className="block px-3 py-3"><span className={`block text-[10px] font-black uppercase tracking-wider ${mine ? "text-atseen-bg/60" : "text-atseen-blue"}`}>Shared post</span><span className="mt-1 block text-sm font-bold">Open this post</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{sharedUrl}</span></span></a>;
+  const previewMedia = post.media?.find((item) => item.type === "image") || post.media?.[0];
+  const authorName = post.author?.name || post.author?.displayName || "OnlyMe creator";
+  const authorAvatar = post.author?.avatar || post.author?.avatarUrl || "";
+  return <a className={`block w-[min(18rem,72vw)] overflow-hidden rounded-xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank">
+    {previewMedia?.url ? previewMedia.type === "video" ? <div className="grid h-32 place-items-center bg-black/40 text-xs font-bold">Video post</div> : <img alt="Shared post preview" className="h-32 w-full object-cover" loading="lazy" src={resolveMediaUrl(previewMedia.url)} /> : null}
+    <span className="block p-3">
+      <span className="flex items-center gap-2"><FanAvatar name={authorName} size="h-7 w-7" src={authorAvatar} /><span className="min-w-0"><span className="block truncate text-xs font-black">{authorName}</span>{post.author?.username ? <span className={`block truncate text-[9px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>@{post.author.username}</span> : null}</span></span>
+      {post.text ? <span className="mt-2 block line-clamp-3 whitespace-pre-wrap text-xs leading-5">{post.text}</span> : <span className={`mt-2 block text-xs ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>Shared an OnlyMe post</span>}
+      <span className={`mt-2 block text-[10px] font-bold ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Open post</span>
+    </span>
+  </a>;
+}
+
 function MessageText({ body, mine }) {
   const value = String(body || "");
   const sharedUrl = /^https?:\/\/\S+\/(?:posts|profile|worlds?|publications?)\/[^\s]+$/i.test(value) ? value : null;
   if (!sharedUrl) return <p className="whitespace-pre-wrap break-words">{value}</p>;
+  const postId = sharedUrl.match(/\/posts\/([^/?#]+)/i)?.[1];
+  if (postId) return <PostMessagePreview mine={mine} postId={decodeURIComponent(postId)} sharedUrl={sharedUrl} />;
   const profileShare = /\/profile\//i.test(sharedUrl);
   const worldShare = /\/(?:worlds?|publications?)\//i.test(sharedUrl);
   const sharedKind = profileShare ? "profile" : worldShare ? "world" : "note";
-  return <a className={`block min-w-52 overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank"><span className="block px-3 py-3"><span className={`block text-[10px] font-black uppercase tracking-wider ${mine ? "text-atseen-bg/60" : "text-atseen-blue"}`}>Forwarded {sharedKind}</span><span className="mt-1 block text-sm font-bold">Open this {sharedKind}</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{sharedUrl}</span></span></a>;
+  return <a className={`block w-[min(13rem,68vw)] max-w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank"><span className="block px-3 py-3"><span className={`block text-[10px] font-black uppercase tracking-wider ${mine ? "text-atseen-bg/60" : "text-atseen-blue"}`}>Forwarded {sharedKind}</span><span className="mt-1 block text-sm font-bold">Open this {sharedKind}</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{sharedUrl}</span></span></a>;
 }
 
 function GroupImageCropper({ source, onCancel, onSave, saving }) {
@@ -146,6 +173,58 @@ function GroupImageCropper({ source, onCancel, onSave, saving }) {
   </div>;
 }
 
+function sharedContentLabel(type = "") {
+  if (type === "feed_post") return "POST";
+  if (type === "seen") return "SEEN";
+  if (type === "world") return "WORLD";
+  if (type === "experience") return "EXPERIENCE";
+  if (type === "profile") return "PROFILE";
+  if (type === "story") return "STORY";
+  return "CONTENT";
+}
+
+function sharedContentBodyLabel(type = "") {
+  if (type === "feed_post") return "post";
+  if (type === "seen") return "Seen";
+  if (type === "world") return "World";
+  if (type === "experience") return "experience";
+  if (type === "profile") return "profile";
+  if (type === "story") return "story";
+  return "content";
+}
+
+function defaultSharedBody(message) {
+  if (!message?.sharedContent) return "";
+  return `Shared a ${sharedContentBodyLabel(message.sharedContent.contentType)}`;
+}
+
+function SharedContentMessageCard({ content, mine, onOpen }) {
+  if (!content) return null;
+  const author = content.author || {};
+  const image = resolveMediaUrl(content.imageUrl || author.avatarUrl);
+  return (
+    <button
+      className={`mb-2 block w-full max-w-[236px] overflow-hidden rounded-2xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`}
+      onClick={() => onOpen(content)}
+      type="button"
+    >
+      {image ? <img alt={`${sharedContentLabel(content.contentType)} preview`} className="aspect-[5/3] w-full object-cover" loading="lazy" src={image} /> : null}
+      <div className="p-2.5">
+        <p className={`text-[9px] font-black tracking-[0.14em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{sharedContentLabel(content.contentType)}</p>
+        <div className="mt-1.5 flex items-center gap-2">
+          <FanAvatar name={author.name || content.title || "@seen"} size="h-6 w-6" src={author.avatarUrl} />
+          <span className="min-w-0 flex-1">
+            <b className="block truncate text-xs">{author.name || content.title || "Shared content"}</b>
+            {author.username ? <small className={`block truncate text-[10px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>@{author.username}</small> : null}
+          </span>
+          <FiExternalLink className="shrink-0 opacity-55" />
+        </div>
+        <p className={`mt-2 line-clamp-2 text-xs leading-5 ${mine ? "text-atseen-bg/75" : "text-atseen-text/85"}`}>{content.previewText || content.title || "Open shared content"}</p>
+      </div>
+    </button>
+  );
+}
+
 export default function MessagesPage() {
   const { user } = useAuth();
   const { startCall } = useCalls();
@@ -168,6 +247,7 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [newChat, setNewChat] = useState(false);
+  const [sharePickerOpen, setSharePickerOpen] = useState(false);
   const [newDirectChat, setNewDirectChat] = useState(false);
   const [newGroup, setNewGroup] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -220,13 +300,25 @@ export default function MessagesPage() {
   const imageInputRef = useRef(null);
   const groupAvatarInputRef = useRef(null);
   const newGroupAvatarInputRef = useRef(null);
+  useEffect(() => {
+    if (!inboxRowMenu && !chatMenuOpen && !messageMenu && !reactionFor) return undefined;
+    const dismissPopovers = (event) => {
+      if (event.target.closest?.("[data-chat-popover]")) return;
+      setInboxRowMenu(null);
+      setChatMenuOpen(false);
+      setMessageMenu(null);
+      setReactionFor(null);
+    };
+    document.addEventListener("pointerdown", dismissPopovers);
+    return () => document.removeEventListener("pointerdown", dismissPopovers);
+  }, [chatMenuOpen, inboxRowMenu, messageMenu, reactionFor]);
   const conversationsQuery = useQuery({
     queryKey: ["messages", "conversations"],
     queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: "always",
-    staleTime: 0,
+    refetchInterval: socketConnected ? false : 10000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
   const messagesQuery = useQuery({
     queryKey: selected?.type === "group" ? ["messages", "group", selected?.id] : ["messages", selected?.id],
@@ -257,7 +349,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (selected?.id) messagesQuery.refetch();
   }, [selected?.directAccessWindowId]);
-  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
+  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || sharePickerOpen || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
   const groupsQuery = useQuery({
     queryKey: ["messages", "groups"],
     queryFn: () => messageService.getGroups().then((response) => response.data.data.groups),
@@ -342,7 +434,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!pendingShare) return;
     if (!selected?.id) {
-      setNewChat(true);
+      setSharePickerOpen(true);
       return;
     }
     setDraft(pendingShare);
@@ -460,8 +552,10 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const unreadChats = conversations.filter(
-      (conversation) => (Number(conversation.unreadCount) || 0) > 0,
-    ).length + (groupsQuery.data || []).filter((group) => (Number(group.unreadCount) || 0) > 0).length;
+      (conversation) => !conversation.muted && (Number(conversation.unreadCount) || 0) > 0,
+    ).length + (groupsQuery.data || []).filter(
+      (group) => !group.muted && (Number(group.unreadCount) || 0) > 0,
+    ).length;
     window.dispatchEvent(new CustomEvent(UNREAD_MESSAGE_COUNT_EVENT, { detail: unreadChats }));
   }, [conversations, groupsQuery.data]);
 
@@ -682,6 +776,25 @@ export default function MessagesPage() {
     ...(groupsQuery.data || []).filter((item) => item.archived),
     ...conversations.filter((item) => item.archived),
   ], [conversations, groupsQuery.data]);
+  const recentShareTargets = useMemo(() => [
+    ...(groupsQuery.data || []).filter((item) => !item.archived),
+    ...conversations.filter((item) => !item.archived && item.status !== "DECLINED"),
+  ].sort((left, right) => {
+    const leftTime = new Date(left.lastMessage?.createdAt || left.updatedAt || left.createdAt || 0).getTime();
+    const rightTime = new Date(right.lastMessage?.createdAt || right.updatedAt || right.createdAt || 0).getTime();
+    return rightTime - leftTime;
+  }), [conversations, groupsQuery.data]);
+  const shareSearch = search.trim().toLowerCase();
+  const filteredRecentShareTargets = useMemo(() => recentShareTargets.filter((target) => {
+    if (!shareSearch) return true;
+    const name = target.type === "group" ? target.name : target.participant?.displayName;
+    const username = target.type === "group" ? "" : target.participant?.username;
+    return `${name || ""} ${username || ""}`.toLowerCase().includes(shareSearch);
+  }), [recentShareTargets, shareSearch]);
+  const remainingSharePeople = useMemo(() => {
+    const existingDirectIds = new Set(conversations.map((item) => String(item.id)));
+    return orderedPeople.filter((person) => !existingDirectIds.has(String(person.id)));
+  }, [conversations, orderedPeople]);
   const chooseConversation = (conversation) => {
     if (conversation.type === "group") {
       setSelected(conversation);
@@ -697,6 +810,21 @@ export default function MessagesPage() {
   };
   const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
   const openPerson = (person) => { chooseConversation({ id: person.id, type: "direct", participant: person }); setNewChat(false); setNewDirectChat(false); setSearch(""); };
+  const chooseShareTarget = (target) => {
+    setSharePickerOpen(false);
+    setSearch("");
+    chooseConversation(target.type === "group" ? target : { ...target, type: "direct" });
+  };
+  const closeSharePicker = () => {
+    setSharePickerOpen(false);
+    setPendingShare("");
+    setSearch("");
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("share");
+      return next;
+    }, { replace: true });
+  };
   const createGroup = async (event) => {
     event.preventDefault();
     if (!groupName.trim() || !groupMembers.length || actionBusy) return;
@@ -845,6 +973,9 @@ export default function MessagesPage() {
       await Promise.all([queryClient.invalidateQueries({ queryKey: ["messages", "groups"] }), queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] })]);
     } catch (requestError) { setError(requestError.response?.data?.message || "Could not forward this message."); }
     finally { setActionBusy(false); }
+  };
+  const openSharedContent = (content) => {
+    if (content?.route) navigate(content.route);
   };
   const loadOlder = async () => {
     const cursor = messagesQuery.data?.pageInfo?.nextCursor;
@@ -1399,22 +1530,33 @@ export default function MessagesPage() {
     catch (requestError) { const expired = [404, 410].includes(requestError.response?.status); if (expired) setExpiredStoryIds((current) => new Set(current).add(reply.storyId)); setStoryViewer({ expired, error: !expired }); }
   };
 
-  return <div className="relative h-full min-h-0 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2">
+  return <div className="messages-page relative h-full min-h-0 min-w-0 overflow-hidden bg-atseen-bg-2">
     <div className="flex h-full min-h-0">
+      {sharePickerOpen ? <div className="absolute inset-0 z-[80] flex items-end bg-black/75" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSharePicker(); }}><section aria-modal="true" className="flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5 shadow-2xl" role="dialog">
+        <div className="mx-auto mb-4 h-1 w-8 shrink-0 rounded-full bg-white/35" />
+        <div className="mb-3 flex shrink-0 items-center justify-between"><div><h2 className="text-lg font-black">Send in message</h2><p className="mt-1 text-[11px] text-atseen-muted">Choose a recent chat, group, or another person.</p></div><button aria-label="Close share picker" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={closeSharePicker} type="button"><FiX /></button></div>
+        <label className="mb-3 flex shrink-0 items-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 px-3"><FiSearch className="text-atseen-muted" /><input autoFocus className="w-full bg-transparent py-2.5 text-sm outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search chats and people" value={search} /></label>
+        <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto">
+          {filteredRecentShareTargets.length ? <><h3 className="sticky top-0 z-10 bg-[#1b212c] pb-2 pt-1 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Recent</h3>{filteredRecentShareTargets.map((target) => { const isGroup = target.type === "group"; const person = isGroup ? { displayName: target.name, avatarUrl: target.avatarUrl } : target.participant; return <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`${isGroup ? "group" : "direct"}:${target.id}`} onClick={() => chooseShareTarget(target)} type="button"><Identity compact person={person} presence={isGroup ? null : presence[target.id]} subtitle={isGroup ? `${target.members?.length || 0} members` : target.lastMessage?.body || "Recent chat"} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>; })}</> : null}
+          {remainingSharePeople.length ? <><h3 className="sticky top-0 z-10 mt-3 border-t border-white/[0.07] bg-[#1b212c] pb-2 pt-3 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Other people</h3>{remainingSharePeople.map((person) => <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`person:${person.id}`} onClick={() => chooseShareTarget({ id: person.id, participant: person, type: "direct" })} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>)}</> : null}
+          {peopleQuery.isLoading ? <p className="p-5 text-center text-sm text-atseen-muted">Loading people…</p> : null}
+          {!peopleQuery.isLoading && !filteredRecentShareTargets.length && !remainingSharePeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No chats or people found.</p> : null}
+        </div>
+      </section></div> : null}
       <aside className={`${selected ? "hidden" : "flex"} h-full min-h-0 w-full flex-col`}>
-        <header className="flex items-center justify-end gap-2 px-5 pb-4 pt-5">
+        <header className="flex items-center justify-end gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
           <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
           <button aria-label="Message notifications" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" type="button"><FiZap /><span className="absolute -right-0.5 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black text-atseen-bg">{[...conversations, ...(groupsQuery.data || [])].reduce((total, item) => total + (Number(item.unreadCount) || 0), 0)}</span></button>
         </header>
-        <nav aria-label="Message inbox filters" className="mx-5 grid grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1">
+        <nav aria-label="Message inbox filters" className="mx-3 grid grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1 sm:mx-5">
           {([{ id: "all", label: "All" }, { id: "requests", label: "Requests" }, { id: "direct", label: "Direct Access" }]).map((tab) => {
             const count = tab.id === "requests"
               ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
               : tab.id === "direct"
                 ? user?.role === "creator" ? directConversations.filter((item) => item.settlementStatus === "HELD").length : directConversations.length
                 : 0;
-            return <button className={`rounded-lg px-2 py-2.5 text-xs font-bold transition ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => setInboxTab(tab.id)} type="button">{tab.label}{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
+            return <button className={`min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => setInboxTab(tab.id)} type="button"><span className="break-words">{tab.label}</span>{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
           })}
         </nav>
         {inboxTab === "requests" ? <p className="px-5 pb-2 pt-3 text-[10px] leading-4 text-atseen-muted">People you don’t follow yet. They won’t know you’ve seen it until you accept.</p> : null}
@@ -1439,10 +1581,10 @@ export default function MessagesPage() {
           {inboxTab === "requests" ? shownConversations.map((conversation) => {
             const person = conversation.participant;
             const last = conversation.lastMessage;
-            return <article className="flex items-center gap-3 px-5 py-4" key={`request:${conversation.id}`}>
+            return <article className="flex flex-col items-stretch gap-3 px-3 py-4 min-[480px]:flex-row min-[480px]:items-center sm:px-5" key={`request:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={person} presence={presence[conversation.id]} subtitle={last?.body || "Message request"} /></button>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="mr-1 text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>
+              <div className="flex shrink-0 items-center gap-2 max-[479px]:pl-12">
+                <span className="mr-auto text-[10px] text-atseen-muted min-[480px]:mr-1">{inboxTime(last?.createdAt)}</span>
                 <button className="min-h-10 rounded-full bg-atseen-blue px-4 py-2 text-xs font-black text-atseen-bg shadow-[0_7px_18px_rgba(112,169,255,0.25)] disabled:opacity-50" disabled={requestBusy} onClick={() => handleInboxRequest(conversation, true)} type="button">Accept</button>
                 <button className="min-h-10 rounded-full border border-atseen-line bg-atseen-surface-2 px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={requestBusy} onClick={() => handleInboxRequest(conversation, false)} type="button">Delete</button>
               </div>
@@ -1455,8 +1597,8 @@ export default function MessagesPage() {
             const requestPending = conversation.status === "REQUEST";
             return <div className={`relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-2 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={rowPerson} presence={isGroup ? null : presence[conversation.id]} subtitle={subtitle} /><span className="ml-auto flex max-w-[95px] flex-col items-end gap-1"><span className="text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>{requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">Pending</span> : conversation.unreadCount ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-atseen-blue px-1 text-[10px] font-black text-atseen-bg">{conversation.unreadCount}</span> : null}</span></button>
-              <button aria-label={`Actions for ${rowPerson.displayName}`} className="grid h-11 w-10 shrink-0 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setInboxRowMenu((current) => current?.id === conversation.id ? null : conversation)} type="button"><FiMoreVertical /></button>
-              {inboxRowMenu?.id === conversation.id ? <div className="absolute right-4 top-12 z-50 w-44 rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl"><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold hover:bg-white/5" onClick={() => archiveInboxRow(conversation)} type="button"><FiArchive />{conversation.archived ? "Unarchive" : "Archive"}</button><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-atseen-muted hover:bg-white/5" onClick={() => { setInboxRowMenu(null); chooseConversation(conversation); }} type="button"><FiMessageCircle />Open chat</button></div> : null}
+              <button aria-label={`Actions for ${rowPerson.displayName}`} className="grid h-11 w-10 shrink-0 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setChatMenuOpen(false); setMessageMenu(null); setReactionFor(null); setInboxRowMenu((current) => current?.id === conversation.id ? null : conversation); }} type="button"><FiMoreVertical /></button>
+              {inboxRowMenu?.id === conversation.id ? <div className="absolute right-4 top-12 z-50 w-44 rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl" data-chat-popover><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold hover:bg-white/5" onClick={() => archiveInboxRow(conversation)} type="button"><FiArchive />{conversation.archived ? "Unarchive" : "Archive"}</button><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-atseen-muted hover:bg-white/5" onClick={() => { setInboxRowMenu(null); chooseConversation(conversation); }} type="button"><FiMessageCircle />Open chat</button></div> : null}
             </div>;
           })}
         </div>
@@ -1465,14 +1607,14 @@ export default function MessagesPage() {
       <main className={`${selected ? "flex" : "hidden"} isolate h-full min-h-0 min-w-0 flex-1 flex-col`}>
         {directAccessNotice ? <div className="absolute left-1/2 top-16 z-[90] -translate-x-1/2 rounded-full border border-atseen-line bg-atseen-bg-2/95 px-4 py-2 text-xs font-bold text-atseen-muted shadow-xl backdrop-blur">{directAccessNotice}</div> : null}
         {selected ? <>
-          <header className="relative z-50 flex shrink-0 items-center gap-3 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-4 py-3 backdrop-blur">
+          <header className="relative z-50 flex shrink-0 items-center gap-1.5 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-2 py-2.5 backdrop-blur sm:gap-3 sm:px-4 sm:py-3">
             <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
             {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else if (participant.username) navigate(`/profile/${encodeURIComponent(participant.username)}`); }} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members${participant.admins?.includes(myId) ? " · you're admin" : ""}` : `${presence[selected.id]?.online ? "● At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)}${participant.typicalReplyHours ? ` · replies within ${participant.typicalReplyHours}h` : ""}`} /></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
             {selected.type !== "group" && user?.role === "fan" && participant?.role === "creator" && participant?.callEnabled ? <button aria-label={`Call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-atseen-line text-sm text-atseen-blue transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button> : null}
             <div className="relative">
-              <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setChatMenuOpen((current) => !current)} type="button"><FiMoreVertical /></button>
-              {chatMenuOpen ? <div className="absolute right-0 top-11 z-[70] w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl">
+              <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setMessageMenu(null); setReactionFor(null); setChatMenuOpen((current) => !current); }} type="button"><FiMoreVertical /></button>
+              {chatMenuOpen ? <div className="absolute right-0 top-11 z-[70] w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl" data-chat-popover>
                 <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={muteSelectedConversation} type="button"><FiBell /> {selectedConversationMuted ? "Unmute notifications" : "Mute notifications"}</button>
                 {selected.type === "group" ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); pinSelectedGroup(); }} type="button"><FiZap /> {participant?.pinnedToProfile ? "Remove from profile" : "Add group to profile"}</button> : null}
                 {selected.type === "group" && participant?.admins?.includes(myId) ? <><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={changeSelectedGroupAvatar} ref={groupAvatarInputRef} type="file" /><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => groupAvatarInputRef.current?.click()} type="button"><FiImage /> Change group photo</button></> : null}
@@ -1485,7 +1627,7 @@ export default function MessagesPage() {
           </header>
           {awaitingFollowupCreatorReply ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>✦{directAccessWindow.priceStars} held</b> · awaiting creator reply · ⏳ {directAccessTimeLabel} · 0/3 used</div> : fanAwaitingFreeAskReply || creatorCanReplyToFreeFanAsk ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>Free follow-up pending</b> · no Stars charged yet</div> : hasActiveDirectAccessWindow ? <div className="shrink-0 border-b border-atseen-blue/15 bg-atseen-blue/[0.045] px-4 py-2 text-center text-[10px] text-atseen-blue"><b>✦ Direct Access</b> · ⏳ {directAccessTimeLabel} · {directAccessWindow.fanMessagesUsed}/{directAccessWindow.fanMessageLimit} used · {directAccessWindow.settlementStatus === "HELD" ? "Pending" : directAccessWindow.settlementStatus === "INCLUDED" ? "Premium" : "Answered"}</div> : creatorCanAnswerClosedPaidWindow ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>3/3 fan messages used</b> · You can still answer · ⏳ {directAccessTimeLabel}</div> : directAccessEffectivelyClosed ? <div className="shrink-0 border-b border-atseen-line/70 px-4 py-2 text-center text-[10px] text-atseen-muted"><b>✦ Direct Access ended</b> · History remains readable</div> : user?.role === "fan" && participant?.role === "creator" && selectedDirectAccessOfferQuery.data?.enabled ? <div className="shrink-0 border-b border-atseen-line/60 px-4 py-2.5 text-center"><button className="rounded-full border border-atseen-blue/45 bg-atseen-blue/[0.035] px-4 py-1.5 text-[11px] font-bold text-atseen-blue transition hover:bg-atseen-blue/10 disabled:opacity-50" disabled={directAccessBusy} onClick={openDirectAccess} type="button">{directAccessBusy ? "Opening…" : `Direct Access · ✦${selectedDirectAccessOfferQuery.data.priceStars}`}</button><p className="mt-1 text-[9px] text-atseen-muted">Guaranteed within 48 hours or fully refunded</p></div> : null}
           {selected.type !== "group" && messagesQuery.data?.requestReceived ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-2 text-center text-[11px] font-semibold text-atseen-warning">They won’t know you’ve seen it until you accept.</div> : null}
-          <section className="atseen-hide-scrollbar relative z-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-4 py-6 sm:px-8" onScroll={handleThreadScroll} ref={threadRef}>
+          <section className="atseen-hide-scrollbar relative z-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-3 py-4 sm:px-8 sm:py-6" onScroll={handleThreadScroll} ref={threadRef}>
             {selected.type !== "group" && (participant?.statusLine || participant?.personalLine) ? <div className="mx-auto mb-7 max-w-sm px-5 py-1 text-center"><span className="inline-flex items-center gap-1.5 rounded-full border border-atseen-blue/35 bg-atseen-blue/[0.035] px-3 py-1 text-[10px] font-black text-atseen-blue"><FiEye className="text-[11px]" />{participant.statusLine || "At seen"}</span>{participant.personalLine ? <p className="mt-2 line-clamp-2 text-xs italic leading-5 text-white/80">“{participant.personalLine}”</p> : null}{participant.typicalReplyHours ? <p className="mt-0.5 text-[10px] text-atseen-muted">usually replies within {participant.typicalReplyHours}h</p> : null}</div> : null}
             {user?.role === "creator" && directAccessWindow?.settlementStatus === "HELD" ? <div className="mx-auto mb-4 max-w-sm rounded-2xl border border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-3 text-center"><p className="text-xs font-black text-atseen-warning">Answer honestly · earn ${Number(directAccessWindow.creatorNetUsd || 0).toFixed(2)}</p><p className="mt-1 text-[10px] leading-4 text-atseen-muted">Your first reply completes this paid request and releases your net earnings.</p></div> : null}
             <div className={`pointer-events-none sticky top-2 z-30 mx-auto -mb-7 flex h-7 w-fit items-center rounded-full border border-atseen-line bg-atseen-bg-2/95 px-3 text-[10px] font-bold text-atseen-muted shadow-lg backdrop-blur transition-all duration-200 ${scrollDate.visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>{scrollDate.label}</div>
@@ -1504,7 +1646,7 @@ export default function MessagesPage() {
               return <Fragment key={message.id}>
                 {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
                 <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
-                <div className={`relative flex max-w-[78%] flex-col ${mine ? "items-end" : "items-start"}`}>
+                <div className={`relative flex max-w-[86%] flex-col sm:max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
                   <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
                     {selected.type === "group" && !mine && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
@@ -1512,7 +1654,7 @@ export default function MessagesPage() {
                     {message.forwarded ? <p className={`mb-1 text-[9px] italic ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>↪ Forwarded</p> : null}
                     {message.messageKind === "CREATOR_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Asks you</p> : null}
                     {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>Free follow-up</p> : null}
-                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
+                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : selected.type !== "group" && mine && !message.readAt ? " · Sent" : ""}</span>
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}
@@ -1544,12 +1686,12 @@ export default function MessagesPage() {
                       })}<span className="block px-2 pt-1 text-[9px] text-atseen-dim">{matching.some((reaction) => reaction.userId === myId) ? "Remove is available for your reaction." : "Reactions from this chat."}</span></span> : null}
                     </span>;
                   })}</div> : null}
-                  {!message.deletedAt ? <div className={`absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5 text-atseen-muted opacity-100 transition sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "right-full mr-1 flex-row-reverse" : "left-full ml-1"}`}>
+                  {!message.deletedAt ? <div className={`relative mt-1 flex items-center gap-0.5 text-atseen-muted opacity-100 transition sm:absolute sm:top-1/2 sm:mt-0 sm:-translate-y-1/2 sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "self-end flex-row-reverse sm:right-full sm:mr-1" : "self-start sm:left-full sm:ml-1"}`}>
                     <button aria-label="Reply to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => { setReplyTo(message); setReactionFor(null); }} title="Reply" type="button"><FiCornerUpLeft /></button>
-                    <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setReactionFor((current) => current === message.id ? null : message.id)} title="React" type="button"><FiSmile /></button>
-                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => setMessageMenu((current) => current === message.id ? null : message.id)} title="More" type="button"><FiMoreVertical /></button>
-                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`}>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
-                    {messageMenu === message.id ? <div className={`absolute bottom-8 z-30 w-40 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl ${mine ? "right-0" : "left-0"}`}>
+                    <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setChatMenuOpen(false); setMessageMenu(null); setReactionFor((current) => current === message.id ? null : message.id); }} title="React" type="button"><FiSmile /></button>
+                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setChatMenuOpen(false); setReactionFor(null); setMessageMenu((current) => current === message.id ? null : message.id); }} title="More" type="button"><FiMoreVertical /></button>
+                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
+                    {messageMenu === message.id ? <div className={`absolute bottom-8 z-30 w-40 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>
                       {message.body && !message.deletedAt ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => copyMessage(message)} type="button"><FiCopy /> Copy</button> : null}
                       {selected.type === "group" && mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setGroupMessageInfo(message); }} type="button">Message info</button> : null}
                       {!message.id.startsWith("pending:") ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setForwardSelection(new Set([message.id])); }} type="button"><FiShare2 /> Select messages</button> : null}
@@ -1580,15 +1722,14 @@ export default function MessagesPage() {
           </div> : messagesQuery.data?.conversationStatus === "REQUEST" ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-4 text-center text-xs text-atseen-muted">Message request sent. You can continue after they accept it.</div> : <form className="relative shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-3 sm:p-4" onSubmit={send}>
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
             {replyTo ? <div className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-atseen-blue bg-atseen-surface-2 px-3 py-2"><FiCornerUpLeft className="shrink-0 text-atseen-blue" /><div className="min-w-0 flex-1"><p className="text-[10px] font-bold text-atseen-blue">Replying to {replyTo.senderId === myId ? "yourself" : participant?.displayName}</p><p className="truncate text-xs text-atseen-muted">{replyTo.body}</p></div><button aria-label="Cancel reply" className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-white/5" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
-            {emojiOpen ? <div className="absolute bottom-[4.5rem] left-3 z-20 w-[min(19rem,calc(100%-1.5rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-3 shadow-2xl"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-7 gap-1">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 w-9 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
+            {emojiOpen ? <div className="absolute bottom-[4.25rem] left-2 z-20 w-[min(19rem,calc(100%-1rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-2 shadow-2xl sm:bottom-[4.5rem] sm:left-3 sm:w-[min(19rem,calc(100%-1.5rem))] sm:p-3"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-6 gap-1 min-[380px]:grid-cols-7">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 min-w-0 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
             {fanCanAskAfterWindowEnded ? fanCanAffordFollowup ? <div className="mb-2 rounded-xl border border-atseen-blue/20 bg-atseen-blue/[0.04] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-blue">Ask a free follow-up</b> · ✦{followupPriceStars || directAccessWindow.priceStars} is held now, paid only if they reply, or fully refunded after 48h.</div> : <div className="mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-danger/[0.05] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-danger">Not enough Stars</b> · You need ✦{followupPriceStars}, but your Wallet has ✦{followupWalletBalance}. <button className="font-black text-atseen-blue" onClick={() => navigate("/fan/wallet")} type="button">Open Wallet</button></div> : null}
             {user?.role === "fan" && awaitingFollowupCreatorReply ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-center text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Waiting for the creator</b> · ✦{directAccessWindow.priceStars} is held and will be fully refunded if they do not reply in time.</div> : null}
             {fanAwaitingFreeAskReply ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-center text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Waiting for the creator</b> · No Stars have been charged. The configured Direct Access price is charged only when the creator replies.</div> : null}
             {creatorCanReplyToFreeFanAsk ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Free fan question</b> · Your reply opens and settles a new paid window at your configured price.</div> : null}
             {user?.role === "creator" && directAccessWindow?.settlementStatus === "HELD" ? <p className="mb-2 text-center text-[11px] text-atseen-dim">Answer the actual question — specific and real. Your reply remains available even after the fan reaches 3/3.</p> : null}
             {directAccessFanLocked && !fanCanAskAfterWindowEnded && !awaitingFollowupCreatorReply ? <p className="mb-2 text-center text-xs font-bold text-atseen-warning">This Direct Access window is closed. Its message history remains visible to both people.</p> : null}
-            {selected.type === "group" ? <div className="mb-2 flex items-center gap-2"><VoiceRecorder disabled={sending || imageBusy} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send group image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/40 hover:text-white disabled:opacity-40" disabled={sending || imageBusy} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button><span className="text-[10px] text-atseen-muted">Voice, video notes and images</span></div> : null}
-            <div className="flex items-end gap-2">{selected.type !== "group" ? <><VoiceRecorder disabled={sending || imageBusy || directAccessFanLocked} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:text-white disabled:opacity-40" disabled={sending || imageBusy || directAccessFanLocked} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button></> : null}<button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60 disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending || imageBusy || directAccessFanLocked}><FiSend /></button></div>
+            <div className="flex items-end gap-2"><VoiceRecorder disabled={sending || imageBusy || directAccessFanLocked} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:text-white disabled:opacity-40" disabled={sending || imageBusy || directAccessFanLocked} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button><button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><textarea aria-label="Message" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 px-4 py-2.5 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60 disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} /><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending || imageBusy || directAccessFanLocked}><FiSend /></button></div>
           </form>)}
         </> : null}
       </main>

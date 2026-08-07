@@ -24,7 +24,7 @@ export default function VideoNoteBubble({ mine = false, video }) {
     else player.pause();
   };
 
-  return <div className="relative h-56 w-56 sm:h-64 sm:w-64">
+  return <div className="relative h-[min(14rem,68vw)] w-[min(14rem,68vw)] sm:h-64 sm:w-64">
     <video className="h-full w-full rounded-full bg-black object-cover" disablePictureInPicture onDurationChange={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : Number(video?.duration) || 0)} onEnded={() => { setPlaying(false); setCurrent(0); }} onError={() => setFailed(true)} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={(event) => setCurrent(event.currentTarget.currentTime)} playsInline preload="metadata" ref={playerRef} src={video?.url} />
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 -rotate-90" viewBox="0 0 100 100">
       <circle cx="50" cy="50" fill="none" r={radius} stroke={mine ? "rgba(10,12,15,.22)" : "rgba(255,255,255,.16)"} strokeWidth="2" />

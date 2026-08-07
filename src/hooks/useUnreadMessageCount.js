@@ -4,8 +4,9 @@ import { getMessageSocket } from "../services/messageSocket";
 
 export const UNREAD_MESSAGE_COUNT_EVENT = "atseen:unread-message-count";
 
-export function useUnreadMessageCount(enabled = true) {
+export function useUnreadMessageCount(enabled = true, options = {}) {
   const [count, setCount] = useState(0);
+  const shouldPoll = options.poll !== false;
 
   useEffect(() => {
     if (!enabled) {
@@ -15,10 +16,20 @@ export function useUnreadMessageCount(enabled = true) {
     let active = true;
     const refresh = async () => {
       try {
-        const response = await messageService.getConversations();
+        const [conversationResponse, groupResponse] = await Promise.all([
+          messageService.getConversations(),
+          messageService.getGroups(),
+        ]);
         if (!active) return;
-        const conversations = response.data.data.conversations || [];
-        setCount(conversations.filter((conversation) => (Number(conversation.unreadCount) || 0) > 0).length);
+        const conversations = conversationResponse.data.data.conversations || [];
+        const groups = groupResponse.data.data.groups || [];
+        const unreadDirectChats = conversations.filter((conversation) => (
+          !conversation.muted && (Number(conversation.unreadCount) || 0) > 0
+        )).length;
+        const unreadGroups = groups.filter((group) => (
+          !group.muted && (Number(group.unreadCount) || 0) > 0
+        )).length;
+        setCount(unreadDirectChats + unreadGroups);
       } catch {
         // Keep the last known count during a temporary connection failure.
       }
@@ -26,27 +37,38 @@ export function useUnreadMessageCount(enabled = true) {
     const socket = getMessageSocket();
     const applyPublishedCount = (event) => {
       const nextCount = Number(event.detail);
-      if (Number.isSafeInteger(nextCount) && nextCount >= 0) setCount(nextCount);
+      if (Number.isSafeInteger(nextCount) && nextCount >= 0) {
+        setCount(nextCount);
+        return;
+      }
+      if (shouldPoll) refresh();
     };
-    refresh();
-    const interval = window.setInterval(refresh, 3000);
-    socket?.on("connect", refresh);
-    socket?.on("message:new", refresh);
-    socket?.on("conversation:status", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    window.addEventListener("online", refresh);
+    let interval = null;
+    if (shouldPoll) {
+      refresh();
+      interval = window.setInterval(refresh, 10000);
+      socket?.on("connect", refresh);
+      socket?.on("message:new", refresh);
+      socket?.on("group:message", refresh);
+      socket?.on("conversation:status", refresh);
+      document.addEventListener("visibilitychange", refresh);
+      window.addEventListener("online", refresh);
+    }
     window.addEventListener(UNREAD_MESSAGE_COUNT_EVENT, applyPublishedCount);
     return () => {
       active = false;
-      window.clearInterval(interval);
-      socket?.off("connect", refresh);
-      socket?.off("message:new", refresh);
-      socket?.off("conversation:status", refresh);
-      document.removeEventListener("visibilitychange", refresh);
-      window.removeEventListener("online", refresh);
+      if (interval) window.clearInterval(interval);
+      if (shouldPoll) {
+        socket?.off("connect", refresh);
+        socket?.off("message:new", refresh);
+        socket?.off("group:message", refresh);
+        socket?.off("conversation:status", refresh);
+        document.removeEventListener("visibilitychange", refresh);
+        window.removeEventListener("online", refresh);
+      }
       window.removeEventListener(UNREAD_MESSAGE_COUNT_EVENT, applyPublishedCount);
     };
-  }, [enabled]);
+  }, [enabled, shouldPoll]);
 
   return count;
 }

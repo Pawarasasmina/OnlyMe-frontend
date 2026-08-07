@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { FiBarChart2, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiSend, FiTrash2, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
@@ -117,10 +118,11 @@ function StoryOverlays({ story }) {
   );
 }
 
-function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = [] }) {
+function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentation = "modal", stories = [] }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const viewedRef = useRef(new Set());
   const [index, setIndex] = useState(initialIndex);
@@ -133,6 +135,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [recentReaction, setRecentReaction] = useState(null);
+  const [seeYouNotice, setSeeYouNotice] = useState(false);
   const [reactions, setReactions] = useState(readReactions);
   const [replyText, setReplyText] = useState("");
   const markViewedMutation = useMarkStoryViewed();
@@ -141,7 +144,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
   const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen;
 
   const activeStory = stories[index] || null;
-  const selectedReaction = activeStory ? reactions[activeStory.id]?.reaction : null;
+  const selectedReaction = activeStory ? reactions[activeStory.id]?.reaction || activeStory.viewerReaction : null;
   const canReact = canReactToStory(user, activeStory);
   const canReply = canReplyToStory(user, activeStory);
   const canDelete = canDeleteStory(user, activeStory);
@@ -156,6 +159,16 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
       onClose();
     },
     onError: (error) => showToast(error?.response?.data?.message || "Story reply could not be sent."),
+  });
+  const seeYouMutation = useMutation({
+    mutationFn: ({ storyId }) => storyService.replyToStory(storyId, "I SEE YOU"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      setSeeYouNotice(true);
+      window.setTimeout(() => setSeeYouNotice(false), 1300);
+      showToast("I SEE YOU sent.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "I SEE YOU could not be sent."),
   });
 
   const boundedIndex = useMemo(() => Math.max(0, Math.min(stories.length - 1, initialIndex)), [initialIndex, stories.length]);
@@ -219,6 +232,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
     }
 
     const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
       if (event.key === "ArrowRight") goStory(1);
       if (event.key === "ArrowLeft") goStory(-1);
     };
@@ -236,7 +250,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
       window.removeEventListener("focus", resume);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [goStory, isOpen]);
+  }, [goStory, isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen || !activeStory || paused) {
@@ -317,15 +331,36 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
     replyMutation.mutate({ body, storyId: activeStory.id });
   };
 
+  const sendSeeYou = () => {
+    if (!activeStory || !canReply || seeYouMutation.isPending) return;
+    seeYouMutation.mutate({ storyId: activeStory.id });
+  };
+
   if (!activeStory) {
     return null;
   }
 
+  const inline = presentation === "inline";
+  const replyName = (activeStory.owner.name || "Story").split(" ").filter(Boolean)[0] || "Story";
+  const ownerProfileKey = activeStory.owner.username || activeStory.username || activeStory.owner.id || activeStory.ownerId;
+  const ownerProfilePath = ownerProfileKey ? `/profile/${encodeURIComponent(ownerProfileKey)}` : null;
+  const openOwnerProfile = (event) => {
+    event.stopPropagation();
+    if (ownerProfilePath) navigate(ownerProfilePath);
+  };
+
   return (
     <>
-      <FanModal className="h-[100dvh] max-h-[100dvh] max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:h-auto sm:max-w-[440px] sm:rounded-[26px]" hideHeader isOpen={isOpen} onClose={onClose} overlayClassName="p-0 sm:p-4" title="Story viewer">
+      <FanModal
+        className={`h-[100dvh] max-h-[100dvh] max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:h-auto sm:max-w-[440px] sm:rounded-[26px] ${inline ? "discover-story-inline-dialog" : ""}`}
+        hideHeader
+        isOpen={isOpen}
+        onClose={onClose}
+        overlayClassName={`${inline ? "discover-story-inline-overlay" : ""} p-0 sm:p-4`}
+        title="Story viewer"
+      >
         <div
-          className="relative h-[100dvh] overflow-hidden bg-black sm:h-[min(88vh,760px)] sm:rounded-[26px]"
+          className={`relative h-[100dvh] overflow-hidden bg-black ${inline ? "discover-story-inline-surface" : "sm:h-[min(88vh,760px)] sm:rounded-[26px]"}`}
           onPointerDown={() => setHoldPaused(true)}
           onPointerLeave={() => setHoldPaused(false)}
           onPointerUp={() => setHoldPaused(false)}
@@ -348,14 +383,24 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
             ))}
           </div>
           <div className="absolute left-4 right-4 top-9 z-30 flex items-center gap-2.5">
-            <FanAvatar brand={activeStory.brand} name={activeStory.owner.name} size="h-9 w-9" src={activeStory.owner.avatar} />
-            <div className="min-w-0 flex-1">
+            <button
+              aria-label={`Open ${activeStory.owner.name || "story owner"} profile`}
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              disabled={!ownerProfilePath}
+              onClick={openOwnerProfile}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              type="button"
+            >
+              <FanAvatar brand={activeStory.brand} name={activeStory.owner.name} size="h-9 w-9" src={activeStory.owner.avatar} />
+              <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1 truncate text-sm font-bold text-white">
                 <span className="truncate">{activeStory.owner.name}</span>
                 {activeStory.owner.verified ? <VerifiedBadge className="h-3.5 w-3.5 shrink-0" /> : null}
               </p>
               <p className="truncate text-[10px] font-semibold text-white/65">{formatStoryTimeAgo(activeStory.createdAt)}</p>
-            </div>
+              </div>
+            </button>
             <button
               aria-label={paused ? "Resume story" : "Pause story"}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55"
@@ -382,10 +427,16 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
                 {muted ? <FiVolumeX aria-hidden="true" /> : <FiVolume2 aria-hidden="true" />}
               </button>
             ) : null}
-            <button aria-label="Close story" className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55" onClick={onClose} type="button">
+            <button aria-label="Close story" className="flex h-9 w-9 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur transition hover:bg-black/45" onClick={onClose} type="button">
               <FiX aria-hidden="true" />
             </button>
           </div>
+          {seeYouNotice ? (
+            <div className="pointer-events-none absolute left-1/2 top-[74px] z-40 -translate-x-1/2 rounded-full bg-[#121721]/90 px-4 py-2 text-sm font-extrabold text-white shadow-2xl backdrop-blur">
+              <span aria-hidden="true" className="mr-2">{"\ud83d\udc41\ufe0f"}</span>
+              <span>{"\u2192"} {replyName}</span>
+            </div>
+          ) : null}
           {canDelete || canViewInsights || canAdd ? (
             <div
               className="absolute right-4 top-20 z-40"
@@ -413,32 +464,41 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, stories = 
               ) : null}
             </div>
           ) : null}
-          {activeStory.caption ? <p className="absolute bottom-24 left-5 right-5 z-30 rounded-2xl bg-black/20 px-3 py-2 text-center text-base font-bold leading-7 text-white backdrop-blur">{activeStory.caption}</p> : null}
+          {activeStory.caption ? <p className="absolute bottom-32 left-5 right-5 z-30 text-left text-base font-bold leading-6 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,.6)]">{activeStory.caption}</p> : null}
           {recentReaction ? <span aria-live="polite" className="pointer-events-none absolute bottom-32 left-1/2 z-30 -translate-x-1/2 animate-bounce text-5xl motion-reduce:animate-none">{recentReaction}</span> : null}
-          {canViewInsights ? <button className="absolute bottom-[max(18px,env(safe-area-inset-bottom))] left-4 right-4 z-40 flex items-center rounded-2xl border border-white/15 bg-black/50 px-3 py-2.5 text-left text-white shadow-xl backdrop-blur transition hover:bg-black/65" onClick={(event) => { event.stopPropagation(); setInsightsOpen(true); }} onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} type="button"><span className="flex -space-x-2">{(activeStory.insights?.viewers || []).slice(0, 4).map((viewer) => <span className="relative" key={viewer.id}><FanAvatar name={viewer.name || viewer.username} size="h-8 w-8" src={viewer.avatar} />{viewer.reaction ? <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full border border-black bg-atseen-bg text-[9px]">{viewer.reaction}</span> : null}</span>)}</span><span className={`${activeStory.insights?.viewers?.length ? "ml-3" : ""} min-w-0 flex-1`}><strong className="block text-xs">{activeStory.insights?.viewCount ? `Seen by ${activeStory.insights.viewCount}` : "No viewers yet"}</strong><small className="block truncate text-[10px] text-white/60">{activeStory.insights?.viewers?.some((viewer) => viewer.reaction) ? "Reactors shown first · View all" : "View story insights"}</small></span><span className="ml-2 text-xs font-bold text-atseen-blue">View</span></button> : null}
-          {canReact ? (
-            <div className={`absolute left-4 right-4 z-30 ${canReply ? "bottom-[84px]" : "bottom-[max(20px,env(safe-area-inset-bottom))]"}`}>
-              <StoryReactionTray disabled={!canReact} onReact={react} pending={reactionMutation.isPending} selectedReaction={selectedReaction} />
+          {canReact || canReply ? (
+            <div className={`absolute left-[22px] right-[22px] z-30 ${canReply ? "bottom-[78px]" : "bottom-[max(20px,env(safe-area-inset-bottom))]"}`}>
+              <StoryReactionTray
+                canSeeYou={canReply}
+                canReact={canReact}
+                onReact={react}
+                pending={reactionMutation.isPending}
+                onSeeYou={sendSeeYou}
+                seeYouPending={seeYouMutation.isPending}
+                selectedReaction={selectedReaction}
+              />
             </div>
           ) : null}
           {canReply ? (
             <form
-              className="absolute bottom-[max(16px,env(safe-area-inset-bottom))] left-4 right-4 z-40 flex gap-2"
+              className="absolute bottom-[max(26px,env(safe-area-inset-bottom))] left-3.5 right-3.5 z-40 flex gap-2.5"
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onSubmit={submitReply}
             >
               <input
                 aria-label="Reply to story"
-                className="min-w-0 flex-1 rounded-full border border-white/25 bg-black/45 px-4 py-3 text-sm text-white outline-none backdrop-blur placeholder:text-white/55 focus:border-atseen-blue"
+                className="min-w-0 flex-1 rounded-full border border-white/35 bg-black/45 px-4 py-3 text-sm text-white outline-none backdrop-blur placeholder:text-white/55 focus:border-white/70"
                 maxLength={1000}
+                onBlur={() => setSystemPaused(false)}
                 onChange={(event) => setReplyText(event.target.value)}
-                placeholder="Reply to Story…"
+                onFocus={() => setSystemPaused(true)}
+                placeholder={`Reply to ${replyName}...`}
                 value={replyText}
               />
               <button
                 aria-label="Send story reply"
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-45"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/35 bg-black/45 text-white backdrop-blur disabled:opacity-45"
                 disabled={!replyText.trim() || replyMutation.isPending}
                 type="submit"
               >
