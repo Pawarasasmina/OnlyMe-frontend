@@ -1,5 +1,6 @@
 import axiosInstance from "../api/axiosInstance";
 import { atseenCreators, atseenStories } from "../data/atseenMockData";
+import { STATUS_PRESETS } from "../constants/statusPresets";
 import { resolveMediaUrl } from "../utils/media";
 
 const STORY_API_ENABLED = import.meta.env.VITE_STORY_API_ENABLED !== "false";
@@ -28,6 +29,59 @@ function addHours(date, hours) {
 
 function isExpired(story) {
   return story?.expiresAt ? new Date(story.expiresAt).getTime() <= Date.now() : false;
+}
+
+function isStatusActive(status) {
+  return Boolean(status?.label && status?.expiresAt && new Date(status.expiresAt).getTime() > Date.now());
+}
+
+function statusExpiresAt(hours = 2) {
+  return addHours(new Date(), hours);
+}
+
+function normalizeStatus(status) {
+  if (!isStatusActive(status)) return null;
+  const resolvedPresetKey = status.presetKey || presetKeyForCreatorStatus(status.label);
+  const preset = STATUS_PRESETS[resolvedPresetKey] || {};
+  const usePreset = Boolean(resolvedPresetKey && resolvedPresetKey !== "custom" && preset.label);
+  return {
+    color: usePreset ? preset.color : status.color || preset.color || "#9CCBFF",
+    emoji: usePreset ? preset.emoji : status.emoji || preset.emoji || "",
+    expiresAt: status.expiresAt,
+    isCustom: Boolean(status.isCustom),
+    label: usePreset ? preset.label : status.label || preset.label || "",
+    presetKey: resolvedPresetKey || "",
+    startedAt: status.startedAt || null,
+  };
+}
+
+function normalizeLegacyStatus({ color, emoji, label, presetKey } = {}) {
+  const preset = STATUS_PRESETS[presetKey] || {};
+  const nextLabel = label || preset.label || "";
+  const nextEmoji = emoji || preset.emoji || "";
+  if (!nextLabel || !nextEmoji) return null;
+  return normalizeStatus({
+    color: color || preset.color || "#9CCBFF",
+    emoji: nextEmoji,
+    expiresAt: statusExpiresAt(preset.defaultDurationHours || 2),
+    isCustom: !presetKey,
+    label: nextLabel,
+    presetKey: presetKey || "custom",
+    startedAt: new Date().toISOString(),
+  });
+}
+
+function presetKeyForCreatorStatus(status = "") {
+  const normalized = String(status).trim().toLowerCase();
+  if (normalized === "at seen") return "at_seen";
+  if (normalized === "right now") return "right_now";
+  if (normalized === "at the gym") return "at_gym";
+  if (normalized === "celebrating") return "celebrating";
+  if (normalized === "coffee break") return "coffee_break";
+  if (normalized === "traveling" || normalized === "travelling" || normalized === "just landed") return "traveling";
+  if (normalized === "working") return "working";
+  if (normalized === "relaxing") return "relaxing";
+  return "";
 }
 
 function timeAgo(value) {
@@ -59,11 +113,31 @@ function normalizeOwner(story = {}) {
   };
 }
 
+function normalizeUser(user = {}) {
+  const name = user.name || user.displayName || user.username || "Account";
+  return {
+    id: user.id || user._id || user.userId || "",
+    name,
+    firstName: user.firstName || name.split(" ").filter(Boolean)[0] || name,
+    username: user.username || String(name).toLowerCase().replace(/\s+/g, ""),
+    avatar: resolveMediaUrl(user.avatar || user.avatarUrl || user.profilePhoto || user.profileImage || ""),
+    avatarUrl: resolveMediaUrl(user.avatarUrl || user.avatar || user.profilePhoto || user.profileImage || ""),
+    verified: Boolean(user.verified || user.isVerified),
+    role: user.role || "",
+  };
+}
+
 function normalizeStory(story = {}) {
   const createdAt = story.createdAt || new Date().toISOString();
   const mediaUrl = story.mediaUrl || story.image || story.url || "";
   const owner = normalizeOwner(story);
+  const creator = atseenCreators[owner.id] || {};
   const id = story.id || story._id || `${owner.id}-${createdAt}`;
+  const legacyStatus = normalizeLegacyStatus({
+    emoji: story.statusEmoji || creator.statusEmoji,
+    label: story.status || creator.status,
+    presetKey: presetKeyForCreatorStatus(story.status || creator.status),
+  });
 
   return {
     id,
@@ -97,6 +171,7 @@ function normalizeStory(story = {}) {
     reactionCount: Number(story.reactionCount) || 0,
     replyCount: Number(story.replyCount) || 0,
     statusEmoji: story.statusEmoji || "",
+    activeStatus: normalizeStatus(story.activeStatus) || legacyStatus,
     timeAgo: timeAgo(createdAt),
     isOwner: Boolean(story.isOwner || story.isOwn),
     isOwn: Boolean(story.isOwner || story.isOwn),
@@ -104,8 +179,53 @@ function normalizeStory(story = {}) {
 }
 
 function normalizeApiList(data) {
-  const list = data?.data?.items || data?.data || data?.items || data || [];
+  const payload = data?.data || data;
+  if (payload?.viewer || Array.isArray(payload?.items)) {
+    return [
+      ...((payload.viewer?.stories || []).map((story) => normalizeStory({ ...story, isOwner: true, isOwn: true }))),
+      ...((payload.items || []).flatMap((group) => (group.stories || []).map((story) => normalizeStory(story)))),
+    ].filter((story) => !isExpired(story));
+  }
+  const list = payload?.items || payload || [];
   return Array.isArray(list) ? list.map(normalizeStory).filter((story) => !isExpired(story)) : [];
+}
+
+function normalizeWallStoryGroup(group = {}) {
+  const stories = (group.stories || []).map(normalizeStory).filter((story) => !isExpired(story));
+  const storyStatus = stories.find((story) => story.activeStatus)?.activeStatus;
+  return {
+    id: group.user?.id || group.user?._id || stories[0]?.owner?.id || "",
+    activeStatus: normalizeStatus(group.activeStatus || group.user?.activeStatus) || storyStatus,
+    hasUnseenStories: Boolean(group.hasUnseenStories || stories.some((story) => !story.viewed)),
+    presence: {
+      isOnline: Boolean(group.presence?.isOnline),
+      lastActiveAt: group.presence?.lastActiveAt || null,
+    },
+    stories,
+    storyCount: Number(group.storyCount ?? stories.length),
+    user: normalizeUser(group.user || stories[0]?.owner),
+  };
+}
+
+function normalizeWallStories(data, fallbackUser = {}) {
+  const payload = data?.data || data || {};
+  const viewerStories = (payload.viewer?.stories || []).map((story) => normalizeStory({ ...story, isOwner: true, isOwn: true })).filter((story) => !isExpired(story));
+  const viewer = {
+    ...normalizeUser(payload.viewer || fallbackUser),
+    activeStatus: normalizeStatus(payload.viewer?.activeStatus || fallbackUser.activeStatus),
+    hasActiveStories: Boolean(payload.viewer?.hasActiveStories || viewerStories.length),
+    presence: {
+      isOnline: Boolean(payload.viewer?.presence?.isOnline),
+      lastActiveAt: payload.viewer?.presence?.lastActiveAt || fallbackUser.lastSeenAt || null,
+    },
+    stories: viewerStories,
+    storyCount: Number(payload.viewer?.storyCount ?? viewerStories.length),
+  };
+
+  return {
+    viewer,
+    items: (payload.items || []).map(normalizeWallStoryGroup).filter((item) => item.user.id && (item.stories.length || item.activeStatus || item.presence.isOnline)),
+  };
 }
 
 function mockBaseStories() {
@@ -166,6 +286,34 @@ export const storyService = {
 
     requireMocks();
     return [...mockBaseStories(), ...readMockStories()].filter((story) => !isExpired(story));
+  },
+
+  getWallStories: async ({ fallbackUser } = {}) => {
+    if (STORY_API_ENABLED) {
+      return axiosInstance.get("/stories/active").then((response) => normalizeWallStories(response.data, fallbackUser));
+    }
+
+    requireMocks();
+    const stories = [...mockBaseStories(), ...readMockStories()].filter((story) => !isExpired(story));
+    const viewerStories = stories.filter((story) => story.isOwn || story.isOwner);
+    const byOwner = new Map();
+    stories.filter((story) => !(story.isOwn || story.isOwner)).forEach((story) => {
+      const ownerId = story.owner.id;
+      const group = byOwner.get(ownerId) || { user: story.owner, stories: [], hasUnseenStories: false };
+      group.stories.push(story);
+      group.hasUnseenStories = group.hasUnseenStories || !story.viewed;
+      byOwner.set(ownerId, group);
+    });
+    return normalizeWallStories({
+      viewer: {
+        ...fallbackUser,
+        activeStatus: fallbackUser?.activeStatus,
+        hasActiveStories: viewerStories.length > 0,
+        stories: viewerStories,
+        storyCount: viewerStories.length,
+      },
+      items: [...byOwner.values()],
+    }, fallbackUser);
   },
 
   getCreatorStories: async (creatorId) => {
@@ -279,6 +427,11 @@ export const storyService = {
 
     deleteMockStory(storyId);
     return { data: { data: { storyId, deleted: true } } };
+  },
+
+  updateStatus: async (payload) => {
+    const response = await axiosInstance.patch("/stories/status", payload);
+    return normalizeStatus(response.data?.data?.activeStatus);
   },
 
   getStoryInsights: async (storyId) => {

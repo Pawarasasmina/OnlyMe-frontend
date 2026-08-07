@@ -1,18 +1,16 @@
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import { useUnreadMessageCount } from "../../hooks/useUnreadMessageCount";
 import { socialPrimaryNavItems } from "../social/socialNavItems";
 
-function FanMobileNav() {
-  const { user } = useAuth();
-  const unreadMessageCount = useUnreadMessageCount(Boolean(user));
+function FanMobileNav({ unreadMessageCount = 0 }) {
+  const mobileItems = socialPrimaryNavItems.filter((item) => ["Home", "Seen", "Discover", "Messages", "Profile"].includes(item.label));
+
   return (
     <nav
       aria-label="Mobile fan navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-atseen-line bg-atseen-bg/95 px-2 py-2 backdrop-blur md:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
-        {socialPrimaryNavItems.map((item) => {
+        {mobileItems.map((item) => {
           const Icon = item.icon;
 
           return (

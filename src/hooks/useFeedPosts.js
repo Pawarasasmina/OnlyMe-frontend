@@ -155,6 +155,31 @@ export function useToggleFeedPostShare() {
   });
 }
 
+export function useMarkFeedPostViewed() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: postService.markView,
+    retry: false,
+    onSuccess: (result, postId) => {
+      const targetId = String(result?.postId || postId || "");
+      const viewCount = Number(result?.viewCount);
+      if (!targetId || !Number.isFinite(viewCount)) return;
+
+      queryClient.setQueriesData({ queryKey: ["feed-posts"] }, (current) => {
+        if (!current?.items) return current;
+        return {
+          ...current,
+          items: current.items.map((item) => {
+            const itemId = String(item.originalPostId || item.id || "");
+            if (itemId !== targetId) return item;
+            return { ...item, viewCount, viewerViewed: true };
+          }),
+        };
+      });
+    },
+  });
+}
+
 export function useHideFeedPost() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,295 +1,332 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiEye, FiHeart, FiMessageCircle, FiMoreHorizontal, FiSearch, FiUserPlus } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import {
-  CategoryCard,
-  DiscoverCreatorCard,
-  DiscoverEmpty,
-  DiscoverError,
-  DiscoverFilters,
-  DiscoverHeader,
-  DiscoverSection,
-  DiscoverSkeleton,
-  ExperienceCard,
-  FeaturedCreatorCard,
-  StoryStrip,
-  WorldCard,
-} from "../../components/discover/DiscoverCards";
-import DiscoverSettingsModal from "../../components/discover/DiscoverSettingsModal";
-import { compactNumber } from "../../components/discover/discoverFormat";
-import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
-import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
+import { FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
+import DiscoverMasonryCard from "../../components/discover/DiscoverMasonryCard";
+import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSections";
+import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
+import DiscoverRightSidebar from "../../components/discover/DiscoverRightSidebar";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
+import StoryViewer from "../../components/stories/StoryViewer";
+import { useAuth } from "../../hooks/useAuth";
 import {
   useDiscoverFollowMutation,
-  useDiscoverQuery,
-  useDiscoverSettingsMutation,
-  useResetDiscoverSettings,
+  useDiscoverSlidesQuery,
 } from "../../hooks/useDiscoverQuery";
+import { firstUnseenStoryIndex } from "../../utils/discoverFriends";
 import { resolveMediaUrl } from "../../utils/media";
 
-const FILTERS = [
-  "All", "Nearby", "Trending", "Rising", "New", "Friends", "Photography", "Travel",
-  "Fitness", "Food", "Music", "Gaming", "Fashion", "Art", "Business", "Technology",
-  "Lifestyle", "Education", "Sports", "Pets", "Comedy",
-];
+const DEFAULT_FILTER = "for_you";
+const SUPPORTED_FILTERS = new Set(["for_you", "nearby", "rising", "new", "creators"]);
 
-function useDebouncedValue(value, delay = 280) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(value), delay);
-    return () => window.clearTimeout(timer);
-  }, [delay, value]);
-  return debounced;
+function dedupeByProfile(items = []) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = item.id || item.username || item.creator?.id || item.creator?.username;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
-function uniqueCreators(...lists) {
-  const map = new Map();
-  for (const list of lists) {
-    for (const creator of list || []) {
-      if (creator?.username && !map.has(creator.username)) map.set(creator.username, creator);
-    }
-  }
-  return Array.from(map.values());
-}
-
-function creatorMatchesFilter(creator, active) {
-  if (["All", "Trending", "Rising", "New", "Nearby", "Friends"].includes(active)) return true;
-  return [creator.category, ...(creator.tags || [])].some((tag) => tag?.toLowerCase() === active.toLowerCase());
-}
-
-function creatorMatchesSearch(creator, query) {
-  if (!query) return true;
-  const haystack = [creator.name, creator.username, creator.category, creator.location, creator.bio, ...(creator.tags || [])].join(" ").toLowerCase();
-  return haystack.includes(query.toLowerCase());
-}
-
-function worldMatchesSearch(world, query) {
-  if (!query) return true;
-  const haystack = [world.title, world.category, world.preview, world.owner?.name, world.owner?.username].join(" ").toLowerCase();
-  return haystack.includes(query.toLowerCase());
-}
-
-function mediaUrl(creator) {
-  return resolveMediaUrl(creator.cover || creator.previewThumbnails?.[0] || creator.avatar || "");
-}
-
-function DiscoverMosaicCard({ creator, followPending, onFollow }) {
-  const background = mediaUrl(creator);
+function DiscoverSkeleton() {
   return (
-    <article className="discover-mosaic-card group">
-      {background ? <img alt="" loading="lazy" src={background} /> : <div className="discover-mosaic-fallback">{creator.name.slice(0, 1)}</div>}
-      <div className="discover-mosaic-shade" />
-      {creator.updatedAt ? <span className="discover-live-dot" /> : null}
-      <button aria-label={`More options for ${creator.name}`} className="discover-more" type="button"><FiMoreHorizontal /></button>
-      <div className="discover-card-copy">
-        <Link className="discover-card-name" to={`/profile/${encodeURIComponent(creator.username)}`}>
-          {creator.name.split(" ")[0]}{creator.verified ? <VerifiedBadge /> : null}
-        </Link>
-        <p>{creator.category || "Creator"} · {creator.location?.split(",")[0] || "Global"}</p>
-        <strong>{creator.whyRecommended || "Similar interests"}</strong>
+    <div className="discover-orb-loading" aria-label="Loading Discover">
+      <div className="discover-skeleton-top">
+        <span />
+        <span />
+        <span />
       </div>
-      <div className="discover-card-actions">
-        <button aria-label={creator.following ? `Unfollow ${creator.name}` : `Follow ${creator.name}`} className={creator.following ? "is-on" : ""} disabled={followPending} onClick={() => onFollow(creator)} type="button">
-          <span><FiUserPlus /></span><i>{creator.following ? "Following" : "Follow"}</i>
-        </button>
-        <Link aria-label={`Message ${creator.name}`} to={`/messages?user=${encodeURIComponent(creator.username)}`}>
-          <span><FiMessageCircle /></span><i>Message</i>
-        </Link>
-        <Link aria-label={`View ${creator.name}`} to={`/profile/${encodeURIComponent(creator.username)}`}>
-          <span><FiEye /></span><i>Profile</i>
-        </Link>
+      <div className="discover-skeleton-friends">
+        {Array.from({ length: 4 }).map((_, index) => <span key={index} />)}
       </div>
-    </article>
+      <div className="discover-orb-grid">
+        {Array.from({ length: 6 }).map((_, index) => <span className="discover-card-skeleton" key={index} />)}
+      </div>
+    </div>
   );
 }
 
-function DiscoverPrototypeMosaic({ creators, followPending, onFollow }) {
-  if (!creators.length) return null;
+function DiscoverEmpty({ onRefresh }) {
   return (
-    <section className="discover-prototype" aria-label="People worth seeing next">
-      <div className="discover-prototype-top">
-        <div>
-          <span>Discover</span>
-          <p>people worth seeing next</p>
-        </div>
-        <button aria-label="Search Discover" type="button"><FiSearch /></button>
-      </div>
-      <div className="discover-prototype-grid">
-        {creators.slice(0, 6).map((creator) => (
-          <DiscoverMosaicCard creator={creator} followPending={followPending} key={creator.username} onFollow={onFollow} />
-        ))}
-      </div>
+    <section className="discover-empty-panel" aria-live="polite">
+      <span aria-hidden="true" />
+      <h1>No recommendations</h1>
+      <p>Refresh when more public creators are available for your preferences.</p>
+      <button onClick={onRefresh} type="button">
+        <FiRefreshCw aria-hidden="true" />
+        Refresh
+      </button>
+    </section>
+  );
+}
+
+function DiscoverError({ error, onRetry }) {
+  return (
+    <section className="discover-empty-panel is-error" role="alert">
+      <h1>We could not load Discover.</h1>
+      <p>{error?.response?.data?.message || error?.message || "Something went wrong while loading recommendations."}</p>
+      <button onClick={onRetry} type="button">
+        <FiRefreshCw aria-hidden="true" />
+        Retry
+      </button>
     </section>
   );
 }
 
 function DiscoverPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialFilter = FILTERS.includes(searchParams.get("filter")) ? searchParams.get("filter") : "All";
-  const [activeFilter, setActiveFilter] = useState(initialFilter);
-  const [search, setSearch] = useState("");
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const debouncedSearch = useDebouncedValue(search);
-  const queryParams = useMemo(() => ({ search: debouncedSearch || undefined }), [debouncedSearch]);
-  const discoverQuery = useDiscoverQuery(queryParams);
-  const followMutation = useDiscoverFollowMutation(queryParams);
-  const settingsMutation = useDiscoverSettingsMutation(queryParams);
-  const resetMutation = useResetDiscoverSettings(queryParams);
   const { showToast } = useFanToast();
-  const data = discoverQuery.data || {};
+  const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
+  const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
+  const viewerId = user?.id || user?._id || "";
+  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8 }), [activeFilter, viewerId]);
+  const discoverQuery = useDiscoverSlidesQuery(queryParams);
+  const followMutation = useDiscoverFollowMutation(queryParams);
+  const sentinelRef = useRef(null);
+  const storyHistoryPushedRef = useRef(false);
+  const storyTriggerRef = useRef(null);
+  const [storyViewer, setStoryViewer] = useState({ personId: null, index: 0 });
+  const [activeRecommendationStory, setActiveRecommendationStory] = useState(null);
+
+  const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
+  const firstPage = pages[0] || {};
+  const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])), [pages]);
+  const sidebarSuggestedUsers = useMemo(() => {
+    if (firstPage.suggestedUsers?.length) return firstPage.suggestedUsers;
+    return recommendations.filter((card) => !(card.isFollowing || card.following || card.actions?.following)).slice(0, 4);
+  }, [firstPage.suggestedUsers, recommendations]);
+  const sidebarTrendingSeen = useMemo(() => {
+    if (firstPage.trendingSeen) return firstPage.trendingSeen;
+    const source = recommendations.find((card) => card.featuredOffer);
+    if (!source?.featuredOffer) return null;
+    return {
+      ...source.featuredOffer,
+      coverImage: source.featuredOffer.cover || source.coverImage || source.media?.url,
+      creator: source.creator,
+      engagementCount: source.featuredOffer.peopleCount || source.followersCount || 0,
+      title: source.featuredOffer.title || source.dream?.title || source.displayName,
+    };
+  }, [firstPage.trendingSeen, recommendations]);
+  const sidebarFreshSeens = useMemo(() => {
+    if (firstPage.freshSeens?.length) return firstPage.freshSeens;
+    return recommendations
+      .filter((card) => card.featuredOffer)
+      .slice(0, 3)
+      .map((card) => ({
+        ...card.featuredOffer,
+        id: card.featuredOffer?.id || card.id,
+        coverImage: card.featuredOffer?.cover || card.coverImage || card.media?.url,
+        creator: card.creator,
+        title: card.featuredOffer?.title || card.dream?.title || card.displayName,
+        chapterCount: card.featuredOffer?.chapterCount || card.featuredOffer?.chapters?.length || 0,
+      }));
+  }, [firstPage.freshSeens, recommendations]);
+  const filters = useMemo(() => (firstPage.filters || []).filter((filter) => SUPPORTED_FILTERS.has(filter.id)), [firstPage.filters]);
+  const activeStoryPerson = useMemo(
+    () => [...(firstPage.friends || []), ...(firstPage.following || [])].find((person) => person.id === storyViewer.personId),
+    [firstPage.friends, firstPage.following, storyViewer.personId],
+  );
+
+  const changeFilter = useCallback((filterId) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (filterId === DEFAULT_FILTER) next.delete("filter");
+      else next.set("filter", filterId);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const refresh = useCallback(() => {
+    discoverQuery.refetch();
+  }, [discoverQuery]);
+
+  const invite = useCallback(async () => {
+    const url = typeof window === "undefined" ? "" : `${window.location.origin}/discover`;
+    try {
+      if (navigator.share) await navigator.share({ title: "@seen", text: "Find people worth seeing next on @seen.", url });
+      else {
+        await navigator.clipboard.writeText(url);
+        showToast("Discover link copied.");
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") showToast("Unable to share Discover right now.");
+    }
+  }, [showToast]);
+
+  const toggleFollow = useCallback((person) => {
+    if (!person?.username) return;
+    followMutation.mutate(person, {
+      onError: (error) => showToast(error?.response?.data?.message || "Unable to update follow."),
+    });
+  }, [followMutation, showToast]);
+
+  const closeFriendStories = useCallback(({ fromPop = false } = {}) => {
+    setStoryViewer({ personId: null, index: 0 });
+    window.setTimeout(() => storyTriggerRef.current?.focus?.(), 0);
+    if (!fromPop && storyHistoryPushedRef.current) {
+      storyHistoryPushedRef.current = false;
+      window.history.back();
+    }
+  }, []);
+
+  const openPersonStories = useCallback((person, trigger) => {
+    if (!person?.stories?.length) return;
+    setActiveRecommendationStory(null);
+    storyTriggerRef.current = trigger;
+    setStoryViewer({ personId: person.id, index: firstUnseenStoryIndex(person) });
+    if (!storyHistoryPushedRef.current && typeof window !== "undefined") {
+      window.history.pushState({ atseenDiscoverStory: true }, "", window.location.href);
+      storyHistoryPushedRef.current = true;
+    }
+  }, []);
+
+  const openRecommendationStory = useCallback((index) => {
+    setStoryViewer({ personId: null, index: 0 });
+    setActiveRecommendationStory(recommendations[index] || null);
+  }, [recommendations]);
 
   useEffect(() => {
-    const next = new URLSearchParams(searchParams);
-    const current = searchParams.get("filter") || "All";
-    if (current === activeFilter) return;
-    if (activeFilter === "All") next.delete("filter");
-    else next.set("filter", activeFilter);
-    setSearchParams(next, { replace: true });
-  }, [activeFilter, searchParams, setSearchParams]);
+    if (!activeRecommendationStory) return;
+    const stillExists = recommendations.find((card) => (card.id || card.username) === (activeRecommendationStory.id || activeRecommendationStory.username));
+    if (stillExists && stillExists !== activeRecommendationStory) setActiveRecommendationStory(stillExists);
+  }, [activeRecommendationStory, recommendations]);
 
-  const allCreators = useMemo(() => uniqueCreators(
-    data.featuredCreators,
-    data.recommendedCreators,
-    data.risingCreators,
-    data.nearbyCreators,
-    data.newCreators,
-    data.friendsOfFriends,
-  ), [data.featuredCreators, data.friendsOfFriends, data.nearbyCreators, data.newCreators, data.recommendedCreators, data.risingCreators]);
+  const closeRecommendationStory = useCallback(() => {
+    setActiveRecommendationStory(null);
+  }, []);
 
-  const activeCreators = useMemo(() => {
-    const base = activeFilter === "Nearby" ? data.nearbyCreators || []
-      : activeFilter === "Trending" || activeFilter === "Rising" ? data.risingCreators || []
-        : activeFilter === "New" ? data.newCreators || []
-          : activeFilter === "Friends" ? data.friendsOfFriends || []
-            : allCreators;
-    return base.filter((creator) => creatorMatchesFilter(creator, activeFilter) && creatorMatchesSearch(creator, debouncedSearch));
-  }, [activeFilter, allCreators, data.friendsOfFriends, data.nearbyCreators, data.newCreators, data.risingCreators, debouncedSearch]);
+  useEffect(() => {
+    const target = sentinelRef.current;
+    if (!target || !discoverQuery.hasNextPage) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !discoverQuery.isFetchingNextPage) discoverQuery.fetchNextPage();
+    }, { rootMargin: "520px 0px" });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [discoverQuery]);
 
-  const worlds = useMemo(() => (data.popularWorlds || []).filter((world) => worldMatchesSearch(world, debouncedSearch)), [data.popularWorlds, debouncedSearch]);
-  const recommendedWorlds = useMemo(() => (data.recommendedWorlds?.length ? data.recommendedWorlds : worlds).filter((world) => worldMatchesSearch(world, debouncedSearch)), [data.recommendedWorlds, debouncedSearch, worlds]);
-  const featuredExperiences = useMemo(() => (data.featuredExperiences || []).filter((item) => worldMatchesSearch(item, debouncedSearch)), [data.featuredExperiences, debouncedSearch]);
-  const recentlyActive = useMemo(() => [...activeCreators].sort((left, right) => new Date(right.updatedAt || 0) - new Date(left.updatedAt || 0)).slice(0, 12), [activeCreators]);
-  const becauseTopic = (data.settings?.topics || []).find((topic) => topic.preference === "interested")?.label || data.interestTags?.[0] || "your interests";
+  useEffect(() => {
+    const nextCard = recommendations[recommendations.length - 1];
+    const src = resolveMediaUrl(nextCard?.coverImage || nextCard?.media?.url);
+    if (!src || typeof Image === "undefined") return;
+    const image = new Image();
+    image.src = src;
+  }, [recommendations]);
 
-  const setFilter = useCallback((filter) => setActiveFilter(filter), []);
-  const followCreator = useCallback((creator) => followMutation.mutate(creator), [followMutation]);
-  const saveSettings = useCallback((payload) => {
-    settingsMutation.mutate(payload, {
-      onSuccess: () => {
-        setSettingsOpen(false);
-        showToast("Discover settings saved.");
-      },
-      onError: (error) => showToast(error?.response?.data?.message || "Unable to save Discover settings."),
-    });
-  }, [settingsMutation, showToast]);
-  const resetSettings = useCallback(() => {
-    resetMutation.mutate(undefined, {
-      onSuccess: () => showToast("Discover reset."),
-      onError: (error) => showToast(error?.response?.data?.message || "Unable to reset Discover."),
-    });
-  }, [resetMutation, showToast]);
+  useEffect(() => {
+    if (!storyViewer.personId) return undefined;
+    const onPopState = () => {
+      if (storyHistoryPushedRef.current) {
+        storyHistoryPushedRef.current = false;
+        closeFriendStories({ fromPop: true });
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [closeFriendStories, storyViewer.personId]);
 
   if (discoverQuery.isLoading) {
-    return <DiscoverSkeleton />;
+    return (
+      <div className="discover-orb-page">
+        <section className="discover-orb-main"><DiscoverSkeleton /></section>
+        <aside className="discover-right-rail"><div className="discover-rail-card discover-rail-skeleton" /></aside>
+      </div>
+    );
   }
 
   if (discoverQuery.isError) {
-    return <DiscoverError error={discoverQuery.error} onRetry={() => discoverQuery.refetch()} />;
+    return (
+      <div className="discover-orb-page">
+        <section className="discover-orb-main">
+          <DiscoverError error={discoverQuery.error} onRetry={refresh} />
+        </section>
+      </div>
+    );
   }
 
-  const featured = data.featuredCreators?.[0] || activeCreators[0];
-  const empty = !activeCreators.length && !worlds.length && !featuredExperiences.length;
-
   return (
-    <div className="discover-page">
-      <DiscoverHeader
-        onRefresh={() => discoverQuery.refetch()}
-        onSearchChange={setSearch}
-        onSettings={() => setSettingsOpen(true)}
-        refreshing={discoverQuery.isFetching}
-        search={search}
-      />
-      <StoryStrip groups={data.creatorStories || []} />
-      <DiscoverFilters active={activeFilter} filters={FILTERS} onChange={setFilter} />
-      {empty ? <DiscoverEmpty onRefresh={() => discoverQuery.refetch()} onSettings={() => setSettingsOpen(true)} /> : null}
-      {!empty ? (
-        <>
-          <DiscoverPrototypeMosaic creators={activeCreators.length ? activeCreators : allCreators} followPending={followMutation.isPending} onFollow={followCreator} />
-          <FeaturedCreatorCard creator={featured} followPending={followMutation.isPending} onFollow={followCreator} />
-
-          <DiscoverSection title="Recommended for You">
-            {activeCreators.slice(0, 12).map((creator) => <DiscoverCreatorCard creator={creator} followPending={followMutation.isPending} key={creator.username} onFollow={followCreator} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="Trending Creators">
-            {(data.risingCreators || []).filter((creator) => creatorMatchesSearch(creator, debouncedSearch)).map((creator) => <DiscoverCreatorCard creator={creator} followPending={followMutation.isPending} key={creator.username} onFollow={followCreator} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="People Nearby">
-            {(data.nearbyCreators?.length ? data.nearbyCreators : activeCreators).slice(0, 12).map((creator) => <DiscoverCreatorCard creator={creator} followPending={followMutation.isPending} key={creator.username} onFollow={followCreator} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="New Creators">
-            {(data.newCreators || []).filter((creator) => creatorMatchesSearch(creator, debouncedSearch)).map((creator) => <DiscoverCreatorCard creator={creator} followPending={followMutation.isPending} key={creator.username} onFollow={followCreator} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="Friends You May Know">
-            {(data.friendsOfFriends || []).filter((creator) => creatorMatchesSearch(creator, debouncedSearch)).map((creator) => <DiscoverCreatorCard creator={creator} followPending={followMutation.isPending} key={creator.username} onFollow={followCreator} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="Popular Worlds">
-            {worlds.map((world) => <WorldCard key={world.id} world={world} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="Recently Active">
-            {recentlyActive.map((creator) => <DiscoverCreatorCard creator={creator} followPending={followMutation.isPending} key={creator.username} onFollow={followCreator} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="Recommended Stories">
-            {(data.creatorStories || []).map((group) => (
-              <button className="w-[132px] shrink-0 rounded-[20px] border border-atseen-line bg-[#101319] p-3 text-left transition hover:-translate-y-1 hover:border-atseen-blue/30" key={group.id} type="button">
-                <FanAvatar className="ring-2 ring-atseen-blue/60" name={group.owner?.name} size="h-14 w-14" src={group.owner?.avatar} />
-                <b className="mt-3 block truncate text-sm text-white">{group.owner?.name}</b>
-                <span className="mt-1 block text-[10px] font-bold text-atseen-muted">{group.live ? "Live now" : `${group.stories?.length || 0} stories`}</span>
-              </button>
-            ))}
-          </DiscoverSection>
-
-          <DiscoverSection title="Featured Experiences">
-            {featuredExperiences.map((experience) => <ExperienceCard experience={experience} key={experience.id} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title={`Because You Follow ${becauseTopic}`}>
-            {recommendedWorlds.map((world) => <WorldCard key={world.id} world={world} />)}
-          </DiscoverSection>
-
-          <DiscoverSection title="Suggested Categories">
-            {(data.categories || []).map((category) => <CategoryCard category={category} key={category.id || category.title} onClick={setFilter} />)}
-          </DiscoverSection>
-
-          <section className="mt-7 rounded-[20px] border border-atseen-line bg-atseen-surface p-4">
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-atseen-blue">Discover reasons</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {(data.discoverReasons || []).map((reason) => <span className="rounded-full border border-atseen-line bg-white/[0.035] px-3 py-2 text-xs font-bold text-atseen-muted" key={reason}>{reason}</span>)}
+    <div className="discover-orb-page">
+      <section className="discover-orb-main" aria-label="Discover">
+        {activeStoryPerson ? (
+          <StoryViewer
+            initialIndex={storyViewer.index}
+            isOpen
+            onClose={closeFriendStories}
+            presentation="inline"
+            stories={activeStoryPerson.stories || []}
+          />
+        ) : activeRecommendationStory ? (
+          <DiscoverRecommendationStory
+            card={activeRecommendationStory}
+            followPending={followMutation.isPending}
+            onClose={closeRecommendationStory}
+            onFollow={toggleFollow}
+          />
+        ) : (
+          <>
+            <div className="discover-orb-toolbar">
+              <span />
+              <div>
+                <Link aria-label="Search" className="discover-orb-icon" to="/search">
+                  <FiSearch aria-hidden="true" />
+                </Link>
+                <button aria-label="Invite people" className="discover-orb-icon" onClick={invite} type="button">
+                  <FiUserPlus aria-hidden="true" />
+                </button>
+              </div>
             </div>
-            <div className="mt-4 flex items-center gap-2 text-xs font-bold text-white/48">
-              <FiHeart aria-hidden="true" />
-              <span>{compactNumber(allCreators.length)} creators tuned to {data.viewerLocation || "your orbit"}</span>
-            </div>
-          </section>
-        </>
-      ) : null}
 
-      <DiscoverSettingsModal
-        interestTags={data.interestTags || []}
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onReset={resetSettings}
-        onSave={saveSettings}
-        resetPending={resetMutation.isPending}
-        savePending={settingsMutation.isPending}
-        settings={data.settings || {}}
+            <DiscoverPeopleSections
+              friends={firstPage.friends}
+              following={firstPage.following}
+              onOpenFollowingStories={openPersonStories}
+              onOpenFriendStories={openPersonStories}
+            />
+
+            <p className="discover-orb-kicker">{"Discover \u2014 people worth seeing next"}</p>
+            {filters.length ? (
+              <div className="discover-orb-filters" role="tablist" aria-label="Discover filters">
+                {filters.map((filter) => (
+                  <button
+                    aria-selected={activeFilter === filter.id}
+                    className={`discover-orb-chip ${activeFilter === filter.id ? "is-selected" : ""}`}
+                    key={filter.id}
+                    onClick={() => changeFilter(filter.id)}
+                    role="tab"
+                    type="button"
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {recommendations.length ? (
+              <>
+                <div className="discover-orb-grid">
+                  {recommendations.map((card, index) => (
+                    <DiscoverMasonryCard card={card} index={index} key={card.id || card.username} onOpen={openRecommendationStory} />
+                  ))}
+                </div>
+                <div className="discover-next-sentinel" ref={sentinelRef}>
+                  {discoverQuery.isFetchingNextPage ? <FiRefreshCw aria-hidden="true" className="animate-spin" /> : null}
+                </div>
+              </>
+            ) : (
+              <DiscoverEmpty onRefresh={refresh} />
+            )}
+          </>
+        )}
+      </section>
+
+      <DiscoverRightSidebar
+        activity={firstPage.activity}
+        followPending={followMutation.isPending}
+        freshSeens={sidebarFreshSeens}
+        onFollowToggle={toggleFollow}
+        suggestedUsers={sidebarSuggestedUsers}
+        trendingSeen={sidebarTrendingSeen}
       />
     </div>
   );

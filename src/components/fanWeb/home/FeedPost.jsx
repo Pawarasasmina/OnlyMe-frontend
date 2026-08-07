@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiBookmark, FiCheck, FiFlag, FiMessageCircle, FiMoreHorizontal, FiShare2, FiSmile } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { FiBookmark, FiCheck, FiEye, FiFlag, FiMessageCircle, FiMoreHorizontal, FiRepeat, FiSend, FiShare2, FiSmile } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
+import ShareSheet from "../../share/ShareSheet";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import VerifiedBadge from "../shared/VerifiedBadge";
@@ -12,6 +14,7 @@ import {
   useCreateFeedPostComment,
   useDeleteFeedPost,
   useHideFeedPost,
+  useMarkFeedPostViewed,
   useReactToFeedPost,
   useReportFeedPost,
   useToggleFeedPostSave,
@@ -28,6 +31,27 @@ const reactions = [
   { key: "fire", label: "Fire", icon: "🔥" },
 ];
 
+const postReactionOptions = [
+  { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
+  { key: "love", label: "Love", icon: "\u2764\uFE0F" },
+  { key: "care", label: "Care", icon: "\uD83E\uDD17" },
+  { key: "wow", label: "Wow", icon: "\uD83D\uDE2E" },
+  { key: "useful", label: "Useful", icon: "\uD83D\uDCA1" },
+  { key: "fire", label: "Fire", icon: "\uD83D\uDD25" },
+  { key: "clap", label: "Clap", icon: "\uD83D\uDC4F" },
+  { key: "laugh", label: "Laugh", icon: "\uD83D\uDE02" },
+  { key: "see_you", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
+  { key: "sad", label: "Feel you", icon: "\uD83E\uDD72" },
+  { key: "phone", label: "Call me", icon: "\uD83D\uDCF1" },
+  { key: "strong", label: "Strong", icon: "\uD83D\uDCAA" },
+  { key: "pray", label: "Respect", icon: "\uD83D\uDE4F" },
+];
+
+function reactionDisplayFor(key) {
+  return postReactionOptions.find((reactionItem) => reactionItem.key === key)
+    || reactions.find((reactionItem) => reactionItem.key === key);
+}
+
 const commentEmojiGroups = [
   { key: "recent", label: "Recent", emojis: ["😀", "😂", "🥰", "😍", "😎", "😭", "😮", "😅", "🙂", "🙃"] },
   { key: "gestures", label: "Gestures", emojis: ["👍", "❤️", "👏", "🙏", "🤝", "💪", "👌", "🙌", "✌️", "🤞"] },
@@ -36,6 +60,12 @@ const commentEmojiGroups = [
 ];
 
 const mongoIdPattern = /^[a-f\d]{24}$/i;
+const homeCommentEmojiGroups = [
+  { key: "recent", label: "Recent", emojis: ["\uD83D\uDE00", "\uD83D\uDE02", "\uD83E\uDD70", "\uD83D\uDE0D", "\uD83D\uDE0E", "\uD83D\uDE2D", "\uD83D\uDE2E", "\uD83D\uDE05", "\uD83D\uDE42", "\uD83D\uDE43"] },
+  { key: "gestures", label: "Gestures", emojis: ["\uD83D\uDC4D", "\u2764\uFE0F", "\uD83D\uDC4F", "\uD83D\uDE4F", "\uD83E\uDD1D", "\uD83D\uDCAA", "\uD83D\uDC4C", "\uD83D\uDE4C", "\u270C\uFE0F", "\uD83E\uDD1E"] },
+  { key: "vibes", label: "Vibes", emojis: ["\u2728", "\uD83D\uDD25", "\uD83D\uDCAF", "\uD83C\uDF89", "\u2B50", "\uD83C\uDF19", "\u2600\uFE0F", "\uD83D\uDCA1", "\uD83C\uDFB6", "\uD83D\uDCCC"] },
+  { key: "food", label: "Food", emojis: ["\u2615", "\uD83C\uDF55", "\uD83C\uDF54", "\uD83C\uDF70", "\uD83C\uDF53", "\uD83C\uDF49", "\uD83C\uDF5C", "\uD83C\uDF5F", "\uD83E\uDD57", "\uD83C\uDF7F"] },
+];
 
 function relativeTime(value, fallback = "now") {
   if (!value) return fallback;
@@ -47,6 +77,24 @@ function relativeTime(value, fallback = "now") {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
+}
+
+function formatCount(value = 0) {
+  const count = Number(value) || 0;
+  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
+  return count.toLocaleString();
+}
+
+function MediaItem({ item, title }) {
+  const [failed, setFailed] = useState(false);
+  if (!item?.url || failed) {
+    return <span className="home-feed-media-fallback" role="img" aria-label="Media unavailable">Media unavailable</span>;
+  }
+  if (String(item.type || "").toLowerCase().startsWith("video")) {
+    return <video controls preload="metadata" src={item.url} title={`${title} video`} />;
+  }
+  return <img alt={`${title} attachment`} loading="lazy" onError={() => setFailed(true)} src={item.url} />;
 }
 
 function normalizeFeedPost(post = {}) {
@@ -83,6 +131,7 @@ function normalizeFeedPost(post = {}) {
     isOwner: Boolean(post.isOwner),
     location: post.location || "",
     media,
+    reactionBreakdown: post.reactionBreakdown || {},
     reactions: post.reactions || [],
     result: post.result || "",
     seededComments: comments,
@@ -90,10 +139,22 @@ function normalizeFeedPost(post = {}) {
     shareCount: Number(post.shareCount ?? 0),
     text: post.text || "",
     timestamp: post.timestamp || relativeTime(post.createdAt || post.publishedAt),
+    topReactions: post.topReactions || [],
+    viewCount: Number(post.viewCount ?? post.views ?? post.viewerCount ?? 0),
     viewerReaction: post.viewerReaction || null,
     viewerSaved: Boolean(post.viewerSaved),
     viewerShared: Boolean(post.viewerShared),
   };
+}
+
+function filterForContext(context = "", location = "") {
+  const normalized = String(context || "").trim().toLowerCase();
+  if (normalized === "right now") return "right_now";
+  if (normalized === "events") return "events";
+  if (normalized === "things to do") return "things_to_do";
+  if (["coffee", "restaurant"].includes(normalized)) return "food";
+  if (!normalized && location) return "places";
+  return "";
 }
 
 function FeedPost({ post }) {
@@ -109,7 +170,10 @@ function FeedPost({ post }) {
   const hideMutation = useHideFeedPost();
   const reportMutation = useReportFeedPost();
   const blockMutation = useBlockFeedPostAuthor();
+  const viewMutation = useMarkFeedPostViewed();
+  const articleRef = useRef(null);
   const commentInputRef = useRef(null);
+  const viewTrackedRef = useRef(false);
   const [reaction, setReaction] = useState(normalized.viewerReaction);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [saved, setSaved] = useState(normalized.viewerSaved);
@@ -118,33 +182,73 @@ function FeedPost({ post }) {
   const [commentText, setCommentText] = useState("");
   const [shareCaption, setShareCaption] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const [emojiPanelOpen, setEmojiPanelOpen] = useState(false);
-  const [activeEmojiGroupKey, setActiveEmojiGroupKey] = useState(commentEmojiGroups[0].key);
+  const [activeEmojiGroupKey, setActiveEmojiGroupKey] = useState(homeCommentEmojiGroups[0].key);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [viewCount, setViewCount] = useState(normalized.viewCount);
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
-  const selectedReaction = reactions.find((item) => item.key === reaction);
+  const headerName = ownsPost ? "You" : creator.name;
+  const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (normalized.reactions?.length
     ? normalized.reactions
+    : normalized.topReactions?.length && normalized.reactionBreakdown
+      ? normalized.topReactions.map((reactionKey) => ({ count: normalized.reactionBreakdown[reactionKey], reaction: reactionKey }))
     : normalized.supportCount > 0 ? [{ count: normalized.supportCount, reaction: "like" }] : [])
     .map((item) => ({
       count: Number(item.count) || 0,
-      reaction: reactions.find((reactionItem) => reactionItem.key === item.reaction),
+      reaction: reactionDisplayFor(item.reaction),
     }))
     .filter((item) => item.count > 0 && item.reaction);
   const reactionCount = reactionSummary.reduce((total, item) => total + item.count, 0);
-  const activeEmojiGroup = commentEmojiGroups.find((group) => group.key === activeEmojiGroupKey) || commentEmojiGroups[0];
+  const reactionCountsByKey = useMemo(() => reactionSummary.reduce((counts, item) => ({
+    ...counts,
+    [item.reaction.key]: item.count,
+  }), {}), [reactionSummary]);
+  const activeEmojiGroup = homeCommentEmojiGroups.find((group) => group.key === activeEmojiGroupKey) || homeCommentEmojiGroups[0] || commentEmojiGroups[0];
   const commentCount = Math.max(normalized.commentCount, comments.length);
+  const compactText = normalized.text.length > 260 && !expanded ? `${normalized.text.slice(0, 260).trim()}...` : normalized.text;
+  const visibleReactionSamples = reactionSummary.length
+    ? reactionSummary.slice(0, 3).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
+    : "\uD83E\uDD1D \u2764\uFE0F \uD83D\uDD25";
   const actionPostId = normalized.originalPostId || normalized.id;
   const postUrl = useMemo(() => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     return `${origin}/posts/${actionPostId}`;
   }, [actionPostId]);
+  const sharePayload = useMemo(() => ({
+    author: {
+      avatarUrl: creator.avatar,
+      id: creator.id,
+      name: creator.name,
+      username: creator.username,
+    },
+    canonicalUrl: postUrl,
+    contentId: actionPostId,
+    contentType: "feed_post",
+    destinationRoute: `/posts/${actionPostId}`,
+    imageUrl: normalized.media?.[0]?.url || "",
+    textPreview: normalized.text,
+    title: normalized.context
+      ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
+      : normalized.text.slice(0, 96) || "Home post",
+  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, normalized.context, normalized.location, normalized.media, normalized.text, postUrl]);
+  const contextFilter = filterForContext(normalized.context, normalized.location);
+  const contextHref = contextFilter
+    ? `/wall?filter=${encodeURIComponent(contextFilter)}${normalized.location ? `&city=${encodeURIComponent(normalized.location)}` : ""}`
+    : "/wall";
+  const firstMedia = normalized.media?.[0] || {};
+  const firstMediaRatio = firstMedia.width && firstMedia.height ? Number(firstMedia.width) / Number(firstMedia.height) : 0;
+  const mediaLayout = normalized.media?.length === 1 && (String(firstMedia.type || "").toLowerCase().startsWith("video") || firstMediaRatio >= 1.45)
+    ? "hero"
+    : "compact";
 
   useEffect(() => {
     setReaction(normalized.viewerReaction);
@@ -161,6 +265,44 @@ function FeedPost({ post }) {
   useEffect(() => {
     setShared(normalized.viewerShared);
   }, [normalized.viewerShared]);
+
+  useEffect(() => {
+    setViewCount(normalized.viewCount);
+  }, [normalized.viewCount]);
+
+  useEffect(() => {
+    if (!reactionPickerOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setReactionPickerOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [reactionPickerOpen]);
+
+  useEffect(() => {
+    viewTrackedRef.current = false;
+  }, [actionPostId]);
+
+  useEffect(() => {
+    const target = articleRef.current;
+    if (!target || ownsPost || !mongoIdPattern.test(String(actionPostId || ""))) return undefined;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || viewTrackedRef.current || viewMutation.isPending) return;
+      viewTrackedRef.current = true;
+      viewMutation.mutate(actionPostId, {
+        onSuccess: (result) => {
+          if (Number.isFinite(Number(result?.viewCount))) setViewCount(Number(result.viewCount));
+        },
+        onError: () => {
+          viewTrackedRef.current = false;
+        },
+      });
+    }, { threshold: 0.55 });
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [actionPostId, ownsPost, viewMutation]);
 
   const syncSavedPost = (savedPost) => {
     const next = normalizeFeedPost(savedPost);
@@ -362,35 +504,40 @@ function FeedPost({ post }) {
     }
   };
 
+  const openSendSheet = () => {
+    if (!requireDatabasePost()) return;
+    setSendOpen(true);
+  };
+
   return (
     <>
-      <article className="border-b border-white/[0.05] py-[18px]">
+      <article className="home-feed-post" ref={articleRef}>
         {normalized.sharedBy ? (
-          <div className="mb-3 flex items-center gap-2 text-[11px] text-atseen-muted">
+          <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
             <span className="font-bold text-atseen-text">{normalized.sharedBy.name || `@${normalized.sharedBy.username}`}</span>
-            <span>shared this · {relativeTime(normalized.feedCreatedAt)}</span>
+            <span>shared this &middot; {relativeTime(normalized.feedCreatedAt)}</span>
           </div>
         ) : null}
         {normalized.shareCaption ? (
           <p className="mb-3 whitespace-pre-wrap text-sm leading-7 text-white/90">{normalized.shareCaption}</p>
         ) : null}
-        <div className={normalized.sharedBy ? "rounded-2xl border border-atseen-line bg-atseen-surface/45 p-3" : ""}>
-        <div className="flex items-center gap-2.5">
-          <button className="shrink-0" onClick={() => showToast(`${creator.name}'s profile preview opens from Orbit.`)} type="button">
-            <FanAvatar name={creator.name} size="h-[38px] w-[38px]" src={creator.avatar} />
-          </button>
-          <div className="min-w-0">
-            <p className="flex items-center gap-1 truncate text-[13.5px] font-bold text-atseen-text">
-              {creator.name}
+        <div className={normalized.sharedBy ? "home-shared-post" : ""}>
+        <div className="home-feed-post-head">
+          <Link className="shrink-0" to={`/profile/${encodeURIComponent(creator.username)}`}>
+            <FanAvatar name={creator.name} size="h-[22px] w-[22px]" src={creator.avatar} />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link className="home-feed-author" to={`/profile/${encodeURIComponent(creator.username)}`}>
+              {headerName}
               {creator.verified ? <VerifiedBadge /> : null}
-            </p>
-            <p className="text-[10.5px] text-atseen-muted">{normalized.timestamp}</p>
+            </Link>
+            <p className="home-feed-meta">{[normalized.location, normalized.timestamp].filter(Boolean).join(" - ")}</p>
           </div>
           {normalized.context || normalized.location ? (
-            <span className="ml-auto whitespace-nowrap rounded-full border border-atseen-blue/20 bg-atseen-blue/10 px-2.5 py-1 text-[10px] font-bold text-atseen-blue">
+            <Link className="home-context-pill" to={contextHref}>
               {[`${normalized.contextEmoji} ${normalized.context}`.trim(), normalized.location].filter(Boolean).join(" - ")}
-            </span>
+            </Link>
           ) : <span className="ml-auto" />}
           <button
             aria-label={`More actions for ${creator.name}'s post`}
@@ -402,57 +549,38 @@ function FeedPost({ post }) {
           </button>
         </div>
 
-        <p className="mt-2.5 whitespace-pre-wrap text-sm leading-7 text-white/90">{normalized.text}</p>
+        <p className="home-feed-text">{compactText}</p>
+        {normalized.text.length > 260 ? (
+          <button className="home-feed-show-more" onClick={() => setExpanded((current) => !current)} type="button">
+            {expanded ? "Show less" : "Show more"}
+          </button>
+        ) : null}
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
             <FiCheck aria-hidden="true" /> {normalized.result}
           </p>
         ) : null}
         {normalized.media?.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {normalized.media.map((image) => (
-              <img alt="" className="h-[150px] w-[150px] rounded-[13px] object-cover sm:h-[160px] sm:w-[160px]" key={image.id || image.url} loading="lazy" src={image.url} />
+          <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
+            {normalized.media.map((mediaItem) => (
+              <MediaItem item={mediaItem} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
             ))}
           </div>
         ) : null}
         </div>
 
-        <div className="mt-3 flex items-center gap-5 text-[11.5px] font-semibold text-atseen-dim">
-          <div
-            className="relative"
-            onMouseEnter={() => setReactionPickerOpen(true)}
-            onMouseLeave={() => setReactionPickerOpen(false)}
-          >
-            {reactionPickerOpen ? (
-              <div className="absolute bottom-0 left-0 z-20 pb-6">
-                <div aria-hidden="true" className="absolute bottom-0 left-0 h-8 w-full" />
-                <div className="flex gap-1 rounded-full border border-atseen-line bg-[#161B24] px-2 py-1.5 shadow-glow">
-                {reactions.map((item) => (
-                  <button
-                    aria-label={item.label}
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-xl transition hover:-translate-y-1 hover:bg-white/10"
-                    disabled={reactionMutation.isPending}
-                    key={item.key}
-                    onClick={() => {
-                      saveReaction(reaction === item.key ? "" : item.key);
-                      setReactionPickerOpen(false);
-                    }}
-                    type="button"
-                  >
-                    <span aria-hidden="true">{item.icon}</span>
-                  </button>
-                ))}
-                </div>
-              </div>
-            ) : null}
+        <div className="home-feed-actions">
+          <div className="relative">
             <button
-              aria-label={selectedReaction ? `Reacted ${selectedReaction.label}` : "React to post"}
-              className={`inline-flex items-center gap-2 transition hover:text-white [&>span:not(:first-child)]:hidden ${selectedReaction ? "text-atseen-blue" : ""}`}
+              aria-label={selectedReaction ? `Change ${selectedReaction.label} reaction` : "React to post"}
+              className={`home-reaction-capsule ${selectedReaction ? "is-selected" : ""}`}
               disabled={reactionMutation.isPending}
-              onClick={() => saveReaction(reaction ? "" : "like")}
-              onFocus={() => setReactionPickerOpen(true)}
+              onClick={() => setReactionPickerOpen(true)}
+              title="React"
               type="button"
             >
+              <span className="home-reaction-samples" aria-hidden="true">{visibleReactionSamples}</span>
+              <strong>{formatCount(reactionCount)}</strong>
               {reactionSummary.length ? (
                 <span aria-hidden="true" className="inline-flex items-center gap-2">
                   {reactionSummary.map(({ count, reaction: summaryReaction }) => (
@@ -472,23 +600,70 @@ function FeedPost({ post }) {
               <span className="hidden">{reactionCount}</span>
             </button>
           </div>
-          <button className="inline-flex items-center gap-1.5 transition hover:text-white" onClick={() => setCommentsOpen(true)} type="button">
+          <button aria-label="Open comments" className="home-feed-action-button" onClick={() => setCommentsOpen(true)} title="Comment" type="button">
             <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>
           </button>
-          <button className={`inline-flex items-center gap-1.5 transition hover:text-white ${shared ? "text-atseen-blue" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} type="button">
-            <FiShare2 aria-hidden="true" /> <span>{shared ? "Shared" : "Share"}{normalized.shareCount ? ` ${normalized.shareCount}` : ""}</span>
+          <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
+            <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
           </button>
+          <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-action-button is-readonly" title="Views">
+            <FiEye aria-hidden="true" /> <span>{formatCount(viewCount)}</span>
+          </span>
           <button
             aria-label={saved ? "Remove saved post" : "Save post"}
-            className={`ml-auto inline-flex items-center gap-1.5 transition hover:text-white ${saved ? "text-atseen-blue" : ""}`}
+            className={`home-feed-action-button ml-auto ${saved ? "is-selected" : ""}`}
             disabled={saveMutation.isPending}
             onClick={toggleSave}
+            title={saved ? "Unsave" : "Save"}
             type="button"
           >
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
+          <button aria-label="Send post" className="home-feed-action-button" onClick={openSendSheet} title="Send" type="button">
+            <FiSend aria-hidden="true" />
+          </button>
         </div>
       </article>
+
+      <ShareSheet isOpen={sendOpen} onClose={() => setSendOpen(false)} payload={sharePayload} />
+
+      {reactionPickerOpen ? (
+        <div
+          aria-label={`Reactions for ${creator.name}'s post`}
+          aria-modal="true"
+          className="home-reaction-overlay"
+          onClick={() => setReactionPickerOpen(false)}
+          role="dialog"
+        >
+          <div className="home-reaction-sheet" onClick={(event) => event.stopPropagation()}>
+            <div className="home-reaction-handle" aria-hidden="true" />
+            <div className="home-reaction-grid" role="group" aria-label="Choose a reaction">
+              {postReactionOptions.map((item) => {
+                const count = reactionCountsByKey[item.key] || 0;
+                const selected = reaction === item.key;
+                return (
+                  <button
+                    aria-label={`${selected ? "Remove" : "Send"} ${item.label} reaction`}
+                    aria-pressed={selected}
+                    className={`home-reaction-option ${selected ? "is-selected" : ""}`}
+                    disabled={reactionMutation.isPending}
+                    key={item.key}
+                    onClick={() => {
+                      saveReaction(selected ? "" : item.key);
+                      setReactionPickerOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span aria-hidden="true">{item.icon}</span>
+                    <small>{count}</small>
+                  </button>
+                );
+              })}
+            </div>
+            <p>{reactionCount ? `${reactionCount} reaction${reactionCount === 1 ? "" : "s"} - make it yours` : "One reaction - make it yours"}</p>
+          </div>
+        </div>
+      ) : null}
 
       <FanModal
         isOpen={commentsOpen}
@@ -548,7 +723,7 @@ function FeedPost({ post }) {
           {emojiPanelOpen ? (
             <div className="mt-2 rounded-2xl border border-atseen-line bg-[#11161F] p-3 shadow-glow">
               <div className="mb-3 flex gap-1 overflow-x-auto pb-1">
-                {commentEmojiGroups.map((group) => (
+                {homeCommentEmojiGroups.map((group) => (
                   <button
                     className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition ${activeEmojiGroupKey === group.key ? "bg-atseen-blue text-atseen-bg" : "bg-atseen-surface-2 text-atseen-muted hover:text-white"}`}
                     key={group.key}
@@ -585,7 +760,7 @@ function FeedPost({ post }) {
         }}
         title="Share to profile"
       >
-        <p className="text-sm leading-6 text-atseen-muted">Add your own note before this appears on your profile and in the Wall feed.</p>
+        <p className="text-sm leading-6 text-atseen-muted">Add your own note before this appears on your profile and in the Home feed.</p>
         <label className="mt-4 block text-xs font-bold text-atseen-muted">
           Caption <span className="font-normal">(optional)</span>
           <textarea

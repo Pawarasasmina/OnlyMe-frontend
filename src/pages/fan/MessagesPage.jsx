@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiCornerUpLeft, FiEdit, FiFlag, FiImage, FiMessageCircle, FiMoreVertical, FiRefreshCw, FiSearch, FiSend, FiShield, FiSmile, FiTrash2, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCornerUpLeft, FiEdit, FiExternalLink, FiFlag, FiImage, FiMessageCircle, FiMoreVertical, FiRefreshCw, FiSearch, FiSend, FiShield, FiSmile, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -81,6 +81,58 @@ function StoryReplyPreview({ forceExpired = false, mine, onOpen, reply }) {
   return <button className={`mb-2 block w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/15 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`} onClick={() => onOpen(reply, expired)} type="button"><div className="flex items-center gap-2 p-2">{expired ? <span className={`grid h-12 w-10 shrink-0 place-items-center rounded-lg text-lg ${mine ? "bg-atseen-bg/10" : "bg-white/5"}`}>⌛</span> : <img alt="Story replied to" className="h-12 w-10 shrink-0 rounded-lg object-cover" src={resolveMediaUrl(reply.imageUrl)} />}<div className="min-w-0"><p className={`text-[10px] font-bold uppercase tracking-wide ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{expired ? "Story unavailable" : mine ? "You replied to their story" : "Replied to your story"}</p><p className={`truncate text-xs ${mine ? "text-atseen-bg/75" : "text-atseen-muted"}`}>{expired ? "This story has expired" : reply.caption || "Tap to view story"}</p></div></div></button>;
 }
 
+function sharedContentLabel(type = "") {
+  if (type === "feed_post") return "POST";
+  if (type === "seen") return "SEEN";
+  if (type === "world") return "WORLD";
+  if (type === "experience") return "EXPERIENCE";
+  if (type === "profile") return "PROFILE";
+  if (type === "story") return "STORY";
+  return "CONTENT";
+}
+
+function sharedContentBodyLabel(type = "") {
+  if (type === "feed_post") return "post";
+  if (type === "seen") return "Seen";
+  if (type === "world") return "World";
+  if (type === "experience") return "experience";
+  if (type === "profile") return "profile";
+  if (type === "story") return "story";
+  return "content";
+}
+
+function defaultSharedBody(message) {
+  if (!message?.sharedContent) return "";
+  return `Shared a ${sharedContentBodyLabel(message.sharedContent.contentType)}`;
+}
+
+function SharedContentMessageCard({ content, mine, onOpen }) {
+  if (!content) return null;
+  const author = content.author || {};
+  const image = resolveMediaUrl(content.imageUrl || author.avatarUrl);
+  return (
+    <button
+      className={`mb-2 block w-full max-w-[236px] overflow-hidden rounded-2xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`}
+      onClick={() => onOpen(content)}
+      type="button"
+    >
+      {image ? <img alt={`${sharedContentLabel(content.contentType)} preview`} className="aspect-[5/3] w-full object-cover" loading="lazy" src={image} /> : null}
+      <div className="p-2.5">
+        <p className={`text-[9px] font-black tracking-[0.14em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{sharedContentLabel(content.contentType)}</p>
+        <div className="mt-1.5 flex items-center gap-2">
+          <FanAvatar name={author.name || content.title || "@seen"} size="h-6 w-6" src={author.avatarUrl} />
+          <span className="min-w-0 flex-1">
+            <b className="block truncate text-xs">{author.name || content.title || "Shared content"}</b>
+            {author.username ? <small className={`block truncate text-[10px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>@{author.username}</small> : null}
+          </span>
+          <FiExternalLink className="shrink-0 opacity-55" />
+        </div>
+        <p className={`mt-2 line-clamp-2 text-xs leading-5 ${mine ? "text-atseen-bg/75" : "text-atseen-text/85"}`}>{content.previewText || content.title || "Open shared content"}</p>
+      </div>
+    </button>
+  );
+}
+
 export default function MessagesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -134,10 +186,10 @@ export default function MessagesPage() {
   const conversationsQuery = useQuery({
     queryKey: ["messages", "conversations"],
     queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: "always",
-    staleTime: 0,
+    refetchInterval: socketConnected ? false : 10000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
   const messagesQuery = useQuery({
     queryKey: ["messages", selected?.id],
@@ -470,6 +522,9 @@ export default function MessagesPage() {
   };
   const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
   const openPerson = (person) => { chooseConversation({ id: person.id, participant: person }); setNewChat(false); setSearch(""); };
+  const openSharedContent = (content) => {
+    if (content?.route) navigate(content.route);
+  };
   const loadOlder = async () => {
     const cursor = messagesQuery.data?.pageInfo?.nextCursor;
     if (!selected?.id || !cursor || loadingOlder) return;
@@ -956,7 +1011,7 @@ export default function MessagesPage() {
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
                     {message.messageKind === "CREATOR_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Asks you</p> : null}
-                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
+                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <p className="whitespace-pre-wrap break-words">{message.body}</p>}
                     <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : mine && !message.readAt ? " · Sent" : ""}</span>
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}

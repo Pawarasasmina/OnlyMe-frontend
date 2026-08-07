@@ -121,6 +121,7 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<FanHomePage />} />
+          <Route path="/home" element={<Navigate replace to="/wall" />} />
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />
