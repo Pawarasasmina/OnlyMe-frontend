@@ -1543,7 +1543,7 @@ export default function MessagesPage() {
           {!peopleQuery.isLoading && !filteredRecentShareTargets.length && !remainingSharePeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No chats or people found.</p> : null}
         </div>
       </section></div> : null}
-      <aside className={`${selected ? "hidden lg:flex" : "flex"} h-full min-h-0 w-full flex-col lg:w-[clamp(19rem,32vw,22.5rem)] lg:shrink-0 lg:border-r lg:border-atseen-line`}>
+      <aside className={`${selected ? "hidden" : "flex"} h-full min-h-0 w-full flex-col`}>
         <header className="flex items-center justify-end gap-2 px-5 pb-4 pt-5">
           <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
@@ -1608,7 +1608,7 @@ export default function MessagesPage() {
         {directAccessNotice ? <div className="absolute left-1/2 top-16 z-[90] -translate-x-1/2 rounded-full border border-atseen-line bg-atseen-bg-2/95 px-4 py-2 text-xs font-bold text-atseen-muted shadow-xl backdrop-blur">{directAccessNotice}</div> : null}
         {selected ? <>
           <header className="relative z-50 flex shrink-0 items-center gap-3 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-4 py-3 backdrop-blur">
-            <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5 lg:hidden" onClick={closeConversation}><FiArrowLeft /></button>
+            <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
             {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else if (participant.username) navigate(`/profile/${encodeURIComponent(participant.username)}`); }} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members${participant.admins?.includes(myId) ? " · you're admin" : ""}` : `${presence[selected.id]?.online ? "● At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)}${participant.typicalReplyHours ? ` · replies within ${participant.typicalReplyHours}h` : ""}`} /></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
             {selected.type !== "group" && user?.role === "fan" && participant?.role === "creator" && participant?.callEnabled ? <button aria-label={`Call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-atseen-line text-sm text-atseen-blue transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button> : null}
