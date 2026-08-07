@@ -67,6 +67,10 @@ export const postService = {
     const response = await axiosInstance.put(`/posts/${postId}/share`, { caption });
     return normalizePost(response.data?.data?.post);
   },
+  markView: async (postId) => {
+    const response = await axiosInstance.post(`/posts/${postId}/views`);
+    return response.data?.data;
+  },
   hidePost: async (postId, reason = "NOT_USEFUL") => {
     const response = await axiosInstance.post(`/posts/${postId}/hide`, { reason });
     return response.data?.data;

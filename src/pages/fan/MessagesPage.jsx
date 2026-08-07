@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCopy, FiCornerUpLeft, FiEye, FiFlag, FiImage, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiTrash2, FiUserPlus, FiX, FiZap } from "react-icons/fi";
+import { FiExternalLink } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -172,6 +173,58 @@ function GroupImageCropper({ source, onCancel, onSave, saving }) {
   </div>;
 }
 
+function sharedContentLabel(type = "") {
+  if (type === "feed_post") return "POST";
+  if (type === "seen") return "SEEN";
+  if (type === "world") return "WORLD";
+  if (type === "experience") return "EXPERIENCE";
+  if (type === "profile") return "PROFILE";
+  if (type === "story") return "STORY";
+  return "CONTENT";
+}
+
+function sharedContentBodyLabel(type = "") {
+  if (type === "feed_post") return "post";
+  if (type === "seen") return "Seen";
+  if (type === "world") return "World";
+  if (type === "experience") return "experience";
+  if (type === "profile") return "profile";
+  if (type === "story") return "story";
+  return "content";
+}
+
+function defaultSharedBody(message) {
+  if (!message?.sharedContent) return "";
+  return `Shared a ${sharedContentBodyLabel(message.sharedContent.contentType)}`;
+}
+
+function SharedContentMessageCard({ content, mine, onOpen }) {
+  if (!content) return null;
+  const author = content.author || {};
+  const image = resolveMediaUrl(content.imageUrl || author.avatarUrl);
+  return (
+    <button
+      className={`mb-2 block w-full max-w-[236px] overflow-hidden rounded-2xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`}
+      onClick={() => onOpen(content)}
+      type="button"
+    >
+      {image ? <img alt={`${sharedContentLabel(content.contentType)} preview`} className="aspect-[5/3] w-full object-cover" loading="lazy" src={image} /> : null}
+      <div className="p-2.5">
+        <p className={`text-[9px] font-black tracking-[0.14em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{sharedContentLabel(content.contentType)}</p>
+        <div className="mt-1.5 flex items-center gap-2">
+          <FanAvatar name={author.name || content.title || "@seen"} size="h-6 w-6" src={author.avatarUrl} />
+          <span className="min-w-0 flex-1">
+            <b className="block truncate text-xs">{author.name || content.title || "Shared content"}</b>
+            {author.username ? <small className={`block truncate text-[10px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>@{author.username}</small> : null}
+          </span>
+          <FiExternalLink className="shrink-0 opacity-55" />
+        </div>
+        <p className={`mt-2 line-clamp-2 text-xs leading-5 ${mine ? "text-atseen-bg/75" : "text-atseen-text/85"}`}>{content.previewText || content.title || "Open shared content"}</p>
+      </div>
+    </button>
+  );
+}
+
 export default function MessagesPage() {
   const { user } = useAuth();
   const { startCall } = useCalls();
@@ -262,10 +315,10 @@ export default function MessagesPage() {
   const conversationsQuery = useQuery({
     queryKey: ["messages", "conversations"],
     queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: "always",
-    staleTime: 0,
+    refetchInterval: socketConnected ? false : 10000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
   const messagesQuery = useQuery({
     queryKey: selected?.type === "group" ? ["messages", "group", selected?.id] : ["messages", selected?.id],
@@ -921,6 +974,9 @@ export default function MessagesPage() {
     } catch (requestError) { setError(requestError.response?.data?.message || "Could not forward this message."); }
     finally { setActionBusy(false); }
   };
+  const openSharedContent = (content) => {
+    if (content?.route) navigate(content.route);
+  };
   const loadOlder = async () => {
     const cursor = messagesQuery.data?.pageInfo?.nextCursor;
     if (!selected?.id || !cursor || loadingOlder) return;
@@ -1487,7 +1543,7 @@ export default function MessagesPage() {
           {!peopleQuery.isLoading && !filteredRecentShareTargets.length && !remainingSharePeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No chats or people found.</p> : null}
         </div>
       </section></div> : null}
-      <aside className={`${selected ? "hidden" : "flex"} h-full min-h-0 w-full flex-col`}>
+      <aside className={`${selected ? "hidden lg:flex" : "flex"} h-full min-h-0 w-full flex-col lg:w-[clamp(19rem,32vw,22.5rem)] lg:shrink-0 lg:border-r lg:border-atseen-line`}>
         <header className="flex items-center justify-end gap-2 px-5 pb-4 pt-5">
           <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
@@ -1552,7 +1608,7 @@ export default function MessagesPage() {
         {directAccessNotice ? <div className="absolute left-1/2 top-16 z-[90] -translate-x-1/2 rounded-full border border-atseen-line bg-atseen-bg-2/95 px-4 py-2 text-xs font-bold text-atseen-muted shadow-xl backdrop-blur">{directAccessNotice}</div> : null}
         {selected ? <>
           <header className="relative z-50 flex shrink-0 items-center gap-3 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-4 py-3 backdrop-blur">
-            <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
+            <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5 lg:hidden" onClick={closeConversation}><FiArrowLeft /></button>
             {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else if (participant.username) navigate(`/profile/${encodeURIComponent(participant.username)}`); }} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members${participant.admins?.includes(myId) ? " · you're admin" : ""}` : `${presence[selected.id]?.online ? "● At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)}${participant.typicalReplyHours ? ` · replies within ${participant.typicalReplyHours}h` : ""}`} /></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
             {selected.type !== "group" && user?.role === "fan" && participant?.role === "creator" && participant?.callEnabled ? <button aria-label={`Call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-atseen-line text-sm text-atseen-blue transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button> : null}
@@ -1598,7 +1654,8 @@ export default function MessagesPage() {
                     {message.forwarded ? <p className={`mb-1 text-[9px] italic ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>↪ Forwarded</p> : null}
                     {message.messageKind === "CREATOR_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Asks you</p> : null}
                     {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>Free follow-up</p> : null}
-                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
+                    {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>Free follow-up</p> : null}
+                    {message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : selected.type !== "group" && mine && !message.readAt ? " · Sent" : ""}</span>
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}

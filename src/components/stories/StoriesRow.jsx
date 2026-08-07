@@ -1,58 +1,25 @@
 import { useMemo, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
-import LoadingSkeleton from "../fanWeb/shared/LoadingSkeleton";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
-import { useActiveStories } from "../../hooks/useStories";
+import { useWallStories } from "../../hooks/useStories";
 import { canCreateStory, getStoryOwnerId, getUserId } from "../../utils/storyPermissions";
+import OfficialSeenStoryViewer from "./OfficialSeenStoryViewer";
+import OwnSeenPresenceItem from "./OwnSeenPresenceItem";
+import OwnStoryItem from "./OwnStoryItem";
 import StoryCreator from "./StoryCreator";
-import StoryItem from "./StoryItem";
+import StoryStripSkeleton from "./StoryStripSkeleton";
 import StoryViewer from "./StoryViewer";
+import WallStoryPersonItem from "./WallStoryPersonItem";
 
-function groupStories(stories, user) {
-  const userId = getUserId(user);
-  const canUserCreate = canCreateStory(user);
-  const groups = [];
-  const byOwner = new Map();
-
-  stories.forEach((story) => {
-    const isOwnStory = Boolean(story.isOwner || story.isOwn);
-    const ownerId = isOwnStory && userId ? userId : getStoryOwnerId(story) || story.owner?.username || story.username || story.id;
-    const isOwn = Boolean(canUserCreate && (story.isOwner || story.isOwn || (userId && ownerId === userId)));
-    const displayStory = isOwn ? story : { ...story, isOwner: false, isOwn: false };
-
-    if (!byOwner.has(ownerId)) {
-      byOwner.set(ownerId, {
-        id: ownerId,
-        isOwn,
-        owner: { ...story.owner, brand: story.brand },
-        statusEmoji: story.statusEmoji,
-        stories: [],
-      });
-      groups.push(byOwner.get(ownerId));
-    }
-
-    const group = byOwner.get(ownerId);
-    group.isOwn = group.isOwn || isOwn;
-    group.stories.push(displayStory);
-  });
-
-  groups.forEach((group) => {
-    group.stories.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    group.firstUnseenIndex = group.stories.findIndex((story) => !story.viewed);
-  });
-
-  return groups.sort((a, b) => Number(b.isOwn) - Number(a.isOwn));
-}
-
-function userOwner(currentUser, user) {
+function ownUser(currentUser, user, viewer) {
   return {
-    id: getUserId(user) || "me",
-    name: currentUser?.name || user?.name || user?.displayName || "You",
-    username: user?.username || "you",
-    avatar: currentUser?.avatar || user?.avatar || user?.profileImage || "",
-    verified: Boolean(user?.verified),
-    role: user?.role,
+    activeStatus: viewer?.activeStatus || user?.activeStatus || null,
+    avatar: viewer?.avatar || viewer?.avatarUrl || currentUser?.avatar || user?.avatar || user?.profileImage || "",
+    id: viewer?.id || getUserId(user) || "me",
+    name: viewer?.name || currentUser?.name || user?.name || user?.displayName || "You",
+    username: viewer?.username || user?.username || "you",
+    verified: Boolean(viewer?.verified || user?.verified || user?.isVerified),
   };
 }
 
@@ -60,15 +27,23 @@ function StoriesRow({ currentUser }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
-  const storiesQuery = useActiveStories();
+  const viewerId = getUserId(user);
+  const storiesQuery = useWallStories({ fallbackUser: { ...currentUser, ...user }, viewerId });
   const [creatorOpen, setCreatorOpen] = useState(false);
+  const [seenStoryOpen, setSeenStoryOpen] = useState(false);
   const [viewer, setViewer] = useState({ groupId: null, index: 0 });
 
-  const activeStories = useMemo(() => (Array.isArray(storiesQuery.data) ? storiesQuery.data : []), [storiesQuery.data]);
-  const groups = useMemo(() => groupStories(activeStories, user), [activeStories, user]);
-  const ownGroup = groups.find((group) => group.isOwn);
-  const visibleGroups = canCreate ? groups : groups.filter((group) => !group.isOwn);
-  const activeGroup = groups.find((group) => group.id === viewer.groupId);
+  const wallData = storiesQuery.data || { items: [], viewer: ownUser(currentUser, user) };
+  const me = ownUser(currentUser, user, wallData.viewer);
+  const ownStories = useMemo(() => (wallData.viewer?.stories || []).map((story) => ({ ...story, isOwn: true, isOwner: true })), [wallData.viewer?.stories]);
+  const peopleGroups = useMemo(() => (
+    wallData.items || []
+  ).filter((group) => String(group.user?.id || "") !== String(me.id || "") && (group.stories || []).length > 0), [me.id, wallData.items]);
+
+  const activeGroup = useMemo(() => {
+    if (viewer.groupId === "own") return { id: "own", stories: ownStories };
+    return peopleGroups.find((group) => group.id === viewer.groupId || group.user?.id === viewer.groupId);
+  }, [ownStories, peopleGroups, viewer.groupId]);
 
   const openCreator = () => {
     if (!canCreate) {
@@ -78,78 +53,63 @@ function StoriesRow({ currentUser }) {
     setCreatorOpen(true);
   };
 
-  if (storiesQuery.isLoading) {
-    return (
-      <div className="mt-[18px]" role="status">
-        <LoadingSkeleton className="h-[86px]" count={1} />
-      </div>
-    );
-  }
+  const openOwnStory = () => {
+    if (!ownStories.length) {
+      openCreator();
+      return;
+    }
+    const index = ownStories.findIndex((story) => !story.viewed);
+    setViewer({ groupId: "own", index: index >= 0 ? index : 0 });
+  };
 
-  if (storiesQuery.isError) {
-    return (
-      <div className="mt-[18px] rounded-2xl border border-atseen-danger/25 bg-atseen-danger/10 p-4">
-        <p className="text-sm font-semibold text-atseen-danger">Unable to load Stories.</p>
-        <button
-          className="mt-3 inline-flex items-center gap-2 rounded-xl border border-atseen-line px-4 py-2 text-xs font-bold text-atseen-text"
-          onClick={() => storiesQuery.refetch()}
-          type="button"
-        >
-          <FiRefreshCw aria-hidden="true" />
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!visibleGroups.length && !canCreate) {
-    return (
-      <div className="mt-[18px] rounded-2xl border border-atseen-line bg-atseen-surface p-4 text-sm font-semibold text-atseen-muted" role="status">
-        No active Stories right now.
-      </div>
-    );
+  if (storiesQuery.isLoading && !storiesQuery.data) {
+    return <StoryStripSkeleton />;
   }
 
   return (
     <>
-      <div className="atseen-hide-scrollbar mt-[18px] flex gap-[18px] overflow-x-auto pb-1">
-        {canCreate && !ownGroup ? (
-          <StoryItem
-            canAdd
-            hasUnseen={false}
-            isOwn
-            label="Add Story"
-            onAdd={openCreator}
-            onOpen={openCreator}
-            owner={userOwner(currentUser, user)}
-          />
+      <div className="wall-story-strip atseen-hide-scrollbar" aria-label="Home stories and statuses">
+        <OwnSeenPresenceItem activeStatus={me.activeStatus} onOpen={() => setSeenStoryOpen(true)} />
+        <OwnStoryItem
+          activeStatus={me.activeStatus}
+          hasStories={ownStories.length > 0}
+          onAdd={openCreator}
+          onOpen={openOwnStory}
+          storyCount={ownStories.length}
+          user={me}
+        />
+        {storiesQuery.isError ? (
+          <button className="wall-story-error" onClick={() => storiesQuery.refetch()} type="button">
+            <FiRefreshCw aria-hidden="true" />
+            Retry
+          </button>
         ) : null}
-        {visibleGroups.map((group) => (
-          <StoryItem
-            canAdd={canCreate && group.isOwn}
-            hasUnseen={group.stories.some((story) => !story.viewed)}
-            isOwn={group.isOwn}
-            key={group.id}
-            label={`View ${group.isOwn ? "your" : group.owner.name + "'s"} Story`}
-            onAdd={openCreator}
-            onOpen={() => setViewer({ groupId: group.id, index: group.firstUnseenIndex >= 0 ? group.firstUnseenIndex : 0 })}
-            owner={group.owner}
-            statusEmoji={group.statusEmoji}
-          />
-        ))}
+        {!storiesQuery.isError && peopleGroups.map((group) => {
+          const firstUnseenIndex = group.stories.findIndex((story) => !story.viewed);
+          return (
+            <WallStoryPersonItem
+              group={group}
+              key={group.id || group.user.id}
+              onOpenStory={() => setViewer({ groupId: group.id || group.user.id, index: firstUnseenIndex >= 0 ? firstUnseenIndex : 0 })}
+            />
+          );
+        })}
       </div>
 
+      <OfficialSeenStoryViewer isOpen={seenStoryOpen} onClose={() => setSeenStoryOpen(false)} />
       <StoryCreator
         isOpen={creatorOpen}
         onClose={() => setCreatorOpen(false)}
         onPublished={(story) => {
           setCreatorOpen(false);
-          setViewer({ groupId: getStoryOwnerId(story) || story.owner?.id, index: Math.max(0, (ownGroup?.stories.length || 1) - 1) });
+          const ownerId = getStoryOwnerId(story);
+          if (ownerId && String(ownerId) !== String(me.id)) return;
+          storiesQuery.refetch();
         }}
       />
       <StoryViewer
         initialIndex={viewer.index}
-        isOpen={Boolean(activeGroup)}
+        isOpen={Boolean(activeGroup?.stories?.length)}
         onAddStory={openCreator}
         onClose={() => setViewer({ groupId: null, index: 0 })}
         stories={activeGroup?.stories || []}

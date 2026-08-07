@@ -3,11 +3,12 @@ import { FiEdit3, FiImage, FiLayers, FiPenTool } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import { useFanToast } from "../shared/FanToastContext";
-import { atseenStatuses } from "../../../data/atseenMockData";
 import { useAuth } from "../../../hooks/useAuth";
+import { useWallStories } from "../../../hooks/useStories";
 import { canCreateStory } from "../../../utils/storyPermissions";
 import { canCreateFeedPost } from "../../../utils/postPermissions";
 import FeedPostComposer from "../../posts/FeedPostComposer";
+import StatusPicker from "../../stories/StatusPicker";
 
 const createOptions = [
   { label: "Seen", description: "A quick public note for the feed.", icon: FiPenTool },
@@ -23,21 +24,18 @@ function PostComposer({ currentUser, onStatusChange, status }) {
   const [postingOpen, setPostingOpen] = useState(false);
   const [feedComposerOpen, setFeedComposerOpen] = useState(false);
   const canPostToHome = canCreateFeedPost(user);
+  const viewerId = user?.id || user?._id;
+  const wallStoriesQuery = useWallStories({ fallbackUser: { ...currentUser, ...user }, viewerId });
+  const activeStatus = wallStoriesQuery.data?.viewer?.activeStatus || user?.activeStatus || null;
   const visibleCreateOptions = createOptions.filter((option) => {
     if (option.requiresStoryPermission) return canCreateStory(user);
     if (option.requiresFeedPostPermission) return canPostToHome;
     return true;
   });
 
-  const chooseStatus = (nextStatus) => {
-    onStatusChange(nextStatus);
-    setStatusOpen(false);
-    showToast(`Status: ${nextStatus}`);
-  };
-
   return (
     <>
-      <div className="my-[18px] flex items-center gap-3 rounded-2xl border border-atseen-line bg-atseen-surface px-4 py-3.5 text-sm text-atseen-dim">
+      <div className="home-composer-trigger">
         <button
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
           onClick={() => {
@@ -53,32 +51,25 @@ function PostComposer({ currentUser, onStatusChange, status }) {
           <span className="truncate">Share what you&apos;ve seen...</span>
         </button>
         <button
-          className="shrink-0 rounded-full border border-atseen-blue/25 bg-atseen-blue/10 px-3 py-1.5 text-[11px] font-bold text-atseen-blue transition hover:bg-atseen-blue/15"
+          aria-label={activeStatus ? `Change status badge, currently ${activeStatus.label}` : "Set status badge"}
+          className={`home-composer-status ${activeStatus ? "" : "is-empty"}`}
           onClick={() => setStatusOpen(true)}
           type="button"
         >
-          {status}
+          {activeStatus?.emoji ? <span aria-hidden="true">{activeStatus.emoji}</span> : null}
+          {activeStatus?.label || status || "Set status"}
         </button>
       </div>
 
-      <FanModal isOpen={statusOpen} onClose={() => setStatusOpen(false)} title="Choose a status">
-        <div className="grid gap-2 sm:grid-cols-2">
-          {atseenStatuses.map((item) => (
-            <button
-              className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
-                status === item
-                  ? "border-atseen-blue/50 bg-atseen-blue/10 text-atseen-blue"
-                  : "border-atseen-line bg-atseen-surface-2 text-atseen-text hover:border-atseen-blue/40"
-              }`}
-              key={item}
-              onClick={() => chooseStatus(item)}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </FanModal>
+      <StatusPicker
+        activeStatus={activeStatus}
+        isOpen={statusOpen}
+        onClose={() => setStatusOpen(false)}
+        onStatusChange={(nextStatusLabel) => {
+          onStatusChange?.(nextStatusLabel);
+          wallStoriesQuery.refetch();
+        }}
+      />
 
       <FanModal isOpen={postingOpen} onClose={() => setPostingOpen(false)} title="Create">
         <p className="text-sm leading-6 text-atseen-muted">
