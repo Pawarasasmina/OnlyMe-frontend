@@ -2283,7 +2283,7 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     justify-content: center;
   }
 
-  .social-app-shell .social-fixed-rail {
+  .social-app-shell .social-left-rail {
     width: 260px;
     flex-basis: 260px;
     border-color: var(--feed-border-soft);
@@ -2304,13 +2304,13 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 }
 
 @media (min-width: 1020px) {
-  .social-app-shell .social-fixed-rail {
+  .social-app-shell .social-left-rail {
     width: 260px;
     padding-left: 28px;
     padding-right: 28px;
   }
 
-  .social-app-shell .social-fixed-rail a {
+  .social-app-shell .social-left-rail a {
     min-height: 48px;
     gap: 16px;
     padding: 10px 12px;
@@ -2319,32 +2319,32 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     line-height: 1.2;
   }
 
-  .social-app-shell .social-fixed-rail a[aria-current="page"] {
+  .social-app-shell .social-left-rail a[aria-current="page"] {
     font-weight: 750;
   }
 
-  .social-app-shell .social-fixed-rail svg {
+  .social-app-shell .social-left-rail svg {
     width: 22px;
     height: 22px;
   }
 
-  .social-app-shell .social-fixed-rail > a:first-child {
+  .social-app-shell .social-left-rail > a:first-child {
     min-height: auto;
     margin-bottom: 34px;
     padding: 0 12px;
   }
 
-  .social-app-shell .social-fixed-rail > a:first-child svg {
+  .social-app-shell .social-left-rail > a:first-child svg {
     width: 34px;
     height: 34px;
   }
 
-  .social-app-shell .social-fixed-rail > a:first-child span {
+  .social-app-shell .social-left-rail > a:first-child span {
     font-size: 22px;
   }
 
-  .social-app-shell .social-fixed-rail a[href="/create"],
-  .social-app-shell .social-fixed-rail a[href="/creator/verification"] {
+  .social-app-shell .social-left-rail a[href="/create"],
+  .social-app-shell .social-left-rail a[href="/creator/verification"] {
     min-height: 52px;
     width: 100%;
     margin-top: 30px;
@@ -2355,9 +2355,26 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     font-weight: 800;
   }
 
-  .social-app-shell .social-fixed-rail nav[aria-label="Account actions"] a {
+  .social-app-shell .social-left-rail nav[aria-label="Account actions"] a {
     min-height: 42px;
     font-size: 14px;
+  }
+}
+
+/* The shell owns the permanent right rail; route pages only own middle content. */
+.home-prototype-page {
+  grid-template-columns: minmax(0,600px);
+  justify-content: center;
+}
+
+.discover-orb-page {
+  grid-template-columns: minmax(0,548px);
+  justify-content: center;
+}
+
+@media (min-width: 1020px) {
+  .social-shared-right-rail {
+    display: grid;
   }
 }
 
@@ -3933,5 +3950,42 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   .official-seen-story-body > h2,
   .official-seen-story-body > p {
     animation: none;
+  }
+}
+
+/* Preserve the original shared shell geometry while current page content evolves. */
+@media (min-width: 768px) {
+  .social-app-shell .social-app-frame {
+    width: 100%;
+    max-width: 1240px;
+    justify-content: initial;
+  }
+
+  .social-app-shell .social-center-scroll {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .social-app-shell .social-app-frame > .social-fixed-rail:first-child {
+    width: 76px;
+    flex-basis: 76px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .social-app-shell .social-app-frame > .social-fixed-rail:last-child {
+    width: 300px;
+    flex-basis: 300px;
+    padding: 34px 20px 24px;
+  }
+}
+
+@media (min-width: 1020px) {
+  .social-app-shell .social-app-frame > .social-fixed-rail:first-child {
+    width: 240px;
+    flex-basis: 240px;
+    padding-right: 18px;
+    padding-left: 18px;
   }
 }

@@ -4,7 +4,6 @@ import { FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
 import DiscoverMasonryCard from "../../components/discover/DiscoverMasonryCard";
 import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSections";
 import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
-import DiscoverRightSidebar from "../../components/discover/DiscoverRightSidebar";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import StoryViewer from "../../components/stories/StoryViewer";
 import { useAuth } from "../../hooks/useAuth";
@@ -92,36 +91,6 @@ function DiscoverPage() {
   const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
   const firstPage = pages[0] || {};
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])), [pages]);
-  const sidebarSuggestedUsers = useMemo(() => {
-    if (firstPage.suggestedUsers?.length) return firstPage.suggestedUsers;
-    return recommendations.filter((card) => !(card.isFollowing || card.following || card.actions?.following)).slice(0, 4);
-  }, [firstPage.suggestedUsers, recommendations]);
-  const sidebarTrendingSeen = useMemo(() => {
-    if (firstPage.trendingSeen) return firstPage.trendingSeen;
-    const source = recommendations.find((card) => card.featuredOffer);
-    if (!source?.featuredOffer) return null;
-    return {
-      ...source.featuredOffer,
-      coverImage: source.featuredOffer.cover || source.coverImage || source.media?.url,
-      creator: source.creator,
-      engagementCount: source.featuredOffer.peopleCount || source.followersCount || 0,
-      title: source.featuredOffer.title || source.dream?.title || source.displayName,
-    };
-  }, [firstPage.trendingSeen, recommendations]);
-  const sidebarFreshSeens = useMemo(() => {
-    if (firstPage.freshSeens?.length) return firstPage.freshSeens;
-    return recommendations
-      .filter((card) => card.featuredOffer)
-      .slice(0, 3)
-      .map((card) => ({
-        ...card.featuredOffer,
-        id: card.featuredOffer?.id || card.id,
-        coverImage: card.featuredOffer?.cover || card.coverImage || card.media?.url,
-        creator: card.creator,
-        title: card.featuredOffer?.title || card.dream?.title || card.displayName,
-        chapterCount: card.featuredOffer?.chapterCount || card.featuredOffer?.chapters?.length || 0,
-      }));
-  }, [firstPage.freshSeens, recommendations]);
   const filters = useMemo(() => (firstPage.filters || []).filter((filter) => SUPPORTED_FILTERS.has(filter.id)), [firstPage.filters]);
   const activeStoryPerson = useMemo(
     () => [...(firstPage.friends || []), ...(firstPage.following || [])].find((person) => person.id === storyViewer.personId),
@@ -230,7 +199,6 @@ function DiscoverPage() {
     return (
       <div className="discover-orb-page">
         <section className="discover-orb-main"><DiscoverSkeleton /></section>
-        <aside className="discover-right-rail"><div className="discover-rail-card discover-rail-skeleton" /></aside>
       </div>
     );
   }
@@ -320,14 +288,6 @@ function DiscoverPage() {
         )}
       </section>
 
-      <DiscoverRightSidebar
-        activity={firstPage.activity}
-        followPending={followMutation.isPending}
-        freshSeens={sidebarFreshSeens}
-        onFollowToggle={toggleFollow}
-        suggestedUsers={sidebarSuggestedUsers}
-        trendingSeen={sidebarTrendingSeen}
-      />
     </div>
   );
 }

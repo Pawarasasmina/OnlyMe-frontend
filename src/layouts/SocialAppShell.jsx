@@ -65,7 +65,7 @@ function SocialAppShell({ children = null }) {
               {children || <Outlet context={outletContext} />}
             </main>
           </div>
-          {!isDiscoverPage && !isHomePage ? <FanWebRightRail capabilities={capabilities} status={status} user={user} /> : null}
+          <FanWebRightRail capabilities={capabilities} status={status} user={user} />
         </div>
         <FanMobileNav capabilities={capabilities} unreadMessageCount={unreadMessageCount} />
       </div>

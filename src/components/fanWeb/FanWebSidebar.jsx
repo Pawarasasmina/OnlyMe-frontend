@@ -24,7 +24,7 @@ function FanWebSidebar({ capabilities, status, unreadMessageCount = 0 }) {
   };
 
   return (
-    <aside className="social-fixed-rail hidden h-screen w-[76px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[10px] pb-6 pt-[42px] md:flex min-[1020px]:w-[240px] min-[1020px]:px-[28px]">
+    <aside className="social-fixed-rail social-left-rail hidden h-screen w-[76px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[10px] pb-6 pt-[42px] md:flex min-[1020px]:w-[240px] min-[1020px]:px-[28px]">
       <NavLink aria-label="Atseen home" className="mb-[30px] flex items-center justify-center py-1.5 [&_span]:hidden min-[1020px]:justify-start min-[1020px]:px-3 min-[1020px]:[&_span]:inline" to="/wall">
         <AtseenLogo />
       </NavLink>

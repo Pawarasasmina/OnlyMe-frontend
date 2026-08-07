@@ -3,13 +3,12 @@ import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
 import HomeHeader from "../../components/fanWeb/home/HomeHeader";
-import HomeRightRail from "../../components/fanWeb/home/HomeRightRail";
 import PostComposer from "../../components/fanWeb/home/PostComposer";
 import StoriesRow from "../../components/fanWeb/home/StoriesRow";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
 import { useAuth } from "../../hooks/useAuth";
-import { useDiscoverFollowMutation, useDiscoverQuery } from "../../hooks/useDiscoverQuery";
+import { useDiscoverQuery } from "../../hooks/useDiscoverQuery";
 import { useFeedPosts, useMyFeedPosts } from "../../hooks/useFeedPosts";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
@@ -130,7 +129,6 @@ function FanHomePage() {
 
   const discoverParams = useMemo(() => ({ _viewerId: user?.id || user?._id || "", filter: "for_you", limit: 8 }), [user?.id, user?._id]);
   const discoverQuery = useDiscoverQuery(discoverParams);
-  const followMutation = useDiscoverFollowMutation(discoverParams);
 
   useEffect(() => {
     if (locationInitialized) return;
@@ -172,8 +170,6 @@ function FanHomePage() {
     if (discoverQuery.data?.suggestedUsers?.length) return discoverQuery.data.suggestedUsers;
     return recommendations.filter((card) => !(card.isFollowing || card.following || card.actions?.following)).slice(0, 4);
   }, [discoverQuery.data?.suggestedUsers, recommendations]);
-  const trendingSeen = useMemo(() => discoverQuery.data?.trendingSeen || null, [discoverQuery.data?.trendingSeen]);
-  const freshSeens = useMemo(() => discoverQuery.data?.freshSeens || [], [discoverQuery.data?.freshSeens]);
   const seenTodayCount = Number(discoverQuery.data?.seenTodayCount || discoverQuery.data?.activity?.seenTodayCount || 0);
   const locationOptions = useMemo(() => uniqueList([
     profileCity,
@@ -209,11 +205,6 @@ function FanHomePage() {
     }, { replace: true });
   }, [setSearchParams]);
 
-  const toggleFollow = useCallback((person) => {
-    if (!person?.username) return;
-    followMutation.mutate(person);
-  }, [followMutation]);
-
   return (
     <div className="home-prototype-page">
       <section className="home-prototype-main" aria-label="Home feed">
@@ -244,14 +235,6 @@ function FanHomePage() {
         </div>
       </section>
 
-      <HomeRightRail
-        activity={discoverQuery.data?.activity}
-        followPending={followMutation.isPending}
-        freshSeens={freshSeens}
-        onFollowToggle={toggleFollow}
-        suggestedUsers={suggestedUsers}
-        trendingSeen={trendingSeen}
-      />
     </div>
   );
 }

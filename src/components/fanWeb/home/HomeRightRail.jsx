@@ -165,9 +165,9 @@ function HomeRailFooter() {
   );
 }
 
-function HomeRightRail({ activity, followPending = false, freshSeens, onFollowToggle, suggestedUsers, trendingSeen }) {
+function HomeRightRail({ activity, className = "", followPending = false, freshSeens, onFollowToggle, suggestedUsers, trendingSeen }) {
   return (
-    <aside className="home-right-rail" aria-label="Home sidebar">
+    <aside className={`home-right-rail ${className}`.trim()} aria-label="Home sidebar">
       <BeingSeenNowCard activity={activity} />
       <SuggestedUsersCard disabled={followPending} onFollowToggle={onFollowToggle} people={suggestedUsers} />
       <TrendingSeenCard seen={trendingSeen} />
