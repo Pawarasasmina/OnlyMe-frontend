@@ -17,6 +17,7 @@ export const publicationService = {
   archivePublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/archive`, { statusVersion }),
   listPublishedSeens: (params) => axiosInstance.get("/publications/seen", { params }),
   getPublicPublication: (id) => axiosInstance.get(`/publications/${id}`),
+  markWorldWalked: (id) => axiosInstance.post(`/publications/${id}/walked`),
   getSeenEngagement: (id) => axiosInstance.get(`/publications/${id}/engagement`),
   reactToSeen: (id, reaction) => axiosInstance.put(`/publications/${id}/reaction`, { reaction }),
   removeSeenReaction: (id) => axiosInstance.delete(`/publications/${id}/reaction`),

@@ -253,6 +253,7 @@ function DiscoverPage() {
             />
 
             <p className="discover-orb-kicker">{"Discover \u2014 people worth seeing next"}</p>
+            {firstPage.sharedWalks?.length ? <div className="mb-4 grid gap-2">{firstPage.sharedWalks.map((walk) => <Link className="flex items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-300/[0.07] px-4 py-3 text-left" key={walk.id} to={`/world/${walk.world.id}`}><span className="text-xl">{walk.world.emoji}</span><span className="min-w-0"><b className="block truncate text-xs text-amber-200">You both walked {walk.world.title}</b><span className="block truncate text-[10px] text-atseen-muted">with {walk.person.name || `@${walk.person.username}`}</span></span></Link>)}</div> : null}
             {filters.length ? (
               <div className="discover-orb-filters" role="tablist" aria-label="Discover filters">
                 {filters.map((filter) => (
