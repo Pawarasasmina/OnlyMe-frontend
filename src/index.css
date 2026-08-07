@@ -3953,6 +3953,60 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   }
 }
 
+/* Messaging keeps one focused panel and scales its controls without horizontal overflow. */
+.messages-page,
+.messages-page > div,
+.messages-page aside,
+.messages-page main {
+  min-width: 0;
+}
+
+.messages-page img,
+.messages-page video {
+  max-width: 100%;
+}
+
+@media (max-width: 479px) {
+  .messages-page form {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .messages-page form > .flex.items-end {
+    gap: 6px;
+  }
+
+  .messages-page form > .flex.items-end > button,
+  .messages-page form > .flex.items-end > div > button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .messages-page form textarea {
+    min-width: 0;
+    min-height: 40px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}
+
+@media (max-width: 359px) {
+  .messages-page form > .flex.items-end {
+    gap: 4px;
+  }
+
+  .messages-page form > .flex.items-end > button,
+  .messages-page form > .flex.items-end > div > button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .messages-page form textarea {
+    min-height: 36px;
+    font-size: 12px;
+  }
+}
+
 /* Preserve the original shared shell geometry while current page content evolves. */
 @media (min-width: 768px) {
   .social-app-shell .social-app-frame {
@@ -3987,5 +4041,25 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     flex-basis: 240px;
     padding-right: 18px;
     padding-left: 18px;
+  }
+}
+
+/* The shared right rail owns its own column, so prototype pages should use the
+   complete center column instead of retaining space for an embedded rail. */
+@media (min-width: 768px) {
+  .social-app-shell .social-prototype-main .home-prototype-page,
+  .social-app-shell .social-prototype-main .discover-orb-page {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+  }
+
+  .social-app-shell .social-prototype-main .home-prototype-main,
+  .social-app-shell .social-prototype-main .discover-orb-main {
+    width: 100%;
+    max-width: none;
+    border-right: 0;
+    padding-right: 20px;
+    padding-left: 20px;
   }
 }

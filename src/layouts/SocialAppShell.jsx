@@ -60,8 +60,8 @@ function SocialAppShell({ children = null }) {
             <main className={isDiscoverPage || isHomePage
               ? "social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-[980px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 md:h-screen md:px-0 md:pb-12 md:pt-9"
               : isMessagesPage
-                ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-[660px] px-2 py-2 sm:px-3 md:h-screen md:px-4 md:py-0"
-                : "mx-auto min-w-0 max-w-[660px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-[34px] md:pb-20 md:pt-[30px]"}>
+                ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-none px-0 py-0 md:h-screen"
+                : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-5 md:pb-20 md:pt-[30px]"}>
               {children || <Outlet context={outletContext} />}
             </main>
           </div>
