@@ -1,1 +1,40 @@
-import{useEffect,useMemo,useState}from"react";import{Link}from"react-router-dom";import{publicationService as api}from"../../services/publicationService";import WorldCard from"../../components/publication/WorldCard";export default function WorldManagerPage(){const[items,setItems]=useState([]),[kind,setKind]=useState(""),[status,setStatus]=useState(""),[search,setSearch]=useState(""),[error,setError]=useState(""),[deleting,setDeleting]=useState("");useEffect(()=>{api.listMyPublications({kind:kind||"WORLD,PREMIUM_WORLD",status:status||undefined,limit:50}).then(r=>setItems(r.data.data.items||[])).catch(e=>setError(e.response?.data?.message||"Unable to load Worlds"))},[kind,status]);const remove=async x=>{if(!confirm(`Delete “${x.title}”? It will be removed from your planets and will no longer be visible to fans.`))return;setDeleting(x.id);setError("");try{await api.deletePlanet(x.id,x.statusVersion);setItems(current=>current.filter(item=>item.id!==x.id))}catch(e){setError(e.response?.data?.message||"Unable to delete planet")}finally{setDeleting("")}};const visible=useMemo(()=>items.filter(x=>x.title.toLowerCase().includes(search.toLowerCase())),[items,search]),active=items.filter(x=>["DRAFT","PENDING_REVIEW","CHANGES_REQUESTED","PUBLISHED"].includes(x.status)),worlds=active.filter(x=>x.kind==="WORLD").length,premium=active.filter(x=>x.kind==="PREMIUM_WORLD").length;return <div><div className="flex justify-between"><div><h1 className="text-3xl font-black">Worlds</h1><p className="text-atseen-muted">Worlds {worlds}/2 · Premium {premium}/1 · Planets {active.length}/3</p></div><div className="flex gap-2"><Link to="/create/world">Create World</Link><Link to="/create/premium-world">Create Premium</Link></div></div><div className="mt-5 grid gap-2 sm:grid-cols-3"><input className="border p-3" onChange={e=>setSearch(e.target.value)} placeholder="Search" value={search}/><select onChange={e=>setKind(e.target.value)} value={kind}><option value="">Both kinds</option><option value="WORLD">World</option><option value="PREMIUM_WORLD">Premium World</option></select><select onChange={e=>setStatus(e.target.value)} value={status}><option value="">All statuses</option>{["DRAFT","PENDING_REVIEW","CHANGES_REQUESTED","PUBLISHED","REJECTED","ARCHIVED"].map(x=><option key={x}>{x}</option>)}</select></div>{error?<p>{error}</p>:null}<div className="mt-6 grid gap-4 sm:grid-cols-2">{visible.map(x=><div key={x.id}><WorldCard item={x} to={`/studio/worlds/${x.id}`}/><div className="mt-2 flex items-center justify-between gap-3"><p className="text-xs">{x.status.replaceAll('_',' ')} · {x.chapterCount} chapters · {x.previewCount} preview · {x.planet?.slot}</p><button className="text-xs font-bold text-red-400 disabled:opacity-50" disabled={deleting===x.id} onClick={()=>remove(x)} type="button">{deleting===x.id?"Deleting…":"Delete planet"}</button></div></div>)}</div></div>}
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import WorldCard from "../../components/publication/WorldCard";
+import { publicationService as api } from "../../services/publicationService";
+
+export default function WorldManagerPage() {
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState("");
+  const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState("");
+
+  useEffect(() => {
+    api.listMyPublications({ kind: "PREMIUM_WORLD", status: status || undefined, limit: 50 })
+      .then((response) => setItems(response.data.data.items || []))
+      .catch((requestError) => setError(requestError.response?.data?.message || "Unable to load Premium Planet"));
+  }, [status]);
+
+  const remove = async (planet) => {
+    if (!confirm(`Delete “${planet.title}”? It will no longer be visible to fans.`)) return;
+    setDeleting(planet.id);
+    setError("");
+    try {
+      await api.deletePlanet(planet.id, planet.statusVersion);
+      setItems((current) => current.filter((item) => item.id !== planet.id));
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Unable to delete planet");
+    } finally {
+      setDeleting("");
+    }
+  };
+
+  const visible = useMemo(
+    () => items.filter((item) => item.title.toLowerCase().includes(search.toLowerCase())),
+    [items, search],
+  );
+  const active = items.filter((item) => ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
+
+  return <div><div className="flex justify-between"><div><h1 className="text-3xl font-black">Premium Planet</h1><p className="text-atseen-muted">Premium Planet {active.length}/1</p></div><Link to="/create/premium-world">Create Premium Planet</Link></div><div className="mt-5 grid gap-2 sm:grid-cols-2"><input className="border p-3" onChange={(event) => setSearch(event.target.value)} placeholder="Search" value={search} /><select onChange={(event) => setStatus(event.target.value)} value={status}><option value="">All statuses</option>{["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED", "REJECTED", "ARCHIVED"].map((value) => <option key={value}>{value}</option>)}</select></div>{error ? <p>{error}</p> : null}<div className="mt-6 grid gap-4 sm:grid-cols-2">{visible.map((planet) => <div key={planet.id}><WorldCard item={planet} to={`/studio/worlds/${planet.id}`} /><div className="mt-2 flex items-center justify-between gap-3"><p className="text-xs">{planet.status.replaceAll("_", " ")} · {planet.chapterCount} chapters · {planet.previewCount} preview</p><button className="text-xs font-bold text-red-400 disabled:opacity-50" disabled={deleting === planet.id} onClick={() => remove(planet)} type="button">{deleting === planet.id ? "Deleting…" : "Delete planet"}</button></div></div>)}</div></div>;
+}

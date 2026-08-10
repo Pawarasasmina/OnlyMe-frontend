@@ -144,7 +144,7 @@ function AppRoutes() {
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create" element={<CreateHubPage />} />
             <Route path="/create/seen" element={<SeenComposerPage />} />
-            <Route path="/create/world" element={<WorldComposerPage />} />
+            <Route path="/create/world" element={<Navigate replace to="/create/premium-world" />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
             <Route path="/studio/seens" element={<SeenManagerPage />} />
             <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
