@@ -15,6 +15,7 @@ export const publicationService = {
   startPublishedRevision: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/start-revision`, { statusVersion }),
   cancelPublishedRevision: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/cancel-revision`, { statusVersion }),
   archivePublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/archive`, { statusVersion }),
+  deletePlanet: (id, statusVersion) => axiosInstance.delete(`/publications/mine/${id}`, { data: { statusVersion } }),
   listPublishedSeens: (params) => axiosInstance.get("/publications/seen", { params }),
   getPublicPublication: (id) => axiosInstance.get(`/publications/${id}`),
   markWorldWalked: (id) => axiosInstance.post(`/publications/${id}/walked`),
