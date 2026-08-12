@@ -34,7 +34,6 @@ import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
 import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
-import FanBackedSocialPage from "../pages/social/FanBackedSocialPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
@@ -129,7 +128,7 @@ function AppRoutes() {
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
+          <Route path="/activity" element={<ActivityPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/settings" element={<ProfileSettingsPage />} />

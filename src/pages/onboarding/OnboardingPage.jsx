@@ -66,10 +66,10 @@ function ErrorState({ error, onRetry }) {
 
 function StagePanel({ children, eyebrow, title, subtitle }) {
   return (
-    <section className="w-full max-w-[1060px] rounded-[28px] border border-white/10 bg-[#0A0C0F]/92 p-5 shadow-glow sm:p-7 lg:p-8">
-      <div className="mb-6">
+    <section className="onboarding-stage-panel w-full max-w-[900px] rounded-[24px] border border-white/10 bg-[#0A0C0F]/92 p-5 shadow-glow sm:p-6 lg:p-7">
+      <div className="mb-5">
         <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#9CCBFF]/80">{eyebrow}</p>
-        <h1 className="mt-2 text-3xl font-black tracking-normal text-white sm:text-4xl">{title}</h1>
+        <h1 className="mt-2 text-2xl font-black tracking-normal text-white sm:text-3xl">{title}</h1>
         <p className="mt-2 max-w-[660px] text-sm leading-6 text-white/62">{subtitle}</p>
       </div>
       {children}

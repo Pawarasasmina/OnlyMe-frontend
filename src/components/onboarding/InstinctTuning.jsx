@@ -58,27 +58,27 @@ const groups = [
 
 function InstinctTuning({ onChange, values }) {
   return (
-    <div className="space-y-5">
+    <div className="onboarding-instincts space-y-4">
       {groups.map((group, groupIndex) => {
         const Icon = group.Icon;
         return (
-          <section className="rounded-[20px] border border-white/10 bg-white/[0.035] p-4" key={group.key}>
+          <section className="onboarding-instinct-group rounded-[18px] border border-white/10 bg-white/[0.035] p-3.5" key={group.key} style={{ "--instinct-index": `"${groupIndex + 1}"` }}>
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-2xl border border-[#9CCBFF]/20 bg-[#9CCBFF]/10 text-[#9CCBFF]">
+              <span className="onboarding-instinct-icon grid h-9 w-9 place-items-center rounded-xl border border-[#9CCBFF]/20 bg-[#9CCBFF]/10 text-sm text-[#9CCBFF]">
                 <Icon aria-hidden="true" />
               </span>
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35">Instinct {groupIndex + 1} of {groups.length}</p>
-                <h2 className="mt-1 text-lg font-black text-white">{group.title}</h2>
+                <h2 className="mt-1 text-base font-black text-white">{group.title}</h2>
               </div>
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
               {group.options.map((option) => {
                 const selected = values[group.key] === option.value;
                 return (
                   <button
                     aria-pressed={selected}
-                    className={`min-h-24 rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9CCBFF] ${selected ? "border-[#9CCBFF] bg-[#9CCBFF]/12 text-white shadow-[0_0_24px_rgba(156,203,255,.16)]" : "border-white/10 bg-[#12151B] text-white/62 hover:border-white/25 hover:text-white"}`}
+                    className={`onboarding-instinct-option min-h-20 rounded-xl border p-3.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9CCBFF] ${selected ? "is-selected border-[#9CCBFF] bg-[#9CCBFF]/12 text-white shadow-[0_0_24px_rgba(156,203,255,.16)]" : "border-white/10 bg-[#12151B] text-white/62 hover:border-white/25 hover:text-white"}`}
                     key={option.value}
                     onClick={() => onChange(group.key, option.value)}
                     type="button"
