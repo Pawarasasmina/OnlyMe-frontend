@@ -64,12 +64,8 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     <section className="profile-planet-orbit">
       <div className="profile-orbit-heading">
         <div>
-          <p className="profile-orbit-overline">Orbit</p>
-          <h2>
-            {capabilities.isOwner
-              ? "Your Premium Planet"
-              : `${profile?.displayName || "Creator"}’s Premium Planet`}
-          </h2>
+          <p className="profile-orbit-overline">{capabilities.isOwner ? "Your World" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s World`}</p>
+          <h2>One world - everything about you, by subscription.</h2>
         </div>
         {capabilities.isOwner ? <Link to="/studio/worlds">Manage</Link> : null}
       </div>
@@ -129,12 +125,12 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
         </div>
       ) : (
         <p className="profile-orbit-empty">
-          Create your Premium Planet to place it in Orbit.
+          Create your World.
         </p>
       )}
       <p className="profile-orbit-whisper">
         {capabilities.isOwner
-          ? "Edit your Premium Planet here. Published versions are visible to fans."
+          ? "Manage your World here. Published versions are visible to fans."
           : "Tap a planet to step inside."}
       </p>
     </section>

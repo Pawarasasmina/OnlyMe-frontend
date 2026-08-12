@@ -14,13 +14,18 @@ function FanWebRightRail({ user }) {
     () => discoverQuery.data?.recommendations || [],
     [discoverQuery.data?.recommendations],
   );
-  const suggestedUsers = useMemo(() => (
-    discoverQuery.data?.suggestedUsers?.length
+  const suggestedUsers = useMemo(() => {
+    const seen = new Set([String(viewerId || "")]);
+    const source = discoverQuery.data?.suggestedUsers?.length
       ? discoverQuery.data.suggestedUsers
-      : recommendations
-        .filter((person) => !(person.isFollowing || person.following || person.actions?.following))
-        .slice(0, 4)
-  ), [discoverQuery.data?.suggestedUsers, recommendations]);
+      : recommendations.filter((person) => !(person.isFollowing || person.following || person.actions?.following));
+    return source.filter((person) => {
+      const key = String(person?.id || person?._id || person?.username || "");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return !person.deletedAt && person.status !== "suspended";
+    }).slice(0, 4);
+  }, [discoverQuery.data?.suggestedUsers, recommendations, viewerId]);
   const toggleFollow = useCallback((person) => {
     if (person?.username) followMutation.mutate(person);
   }, [followMutation]);
