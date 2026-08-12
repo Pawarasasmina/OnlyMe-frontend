@@ -6,8 +6,25 @@ import { dreamService } from "../../services/dreamService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
 const GOALS = [500, 900, 1500, 2500, 5000];
-const giftEmoji = { rain: "💙", iloveyou: "❤️", selfie: "✨", glow: "🌟", shopping: "🛍️", fit: "💪", ufo: "🛸", pop: "🎉", rocket: "🚀", gold: "🏆", bath: "💎", summit: "🏔️", bugatti: "🏎️", lambo: "🔥", throne: "👑", crown: "♛" };
+const giftImageTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
+const celebrationParticles = Array.from({ length: 18 }, (_, index) => ({
+  angle: (index * 137.5) % 360,
+  distance: 75 + (index % 5) * 18,
+  delay: (index % 6) * 45,
+  size: 3 + (index % 3) * 2,
+}));
 
+function GiftCelebration({ gift }) {
+  return <div aria-live="polite" className="gift-celebration-layer">
+    <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>You’re part of this Dream now</strong><small>{gift.name} · ✦{gift.stars.toLocaleString()} sent</small></span></div>
+    <div className="gift-celebration-stage">
+      <div className="gift-celebration-glow" />
+      {celebrationParticles.map((particle, index) => <i className="gift-celebration-particle" key={index} style={{ "--angle": `${particle.angle}deg`, "--delay": `${particle.delay}ms`, "--distance": `${particle.distance}px`, "--size": `${particle.size}px` }} />)}
+      <div className="gift-celebration-image"><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></div>
+      <strong className="gift-celebration-name">{gift.name}</strong>
+    </div>
+  </div>;
+}
 function Editor({ dream, onClose, onSaved }) {
   const [form, setForm] = useState({ emoji: dream?.emoji || "✨", title: dream?.title || "", reason: dream?.reason || "", goalStars: dream?.goalStars || 900, version: dream?.version });
   const [saving, setSaving] = useState(false), [error, setError] = useState("");
@@ -18,8 +35,20 @@ function Editor({ dream, onClose, onSaved }) {
 function GiftPicker({ dream, gifts, onClose, onSent }) {
   const queryClient = useQueryClient();
   const [privateSupport, setPrivateSupport] = useState(false), [sending, setSending] = useState(""), [sent, setSent] = useState(null), [error, setError] = useState("");
-  const send = async (gift) => { if (sending || sent) return; setSending(gift.key); setError(""); try { const response = await dreamService.sendGift(dream.id, { giftKey: gift.key, privateSupport, idempotencyKey: createIdempotencyKey("dream-gift") }); const result = response.data.data; queryClient.setQueryData(["wallet"], result.wallet); await queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] }); setSent(gift); onSent(result.dream); setTimeout(onClose, 1100); } catch (requestError) { setError(requestError.response?.data?.message || "Unable to send gift"); } finally { setSending(""); } };
-  return <div className="fixed inset-0 z-[80] grid place-items-end bg-black/70 sm:place-items-center sm:p-5" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()}><div className="relative max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-atseen-line bg-atseen-surface p-6 sm:rounded-3xl">{sent ? <div className="absolute inset-0 z-10 grid place-items-center bg-atseen-surface/95 p-8 text-center"><div><span className="text-6xl">{giftEmoji[sent.key] || "✦"}</span><h2 className="mt-4 text-xl font-black">{sent.name} sent!</h2><p className="mt-2 text-sm text-atseen-muted">✦{sent.stars.toLocaleString()} was added to this Dream.</p></div></div> : null}<div className="flex items-center justify-between"><div><h2 className="text-xl font-black">Help Make It Happen</h2><p className="mt-1 text-xs text-atseen-muted">Tap a gift to send it instantly to {dream.title}.</p></div><button disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button></div><div className="mt-5 grid grid-cols-4 gap-2">{gifts.map((gift) => <button className={`rounded-2xl bg-white/[.035] p-3 text-center transition active:scale-95 disabled:opacity-40 ${sending === gift.key ? "border border-atseen-blue bg-atseen-blue/10" : ""}`} disabled={Boolean(sending)} key={gift.key} onClick={() => send(gift)} type="button"><span className="text-2xl">{giftEmoji[gift.key] || "✦"}</span><strong className="mt-2 block truncate text-[10px]">{sending === gift.key ? "Sending…" : gift.name}</strong><small className="mt-1 block text-atseen-muted">✦{gift.stars.toLocaleString()}</small></button>)}</div><label className="mt-5 flex items-center gap-3 text-xs text-atseen-muted"><input checked={privateSupport} disabled={Boolean(sending)} onChange={(event) => setPrivateSupport(event.target.checked)} type="checkbox" /> Support privately</label>{error ? <div className="mt-4 rounded-xl bg-red-400/10 p-3 text-xs text-red-300">{error}{error.toLowerCase().includes("insufficient") ? <Link className="ml-2 font-bold underline" to="/wallet">Open wallet</Link> : null}</div> : null}</div></div>;
+  const send = async (gift) => { if (sending || sent) return; setSending(gift.key); setError(""); try { const response = await dreamService.sendGift(dream.id, { giftKey: gift.key, privateSupport, idempotencyKey: createIdempotencyKey("dream-gift") }); const result = response.data.data; queryClient.setQueryData(["wallet"], result.wallet); await queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] }); setSent({ ...gift, ...result.gift, key: gift.key }); onSent(result.dream); setTimeout(() => setSent(null), 2600); } catch (requestError) { setError(requestError.response?.data?.message || "Unable to send gift"); } finally { setSending(""); } };
+  const progress = Math.min(100, Math.round((dream.receivedStars / dream.goalStars) * 100));
+  return <div className="dream-bottom-sheet fixed inset-0 z-[80] flex items-end justify-center bg-black/70" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()}>
+    <div className="relative max-h-[92dvh] w-full max-w-[660px] overflow-y-auto rounded-t-3xl border border-b-0 border-white/15 bg-[#181D25] px-5 pb-7 pt-8 text-white shadow-[0_-24px_80px_rgba(0,0,0,0.75)] sm:px-6">
+      <span className="absolute left-1/2 top-3 h-1 w-10 -translate-x-1/2 rounded-full bg-white/30" />
+      {sent ? <GiftCelebration gift={sent} /> : null}
+      <div className="flex items-start justify-between gap-4"><div><h2 className="text-xl font-black">Help Make It Happen</h2><p className="mt-1 text-xs text-atseen-muted">Support <strong className="text-white">{dream.title}</strong></p></div><button aria-label="Close gift picker" className="grid h-8 w-8 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button></div>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-atseen-blue" style={{ width: `${progress}%` }} /></div>
+      <p className="mt-2 text-[10px] text-atseen-muted">✦{dream.receivedStars.toLocaleString()} / ✦{dream.goalStars.toLocaleString()} · every gift goes toward the Dream</p>
+      {gifts.length ? <div className="mt-4 grid grid-cols-4 gap-2">{gifts.map((gift) => <button className={`min-w-0 rounded-2xl border border-white/[.04] bg-[#222833] px-1.5 py-3 text-center transition active:scale-95 disabled:opacity-40 ${sending === gift.key ? "ring-1 ring-atseen-blue bg-atseen-blue/15" : "hover:border-white/10 hover:bg-[#29313d]"}`} disabled={Boolean(sending)} key={gift.key} onClick={() => send(gift)} type="button"><span className="mx-auto grid h-16 w-16 place-items-center overflow-hidden rounded-xl bg-slate-950 sm:h-24 sm:w-24"><img alt={gift.name} className="h-full w-full object-contain" src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></span><strong className="mt-2 block truncate text-[10px] text-white">{sending === gift.key ? "Sending…" : gift.name}</strong><small className="mt-1 block text-[10px] text-slate-300">✦{gift.stars.toLocaleString()}</small></button>)}</div> : <p className="mt-5 rounded-2xl bg-[#222833] p-6 text-center text-sm text-slate-300">No gifts are currently available.</p>}
+      <div className="mt-5 flex items-center justify-between border-t border-atseen-line pt-4"><label className="flex items-center gap-3 text-xs text-atseen-muted"><input checked={privateSupport} disabled={Boolean(sending)} onChange={(event) => setPrivateSupport(event.target.checked)} type="checkbox" /> Support privately</label><span className="text-[10px] text-atseen-muted">Made possible by {dream.supporterCount} {dream.supporterCount === 1 ? "person" : "people"}</span></div>
+      {error ? <div className="mt-4 rounded-xl bg-red-400/10 p-3 text-xs text-red-300">{error}{error.toLowerCase().includes("insufficient") ? <Link className="ml-2 font-bold underline" to="/wallet">Open wallet</Link> : null}</div> : null}
+    </div>
+  </div>;
 }
 
 export default function ProfileDream({ capabilities, profile, role }) {

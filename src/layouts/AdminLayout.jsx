@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { FiActivity, FiAlertTriangle, FiCreditCard, FiFileText, FiHome, FiLogOut, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 
@@ -11,6 +11,7 @@ const links = [
   { label: "Creator verifications", to: "/admin/creator-verifications", icon: FiShield },
   { label: "Content moderation", to: "/admin/content-moderation", icon: FiFileText },
   { label: "Publication moderation", to: "/admin/publication-moderation", icon: FiFileText },
+  { label: "Gift catalog", to: "/admin/gifts", icon: FiGift },
   { label: "Message reports", to: "/admin/message-reports", icon: FiAlertTriangle },
   { label: "Financial operations", to: "/admin/financial", icon: FiCreditCard },
 ];
