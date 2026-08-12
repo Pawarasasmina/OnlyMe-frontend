@@ -13,6 +13,186 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dream dialogs follow the prototype's bottom-sheet pattern at every viewport
+   size. The gift picker has a div sheet; the editor is the direct form sheet. */
+.fixed.inset-0.z-\[80\]:has(> form) {
+  align-items: end;
+  justify-items: center;
+  padding: 0;
+}
+
+.fixed.inset-0.z-\[80\] > form {
+  width: 100%;
+  max-width: 660px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  border-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 -24px 70px rgb(0 0 0 / 0.45);
+  background: #181d25;
+  color: #fff;
+}
+
+.fixed.inset-0.z-\[80\] > form::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: -0.75rem auto 1rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+/* Center Dream sheets on the social middle column, not the browser viewport.
+   The desktop rails are asymmetric (260px left and 320px right). */
+@media (min-width: 1240px) {
+  .dream-bottom-sheet > div,
+  .fixed.inset-0.z-\[80\] > form {
+    transform: translateX(-30px);
+  }
+}
+
+@media (min-width: 1020px) and (max-width: 1239px) {
+  .dream-bottom-sheet > div,
+  .fixed.inset-0.z-\[80\] > form {
+    max-width: 600px;
+    transform: translateX(130px);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1019px) {
+  .dream-bottom-sheet > div,
+  .fixed.inset-0.z-\[80\] > form {
+    max-width: min(600px, calc(100vw - 76px));
+    transform: translateX(38px);
+  }
+}
+
+.gift-celebration-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.gift-success-toast {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  min-width: min(310px, calc(100% - 32px));
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgb(255 255 255 / 0.13);
+  border-radius: 9999px;
+  background: rgb(10 13 18 / 0.94);
+  padding: 9px 14px;
+  color: #fff;
+  box-shadow: 0 16px 50px rgb(0 0 0 / 0.55), 0 0 24px rgb(110 207 151 / 0.1);
+  backdrop-filter: blur(14px);
+  transform: translate(-50%, -18px);
+  opacity: 0;
+  animation: gift-toast-in 2.45s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.gift-success-toast span:last-child { min-width: 0; }
+.gift-success-toast strong { display: block; font-size: 12px; line-height: 1.25; }
+.gift-success-toast small { display: block; overflow: hidden; margin-top: 2px; color: rgb(255 255 255 / 0.52); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.gift-success-check { display: grid; width: 24px; height: 24px; flex: none; place-items: center; border-radius: 9999px; background: rgb(110 207 151 / 0.16); color: #6ecf97; font-size: 13px; font-weight: 900; }
+
+.gift-celebration-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  transform: translate(-50%, -47%);
+}
+
+.gift-celebration-glow {
+  position: absolute;
+  inset: 25px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(138 184 255 / 0.32), rgb(138 184 255 / 0.08) 42%, transparent 72%);
+  filter: blur(10px);
+  opacity: 0;
+  animation: gift-glow-bloom 2.2s ease-out forwards;
+}
+
+.gift-celebration-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 22px;
+  background: #06080b;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.7), 0 0 38px rgb(138 184 255 / 0.28);
+  transform: translate(-50%, -50%) scale(.22);
+  opacity: 0;
+  animation: gift-fly-up 2.25s cubic-bezier(.16,.8,.22,1) forwards;
+}
+
+.gift-celebration-image img { width: 100%; height: 100%; object-fit: contain; }
+.gift-celebration-name { position: absolute; top: calc(50% + 88px); left: 50%; color: #fff; font-size: 13px; text-shadow: 0 3px 14px #000; transform: translateX(-50%) translateY(8px); opacity: 0; animation: gift-name-in 2.1s ease-out forwards; }
+
+.gift-celebration-particle {
+  --angle: 0deg;
+  --delay: 0ms;
+  --distance: 90px;
+  --size: 4px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 9999px;
+  background: #d9eaff;
+  box-shadow: 0 0 9px #8ab8ff;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateX(18px) scale(.2);
+  animation: gift-particle-burst 1.35s cubic-bezier(.1,.7,.2,1) var(--delay) forwards;
+}
+
+@keyframes gift-fly-up {
+  0% { opacity: 0; transform: translate(-50%, -20%) scale(.22); }
+  18% { opacity: 1; }
+  45% { transform: translate(-50%, -53%) scale(1.08); }
+  58%, 76% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -58%) scale(.92); }
+}
+
+@keyframes gift-particle-burst {
+  0%, 16% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) translateX(18px) scale(.2); }
+  32% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance)) scale(1); }
+}
+
+@keyframes gift-glow-bloom { 0% { opacity: 0; transform: scale(.35); } 30%, 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.2); } }
+@keyframes gift-name-in { 0%, 24% { opacity: 0; transform: translateX(-50%) translateY(8px); } 42%, 76% { opacity: 1; transform: translateX(-50%) translateY(0); } 100% { opacity: 0; transform: translateX(-50%) translateY(-5px); } }
+@keyframes gift-toast-in { 0%, 18% { opacity: 0; transform: translate(-50%, -18px); } 32%, 82% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -6px); } }
+
+@media (max-width: 480px) {
+  .gift-celebration-stage { width: 230px; height: 230px; }
+  .gift-celebration-image { width: 128px; height: 128px; }
+  .gift-celebration-name { top: calc(50% + 76px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gift-celebration-image,
+  .gift-celebration-glow,
+  .gift-celebration-name,
+  .gift-celebration-particle,
+  .gift-success-toast { animation-duration: .01ms !important; animation-delay: 0ms !important; }
+  .gift-celebration-particle { display: none; }
+}
+
 body {
   margin: 0;
   min-width: 320px;
