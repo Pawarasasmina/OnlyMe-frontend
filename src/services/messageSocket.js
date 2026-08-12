@@ -24,7 +24,7 @@ export function getMessageSocket() {
   const token = localStorage.getItem("onlyme_access_token");
   if (!token) return null;
   if (!socket) {
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api";
     socket = io(apiUrl.replace(/\/api\/?$/, ""), {
       auth: (callback) => callback({ token: localStorage.getItem("onlyme_access_token") }),
       reconnection: true,

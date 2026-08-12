@@ -53,22 +53,19 @@ function OwnerPlanetAction({ planet }) {
 }
 
 export default function ProfileOrbit({ capabilities, planets = [], profile, role }) {
-  if (role !== "creator" || (!planets.length && !capabilities.isOwner)) return null;
+  const premiumPlanets = planets.filter((planet) => planet.kind === "PREMIUM_WORLD");
+  if (role !== "creator" || (!premiumPlanets.length && !capabilities.isOwner)) return null;
   const bySlot = Object.fromEntries(
-    planets.map((planet) => [planet.planet?.slot, planet]),
+    premiumPlanets.map((planet) => [planet.planet?.slot, planet]),
   );
-  const visible = [bySlot.WORLD_1, bySlot.WORLD_2, bySlot.PREMIUM].filter(Boolean);
+  const visible = [bySlot.PREMIUM].filter(Boolean);
 
   return (
     <section className="profile-planet-orbit">
       <div className="profile-orbit-heading">
         <div>
-          <p className="profile-orbit-overline">Orbit</p>
-          <h2>
-            {capabilities.isOwner
-              ? "Your worlds"
-              : `${profile?.displayName || "Creator"}’s worlds`}
-          </h2>
+          <p className="profile-orbit-overline">{capabilities.isOwner ? "Your World" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s World`}</p>
+          <h2>One world - everything about you, by subscription.</h2>
         </div>
         {capabilities.isOwner ? <Link to="/studio/worlds">Manage</Link> : null}
       </div>
@@ -84,12 +81,6 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
             <span>{profile?.displayName?.slice(0, 1) || "@"}</span>
           )}
           <small>@{profile?.username}</small>
-        </div>
-        <div className="profile-orbit-position position-left">
-          <PlanetSlot compact owner={capabilities.isOwner} planet={bySlot.WORLD_1} />
-        </div>
-        <div className="profile-orbit-position position-right">
-          <PlanetSlot compact owner={capabilities.isOwner} planet={bySlot.WORLD_2} />
         </div>
         <div className="profile-orbit-position position-front">
           <PlanetSlot compact owner={capabilities.isOwner} planet={bySlot.PREMIUM} premium />
@@ -134,12 +125,12 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
         </div>
       ) : (
         <p className="profile-orbit-empty">
-          Light a planet to place your first World in Orbit.
+          Create your World.
         </p>
       )}
       <p className="profile-orbit-whisper">
         {capabilities.isOwner
-          ? "Edit draft planets here. Published Worlds are visible to fans."
+          ? "Manage your World here. Published versions are visible to fans."
           : "Tap a planet to step inside."}
       </p>
     </section>
