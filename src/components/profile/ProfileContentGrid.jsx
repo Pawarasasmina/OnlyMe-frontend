@@ -1,15 +1,225 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiBookOpen, FiFileText, FiHeadphones, FiImage, FiLock, FiVideo } from "react-icons/fi";
+import {
+  FiBookOpen,
+  FiEdit3,
+  FiFileText,
+  FiGrid,
+  FiHeadphones,
+  FiImage,
+  FiLock,
+  FiRepeat,
+  FiScissors,
+  FiVideo,
+  FiX,
+} from "react-icons/fi";
 
 const icons = { IMAGE: FiImage, VIDEO: FiVideo, AUDIO: FiHeadphones, TEXT: FiFileText };
 
-function ProfileContentGrid({ content = [], kind = "content" }) {
+function findMedia(item) {
+  if (item?.coverMedia?.secureUrl) return item.coverMedia;
+  return item?.chapters
+    ?.flatMap((chapter) => chapter.blocks || [])
+    ?.find((block) => block.media?.secureUrl)?.media || null;
+}
+
+function descriptionFor(item) {
+  const summary = item?.summary || item?.description || "";
+  if (summary) return summary;
+  const textBlock = item?.chapters
+    ?.flatMap((chapter) => chapter.blocks || [])
+    ?.find((block) => block.text?.trim());
+  return textBlock?.text || "A Seen from this profile.";
+}
+
+function viewsFor(item) {
+  return Number(item?.viewCount || item?.views || item?.steppedInside || item?.metrics?.views || 0);
+}
+
+function seriesFor(item) {
+  const value = item?.series?.name || item?.series?.title || item?.seriesName || item?.seriesTitle || item?.collection?.title || item?.collectionName;
+  if (value) return value;
+  return item?.title?.toLowerCase().includes("gym") ? "Gym Life" : "";
+}
+
+function SeriesSheet({ currentSeries, onClose, onSetSeries }) {
+  const [draftSeries, setDraftSeries] = useState("");
+  const [selectedSeries, setSelectedSeries] = useState(currentSeries || "");
+
+  const addSeries = () => {
+    const next = draftSeries.trim();
+    if (!next) return;
+    setSelectedSeries(next);
+    onSetSeries(next);
+    setDraftSeries("");
+  };
+
+  const removeSeries = () => {
+    setSelectedSeries("");
+    onSetSeries("");
+  };
+
+  return (
+    <div aria-modal="true" className="profile-series-backdrop" onMouseDown={onClose} role="dialog">
+      <section className="profile-series-sheet" onMouseDown={(event) => event.stopPropagation()}>
+        <span className="profile-series-handle" />
+        <h2>Series</h2>
+        <p>One tap - the Seen joins the book.</p>
+
+        {selectedSeries ? (
+          <button className="profile-series-pill" onClick={() => onSetSeries(selectedSeries)} type="button">{selectedSeries}</button>
+        ) : null}
+
+        <div className="profile-series-create">
+          <input
+            aria-label="New series name"
+            maxLength={40}
+            onChange={(event) => setDraftSeries(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") addSeries();
+            }}
+            placeholder="New series..."
+            value={draftSeries}
+          />
+          <button aria-label="Create series" onClick={addSeries} type="button">+</button>
+        </div>
+
+        <button className="profile-series-remove" disabled={!selectedSeries} onClick={removeSeries} type="button">Remove from series</button>
+      </section>
+    </div>
+  );
+}
+
+function SeenPreviewSheet({ item, onClose, owner }) {
+  const [seriesOpen, setSeriesOpen] = useState(false);
+  const [localSeries, setLocalSeries] = useState(() => seriesFor(item));
+  const media = findMedia(item);
+  const chapters = item?.chapters || [];
+  const views = viewsFor(item);
+  const isVideo = ["video", "VIDEO"].includes(media?.resourceType || media?.mediaType || media?.type);
+  const editTarget = `/studio/seens/${item.id}/edit`;
+  const seenTarget = `/seen/${item.id}`;
+
+  return (
+    <div aria-modal="true" className="profile-seen-preview-backdrop" onMouseDown={onClose} role="dialog">
+      <section className="profile-seen-preview-sheet" onMouseDown={(event) => event.stopPropagation()}>
+        <span className="profile-seen-preview-handle" />
+        <div className="profile-seen-preview-media">
+          {media?.secureUrl ? (
+            isVideo ? <video muted playsInline src={media.secureUrl} /> : <img alt={`${item.title} cover`} src={media.secureUrl} />
+          ) : <span className="profile-seen-preview-fallback"><FiBookOpen /></span>}
+          <span className="profile-seen-preview-shade" />
+          {isVideo ? <em><FiVideo /> 0:15</em> : null}
+          <h2>{item.title || "Untitled Seen"}</h2>
+        </div>
+
+        <p className="profile-seen-preview-views">
+          <span aria-hidden="true">🔥</span>
+          <b>{views ? views.toLocaleString() : "0"}</b> stepped inside
+        </p>
+        <p className="profile-seen-preview-description">{descriptionFor(item)}</p>
+
+        {chapters.length ? (
+          <div className="profile-seen-preview-chapters">
+            {chapters.slice(0, 3).map((chapter, index) => (
+              <Link className="profile-seen-preview-chapter" key={chapter.stableChapterId || `${item.id}-${index}`} to={seenTarget}>
+                <span>{index + 1}</span>
+                <b>{chapter.title || `Chapter ${index + 1}`}</b>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        <button className="profile-seen-preview-series" onClick={() => setSeriesOpen(true)} type="button">
+          <span><FiGrid /></span>
+          <span>
+            <b>{localSeries ? `Series: ${localSeries}` : "Add to a series"}</b>
+            <small>{localSeries ? "Tap to change or remove" : "Group Seens into one book"}</small>
+          </span>
+          <i>›</i>
+        </button>
+
+        <button className="profile-seen-preview-story" type="button"><FiScissors /> Add to your story</button>
+
+        <div className="profile-seen-preview-actions">
+          {owner ? <Link to={editTarget}>Edit</Link> : <Link to={seenTarget}>Open</Link>}
+          <button type="button">Share</button>
+          <button aria-label="Close Seen preview" className="is-close" onClick={onClose} type="button"><FiX /></button>
+        </div>
+        {seriesOpen ? (
+          <SeriesSheet
+            currentSeries={localSeries}
+            onClose={() => setSeriesOpen(false)}
+            onSetSeries={(next) => setLocalSeries(next)}
+          />
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
+function ProfileContentGrid({ content = [], emptyText = "", kind = "content", owner = false, reposted = false }) {
+  const [activeSeen, setActiveSeen] = useState(null);
+  const visibleContent = useMemo(() => content || [], [content]);
+
   if (kind === "seens") {
-    if (!content.length) return <div className="rounded-2xl border border-dashed border-atseen-line p-8 text-center"><p className="text-sm font-semibold">No published Seens yet.</p><p className="mt-2 text-xs text-atseen-muted">Drafts and review submissions stay private.</p></div>;
-    return <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{content.map((item) => <Link className="relative aspect-square overflow-hidden rounded-xl border border-atseen-line bg-atseen-surface" key={item.id} to={`/seen/${item.id}`}>{item.coverMedia?.secureUrl ? <img alt={`${item.title} cover`} className="h-full w-full object-cover" src={item.coverMedia.secureUrl} /> : <span className="grid h-full place-items-center"><FiBookOpen /></span>}<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 p-3"><p className="line-clamp-2 text-xs font-bold text-white">{item.title}</p><p className="text-[10px] text-white/60">{item.chapters?.length || 0} chapters</p></div></Link>)}</div>;
+    if (!visibleContent.length) return <div className="profile-empty-state">{emptyText || "No published Seens yet."}</div>;
+    return (
+      <>
+        <div className="profile-seens-grid">
+          {visibleContent.map((item) => {
+            const draft = owner && item.status && item.status !== "PUBLISHED";
+            const target = draft ? `/studio/seens/${item.id}/edit` : `/seen/${item.id}`;
+            const chapters = item.chapters?.length || 0;
+            const tile = (
+              <>
+                {item.coverMedia?.secureUrl ? <img alt={`${item.title} cover`} loading="lazy" src={item.coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+                <span className="profile-seen-shade" />
+                {reposted ? <span className="profile-seen-badge"><FiRepeat /> REPOST</span> : null}
+                {draft ? <span className="profile-seen-badge"><FiEdit3 /> {item.status.replaceAll("_", " ")}</span> : null}
+                {chapters > 1 && !draft ? <span className="profile-seen-badge">SERIES <b>{chapters}</b></span> : null}
+                <span className="profile-seen-copy">
+                  <strong>{item.title}</strong>
+                  <small>{chapters} {chapters === 1 ? "chapter" : "chapters"}</small>
+                </span>
+              </>
+            );
+
+            if (draft) {
+              return <Link className="profile-seen-tile" key={item.id} to={target}>{tile}</Link>;
+            }
+
+            return (
+              <button className="profile-seen-tile" key={item.id} onClick={() => setActiveSeen(item)} type="button">
+                {tile}
+              </button>
+            );
+          })}
+        </div>
+        {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} owner={owner} /> : null}
+      </>
+    );
   }
-  if (!content.length) return <div className="rounded-2xl border border-dashed border-atseen-line p-8 text-center"><p className="text-sm font-semibold">No published content yet.</p><p className="mt-2 text-xs text-atseen-muted">Only published legacy content appears here.</p></div>;
-  return <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{content.map((item) => { const Icon = item.locked ? FiLock : icons[item.contentType] || FiFileText; const media = item.media?.find((entry) => entry.isPrimary) || item.media?.[0] || item.thumbnail; const image = !item.locked && media?.mediaType === "IMAGE" ? media.secureUrl : null; return <article className="relative grid aspect-square place-items-center overflow-hidden rounded-xl border border-atseen-line bg-atseen-surface" key={item.id}>{image ? <img alt="" className="h-full w-full object-cover" src={image} /> : <Icon className="text-3xl text-atseen-blue/60" />}<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3"><p className="line-clamp-2 text-xs font-bold text-white">{item.title}</p>{item.locked ? <p className="mt-1 text-[10px] text-atseen-muted">Locked content</p> : null}</div></article>; })}</div>;
+
+  if (!visibleContent.length) return <div className="profile-empty-state">{emptyText || "No published content yet."}</div>;
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {visibleContent.map((item) => {
+        const Icon = item.locked ? FiLock : icons[item.contentType] || FiFileText;
+        const media = item.media?.find((entry) => entry.isPrimary) || item.media?.[0] || item.thumbnail;
+        const image = !item.locked && media?.mediaType === "IMAGE" ? media.secureUrl : null;
+        return (
+          <article className="relative grid aspect-square place-items-center overflow-hidden rounded-xl border border-atseen-line bg-atseen-surface" key={item.id}>
+            {image ? <img alt="" className="h-full w-full object-cover" src={image} /> : <Icon className="text-3xl text-atseen-blue/60" />}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3">
+              <p className="line-clamp-2 text-xs font-bold text-white">{item.title}</p>
+              {item.locked ? <p className="mt-1 text-[10px] text-atseen-muted">Locked content</p> : null}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
 }
 
 export default ProfileContentGrid;

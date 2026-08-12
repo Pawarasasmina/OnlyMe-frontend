@@ -9,6 +9,11 @@ export const adminService = {
   getReportedMessageUser: (userId) => axiosInstance.get(`/admin/message-report-users/${userId}`),
   startMessageReportReview: (reportId) => axiosInstance.post(`/admin/message-reports/${reportId}/review`),
   resolveMessageReport: (reportId, payload) => axiosInstance.post(`/admin/message-reports/${reportId}/resolve`, payload),
+  getGifts: () => axiosInstance.get("/admin/gifts"),
+  createGift: (formData, onUploadProgress) => axiosInstance.post("/admin/gifts", formData, { onUploadProgress }),
+  updateGift: (id, formData, onUploadProgress) => axiosInstance.patch(`/admin/gifts/${id}`, formData, { onUploadProgress }),
+  reorderGifts: (ids) => axiosInstance.patch("/admin/gifts/reorder", { ids }),
+  deleteGift: (id) => axiosInstance.delete(`/admin/gifts/${id}`),
 };
 
 

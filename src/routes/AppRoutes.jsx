@@ -65,6 +65,7 @@ import WelcomePage from "../pages/onboarding/WelcomePage";
 import AccountSettingsPage from "../pages/settings/AccountSettingsPage";
 import PrivacySettingsPage from "../pages/settings/PrivacySettingsPage";
 import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage";
+import GiftManagementPage from "../pages/admin/GiftManagementPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -202,6 +203,7 @@ function AppRoutes() {
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
           <Route path="/admin/message-reports" element={<MessageReportsPage />} />
+          <Route path="/admin/gifts" element={<GiftManagementPage />} />
         </Route>
       </Route>
     </Route>
