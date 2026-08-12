@@ -4,6 +4,7 @@ export const profileService = {
   getMe: () => axiosInstance.get("/profile/me"),
   getUnifiedMe: () => axiosInstance.get("/profiles/me"),
   getOwnConnections: (type) => axiosInstance.get("/profiles/me/connections", { params: { type } }),
+  getConnections: (username, type) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/connections`, { params: { type } }),
   getOwnViewers: (params = {}) => axiosInstance.get("/profiles/me/viewers", { params }),
   getUnifiedProfile: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}`),
   getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),

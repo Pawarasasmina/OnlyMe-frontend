@@ -6,15 +6,16 @@ import LoadingSkeleton from "../fanWeb/shared/LoadingSkeleton";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { profileService } from "../../services/profileService";
 
-function ProfileConnectionsModal({ onClose, type }) {
+function ProfileConnectionsModal({ onClose, type, username }) {
   const query = useQuery({
-    queryKey: ["profile-connections", type],
-    queryFn: () => profileService.getOwnConnections(type).then((response) => response.data.data),
-    enabled: Boolean(type),
+    queryKey: ["profile-connections", username, type],
+    queryFn: () => profileService.getConnections(username, type).then((response) => response.data.data),
+    enabled: Boolean(type && username),
   });
   const accounts = query.data?.accounts || [];
 
-  return <FanModal className="max-w-md" isOpen={Boolean(type)} onClose={onClose} title={type === "following" ? "Following" : "Followers"}>
+  const title = type === "following" ? "Following" : type === "supporters" ? "Supporters" : "Followers";
+  return <FanModal className="max-w-md" isOpen={Boolean(type)} onClose={onClose} title={title}>
     <div className="max-h-[60vh] overflow-y-auto pr-1">
       {query.isLoading ? <LoadingSkeleton className="h-14" count={4} /> : null}
       {query.isError ? <div className="py-8 text-center"><p className="text-sm text-atseen-muted">Unable to load these accounts.</p><button className="mt-3 text-sm font-bold text-atseen-blue" onClick={() => query.refetch()} type="button">Try again</button></div> : null}

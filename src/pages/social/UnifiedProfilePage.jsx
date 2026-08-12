@@ -623,7 +623,7 @@ function StatsRow({ metrics = {}, onConnectionsOpen }) {
   return (
     <section className="profile-stats-row">
       {items.map(([key, label, value]) => (
-        <button key={key} onClick={() => onConnectionsOpen(key === "supporters" ? "" : key)} type="button">
+        <button key={key} onClick={() => onConnectionsOpen(key)} type="button">
           <strong>{compact(value)}</strong>
           <span>{label}</span>
         </button>
@@ -717,7 +717,7 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
   } else {
     body = (
       <>
-        <ProfileConnectionsModal onClose={() => setConnectionsType("")} type={connectionsType} />
+        <ProfileConnectionsModal onClose={() => setConnectionsType("")} type={connectionsType} username={profileQuery.data.profile.username} />
         <ProfileBody data={profileQuery.data} owner={owner} setConnectionsType={setConnectionsType} setStatus={statusContext?.setStatus} statusContext={statusContext} />
       </>
     );

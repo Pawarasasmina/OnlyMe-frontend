@@ -140,7 +140,7 @@ function Editor({ dream, onClose, onSaved }) {
   );
 }
 
-function GiftPicker({ dream, gifts, onClose, onSent }) {
+function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
   const queryClient = useQueryClient();
   const [privateSupport, setPrivateSupport] = useState(false);
   const [sending, setSending] = useState("");
@@ -172,34 +172,38 @@ function GiftPicker({ dream, gifts, onClose, onSent }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-end bg-black/70 sm:place-items-center sm:p-5" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()}>
-      <div className="relative max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-atseen-line bg-atseen-surface p-6 sm:rounded-3xl">
+    <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()}>
+      <div className="dream-gift-sheet">
         {sent ? <GiftCelebration gift={sent} /> : null}
-        <div className="flex items-center justify-between">
+        <span className="dream-gift-handle" />
+        <div className="dream-gift-header">
           <div>
-            <h2 className="text-xl font-black">Help Make It Happen</h2>
-            <p className="mt-1 text-xs text-atseen-muted">Tap a gift to send it instantly to {dream.title}.</p>
+            <h2>Help Make It Happen</h2>
+            <p>{creatorName} dreams of <strong>{dream.title}</strong></p>
           </div>
-          <button disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button>
+          <button aria-label="Close gift picker" disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button>
         </div>
-        {gifts.length ? <div className="mt-5 grid grid-cols-4 gap-2">
+        <div className="dream-gift-progress"><i style={{ width: `${Math.min(100, Math.round((dream.receivedStars / dream.goalStars) * 100))}%` }} /></div>
+        <p className="dream-gift-progress-copy">{STAR}{dream.receivedStars.toLocaleString()} / {STAR}{dream.goalStars.toLocaleString()} · every gift goes toward the dream</p>
+        {gifts.length ? <div className="dream-gift-grid">
           {gifts.map((gift) => (
             <button
-              className={`rounded-2xl bg-white/[.035] p-3 text-center transition active:scale-95 disabled:opacity-40 ${sending === gift.key ? "border border-atseen-blue bg-atseen-blue/10" : ""}`}
+              className={`dream-gift-tile ${sending === gift.key ? "is-sending" : ""}`}
               disabled={Boolean(sending)}
               key={gift.key}
               onClick={() => send(gift)}
               type="button"
             >
-              <span className="mx-auto grid h-16 w-16 place-items-center overflow-hidden rounded-xl bg-slate-950 sm:h-20 sm:w-20">
-                <img alt={gift.name} className="h-full w-full object-contain" src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} />
+              <span>
+                <img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} />
               </span>
-              <strong className="mt-2 block truncate text-[10px]">{sending === gift.key ? "Sending..." : gift.name}</strong>
-              <small className="mt-1 block text-atseen-muted">{STAR}{gift.stars.toLocaleString()}</small>
+              <strong>{sending === gift.key ? "Sending..." : gift.name}</strong>
+              <small>{STAR}{gift.stars.toLocaleString()}</small>
             </button>
           ))}
-        </div> : <p className="mt-5 rounded-2xl bg-white/[.035] p-6 text-center text-sm text-atseen-muted">No gifts are currently available.</p>}
-        <label className="mt-5 flex items-center gap-3 text-xs text-atseen-muted">
+        </div> : <p className="dream-gift-empty">No gifts are currently available.</p>}
+        <p className="dream-gift-supporters">Made possible by {dream.supporterCount} {dream.supporterCount === 1 ? "person" : "people"}</p>
+        <label className="dream-gift-private">
           <input checked={privateSupport} disabled={Boolean(sending)} onChange={(event) => setPrivateSupport(event.target.checked)} type="checkbox" />
           Support privately
         </label>
@@ -226,11 +230,11 @@ function DreamEntryRow({ dream, isOwner, onCreate, onGift }) {
   }
 
   return (
-    <div className="profile-dream-live">
-      <div className="profile-dream-head">
+    <div className={`profile-dream-live ${isOwner ? "is-owner" : "is-supportable"}`}>
+      {isOwner ? <div className="profile-dream-head">
         <p>My Dream</p>
-        {isOwner ? <button onClick={onCreate} type="button">Edit</button> : null}
-      </div>
+        <button onClick={onCreate} type="button">Edit</button>
+      </div> : null}
       <div className="profile-dream-main">
         <span>{dream.emoji || SPARKLE}</span>
         <div>
@@ -282,7 +286,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
     <section className={`profile-dream-card ${dream ? "" : "is-empty"}`}>
       <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => setEditor(true)} onGift={() => setPicker(true)} />
 
-      {dream ? (
+      {dream && capabilities.isOwner ? (
         <>
           <div className="profile-dream-progress"><i style={{ width: `${progress}%` }} /></div>
           <div className="profile-dream-meta">
@@ -313,7 +317,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
       ) : null}
 
       {editor ? <Editor dream={dream?.status === "ACTIVE" ? dream : null} onClose={() => setEditor(false)} onSaved={update} /> : null}
-      {picker ? <GiftPicker dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={update} /> : null}
+      {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={update} /> : null}
     </section>
   );
 }

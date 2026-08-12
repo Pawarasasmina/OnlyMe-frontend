@@ -3167,8 +3167,9 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   --profile-blue-2: #6FA9E8;
   --profile-muted: rgba(255,255,255,.62);
   --profile-dim: rgba(255,255,255,.4);
-  width: min(100%, 600px);
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -3835,6 +3836,108 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 }
 .profile-dream-live {
   min-width: 0;
+}
+.profile-dream-live.is-supportable .profile-dream-main {
+  align-items: center;
+  margin-top: 0;
+}
+.profile-dream-live.is-supportable .profile-dream-main > span {
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
+  background: transparent;
+  font-size: 17px;
+}
+.profile-dream-live.is-supportable .profile-dream-main h2 {
+  font-size: 15px;
+}
+.profile-dream-live.is-supportable .profile-dream-main p {
+  margin-top: 8px;
+  color: rgba(255,255,255,.78);
+  font-size: 12px;
+  font-style: italic;
+}
+.profile-dream-live.is-supportable .profile-dream-gift {
+  width: 100%;
+  min-height: 40px;
+  justify-content: center;
+  margin-top: 14px;
+  border: 1px solid rgba(156,203,255,.34);
+  border-radius: 999px;
+  background: rgba(156,203,255,.035);
+  color: #9CCBFF;
+  font-size: 12px;
+  font-weight: 950;
+}
+.profile-dream-live.is-supportable .profile-dream-gift svg { display: none; }
+
+.dream-gift-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0,0,0,.74);
+}
+.dream-gift-sheet {
+  position: relative;
+  width: min(100%, 548px);
+  max-height: 94dvh;
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,.07);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: #1D2430;
+  box-shadow: 0 -20px 60px rgba(0,0,0,.56);
+  padding: 12px 20px 34px;
+}
+.dream-gift-handle {
+  display: block;
+  width: 32px;
+  height: 4px;
+  margin: 0 auto 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.3);
+}
+.dream-gift-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dream-gift-header h2 { margin: 0; color: #fff; font-size: 20px; font-weight: 950; }
+.dream-gift-header p { margin: 5px 0 0; color: rgba(255,255,255,.72); font-size: 12px; }
+.dream-gift-header p strong { color: #fff; }
+.dream-gift-header button { display: grid; width: 30px; height: 30px; flex: none; place-items: center; color: rgba(255,255,255,.55); }
+.dream-gift-progress { height: 4px; margin-top: 14px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.1); }
+.dream-gift-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #86b9ef, #eef7ff); }
+.dream-gift-progress-copy { margin: 7px 0 0; color: rgba(156,203,255,.62); font-size: 9px; }
+.dream-gift-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
+.dream-gift-tile {
+  min-width: 0;
+  min-height: 119px;
+  border: 1px solid transparent;
+  border-radius: 17px;
+  background: rgba(255,255,255,.035);
+  padding: 10px 6px 8px;
+  text-align: center;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.dream-gift-tile:hover { border-color: rgba(156,203,255,.2); background: rgba(255,255,255,.06); }
+.dream-gift-tile:active { transform: scale(.97); }
+.dream-gift-tile.is-sending { border-color: #9CCBFF; background: rgba(156,203,255,.1); }
+.dream-gift-tile:disabled { opacity: .45; }
+.dream-gift-tile > span { display: grid; width: 58px; height: 58px; margin: 0 auto; overflow: hidden; place-items: center; background: #080a0e; }
+.dream-gift-tile img { width: 100%; height: 100%; object-fit: contain; }
+.dream-gift-tile strong { display: block; overflow: hidden; margin-top: 7px; color: #fff; font-size: 9px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.dream-gift-tile small { display: block; margin-top: 3px; color: rgba(156,203,255,.62); font-size: 9px; }
+.dream-gift-supporters { margin: 16px 0 0; color: rgba(255,255,255,.42); font-size: 9px; text-align: center; }
+.dream-gift-private { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: rgba(255,255,255,.55); font-size: 10px; }
+.dream-gift-empty { margin-top: 14px; border-radius: 16px; background: rgba(255,255,255,.035); padding: 24px; color: rgba(255,255,255,.55); font-size: 12px; text-align: center; }
+@media (min-width: 768px) {
+  .dream-gift-sheet { max-height: 88dvh; }
+}
+@media (max-width: 420px) {
+  .dream-gift-sheet { padding-inline: 14px; }
+  .dream-gift-grid { gap: 7px; }
+  .dream-gift-tile { min-height: 110px; padding-inline: 4px; }
+  .dream-gift-tile > span { width: 52px; height: 52px; }
 }
 .profile-dream-editor-layer {
   position: fixed;
@@ -5017,7 +5120,7 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 .creator-studio-error p { color: rgba(255,255,255,.62); }
 .creator-studio-error button { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #9CCBFF; color: #07101a; padding: 10px 14px; font-size: 12px; font-weight: 900; }
 @media (max-width: 1239px) {
-  .profile-prototype { width: min(100%, 600px); }
+  .profile-prototype { width: 100%; max-width: none; }
 }
 @media (max-width: 720px) {
   .profile-prototype { width: 100%; }
@@ -6954,6 +7057,11 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 
 /* Preserve the original shared shell geometry while current page content evolves. */
 @media (min-width: 768px) {
+  .social-app-shell .social-center-scroll > main:has(> .profile-prototype) {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
   .social-app-shell .social-app-frame {
     width: 100%;
     max-width: 1240px;
