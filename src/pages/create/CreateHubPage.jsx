@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FiPlusCircle } from "react-icons/fi";
+import { FiArrowLeft, FiPlusCircle } from "react-icons/fi";
 import StoryCreator from "../../components/stories/StoryCreator";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
@@ -26,6 +26,7 @@ function CreateHubPage() {
 
   return (
     <div>
+      <Link className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-atseen-muted transition hover:text-atseen-blue" to="/profile"><FiArrowLeft /> Back to Profile</Link>
       <h1 className="text-3xl font-black">Create</h1>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {canCreate ? (

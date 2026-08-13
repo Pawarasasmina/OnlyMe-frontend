@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBookmark, FiClock, FiEye, FiGift, FiMessageCircle, FiRefreshCw, FiUserPlus, FiZap } from "react-icons/fi";
+import { FiBookmark, FiClock, FiEye, FiGift, FiMessageCircle, FiRefreshCw, FiUserPlus, FiZap } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { fanService } from "../../services/fanService";
@@ -38,6 +38,7 @@ function classify(item) {
 }
 
 function routeFor(item) {
+  if (item.actionPath && !item.actionPath.startsWith("/fan/")) return item.actionPath;
   if (item.relatedCreator?.username) return `/profile/${encodeURIComponent(item.relatedCreator.username)}`;
   if (item.filter === "earnings" || item.filter === "purchases") return "/wallet/ledger";
   if (item.filter === "comments") return "/messages";
@@ -102,7 +103,7 @@ export default function ActivityPage() {
   const acknowledge = (id) => setAcknowledged((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   return <main className="activity-prototype-page">
-    <header className="activity-prototype-header"><button aria-label="Back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><p>Reactions, people and earnings — everything that found you</p></header>
+    <header className="activity-prototype-header"><p>Reactions, people and earnings — everything that found you</p></header>
     <nav className="activity-prototype-segment"><button className={direction === "received" ? "is-active" : ""} onClick={() => { setDirection("received"); setFilter("all"); }} type="button">Received</button><button className={direction === "sent" ? "is-active" : ""} onClick={() => { setDirection("sent"); setFilter("all"); }} type="button">Sent</button></nav>
     <div className="activity-prototype-filters">{filters.map(([label, value]) => <button className={filter === value ? "is-active" : ""} key={value} onClick={() => setFilter(value)} type="button">{label}</button>)}</div>
     {direction === "received" && filter === "earnings" ? <button className="activity-wallet-card" onClick={() => navigate("/wallet")} type="button"><FiZap /><span><strong>{Number(walletQuery.data?.balance || 0).toLocaleString()} Stars</strong><small>Wallet balance</small></span><b>›</b></button> : null}

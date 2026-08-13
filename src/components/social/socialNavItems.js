@@ -1,4 +1,4 @@
-import { FiActivity, FiBookmark, FiCheckCircle, FiCompass, FiCreditCard, FiEye, FiGrid, FiHome, FiMessageCircle, FiSettings, FiShoppingBag, FiStar, FiUser, FiUsers } from "react-icons/fi";
+import { FiActivity, FiCheckCircle, FiCompass, FiEye, FiHome, FiMessageCircle, FiUser } from "react-icons/fi";
 
 export const socialPrimaryNavItems = [
   { label: "Home", to: "/wall", icon: FiHome },
@@ -10,19 +10,11 @@ export const socialPrimaryNavItems = [
 ];
 
 export function socialSecondaryNavItems(capabilities) {
-  const items = [
-    { label: "Search", to: "/search", icon: FiUsers },
-    { label: "Saved", to: "/saved", icon: FiBookmark },
-    { label: "Wallet", to: "/wallet", icon: FiCreditCard },
-    { label: "Purchases", to: "/purchases", icon: FiShoppingBag },
-    { label: "Memberships", to: "/memberships", icon: FiStar },
-  ];
+  const items = [];
 
-  if (capabilities.canAccessStudio) items.push({ label: "Studio", to: "/studio", icon: FiGrid });
   if (capabilities.canAccessVerification && !capabilities.isApprovedCreator) {
     items.push({ label: "Verification", to: "/creator/verification", icon: FiCheckCircle, emphasis: true });
   }
 
-  items.push({ label: "Settings", to: "/settings", icon: FiSettings });
   return items;
 }

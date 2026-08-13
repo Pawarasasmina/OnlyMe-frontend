@@ -85,8 +85,7 @@ function FanWebSidebar({ capabilities, status, unreadMessageCount = 0 }) {
         >
           <FiLogOut aria-hidden="true" /> Logout
         </button>
-        <p className="text-center text-[10px] text-atseen-dim max-[760px]:hidden">Atseen OU · web v1.6</p>
-      </div>
+           </div>
     </aside>
   );
 }
