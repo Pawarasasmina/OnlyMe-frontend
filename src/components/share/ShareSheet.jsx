@@ -92,7 +92,7 @@ function selectedLabel(recipients = []) {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
 }
 
-function ShareSheet({ isOpen, onClose, payload }) {
+function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const navigate = useNavigate();
@@ -245,11 +245,13 @@ function ShareSheet({ isOpen, onClose, payload }) {
 
   if (!isOpen || !payload) return null;
 
+  const isSeenVariant = variant === "seen";
+
   return (
     <div
       aria-labelledby="share-sheet-title"
       aria-modal="true"
-      className="share-sheet-overlay"
+      className={isSeenVariant ? "is-seen-share share-sheet-overlay" : "share-sheet-overlay"}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
@@ -267,7 +269,7 @@ function ShareSheet({ isOpen, onClose, payload }) {
           </button>
         </header>
 
-        <ShareContentPreview payload={payload} />
+        {isSeenVariant ? null : <ShareContentPreview payload={payload} />}
 
         <label className="share-search">
           <span className="sr-only">Search recipients</span>

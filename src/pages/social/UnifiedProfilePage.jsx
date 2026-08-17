@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiAperture,
@@ -676,9 +676,21 @@ function WallPreview({ isOwner, posts = [] }) {
 }
 
 function ProfileBody({ data, owner, setConnectionsType, setStatus, statusContext }) {
-  const [tab, setTab] = useState("seens");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
+  useEffect(() => {
+    setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
+  }, [requestedTab]);
+  const setTab = (nextTab) => {
+    setTabState(nextTab);
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextTab === "seens") nextParams.delete("tab");
+    else nextParams.set("tab", nextTab);
+    setSearchParams(nextParams, { replace: true });
+  };
   return (
     <div className="profile-prototype">
       <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} />

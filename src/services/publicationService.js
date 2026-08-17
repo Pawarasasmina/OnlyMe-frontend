@@ -26,4 +26,8 @@ export const publicationService = {
   shareSeen: (id, caption = "") => axiosInstance.put(`/publications/${id}/share`, { caption }),
   removeSeenShare: (id) => axiosInstance.delete(`/publications/${id}/share`),
   toggleSeenSave: (id) => axiosInstance.put(`/publications/${id}/save`),
+  hideSeen: (id, reason = "NOT_INTERESTED") => axiosInstance.post(`/publications/${id}/hide`, { reason }),
+  muteSeenCreator: (id, reason = "MUTED_FROM_SEEN") => axiosInstance.post(`/publications/${id}/mute-creator`, { reason }),
+  blockSeenCreator: (id) => axiosInstance.put(`/publications/${id}/block-creator`),
+  reportSeen: (id, payload) => axiosInstance.post(`/publications/${id}/report`, payload),
 };

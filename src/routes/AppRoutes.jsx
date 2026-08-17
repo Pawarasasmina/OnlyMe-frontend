@@ -127,6 +127,7 @@ function AppRoutes() {
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
+          <Route path="/seen/:id" element={<SeenReaderPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
@@ -209,7 +210,6 @@ function AppRoutes() {
     </Route>
 
     <Route path="/profile/:username" element={<ProfileRoute />} />
-    <Route path="/seen/:id" element={<SeenReaderPage />} />
     <Route path="/world/:id" element={<WorldRoute />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
 

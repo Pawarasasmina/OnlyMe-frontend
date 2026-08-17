@@ -182,6 +182,20 @@ function ProfileSettingsPage() {
     retry: false,
   });
 
+  const mutedQuery = useQuery({
+    queryKey: ["settings", "muted-accounts"],
+    queryFn: () => profileService.getMutedAccounts().then((response) => response.data.data.items || []),
+    enabled: Boolean(user && accessToken),
+    retry: false,
+  });
+
+  const hiddenSeensQuery = useQuery({
+    queryKey: ["settings", "hidden-seens"],
+    queryFn: () => profileService.getHiddenSeens().then((response) => response.data.data.items || []),
+    enabled: Boolean(user && accessToken),
+    retry: false,
+  });
+
   useEffect(() => {
     if (user && !accessToken) {
       setUser(null);
@@ -316,6 +330,39 @@ function ProfileSettingsPage() {
     onError: (requestError) => {
       setMessage("");
       setError(requestError.response?.data?.message || requestError.message || "Unable to save profile.");
+    },
+  });
+
+  const unmuteMutation = useMutation({
+    mutationFn: (userId) => profileService.unmuteAccount(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings", "muted-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["discover"] });
+      queryClient.invalidateQueries({ queryKey: ["orbit"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      setMessage("Account unmuted.");
+      setError("");
+    },
+    onError: () => {
+      setMessage("");
+      setError("Unable to unmute this account. Please try again.");
+    },
+  });
+
+  const showSeenAgainMutation = useMutation({
+    mutationFn: (seenId) => profileService.showHiddenSeenAgain(seenId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings", "hidden-seens"] });
+      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["discover"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      setMessage("Seen will be shown again.");
+      setError("");
+    },
+    onError: () => {
+      setMessage("");
+      setError("Unable to show this Seen again. Please try again.");
     },
   });
 
@@ -456,6 +503,60 @@ function ProfileSettingsPage() {
         <Segmented label="Who can see your saved places?" onChange={setSavedVisibility} value={segmentedFromVisibility(form.profileVisibility)} />
         <Segmented label="Who can see your orbit?" onChange={setOrbitVisibility} value={form.orbitVisible ? "everyone" : "only_me"} />
         <p>Your orbit only ever shows public ties - follows and open dream support. Messages and private signals never appear to others.</p>
+        <div className="edit-profile-muted-accounts">
+          <div>
+            <h3>Muted accounts</h3>
+            <Link to="/settings/privacy">Manage privacy</Link>
+          </div>
+          {mutedQuery.isLoading ? <p>Loading muted accounts...</p> : null}
+          {mutedQuery.isError ? <p role="alert">Unable to load muted accounts.</p> : null}
+          {!mutedQuery.isLoading && !mutedQuery.isError && !mutedQuery.data?.length ? <p>No muted accounts.</p> : null}
+          {mutedQuery.data?.length ? (
+            <div className="edit-profile-muted-list">
+              {mutedQuery.data.map((account) => (
+                <article key={account.id}>
+                  <FanAvatar name={account.displayName || account.username} size="h-[42px] w-[42px]" src={account.profilePhoto} />
+                  <span>
+                    <b>{account.displayName || `@${account.username}`}</b>
+                    <small>@{account.username} · {account.role}</small>
+                  </span>
+                  <button disabled={unmuteMutation.isPending} onClick={() => unmuteMutation.mutate(account.id)} type="button">Unmute</button>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <div className="edit-profile-muted-accounts">
+          <div>
+            <h3>Hidden Seens</h3>
+            <Link to="/settings/privacy">Manage privacy</Link>
+          </div>
+          {hiddenSeensQuery.isLoading ? <p>Loading hidden Seens...</p> : null}
+          {hiddenSeensQuery.isError ? <p role="alert">Unable to load hidden Seens.</p> : null}
+          {!hiddenSeensQuery.isLoading && !hiddenSeensQuery.isError && !hiddenSeensQuery.data?.length ? <p>No hidden Seens.</p> : null}
+          {hiddenSeensQuery.data?.length ? (
+            <div className="edit-profile-muted-list">
+              {hiddenSeensQuery.data.map((seen) => {
+                const coverUrl = resolveMediaUrl(seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover);
+                const creatorName = seen.creator?.displayName || seen.creator?.name || seen.creator?.username || "Unknown creator";
+                const creatorUsername = seen.creator?.username ? `@${seen.creator.username}` : "Creator unavailable";
+
+                return (
+                  <article key={seen.id}>
+                    <Link className="block h-[42px] w-[64px] shrink-0 overflow-hidden rounded-[11px] bg-[#1a263a]" to={`/seen/${encodeURIComponent(seen.id)}`}>
+                      {coverUrl ? <img alt="" className="h-full w-full object-cover" src={coverUrl} /> : <span className="grid h-full w-full place-items-center text-[10px] font-black text-[#9CCBFF]">Seen</span>}
+                    </Link>
+                    <span>
+                      <b>{seen.title || "Untitled Seen"}</b>
+                      <small>{creatorName} - {creatorUsername}</small>
+                    </span>
+                    <button disabled={showSeenAgainMutation.isPending} onClick={() => showSeenAgainMutation.mutate(seen.id)} type="button">Show again</button>
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <button className="edit-profile-save" disabled={saveMutation.isPending || uploading} type="submit">

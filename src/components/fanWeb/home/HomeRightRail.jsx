@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import VerifiedBadge from "../shared/VerifiedBadge";
@@ -95,6 +95,7 @@ function SuggestedUsersCard({ disabled, onFollowToggle, people = [] }) {
 }
 
 function TrendingSeenCard({ seen }) {
+  const location = useLocation();
   if (!seen) {
     return (
       <section className="home-rail-card home-rail-compact-empty" aria-labelledby="home-rail-trending-empty-title">
@@ -106,9 +107,11 @@ function TrendingSeenCard({ seen }) {
 
   const cover = resolveMediaUrl(seen.coverImage || seen.cover);
   const creator = seen.creator?.firstName || seen.creator?.name || seen.creator?.displayName || "Creator";
+  const target = seen.route || `/seen/${seen.id}`;
+  const alreadyHere = location.pathname === target && !location.search;
 
   return (
-    <Link className="home-rail-trending" to={seen.route || `/seen/${seen.id}`}>
+    <Link className="home-rail-trending" replace={alreadyHere} to={target}>
       {cover ? <img alt={`${seen.title} cover`} loading="lazy" src={cover} /> : <span className="home-rail-seen-fallback" aria-hidden="true" />}
       <span className="home-rail-trending-shade" aria-hidden="true" />
       <span className="home-rail-trending-copy">
