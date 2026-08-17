@@ -28,7 +28,7 @@ import ContentModeration from "../pages/admin/ContentModeration";
 import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
 import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
-import CreatorVerificationDetail from "../pages/admin/CreatorVerificationDetail";
+import CreatorVerificationDetail from "../pages/admin/SimpleCreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import SettingsPage from "../pages/settings/SettingsPage";
