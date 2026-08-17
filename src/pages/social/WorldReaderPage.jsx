@@ -35,6 +35,13 @@ function mediaFor(publication, chapters) {
 }
 
 function storyItems(publication, chapters) {
+  const storyPreviewMedia = chapters.flatMap((chapter) =>
+    (chapter.blocks || [])
+      .filter((block) => block.metadata?.storyPreview && ["IMAGE", "VIDEO"].includes(block.type) && block.media?.secureUrl)
+      .map((block) => ({ ...block.media, title: block.metadata?.label || chapter.title })),
+  );
+  if (storyPreviewMedia.length) return storyPreviewMedia.slice(0, 3);
+
   const chapterMedia = chapters.flatMap((chapter) =>
     (chapter.blocks || [])
       .filter((block) => ["IMAGE", "VIDEO"].includes(block.type) && block.media?.secureUrl)
