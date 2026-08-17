@@ -7954,6 +7954,10 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     padding-right: 18px;
     padding-left: 18px;
   }
+
+  .social-app-shell .social-center-scroll {
+    margin-left: 20px;
+  }
 }
 
 /* The shared right rail owns its own column, so prototype pages should use the
@@ -11061,5 +11065,15 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 
   .seen-engagement-left {
     gap: 10px;
+  }
+}
+
+/* Keep the permanent desktop rails on the shared outer canvas. */
+@media (min-width: 1020px) {
+  .social-app-shell .social-app-frame > .social-fixed-rail:first-child,
+  .social-app-shell .social-app-frame > .social-fixed-rail:last-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-fixed-rail:first-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-fixed-rail:last-child {
+    background: transparent;
   }
 }
