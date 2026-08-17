@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiUserX } from "react-icons/fi";
+import { FiEyeOff, FiUserX, FiVolumeX } from "react-icons/fi";
 import Button from "../../components/common/Button";
 import Loader from "../../components/common/Loader";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
+import { resolveMediaUrl } from "../../utils/media";
 import SettingsNav from "./SettingsNav";
 
 const roleOptions = {
@@ -60,6 +62,16 @@ function PrivacySettingsPage() {
     queryFn: () => profileService.getBlockedAccounts().then((response) => response.data.data.items || []),
   });
 
+  const mutedQuery = useQuery({
+    queryKey: ["settings", "muted-accounts"],
+    queryFn: () => profileService.getMutedAccounts().then((response) => response.data.data.items || []),
+  });
+
+  const hiddenSeensQuery = useQuery({
+    queryKey: ["settings", "hidden-seens"],
+    queryFn: () => profileService.getHiddenSeens().then((response) => response.data.data.items || []),
+  });
+
   useEffect(() => {
     if (query.data && !dirty) {
       setForm({
@@ -98,6 +110,39 @@ function PrivacySettingsPage() {
     onError: (err) => {
       setMessage("");
       setError(normalizeApiError(err, "Unable to unblock this account. Please try again.").message);
+    },
+  });
+
+  const unmuteMutation = useMutation({
+    mutationFn: (userId) => profileService.unmuteAccount(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings", "muted-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["discover"] });
+      queryClient.invalidateQueries({ queryKey: ["orbit"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      setMessage("Account unmuted.");
+      setError("");
+    },
+    onError: (err) => {
+      setMessage("");
+      setError(normalizeApiError(err, "Unable to unmute this account. Please try again.").message);
+    },
+  });
+
+  const showSeenAgainMutation = useMutation({
+    mutationFn: (seenId) => profileService.showHiddenSeenAgain(seenId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings", "hidden-seens"] });
+      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["discover"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      setMessage("Seen will be shown again.");
+      setError("");
+    },
+    onError: (err) => {
+      setMessage("");
+      setError(normalizeApiError(err, "Unable to show this Seen again. Please try again.").message);
     },
   });
 
@@ -188,6 +233,92 @@ function PrivacySettingsPage() {
                   </Button>
                 </div>
               ))}
+            </div>
+          ) : null}
+        </section>
+        <section className="space-y-4 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-brand-primary">
+              <FiVolumeX />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold">Muted accounts</h2>
+              <p className="mt-1 text-sm text-brand-mist/60">Seens from muted accounts will stay out of your Seen feed.</p>
+            </div>
+          </div>
+          {mutedQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">Loading muted accounts...</p> : null}
+          {mutedQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">Unable to load muted accounts.</p> : null}
+          {!mutedQuery.isLoading && !mutedQuery.isError && !mutedQuery.data?.length ? (
+            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">No muted accounts.</p>
+          ) : null}
+          {mutedQuery.data?.length ? (
+            <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
+              {mutedQuery.data.map((account) => (
+                <div className="flex items-center gap-3 bg-white/[0.03] px-4 py-3" key={account.id}>
+                  <FanAvatar name={account.displayName || account.username} src={account.profilePhoto} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{account.displayName || `@${account.username}`}</p>
+                    <p className="truncate text-xs text-brand-mist/50">@{account.username} · {account.role}</p>
+                  </div>
+                  <Button
+                    className="px-4 py-2"
+                    disabled={unmuteMutation.isPending}
+                    onClick={() => unmuteMutation.mutate(account.id)}
+                    type="button"
+                    variant="ghost"
+                  >
+                    Unmute
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+        <section className="space-y-4 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-brand-primary">
+              <FiEyeOff />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold">Hidden Seens</h2>
+              <p className="mt-1 text-sm text-brand-mist/60">Individual Seens marked Not interested stay out of your Seen feed.</p>
+            </div>
+          </div>
+          {hiddenSeensQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">Loading hidden Seens...</p> : null}
+          {hiddenSeensQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">Unable to load hidden Seens.</p> : null}
+          {!hiddenSeensQuery.isLoading && !hiddenSeensQuery.isError && !hiddenSeensQuery.data?.length ? (
+            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">No hidden Seens.</p>
+          ) : null}
+          {hiddenSeensQuery.data?.length ? (
+            <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
+              {hiddenSeensQuery.data.map((seen) => {
+                const coverUrl = resolveMediaUrl(seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover);
+                const creatorName = seen.creator?.displayName || seen.creator?.name || seen.creator?.username || "Unknown creator";
+                const creatorUsername = seen.creator?.username ? `@${seen.creator.username}` : "Creator unavailable";
+
+                return (
+                  <div className="flex items-center gap-3 bg-white/[0.03] px-4 py-3" key={seen.id}>
+                    <Link className="block h-16 w-24 shrink-0 overflow-hidden rounded-2xl bg-white/10" to={`/seen/${encodeURIComponent(seen.id)}`}>
+                      {coverUrl ? <img alt="" className="h-full w-full object-cover" src={coverUrl} /> : <span className="grid h-full w-full place-items-center text-xs font-black text-brand-mist/50">Seen</span>}
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <Link className="block truncate text-sm font-semibold text-white hover:text-brand-primary" to={`/seen/${encodeURIComponent(seen.id)}`}>
+                        {seen.title || "Untitled Seen"}
+                      </Link>
+                      <p className="truncate text-xs text-brand-mist/50">{creatorName} - {creatorUsername}</p>
+                    </div>
+                    <Button
+                      className="px-4 py-2"
+                      disabled={showSeenAgainMutation.isPending}
+                      onClick={() => showSeenAgainMutation.mutate(seen.id)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      Show again
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </section>

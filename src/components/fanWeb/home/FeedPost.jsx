@@ -246,8 +246,7 @@ function FeedPost({ post }) {
     ? `/wall?filter=${encodeURIComponent(contextFilter)}${normalized.location ? `&city=${encodeURIComponent(normalized.location)}` : ""}`
     : "/wall";
   const firstMedia = normalized.media?.[0] || {};
-  const firstMediaRatio = firstMedia.width && firstMedia.height ? Number(firstMedia.width) / Number(firstMedia.height) : 0;
-  const mediaLayout = normalized.media?.length === 1 && (String(firstMedia.type || "").toLowerCase().startsWith("video") || firstMediaRatio >= 1.45)
+  const mediaLayout = normalized.media?.length === 1 && String(firstMedia.type || "").toLowerCase().startsWith("video")
     ? "hero"
     : "compact";
 
@@ -479,8 +478,8 @@ function FeedPost({ post }) {
       toggleSave();
       setMoreOpen(false);
     } else if (action === "share") {
-      toggleShare();
       setMoreOpen(false);
+      openSendSheet();
     } else if (action === "copy") {
       copyLink();
       setMoreOpen(false);
@@ -815,7 +814,7 @@ function FeedPost({ post }) {
             ]
             : [
               ["save", saved ? "Remove saved post" : "Save post", FiBookmark],
-              ["share", shared ? "Remove from profile" : "Share to profile", FiShare2],
+              ["share", "Share", FiShare2],
               ["copy", "Copy Link", FiShare2],
               ["not-useful", "Not useful", FiMoreHorizontal],
               ["report", "Report", FiFlag],

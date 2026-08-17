@@ -343,7 +343,7 @@ export const storyService = {
     }
 
     requireMocks();
-    const media = formData.get("media");
+    const media = formData.get("media") || formData.get("image");
     if (!(media instanceof File)) {
       throw new Error("Story media is required.");
     }

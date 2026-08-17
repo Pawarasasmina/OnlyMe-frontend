@@ -93,13 +93,6 @@ function WorldRoute() {
   return <WorldReaderPage />;
 }
 
-function SeenRoute() {
-  const { loading, user } = useAuth();
-  if (loading) return null;
-  if (user && [ROLES.FAN, ROLES.CREATOR].includes(user.role)) return <SocialAppShell><SeenReaderPage /></SocialAppShell>;
-  return <SeenReaderPage />;
-}
-
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
@@ -127,6 +120,7 @@ function AppRoutes() {
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
+          <Route path="/seen/:id" element={<SeenReaderPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<ActivityPage />} />
@@ -213,7 +207,6 @@ function AppRoutes() {
     </Route>
 
     <Route path="/profile/:username" element={<ProfileRoute />} />
-    <Route path="/seen/:id" element={<SeenRoute />} />
     <Route path="/world/:id" element={<WorldRoute />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
 

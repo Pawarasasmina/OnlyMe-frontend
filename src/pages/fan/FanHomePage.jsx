@@ -90,6 +90,7 @@ function FanHomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const display = getUserDisplay(user, status);
   const requestedFilter = searchParams.get("filter") || "all";
+  const composeSignal = searchParams.get("compose") === "note" ? "note" : "";
   const activeFilter = HOME_FILTERS.some((filter) => filter.key === requestedFilter) ? requestedFilter : "all";
   const requestedCity = searchParams.get("city") || "";
   const [selectedLocation, setSelectedLocation] = useState(() => {
@@ -205,6 +206,14 @@ function FanHomePage() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const clearComposeSignal = useCallback(() => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("compose");
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return (
     <div className="home-prototype-page">
       <section className="home-prototype-main" aria-label="Home feed">
@@ -217,7 +226,7 @@ function FanHomePage() {
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
         <HomeFeedFilters activeFilter={activeFilter} onChange={changeFilter} />
         <SeenTodayLink count={seenTodayCount} />
-        {canPost ? <PostComposer currentUser={display} onStatusChange={setStatus} status={status} /> : null}
+        {canPost ? <PostComposer currentUser={display} onComposeOpened={clearComposeSignal} onStatusChange={setStatus} openSignal={composeSignal} status={status} /> : null}
 
         {loading ? <LoadingSkeleton className="h-20" count={4} /> : null}
         {feedQuery.isError ? (
