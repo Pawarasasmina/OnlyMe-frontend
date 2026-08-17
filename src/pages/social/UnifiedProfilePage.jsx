@@ -3,6 +3,7 @@ import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiAperture,
+  FiArrowLeft,
   FiBarChart2,
   FiBell,
   FiBookmark,
@@ -517,9 +518,11 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
   const showWorldBadge = profile.role === "creator" && (profileWorld || isOwner);
 
   return (
-    <section className="profile-identity">
+    <section className={`profile-identity ${isOwner ? "is-owner" : "is-visitor"}`}>
       <div className="profile-cover">
         {cover ? <img alt={`${profile.displayName} cover`} src={cover} /> : null}
+        {!isOwner ? <button aria-label="Go back" className="profile-cover-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button> : null}
+        {!isOwner ? <span className="profile-cover-more"><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></span> : null}
       </div>
       <div className="profile-avatar-actions">
         <span className="profile-avatar-ring" style={{ "--profile-status-color": statusColor }}>
@@ -533,11 +536,12 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
         </span>
         <div className="profile-action-row">
           {isOwner ? <button aria-label="Who saw you" className="profile-action-chip is-icon" onClick={() => setViewersOpen(true)} type="button"><FiEye /></button> : null}
-          {isOwner ? <Link className="profile-action-chip" to="/settings"><FiEdit3 /> Edit</Link> : null}
+          {isOwner ? <Link className="profile-action-chip" to="/settings/profile"><FiEdit3 /> Edit</Link> : null}
+          {!isOwner ? <span aria-label="Views are private" className="profile-visitor-eye"><FiEye /></span> : null}
           {!isOwner && viewerCapabilities.canFollow ? <VisitorFollowButton profile={profile} relationship={relationship} /> : null}
           {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button"><FiMessageCircle /> Message</button> : null}
-          <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button>
-          <MoreMenu isOwner={isOwner} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} />
+          {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button> : null}
+          {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
         </div>
       </div>
       <div className="profile-copy">
@@ -666,6 +670,13 @@ function StatsRow({ metrics = {}, onConnectionsOpen }) {
   );
 }
 
+function VisitorWorldRow({ planets = [], profile }) {
+  if (profile.role !== "creator") return null;
+  const world = planets.find((item) => item.kind === "PREMIUM_WORLD" && item.status === "PUBLISHED") || planets.find((item) => item.status === "PUBLISHED");
+  if (!world) return null;
+  return <Link className="profile-visitor-world" to={`/world/${world.id}`}><span>🪐</span><b>{world.title || "Premium World"}</b><strong>Join <FiChevronRight /></strong></Link>;
+}
+
 function ProfileTabs({ tab, setTab }) {
   const tabs = [
     ["seens", "Seens", FiGrid],
@@ -709,7 +720,7 @@ function WallPreview({ isOwner, posts = [] }) {
   );
 }
 
-function ProfileBody({ data, owner, setConnectionsType, setStatus, statusContext }) {
+function ProfileBody({ data, setConnectionsType, setStatus, statusContext }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
@@ -727,18 +738,19 @@ function ProfileBody({ data, owner, setConnectionsType, setStatus, statusContext
   };
   return (
     <div className="profile-prototype">
-      <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} />
-      {!owner && !isOwner ? <Link className="profile-back-link" to="/wall">Back</Link> : null}
+      {isOwner ? <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <IdentitySection onStatusChange={setStatus} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} statusContext={statusContext} viewerCapabilities={viewerCapabilities} />
-      <DashboardRow profile={profile} viewerCapabilities={viewerCapabilities} />
-      <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} />
+      {isOwner ? <DashboardRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
+      {isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <PhotosSection isOwner={isOwner} photos={data.photos || []} />
       <StatsRow metrics={publicMetrics} onConnectionsOpen={setConnectionsType} />
+      {!isOwner ? <VisitorWorldRow planets={data.planets || []} profile={profile} /> : null}
+      {!isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel"><ContentTabsPanel data={data} isOwner={isOwner} tab={tab} /></section>
       <WallPreview isOwner={isOwner} posts={data.wallPosts || data.sharedWallPosts || []} />
-      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} />
+      {isOwner ? <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} /> : null}
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
     </div>
   );
@@ -764,7 +776,7 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     body = (
       <>
         <ProfileConnectionsModal onClose={() => setConnectionsType("")} type={connectionsType} username={profileQuery.data.profile.username} />
-        <ProfileBody data={profileQuery.data} owner={owner} setConnectionsType={setConnectionsType} setStatus={statusContext?.setStatus} statusContext={statusContext} />
+        <ProfileBody data={profileQuery.data} setConnectionsType={setConnectionsType} setStatus={statusContext?.setStatus} statusContext={statusContext} />
       </>
     );
   }

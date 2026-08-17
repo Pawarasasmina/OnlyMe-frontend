@@ -46,8 +46,8 @@ function NotificationSettingsPage() {
     },
   });
 
-  if (query.isLoading) return <Loader label="Loading notification settings..." />;
-  if (query.isError) return <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load notification settings.</p>;
+  if (query.isLoading) return <div className="space-y-6"><SettingsNav /><Loader label="Loading notification settings..." /></div>;
+  if (query.isError) return <div className="space-y-6"><SettingsNav /><p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load notification settings.</p></div>;
 
   const role = query.data?.role || "fan";
   const keys = role === "admin" ? ["email", "inApp", "security"] : ["email", "inApp", "messages", "directAccess", "marketing"];

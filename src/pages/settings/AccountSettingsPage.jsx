@@ -82,11 +82,10 @@ function AccountSettingsPage() {
     },
   });
 
-  if (query.isLoading) return <Loader label={t("Loading account settings...")} />;
-  if (query.isError) return <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{t("Unable to load account settings.")}</p>;
+  if (query.isLoading) return <div className="space-y-6"><SettingsNav showTabs={false} /><Loader label={t("Loading account settings...")} /></div>;
+  if (query.isError) return <div className="space-y-6"><SettingsNav showTabs={false} /><p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{t("Unable to load account settings.")}</p></div>;
 
   const account = query.data.account;
-  const role = account.role;
   const updatePreference = ({ target }) => {
     setDirty(true);
     setMessage("");
@@ -117,7 +116,7 @@ function AccountSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <SettingsNav />
+      <SettingsNav showTabs={false} />
       {message ? <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
       {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p> : null}
       <form className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5" onSubmit={saveAccount}>
@@ -130,7 +129,6 @@ function AccountSettingsPage() {
           <Input disabled label={t("Role")} value={account.role} />
           <label className="block text-sm font-medium text-brand-mist/80">{t("Preferred language")}<select className="mt-2 w-full rounded-xl border border-white/10 bg-brand-dark px-4 py-3 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="preferredLanguage" onChange={updatePreference} value={language}><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="es">Español</option><option value="fr">Français</option><option value="pt">Português</option></select></label>
           <TimezoneSelector label={t("Time zone")} onChange={updatePreference} value={preferences.timezone} />
-          {role === "admin" ? <Input label={t("Phone number")} name="phoneNumber" onChange={updatePreference} value={preferences.phoneNumber} /> : null}
         </div>
         <div className="flex justify-end">
           <Button disabled={!dirty || accountMutation.isPending} type="submit">{accountMutation.isPending ? t("Saving...") : t("Save account")}</Button>

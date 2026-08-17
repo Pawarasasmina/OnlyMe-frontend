@@ -65,6 +65,8 @@ import WelcomePage from "../pages/onboarding/WelcomePage";
 import AccountSettingsPage from "../pages/settings/AccountSettingsPage";
 import PrivacySettingsPage from "../pages/settings/PrivacySettingsPage";
 import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage";
+import ContentPreferencesPage from "../pages/settings/ContentPreferencesPage";
+import SupportPage from "../pages/settings/SupportPage";
 import GiftManagementPage from "../pages/admin/GiftManagementPage";
 
 function RootRedirect() {
@@ -131,6 +133,8 @@ function AppRoutes() {
           <Route path="/settings/account" element={<AccountSettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+          <Route path="/settings/content" element={<ContentPreferencesPage />} />
+          <Route path="/settings/support/:section" element={<SupportPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
