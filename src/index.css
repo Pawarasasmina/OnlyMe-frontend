@@ -7954,6 +7954,10 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     padding-right: 18px;
     padding-left: 18px;
   }
+
+  .social-app-shell .social-center-scroll {
+    margin-left: 20px;
+  }
 }
 
 /* The shared right rail owns its own column, so prototype pages should use the
@@ -10905,69 +10909,6 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     justify-content: initial;
   }
 
-  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-fixed-rail:first-child {
-    border-right: 1px solid rgba(255,255,255,.05);
-    background: var(--feed-page-bg);
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] {
-    display: grid;
-    gap: 9px;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a {
-    min-height: 48px;
-    gap: 16px;
-    border-radius: 999px;
-    padding: 12.5px 14px;
-    color: rgba(255,255,255,.62);
-    font-size: 15px;
-    font-weight: 600;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a:hover,
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a[aria-current="page"] {
-    background: transparent;
-    color: #fff;
-    font-weight: 800;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail a[href="/create"],
-  .social-app-shell:has(.seen-shell-main) .social-left-rail a[href="/creator/verification"] {
-    min-height: 60px;
-    margin-top: 16px;
-    border-radius: 999px;
-    background: linear-gradient(135deg,#9CCBFF,#6FA9E8);
-    color: #0A0C0F;
-    font-size: 14px;
-    font-weight: 800;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail > div {
-    margin-top: auto;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail > div > a {
-    gap: 11px;
-    border-radius: 999px;
-    padding: 10px 14px;
-    color: rgba(255,255,255,.62);
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail > div > a:hover {
-    background: rgba(255,255,255,.04);
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail > div > a > span:first-child {
-    width: 37px !important;
-    height: 37px !important;
-  }
-
   .social-app-shell:has(.seen-shell-main) .social-center-scroll {
     width: auto;
     min-width: 0;
@@ -11061,5 +11002,105 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 
   .seen-engagement-left {
     gap: 10px;
+  }
+}
+
+/* Keep the permanent desktop rails on the shared outer canvas. */
+@media (min-width: 1020px) {
+  .social-app-shell .social-app-frame > .social-fixed-rail:first-child,
+  .social-app-shell .social-app-frame > .social-fixed-rail:last-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-fixed-rail:first-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-fixed-rail:last-child {
+    background: transparent;
+  }
+}
+
+/* Seen detail and chapter views fill the shell's center column on desktop. */
+@media (min-width: 768px) {
+  .seen-detail-page,
+  .seen-reader-page {
+    width: 100%;
+  }
+}
+
+/* Present Create as a compact modal on desktop; mobile remains a bottom sheet. */
+@media (min-width: 768px) {
+  .seen-create-layer {
+    align-items: flex-end;
+    transform: none;
+  }
+
+  .seen-create-dim {
+    inset: 0;
+    width: auto;
+    background: rgba(2, 4, 8, .72);
+    backdrop-filter: blur(3px);
+  }
+
+  .seen-create-sheet {
+    position: absolute;
+    bottom: 0;
+    width: min(460px, calc(100vw - 48px));
+    max-height: min(680px, calc(100dvh - 64px));
+    border: 1px solid rgba(255, 255, 255, .11);
+    border-bottom: 0;
+    border-radius: 24px 24px 0 0;
+    background: #151A22;
+    padding: 10px 24px 32px;
+    box-shadow: 0 -24px 80px rgba(0, 0, 0, .68), inset 0 1px 0 rgba(255, 255, 255, .035);
+    animation: seenCreateSheetIn .28s cubic-bezier(.2, .8, .2, 1);
+  }
+
+  .seen-create-grab {
+    display: block;
+    width: 38px;
+    margin: 2px auto 18px;
+  }
+
+  .seen-create-sheet h2 {
+    margin-bottom: 18px;
+    font-size: 24px;
+  }
+
+  .seen-create-list {
+    gap: 9px;
+  }
+
+  .seen-create-option {
+    gap: 14px;
+    min-height: 66px;
+    border: 1px solid rgba(255, 255, 255, .065);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .025);
+    padding: 11px 14px;
+  }
+
+  .seen-create-option:hover:not(:disabled) {
+    border-color: rgba(156, 203, 255, .28);
+    background: rgba(156, 203, 255, .075);
+    transform: translateY(-1px);
+  }
+
+  .seen-create-option-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(156, 203, 255, .09);
+    color: #9CCBFF;
+  }
+
+  .seen-create-option-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .seen-create-option-copy b {
+    font-size: 15px;
+  }
+
+  .seen-create-option-copy small {
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: 550;
   }
 }
