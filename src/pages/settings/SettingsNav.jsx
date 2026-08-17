@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useLanguage } from "../../hooks/useLanguage";
 
 const settingsTabs = [
   { label: "Profile", slug: "profile" },
@@ -9,6 +10,7 @@ const settingsTabs = [
 
 function SettingsNav() {
   const location = useLocation();
+  const { t } = useLanguage();
   const basePath = location.pathname.startsWith("/creator/settings")
     ? "/creator/settings"
     : location.pathname.startsWith("/admin/settings") || location.pathname.startsWith("/admin/profile")
@@ -30,7 +32,7 @@ function SettingsNav() {
           key={to}
           to={to}
         >
-          {tab.label}
+          {t(tab.label)}
         </Link>
         );
       })}

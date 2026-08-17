@@ -147,19 +147,13 @@ function FreshSeensCard({ seens = [] }) {
 }
 
 function HomeRailFooter() {
-  const links = [
-    ["About", "/explore"],
-    ["Creators", "/discover"],
-    ["Terms", "/settings"],
-    ["Privacy", "/settings/privacy"],
-    ["Help", "/settings"],
-  ];
+  const labels = ["About", "Creators", "Terms", "Privacy", "Help"];
 
   return (
-    <footer className="home-rail-footer" aria-label="@seen links">
-      <nav aria-label="Home feed footer links">
-        {links.map(([label, to]) => <Link key={label} to={to}>{label}</Link>)}
-      </nav>
+    <footer className="home-rail-footer" aria-label="@seen information">
+      <div aria-label="Home feed information">
+        {labels.map((label) => <button key={label} type="button">{label}</button>)}
+      </div>
       <p>@seen - We see you. Every day.</p>
     </footer>
   );

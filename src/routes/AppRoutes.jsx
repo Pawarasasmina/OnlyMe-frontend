@@ -31,10 +31,10 @@ import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
 import CreatorVerificationDetail from "../pages/admin/CreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
+import SettingsPage from "../pages/settings/SettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
 import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
-import FanBackedSocialPage from "../pages/social/FanBackedSocialPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
@@ -93,6 +93,13 @@ function WorldRoute() {
   return <WorldReaderPage />;
 }
 
+function SeenRoute() {
+  const { loading, user } = useAuth();
+  if (loading) return null;
+  if (user && [ROLES.FAN, ROLES.CREATOR].includes(user.role)) return <SocialAppShell><SeenReaderPage /></SocialAppShell>;
+  return <SeenReaderPage />;
+}
+
 function AppRoutes() {
   return <Routes>
     <Route element={<MainLayout />}>
@@ -112,13 +119,6 @@ function AppRoutes() {
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/onboarding/:step" element={<OnboardingPage />} />
-      <Route element={<MainLayout />}>
-        <Route path="/settings/profile" element={<ProfileSettingsPage />} />
-        <Route path="/settings/account" element={<AccountSettingsPage />} />
-        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
-        <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
-      </Route>
-
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<FanHomePage />} />
@@ -129,10 +129,14 @@ function AppRoutes() {
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/activity" element={<FanBackedSocialPage description="Creator activity is not connected to the shared social shell yet." title="Activity"><ActivityPage /></FanBackedSocialPage>} />
+          <Route path="/activity" element={<ActivityPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
-          <Route path="/settings" element={<ProfileSettingsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+          <Route path="/settings/account" element={<AccountSettingsPage />} />
+          <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+          <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
@@ -209,7 +213,7 @@ function AppRoutes() {
     </Route>
 
     <Route path="/profile/:username" element={<ProfileRoute />} />
-    <Route path="/seen/:id" element={<SeenReaderPage />} />
+    <Route path="/seen/:id" element={<SeenRoute />} />
     <Route path="/world/:id" element={<WorldRoute />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
 
