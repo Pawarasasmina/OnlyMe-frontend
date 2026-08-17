@@ -14,6 +14,7 @@ import { useSocialCapabilities } from "../hooks/useSocialCapabilities";
 import { CallProvider } from "../context/CallContext";
 import { canCreateFeedPost } from "../utils/postPermissions";
 import { canCreateStory } from "../utils/storyPermissions";
+import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -36,6 +37,7 @@ function SocialAppShell({ children = null }) {
   const [appModalOpen, setAppModalOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
+  const [verificationOpen, setVerificationOpen] = useState(false);
 
   useEffect(() => {
     if (status) localStorage.setItem(STATUS_KEY, status);
@@ -68,7 +70,7 @@ function SocialAppShell({ children = null }) {
       <CallProvider user={user}>
       <div className="social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden">
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] md:h-screen md:min-h-0">
-          <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} status={status} unreadMessageCount={unreadMessageCount} />
+          <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadMessageCount={unreadMessageCount} />
           <div className="social-center-scroll min-w-0 flex-1 md:h-screen md:overflow-y-auto md:overscroll-contain" ref={contentScrollRef}>
             {!isDiscoverPage && !isHomePage && !isSeenPage && !isWorldComposePage ? <header className="sticky top-0 z-30 flex items-center justify-between border-b border-atseen-line bg-atseen-bg/92 px-4 py-3 backdrop-blur md:hidden">
               <AtseenLogo size={28} />
@@ -111,6 +113,7 @@ function SocialAppShell({ children = null }) {
         }}
       />
       <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
+      {verificationOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerificationOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
       </CallProvider>
     </FanToastProvider>
   );
