@@ -64,8 +64,8 @@ function WelcomeCarousel({ error, onAlreadyHaveAccount, onGetStarted, saving }) 
         <AtseenEyeMark className="h-28 w-44 animate-[atseen-eye-pulse_3s_ease-in-out_infinite] sm:h-32 sm:w-52" />
       </button>
       <div className="flex flex-1 flex-col justify-end pt-8 lg:justify-center lg:pt-0">
-        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#9CCBFF]/80">Welcome to Atseen</p>
-        <h1 id="welcome-slide-title" className="mt-3 max-w-[460px] text-[clamp(2rem,5vw,3.35rem)] font-black leading-[0.98] tracking-normal text-white">{slide.title}</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9CCBFF]/80">Welcome to Atseen</p>
+        <h1 id="welcome-slide-title" className="mt-3 max-w-[460px] text-[clamp(2rem,5vw,3.35rem)] font-bold leading-[1.02] tracking-[-0.02em] text-white">{slide.title}</h1>
         <p className="mt-4 max-w-[460px] text-sm leading-6 text-white/62 sm:text-base" aria-live="polite">{slide.description}</p>
         <div className="mt-5 flex gap-2" role="tablist" aria-label="Welcome slides">
           {slides.map((item, slideIndex) => (
@@ -82,14 +82,14 @@ function WelcomeCarousel({ error, onAlreadyHaveAccount, onGetStarted, saving }) 
         </div>
         {error ? <p className="mt-5 rounded-2xl border border-[#F17878]/30 bg-[#F17878]/10 p-3 text-sm text-[#F17878]" role="alert">{error}</p> : null}
         <div className="mt-6 grid gap-3 sm:grid-cols-[0.8fr_1fr]">
-          <button className="rounded-xl border border-white/10 px-4 py-3 text-sm font-black text-white/62 transition hover:bg-white/5 hover:text-white disabled:opacity-40" disabled={index === 0 || saving} onClick={previous} type="button">
+          <button className="rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/62 transition hover:bg-white/5 hover:text-white disabled:opacity-40" disabled={index === 0 || saving} onClick={previous} type="button">
             Previous
           </button>
-          <button className="rounded-xl bg-[#9CCBFF] px-4 py-3 text-sm font-black text-[#0A0C0F] transition hover:bg-[#6FA9E8] disabled:opacity-60" disabled={saving} onClick={next} type="button">
+          <button className="rounded-xl bg-[#9CCBFF] px-4 py-3 text-sm font-semibold text-[#0A0C0F] transition hover:bg-[#6FA9E8] disabled:opacity-60" disabled={saving} onClick={next} type="button">
             {index < slides.length - 1 ? "Next" : saving ? "Saving..." : "Get started"}
           </button>
         </div>
-        <button className="mt-3 w-full rounded-2xl px-5 py-3 text-sm font-bold text-white/62 transition hover:bg-white/5 hover:text-white" onClick={onAlreadyHaveAccount} type="button">
+        <button className="mt-3 w-full rounded-2xl px-5 py-3 text-sm font-medium text-white/62 transition hover:bg-white/5 hover:text-white" onClick={onAlreadyHaveAccount} type="button">
           I already have an account
         </button>
       </div>

@@ -13,6 +13,8 @@ import {
   FiEdit3,
   FiDisc,
   FiEye,
+  FiEyeOff,
+  FiFlag,
   FiGrid,
   FiLink,
   FiMapPin,
@@ -25,6 +27,7 @@ import {
   FiRepeat,
   FiSettings,
   FiShare2,
+  FiSlash,
   FiUserCheck,
   FiUserPlus,
   FiX,
@@ -413,37 +416,68 @@ function OwnerQuickActionsSheet({ isOpen, onClose, profile, viewerCapabilities =
   );
 }
 
-function VisitorMoreSheet({ isOpen, onClose, profile }) {
+function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
+  const client = useQueryClient();
+  const [busy, setBusy] = useState("");
+  const [muted, setMuted] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [error, setError] = useState("");
   if (!isOpen) return null;
   const publicPath = `/profile/${encodeURIComponent(profile.username)}`;
   const shareTarget = `${window.location.origin}${publicPath}`;
-  const actions = [
-    { icon: FiMessageSquare, label: "Send profile", sub: "Share in a chat", to: `/messages?share=${encodeURIComponent(shareTarget)}` },
-    { icon: FiEye, label: "View public profile", sub: `@${profile.username}`, to: publicPath },
-  ];
+  const firstName = String(profile.displayName || profile.username || "Profile").trim().split(/\s+/)[0];
+
+  const run = async (name, action) => {
+    setBusy(name);
+    setError("");
+    try { await action(); } catch (requestError) { setError(requestError.response?.data?.message || `Could not ${name.toLowerCase()}.`); } finally { setBusy(""); }
+  };
+  const share = () => run("Share profile", async () => {
+    if (navigator.share) await navigator.share({ title: `${profile.displayName} on @seen`, url: shareTarget });
+    else await copyText(shareTarget);
+    onClose();
+  });
+  const follow = () => run(relationship.following ? "Unfollow" : "Follow", async () => {
+    await profileService.toggleFollow(profile.username);
+    await client.invalidateQueries({ queryKey: ["unified-profile"] });
+    onClose();
+  });
+  const mute = () => run(muted ? "Unmute" : "Mute", async () => {
+    await messageService.muteConversation(profile.ownerUserId, !muted);
+    setMuted((value) => !value);
+  });
+  const report = () => run("Report", async () => {
+    await messageService.reportConversation(profile.ownerUserId, { reason: "OTHER", details: `Profile report for @${profile.username}` });
+    onClose();
+  });
+  const block = () => {
+    if (!blocked && !window.confirm(`Block ${profile.displayName}? They will not be able to message or interact with you.`)) return;
+    run(blocked ? "Unblock" : "Block", async () => {
+      if (blocked) await messageService.unblock(profile.ownerUserId); else await messageService.block(profile.ownerUserId);
+      setBlocked((value) => !value);
+      await client.invalidateQueries({ queryKey: ["unified-profile"] });
+      onClose();
+    });
+  };
   return (
     <div aria-modal="true" className="profile-quick-actions-backdrop" onClick={onClose} role="dialog">
-      <section className="profile-quick-actions-sheet" onClick={(event) => event.stopPropagation()}>
+      <section className="profile-quick-actions-sheet is-visitor" onClick={(event) => event.stopPropagation()}>
         <span className="profile-quick-actions-handle" />
-        <h2>Quick actions</h2>
+        <h2>{firstName}</h2>
         <div className="profile-quick-actions-list">
-          {actions.map(({ icon: Icon, label, sub, to }) => (
-            <Link className="profile-quick-action-row" key={label} onClick={onClose} to={to}>
-              <span className="profile-quick-action-icon"><Icon /></span>
-              <span className="profile-quick-action-copy">
-                <b>{label}</b>
-                <small>{sub}</small>
-              </span>
-              <FiChevronRight />
-            </Link>
-          ))}
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiShare2 /></span><span className="profile-quick-action-copy"><b>Share profile</b></span></button>
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={follow} type="button"><span className="profile-quick-action-icon"><FiUserCheck /></span><span className="profile-quick-action-copy"><b>{relationship.following ? "Unfollow" : "Follow"}</b></span></button>
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={mute} type="button"><span className="profile-quick-action-icon"><FiEyeOff /></span><span className="profile-quick-action-copy"><b>{muted ? `Unmute ${firstName}` : `Mute ${firstName}`}</b><small>{muted ? "Show their updates again" : "Stay following, stop seeing their posts and stories"}</small></span></button>
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={report} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>Report</b></span></button>
+          <button className="profile-quick-action-row is-danger" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? `Unblock ${firstName}` : `Block ${firstName}`}</b></span></button>
         </div>
+        {error ? <p className="profile-visitor-action-error" role="alert">{error}</p> : null}
       </section>
     </div>
   );
 }
 
-function MoreMenu({ isOwner, profile, viewerCapabilities = {} }) {
+function MoreMenu({ isOwner, profile, relationship = {}, viewerCapabilities = {} }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="profile-more-wrap">
@@ -451,7 +485,7 @@ function MoreMenu({ isOwner, profile, viewerCapabilities = {} }) {
       {isOwner ? (
         <OwnerQuickActionsSheet isOpen={open} onClose={() => setOpen(false)} profile={profile} viewerCapabilities={viewerCapabilities} />
       ) : (
-        <VisitorMoreSheet isOpen={open} onClose={() => setOpen(false)} profile={profile} />
+        <VisitorMoreSheet isOpen={open} onClose={() => setOpen(false)} profile={profile} relationship={relationship} />
       )}
     </span>
   );
@@ -503,7 +537,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
           {!isOwner && viewerCapabilities.canFollow ? <VisitorFollowButton profile={profile} relationship={relationship} /> : null}
           {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button"><FiMessageCircle /> Message</button> : null}
           <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button>
-          <MoreMenu isOwner={isOwner} profile={profile} viewerCapabilities={viewerCapabilities} />
+          <MoreMenu isOwner={isOwner} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} />
         </div>
       </div>
       <div className="profile-copy">

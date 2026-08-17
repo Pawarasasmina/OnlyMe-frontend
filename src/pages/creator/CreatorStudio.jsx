@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FiArrowLeft,
   FiCheck,
+  FiClock,
   FiCreditCard,
   FiEye,
   FiMapPin,
@@ -23,6 +24,9 @@ const PLANET = "\u{1FA90}";
 const UP = "\u25B2";
 const DOT = "\u00B7";
 const CHEVRON = "\u203A";
+
+// Beta-only switch. Set to false (or remove the early return below) to restore the dashboard.
+const PROFESSIONAL_DASHBOARD_BETA_MASK_ENABLED = true;
 
 function compact(value) {
   const number = Number(value) || 0;
@@ -187,6 +191,20 @@ export default function CreatorStudio() {
   const bestSeen = metrics.seens[0];
   const bestWorld = metrics.activeWorlds[0];
   const sourceHasData = metrics.published.length || wallPosts.length || metrics.seens.length;
+
+  if (PROFESSIONAL_DASHBOARD_BETA_MASK_ENABLED) {
+    return (
+      <main className="grid min-h-[560px] place-items-start px-4 pt-20 text-center sm:pt-28">
+        <section className="mx-auto w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-surface p-8 shadow-2xl" role="status">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-atseen-blue/10 text-3xl text-atseen-blue"><FiClock /></span>
+          <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-atseen-blue">Coming soon</p>
+          <h1 className="mt-2 text-3xl font-black">Professional dashboard</h1>
+          <p className="mt-3 text-sm leading-6 text-atseen-muted">We’re preparing your professional tools, insights, and earnings experience. The dashboard will become available after the beta release.</p>
+          <Link className="mt-7 inline-flex items-center gap-2 rounded-full border border-atseen-line px-5 py-2.5 text-sm font-bold transition hover:border-atseen-blue/50 hover:text-atseen-blue" to="/profile"><FiArrowLeft /> Back to Profile</Link>
+        </section>
+      </main>
+    );
+  }
 
   if (loading) {
     return (

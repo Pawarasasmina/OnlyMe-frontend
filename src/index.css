@@ -3135,6 +3135,20 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   font-size: 16px;
   font-weight: 950;
 }
+.edit-profile-account-actions { display: grid; gap: 9px; margin-top: 20px; }
+.edit-profile-account-actions > button { display: flex; width: 100%; min-height: 52px; align-items: center; justify-content: center; gap: 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #181D25; color: #fff; font-size: 15px; font-weight: 850; }
+.edit-profile-account-actions > button.is-danger { color: #F17878; }
+.edit-profile-account-actions > button:disabled { opacity: .5; }
+.edit-profile-account-actions > small { margin-top: 5px; color: rgba(255,255,255,.35); font-size: 11px; text-align: center; }
+.edit-profile-delete-overlay { position: fixed; inset: 0; z-index: 180; display: flex; align-items: flex-end; justify-content: center; background: rgba(4,6,10,.68); padding: 0 12px; }
+.edit-profile-delete-sheet { width: min(100%, 560px); border: 1px solid rgba(255,255,255,.08); border-bottom: 0; border-radius: 22px 22px 0 0; background: #1C212B; padding: 8px 24px 30px; text-align: center; box-shadow: 0 -24px 70px rgba(0,0,0,.58); }
+.edit-profile-delete-handle { display: block; width: 34px; height: 4px; margin: 0 auto 20px; border-radius: 999px; background: rgba(255,255,255,.28); }
+.edit-profile-delete-icon { margin: 0 auto; color: #F17878; font-size: 27px; }
+.edit-profile-delete-sheet h2 { margin-top: 10px; color: #fff; font-size: 18px; font-weight: 950; }
+.edit-profile-delete-sheet p { margin: 8px auto 0; max-width: 430px; color: rgba(255,255,255,.62); font-size: 13px; line-height: 1.65; }
+.edit-profile-delete-confirm { width: 100%; min-height: 48px; margin-top: 17px; border: 1px solid rgba(241,120,120,.22); border-radius: 13px; background: #181D25; color: #F17878; font-size: 14px; font-weight: 900; }
+.edit-profile-delete-cancel { margin-top: 13px; color: rgba(255,255,255,.42); font-size: 13px; font-weight: 800; }
+.edit-profile-delete-sheet button:disabled { opacity: .5; }
 .edit-profile-success,
 .edit-profile-error {
   margin: 18px 0 0;
@@ -3690,6 +3704,13 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   border-color: rgba(156,203,255,.25);
   color: var(--profile-blue);
 }
+.profile-quick-actions-sheet.is-visitor .profile-quick-action-row { width: 100%; text-align: left; }
+.profile-quick-actions-sheet.is-visitor .profile-quick-action-icon { border: 0; background: transparent; color: rgba(255,255,255,.72); }
+.profile-quick-actions-sheet.is-visitor .profile-quick-action-row.is-danger,
+.profile-quick-actions-sheet.is-visitor .profile-quick-action-row.is-danger b,
+.profile-quick-actions-sheet.is-visitor .profile-quick-action-row.is-danger .profile-quick-action-icon { color: #F17878; }
+.profile-quick-actions-sheet.is-visitor .profile-quick-action-row:disabled { opacity: .55; }
+.profile-visitor-action-error { margin-top: 10px; border-radius: 10px; background: rgba(241,120,120,.1); color: #F17878; padding: 9px 11px; font-size: 11px; }
 @media (max-width: 1239px) and (min-width: 1020px) {
   .profile-quick-actions-sheet { left: calc(50% + 130px); }
 }
@@ -5406,12 +5427,12 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     gap: 16px;
     padding: 10px 12px;
     font-size: 16px;
-    font-weight: 650;
+    font-weight: 500;
     line-height: 1.2;
   }
 
   .social-app-shell .social-left-rail a[aria-current="page"] {
-    font-weight: 750;
+    font-weight: 700;
   }
 
   .social-app-shell .social-left-rail svg {
@@ -5423,6 +5444,10 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     min-height: auto;
     margin-bottom: 34px;
     padding: 0 12px;
+  }
+
+  .social-app-shell .social-left-rail > a:first-child > span {
+    gap: 0;
   }
 
   .social-app-shell .social-left-rail > a:first-child svg {
@@ -5443,7 +5468,24 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
     background: var(--feed-primary);
     color: #050608;
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 700;
+    box-shadow: 0 12px 28px rgba(138,184,255,.18);
+  }
+
+  .social-app-shell .social-left-rail .sidebar-identity {
+    font-weight: 400;
+  }
+
+  .social-app-shell .social-left-rail .sidebar-identity strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 650;
+  }
+
+  .social-app-shell .social-left-rail .sidebar-identity small {
+    color: var(--feed-text-tertiary);
+    font-size: 11px;
+    font-weight: 400;
   }
 
   .social-app-shell .social-left-rail nav[aria-label="Account actions"] a {

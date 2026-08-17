@@ -147,10 +147,12 @@ function Segmented({ label, onChange, value }) {
 }
 
 function normalizeLanguage(text) {
-  return String(text || "")
+  const value = String(text || "")
     .split(/[,\u00b7]/)
     .map((part) => part.trim())
     .filter(Boolean)[0] || "en";
+  const codes = { english: "en", "العربية": "ar", arabic: "ar", "русский": "ru", russian: "ru", "español": "es", spanish: "es", "français": "fr", french: "fr", "português": "pt", portuguese: "pt" };
+  return codes[value.toLowerCase()] || value.toLowerCase();
 }
 
 function ProfileSettingsPage() {
@@ -243,6 +245,7 @@ function ProfileSettingsPage() {
     setDirty(true);
     setForm((current) => ({ ...current, orbitVisible: value !== "only_me" }));
   };
+
 
   const saveMutation = useMutation({
     mutationFn: async () => {
