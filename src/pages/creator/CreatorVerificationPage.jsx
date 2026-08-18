@@ -14,7 +14,7 @@ const pages = [
   ["Facebook", "Facebook · @handle", FiCreditCard],
   ["YouTube", "YouTube · @handle", FiEye],
 ];
-const editableStatuses = new Set(["NOT_STARTED", "DRAFT", "CHANGES_REQUESTED"]);
+const editableStatuses = new Set(["NOT_STARTED", "DRAFT", "CHANGES_REQUESTED", "REJECTED"]);
 
 const errorText = (error, fallback) => error.response?.data?.message || error.message || fallback;
 
@@ -58,7 +58,7 @@ export default function CreatorVerificationPage() {
     try {
       await verificationService.saveDraft({ category, socialPages });
       if (file) await verificationService.uploadDocument("documentFront", file);
-      if (status === "CHANGES_REQUESTED") await verificationService.resubmit(); else await verificationService.submit();
+      if (["CHANGES_REQUESTED", "REJECTED"].includes(status)) await verificationService.resubmit(); else await verificationService.submit();
       await queryClient.invalidateQueries({ queryKey: ["creator", "verification"] });
       await query.refetch();
     } catch (requestError) { setError(errorText(requestError, "Unable to send your application.")); }

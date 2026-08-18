@@ -6,12 +6,12 @@ import { getUserDisplay } from "./shared/userDisplay";
 import { socialPrimaryNavItems } from "../social/socialNavItems";
 import { useLanguage } from "../../hooks/useLanguage";
 
-function FanWebSidebar({ capabilities, onVerify, status, unreadMessageCount = 0 }) {
+function FanWebSidebar({ capabilities, onCreate, onVerify, status, unreadMessageCount = 0 }) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate
-    ? { label: "Create ✦", to: "/create" }
+    ? { label: "Create ✦", onClick: onCreate }
     : capabilities.canAccessVerification && !capabilities.isApprovedCreator
       ? { label: "Verify ✦", to: "/creator/verification" }
       : null;
@@ -44,7 +44,13 @@ function FanWebSidebar({ capabilities, onVerify, status, unreadMessageCount = 0 
         ))}
       </nav>
       {createAction ? (
-        createAction.to === "/creator/verification" ? <button
+        createAction.onClick ? <button
+          className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
+          onClick={createAction.onClick}
+          type="button"
+        >
+          {t(createAction.label)}
+        </button> : createAction.to === "/creator/verification" ? <button
           className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
           onClick={onVerify}
           type="button"

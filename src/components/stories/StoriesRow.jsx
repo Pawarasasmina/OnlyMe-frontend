@@ -27,8 +27,7 @@ function StoriesRow({ currentUser }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
-  const isFanViewer = String(user?.role || currentUser?.role || "").toLowerCase() === "fan";
-  const showStoryPublishing = !isFanViewer;
+  const showStoryPublishing = canCreate;
   const viewerId = getUserId(user);
   const storiesQuery = useWallStories({ fallbackUser: { ...currentUser, ...user }, viewerId });
   const [creatorOpen, setCreatorOpen] = useState(false);

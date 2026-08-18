@@ -1,7 +1,7 @@
 import { ROLES } from "./constants";
 
 export function canCreateFeedPost(user) {
-  return user?.role === ROLES.CREATOR;
+  return [ROLES.FAN, ROLES.CREATOR].includes(user?.role);
 }
 
 export function canManageFeedPost(user, post) {

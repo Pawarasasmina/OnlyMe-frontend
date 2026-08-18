@@ -141,7 +141,7 @@ function AppRoutes() {
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
-          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
           </Route>
           <Route element={<ApprovedCreatorRoute />}>
@@ -172,7 +172,7 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
+      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<CreatorAppShell />}>
             <Route path="/creator/dashboard" element={<Navigate replace to="/wall" />} />
             <Route path="/creator/application" element={<CreatorApplicationPage />} />

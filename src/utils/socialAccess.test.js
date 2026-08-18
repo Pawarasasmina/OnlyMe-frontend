@@ -22,16 +22,22 @@ test("approved creators receive Create and Studio capabilities", () => {
   assert.equal(capabilities.canAccessVerification, true);
 });
 
-test("pending creators retain social and verification access without creation", () => {
-  const capabilities = socialCapabilitiesFor({ role: "creator", creatorApprovalStatus: "pending" });
-  assert.equal(capabilities.canCreate, false);
+test("pending applicants retain free social creation and verification without Studio", () => {
+  const capabilities = socialCapabilitiesFor({ role: "fan", creatorApprovalStatus: "pending" });
+  assert.equal(capabilities.canCreate, true);
   assert.equal(capabilities.canAccessStudio, false);
   assert.equal(capabilities.canAccessVerification, true);
 });
 
-test("fans receive shared navigation without creator management capabilities", () => {
+test("normal accounts receive free creation and application access without creator management", () => {
   const capabilities = socialCapabilitiesFor({ role: "fan" });
-  assert.equal(capabilities.canCreate, false);
+  assert.equal(capabilities.canCreate, true);
   assert.equal(capabilities.canAccessStudio, false);
-  assert.equal(capabilities.canAccessVerification, false);
+  assert.equal(capabilities.canAccessVerification, true);
+});
+
+test("approved unified accounts receive creator capabilities without changing role", () => {
+  const capabilities = socialCapabilitiesFor({ role: "fan", creatorApprovalStatus: "approved" });
+  assert.equal(capabilities.isApprovedCreator, true);
+  assert.equal(capabilities.canAccessStudio, true);
 });

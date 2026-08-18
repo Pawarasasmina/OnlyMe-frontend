@@ -227,6 +227,7 @@ function SharedContentMessageCard({ content, mine, onOpen }) {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const creatorMode = user?.creatorApprovalStatus === "approved";
   const { startCall } = useCalls();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -358,18 +359,18 @@ export default function MessagesPage() {
   const directWindowsQuery = useQuery({
     queryKey: ["messages", "direct-access"],
     queryFn: () => messageService.getDirectAccessWindows().then((response) => response.data.data.windows),
-    enabled: inboxTab === "direct" || user?.role === "creator",
+    enabled: inboxTab === "direct" || creatorMode,
     refetchInterval: inboxTab === "direct" ? 10000 : false,
   });
   const creatorDirectAccessQuery = useQuery({
     queryKey: ["messages", "direct-access-settings"],
     queryFn: () => messageService.getDirectAccessOffer(myId).then((response) => response.data.data),
-    enabled: inboxTab === "direct" && user?.role === "creator" && Boolean(myId),
+    enabled: inboxTab === "direct" && creatorMode && Boolean(myId),
   });
   const selectedDirectAccessOfferQuery = useQuery({
     queryKey: ["messages", "direct-access-offer", selected?.id],
     queryFn: () => messageService.getDirectAccessOffer(selected.id).then((response) => response.data.data),
-    enabled: user?.role === "fan" && selected?.type !== "group" && Boolean(selected?.id),
+    enabled: selected?.type !== "group" && Boolean(selected?.id),
     retry: false,
     staleTime: 30000,
   });
@@ -387,7 +388,7 @@ export default function MessagesPage() {
   const directConversations = useMemo(() => {
     const byPerson = new Map();
     (directWindowsQuery.data || []).forEach((windowItem) => {
-      const other = user?.role === "creator" ? windowItem.fan : windowItem.creator;
+      const other = String(windowItem.creatorId) === myId ? windowItem.fan : windowItem.creator;
       if (!other?.id) return;
       const current = byPerson.get(other.id);
       const itemIsActive = ["OPEN", "ANSWERED"].includes(windowItem.status)
@@ -404,7 +405,7 @@ export default function MessagesPage() {
       }
     });
     return [...byPerson.values()];
-  }, [directWindowsQuery.data, user?.role]);
+  }, [directWindowsQuery.data, myId]);
   const archiveInboxRow = async (conversation) => {
     setInboxRowMenu(null);
     if (conversation.type === "group") await messageService.archiveGroup(conversation.id, !conversation.archived);
@@ -416,12 +417,12 @@ export default function MessagesPage() {
   };
   const directWindowSections = useMemo(() => {
     const windows = directConversations;
-    if (user?.role !== "creator") return [{ label: "MY DIRECT ACCESS", items: windows }];
+    if (!creatorMode) return [{ label: "MY DIRECT ACCESS", items: windows }];
     return [
       { label: "INCOMING · PAID", items: windows.filter((item) => item.settlementStatus === "HELD") },
       { label: "ANSWERED", items: windows.filter((item) => item.settlementStatus !== "HELD") },
     ];
-  }, [directConversations, user?.role]);
+  }, [creatorMode, directConversations]);
   const participant = selected?.type === "group"
     ? { ...(messagesQuery.data?.group || selected), displayName: messagesQuery.data?.group?.name || selected?.name || "Group", avatarUrl: messagesQuery.data?.group?.avatarUrl || selected?.avatarUrl, members: (messagesQuery.data?.group?.members || selected?.members || []).map((member) => ({ ...member, presence: presence[member.id] })) }
     : messagesQuery.data?.participant || selected?.participant || selected;
@@ -458,7 +459,7 @@ export default function MessagesPage() {
   const selectedConversationMuted = selected?.type === "group" ? Boolean(participant?.muted) : Boolean(messagesQuery.data?.muted ?? selected?.muted);
   useEffect(() => {
     const previous = directAccessSettlementRef.current;
-    if (user?.role === "creator" && previous === "HELD" && directAccessWindow?.settlementStatus === "CAPTURED") {
+    if (creatorMode && previous === "HELD" && directAccessWindow?.settlementStatus === "CAPTURED") {
       const creatorShare = directAccessWindow.source === "CREATOR_REOPEN" ? 80 : 90;
       const earned = Math.floor((directAccessWindow.priceStars * creatorShare) / 100);
       setDirectAccessNotice(`✦${directAccessWindow.priceStars} captured · ✦${earned} earned`);
@@ -468,7 +469,7 @@ export default function MessagesPage() {
     }
     directAccessSettlementRef.current = directAccessWindow?.settlementStatus || null;
     return undefined;
-  }, [directAccessWindow?.priceStars, directAccessWindow?.settlementStatus, directAccessWindow?.source, user?.role]);
+  }, [creatorMode, directAccessWindow?.priceStars, directAccessWindow?.settlementStatus, directAccessWindow?.source]);
   const hasActiveDirectAccessWindow = Boolean(
     directAccessWindow
     && ["OPEN", "ANSWERED"].includes(directAccessWindow.status)
@@ -496,21 +497,21 @@ export default function MessagesPage() {
   const latestFreeFanAskIndex = latestFreeFanAsk ? messages.findIndex((message) => message.id === latestFreeFanAsk.id) : -1;
   const pendingFreeFanAsk = latestFreeFanAsk && !messages.slice(latestFreeFanAskIndex + 1).some((message) => message.senderId === directAccessWindow?.creatorId && message.messageKind !== "FAN_FREE_ASK") ? latestFreeFanAsk : null;
   const awaitingFollowupCreatorReply = Boolean(directAccessWindow?.source === "FAN_FOLLOWUP" && directAccessWindow?.settlementStatus === "HELD" && !directAccessWindow?.firstCreatorReplyAt);
-  const fanCanAskAfterWindowEnded = Boolean(user?.role === "fan" && directAccessEffectivelyClosed && ["CAPTURED", "INCLUDED", "REFUNDED"].includes(directAccessWindow?.settlementStatus));
+  const fanCanAskAfterWindowEnded = Boolean(!creatorMode && directAccessEffectivelyClosed && ["CAPTURED", "INCLUDED", "REFUNDED"].includes(directAccessWindow?.settlementStatus));
   const followupPriceStars = Number(selectedDirectAccessOfferQuery.data?.priceStars || 0);
   const followupWalletBalance = Number(selectedDirectAccessOfferQuery.data?.walletBalance ?? -1);
   const followupBalanceKnown = followupPriceStars > 0 && followupWalletBalance >= 0;
   const fanCanAffordFollowup = !followupBalanceKnown || followupWalletBalance >= followupPriceStars;
-  const creatorCanReplyToFreeFanAsk = Boolean(user?.role === "creator" && directAccessEffectivelyClosed && pendingFreeFanAsk);
-  const fanAwaitingFreeAskReply = Boolean(user?.role === "fan" && directAccessEffectivelyClosed && pendingFreeFanAsk);
+  const creatorCanReplyToFreeFanAsk = Boolean(creatorMode && directAccessEffectivelyClosed && pendingFreeFanAsk);
+  const fanAwaitingFreeAskReply = Boolean(!creatorMode && directAccessEffectivelyClosed && pendingFreeFanAsk);
   const creatorCanAnswerClosedPaidWindow = Boolean(
-    user?.role === "creator"
+    creatorMode
     && directAccessWindow?.settlementStatus === "HELD"
     && directAccessRemaining > 0
   );
   const directAccessFanLocked = Boolean(
-    (directAccessEffectivelyClosed && !(fanCanAskAfterWindowEnded || creatorCanReplyToFreeFanAsk || (user?.role === "creator" && (creatorAskMode || creatorCanAnswerClosedPaidWindow))))
-    || (user?.role === "fan" && awaitingFollowupCreatorReply)
+    (directAccessEffectivelyClosed && !(fanCanAskAfterWindowEnded || creatorCanReplyToFreeFanAsk || (creatorMode && (creatorAskMode || creatorCanAnswerClosedPaidWindow))))
+    || (!creatorMode && awaitingFollowupCreatorReply)
     || fanAwaitingFreeAskReply
     || (fanCanAskAfterWindowEnded && !fanCanAffordFollowup),
   );
@@ -693,7 +694,7 @@ export default function MessagesPage() {
     };
     const openDirectAccessRealtime = (windowItem) => {
       queryClient.invalidateQueries({ queryKey: ["messages", "direct-access"] });
-      if (user?.role !== "creator") return;
+      if (!creatorMode) return;
       const fanName = windowItem?.fan?.displayName || windowItem?.fan?.username || "Someone";
       setDirectAccessNotice(`⚡ New Direct Access — ${fanName} · +$${Number(windowItem?.creatorNetUsd || 0).toFixed(2)}`);
       window.setTimeout(() => setDirectAccessNotice(""), 5000);
@@ -709,7 +710,7 @@ export default function MessagesPage() {
     socket.on("direct-access:updated", updateDirectAccess);
     socket.on("direct-access:opened", openDirectAccessRealtime);
     return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("group:message", receiveGroupMessage); socket.off("group:created", receiveGroupCreated); socket.off("group:reaction", receiveGroupReaction); socket.off("group:receipt", receiveGroupReceipt); socket.off("group:message-deleted", receiveGroupDelete); socket.off("messages:read", markMessagesRead); socket.off("message:reaction", updateReaction); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); socket.off("message:deleted", deleteRealtimeMessage); socket.off("message:hidden", hideRealtimeMessage); socket.off("conversation:hidden", hideRealtimeConversation); socket.off("account:block", updateBlock); socket.off("direct-access:updated", updateDirectAccess); socket.off("direct-access:opened", openDirectAccessRealtime); };
-  }, [myId, queryClient, selected?.id, selected?.type, setSearchParams, user?.role]);
+  }, [creatorMode, myId, queryClient, selected?.directAccessWindowId, selected?.id, selected?.type, setSearchParams]);
 
   useEffect(() => {
     if (!selected?.id) return;
@@ -1143,7 +1144,7 @@ export default function MessagesPage() {
     setSending(true);
     setError("");
     const clientMessageId = newClientMessageId();
-    if (selected.type !== "group" && creatorAskMode && user?.role === "creator") {
+    if (selected.type !== "group" && creatorAskMode && creatorMode) {
       try {
         const response = await messageService.askDirectAccessQuestion(selected.id, body, clientMessageId);
         queryClient.setQueryData(["messages", selected.id], (current) => current ? {
@@ -1554,7 +1555,7 @@ export default function MessagesPage() {
             const count = tab.id === "requests"
               ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
               : tab.id === "direct"
-                ? user?.role === "creator" ? directConversations.filter((item) => item.settlementStatus === "HELD").length : directConversations.length
+                ? creatorMode ? directConversations.filter((item) => item.settlementStatus === "HELD").length : directConversations.length
                 : 0;
             return <button className={`min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => setInboxTab(tab.id)} type="button"><span className="break-words">{tab.label}</span>{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
           })}

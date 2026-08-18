@@ -51,6 +51,8 @@ import { messageService } from "../../services/messageService";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
+import { canCreateFeedPost } from "../../utils/postPermissions";
+import { canCreateStory } from "../../utils/storyPermissions";
 
 function relativeTime(value) {
   if (!value) return "";
@@ -250,10 +252,10 @@ function ProfileSkeleton() {
   );
 }
 
-function ProfileCreateSheet({ canCreateStoryNow, canPostNote, isOpen, onClose, onNote, onStory }) {
+function ProfileCreateSheet({ canCreateCreatorContent, canCreateStoryNow, canPostNote, isOpen, onClose, onNote, onStory }) {
   if (!isOpen) return null;
   const options = [
-    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen" },
+    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen", disabled: !canCreateCreatorContent },
     { description: "24 hours - then it's gone", icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
     { description: "One line on the wall", icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
     { description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "🪐", to: "/create/premium-world" },
@@ -300,8 +302,8 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
   const [storyOpen, setStoryOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
-  const canCreateStoryNow = viewerCapabilities.canCreate && user?.creatorApprovalStatus === "approved";
-  const canPostNote = user?.role === "creator";
+  const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
+  const canPostNote = canCreateFeedPost(user);
   const currentUser = {
     ...user,
     avatar: profile.avatar || user?.avatar,
@@ -340,6 +342,7 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
         </div>
       </header>
       <ProfileCreateSheet
+        canCreateCreatorContent={viewerCapabilities.canAccessStudio}
         canCreateStoryNow={canCreateStoryNow}
         canPostNote={canPostNote}
         isOpen={createOpen}
@@ -355,7 +358,7 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
 
 function OwnerQuickActionsSheet({ isOpen, onClose, profile, viewerCapabilities = {} }) {
   if (!isOpen) return null;
-  const isCreator = profile.role === "creator";
+  const isCreator = profile.isCreator;
   const actions = [
     isCreator && viewerCapabilities.canAccessStudio ? {
       icon: FiBarChart2,
@@ -536,7 +539,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
       ? "/create/premium-world"
       : "";
   const planetFace = profileWorld?.planet?.emoji || PROFILE_FLOATING_PLANET;
-  const showWorldBadge = profile.role === "creator" && (profileWorld || isOwner);
+  const showWorldBadge = profile.isCreator && (profileWorld || isOwner);
 
   return (
     <section className={`profile-identity ${isOwner ? "is-owner" : "is-visitor"}`}>
@@ -569,7 +572,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
       <div className="profile-copy">
         <h1>
           {profile.displayName}
-          {profile.verified ? <VerifiedBadge /> : isOwner && profile.role === "creator" ? <Link to="/creator/verification">Get verified <FiChevronRight /></Link> : null}
+          {profile.verified ? <VerifiedBadge /> : null}
         </h1>
         <button className="profile-status-pill" disabled={!isOwner} onClick={editStatus} style={{ "--profile-status-color": statusColor }} type="button">
           <span />
@@ -612,7 +615,7 @@ function VisitorFollowButton({ profile, relationship = {} }) {
 }
 
 function DashboardRow({ profile, viewerCapabilities }) {
-  if (profile.role !== "creator" || !viewerCapabilities.canAccessStudio) return null;
+  if (!profile.isCreator || !viewerCapabilities.canAccessStudio) return null;
   return (
     <Link className="profile-row profile-dashboard-row" to="/studio">
       <FiBarChart2 />
@@ -628,10 +631,10 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
   const windows = useQuery({
     queryKey: ["messages", "direct-access"],
     queryFn: () => messageService.getDirectAccessWindows().then((response) => response.data.data.windows),
-    enabled: profile.role === "creator" && viewerCapabilities.isOwner,
+    enabled: profile.isCreator && viewerCapabilities.isOwner,
     staleTime: 30000,
   });
-  if (profile.role !== "creator") return null;
+  if (!profile.isCreator) return null;
   if (!viewerCapabilities.isOwner && !viewerCapabilities.canMessage) return null;
   if (!viewerCapabilities.isOwner && !profile.directAccess?.enabled && !profile.directAccess?.callEnabled) return null;
   const waiting = (windows.data || []).filter((item) => item.settlementStatus === "HELD").length;
@@ -693,7 +696,7 @@ function StatsRow({ metrics = {}, onConnectionsOpen }) {
 }
 
 function VisitorWorldRow({ planets = [], profile }) {
-  if (profile.role !== "creator") return null;
+  if (!profile.isCreator) return null;
   const world = planets.find((item) => item.kind === "PREMIUM_WORLD" && item.status === "PUBLISHED") || planets.find((item) => item.status === "PUBLISHED");
   if (!world) return null;
   return <Link className="profile-visitor-world" to={`/world/${world.id}`}><span>🪐</span><b>{world.title || "Premium World"}</b><strong>Join <FiChevronRight /></strong></Link>;

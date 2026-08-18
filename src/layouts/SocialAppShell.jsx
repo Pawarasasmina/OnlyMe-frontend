@@ -102,6 +102,7 @@ function SocialAppShell({ children = null }) {
         <p className="text-center text-sm leading-6 text-atseen-muted">Mobile app availability will be announced when it is ready.</p>
       </FanModal>
       <FanCreateSheet
+        canCreateCreatorContent={capabilities.isApprovedCreator}
         canCreateStoryNow={canCreateStoryNow}
         canPostNote={canPostNote}
         isOpen={createOpen}
