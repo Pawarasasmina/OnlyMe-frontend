@@ -38,6 +38,7 @@ import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
+import PlanetComingSoonPage from "../pages/create/PlanetComingSoonPage";
 import SeenComposerPage from "../pages/creator/SeenComposerPage";
 import SeenManagerPage from "../pages/creator/SeenManagerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
@@ -147,8 +148,8 @@ function AppRoutes() {
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create" element={<CreateHubPage />} />
             <Route path="/create/seen" element={<SeenComposerPage />} />
-            <Route path="/create/world" element={<Navigate replace to="/create/premium-world" />} />
-            <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
+            <Route path="/create/world" element={<PlanetComingSoonPage />} />
+            <Route path="/create/premium-world" element={<PlanetComingSoonPage />} />
             <Route path="/studio/seens" element={<SeenManagerPage />} />
             <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
             <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />

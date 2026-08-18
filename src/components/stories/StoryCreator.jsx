@@ -17,8 +17,7 @@ function freshStory() {
   return {
     color: "#D6EAFF",
     gradient: 0,
-    photo: true,
-    seed: `me${Math.floor(Math.random() * 900)}`,
+    photo: false,
     size: 26,
     style: 0,
     text: "",
@@ -36,10 +35,6 @@ function storyTextClass(style) {
   return "story-composer-text";
 }
 
-function storyPhotoUrl(seed, width = 750, height = 1400) {
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${width}/${height}`;
-}
-
 function loadStoryImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -55,20 +50,6 @@ function drawCoverImage(context, image, width, height) {
   const drawWidth = image.naturalWidth * scale;
   const drawHeight = image.naturalHeight * scale;
   context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
-}
-
-function drawFallbackPhoto(context, canvas, seedValue) {
-  const seed = Number(String(seedValue).replace(/\D/g, "")) || 1;
-  for (let index = 0; index < 18; index += 1) {
-    const x = (Math.sin(seed + index * 2.3) + 1) * (canvas.width / 2);
-    const y = (Math.cos(seed * 0.7 + index * 1.9) + 1) * (canvas.height / 2);
-    const radius = 160 + ((seed + index * 29) % 240);
-    const glow = context.createRadialGradient(x, y, 0, x, y, radius);
-    glow.addColorStop(0, `rgba(${90 + (index * 17) % 90}, ${130 + (index * 23) % 80}, ${170 + (index * 11) % 70}, .34)`);
-    glow.addColorStop(1, "rgba(0,0,0,0)");
-    context.fillStyle = glow;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }
 }
 
 function fileFromCanvas(canvas) {
@@ -96,12 +77,8 @@ async function renderStoryFile(story) {
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   if (story.photo) {
-    try {
-      const image = await loadStoryImage(story.uploadedUrl || storyPhotoUrl(story.seed, 1080, 1920));
-      drawCoverImage(context, image, canvas.width, canvas.height);
-    } catch {
-      drawFallbackPhoto(context, canvas, story.seed);
-    }
+    const image = await loadStoryImage(story.uploadedUrl);
+    drawCoverImage(context, image, canvas.width, canvas.height);
   }
 
   const shade = context.createLinearGradient(0, 0, 0, canvas.height);
@@ -161,12 +138,11 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
   const createMutation = useCreateStory();
   const [story, setStory] = useState(freshStory);
   const [hintOpen, setHintOpen] = useState(() => !localStorage.getItem("atseen_story_comp_hint"));
-  const [galleryOpen, setGalleryOpen] = useState(false);
   const [upload, setUpload] = useState({ error: "", progress: 0, step: "" });
 
   const colorIndex = useMemo(() => STORY_COLORS.indexOf(story.color), [story.color]);
   const backgroundStyle = story.photo
-    ? { backgroundImage: `url("${story.uploadedUrl || storyPhotoUrl(story.seed)}")` }
+    ? { backgroundImage: `url("${story.uploadedUrl}")` }
     : { background: `linear-gradient(160deg,${STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length].join(",")})` };
 
   useEffect(() => {
@@ -186,7 +162,6 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
   const updateStory = (patch) => setStory((current) => ({ ...current, ...patch }));
 
   const close = () => {
-    setGalleryOpen(false);
     setUpload({ error: "", progress: 0, step: "" });
     setStory((current) => {
       if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
@@ -313,8 +288,12 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
           <button
             aria-label="Refresh background"
             onClick={() => {
-              if (story.uploadedUrl) URL.revokeObjectURL(story.uploadedUrl);
-              updateStory(story.photo ? { seed: `me${Math.floor(Math.random() * 900)}`, uploadedUrl: "" } : { gradient: story.gradient + 1 });
+              if (story.uploadedUrl) {
+                URL.revokeObjectURL(story.uploadedUrl);
+                updateStory({ photo: false, uploadedUrl: "" });
+              } else {
+                updateStory({ gradient: story.gradient + 1 });
+              }
             }}
             type="button"
           >
@@ -339,6 +318,16 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
           </div>
         ) : null}
 
+        {!story.photo && !story.text.trim() ? (
+          <div className="story-composer-empty">
+            <button onClick={() => uploadInputRef.current?.click()} type="button">
+              <span><FiImage /></span>
+              <strong>Add image to your story</strong>
+            </button>
+            <p>Or add text using the field below</p>
+          </div>
+        ) : null}
+
         {story.text ? (
           <button
             className={storyTextClass(story.style)}
@@ -356,8 +345,8 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
           </button>
         ) : null}
 
-        <button className="story-composer-gallery-thumb" onClick={() => setGalleryOpen(true)} type="button">
-          <img alt="" src={storyPhotoUrl("gal0", 80, 104)} />
+        <button aria-label="Add an image" className="story-composer-gallery-thumb" onClick={() => uploadInputRef.current?.click()} type="button">
+          <FiImage />
         </button>
 
         <div className="story-composer-bottom">
@@ -389,30 +378,6 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
           ) : null}
         </div>
 
-        {galleryOpen ? (
-          <div className="story-composer-gallery" onClick={() => setGalleryOpen(false)}>
-            <section onClick={(event) => event.stopPropagation()}>
-              <span />
-              <h2>Recents</h2>
-              <div>
-                {Array.from({ length: 12 }, (_, index) => (
-                  <button
-                    key={index}
-                  onClick={() => {
-                      if (story.uploadedUrl) URL.revokeObjectURL(story.uploadedUrl);
-                      updateStory({ photo: true, seed: `gal${index}`, uploadedUrl: "" });
-                      setGalleryOpen(false);
-                    }}
-                    type="button"
-                  >
-                    <img alt="" src={storyPhotoUrl(`gal${index}`, 200, 266)} />
-                    {index === 1 || index === 6 ? <small>0:{12 + index}</small> : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
-        ) : null}
       </section>
     </div>
   );

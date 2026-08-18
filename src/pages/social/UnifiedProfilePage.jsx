@@ -494,9 +494,11 @@ function MoreMenu({ isOwner, profile, relationship = {}, viewerCapabilities = {}
 
 function IdentitySection({ onStatusChange, planets = [], profile, relationship = {}, statusContext, viewerCapabilities }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [statusOpen, setStatusOpen] = useState(false);
   const [viewersOpen, setViewersOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [seenConfirmation, setSeenConfirmation] = useState(false);
   const isOwner = viewerCapabilities.isOwner;
   const cover = resolveMediaUrl(profile.cover);
   const avatar = resolveMediaUrl(profile.avatar);
@@ -504,6 +506,25 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
   const statusColor = activeStatus?.color || "#9CCBFF";
   const shareUrl = `${window.location.origin}/profile/${profile.username}`;
   const editStatus = () => isOwner && setStatusOpen(true);
+  const showSeenConfirmation = () => setSeenConfirmation(true);
+  const seeSignal = useMutation({
+    mutationFn: () => profileService.toggleSeeSignal(profile.username),
+    onSuccess: () => {
+      showSeenConfirmation();
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+    },
+  });
+
+  useEffect(() => {
+    if (!seenConfirmation) return undefined;
+    const timer = window.setTimeout(() => setSeenConfirmation(false), 3200);
+    return () => window.clearTimeout(timer);
+  }, [seenConfirmation]);
+
+  const markProfileSeen = () => {
+    if (relationship.seeSignalSent) showSeenConfirmation();
+    else seeSignal.mutate();
+  };
   const profileWorld = planets.find((planet) => planet.kind === "PREMIUM_WORLD") || planets[0];
   const worldTarget = profileWorld
     ? ["DRAFT", "CHANGES_REQUESTED"].includes(profileWorld.status) && isOwner
@@ -523,6 +544,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
         {cover ? <img alt={`${profile.displayName} cover`} src={cover} /> : null}
         {!isOwner ? <button aria-label="Go back" className="profile-cover-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button> : null}
         {!isOwner ? <span className="profile-cover-more"><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></span> : null}
+        {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> Only {profile.displayName?.split(" ")[0] || "they"} sees this</div> : null}
       </div>
       <div className="profile-avatar-actions">
         <span className="profile-avatar-ring" style={{ "--profile-status-color": statusColor }}>
@@ -537,7 +559,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
         <div className="profile-action-row">
           {isOwner ? <button aria-label="Who saw you" className="profile-action-chip is-icon" onClick={() => setViewersOpen(true)} type="button"><FiEye /></button> : null}
           {isOwner ? <Link className="profile-action-chip" to="/settings/profile"><FiEdit3 /> Edit</Link> : null}
-          {!isOwner ? <span aria-label="Views are private" className="profile-visitor-eye"><FiEye /></span> : null}
+          {!isOwner ? <button aria-label={`Let ${profile.displayName} know you saw them`} className={`profile-visitor-eye ${relationship.seeSignalSent ? "is-seen" : ""}`} disabled={seeSignal.isPending} onClick={markProfileSeen} type="button"><FiEye /></button> : null}
           {!isOwner && viewerCapabilities.canFollow ? <VisitorFollowButton profile={profile} relationship={relationship} /> : null}
           {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button"><FiMessageCircle /> Message</button> : null}
           {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button> : null}
