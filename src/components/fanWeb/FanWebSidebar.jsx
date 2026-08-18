@@ -1,7 +1,5 @@
+import { FiLogOut } from "react-icons/fi";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import {
-  FiLogOut,
-} from "react-icons/fi";
 import FanAvatar from "./shared/FanAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { getUserDisplay } from "./shared/userDisplay";
@@ -12,9 +10,9 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadMessageCount = 0 
   const { logout, user } = useAuth();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate
-    ? { label: "Create ✦", to: "/create" }
+    ? { label: "Create", to: "/create" }
     : capabilities.canAccessVerification && !capabilities.isApprovedCreator
-      ? { label: "Verify ✦", to: "/creator/verification" }
+      ? { label: "Verify", to: "/creator/verification" }
       : null;
 
   const logoutAndNavigate = async () => {
@@ -50,17 +48,22 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadMessageCount = 0 
         ))}
       </nav>
       {createAction ? (
-        <Link
-          className="mt-9 flex min-h-[60px] w-full items-center justify-center rounded-[28px] bg-[#8ab8ff] px-5 text-base font-black text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
-          onClick={(event) => {
-            if (!onCreate) return;
-            event.preventDefault();
-            onCreate();
-          }}
-          to={createAction.to}
-        >
-          {createAction.label}
-        </Link>
+        capabilities.canCreate ? (
+          <button
+            className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
+            onClick={onCreate}
+            type="button"
+          >
+            {createAction.label}
+          </button>
+        ) : (
+          <Link
+            className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
+            to={createAction.to}
+          >
+            {createAction.label}
+          </Link>
+        )
       ) : null}
       <nav aria-label="Account actions" className="mt-5 space-y-0.5 border-t border-white/[0.05] pt-5">
         {socialSecondaryNavItems(capabilities).map((item) => (
@@ -89,7 +92,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadMessageCount = 0 
         >
           <FiLogOut aria-hidden="true" /> Logout
         </button>
-        <p className="text-center text-[10px] text-atseen-dim max-[760px]:hidden">Atseen OU · web v1.6</p>
+        <p className="text-center text-[10px] text-atseen-dim max-[760px]:hidden">Atseen OU &middot; web v1.6</p>
       </div>
     </aside>
   );
