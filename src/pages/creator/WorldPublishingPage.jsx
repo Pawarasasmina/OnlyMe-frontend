@@ -22,29 +22,22 @@ const PLANET = "\uD83E\uDE90";
 const FLEX = "\uD83D\uDCAA";
 const STAR = "\u2726";
 const STORY_PREVIEW_LIMIT = 3;
-const DEFAULT_COVER = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80";
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 
-const defaultChapters = [
-  { blocks: [{ id: crypto.randomUUID(), order: 0, text: "Start with one goal, one habit, and one honest baseline. Keep the promise small enough that you can repeat it tomorrow.", type: "TEXT" }], isPreview: true, title: "Week 1 - Foundations" },
-  { blocks: [{ id: crypto.randomUUID(), order: 0, text: "Build the habit before you build the intensity. This chapter keeps the system simple and repeatable.", type: "TEXT" }], isPreview: false, title: "Week 2 - The habit" },
-  { blocks: [{ id: crypto.randomUUID(), order: 0, text: "Add load only after your rhythm is real. Track the effort, the meals, and the recovery honestly.", type: "TEXT" }], isPreview: false, title: "Week 3 - Load" },
-];
-
 function freshWorld() {
   return {
-    category: "Fitness",
-    chapters: defaultChapters.map((chapter) => ({ ...chapter, localId: crypto.randomUUID(), blocks: chapter.blocks.map((block) => ({ ...block, id: crypto.randomUUID() })) })),
+    category: "",
+    chapters: [],
     coverMedia: null,
-    description: "A structured 8-week program - no gym required. Weekly goals, honest form checks and the exact meals.",
+    description: "",
     kind: "PREMIUM_WORLD",
     planet: { accent: "ice-white", emoji: PLANET },
     pricing: { mode: "MONTHLY", presetId: "MONTHLY_190", starsAmount: 190 },
     status: "DRAFT",
-    summary: "A structured 8-week program - no gym required.",
-    tags: ["fitness", "discipline"],
-    title: "Morning Discipline",
+    summary: "",
+    tags: [],
+    title: "",
   };
 }
 
@@ -57,7 +50,7 @@ function blockPayload(block = {}, order) {
   };
 
   if (TEXT_BLOCK_TYPES.has(type)) {
-    payload.text = block.text || "Write the story people step inside for.";
+    payload.text = block.text || "";
     if (block.metadata) payload.metadata = block.metadata;
     return payload;
   }
@@ -74,16 +67,15 @@ function blockPayload(block = {}, order) {
     return payload;
   }
 
-  return { ...payload, text: block.text || "Write the story people step inside for." };
+  return { ...payload, text: block.text || "" };
 }
 
 function chapterPayload(chapter, index) {
   return {
-    blocks: (chapter.blocks?.length ? chapter.blocks : [{ id: crypto.randomUUID(), order: 0, text: "Write the story people step inside for.", type: "TEXT" }])
-      .map(blockPayload),
+    blocks: (chapter.blocks || []).map(blockPayload),
     isPreview: index === 0,
     releaseMode: "IMMEDIATE",
-    title: chapter.title || `Chapter ${index + 1}`,
+    title: chapter.title || "",
   };
 }
 
@@ -155,7 +147,7 @@ export default function WorldPublishingPage() {
   const [error, setError] = useState("");
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || "Max";
-  const coverUrl = world.coverMedia?.secureUrl || DEFAULT_COVER;
+  const coverUrl = world.coverMedia?.secureUrl;
   const validation = useMemo(() => worldCompletenessBySection(world), [world]);
   const validationMessages = Object.values(validation).flat();
   const readyToSubmit = world.id && !validationMessages.length && !saving && !uploading;
@@ -173,7 +165,7 @@ export default function WorldPublishingPage() {
           current.forEach(revokePreviewUrl);
           return [];
         });
-        setNotice("New premium world ready.");
+        setNotice("Start creating your premium world.");
         return;
       }
       const full = await api.getMyPublication(existing.id);
@@ -446,10 +438,10 @@ export default function WorldPublishingPage() {
       chapters: [
         ...chapters,
         {
-          blocks: [{ id: crypto.randomUUID(), order: 0, text: "Write the story people step inside for.", type: "TEXT" }],
+          blocks: [],
           isPreview: false,
           localId: crypto.randomUUID(),
-          title: `Chapter ${chapters.length + 1}`,
+          title: "",
         },
       ],
     });
@@ -520,7 +512,7 @@ export default function WorldPublishingPage() {
       ) : null}
 
       <section className="world-prototype-creator">
-        <span>{ownerName.split(" ")[0]} <b>✓</b> - <strong>{Number(world.steppedInside || world.viewCount || 224).toLocaleString()}</strong> stepped inside</span>
+        <span>{ownerName.split(" ")[0]} <b>✓</b> - <strong>{Number(world.steppedInside || world.viewCount || 0).toLocaleString()}</strong> stepped inside</span>
       </section>
 
       <div className="world-prototype-premium-pill">{PLANET} Premium World - 1 free chapter - {STAR}{world.pricing?.starsAmount || 190}/mo</div>
@@ -530,13 +522,13 @@ export default function WorldPublishingPage() {
         className={inputClass("world-publish-title")}
         maxLength={120}
         onChange={(event) => updateWorld({ title: event.target.value })}
+        placeholder="Name your premium world"
         value={world.title}
       />
 
       <div className="world-prototype-media world-publish-cover">
-        <img alt={`${world.title} cover`} src={coverUrl} />
+        {coverUrl ? <img alt={`${world.title || "Premium world"} cover`} src={coverUrl} /> : <div className="world-prototype-media-empty">Add a cover</div>}
         <button aria-label="Upload cover media" className="world-prototype-media-edit" onClick={() => coverInputRef.current?.click()} type="button"><FiEdit3 /></button>
-        <span className="world-prototype-video-time">▶ 0:30</span>
         <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" className="sr-only" onChange={uploadCover} ref={coverInputRef} type="file" />
       </div>
 
@@ -545,13 +537,14 @@ export default function WorldPublishingPage() {
         className={inputClass("world-publish-summary")}
         maxLength={300}
         onChange={(event) => updateWorld({ description: event.target.value, summary: event.target.value.slice(0, 300) })}
+        placeholder="Describe what members will experience"
         value={world.description}
       />
 
       <div className="world-publish-meta-row">
         <label>
           Category
-          <input maxLength={40} onChange={(event) => updateWorld({ category: event.target.value })} value={world.category} />
+          <input maxLength={40} onChange={(event) => updateWorld({ category: event.target.value })} placeholder="Add a category" value={world.category} />
         </label>
         <label>
           Price
@@ -566,7 +559,7 @@ export default function WorldPublishingPage() {
       <section className="world-prototype-experience">
         <div className="world-prototype-section-head">
           <h2>Experience</h2>
-          <span>{Math.min(chapters.length, 3)} / 10 chapters - {PLANET} Premium</span>
+          <span>{chapters.length} / 5 chapters - {PLANET} Premium</span>
         </div>
         <div className="world-prototype-chapters">
           {chapters.map((chapter, index) => {
@@ -600,6 +593,7 @@ export default function WorldPublishingPage() {
             aria-label="Chapter title"
             maxLength={120}
             onChange={(event) => updateChapter(activeChapter, { title: event.target.value })}
+            placeholder="Chapter title"
             value={chapters[activeChapter].title}
           />
           <textarea
@@ -613,6 +607,7 @@ export default function WorldPublishingPage() {
               setNotice("Unsaved changes");
               setError("");
             }}
+            placeholder="Write this chapter's story"
             value={readChapterText(chapters[activeChapter])}
           />
         </section>

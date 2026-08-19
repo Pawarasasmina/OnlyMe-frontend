@@ -18,7 +18,7 @@ function RoleProtectedRoute({ allowedRoles = [], requireCreatorApproval = true }
     return <Navigate replace to={dashboardFor(user)} />;
   }
 
-  if (requireCreatorApproval && user.role === "creator" && user.creatorApprovalStatus !== "approved") {
+  if (requireCreatorApproval && ["fan", "creator"].includes(user.role) && user.creatorApprovalStatus !== "approved") {
     return <Navigate replace to="/creator/verification" />;
   }
 

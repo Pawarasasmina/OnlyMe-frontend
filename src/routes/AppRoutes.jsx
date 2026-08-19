@@ -28,7 +28,7 @@ import ContentModeration from "../pages/admin/ContentModeration";
 import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
 import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
-import CreatorVerificationDetail from "../pages/admin/CreatorVerificationDetail";
+import CreatorVerificationDetail from "../pages/admin/SimpleCreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
 import SettingsPage from "../pages/settings/SettingsPage";
@@ -38,6 +38,7 @@ import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
+import PlanetComingSoonPage from "../pages/create/PlanetComingSoonPage";
 import SeenComposerPage from "../pages/creator/SeenComposerPage";
 import SeenManagerPage from "../pages/creator/SeenManagerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
@@ -65,6 +66,8 @@ import WelcomePage from "../pages/onboarding/WelcomePage";
 import AccountSettingsPage from "../pages/settings/AccountSettingsPage";
 import PrivacySettingsPage from "../pages/settings/PrivacySettingsPage";
 import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage";
+import ContentPreferencesPage from "../pages/settings/ContentPreferencesPage";
+import SupportPage from "../pages/settings/SupportPage";
 import GiftManagementPage from "../pages/admin/GiftManagementPage";
 
 function RootRedirect() {
@@ -131,20 +134,22 @@ function AppRoutes() {
           <Route path="/settings/account" element={<AccountSettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+          <Route path="/settings/content" element={<ContentPreferencesPage />} />
+          <Route path="/settings/support/:section" element={<SupportPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
-          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
           </Route>
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create" element={<CreateHubPage />} />
             <Route path="/create/seen" element={<SeenComposerPage />} />
-            <Route path="/create/world" element={<Navigate replace to="/create/premium-world" />} />
-            <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
+            <Route path="/create/world" element={<PlanetComingSoonPage />} />
+            <Route path="/create/premium-world" element={<PlanetComingSoonPage />} />
             <Route path="/studio/seens" element={<SeenManagerPage />} />
             <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
             <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
@@ -167,7 +172,7 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.CREATOR]} requireCreatorApproval={false} />}>
+      <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<CreatorAppShell />}>
             <Route path="/creator/dashboard" element={<Navigate replace to="/wall" />} />
             <Route path="/creator/application" element={<CreatorApplicationPage />} />

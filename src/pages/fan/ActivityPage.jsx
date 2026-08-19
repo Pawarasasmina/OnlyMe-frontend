@@ -22,6 +22,7 @@ function relativeTime(value) {
 }
 
 function classify(item) {
+  if (item.direction && item.filter) return item;
   const text = `${item.type || ""} ${item.description || ""}`.toLowerCase();
   const dreamGift = item.event === "DREAM_GIFT_DEBIT" || item.event === "DREAM_CREATOR_EARNING" || item.reference?.type === "DREAM_GIFT" || text.includes("gift");
   const sent = item.type === "wallet_debit" || text.includes("subscribed to") || text.includes("you sent") || text.includes("you saved") || text.includes("you followed") || text.includes("you commented");

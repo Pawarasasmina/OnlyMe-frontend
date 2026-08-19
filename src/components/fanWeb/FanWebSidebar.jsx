@@ -3,15 +3,15 @@ import AtseenLogo from "../branding/AtseenLogo";
 import FanAvatar from "./shared/FanAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { getUserDisplay } from "./shared/userDisplay";
-import { socialPrimaryNavItems, socialSecondaryNavItems } from "../social/socialNavItems";
+import { socialPrimaryNavItems } from "../social/socialNavItems";
 import { useLanguage } from "../../hooks/useLanguage";
 
-function FanWebSidebar({ capabilities, status, unreadMessageCount = 0 }) {
+function FanWebSidebar({ capabilities, onCreate, onVerify, status, unreadMessageCount = 0 }) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate
-    ? { label: "Create ✦", to: "/create" }
+    ? { label: "Create ✦", onClick: onCreate }
     : capabilities.canAccessVerification && !capabilities.isApprovedCreator
       ? { label: "Verify ✦", to: "/creator/verification" }
       : null;
@@ -44,25 +44,20 @@ function FanWebSidebar({ capabilities, status, unreadMessageCount = 0 }) {
         ))}
       </nav>
       {createAction ? (
-        <Link
+        createAction.onClick ? <button
           className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
-          to={createAction.to}
+          onClick={createAction.onClick}
+          type="button"
         >
           {t(createAction.label)}
-        </Link>
+        </button> : createAction.to === "/creator/verification" ? <button
+          className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden"
+          onClick={onVerify}
+          type="button"
+        >
+          {t(createAction.label)}
+        </button> : <Link className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden" to={createAction.to}>{t(createAction.label)}</Link>
       ) : null}
-      <nav aria-label="Account actions" className="mt-5 space-y-0.5">
-        {socialSecondaryNavItems(capabilities).map((item) => (
-          <NavLink
-            className={({ isActive }) => `flex min-h-11 items-center gap-3.5 rounded-xl px-3 py-3 text-sm font-semibold transition ${isActive ? "text-white" : item.emphasis ? "text-atseen-blue hover:bg-atseen-blue/10" : "text-atseen-muted hover:bg-atseen-surface-2 hover:text-white"}`}
-            key={item.to}
-            to={item.to}
-          >
-            <item.icon className="h-5 w-5 shrink-0" />
-            <span className="truncate max-[1019px]:sr-only">{t(item.label)}</span>
-          </NavLink>
-        ))}
-      </nav>
       <div className="mt-auto pb-2">
         <NavLink
           className="sidebar-identity flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-atseen-muted transition hover:bg-atseen-surface-2 hover:text-white"

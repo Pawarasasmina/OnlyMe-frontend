@@ -3,6 +3,7 @@ import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiAperture,
+  FiArrowLeft,
   FiBarChart2,
   FiBell,
   FiBookmark,
@@ -50,6 +51,8 @@ import { messageService } from "../../services/messageService";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
+import { canCreateFeedPost } from "../../utils/postPermissions";
+import { canCreateStory } from "../../utils/storyPermissions";
 
 function relativeTime(value) {
   if (!value) return "";
@@ -249,10 +252,10 @@ function ProfileSkeleton() {
   );
 }
 
-function ProfileCreateSheet({ canCreateStoryNow, canPostNote, isOpen, onClose, onNote, onStory }) {
+function ProfileCreateSheet({ canCreateCreatorContent, canCreateStoryNow, canPostNote, isOpen, onClose, onNote, onStory }) {
   if (!isOpen) return null;
   const options = [
-    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen" },
+    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen", disabled: !canCreateCreatorContent },
     { description: "24 hours - then it's gone", icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
     { description: "One line on the wall", icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
     { description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "🪐", to: "/create/premium-world" },
@@ -299,8 +302,8 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
   const [storyOpen, setStoryOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
-  const canCreateStoryNow = viewerCapabilities.canCreate && user?.creatorApprovalStatus === "approved";
-  const canPostNote = user?.role === "creator";
+  const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
+  const canPostNote = canCreateFeedPost(user);
   const currentUser = {
     ...user,
     avatar: profile.avatar || user?.avatar,
@@ -339,6 +342,7 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
         </div>
       </header>
       <ProfileCreateSheet
+        canCreateCreatorContent={viewerCapabilities.canAccessStudio}
         canCreateStoryNow={canCreateStoryNow}
         canPostNote={canPostNote}
         isOpen={createOpen}
@@ -354,7 +358,7 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
 
 function OwnerQuickActionsSheet({ isOpen, onClose, profile, viewerCapabilities = {} }) {
   if (!isOpen) return null;
-  const isCreator = profile.role === "creator";
+  const isCreator = profile.isCreator;
   const actions = [
     isCreator && viewerCapabilities.canAccessStudio ? {
       icon: FiBarChart2,
@@ -493,9 +497,11 @@ function MoreMenu({ isOwner, profile, relationship = {}, viewerCapabilities = {}
 
 function IdentitySection({ onStatusChange, planets = [], profile, relationship = {}, statusContext, viewerCapabilities }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [statusOpen, setStatusOpen] = useState(false);
   const [viewersOpen, setViewersOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [seenConfirmation, setSeenConfirmation] = useState(false);
   const isOwner = viewerCapabilities.isOwner;
   const cover = resolveMediaUrl(profile.cover);
   const avatar = resolveMediaUrl(profile.avatar);
@@ -503,6 +509,25 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
   const statusColor = activeStatus?.color || "#9CCBFF";
   const shareUrl = `${window.location.origin}/profile/${profile.username}`;
   const editStatus = () => isOwner && setStatusOpen(true);
+  const showSeenConfirmation = () => setSeenConfirmation(true);
+  const seeSignal = useMutation({
+    mutationFn: () => profileService.toggleSeeSignal(profile.username),
+    onSuccess: () => {
+      showSeenConfirmation();
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+    },
+  });
+
+  useEffect(() => {
+    if (!seenConfirmation) return undefined;
+    const timer = window.setTimeout(() => setSeenConfirmation(false), 3200);
+    return () => window.clearTimeout(timer);
+  }, [seenConfirmation]);
+
+  const markProfileSeen = () => {
+    if (relationship.seeSignalSent) showSeenConfirmation();
+    else seeSignal.mutate();
+  };
   const profileWorld = planets.find((planet) => planet.kind === "PREMIUM_WORLD") || planets[0];
   const worldTarget = profileWorld
     ? ["DRAFT", "CHANGES_REQUESTED"].includes(profileWorld.status) && isOwner
@@ -514,12 +539,15 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
       ? "/create/premium-world"
       : "";
   const planetFace = profileWorld?.planet?.emoji || PROFILE_FLOATING_PLANET;
-  const showWorldBadge = profile.role === "creator" && (profileWorld || isOwner);
+  const showWorldBadge = profile.isCreator && (profileWorld || isOwner);
 
   return (
-    <section className="profile-identity">
+    <section className={`profile-identity ${isOwner ? "is-owner" : "is-visitor"}`}>
       <div className="profile-cover">
         {cover ? <img alt={`${profile.displayName} cover`} src={cover} /> : null}
+        {!isOwner ? <button aria-label="Go back" className="profile-cover-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button> : null}
+        {!isOwner ? <span className="profile-cover-more"><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></span> : null}
+        {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> Only {profile.displayName?.split(" ")[0] || "they"} sees this</div> : null}
       </div>
       <div className="profile-avatar-actions">
         <span className="profile-avatar-ring" style={{ "--profile-status-color": statusColor }}>
@@ -533,17 +561,18 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
         </span>
         <div className="profile-action-row">
           {isOwner ? <button aria-label="Who saw you" className="profile-action-chip is-icon" onClick={() => setViewersOpen(true)} type="button"><FiEye /></button> : null}
-          {isOwner ? <Link className="profile-action-chip" to="/settings"><FiEdit3 /> Edit</Link> : null}
+          {isOwner ? <Link className="profile-action-chip" to="/settings/profile"><FiEdit3 /> Edit</Link> : null}
+          {!isOwner ? <button aria-label={`Let ${profile.displayName} know you saw them`} className={`profile-visitor-eye ${relationship.seeSignalSent ? "is-seen" : ""}`} disabled={seeSignal.isPending} onClick={markProfileSeen} type="button"><FiEye /></button> : null}
           {!isOwner && viewerCapabilities.canFollow ? <VisitorFollowButton profile={profile} relationship={relationship} /> : null}
           {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button"><FiMessageCircle /> Message</button> : null}
-          <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button>
-          <MoreMenu isOwner={isOwner} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} />
+          {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button> : null}
+          {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
         </div>
       </div>
       <div className="profile-copy">
         <h1>
           {profile.displayName}
-          {profile.verified ? <VerifiedBadge /> : isOwner && profile.role === "creator" ? <Link to="/creator/verification">Get verified <FiChevronRight /></Link> : null}
+          {profile.verified ? <VerifiedBadge /> : null}
         </h1>
         <button className="profile-status-pill" disabled={!isOwner} onClick={editStatus} style={{ "--profile-status-color": statusColor }} type="button">
           <span />
@@ -586,7 +615,7 @@ function VisitorFollowButton({ profile, relationship = {} }) {
 }
 
 function DashboardRow({ profile, viewerCapabilities }) {
-  if (profile.role !== "creator" || !viewerCapabilities.canAccessStudio) return null;
+  if (!profile.isCreator || !viewerCapabilities.canAccessStudio) return null;
   return (
     <Link className="profile-row profile-dashboard-row" to="/studio">
       <FiBarChart2 />
@@ -602,10 +631,10 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
   const windows = useQuery({
     queryKey: ["messages", "direct-access"],
     queryFn: () => messageService.getDirectAccessWindows().then((response) => response.data.data.windows),
-    enabled: profile.role === "creator" && viewerCapabilities.isOwner,
+    enabled: profile.isCreator && viewerCapabilities.isOwner,
     staleTime: 30000,
   });
-  if (profile.role !== "creator") return null;
+  if (!profile.isCreator) return null;
   if (!viewerCapabilities.isOwner && !viewerCapabilities.canMessage) return null;
   if (!viewerCapabilities.isOwner && !profile.directAccess?.enabled && !profile.directAccess?.callEnabled) return null;
   const waiting = (windows.data || []).filter((item) => item.settlementStatus === "HELD").length;
@@ -666,6 +695,13 @@ function StatsRow({ metrics = {}, onConnectionsOpen }) {
   );
 }
 
+function VisitorWorldRow({ planets = [], profile }) {
+  if (!profile.isCreator) return null;
+  const world = planets.find((item) => item.kind === "PREMIUM_WORLD" && item.status === "PUBLISHED") || planets.find((item) => item.status === "PUBLISHED");
+  if (!world) return null;
+  return <Link className="profile-visitor-world" to={`/world/${world.id}`}><span>🪐</span><b>{world.title || "Premium World"}</b><strong>Join <FiChevronRight /></strong></Link>;
+}
+
 function ProfileTabs({ tab, setTab }) {
   const tabs = [
     ["seens", "Seens", FiGrid],
@@ -709,7 +745,7 @@ function WallPreview({ isOwner, posts = [] }) {
   );
 }
 
-function ProfileBody({ data, owner, setConnectionsType, setStatus, statusContext }) {
+function ProfileBody({ data, setConnectionsType, setStatus, statusContext }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
@@ -727,18 +763,19 @@ function ProfileBody({ data, owner, setConnectionsType, setStatus, statusContext
   };
   return (
     <div className="profile-prototype">
-      <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} />
-      {!owner && !isOwner ? <Link className="profile-back-link" to="/wall">Back</Link> : null}
+      {isOwner ? <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <IdentitySection onStatusChange={setStatus} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} statusContext={statusContext} viewerCapabilities={viewerCapabilities} />
-      <DashboardRow profile={profile} viewerCapabilities={viewerCapabilities} />
-      <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} />
+      {isOwner ? <DashboardRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
+      {isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <PhotosSection isOwner={isOwner} photos={data.photos || []} />
       <StatsRow metrics={publicMetrics} onConnectionsOpen={setConnectionsType} />
+      {!isOwner ? <VisitorWorldRow planets={data.planets || []} profile={profile} /> : null}
+      {!isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel"><ContentTabsPanel data={data} isOwner={isOwner} tab={tab} /></section>
       <WallPreview isOwner={isOwner} posts={data.wallPosts || data.sharedWallPosts || []} />
-      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} />
+      {isOwner ? <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} /> : null}
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
     </div>
   );
@@ -764,7 +801,7 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     body = (
       <>
         <ProfileConnectionsModal onClose={() => setConnectionsType("")} type={connectionsType} username={profileQuery.data.profile.username} />
-        <ProfileBody data={profileQuery.data} owner={owner} setConnectionsType={setConnectionsType} setStatus={statusContext?.setStatus} statusContext={statusContext} />
+        <ProfileBody data={profileQuery.data} setConnectionsType={setConnectionsType} setStatus={statusContext?.setStatus} statusContext={statusContext} />
       </>
     );
   }

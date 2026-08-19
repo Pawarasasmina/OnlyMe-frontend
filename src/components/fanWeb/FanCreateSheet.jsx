@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiAperture, FiDisc, FiEdit3, FiEye } from "react-icons/fi";
 
 function FanCreateSheet({
+  canCreateCreatorContent = false,
   canCreateStoryNow = true,
   canPostNote = true,
   isOpen,
@@ -11,10 +12,10 @@ function FanCreateSheet({
   onStory,
 }) {
   const options = [
-    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen" },
+    ...(canCreateCreatorContent ? [{ description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen" }] : []),
     { description: "24 hours - then it's gone", icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
     { description: "One line on the wall", icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
-    { description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "\uD83E\uDE90", to: "/create/premium-world" },
+    ...(canCreateCreatorContent ? [{ description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "\uD83E\uDE90", to: "/create/premium-world" }] : []),
   ];
 
   useEffect(() => {

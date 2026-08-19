@@ -14,7 +14,7 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
   const [directAccessOpen, setDirectAccessOpen] = useState(false);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
   const follow = useMutation({ mutationFn: () => profileService.toggleFollow(profile.username), onSuccess: () => { setError(""); refresh(); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to update this follow.") });
-  const signal = useMutation({ mutationFn: () => profileService.toggleSeeSignal(profile.username), onSuccess: () => { setError(""); refresh(); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to send this signal.") });
+  const signal = useMutation({ mutationFn: () => profileService.toggleSeeSignal(profile.username), onSuccess: () => { setError(""); refresh(); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to send this signal.") });
   const openMessage = () => {
     if (relationship.following) navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`);
     else setMessagePrompt(true);
@@ -30,7 +30,7 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
     finally { setMessageBusy(false); }
   };
 
-  if ((!capabilities.canFollow && !capabilities.canMessage) || profile.role !== "creator") return null;
+  if (!capabilities.canFollow && !capabilities.canMessage) return null;
   return <section className="mt-4">
     <div className={`grid gap-2 ${capabilities.canMessage ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
       {capabilities.canFollow ? <button className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-bold transition ${relationship.following ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface hover:border-atseen-blue/45"}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{relationship.following ? <FiUserCheck /> : <FiUserPlus />}{relationship.following ? "Following" : "Follow"}</button> : null}

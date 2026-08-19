@@ -146,6 +146,69 @@ function Segmented({ label, onChange, value }) {
   );
 }
 
+const notificationRows = [
+  ["email", "Email notifications", "Account updates and summaries"],
+  ["inApp", "In-app notifications", "Activity while you use Atseen"],
+  ["messages", "Messages", "New messages and replies"],
+  ["directAccess", "Direct Access & income", "Requests, calls and earnings"],
+  ["marketing", "Product announcements", "New features and occasional news"],
+];
+
+function NotificationSheet({ isOpen, onClose }) {
+  const queryClient = useQueryClient();
+  const [preferences, setPreferences] = useState({});
+  const [error, setError] = useState("");
+  const query = useQuery({
+    queryKey: ["settings", "notifications"],
+    queryFn: () => profileService.getNotificationSettings().then((response) => response.data.data),
+    enabled: isOpen,
+  });
+  const mutation = useMutation({
+    mutationFn: (next) => profileService.updateNotificationSettings({ notificationPreferences: next }),
+    onSuccess: (response) => {
+      const data = response.data.data;
+      queryClient.setQueryData(["settings", "notifications"], data);
+      setPreferences(data.notificationPreferences || {});
+      setError("");
+    },
+    onError: () => setError("Unable to save notification settings. Please try again."),
+  });
+
+  useEffect(() => {
+    if (isOpen && query.data) setPreferences(query.data.notificationPreferences || {});
+  }, [isOpen, query.data]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const closeOnEscape = (event) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const toggle = (key) => {
+    const next = { ...preferences, [key]: !preferences[key] };
+    setPreferences(next);
+    setError("");
+    mutation.mutate(next);
+  };
+
+  return <div aria-labelledby="profile-notifications-title" aria-modal="true" className="profile-notification-layer" role="dialog">
+    <button aria-label="Close notifications" className="profile-notification-dim" onClick={onClose} type="button" />
+    <section className="profile-notification-sheet">
+      <span aria-hidden="true" className="profile-notification-grab" />
+      <div className="profile-notification-heading"><div><h2 id="profile-notifications-title">Notifications</h2><p>Choose what deserves your attention.</p></div><button onClick={onClose} type="button">Done</button></div>
+      {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : <div className="profile-notification-list">
+        {notificationRows.map(([key, title, subtitle]) => <button disabled={mutation.isPending} key={key} onClick={() => toggle(key)} type="button"><span><b>{title}</b><small>{subtitle}</small></span><i aria-hidden="true" className={preferences[key] ? "is-on" : ""}><em /></i></button>)}
+      </div>}
+      {query.isError ? <p className="profile-notification-error">Unable to load notification settings.</p> : null}
+      {error ? <p className="profile-notification-error">{error}</p> : null}
+      <p className="profile-notification-note">Views are always silent — never a notification.</p>
+    </section>
+  </div>;
+}
+
 function normalizeLanguage(text) {
   const value = String(text || "")
     .split(/[,\u00b7]/)
@@ -168,6 +231,7 @@ function ProfileSettingsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [statusOpen, setStatusOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const accessToken = localStorage.getItem("onlyme_access_token");
 
   const profileQuery = useQuery({
@@ -498,7 +562,9 @@ function ProfileSettingsPage() {
         </button>
         <SettingsRow subtitle={directSummary} title="Direct Access settings" to="/messages?tab=direct" />
         <SettingsRow subtitle={giftSummary} title="Gift settings" to="/profile" />
-        <SettingsRow subtitle={notificationSummary} title="Notifications" to="/settings/notifications" />
+        <button className="edit-profile-settings-row" onClick={() => setNotificationsOpen(true)} type="button">
+          <span><b>Notifications</b><small>{notificationSummary}</small></span><FiChevronRight />
+        </button>
       </section>
 
       <section className="edit-profile-privacy">
@@ -577,6 +643,7 @@ function ProfileSettingsPage() {
           queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
         }}
       />
+      <NotificationSheet isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </form>
   );
 }

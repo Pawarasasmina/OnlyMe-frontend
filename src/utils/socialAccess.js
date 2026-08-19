@@ -33,17 +33,17 @@ export function destinationForUser(user) {
 
 export function socialCapabilitiesFor(user) {
   const isAuthenticated = Boolean(user);
-  const isCreator = user?.role === "creator";
-  const isApprovedCreator = isCreator && user.creatorApprovalStatus === "approved";
+  const isConsumer = isConsumerRole(user?.role);
+  const isApprovedCreator = isConsumer && user?.creatorApprovalStatus === "approved";
 
   return {
     isAuthenticated,
     role: user?.role || null,
-    isCreator,
+    isCreator: isApprovedCreator,
     isApprovedCreator,
-    canCreate: isApprovedCreator,
+    canCreate: isConsumer,
     canAccessStudio: isApprovedCreator,
-    canAccessVerification: isCreator,
+    canAccessVerification: isConsumer,
     isProfileOwner: isAuthenticated,
   };
 }

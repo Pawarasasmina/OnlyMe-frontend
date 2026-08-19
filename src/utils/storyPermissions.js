@@ -19,7 +19,7 @@ export function isStoryOwner(user, story) {
 }
 
 export function canCreateStory(user) {
-  return getUserRole(user) === ROLES.CREATOR && user?.creatorApprovalStatus === "approved";
+  return [ROLES.FAN, ROLES.CREATOR].includes(getUserRole(user));
 }
 
 export function canDeleteStory(user, story) {
