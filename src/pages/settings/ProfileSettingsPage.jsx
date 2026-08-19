@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
+import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import StatusPicker from "../../components/stories/StatusPicker";
 import { useAuth } from "../../hooks/useAuth";
 import { profileService } from "../../services/profileService";
@@ -111,7 +112,7 @@ function PhotoRow({ cover = false, disabled, fileRef, label, onChange, src, subt
         {subtitle ? <small>{subtitle}</small> : null}
       </span>
       <input accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={disabled} onChange={onChange} ref={fileRef} type="file" />
-      <button className="edit-profile-pill-button" disabled={disabled} onClick={() => fileRef.current?.click()} type="button">Change</button>
+      <button className="edit-profile-pill-button" disabled={disabled} onClick={() => fileRef.current?.click()} type="button">{src ? "Change" : "Add"}</button>
     </div>
   );
 }
@@ -232,6 +233,7 @@ function ProfileSettingsPage() {
   const [error, setError] = useState("");
   const [statusOpen, setStatusOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [cropImage, setCropImage] = useState(null);
   const accessToken = localStorage.getItem("onlyme_access_token");
 
   const profileQuery = useQuery({
@@ -473,6 +475,23 @@ function ProfileSettingsPage() {
   });
   const uploading = avatarMutation.isPending || coverMutation.isPending;
 
+  const chooseImage = (kind, event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setCropImage({ kind, url: URL.createObjectURL(file) });
+  };
+
+  const closeCropper = () => {
+    if (cropImage?.url) URL.revokeObjectURL(cropImage.url);
+    setCropImage(null);
+  };
+
+  const uploadCroppedImage = (file) => {
+    if (cropImage?.kind === "cover") coverMutation.mutate(file, { onSettled: closeCropper });
+    else avatarMutation.mutate(file, { onSettled: closeCropper });
+  };
+
   const submit = (event) => {
     event.preventDefault();
     saveMutation.mutate();
@@ -508,28 +527,20 @@ function ProfileSettingsPage() {
         disabled={uploading}
         fileRef={avatarInput}
         label="Profile photo"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) avatarMutation.mutate(file);
-          event.target.value = "";
-        }}
+        onChange={(event) => chooseImage("avatar", event)}
         src={profilePhoto}
         subtitle="Square works best"
       />
-      {role === "creator" ? (
-        <PhotoRow
+      <PhotoRow
           cover
           disabled={uploading}
           fileRef={coverInput}
           label="Cover photo"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) coverMutation.mutate(file);
-            event.target.value = "";
-          }}
+          onChange={(event) => chooseImage("cover", event)}
           src={coverPhoto}
-        />
-      ) : null}
+      />
+
+      {cropImage ? <ProfileImageCropper kind={cropImage.kind} onCancel={closeCropper} onSave={uploadCroppedImage} saving={uploading} source={cropImage.url} /> : null}
 
       {message ? <p className="edit-profile-success">{message}</p> : null}
       {error ? <p className="edit-profile-error">{error}</p> : null}
