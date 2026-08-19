@@ -5,6 +5,8 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+let refreshPromise = null;
+
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("onlyme_access_token");
 
@@ -20,11 +22,14 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const request = error.config;
     const isRefreshRequest = request?.url?.includes("/auth/refresh");
+    const isPublicAuthRequest = ["/auth/login", "/auth/register", "/auth/refresh"].some((path) => request?.url?.includes(path));
+    const hasAccessToken = Boolean(localStorage.getItem("onlyme_access_token"));
 
-    if (error.response?.status === 401 && !request?._retried && !isRefreshRequest) {
+    if (error.response?.status === 401 && hasAccessToken && !request?._retried && !isPublicAuthRequest) {
       request._retried = true;
       try {
-        const response = await axiosInstance.post("/auth/refresh");
+        refreshPromise ||= axiosInstance.post("/auth/refresh").finally(() => { refreshPromise = null; });
+        const response = await refreshPromise;
         const accessToken = response.data.data.accessToken;
         localStorage.setItem("onlyme_access_token", accessToken);
         request.headers.Authorization = `Bearer ${accessToken}`;
