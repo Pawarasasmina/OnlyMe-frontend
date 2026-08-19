@@ -81,7 +81,7 @@ export default function SettingsPage() {
 
     <SettingsGroup title="Account">
       {["fan", "creator"].includes(user?.role) ? user.creatorApprovalStatus === "approved" ? <SettingsRow icon={FiUserCheck} subtitle="Approved creator access" title="Creator tools" to="/studio" /> : <SettingsRow icon={FiUserCheck} onClick={() => setCreatorApplyOpen(true)} subtitle={user.creatorApprovalStatus === "pending" ? "Application under review" : "For people who want to publish and earn"} title={user.creatorApprovalStatus === "pending" ? "Creator application" : "Apply as a creator"} /> : null}
-      <SettingsRow icon={FiEdit3} subtitle="Identity, photos and contact options" title="Edit profile" to="/settings/profile" />
+      <SettingsRow icon={FiEdit3} subtitle="Identity, photos and contact options" title="Edit profile" to="/settings/profile?from=settings" />
       <SettingsRow icon={FiGlobe} subtitle="Language, time zone and password" title="Account preferences" to="/settings/account" />
     </SettingsGroup>
 

@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiEyeOff, FiUserX, FiVolumeX } from "react-icons/fi";
+import { FiArrowLeft, FiEyeOff, FiUserX, FiVolumeX } from "react-icons/fi";
 import Button from "../../components/common/Button";
 import Loader from "../../components/common/Loader";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import { resolveMediaUrl } from "../../utils/media";
-import SettingsNav from "./SettingsNav";
 
 const roleOptions = {
   fan: [
@@ -146,8 +145,8 @@ function PrivacySettingsPage() {
     },
   });
 
-  if (query.isLoading) return <div className="space-y-6"><SettingsNav /><Loader label="Loading privacy settings..." /></div>;
-  if (query.isError) return <div className="space-y-6"><SettingsNav /><p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load privacy settings.</p></div>;
+  if (query.isLoading) return <Loader label="Loading privacy settings..." />;
+  if (query.isError) return <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load privacy settings.</p>;
 
   const role = query.data?.role || "fan";
   const options = roleOptions[role] || roleOptions.fan;
@@ -168,7 +167,9 @@ function PrivacySettingsPage() {
 
   return (
     <div className="space-y-6">
-      <SettingsNav />
+      <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand-mist/70 transition hover:text-white" to="/settings">
+        <FiArrowLeft /> Back to settings
+      </Link>
       <form className="space-y-6" onSubmit={submit}>
         <section className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
           <div>

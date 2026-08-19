@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiGift, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
@@ -210,6 +210,33 @@ function NotificationSheet({ isOpen, onClose }) {
   </div>;
 }
 
+function GiftSettingsComingSoon({ isOpen, onClose }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const closeOnEscape = (event) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div aria-modal="true" className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-0 pt-10 sm:px-4" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} role="dialog">
+      <section className="w-full max-w-[548px] rounded-t-[24px] border border-b-0 border-white/[0.09] bg-[#1d2430] px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]" onMouseDown={(event) => event.stopPropagation()}>
+        <div aria-hidden="true" className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/35" />
+        <div className="flex items-start justify-between gap-4">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-atseen-blue/15 text-xl text-atseen-blue"><FiGift /></div>
+          <button aria-label="Close gift settings" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={onClose} type="button"><FiX /></button>
+        </div>
+        <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-atseen-blue">Coming soon</p>
+        <h2 className="mt-2 text-2xl font-black text-white">Gift settings</h2>
+        <p className="mt-3 text-sm leading-6 text-atseen-muted">Custom gifts and gift preferences are being prepared. This feature will become available after the beta release.</p>
+        <button className="mt-7 w-full rounded-xl bg-atseen-blue py-3 text-sm font-black text-atseen-bg" onClick={onClose} type="button">Got it</button>
+      </section>
+    </div>
+  );
+}
+
 function normalizeLanguage(text) {
   const value = String(text || "")
     .split(/[,\u00b7]/)
@@ -233,8 +260,10 @@ function ProfileSettingsPage() {
   const [error, setError] = useState("");
   const [statusOpen, setStatusOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [giftSettingsOpen, setGiftSettingsOpen] = useState(false);
   const [cropImage, setCropImage] = useState(null);
   const accessToken = localStorage.getItem("onlyme_access_token");
+  const backTarget = new URLSearchParams(location.search).get("from") === "settings" ? "/settings" : "/profile";
 
   const profileQuery = useQuery({
     queryKey: ["profile", "me"],
@@ -246,20 +275,6 @@ function ProfileSettingsPage() {
   const privacyQuery = useQuery({
     queryKey: ["settings", "privacy"],
     queryFn: () => profileService.getPrivacySettings().then((response) => response.data.data),
-    enabled: Boolean(user && accessToken),
-    retry: false,
-  });
-
-  const mutedQuery = useQuery({
-    queryKey: ["settings", "muted-accounts"],
-    queryFn: () => profileService.getMutedAccounts().then((response) => response.data.data.items || []),
-    enabled: Boolean(user && accessToken),
-    retry: false,
-  });
-
-  const hiddenSeensQuery = useQuery({
-    queryKey: ["settings", "hidden-seens"],
-    queryFn: () => profileService.getHiddenSeens().then((response) => response.data.data.items || []),
     enabled: Boolean(user && accessToken),
     retry: false,
   });
@@ -402,39 +417,6 @@ function ProfileSettingsPage() {
     },
   });
 
-  const unmuteMutation = useMutation({
-    mutationFn: (userId) => profileService.unmuteAccount(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings", "muted-accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["discover"] });
-      queryClient.invalidateQueries({ queryKey: ["orbit"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
-      setMessage("Account unmuted.");
-      setError("");
-    },
-    onError: () => {
-      setMessage("");
-      setError("Unable to unmute this account. Please try again.");
-    },
-  });
-
-  const showSeenAgainMutation = useMutation({
-    mutationFn: (seenId) => profileService.showHiddenSeenAgain(seenId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings", "hidden-seens"] });
-      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["discover"] });
-      queryClient.invalidateQueries({ queryKey: ["search"] });
-      setMessage("Seen will be shown again.");
-      setError("");
-    },
-    onError: () => {
-      setMessage("");
-      setError("Unable to show this Seen again. Please try again.");
-    },
-  });
-
   function handleProfileMutationSuccess(text) {
     return (response) => {
       const data = response.data.data;
@@ -510,7 +492,7 @@ function ProfileSettingsPage() {
   if (profileQuery.isError || privacyQuery.isError) {
     return (
       <div className="edit-profile-page">
-        <button className="edit-profile-back" onClick={() => navigate("/profile")} type="button"><FiChevronLeft /></button>
+        <button className="edit-profile-back" onClick={() => navigate(backTarget)} type="button"><FiChevronLeft /></button>
         <p className="edit-profile-error">Unable to load profile settings.</p>
       </div>
     );
@@ -519,7 +501,7 @@ function ProfileSettingsPage() {
   return (
     <form className="edit-profile-page" onSubmit={submit}>
       <header className="edit-profile-header">
-        <button aria-label="Back to profile" className="edit-profile-back" onClick={() => navigate("/profile")} type="button"><FiChevronLeft /></button>
+        <button aria-label={backTarget === "/settings" ? "Back to settings" : "Back to profile"} className="edit-profile-back" onClick={() => navigate(backTarget)} type="button"><FiChevronLeft /></button>
         <h1>Edit Profile</h1>
       </header>
 
@@ -572,72 +554,20 @@ function ProfileSettingsPage() {
           <FiChevronRight />
         </button>
         <SettingsRow subtitle={directSummary} title="Direct Access settings" to="/messages?tab=direct" />
-        <SettingsRow subtitle={giftSummary} title="Gift settings" to="/profile" />
+        <button className="edit-profile-settings-row" onClick={() => setGiftSettingsOpen(true)} type="button">
+          <span><b>Gift settings</b><small>{giftSummary}</small></span><FiChevronRight />
+        </button>
         <button className="edit-profile-settings-row" onClick={() => setNotificationsOpen(true)} type="button">
           <span><b>Notifications</b><small>{notificationSummary}</small></span><FiChevronRight />
         </button>
       </section>
 
-      <section className="edit-profile-privacy">
+      {role === "creator" ? <section className="edit-profile-privacy">
         <h2>Privacy</h2>
         <Segmented label="Who can see your saved places?" onChange={setSavedVisibility} value={segmentedFromVisibility(form.profileVisibility)} />
         <Segmented label="Who can see your orbit?" onChange={setOrbitVisibility} value={form.orbitVisible ? "everyone" : "only_me"} />
         <p>Your orbit only ever shows public ties - follows and open dream support. Messages and private signals never appear to others.</p>
-        <div className="edit-profile-muted-accounts">
-          <div>
-            <h3>Muted accounts</h3>
-            <Link to="/settings/privacy">Manage privacy</Link>
-          </div>
-          {mutedQuery.isLoading ? <p>Loading muted accounts...</p> : null}
-          {mutedQuery.isError ? <p role="alert">Unable to load muted accounts.</p> : null}
-          {!mutedQuery.isLoading && !mutedQuery.isError && !mutedQuery.data?.length ? <p>No muted accounts.</p> : null}
-          {mutedQuery.data?.length ? (
-            <div className="edit-profile-muted-list">
-              {mutedQuery.data.map((account) => (
-                <article key={account.id}>
-                  <FanAvatar name={account.displayName || account.username} size="h-[42px] w-[42px]" src={account.profilePhoto} />
-                  <span>
-                    <b>{account.displayName || `@${account.username}`}</b>
-                    <small>@{account.username} · {account.role}</small>
-                  </span>
-                  <button disabled={unmuteMutation.isPending} onClick={() => unmuteMutation.mutate(account.id)} type="button">Unmute</button>
-                </article>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <div className="edit-profile-muted-accounts">
-          <div>
-            <h3>Hidden Seens</h3>
-            <Link to="/settings/privacy">Manage privacy</Link>
-          </div>
-          {hiddenSeensQuery.isLoading ? <p>Loading hidden Seens...</p> : null}
-          {hiddenSeensQuery.isError ? <p role="alert">Unable to load hidden Seens.</p> : null}
-          {!hiddenSeensQuery.isLoading && !hiddenSeensQuery.isError && !hiddenSeensQuery.data?.length ? <p>No hidden Seens.</p> : null}
-          {hiddenSeensQuery.data?.length ? (
-            <div className="edit-profile-muted-list">
-              {hiddenSeensQuery.data.map((seen) => {
-                const coverUrl = resolveMediaUrl(seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover);
-                const creatorName = seen.creator?.displayName || seen.creator?.name || seen.creator?.username || "Unknown creator";
-                const creatorUsername = seen.creator?.username ? `@${seen.creator.username}` : "Creator unavailable";
-
-                return (
-                  <article key={seen.id}>
-                    <Link className="block h-[42px] w-[64px] shrink-0 overflow-hidden rounded-[11px] bg-[#1a263a]" to={`/seen/${encodeURIComponent(seen.id)}`}>
-                      {coverUrl ? <img alt="" className="h-full w-full object-cover" src={coverUrl} /> : <span className="grid h-full w-full place-items-center text-[10px] font-black text-[#9CCBFF]">Seen</span>}
-                    </Link>
-                    <span>
-                      <b>{seen.title || "Untitled Seen"}</b>
-                      <small>{creatorName} - {creatorUsername}</small>
-                    </span>
-                    <button disabled={showSeenAgainMutation.isPending} onClick={() => showSeenAgainMutation.mutate(seen.id)} type="button">Show again</button>
-                  </article>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-      </section>
+      </section> : null}
 
       <button className="edit-profile-save" disabled={saveMutation.isPending || uploading} type="submit">
         {saveMutation.isPending ? "Saving..." : "Save"}
@@ -655,6 +585,7 @@ function ProfileSettingsPage() {
         }}
       />
       <NotificationSheet isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <GiftSettingsComingSoon isOpen={giftSettingsOpen} onClose={() => setGiftSettingsOpen(false)} />
     </form>
   );
 }

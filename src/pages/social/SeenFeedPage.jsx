@@ -524,6 +524,8 @@ export default function SeenFeedPage() {
   return <section className="seen-prototype-page">
     <SeenHeader activeTab={tab} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onTabChange={setTab} />
     <FanCreateSheet
+      canCreateSeen={capabilities.canCreate}
+      canCreateWorld={capabilities.isApprovedCreator}
       canCreateStoryNow={canCreateStoryNow}
       canPostNote={canPostNote}
       isOpen={createOpen}

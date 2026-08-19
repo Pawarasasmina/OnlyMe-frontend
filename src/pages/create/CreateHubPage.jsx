@@ -6,22 +6,25 @@ import StoryCreator from "../../components/stories/StoryCreator";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { canCreateStory } from "../../utils/storyPermissions";
+import { socialCapabilitiesFor } from "../../utils/socialAccess";
 
 function CreateHubPage() {
   const { user } = useAuth();
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const canCreate = canCreateStory(user);
+  const capabilities = socialCapabilitiesFor(user);
   const publicationsQuery = useQuery({
     queryKey: ["creation-capacity"],
     queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD", limit: 50 })
       .then((response) => response.data.data.items || []),
+    enabled: capabilities.isApprovedCreator,
   });
   const active = (publicationsQuery.data || []).filter((item) =>
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
   const cards = [
     { title: "Seen", text: "Free public publication with 1–3 chapters", to: "/create/seen" },
-    { title: "Premium World", text: `Monthly private ecosystem · 1–2 previews · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 },
+    ...(capabilities.isApprovedCreator ? [{ title: "Premium World", text: `Monthly private ecosystem · 1–2 previews · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 
   return (

@@ -252,13 +252,13 @@ function ProfileSkeleton() {
   );
 }
 
-function ProfileCreateSheet({ canCreateCreatorContent, canCreateStoryNow, canPostNote, isOpen, onClose, onNote, onStory }) {
+function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, canPostNote, isOpen, onClose, onNote, onStory }) {
   if (!isOpen) return null;
   const options = [
-    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen", disabled: !canCreateCreatorContent },
+    { description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen", disabled: !canCreateSeen },
     { description: "24 hours - then it's gone", icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
     { description: "One line on the wall", icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
-    { description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "🪐", to: "/create/premium-world" },
+    ...(canCreateWorld ? [{ description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "🪐", to: "/create/premium-world" }] : []),
   ];
 
   return (
@@ -342,7 +342,8 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
         </div>
       </header>
       <ProfileCreateSheet
-        canCreateCreatorContent={viewerCapabilities.canAccessStudio}
+        canCreateSeen={viewerCapabilities.canCreate}
+        canCreateWorld={viewerCapabilities.canAccessStudio}
         canCreateStoryNow={canCreateStoryNow}
         canPostNote={canPostNote}
         isOpen={createOpen}
