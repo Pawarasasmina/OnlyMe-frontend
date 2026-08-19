@@ -52,7 +52,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadMessageCount = 0 
           to="/profile"
         >
           <FanAvatar name={display.name} size="h-8 w-8" src={display.avatar} />
-          <span className="min-w-0 max-[1019px]:sr-only"><strong className="block truncate">{display.name}</strong><small className="mt-0.5 block truncate">{t("Your space")}</small></span>
+          <span className="min-w-0 max-[1019px]:sr-only"><strong className="block truncate">{display.name}</strong><small className="mt-0.5 block truncate">{t("My space")}</small></span>
         </NavLink>
       </div>
     </aside>

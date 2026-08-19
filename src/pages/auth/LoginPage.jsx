@@ -44,7 +44,14 @@ function LoginPage() {
       const user = response.data.data.user;
       navigate(destinationAfterLogin(user, location.state?.from?.pathname), { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to sign in. Please try again.");
+      const status = requestError.response?.status;
+      setError(status === 429
+        ? "Too many sign-in attempts. Please wait a few minutes and try again."
+        : [502, 503, 504].includes(status)
+          ? "The service is temporarily unavailable. Please try again shortly."
+          : !requestError.response
+            ? "Unable to reach the server. Check your connection and try again."
+            : requestError.response.data?.message || "Unable to sign in. Please try again.");
     } finally {
       setSubmitting(false);
     }

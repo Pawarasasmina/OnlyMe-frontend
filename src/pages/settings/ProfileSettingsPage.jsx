@@ -88,9 +88,9 @@ function visibilityFromSegment(value) {
   return value === "everyone" ? "public" : "private";
 }
 
-function Field({ disabled = false, label, name, onChange, placeholder = "", value }) {
+function Field({ className = "", disabled = false, label, name, onChange, placeholder = "", value }) {
   return (
-    <label className="edit-profile-field">
+    <label className={`edit-profile-field ${className}`}>
       <span>{label}</span>
       <input disabled={disabled} name={name} onChange={onChange} placeholder={placeholder} value={value || ""} />
     </label>
@@ -530,16 +530,16 @@ function ProfileSettingsPage() {
       <section className="edit-profile-fields">
         <Field label="First name" name="firstName" onChange={updateField} value={form.firstName} />
         <Field label="Last name" name="lastName" onChange={updateField} value={form.lastName} />
-        <Field disabled label="Username" name="username" onChange={updateField} value={`@${form.username}`} />
-        <p className="edit-profile-help">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
+        <Field className="edit-profile-field-wide" disabled label="Username" name="username" onChange={updateField} value={`@${form.username}`} />
+        <p className="edit-profile-help edit-profile-field-wide">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
         <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
         <Field label="Languages" name="languagesText" onChange={updateField} value={form.languagesText} />
-        <Field label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} />
+        <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} />
       </section>
 
       <section className="edit-profile-fields">
-        <h2>Contact Options</h2>
-        <Field disabled label="Email" name="email" onChange={updateField} value={form.email} />
+        <h2 className="edit-profile-field-wide">Contact Options</h2>
+        <Field className="edit-profile-field-wide" disabled label="Email" name="email" onChange={updateField} value={form.email} />
         <Field label="Phone number" name="phoneNumber" onChange={updateField} value={form.phoneNumber} />
         <Field label="WhatsApp" name="whatsapp" onChange={updateField} value={form.whatsapp} />
       </section>
