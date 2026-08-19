@@ -24,8 +24,6 @@ import ContentDetailPage from "../pages/creator/ContentDetailPage";
 import EarningsPage from "../pages/creator/EarningsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserManagement from "../pages/admin/UserManagement";
-import ContentModeration from "../pages/admin/ContentModeration";
-import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
 import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
 import CreatorVerificationDetail from "../pages/admin/SimpleCreatorVerificationDetail";
@@ -44,8 +42,8 @@ import SeenManagerPage from "../pages/creator/SeenManagerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
-import PublicationModeration from "../pages/admin/PublicationModeration";
-import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
+import AdminModerationComingSoon from "../pages/admin/AdminModerationComingSoon";
+import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
 import WorldComposerPage from "../pages/creator/WorldComposerPage";
 import WorldManagerPage from "../pages/creator/WorldManagerPage";
 import WorldOwnerDetailPage from "../pages/creator/WorldOwnerDetailPage";
@@ -198,11 +196,12 @@ function AppRoutes() {
           <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
-          <Route path="/admin/content-moderation" element={<ContentModeration />} />
-          <Route path="/admin/content-moderation/:id" element={<ContentModerationDetail />} />
-          <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
-          <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
-          <Route path="/admin/moderation" element={<Navigate replace to="/admin/content-moderation" />} />
+          <Route path="/admin/content-moderation" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/content-moderation/:id" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/publication-moderation" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/publication-moderation/:id" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/moderation" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
           <Route path="/admin/message-reports" element={<MessageReportsPage />} />
