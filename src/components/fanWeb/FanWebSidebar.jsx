@@ -1,20 +1,27 @@
-import { Link, NavLink } from "react-router-dom";
+import { FiLogOut } from "react-icons/fi";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import AtseenLogo from "../branding/AtseenLogo";
 import FanAvatar from "./shared/FanAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { getUserDisplay } from "./shared/userDisplay";
-import { socialPrimaryNavItems } from "../social/socialNavItems";
+import { socialPrimaryNavItems, socialSecondaryNavItems } from "../social/socialNavItems";
 import { useLanguage } from "../../hooks/useLanguage";
 
 function FanWebSidebar({ capabilities, onCreate, onVerify, status, unreadMessageCount = 0 }) {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const { t } = useLanguage();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate
     ? { label: "Create ✦", onClick: onCreate }
     : capabilities.canAccessVerification && !capabilities.isApprovedCreator
-      ? { label: "Verify ✦", to: "/creator/verification" }
+      ? { label: "Verify", to: "/creator/verification" }
       : null;
+
+  const logoutAndNavigate = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <aside className="social-fixed-rail social-left-rail hidden h-screen w-[76px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[10px] pb-6 pt-[42px] md:flex min-[1020px]:w-[240px] min-[1020px]:px-[28px]">
@@ -58,6 +65,18 @@ function FanWebSidebar({ capabilities, onCreate, onVerify, status, unreadMessage
           {t(createAction.label)}
         </button> : <Link className="sidebar-create-action mt-9 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#8ab8ff] px-5 text-[15px] font-bold text-[#07090d] transition hover:brightness-110 max-[1019px]:hidden" to={createAction.to}>{t(createAction.label)}</Link>
       ) : null}
+      <nav aria-label="Account actions" className="mt-5 space-y-0.5 border-t border-white/[0.05] pt-5">
+        {socialSecondaryNavItems(capabilities).map((item) => (
+          <NavLink
+            className={({ isActive }) => `flex min-h-11 items-center gap-3.5 rounded-xl px-3 py-3 text-sm font-semibold transition ${isActive ? "text-white" : item.emphasis ? "text-atseen-blue hover:bg-atseen-blue/10" : "text-atseen-muted hover:bg-atseen-surface-2 hover:text-white"}`}
+            key={item.to}
+            to={item.to}
+          >
+            <item.icon className="h-5 w-5 shrink-0" />
+            <span className="truncate max-[1019px]:sr-only">{t(item.label)}</span>
+          </NavLink>
+        ))}
+      </nav>
       <div className="mt-auto pb-2">
         <NavLink
           className="sidebar-identity flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-atseen-muted transition hover:bg-atseen-surface-2 hover:text-white"
@@ -66,6 +85,14 @@ function FanWebSidebar({ capabilities, onCreate, onVerify, status, unreadMessage
           <FanAvatar name={display.name} size="h-8 w-8" src={display.avatar} />
           <span className="min-w-0 max-[1019px]:sr-only"><strong className="block truncate">{display.name}</strong><small className="mt-0.5 block truncate">{t("Your space")}</small></span>
         </NavLink>
+        <button
+          className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-atseen-line px-3 py-2 text-xs font-semibold text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white max-[1019px]:hidden"
+          onClick={logoutAndNavigate}
+          type="button"
+        >
+          <FiLogOut aria-hidden="true" /> {t("Logout")}
+        </button>
+        <p className="text-center text-[10px] text-atseen-dim max-[760px]:hidden">Atseen OU &middot; web v1.6</p>
       </div>
     </aside>
   );
