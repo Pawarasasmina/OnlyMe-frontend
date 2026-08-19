@@ -15,6 +15,8 @@ const VIDEO_RECORDER_TYPES = [
   "video/webm",
 ];
 const VIDEO_RECORDING_PAD_MS = 350;
+const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm";
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 
 function statusLabel(status, uploading) {
@@ -86,6 +88,16 @@ function seekVideo(video, time) {
     video.addEventListener("seeked", done, { once: true });
     video.addEventListener("error", fail, { once: true });
     video.currentTime = time;
+  });
+}
+
+function readVideoDuration(url) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => resolve(Number(video.duration) || 0);
+    video.onerror = () => reject(new Error("Unable to read this video."));
+    video.src = url;
   });
 }
 
@@ -488,11 +500,31 @@ export default function SeenComposerPage() {
     event.target.value = "";
     if (!file) return;
     if (pendingCoverKind.current === "VIDEO") {
+      if (!file.type.startsWith("video/")) {
+        setError("Choose a video file for this option.");
+        return;
+      }
       setError("");
-      setVideoToTrim((current) => {
-        if (current?.url) URL.revokeObjectURL(current.url);
-        return { file, limitSeconds: pendingVideoLimit.current, url: URL.createObjectURL(file) };
-      });
+      const url = URL.createObjectURL(file);
+      try {
+        const duration = await readVideoDuration(url);
+        if (duration <= pendingVideoLimit.current + 0.1) {
+          URL.revokeObjectURL(url);
+          await uploadCoverFile(file, "VIDEO");
+          return;
+        }
+        setVideoToTrim((current) => {
+          if (current?.url) URL.revokeObjectURL(current.url);
+          return { file, limitSeconds: pendingVideoLimit.current, url };
+        });
+      } catch (durationError) {
+        URL.revokeObjectURL(url);
+        setError(durationError.message);
+      }
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Choose an image file for the Photo option.");
       return;
     }
     setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
@@ -501,6 +533,7 @@ export default function SeenComposerPage() {
   const chooseMedia = (kind, limitSeconds = 15) => {
     pendingCoverKind.current = kind;
     pendingVideoLimit.current = limitSeconds;
+    if (coverInput.current) coverInput.current.accept = kind === "VIDEO" ? VIDEO_ACCEPT : IMAGE_ACCEPT;
     coverInput.current?.click();
   };
 
@@ -786,7 +819,7 @@ export default function SeenComposerPage() {
           </div>
         )}
         <input
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+          accept={IMAGE_ACCEPT}
           className="sr-only"
           onChange={uploadCover}
           ref={coverInput}
