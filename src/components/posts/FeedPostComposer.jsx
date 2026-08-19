@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FiImage, FiMapPin, FiRefreshCw, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
+import ProfileImageCropper from "../profile/ProfileImageCropper";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import {
   POST_CONTEXTS,
@@ -72,6 +73,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
   const [confirmClose, setConfirmClose] = useState(false);
   const [progress, setProgress] = useState({ error: "", progress: 0, step: "" });
   const [loadedDraftId, setLoadedDraftId] = useState("");
+  const [cropQueue, setCropQueue] = useState([]);
 
   const draftsQuery = usePostDrafts({ enabled: isOpen && canCreateFeedPost(user) && mode === "create" });
   const createMutation = useCreateFeedPost();
@@ -146,7 +148,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
       if (error) {
         nextErrors.media = error;
       } else {
-        accepted.push(makeFilePreview(file));
+        accepted.push({ file, url: URL.createObjectURL(file) });
       }
     });
 
@@ -155,7 +157,20 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     }
 
     setErrors((current) => ({ ...current, ...nextErrors }));
-    setFiles((current) => [...current, ...accepted]);
+    setCropQueue((current) => [...current, ...accepted]);
+  };
+
+  const finishCrop = (file) => {
+    const [current] = cropQueue;
+    if (current?.url) URL.revokeObjectURL(current.url);
+    setFiles((items) => [...items, makeFilePreview(file)]);
+    setCropQueue((items) => items.slice(1));
+  };
+
+  const skipCrop = () => {
+    const [current] = cropQueue;
+    if (current?.url) URL.revokeObjectURL(current.url);
+    setCropQueue((items) => items.slice(1));
   };
 
   const removeFile = (id) => {
@@ -261,6 +276,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
 
   return (
     <FanModal className="max-h-[94dvh] max-w-[920px] p-0 sm:p-0" isOpen={isOpen} onClose={requestClose} title={isEditing ? "Edit Home post" : "Create Home post"}>
+      {cropQueue[0] ? <ProfileImageCropper kind="feed" onCancel={skipCrop} onSave={finishCrop} source={cropQueue[0].url} /> : null}
       <div className="grid bg-[#0B0E13] lg:grid-cols-[minmax(0,1fr)_280px]">
         <section
           className="min-w-0 p-5 sm:p-6"

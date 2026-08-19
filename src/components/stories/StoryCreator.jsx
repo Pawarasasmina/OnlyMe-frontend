@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCreateStory } from "../../hooks/useStories";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
+import ProfileImageCropper from "../profile/ProfileImageCropper";
 
 const STORY_COLORS = ["#FFFFFF", "#D6EAFF", "#9CCBFF", "#0A0C0F", "#6ECF97", "#F17878"];
 const STORY_GRADIENTS = [
@@ -139,6 +140,7 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
   const [story, setStory] = useState(freshStory);
   const [hintOpen, setHintOpen] = useState(() => !localStorage.getItem("atseen_story_comp_hint"));
   const [upload, setUpload] = useState({ error: "", progress: 0, step: "" });
+  const [cropSource, setCropSource] = useState("");
 
   const colorIndex = useMemo(() => STORY_COLORS.indexOf(story.color), [story.color]);
   const backgroundStyle = story.photo
@@ -178,11 +180,17 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
       showToast("Choose an image file.");
       return;
     }
+    setCropSource(URL.createObjectURL(file));
+  };
+
+  const useCroppedImage = (file) => {
     const url = URL.createObjectURL(file);
     setStory((current) => {
       if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
       return { ...current, photo: true, uploadedUrl: url };
     });
+    URL.revokeObjectURL(cropSource);
+    setCropSource("");
   };
 
   const beginDrag = (event) => {
@@ -270,6 +278,7 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
 
   return (
     <div aria-label="Create Story" aria-modal="true" className="story-composer-overlay" role="dialog">
+      {cropSource ? <ProfileImageCropper kind="story" onCancel={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} onSave={useCroppedImage} source={cropSource} /> : null}
       <section
         className="story-composer-stage"
         onPointerMove={moveDrag}

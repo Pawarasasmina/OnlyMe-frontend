@@ -2,22 +2,27 @@ import { useState } from "react";
 import { FiX } from "react-icons/fi";
 
 function outputFileName(kind) {
-  return kind === "cover" ? "profile-cover.jpg" : "profile-avatar.jpg";
+  return `${kind || "image"}.jpg`;
 }
 
 export default function ProfileImageCropper({ kind, onCancel, onSave, saving, source }) {
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
-  const cover = kind === "cover";
+  const config = {
+    avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: "profile photo", width: 800 },
+    cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: "cover", width: 1500 },
+    feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "feed image", width: 1080 },
+    seen: { aspect: "aspect-video", frame: "w-full rounded-2xl", height: 1080, label: "Seen image", width: 1920 },
+    story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
+  }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
 
   const save = async () => {
     const image = new Image();
     image.src = source;
     await image.decode();
 
-    const width = cover ? 1500 : 800;
-    const height = cover ? 500 : 800;
+    const { width, height } = config;
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -39,11 +44,11 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     <div aria-modal="true" className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog">
       <section className="w-full max-w-xl rounded-3xl border border-atseen-line bg-[#171c25] p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
-          <div><h2 className="text-lg font-black">Adjust {cover ? "cover" : "profile photo"}</h2><p className="mt-1 text-xs text-atseen-muted">Zoom and reposition the image before uploading.</p></div>
+          <div><h2 className="text-lg font-black">Adjust {config.label}</h2><p className="mt-1 text-xs text-atseen-muted">Zoom and reposition the image before uploading.</p></div>
           <button aria-label="Close image editor" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={saving} onClick={onCancel} type="button"><FiX /></button>
         </div>
 
-        <div className={`relative mx-auto mt-5 overflow-hidden bg-black ring-1 ring-white/20 ${cover ? "aspect-[3/1] w-full rounded-2xl" : "aspect-square w-[min(72vw,320px)] rounded-full"}`}>
+        <div className={`relative mx-auto mt-5 overflow-hidden bg-black ring-1 ring-white/20 ${config.aspect} ${config.frame}`}>
           <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `scale(${zoom})` }} />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>

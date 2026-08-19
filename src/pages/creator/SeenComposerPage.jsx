@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FiCamera, FiChevronLeft, FiEye, FiFilm, FiImage, FiMapPin, FiMic, FiPlus, FiSave, FiScissors, FiType, FiUpload, FiX, FiZap } from "react-icons/fi";
 import { publicationService as api } from "../../services/publicationService";
 import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
+import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 
 const empty = { kind: "SEEN", title: "", summary: "", description: "", category: "", tags: [], chapters: [] };
 const categories = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
@@ -14,6 +15,8 @@ const VIDEO_RECORDER_TYPES = [
   "video/webm",
 ];
 const VIDEO_RECORDING_PAD_MS = 350;
+const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm";
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 
 function statusLabel(status, uploading) {
@@ -85,6 +88,16 @@ function seekVideo(video, time) {
     video.addEventListener("seeked", done, { once: true });
     video.addEventListener("error", fail, { once: true });
     video.currentTime = time;
+  });
+}
+
+function readVideoDuration(url) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => resolve(Number(video.duration) || 0);
+    video.onerror = () => reject(new Error("Unable to read this video."));
+    video.src = url;
   });
 }
 
@@ -350,6 +363,7 @@ export default function SeenComposerPage() {
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
   const [chapterStatus, setChapterStatus] = useState("");
+  const [cropTarget, setCropTarget] = useState(null);
 
   const refresh = async (publicationId = id) => {
     const response = await api.getMyPublication(publicationId);
@@ -486,23 +500,40 @@ export default function SeenComposerPage() {
     event.target.value = "";
     if (!file) return;
     if (pendingCoverKind.current === "VIDEO") {
+      if (!file.type.startsWith("video/")) {
+        setError("Choose a video file for this option.");
+        return;
+      }
       setError("");
-      setVideoToTrim((current) => {
-        if (current?.url) URL.revokeObjectURL(current.url);
-        return { file, limitSeconds: pendingVideoLimit.current, url: URL.createObjectURL(file) };
-      });
+      const url = URL.createObjectURL(file);
+      try {
+        const duration = await readVideoDuration(url);
+        if (duration <= pendingVideoLimit.current + 0.1) {
+          URL.revokeObjectURL(url);
+          await uploadCoverFile(file, "VIDEO");
+          return;
+        }
+        setVideoToTrim((current) => {
+          if (current?.url) URL.revokeObjectURL(current.url);
+          return { file, limitSeconds: pendingVideoLimit.current, url };
+        });
+      } catch (durationError) {
+        URL.revokeObjectURL(url);
+        setError(durationError.message);
+      }
       return;
     }
-    setCoverPreview((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return { kind: "IMAGE", url: URL.createObjectURL(file) };
-    });
-    await uploadCoverFile(file, "IMAGE");
+    if (!file.type.startsWith("image/")) {
+      setError("Choose an image file for the Photo option.");
+      return;
+    }
+    setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
   };
 
   const chooseMedia = (kind, limitSeconds = 15) => {
     pendingCoverKind.current = kind;
     pendingVideoLimit.current = limitSeconds;
+    if (coverInput.current) coverInput.current.accept = kind === "VIDEO" ? VIDEO_ACCEPT : IMAGE_ACCEPT;
     coverInput.current?.click();
   };
 
@@ -633,6 +664,23 @@ export default function SeenComposerPage() {
     }
   };
 
+  const closeImageCrop = () => {
+    if (cropTarget?.url) URL.revokeObjectURL(cropTarget.url);
+    setCropTarget(null);
+  };
+
+  const useCroppedImage = async (file) => {
+    const target = cropTarget?.kind;
+    closeImageCrop();
+    if (target === "cover") await uploadCoverFile(file, "IMAGE");
+    else await uploadChapterMedia("IMAGE", file);
+  };
+
+  const requestChapterMedia = (mediaType, file) => {
+    if (mediaType !== "IMAGE") return uploadChapterMedia(mediaType, file);
+    setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
+  };
+
   const addPlaceBlock = async () => {
     if (!activeChapter || !p.id || chapterSaving) return;
     setChapterSaving(true);
@@ -710,13 +758,15 @@ export default function SeenComposerPage() {
 
   if (activeChapter) {
     return (
+      <>
+      {cropTarget ? <ProfileImageCropper kind="seen" onCancel={closeImageCrop} onSave={useCroppedImage} source={cropTarget.url} /> : null}
       <SeenChapterEditor
         busy={chapterSaving}
         chapter={activeChapter}
         error={error}
         onAddPlace={addPlaceBlock}
         onDone={saveChapterStory}
-        onMediaUpload={uploadChapterMedia}
+        onMediaUpload={requestChapterMedia}
         onStoryChange={(value) => {
           setChapterStory(value);
           setChapterStatus(value.trim() ? "Unsaved chapter" : "");
@@ -724,11 +774,13 @@ export default function SeenComposerPage() {
         status={chapterStatus}
         story={chapterStory}
       />
+      </>
     );
   }
 
   return (
     <section className="seen-compose-page">
+      {cropTarget ? <ProfileImageCropper kind="seen" onCancel={closeImageCrop} onSave={useCroppedImage} source={cropTarget.url} /> : null}
       <header className="seen-compose-header">
         <button aria-label="Back" className="seen-compose-back" onClick={() => nav(-1)} type="button"><FiChevronLeft /></button>
         <div className="seen-compose-heading">
@@ -767,7 +819,7 @@ export default function SeenComposerPage() {
           </div>
         )}
         <input
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+          accept={IMAGE_ACCEPT}
           className="sr-only"
           onChange={uploadCover}
           ref={coverInput}

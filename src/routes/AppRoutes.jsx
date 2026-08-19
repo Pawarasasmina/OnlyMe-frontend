@@ -144,15 +144,15 @@ function AppRoutes() {
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
           </Route>
+          <Route path="/create" element={<CreateHubPage />} />
+          <Route path="/create/seen" element={<SeenComposerPage />} />
+          <Route path="/studio/seens" element={<SeenManagerPage />} />
+          <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
+          <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
-            <Route path="/create" element={<CreateHubPage />} />
-            <Route path="/create/seen" element={<SeenComposerPage />} />
             <Route path="/create/world" element={<PlanetComingSoonPage />} />
             <Route path="/create/premium-world" element={<PlanetComingSoonPage />} />
-            <Route path="/studio/seens" element={<SeenManagerPage />} />
-            <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
-            <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
             <Route path="/studio/worlds" element={<WorldManagerPage />} />
             <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
