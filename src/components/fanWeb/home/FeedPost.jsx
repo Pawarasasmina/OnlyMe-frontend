@@ -803,8 +803,17 @@ function FeedPost({ post }) {
         </div>
       </FanModal>
 
-      <FanModal isOpen={moreOpen} onClose={() => setMoreOpen(false)} title="More">
-        <div className="divide-y divide-white/[0.05]">
+      <FanModal
+        className="home-post-more-sheet"
+        hideHeader
+        isOpen={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        overlayClassName="home-post-more-overlay"
+        title="This note"
+      >
+        <span className="home-post-more-handle" aria-hidden="true" />
+        <h2 className="home-post-more-title">This note</h2>
+        <div className="home-post-more-list">
           {(ownsPost
             ? [
               ["edit", "Edit Post", FiMoreHorizontal],
@@ -821,12 +830,13 @@ function FeedPost({ post }) {
               ["block", `Block ${creator.name.split(" ")[0]}`, FiFlag],
             ]).map(([key, label, Icon]) => (
             <button
-              className={`flex w-full items-center gap-3 px-1 py-3 text-left text-sm font-semibold transition hover:text-atseen-blue ${key === "block" || key === "delete" ? "text-atseen-danger" : "text-atseen-text"}`}
+              className={key === "block" || key === "delete" ? "is-danger" : ""}
               key={key}
               onClick={() => moreAction(key)}
               type="button"
             >
-              <Icon aria-hidden="true" className="text-atseen-muted" /> {label}
+              <Icon aria-hidden="true" />
+              <span>{label}</span>
             </button>
           ))}
         </div>
