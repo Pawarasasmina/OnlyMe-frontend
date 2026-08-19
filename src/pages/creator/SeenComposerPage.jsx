@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FiCamera, FiChevronLeft, FiEye, FiFilm, FiImage, FiMapPin, FiMic, FiPlus, FiSave, FiScissors, FiType, FiUpload, FiX, FiZap } from "react-icons/fi";
 import { publicationService as api } from "../../services/publicationService";
 import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
+import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 
 const empty = { kind: "SEEN", title: "", summary: "", description: "", category: "", tags: [], chapters: [] };
 const categories = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
@@ -350,6 +351,7 @@ export default function SeenComposerPage() {
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
   const [chapterStatus, setChapterStatus] = useState("");
+  const [cropTarget, setCropTarget] = useState(null);
 
   const refresh = async (publicationId = id) => {
     const response = await api.getMyPublication(publicationId);
@@ -493,11 +495,7 @@ export default function SeenComposerPage() {
       });
       return;
     }
-    setCoverPreview((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return { kind: "IMAGE", url: URL.createObjectURL(file) };
-    });
-    await uploadCoverFile(file, "IMAGE");
+    setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
   };
 
   const chooseMedia = (kind, limitSeconds = 15) => {
@@ -633,6 +631,23 @@ export default function SeenComposerPage() {
     }
   };
 
+  const closeImageCrop = () => {
+    if (cropTarget?.url) URL.revokeObjectURL(cropTarget.url);
+    setCropTarget(null);
+  };
+
+  const useCroppedImage = async (file) => {
+    const target = cropTarget?.kind;
+    closeImageCrop();
+    if (target === "cover") await uploadCoverFile(file, "IMAGE");
+    else await uploadChapterMedia("IMAGE", file);
+  };
+
+  const requestChapterMedia = (mediaType, file) => {
+    if (mediaType !== "IMAGE") return uploadChapterMedia(mediaType, file);
+    setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
+  };
+
   const addPlaceBlock = async () => {
     if (!activeChapter || !p.id || chapterSaving) return;
     setChapterSaving(true);
@@ -710,13 +725,15 @@ export default function SeenComposerPage() {
 
   if (activeChapter) {
     return (
+      <>
+      {cropTarget ? <ProfileImageCropper kind="seen" onCancel={closeImageCrop} onSave={useCroppedImage} source={cropTarget.url} /> : null}
       <SeenChapterEditor
         busy={chapterSaving}
         chapter={activeChapter}
         error={error}
         onAddPlace={addPlaceBlock}
         onDone={saveChapterStory}
-        onMediaUpload={uploadChapterMedia}
+        onMediaUpload={requestChapterMedia}
         onStoryChange={(value) => {
           setChapterStory(value);
           setChapterStatus(value.trim() ? "Unsaved chapter" : "");
@@ -724,11 +741,13 @@ export default function SeenComposerPage() {
         status={chapterStatus}
         story={chapterStory}
       />
+      </>
     );
   }
 
   return (
     <section className="seen-compose-page">
+      {cropTarget ? <ProfileImageCropper kind="seen" onCancel={closeImageCrop} onSave={useCroppedImage} source={cropTarget.url} /> : null}
       <header className="seen-compose-header">
         <button aria-label="Back" className="seen-compose-back" onClick={() => nav(-1)} type="button"><FiChevronLeft /></button>
         <div className="seen-compose-heading">

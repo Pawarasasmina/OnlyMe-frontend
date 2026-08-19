@@ -14,6 +14,7 @@ import {
   POST_TEXT_MAX_LENGTH,
 } from "../../../data/postOptions";
 import StatusPicker from "../../stories/StatusPicker";
+import ProfileImageCropper from "../../profile/ProfileImageCropper";
 
 const noteContextOptions = [
   { icon: "⚡", label: "Right now", value: "Right now" },
@@ -59,6 +60,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [uploadLabel, setUploadLabel] = useState("");
+  const [cropQueue, setCropQueue] = useState([]);
   const canPostToHome = canCreateFeedPost(user);
   const viewerId = user?.id || user?._id;
   const wallStoriesQuery = useWallStories({ fallbackUser: { ...currentUser, ...user }, viewerId });
@@ -117,12 +119,25 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     next.slice(0, remaining).forEach((file) => {
       const problem = fileError(file);
       if (problem) nextError = problem;
-      else accepted.push(previewFile(file));
+      else accepted.push({ file, url: URL.createObjectURL(file) });
     });
 
     if (next.length > remaining) nextError = `You can attach up to ${POST_MAX_IMAGES} images.`;
     setError(nextError);
-    if (accepted.length) setFiles((current) => [...current, ...accepted]);
+    if (accepted.length) setCropQueue((current) => [...current, ...accepted]);
+  };
+
+  const finishCrop = (file) => {
+    const [current] = cropQueue;
+    if (current?.url) URL.revokeObjectURL(current.url);
+    setFiles((items) => [...items, previewFile(file)]);
+    setCropQueue((items) => items.slice(1));
+  };
+
+  const skipCrop = () => {
+    const [current] = cropQueue;
+    if (current?.url) URL.revokeObjectURL(current.url);
+    setCropQueue((items) => items.slice(1));
   };
 
   const removeFile = (id) => {
@@ -175,6 +190,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
 
   return (
     <>
+      {cropQueue[0] ? <ProfileImageCropper kind="feed" onCancel={skipCrop} onSave={finishCrop} source={cropQueue[0].url} /> : null}
       {composerOpen ? (
         <section
           aria-label="Create a wall note"
