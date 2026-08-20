@@ -13,6 +13,7 @@ const links = [
   { label: "Publication moderation", to: "/admin/publication-moderation", icon: FiFileText },
   { label: "Gift catalog", to: "/admin/gifts", icon: FiGift },
   { label: "Message reports", to: "/admin/message-reports", icon: FiAlertTriangle },
+  { label: "User reports", to: "/admin/user-reports", icon: FiAlertTriangle },
   { label: "Financial operations", to: "/admin/financial", icon: FiCreditCard },
   { label: "Welcome email", to: "/admin/welcome-email", icon: FiMail },
 ];

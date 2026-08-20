@@ -10,6 +10,7 @@ export const profileService = {
   getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),
   toggleFollow: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/follow`),
   toggleSeeSignal: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/see-signal`),
+  reportProfile: (username, payload) => axiosInstance.post(`/profiles/${encodeURIComponent(username)}/report`, payload),
   updateMe: (payload) => axiosInstance.patch("/profile/me", payload),
   changePassword: (payload) => axiosInstance.patch("/profile/me/password", payload),
   getCompletion: () => axiosInstance.get("/profile/me/completion"),
