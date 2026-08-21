@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -6,10 +6,13 @@ import {
   FiCheck,
   FiClock,
   FiCreditCard,
+  FiDollarSign,
+  FiEdit3,
   FiEye,
   FiMapPin,
   FiMonitor,
   FiRefreshCw,
+  FiZap,
 } from "react-icons/fi";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { contentService } from "../../services/contentService";
@@ -24,9 +27,7 @@ const PLANET = "\u{1FA90}";
 const UP = "\u25B2";
 const DOT = "\u00B7";
 const CHEVRON = "\u203A";
-
-// Beta-only switch. Set to false (or remove the early return below) to restore the dashboard.
-const PROFESSIONAL_DASHBOARD_BETA_MASK_ENABLED = true;
+const PROFESSIONAL_DASHBOARD_BETA_MASK_ENABLED = false;
 
 function compact(value) {
   const number = Number(value) || 0;
@@ -39,6 +40,15 @@ function moneyFromStars(stars) {
   return `$${((Number(stars) || 0) / STARS_PER_USD).toLocaleString(undefined, {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
+  })}`;
+}
+
+function compactMoneyFromStars(stars) {
+  const dollars = (Number(stars) || 0) / STARS_PER_USD;
+  const hasCents = dollars % 1 !== 0;
+  return `$${dollars.toLocaleString(undefined, {
+    maximumFractionDigits: hasCents ? 2 : 0,
+    minimumFractionDigits: hasCents ? 2 : 0,
   })}`;
 }
 
@@ -80,6 +90,94 @@ function priceStarsFor(world = {}) {
   return Number(world.pricing?.starsAmount || world.priceStars || world.monthlyStars || 0);
 }
 
+function monthlyStarsFor(world = {}) {
+  return Number(world.monthlyStars || residentsFor(world) * priceStarsFor(world));
+}
+
+function seenViewsFor(item = {}) {
+  return Number(item.viewCount || item.views || item.walkCount || item.engagement?.viewCount || 0);
+}
+
+function wallEngagementFor(post = {}) {
+  return Number(post.viewCount || 0)
+    + Number(post.reactionCount || post.supportCount || 0)
+    + Number(post.commentCount || 0)
+    + Number(post.shareCount || 0)
+    + Number(post.saveCount || 0);
+}
+
+function wallTitleFor(post = {}) {
+  const text = String(post.text || post.shareCaption || "").trim().replace(/\s+/g, " ");
+  if (text) return text.length > 42 ? `${text.slice(0, 39)}...` : text;
+  return post.context || "Wall note";
+}
+
+function bestBy(items = [], score) {
+  return items.reduce((best, item) => score(item) > score(best || {}) ? item : best, null);
+}
+
+function bestLocationFor(posts = []) {
+  const locations = new Map();
+  for (const post of posts) {
+    const location = String(post.location || "").trim();
+    if (!location) continue;
+    const current = locations.get(location) || { count: 0, location, value: 0 };
+    current.count += 1;
+    current.value += wallEngagementFor(post) + 1;
+    locations.set(location, current);
+  }
+  const rows = [...locations.values()];
+  const total = rows.reduce((sum, row) => sum + row.value, 0);
+  const best = bestBy(rows, (row) => row.value);
+  if (!best) return null;
+  return { ...best, percent: total ? Math.round((best.value / total) * 100) : 0 };
+}
+
+function sourcePercentages(sources = []) {
+  const total = sources.reduce((sum, source) => sum + Math.max(0, Number(source.value) || 0), 0);
+  if (!total) return sources.map((source) => ({ ...source, percent: 0 }));
+
+  const raw = sources.map((source) => {
+    const value = Math.max(0, Number(source.value) || 0);
+    const exact = (value / total) * 100;
+    return { ...source, exact, percent: Math.floor(exact) };
+  });
+  const remainder = 100 - raw.reduce((sum, source) => sum + source.percent, 0);
+  return [...raw]
+    .sort((left, right) => (right.exact - right.percent) - (left.exact - left.percent))
+    .map((source, index) => ({ ...source, percent: source.percent + (index < remainder ? 1 : 0) }))
+    .sort((left, right) => sources.findIndex((source) => source.label === left.label) - sources.findIndex((source) => source.label === right.label));
+}
+
+function initialsFor(user = {}) {
+  const source = user.name || user.username || "A";
+  return source.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+function earningTitle(entry = {}) {
+  const event = String(entry.event || "").toUpperCase();
+  const person = entry.counterparty?.name || entry.counterparty?.username || "Someone";
+  const publicationTitle = entry.publication?.title;
+  const giftName = entry.metadata?.giftName || "a gift";
+
+  if (event.includes("PREMIUM_CREATOR_EARNING")) {
+    return publicationTitle ? `${person} became a resident - ${publicationTitle}` : `${person} became a resident`;
+  }
+  if (event.includes("WORLD_CREATOR_EARNING")) {
+    return publicationTitle ? `${person} unlocked ${publicationTitle}` : `${person} unlocked a World`;
+  }
+  if (event.includes("DREAM_CREATOR_EARNING")) {
+    return `${person} sent a gift - ${giftName}`;
+  }
+  if (event.includes("DA_CREATOR_EARNING")) {
+    return `${person} Direct Access answered`;
+  }
+  if (event.includes("CALL_CREATOR_EARNING")) {
+    return `${person} booked Direct Access`;
+  }
+  return `${person} sent creator earnings`;
+}
+
 function StudioStat({ label, sub, value, tone }) {
   return (
     <article className="creator-studio-stat">
@@ -90,9 +188,9 @@ function StudioStat({ label, sub, value, tone }) {
   );
 }
 
-function SourceBar({ color, label, percent }) {
+function SourceBar({ color, label, percent, value }) {
   return (
-    <div className="creator-studio-source-row">
+    <div aria-label={`${label}: ${value} signals, ${percent}%`} className="creator-studio-source-row">
       <span>{label}</span>
       <i><b style={{ width: `${percent}%`, background: color }} /></i>
       <strong>{percent}%</strong>
@@ -119,8 +217,61 @@ function BestPerformer({ icon, label, title, detail, to }) {
   );
 }
 
+function EarningRow({ entry }) {
+  const avatar = entry.counterparty?.avatar;
+  return (
+    <Link className="creator-studio-earning-row" to="/wallet/ledger">
+      <span className="creator-studio-earning-avatar">
+        {avatar ? <img alt="" src={avatar} /> : <b>{initialsFor(entry.counterparty)}</b>}
+      </span>
+      <span className="creator-studio-earning-copy">
+        <b>{earningTitle(entry)}</b>
+        <small>{STAR}{compact(Math.abs(entry.starsChange))} {DOT} {relativeTime(entry.createdAt)}</small>
+      </span>
+      <strong>+{compactMoneyFromStars(entry.starsChange)}</strong>
+    </Link>
+  );
+}
+
+function PayoutsSheet({ onClose }) {
+  return (
+    <div className="creator-payouts-backdrop" onClick={onClose} role="presentation">
+      <section aria-modal="true" className="creator-payouts-sheet" onClick={(event) => event.stopPropagation()} role="dialog">
+        <span className="creator-payouts-handle" />
+        <h2>How payouts work</h2>
+        <p>Simple, and the same for everyone.</p>
+        <div className="creator-payouts-list">
+          <article>
+            <span>80%</span>
+            <div>
+              <b>You keep 80%, after app store fees</b>
+              <small>Worlds, Direct Access, gifts - the same share everywhere, on what remains after store processing.</small>
+            </div>
+          </article>
+          <article>
+            <span><FiDollarSign /></span>
+            <div>
+              <b>Payouts in 3-5 business days</b>
+              <small>To your bank, from $50. Transfer fees on us.</small>
+            </div>
+          </article>
+          <article>
+            <span><FiZap /></span>
+            <div>
+              <b>No subscription, no listing fees</b>
+              <small>Creating and publishing on @seen is free - forever.</small>
+            </div>
+          </article>
+        </div>
+        <Link className="creator-payouts-terms" to="/settings">Full terms in Settings {"->"} Payouts.</Link>
+      </section>
+    </div>
+  );
+}
+
 export default function CreatorStudio() {
   const navigate = useNavigate();
+  const [payoutsOpen, setPayoutsOpen] = useState(false);
   const publicationsQuery = useQuery({
     queryKey: ["creator-studio", "publications"],
     queryFn: () => publicationService.listMyPublications({ limit: 50 }).then((response) => response.data.data.items || []),
@@ -169,7 +320,7 @@ export default function CreatorStudio() {
     const heldRequests = directAccess.filter((item) => item.settlementStatus === "HELD");
     const answeredRequests = directAccess.filter(settledDirectAccess);
     const residents = activeWorlds.reduce((sum, world) => sum + residentsFor(world), 0);
-    const monthlyStars = activeWorlds.reduce((sum, world) => sum + residentsFor(world) * priceStarsFor(world), 0);
+    const monthlyStars = activeWorlds.reduce((sum, world) => sum + monthlyStarsFor(world), 0);
     return { activeWorlds, answeredRequests, creatorCredits, earnedStars, heldRequests, monthlyStars, published, residents, seens, totalChapters, totalViews };
   }, [directAccess, ledger, publications]);
 
@@ -188,9 +339,76 @@ export default function CreatorStudio() {
     { done: profilePhotos.length > 0, label: "Add photos to your profile", to: "/settings/profile" },
   ];
   const pathDone = creatorPath.filter((item) => item.done).length;
-  const bestSeen = metrics.seens[0];
-  const bestWorld = metrics.activeWorlds[0];
-  const sourceHasData = metrics.published.length || wallPosts.length || metrics.seens.length;
+  const bestSeen = bestBy(metrics.seens, (item) => seenViewsFor(item));
+  const bestWorld = bestBy(metrics.activeWorlds, (item) => residentsFor(item) * 1000 + monthlyStarsFor(item) + Number(item.chapterCount || item.chapters?.length || 0) * 10);
+  const bestWallPost = bestBy(wallPosts, (post) => wallEngagementFor(post));
+  const bestLocation = bestLocationFor(wallPosts);
+  const activeStatus = profileData.profile?.activeStatus;
+  const wallSignals = wallPosts.reduce((sum, post) => sum + wallEngagementFor(post) + 1, 0);
+  const sourceRows = sourcePercentages([
+    { color: "#9CCBFF", label: "Discover", value: profileVisits },
+    { color: "#6ECF97", label: "Wall", value: wallSignals },
+    { color: "#B092FF", label: "Scenes", value: metrics.totalViews },
+  ]);
+  const performerRows = [
+    bestSeen ? {
+      detail: `${compact(seenViewsFor(bestSeen))} saw this`,
+      icon: <FiEye />,
+      label: "Best Seen",
+      title: bestSeen.title || "Untitled Seen",
+      to: `/studio/seens/${bestSeen.id}`,
+    } : {
+      detail: "Publish a Seen to unlock this",
+      icon: <FiEye />,
+      label: "Best Seen",
+      title: "No Seen yet",
+      to: "/create/seen",
+    },
+    {
+      detail: profileVisits ? `${compact(profileVisits)} profile visits` : "Turn on a status to track profile interest",
+      icon: <FiMonitor />,
+      label: "Best status",
+      title: activeStatus?.label || "No active status",
+      to: "/settings/profile",
+    },
+    bestLocation ? {
+      detail: `${bestLocation.percent}% of located Wall reach`,
+      icon: <FiMapPin />,
+      label: "Best location",
+      title: bestLocation.location,
+      to: "/wall",
+    } : {
+      detail: "Add locations to Wall posts to track this",
+      icon: <FiMapPin />,
+      label: "Best location",
+      title: profileData.profile?.location || "No location yet",
+      to: "/wall",
+    },
+    bestWallPost ? {
+      detail: `${compact(wallEngagementFor(bestWallPost))} interactions`,
+      icon: <FiEdit3 />,
+      label: "Best Wall",
+      title: wallTitleFor(bestWallPost),
+      to: `/posts/${bestWallPost.originalPostId || bestWallPost.id}`,
+    } : null,
+    bestWorld ? {
+      detail: [
+        residentsFor(bestWorld) ? `${compact(residentsFor(bestWorld))} residents` : null,
+        Number(bestWorld.chapterCount || bestWorld.chapters?.length || 0) ? `${compact(bestWorld.chapterCount || bestWorld.chapters?.length || 0)} chapters` : null,
+        priceStarsFor(bestWorld) ? `${STAR}${compact(priceStarsFor(bestWorld))}` : null,
+      ].filter(Boolean).join(" - ") || bestWorld.status?.replaceAll("_", " ") || "World performance",
+      icon: <FiMapPin />,
+      label: bestWorld.kind === "PREMIUM_WORLD" ? "Best Premium World" : "Best World",
+      title: bestWorld.title || "Untitled World",
+      to: `/studio/worlds/${bestWorld.id}`,
+    } : {
+      detail: "Create a World to track residents",
+      icon: <FiMapPin />,
+      label: "Best World",
+      title: "No World yet",
+      to: "/create/premium-world",
+    },
+  ].filter(Boolean);
 
   if (PROFESSIONAL_DASHBOARD_BETA_MASK_ENABLED) {
     return (
@@ -231,6 +449,7 @@ export default function CreatorStudio() {
   }
 
   return (
+    <>
     <main className="creator-studio-prototype">
       <header className="creator-studio-header">
         <button aria-label="Back" className="creator-studio-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button>
@@ -271,12 +490,7 @@ export default function CreatorStudio() {
       <section className="creator-studio-section">
         <h2>RECENT EARNINGS</h2>
         {metrics.creatorCredits.length ? metrics.creatorCredits.slice(0, 5).map((entry) => (
-          <Link className="creator-studio-earning-row" key={entry.id} to="/wallet/ledger">
-            <span>{STAR}</span>
-            <b>{entry.event?.replaceAll("_", " ") || "Creator earning"}</b>
-            <small>{STAR}{compact(entry.starsChange)} {DOT} {relativeTime(entry.createdAt)}</small>
-            <strong>+{moneyFromStars(entry.starsChange)}</strong>
-          </Link>
+          <EarningRow entry={entry} key={entry.id} />
         )) : (
           <p className="creator-studio-empty">Creator earnings will appear here after gifts, paid access, calls, or memberships settle.</p>
         )}
@@ -285,20 +499,20 @@ export default function CreatorStudio() {
       <section className="creator-studio-section">
         <h2>WHERE PEOPLE FIND YOU</h2>
         <div className="creator-studio-source-card">
-          <SourceBar color="#9CCBFF" label="Discover" percent={sourceHasData ? 44 : 0} />
-          <SourceBar color="#6ECF97" label="Wall" percent={wallPosts.length ? 31 : 0} />
-          <SourceBar color="#B092FF" label="Scenes" percent={metrics.seens.length ? 25 : 0} />
+          {sourceRows.map((source) => <SourceBar color={source.color} key={source.label} label={source.label} percent={source.percent} value={source.value} />)}
         </div>
       </section>
 
       <section className="creator-studio-section">
         <h2>BEST PERFORMERS</h2>
-        <BestPerformer detail={bestSeen ? `${compact(bestSeen.viewCount || bestSeen.views || 0)} saw this` : "Create your first Seen"} icon={<FiEye />} label="Best Seen" title={bestSeen?.title || "No Seen yet"} to={bestSeen ? `/studio/seens/${bestSeen.id}` : "/create/seen"} />
-        <BestPerformer detail={profileVisits ? `${compact(profileVisits)} profile visits` : "Status analytics pending"} icon={<FiMonitor />} label="Best status" title={profileData.profile?.activeStatus?.label || "Status tracking"} to="/settings/profile" />
-        <BestPerformer detail={bestWorld ? `${bestWorld.chapterCount || bestWorld.chapters?.length || 0} chapters` : "Create your World"} icon={<FiMapPin />} label="Best World" title={bestWorld?.title || "No World yet"} to={bestWorld ? `/studio/worlds/${bestWorld.id}` : "/create/premium-world"} />
+        {performerRows.map((item) => (
+          <BestPerformer detail={item.detail} icon={item.icon} key={item.label} label={item.label} title={item.title} to={item.to} />
+        ))}
       </section>
 
-      <p className="creator-studio-note">Your numbers are yours. No subscription, no paywall - ever. {STAR} <Link to="/wallet">How payouts work {CHEVRON}</Link></p>
+      <p className="creator-studio-note">Your numbers are yours. No subscription, no paywall - ever. {STAR} <button onClick={() => setPayoutsOpen(true)} type="button">How payouts work {CHEVRON}</button></p>
     </main>
+    {payoutsOpen ? <PayoutsSheet onClose={() => setPayoutsOpen(false)} /> : null}
+    </>
   );
 }
