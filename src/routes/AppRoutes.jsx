@@ -56,6 +56,7 @@ import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
 import MessageReportsPage from "../pages/admin/MessageReportsPage";
+import MessageReportsOnlyPage from "../pages/admin/MessageReportsOnlyPage";
 import SearchPage from "../pages/social/SearchPage";
 import DiscoverPage from "../pages/social/DiscoverPage";
 import PostDetailPage from "../pages/social/PostDetailPage";
@@ -204,7 +205,8 @@ function AppRoutes() {
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
-          <Route path="/admin/message-reports" element={<MessageReportsPage />} />
+          <Route path="/admin/message-reports" element={<MessageReportsOnlyPage />} />
+          <Route path="/admin/user-reports" element={<MessageReportsPage />} />
           <Route path="/admin/gifts" element={<GiftManagementPage />} />
         </Route>
       </Route>

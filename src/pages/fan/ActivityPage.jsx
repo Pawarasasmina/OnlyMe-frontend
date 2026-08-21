@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { FiBookmark, FiClock, FiEye, FiGift, FiMessageCircle, FiRefreshCw, FiUserPlus, FiZap } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { fanService } from "../../services/fanService";
 import { walletService } from "../../services/walletService";
+import { moderationWarningService } from "../../services/moderationWarningService";
 
 const RECEIVED_FILTERS = [["All", "all"], ["💫 Seen", "seen"], ["Support", "support"], ["Saves", "saves"], ["Comments", "comments"], ["Follows", "follows"], ["Earnings", "earnings"]];
 const SENT_FILTERS = [["All", "all"], ["💫 Seen", "seen"], ["Support", "support"], ["Saves", "saves"], ["Comments", "comments"], ["Follows", "follows"], ["Purchases", "purchases"]];
@@ -60,10 +61,10 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
   const creator = item.relatedCreator;
   const Icon = iconFor(item.filter);
   return (
-    <article className={`activity-prototype-row ${item.filter === "support" ? "is-dream-gift" : ""}`} onClick={() => onOpen(item)}>
+    <article className={`activity-prototype-row ${item.filter === "support" ? "is-dream-gift" : ""} ${item.type === "moderation_warning" ? "border border-red-500/60 bg-red-950/40 shadow-[0_10px_35px_rgba(220,38,38,.16)]" : ""}`} onClick={() => onOpen(item)}>
       {creator ? <FanAvatar name={creator.displayName || creator.name || "Activity"} size="h-10 w-10" src={creator.avatarUrl || creator.avatar} /> : <span className="activity-prototype-icon"><Icon /></span>}
       <div className="activity-prototype-copy">
-        <p>{item.description}</p>
+        {item.type === "moderation_warning" ? <strong className="mb-1 block text-xs uppercase tracking-widest text-red-400">High priority · Account warning</strong> : null}<p className={item.type === "moderation_warning" ? "font-bold text-red-100" : ""}>{item.description}</p>
         {item.relatedContent?.title ? <q>{item.relatedContent.title}</q> : null}
         <time>{relativeTime(item.createdAt)}</time>
       </div>
@@ -77,6 +78,7 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
 
 export default function ActivityPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [direction, setDirection] = useState("received");
   const [filter, setFilter] = useState("all");
   const [acknowledged, setAcknowledged] = useState(() => new Set());
@@ -95,13 +97,14 @@ export default function ActivityPage() {
         : `${entry.event?.replaceAll("_", " ") || "Stars activity"}`;
       return classify({ id: `ledger-${entry.id}`, event: entry.event, reference: entry.reference, type: entry.starsChange > 0 ? "wallet_credit" : "wallet_debit", description, relatedCreator: entry.counterparty ? { displayName: entry.counterparty.name, username: entry.counterparty.username, avatarUrl: entry.counterparty.avatar } : null, createdAt: entry.createdAt, starsChange: Number(entry.starsChange) || 0 });
     });
-    return [...base, ...ledger].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return [...base, ...ledger].sort((a, b) => (Number(b.priority) - Number(a.priority)) || (new Date(b.createdAt) - new Date(a.createdAt)));
   }, [activityQuery.data, ledgerQuery.data]);
   const visible = items.filter((item) => item.direction === direction && (filter === "all" || item.filter === filter));
   const filters = direction === "received" ? RECEIVED_FILTERS : SENT_FILTERS;
   const loading = activityQuery.isLoading || ledgerQuery.isLoading;
   const failed = activityQuery.isError && ledgerQuery.isError;
-  const acknowledge = (id) => setAcknowledged((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const warningAcknowledge = useMutation({ mutationFn: moderationWarningService.acknowledge, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); queryClient.invalidateQueries({ queryKey: ["moderation-warnings"] }); } });
+  const acknowledge = (id) => { const item = items.find((entry) => entry.id === id); if (item?.warningId) { warningAcknowledge.mutate(item.warningId); return; } setAcknowledged((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; }); };
 
   return <main className="activity-prototype-page">
     <header className="activity-prototype-header"><p>Reactions, people and earnings — everything that found you</p></header>
@@ -111,7 +114,7 @@ export default function ActivityPage() {
     <section className="activity-prototype-list">
       {loading ? <LoadingSkeleton className="h-16" count={7} /> : null}
       {failed ? <div className="activity-prototype-state"><FiRefreshCw /><p>Unable to load recent activity.</p><button onClick={() => { activityQuery.refetch(); ledgerQuery.refetch(); }} type="button">Try again</button></div> : null}
-      {!loading && !failed ? visible.map((item) => <ActivityItem acknowledged={acknowledged.has(item.id)} item={item} key={item.id} onAcknowledge={acknowledge} onOpen={(entry) => navigate(routeFor(entry))} />) : null}
+      {!loading && !failed ? visible.map((item) => <ActivityItem acknowledged={item.acknowledged || acknowledged.has(item.id)} item={item} key={item.id} onAcknowledge={acknowledge} onOpen={(entry) => navigate(routeFor(entry))} />) : null}
       {!loading && !failed && !visible.length ? <div className="activity-prototype-state"><FiClock /><strong>{filter === "seen" ? "Your Orbit is tuning to you" : "Nothing here yet"}</strong><p>{filter === "seen" ? "The moment someone sees you, it lands here." : "Your world is just waking up."}</p>{filter === "seen" ? <button onClick={() => navigate("/orbit")} type="button">Open your Orbit 💫</button> : null}</div> : null}
     </section>
   </main>;

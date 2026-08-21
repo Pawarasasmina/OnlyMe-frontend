@@ -13,6 +13,7 @@ import { canCreateFeedPost } from "../../utils/postPermissions";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useAuth } from "../../hooks/useAuth";
 import { useSocialCapabilities } from "../../hooks/useSocialCapabilities";
+import { atseenReportReasons } from "../../data/atseenMockData";
 
 const seenReactionOptions = [
   { key: "LIKE", label: "Support", icon: "\uD83E\uDD1D" },
@@ -172,6 +173,11 @@ function SeenOptionsSheet({ creatorName, isOpen, itemTitle, onBlock, onClose, on
   </div>;
 }
 
+function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
+  if (!isOpen) return null;
+  return <div className="seen-feed-options-layer"><button aria-label="Close report" className="seen-feed-options-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="seen-feed-options-sheet" role="dialog"><span className="seen-feed-options-handle" /><h2>{done ? "Report received" : `Report ${title}`}</h2>{done ? <div className="p-4"><p className="text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="mt-4 w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={onClose} type="button">Done</button></div> : <div className="seen-feed-options-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this Seen?</p>{atseenReportReasons.map((reason) => <button disabled={pending} key={reason} onClick={() => onReport(reason)} type="button"><FiFlag /><span><b>{reason}</b></span></button>)}</div>}</section></div>;
+}
+
 function SeenMedia({ item, target }) {
   const chapterCount = item.chapters.length;
   return <Link className="seen-media" to={target}>
@@ -278,6 +284,8 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
   const [menuOpen, setMenuOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
   const engagementQuery = useQuery({
@@ -368,10 +376,10 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
     onError: (error) => setNotice(actionError(error)),
   });
   const reportMutation = useMutation({
-    mutationFn: () => publicationService.reportSeen(item.id, { reason: "OTHER", label: "Report" }),
+    mutationFn: (reason) => publicationService.reportSeen(item.id, { reason }),
     onSuccess: () => {
       setMenuOpen(false);
-      setNotice("Report received.");
+      setReportDone(true);
     },
     onError: (error) => setNotice(actionError(error)),
   });
@@ -429,7 +437,7 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
         onClose={() => setMenuOpen(false)}
         onHide={() => hideMutation.mutate()}
         onMute={() => muteMutation.mutate()}
-        onReport={() => reportMutation.mutate()}
+        onReport={() => { setMenuOpen(false); setReportDone(false); setReportOpen(true); }}
         onSave={() => {
           setMenuOpen(false);
           saveMutation.mutate();
@@ -442,6 +450,7 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
         saved={item.viewerState.saved}
       />
     </div>
+    <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
     <SeenMedia item={item} target={target} />
     <div className="seen-feed-copy">

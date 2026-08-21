@@ -53,6 +53,7 @@ import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import { canCreateStory } from "../../utils/storyPermissions";
+import { atseenReportReasons } from "../../data/atseenMockData";
 
 function relativeTime(value) {
   if (!value) return "";
@@ -427,6 +428,8 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
   const [muted, setMuted] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState("");
+  const [reporting, setReporting] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   if (!isOpen) return null;
   const publicPath = `/profile/${encodeURIComponent(profile.username)}`;
   const shareTarget = `${window.location.origin}${publicPath}`;
@@ -451,9 +454,10 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
     await messageService.muteConversation(profile.ownerUserId, !muted);
     setMuted((value) => !value);
   });
-  const report = () => run("Report", async () => {
-    await messageService.reportConversation(profile.ownerUserId, { reason: "OTHER", details: `Profile report for @${profile.username}` });
-    onClose();
+  const report = (reason) => run("Report", async () => {
+    await profileService.reportProfile(profile.username, { reason });
+    setReporting(false);
+    setReportDone(true);
   });
   const block = () => {
     if (!blocked && !window.confirm(`Block ${profile.displayName}? They will not be able to message or interact with you.`)) return;
@@ -465,17 +469,17 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
     });
   };
   return (
-    <div aria-modal="true" className="profile-quick-actions-backdrop" onClick={onClose} role="dialog">
+    <div aria-modal="true" className="profile-quick-actions-backdrop" onClick={() => { setReporting(false); setReportDone(false); onClose(); }} role="dialog">
       <section className="profile-quick-actions-sheet is-visitor" onClick={(event) => event.stopPropagation()}>
         <span className="profile-quick-actions-handle" />
-        <h2>{firstName}</h2>
-        <div className="profile-quick-actions-list">
+        <h2>{reportDone ? "Report received" : reporting ? `Report ${firstName}` : firstName}</h2>
+        {reportDone ? <div className="profile-quick-actions-list px-4 pb-4"><p className="py-3 text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={() => { setReportDone(false); onClose(); }} type="button">Done</button></div> : reporting ? <div className="profile-quick-actions-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this profile?</p>{atseenReportReasons.map((reason) => <button className="profile-quick-action-row" disabled={Boolean(busy)} key={reason} onClick={() => report(reason)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{reason}</b></span></button>)}<button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(false)} type="button"><span className="profile-quick-action-copy"><b>Back</b></span></button></div> : <div className="profile-quick-actions-list">
           <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiShare2 /></span><span className="profile-quick-action-copy"><b>Share profile</b></span></button>
           <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={follow} type="button"><span className="profile-quick-action-icon"><FiUserCheck /></span><span className="profile-quick-action-copy"><b>{relationship.following ? "Unfollow" : "Follow"}</b></span></button>
           <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={mute} type="button"><span className="profile-quick-action-icon"><FiEyeOff /></span><span className="profile-quick-action-copy"><b>{muted ? `Unmute ${firstName}` : `Mute ${firstName}`}</b><small>{muted ? "Show their updates again" : "Stay following, stop seeing their posts and stories"}</small></span></button>
-          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={report} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>Report</b></span></button>
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(true)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>Report</b></span></button>
           <button className="profile-quick-action-row is-danger" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? `Unblock ${firstName}` : `Block ${firstName}`}</b></span></button>
-        </div>
+        </div>}
         {error ? <p className="profile-visitor-action-error" role="alert">{error}</p> : null}
       </section>
     </div>

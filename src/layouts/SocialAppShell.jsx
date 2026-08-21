@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AtseenLogo from "../components/branding/AtseenLogo";
 import FanCreateSheet from "../components/fanWeb/FanCreateSheet";
 import FanMobileNav from "../components/fanWeb/FanMobileNav";
@@ -15,6 +16,7 @@ import { CallProvider } from "../context/CallContext";
 import { canCreateFeedPost } from "../utils/postPermissions";
 import { canCreateStory } from "../utils/storyPermissions";
 import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
+import { moderationWarningService } from "../services/moderationWarningService";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -23,6 +25,10 @@ function SocialAppShell({ children = null }) {
   const capabilities = useSocialCapabilities();
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const warningQuery = useQuery({ queryKey: ["moderation-warnings", user?.id], queryFn: () => moderationWarningService.listPending().then((response) => response.data.data.warnings || []), enabled: Boolean(user), retry: false });
+  const currentWarning = warningQuery.data?.[0] || null;
+  const acknowledgeWarning = useMutation({ mutationFn: () => moderationWarningService.acknowledge(currentWarning.id), onSuccess: () => { queryClient.setQueryData(["moderation-warnings", user?.id], (warnings = []) => warnings.filter((warning) => warning.id !== currentWarning.id)); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); } });
   const isMessagesPage = location.pathname === "/messages";
   const isDiscoverPage = location.pathname === "/discover";
   const isHomePage = location.pathname === "/wall";
@@ -68,6 +74,7 @@ function SocialAppShell({ children = null }) {
   return (
     <FanToastProvider>
       <CallProvider user={user}>
+      {currentWarning ? <div className="fixed inset-0 z-[300] grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="moderation-warning-title"><section className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#210b0d] p-6 text-white shadow-[0_24px_90px_rgba(220,38,38,.35)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-500/20 text-3xl text-red-400">!</div><p className="mt-5 text-center text-xs font-black uppercase tracking-[.2em] text-red-400">Account warning</p><h2 className="mt-2 text-center text-2xl font-black" id="moderation-warning-title">{currentWarning.title}</h2><p className="mt-4 text-center text-sm leading-6 text-red-50/80">{currentWarning.message}</p><p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">Future violations may lead to temporary restriction or account suspension.</p><button className="mt-6 w-full rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white disabled:opacity-50" disabled={acknowledgeWarning.isPending} onClick={() => acknowledgeWarning.mutate()} type="button">{acknowledgeWarning.isPending ? "Saving…" : "I understand"}</button></section></div> : null}
       <div className="social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden">
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] md:h-screen md:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadMessageCount={unreadMessageCount} />

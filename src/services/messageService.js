@@ -2,6 +2,7 @@ import axiosInstance from "../api/axiosInstance";
 
 export const messageService = {
   getConversations: () => axiosInstance.get("/messages/conversations"),
+  getGifts: (recipientId) => axiosInstance.get("/messages/gifts", { params: { recipientId } }),
   getMessages: (userId, { cursor = null, limit = 50, directAccessWindowId = null } = {}) => axiosInstance.get(
     `/messages/conversations/${userId}`,
     { params: { limit, ...(cursor ? { cursor } : {}), ...(directAccessWindowId ? { directAccessWindowId } : {}) } },
@@ -10,6 +11,7 @@ export const messageService = {
     `/messages/conversations/${userId}`,
     { body, replyToId, clientMessageId, directAccessWindowId },
   ),
+  sendGift: (userId, giftId, idempotencyKey) => axiosInstance.post(`/messages/conversations/${userId}/gifts`, { giftId, idempotencyKey }),
   sendVoice: (userId, blob, waveform = [], directAccessWindowId = null, clientMessageId = null) => {
     const data = new FormData();
     const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";

@@ -445,7 +445,7 @@ function FeedPost({ post }) {
     if (!requireDatabasePost()) return;
 
     reportMutation.mutate(
-      { postId: normalized.id, payload: { reason } },
+      { postId: actionPostId, payload: { reason } },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Report could not be submitted."),
         onSuccess: () => {
