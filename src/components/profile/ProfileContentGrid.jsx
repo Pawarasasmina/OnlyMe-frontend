@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FiBookOpen,
-  FiEdit3,
   FiFileText,
   FiGrid,
   FiHeadphones,
@@ -39,7 +38,8 @@ function viewsFor(item) {
 function seriesFor(item) {
   const value = item?.series?.name || item?.series?.title || item?.seriesName || item?.seriesTitle || item?.collection?.title || item?.collectionName;
   if (value) return value;
-  return item?.title?.toLowerCase().includes("gym") ? "Gym Life" : "";
+  const seriesTag = (item?.tags || []).find((tag) => String(tag).startsWith("series:"));
+  return seriesTag ? String(seriesTag).slice(7).replace(/-/g, " ") : "";
 }
 
 function SeriesSheet({ currentSeries, onClose, onSetSeries }) {
@@ -97,7 +97,7 @@ function SeenPreviewSheet({ item, onClose, owner }) {
   const chapters = item?.chapters || [];
   const views = viewsFor(item);
   const isVideo = ["video", "VIDEO"].includes(media?.resourceType || media?.mediaType || media?.type);
-  const editTarget = `/studio/seens/${item.id}/edit`;
+  const editTarget = `/studio/seens/${item.id}/edit?from=drafts`;
   const seenTarget = `/seen/${item.id}`;
 
   return (
@@ -160,34 +160,45 @@ function SeenPreviewSheet({ item, onClose, owner }) {
 
 function ProfileContentGrid({ content = [], emptyText = "", kind = "content", owner = false, reposted = false }) {
   const [activeSeen, setActiveSeen] = useState(null);
-  const visibleContent = useMemo(() => content || [], [content]);
+  const [activeSeries, setActiveSeries] = useState("");
+  const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt) : content || [], [content, kind]);
 
   if (kind === "seens") {
     if (!visibleContent.length) return <div className="profile-empty-state">{emptyText || "No published Seens yet."}</div>;
+    const seriesGroups = new Map();
+    visibleContent.forEach((item) => {
+      const name = seriesFor(item);
+      if (!name) return;
+      if (!seriesGroups.has(name)) seriesGroups.set(name, []);
+      seriesGroups.get(name).push(item);
+    });
+    const items = activeSeries ? seriesGroups.get(activeSeries) || [] : visibleContent.filter((item) => !seriesFor(item));
     return (
       <>
+        {activeSeries ? <button className="profile-series-path" onClick={() => setActiveSeries("")} type="button">‹ My Seens <span>·</span> {activeSeries} <span>·</span> {items.length}</button> : null}
         <div className="profile-seens-grid">
-          {visibleContent.map((item) => {
-            const draft = owner && item.status && item.status !== "PUBLISHED";
-            const target = draft ? `/studio/seens/${item.id}/edit` : `/seen/${item.id}`;
+          {!activeSeries ? [...seriesGroups.entries()].map(([name, seriesItems]) => {
+            const media = findMedia(seriesItems[0]);
+            return <button className="profile-seen-tile profile-series-tile" key={name} onClick={() => setActiveSeries(name)} type="button">
+              {media?.secureUrl ? <img alt={`${name} series cover`} loading="lazy" src={media.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+              <span className="profile-seen-shade" />
+              <span className="profile-seen-badge">SERIES <b>{seriesItems.length}</b></span>
+              <span className="profile-seen-copy"><strong>{name}</strong><small>{seriesItems.length} {seriesItems.length === 1 ? "Seen" : "Seens"}</small></span>
+            </button>;
+          }) : null}
+          {items.map((item) => {
             const chapters = item.chapters?.length || 0;
             const tile = (
               <>
                 {item.coverMedia?.secureUrl ? <img alt={`${item.title} cover`} loading="lazy" src={item.coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
                 {reposted ? <span className="profile-seen-badge"><FiRepeat /> REPOST</span> : null}
-                {draft ? <span className="profile-seen-badge"><FiEdit3 /> {item.status.replaceAll("_", " ")}</span> : null}
-                {chapters > 1 && !draft ? <span className="profile-seen-badge">SERIES <b>{chapters}</b></span> : null}
                 <span className="profile-seen-copy">
                   <strong>{item.title}</strong>
                   <small>{chapters} {chapters === 1 ? "chapter" : "chapters"}</small>
                 </span>
               </>
             );
-
-            if (draft) {
-              return <Link className="profile-seen-tile" key={item.id} to={target}>{tile}</Link>;
-            }
 
             return (
               <button className="profile-seen-tile" key={item.id} onClick={() => setActiveSeen(item)} type="button">

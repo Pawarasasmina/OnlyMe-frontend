@@ -19,7 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <LanguageProvider>
-        <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
           <App />
         </BrowserRouter>
       </LanguageProvider>

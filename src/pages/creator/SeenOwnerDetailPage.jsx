@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { publicationService } from "../../services/publicationService";
 
 function SeenCoverPreview({ media }) {
@@ -34,13 +34,24 @@ function SeenCoverPreview({ media }) {
 
 export default function SeenOwnerDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const fromDrafts = searchParams.get("from") === "drafts";
+  const managerTarget = fromDrafts ? "/studio/seens?status=drafts" : "/studio/seens";
+  const editTarget = `/studio/seens/${id}/edit${fromDrafts ? "?from=drafts" : ""}`;
   const [p, setP] = useState();
   const [error, setError] = useState("");
 
   const load = () =>
     publicationService
       .getMyPublication(id)
-      .then((response) => setP(response.data.data.publication))
+      .then((response) => {
+        const publication = response.data?.data?.publication || {};
+        setP({
+          ...publication,
+          chapters: Array.isArray(publication.chapters) ? publication.chapters : [],
+          status: publication.status || "DRAFT",
+        });
+      })
       .catch((requestError) => setError(requestError.response?.data?.message || "Unable to load Seen"));
 
   useEffect(load, [id]);
@@ -49,18 +60,16 @@ export default function SeenOwnerDetailPage() {
 
   return (
     <div>
-      <Link to="/studio/seens">{"<-"} Manage Seens</Link>
+      <Link reloadDocument to={managerTarget}>{"<-"} {fromDrafts ? "Back to Drafts" : "Manage Seens"}</Link>
       <div className="mt-5 flex justify-between">
         <div>
           <h1 className="text-3xl font-black">{p.title || "Untitled Seen"}</h1>
           <p className="text-sm text-atseen-blue">{p.status.replaceAll("_", " ")} · v{p.statusVersion}</p>
         </div>
-        {["DRAFT", "CHANGES_REQUESTED"].includes(p.status) ? (
-          <Link className="rounded-full bg-atseen-blue px-4 py-2 font-bold text-atseen-bg" to={`/studio/seens/${id}/edit`}>
+        {["DRAFT", "CHANGES_REQUESTED", "PUBLISHED"].includes(p.status) ? (
+          <Link className="rounded-full bg-atseen-blue px-4 py-2 font-bold text-atseen-bg" to={editTarget}>
             Edit
           </Link>
-        ) : p.status === "PUBLISHED" ? (
-          <Link to={`/seen/${id}`}>Public view</Link>
         ) : null}
       </div>
 
@@ -71,7 +80,7 @@ export default function SeenOwnerDetailPage() {
       {p.chapters.map((chapter, index) => (
         <section className="mt-6 rounded-2xl border border-atseen-line bg-atseen-surface p-5" key={chapter.stableChapterId}>
           <h2 className="text-xl font-black">{index + 1}. {chapter.title}</h2>
-          <p className="mt-3 text-sm text-atseen-muted">{chapter.blocks.length} ordered blocks</p>
+          <p className="mt-3 text-sm text-atseen-muted">{Array.isArray(chapter.blocks) ? chapter.blocks.length : 0} ordered blocks</p>
         </section>
       ))}
     </div>
