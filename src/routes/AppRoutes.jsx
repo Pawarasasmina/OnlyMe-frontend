@@ -68,6 +68,8 @@ import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage
 import ContentPreferencesPage from "../pages/settings/ContentPreferencesPage";
 import SupportPage from "../pages/settings/SupportPage";
 import GiftManagementPage from "../pages/admin/GiftManagementPage";
+import VerifiedCreatorPage from "../pages/creator/VerifiedCreatorPage";
+import VerifiedCreatorManagementPage from "../pages/admin/VerifiedCreatorManagementPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -135,6 +137,7 @@ function AppRoutes() {
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
           <Route path="/settings/content" element={<ContentPreferencesPage />} />
           <Route path="/settings/support/:section" element={<SupportPage />} />
+          <Route path="/creator/verified" element={<VerifiedCreatorPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
@@ -197,6 +200,7 @@ function AppRoutes() {
           <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
+          <Route path="/admin/verified-creators" element={<VerifiedCreatorManagementPage />} />
           <Route path="/admin/content-moderation" element={<AdminModerationComingSoon />} />
           <Route path="/admin/content-moderation/:id" element={<AdminModerationComingSoon />} />
           <Route path="/admin/publication-moderation" element={<AdminModerationComingSoon />} />

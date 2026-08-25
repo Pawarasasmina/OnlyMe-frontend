@@ -579,6 +579,7 @@ function ProfileSettingsPage() {
 
       <section className="edit-profile-settings-list">
         <h2>Settings</h2>
+        {role === "creator" ? <SettingsRow subtitle={account.isVerified ? "Blue tick active · manage monthly renewal" : "Apply for the blue tick · monthly plan"} title="Verified Creator" to="/creator/verified" /> : null}
         <button className="edit-profile-settings-row" onClick={() => setStatusOpen(true)} type="button">
           <span>
             <b>Status</b>

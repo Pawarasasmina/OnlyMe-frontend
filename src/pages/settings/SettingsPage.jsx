@@ -9,6 +9,7 @@ import PrivacyQuickSettingsSheet from "./PrivacyQuickSettingsSheet";
 import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
+import VerifiedCreatorPage from "../creator/VerifiedCreatorPage";
 
 function SettingsRow({ icon: Icon, onClick, subtitle, title, to, trailing }) {
   const content = <><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-atseen-line bg-atseen-surface-2 text-atseen-blue"><Icon /></span><span className="min-w-0 flex-1"><b className="block text-sm font-bold text-white">{title}</b>{subtitle ? <small className="mt-1 block truncate text-xs text-atseen-muted">{subtitle}</small> : null}</span>{trailing || <FiChevronRight className="shrink-0 text-atseen-dim" />}</>;
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [creatorApplyOpen, setCreatorApplyOpen] = useState(false);
+  const [verifiedApplyOpen, setVerifiedApplyOpen] = useState(false);
   const [privacySheet, setPrivacySheet] = useState(null);
   const [privacyError, setPrivacyError] = useState("");
   const [supportersSaved, setSupportersSaved] = useState(false);
@@ -85,7 +87,7 @@ export default function SettingsPage() {
       <SettingsRow icon={FiGlobe} subtitle="Language, time zone and password" title="Account preferences" to="/settings/account" />
     </SettingsGroup>
 
-    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/messages?tab=direct" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
+    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiUserCheck} onClick={() => setVerifiedApplyOpen(true)} subtitle={user?.isVerified ? "Blue tick active · monthly plan" : "Apply separately for the blue tick"} title={user?.isVerified ? "Verified Creator" : "Apply for Verified Creator"} /><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/messages?tab=direct" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
 
     <SettingsGroup title="Preferences"><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle="Comments, reactions, messages and income" title="Notifications" /><SettingsRow icon={FiGlobe} subtitle="Topics, people and what you see" title="Content preferences" to="/settings/content" /></SettingsGroup>
     <SettingsGroup title="Payments"><SettingsRow icon={FiCreditCard} subtitle="Stars and transaction history" title="Wallet" to="/wallet" /></SettingsGroup>
@@ -110,6 +112,7 @@ export default function SettingsPage() {
     <NotificationSettingsSheet isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     <PrivacyQuickSettingsSheet isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
+    {verifiedApplyOpen ? <><button aria-label="Close Verified Creator" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerifiedApplyOpen(false)} type="button" /><VerifiedCreatorPage embedded onClose={() => setVerifiedApplyOpen(false)} /></> : null}
     {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">Supporters {privacyQuery.data?.privacySettings?.showFollowers ? "shown" : "hidden"}</div> : null}
   </main>;
 }
