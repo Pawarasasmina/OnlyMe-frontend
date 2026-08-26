@@ -127,7 +127,7 @@ function roundRect(context, x, y, width, height, radius) {
   context.closePath();
 }
 
-function StoryCreator({ isOpen, onClose, onPublished }) {
+function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
@@ -225,6 +225,17 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
     try {
       setUpload({ error: "", progress: 8, step: "Preparing" });
       const file = await renderStoryFile(story);
+      const editorMetadata = {
+        prototypeComposer: true,
+        textOverlays: story.text.trim() ? [{ color: story.color, fontSize: story.size, style: story.style, text: story.text.trim(), x: story.x * 100, y: story.y * 100 }] : [],
+      };
+      if (mode === "compose") {
+        setUpload({ error: "", progress: 70, step: "Adding preview" });
+        await onSave?.({ caption: story.text.trim(), editorMetadata, file });
+        setUpload({ error: "", progress: 100, step: "Added" });
+        close();
+        return;
+      }
       const formData = new FormData();
       formData.append("image", file);
       formData.append("mediaType", "image");
@@ -234,10 +245,7 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
       formData.append("allowReactions", "true");
       formData.append("allowReplies", "true");
       formData.append("allowSharing", "true");
-      formData.append("editorMetadata", JSON.stringify({
-        prototypeComposer: true,
-        textOverlays: story.text.trim() ? [{ color: story.color, fontSize: story.size, style: story.style, text: story.text.trim(), x: story.x * 100, y: story.y * 100 }] : [],
-      }));
+      formData.append("editorMetadata", JSON.stringify(editorMetadata));
       formData.append("owner", JSON.stringify({
         id: user?.id || user?._id || "me",
         name: user?.name || user?.displayName || "You",
@@ -375,8 +383,8 @@ function StoryCreator({ isOpen, onClose, onPublished }) {
               ref={inputRef}
               value={story.text}
             />
-            <button className="story-composer-share" disabled={createMutation.isPending} onClick={publish} type="button">
-              {createMutation.isPending ? "..." : "Share"}
+            <button className="story-composer-share" disabled={createMutation.isPending || upload.step === "Adding preview"} onClick={publish} type="button">
+              {createMutation.isPending || upload.step === "Adding preview" ? "..." : mode === "compose" ? "Add" : "Share"}
             </button>
           </div>
           {upload.step ? (

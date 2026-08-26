@@ -14,9 +14,12 @@ import {
   FiX,
 } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
+import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
+import StoryCreator from "../../components/stories/StoryCreator";
 import { publicationService as api } from "../../services/publicationService";
 import { normalizeTags, publicationError } from "../../utils/publicationValidation";
 import { worldCompletenessBySection } from "../../utils/worldValidation";
+import { SeenChapterEditor, chapterBlocksWithStory, chapterStoryText } from "./SeenComposerPage";
 
 const PLANET = "\uD83E\uDE90";
 const FLEX = "\uD83D\uDCAA";
@@ -24,6 +27,8 @@ const STAR = "\u2726";
 const STORY_PREVIEW_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
+const WORLD_CATEGORIES = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
+const MONTHLY_PRICES = [90, 190, 290];
 
 function freshWorld() {
   return {
@@ -79,23 +84,6 @@ function chapterPayload(chapter, index) {
   };
 }
 
-function readChapterText(chapter) {
-  return chapter?.blocks?.find((block) => block.type === "TEXT")?.text || "";
-}
-
-function applyChapterText(chapter, text) {
-  const blocks = chapter.blocks?.length ? chapter.blocks : [{ id: crypto.randomUUID(), order: 0, text: "", type: "TEXT" }];
-  let used = false;
-  return {
-    ...chapter,
-    blocks: blocks.map((block, order) => {
-      if (block.type !== "TEXT" || used) return { ...block, order };
-      used = true;
-      return { ...block, order, text };
-    }),
-  };
-}
-
 function inputClass(extra = "") {
   return `world-publish-input ${extra}`.trim();
 }
@@ -118,6 +106,8 @@ function storyPreviewsFromWorld(publication = {}) {
         chapterId: chapter.stableChapterId,
         id: block.media.assetId || `${chapter.stableChapterId}-${block.id}`,
         label: block.metadata?.label || chapter.title || "Story",
+        caption: block.metadata?.caption || "",
+        editorMetadata: block.metadata?.editorMetadata || null,
         media: block.media,
         saved: true,
         url: block.media.secureUrl,
@@ -129,17 +119,22 @@ function revokePreviewUrl(story) {
   if (story?.url?.startsWith("blob:")) URL.revokeObjectURL(story.url);
 }
 
-export default function WorldPublishingPage() {
+export default function WorldPublishingPage({ publicationId = "" }) {
   const nav = useNavigate();
   const { user } = useAuth();
   const coverInputRef = useRef(null);
-  const storyInputRef = useRef(null);
   const storyPreviewsRef = useRef([]);
   const [world, setWorld] = useState(freshWorld);
   const [storyPreviews, setStoryPreviews] = useState([]);
   const [activeStoryId, setActiveStoryId] = useState("");
   const [activeChapter, setActiveChapter] = useState(null);
+  const [chapterStory, setChapterStory] = useState("");
+  const [chapterSaving, setChapterSaving] = useState(false);
+  const [chapterStatus, setChapterStatus] = useState("");
+  const [cropTarget, setCropTarget] = useState(null);
+  const [storyComposerOpen, setStoryComposerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [creationStarted, setCreationStarted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -157,8 +152,13 @@ export default function WorldPublishingPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await api.listMyPublications({ kind: "PREMIUM_WORLD", limit: 50 });
-      const existing = (response.data.data.items || []).find((item) => ["DRAFT", "CHANGES_REQUESTED", "PENDING_REVIEW", "PUBLISHED"].includes(item.status));
+      let existing;
+      if (publicationId) {
+        existing = (await api.getMyPublication(publicationId)).data.data.publication;
+      } else {
+        const response = await api.listMyPublications({ kind: "PREMIUM_WORLD", limit: 50 });
+        existing = (response.data.data.items || []).find((item) => ["DRAFT", "CHANGES_REQUESTED", "PENDING_REVIEW", "PUBLISHED"].includes(item.status));
+      }
       if (!existing) {
         setWorld(freshWorld());
         setStoryPreviews((current) => {
@@ -166,22 +166,25 @@ export default function WorldPublishingPage() {
           return [];
         });
         setNotice("Start creating your premium world.");
+        setCreationStarted(false);
         return;
       }
-      const full = await api.getMyPublication(existing.id);
-      const publication = { ...freshWorld(), ...full.data.data.publication };
+      let publication = publicationId ? existing : (await api.getMyPublication(existing.id)).data.data.publication;
+      if (publication.status === "PUBLISHED") publication = (await api.startPublishedRevision(publication.id, publication.statusVersion)).data.data.publication;
+      publication = { ...freshWorld(), ...publication };
       setWorld(publication);
+      setCreationStarted(true);
       setStoryPreviews((current) => {
         current.forEach(revokePreviewUrl);
         return storyPreviewsFromWorld(publication);
       });
-      setNotice(`${statusLabel(full.data.data.publication)} opened.`);
+      setNotice(`${statusLabel(publication)} opened.`);
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [publicationId]);
 
   useEffect(() => {
     loadWorld();
@@ -197,15 +200,6 @@ export default function WorldPublishingPage() {
 
   const updateWorld = (patch) => {
     setWorld((current) => ({ ...current, ...patch }));
-    setNotice("Unsaved changes");
-    setError("");
-  };
-
-  const updateChapter = (index, patch) => {
-    setWorld((current) => ({
-      ...current,
-      chapters: current.chapters.map((chapter, chapterIndex) => (chapterIndex === index ? { ...chapter, ...patch } : chapter)),
-    }));
     setNotice("Unsaved changes");
     setError("");
   };
@@ -261,7 +255,7 @@ export default function WorldPublishingPage() {
       uploadedBlocks.push({
         id: blockId,
         media: uploaded,
-        metadata: { label: preview.label, storyPreview: true },
+        metadata: { caption: preview.caption || "", editorMetadata: preview.editorMetadata || null, label: preview.label, storyPreview: true },
         order: (targetChapter.blocks || []).length + uploadedBlocks.length,
         text: "",
         type: "IMAGE",
@@ -318,6 +312,17 @@ export default function WorldPublishingPage() {
         draft = await refreshWorld(draft.id);
       }
 
+      if (storyPreviews.some((preview) => preview.file && !preview.saved) && !draft.chapters?.length) {
+        await api.addChapter(draft.id, {
+          blocks: [],
+          isPreview: true,
+          releaseMode: "IMMEDIATE",
+          statusVersion: draft.statusVersion,
+          title: "Chapter 1",
+        });
+        draft = await refreshWorld(draft.id);
+      }
+
       draft = await attachStoryPreviews(draft, storyPreviews);
       setNotice("Draft saved");
       return draft;
@@ -350,37 +355,28 @@ export default function WorldPublishingPage() {
     }
   };
 
-  const addStoryPreview = (event) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    event.target.value = "";
-    if (!selectedFiles.length) return;
-
-    const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
-    if (!imageFiles.length) {
-      setError("Choose an image to add a story preview.");
-      return;
-    }
-
+  const addStoryPreview = ({ caption = "", editorMetadata = null, file }) => {
+    if (!file) return;
     const remaining = Math.max(0, STORY_PREVIEW_LIMIT - storyPreviews.length);
     if (!remaining) {
       setNotice("Only 3 story previews can be shown.");
       return;
     }
-    const nextStories = imageFiles.slice(0, remaining).map((file) => ({
+    const nextStory = {
+      caption,
+      editorMetadata,
       file,
       id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
-      label: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+      label: caption || new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
       saved: false,
       url: URL.createObjectURL(file),
-    }));
+    };
 
     setStoryPreviews((current) => {
-      if (imageFiles.length > remaining) setNotice("Only 3 story previews can be shown.");
-      else setNotice("Story preview added.");
-
-      return [...current, ...nextStories];
+      setNotice("Story preview added. Save the draft to keep it.");
+      return [...current, nextStory];
     });
-    setActiveStoryId(nextStories[0]?.id || "");
+    setActiveStoryId(nextStory.id);
     setError("");
   };
 
@@ -403,6 +399,138 @@ export default function WorldPublishingPage() {
     }
     if (activeStoryId === storyId) setActiveStoryId("");
     setNotice("Story preview removed.");
+  };
+
+  const activePlanetChapter = activeChapter == null ? null : chapters[activeChapter];
+  const activePlanetEditorChapter = activePlanetChapter ? {
+    ...activePlanetChapter,
+    blocks: (activePlanetChapter.blocks || []).filter((block) => !block.metadata?.storyPreview),
+  } : null;
+
+  const openChapterEditor = async (index) => {
+    const saved = await saveDraft();
+    if (!saved) return;
+    const chapter = saved.chapters?.[index];
+    if (!chapter?.stableChapterId) {
+      setError("This chapter could not be opened yet. Please try again.");
+      return;
+    }
+    setActiveChapter(index);
+    setChapterStory(chapterStoryText(chapter));
+    setChapterStatus("");
+  };
+
+  const refreshChapterEditor = async () => {
+    const next = await refreshWorld(world.id);
+    const chapter = next.chapters?.[activeChapter];
+    if (chapter) setChapterStory(chapterStoryText(chapter));
+    return next;
+  };
+
+  const updateActiveChapterBlocks = async (blocks, status) => {
+    if (!activePlanetChapter?.stableChapterId || chapterSaving) return;
+    setChapterSaving(true);
+    setChapterStatus(status);
+    setError("");
+    try {
+      const previewBlocks = (activePlanetChapter.blocks || []).filter((block) => block.metadata?.storyPreview);
+      const mergedBlocks = [...previewBlocks, ...blocks].map((block, order) => ({ ...block, order }));
+      await api.updateChapter(world.id, activePlanetChapter.stableChapterId, {
+        blocks: mergedBlocks,
+        isPreview: Boolean(activePlanetChapter.isPreview || activeChapter === 0),
+        releaseMode: activePlanetChapter.releaseMode || "IMMEDIATE",
+        statusVersion: world.statusVersion,
+        title: activePlanetChapter.title || `Chapter ${activeChapter + 1}`,
+      });
+      await refreshChapterEditor();
+      setChapterStatus("Chapter saved");
+      return true;
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      setChapterStatus("Chapter update failed");
+      return false;
+    } finally {
+      setChapterSaving(false);
+    }
+  };
+
+  const saveChapterStory = async () => {
+    if (!activePlanetEditorChapter) return;
+    const saved = await updateActiveChapterBlocks(chapterBlocksWithStory(activePlanetEditorChapter, chapterStory), "Saving chapter...");
+    if (saved) {
+      setActiveChapter(null);
+      setChapterStatus("");
+    }
+  };
+
+  const uploadChapterMedia = async (mediaType, file) => {
+    if (!activePlanetChapter?.stableChapterId || chapterSaving) return;
+    const blockId = crypto.randomUUID();
+    setChapterSaving(true);
+    setChapterStatus(`Uploading ${mediaType.toLowerCase()}...`);
+    setError("");
+    try {
+      const uploaded = (await api.uploadMedia(world.id, file, {
+        blockId,
+        chapterId: activePlanetChapter.stableChapterId,
+        mediaType,
+        purpose: "BLOCK",
+      })).data.data;
+      const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
+      const previewBlocks = (activePlanetChapter.blocks || []).filter((block) => block.metadata?.storyPreview);
+      await api.updateChapter(world.id, activePlanetChapter.stableChapterId, {
+        blocks: [...previewBlocks, ...blocks, { id: blockId, media: uploaded, order: previewBlocks.length + blocks.length, type: mediaType }].map((block, order) => ({ ...block, order })),
+        isPreview: Boolean(activePlanetChapter.isPreview || activeChapter === 0),
+        releaseMode: activePlanetChapter.releaseMode || "IMMEDIATE",
+        statusVersion: world.statusVersion,
+        title: activePlanetChapter.title || `Chapter ${activeChapter + 1}`,
+      });
+      await refreshChapterEditor();
+      setChapterStatus(`${mediaType === "IMAGE" ? "Photo" : "Voice"} added`);
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      setChapterStatus("Media upload failed");
+    } finally {
+      setChapterSaving(false);
+    }
+  };
+
+  const requestChapterMedia = (mediaType, file) => {
+    if (mediaType === "IMAGE") setCropTarget({ url: URL.createObjectURL(file) });
+    else uploadChapterMedia(mediaType, file);
+  };
+
+  const closeImageCrop = () => {
+    if (cropTarget?.url) URL.revokeObjectURL(cropTarget.url);
+    setCropTarget(null);
+  };
+
+  const addPlaceBlock = (label) => {
+    const locationLabel = String(label || "").trim().slice(0, 120);
+    if (!locationLabel || !activePlanetEditorChapter) return;
+    const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
+    updateActiveChapterBlocks([...blocks, { id: crypto.randomUUID(), metadata: { location: { label: locationLabel } }, order: blocks.length, text: locationLabel, type: "KEY_POINT" }], "Adding place...");
+  };
+
+  const removeChapterBlock = (blockId) => {
+    const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory)
+      .filter((block) => block.id !== blockId)
+      .map((block, order) => ({ ...block, order }));
+    updateActiveChapterBlocks(blocks, "Removing block...");
+  };
+
+  const reorderChapterBlocks = (sourceId, targetId) => {
+    const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
+    const storyId = blocks.find((block) => block.type === "TEXT" && !block.metadata?.location)?.id;
+    const source = sourceId === "__story__" ? storyId : sourceId;
+    const target = targetId === "__story__" ? storyId : targetId;
+    const sourceIndex = blocks.findIndex((block) => block.id === source);
+    const targetIndex = blocks.findIndex((block) => block.id === target);
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
+    const reordered = [...blocks];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+    updateActiveChapterBlocks(reordered.map((block, order) => ({ ...block, order })), "Reordering blocks...");
   };
 
   const submitWorld = async () => {
@@ -441,17 +569,54 @@ export default function WorldPublishingPage() {
           blocks: [],
           isPreview: false,
           localId: crypto.randomUUID(),
-          title: "",
+          title: `Chapter ${chapters.length + 1}`,
         },
       ],
     });
-    setActiveChapter(chapters.length);
+    setNotice("New chapter added. Open it to start writing.");
   };
 
   if (loading) return <div className="world-prototype-state">Opening planet...</div>;
 
+  if (activePlanetEditorChapter) return (
+    <>
+      {cropTarget ? <ProfileImageCropper kind="chapter" onCancel={closeImageCrop} onSave={(file) => { closeImageCrop(); uploadChapterMedia("IMAGE", file); }} source={cropTarget.url} /> : null}
+      <SeenChapterEditor
+        busy={chapterSaving}
+        chapter={activePlanetEditorChapter}
+        error={error}
+        onAddPlace={addPlaceBlock}
+        onDone={saveChapterStory}
+        onMediaUpload={requestChapterMedia}
+        onRemoveBlock={removeChapterBlock}
+        onReorderBlocks={reorderChapterBlocks}
+        onStoryChange={setChapterStory}
+        status={chapterStatus}
+        story={chapterStory}
+      />
+    </>
+  );
+
+  if (!creationStarted) return (
+    <article className="planet-create-entry">
+      <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><span>Planet creation</span><h1>Create a world</h1></div></header>
+      <p className="planet-create-intro">A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside.</p>
+      <button className="planet-choice-card is-selected" onClick={() => setCreationStarted(true)} type="button">
+        <span className="planet-choice-orbit"><i>{FLEX}</i><b>{PLANET}</b></span>
+        <span><strong>Your World</strong><small>One per creator · monthly subscription · profile only</small><em>Premium chapters, private stories and closer access—all together.</em></span>
+        <FiArrowUpRight />
+      </button>
+      <div className="planet-create-principles"><span><FiCheck /> One clear monthly price</span><span><FiCheck /> 1 free preview chapter</span><span><FiCheck /> Up to 3 preview stories</span></div>
+      <button className="planet-create-continue" onClick={() => setCreationStarted(true)} type="button">Build my World <FiArrowUpRight /></button>
+      <small className="planet-create-footnote">Worlds live on your profile only—they never appear as ordinary feed posts.</small>
+    </article>
+  );
+
   return (
     <article className="world-prototype-page world-publish-page">
+      <nav className="planet-create-progress" aria-label="World creation progress">
+        {["Identity", "Stories", "Chapters", "Access"].map((label, index) => <span className={index === 0 ? "is-current" : ""} key={label}><b>{index + 1}</b>{label}</span>)}
+      </nav>
       <header className="world-prototype-top">
         <button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button>
         <div>
@@ -484,12 +649,11 @@ export default function WorldPublishingPage() {
             </span>
           ))}
           {storyPreviews.length < STORY_PREVIEW_LIMIT ? (
-          <button className="world-prototype-story-add" onClick={() => storyInputRef.current?.click()} type="button">
+          <button className="world-prototype-story-add" onClick={() => setStoryComposerOpen(true)} type="button">
             <FiPlus />
             <span>add</span>
           </button>
           ) : null}
-          <input accept="image/jpeg,image/png,image/webp" className="sr-only" multiple onChange={addStoryPreview} ref={storyInputRef} type="file" />
         </div>
       </section>
 
@@ -499,9 +663,11 @@ export default function WorldPublishingPage() {
           {storyPreviews.map((story) => (
             <button className="is-active" key={story.id} onClick={() => setActiveStoryId(story.id)} type="button"><FiScissors /><span>{story.label}</span></button>
           ))}
-          {storyPreviews.length < STORY_PREVIEW_LIMIT ? <button onClick={() => storyInputRef.current?.click()} type="button"><FiPlus /><span>New</span></button> : null}
+          {storyPreviews.length < STORY_PREVIEW_LIMIT ? <button onClick={() => setStoryComposerOpen(true)} type="button"><FiPlus /><span>New</span></button> : null}
         </div>
       </section>
+
+      <StoryCreator isOpen={storyComposerOpen} mode="compose" onClose={() => setStoryComposerOpen(false)} onSave={addStoryPreview} />
 
       {activeStory ? (
         <div aria-label="World story preview" aria-modal="true" className="world-story-preview-viewer" onClick={() => setActiveStoryId("")} role="dialog">
@@ -541,20 +707,16 @@ export default function WorldPublishingPage() {
         value={world.description}
       />
 
-      <div className="world-publish-meta-row">
-        <label>
-          Category
-          <input maxLength={40} onChange={(event) => updateWorld({ category: event.target.value })} placeholder="Add a category" value={world.category} />
-        </label>
-        <label>
-          Price
-          <select onChange={(event) => updateWorld({ pricing: { mode: "MONTHLY", presetId: `MONTHLY_${event.target.value}`, starsAmount: Number(event.target.value) } })} value={world.pricing?.starsAmount || 190}>
-            <option value="90">90/mo</option>
-            <option value="190">190/mo</option>
-            <option value="290">290/mo</option>
-          </select>
-        </label>
-      </div>
+      <section className="planet-create-fieldset">
+        <div className="world-prototype-section-head"><h2>Category</h2><span>help people understand your world</span></div>
+        <div className="planet-category-options">{WORLD_CATEGORIES.map((category) => <button className={world.category === category ? "is-selected" : ""} key={category} onClick={() => updateWorld({ category })} type="button">{category}</button>)}</div>
+      </section>
+
+      <section className="planet-create-fieldset planet-price-section">
+        <div className="world-prototype-section-head"><h2>Subscription price</h2><span>one honest monthly price</span></div>
+        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: "MONTHLY", presetId: `MONTHLY_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>/month</small>{price === 190 ? <em>Most chosen</em> : null}</button>)}</div>
+        <div className="planet-price-preview"><span>10 members <b>{STAR}{(world.pricing?.starsAmount || 190) * 10}/mo</b></span><span>50 members <b>{STAR}{(world.pricing?.starsAmount || 190) * 50}/mo</b></span></div>
+      </section>
 
       <section className="world-prototype-experience">
         <div className="world-prototype-section-head">
@@ -565,7 +727,7 @@ export default function WorldPublishingPage() {
           {chapters.map((chapter, index) => {
             const locked = index > 0;
             return (
-              <button className="world-prototype-chapter-row" key={chapter.stableChapterId || chapter.localId || index} onClick={() => setActiveChapter(activeChapter === index ? null : index)} type="button">
+              <button className="world-prototype-chapter-row" key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button">
                 <span>{index + 1}</span>
                 <span>
                   <b>{chapter.title || `Chapter ${index + 1}`}</b>
@@ -582,36 +744,6 @@ export default function WorldPublishingPage() {
         </div>
         <button className="world-prototype-add-chapter" onClick={addChapter} type="button"><FiPlus /> Add a chapter</button>
       </section>
-
-      {activeChapter != null && chapters[activeChapter] ? (
-        <section className="world-publish-chapter-editor">
-          <div>
-            <h2>Chapter {activeChapter + 1}</h2>
-            <button aria-label="Close chapter editor" onClick={() => setActiveChapter(null)} type="button"><FiX /></button>
-          </div>
-          <input
-            aria-label="Chapter title"
-            maxLength={120}
-            onChange={(event) => updateChapter(activeChapter, { title: event.target.value })}
-            placeholder="Chapter title"
-            value={chapters[activeChapter].title}
-          />
-          <textarea
-            aria-label="Chapter story"
-            maxLength={2000}
-            onChange={(event) => {
-              setWorld((current) => ({
-                ...current,
-                chapters: current.chapters.map((chapter, index) => (index === activeChapter ? applyChapterText(chapter, event.target.value) : chapter)),
-              }));
-              setNotice("Unsaved changes");
-              setError("");
-            }}
-            placeholder="Write this chapter's story"
-            value={readChapterText(chapters[activeChapter])}
-          />
-        </section>
-      ) : null}
 
       <section className="world-prototype-comments">
         <h2>Comments</h2>

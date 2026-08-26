@@ -54,11 +54,11 @@ function newBlockId() {
   return globalThis.crypto?.randomUUID?.() || `block-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function chapterStoryText(chapter = {}) {
+export function chapterStoryText(chapter = {}) {
   return (chapter.blocks || []).filter((block) => TEXT_BLOCK_TYPES.has(block.type) && !block.metadata?.location).map((block) => block.text || "").join("\n\n");
 }
 
-function chapterBlocksWithStory(chapter = {}, story = "") {
+export function chapterBlocksWithStory(chapter = {}, story = "") {
   const trimmed = story.trim();
   const source = chapter.blocks || [];
   const storyBlock = source.find((block) => block.type === "TEXT" && !block.metadata?.location);
@@ -265,7 +265,7 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
   );
 }
 
-function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, onMediaUpload, onRemoveBlock, onReorderBlocks, onStoryChange, story, status }) {
+export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, onMediaUpload, onRemoveBlock, onReorderBlocks, onStoryChange, story, status }) {
   const photoInput = useRef(null);
   const voiceInput = useRef(null);
   const textareaRef = useRef(null);

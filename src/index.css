@@ -12234,3 +12234,52 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
     font-weight: 550;
   }
 }
+.planet-create-entry {
+  --atseen-line: rgba(255,255,255,.09);
+  --atseen-blue: #9ccbff;
+  --atseen-bg: #0a0c0f;
+  --atseen-surface: #12151b;
+  --atseen-surface-2: #181d25;
+  --atseen-muted: rgba(255,255,255,.62);
+  --atseen-dim: rgba(255,255,255,.4);
+  width: min(100%, 720px);
+  min-height: 680px;
+  margin: 0 auto;
+  padding: 34px 28px 80px;
+  color: var(--atseen-text, #fff);
+}
+.planet-create-entry header { display: flex; align-items: center; gap: 16px; }
+.planet-create-entry header > button { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--atseen-line); border-radius: 50%; }
+.planet-create-entry header span { color: var(--atseen-blue); font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+.planet-create-entry header h1 { margin-top: 2px; font-size: clamp(28px, 5vw, 40px); font-weight: 950; letter-spacing: -.04em; }
+.planet-create-intro { max-width: 590px; margin-top: 28px; color: var(--atseen-muted); font-size: 14px; line-height: 1.75; }
+.planet-choice-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; width: 100%; margin-top: 26px; padding: 22px; border: 1px solid rgba(156,203,255,.38); border-radius: 24px; background: radial-gradient(circle at 12% 20%,rgba(156,203,255,.15),transparent 40%),var(--atseen-surface); text-align: left; box-shadow: 0 22px 70px rgba(0,0,0,.22); }
+.planet-choice-orbit { position: relative; display: grid; width: 76px; height: 76px; place-items: center; border: 1px solid rgba(156,203,255,.3); border-radius: 50%; background: rgba(156,203,255,.06); }
+.planet-choice-orbit i { position: absolute; left: 10px; top: 8px; font-size: 30px; font-style: normal; }
+.planet-choice-orbit b { position: absolute; bottom: 7px; right: 8px; font-size: 28px; }
+.planet-choice-card strong { display: block; color: #bfe3ff; font-size: 20px; }
+.planet-choice-card small,.planet-choice-card em { display: block; margin-top: 5px; color: var(--atseen-muted); font-size: 12px; font-style: normal; line-height: 1.5; }
+.planet-choice-card em { color: rgba(255,255,255,.46); }
+.planet-create-principles { display: grid; gap: 10px; margin-top: 20px; color: var(--atseen-muted); font-size: 12px; }
+.planet-create-principles span { display: flex; align-items: center; gap: 9px; }
+.planet-create-principles svg { color: var(--atseen-blue); }
+.planet-create-continue { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; margin-top: 28px; padding: 16px; border-radius: 16px; background: var(--atseen-blue); color: var(--atseen-bg); font-weight: 950; }
+.planet-create-footnote { display: block; margin-top: 14px; color: var(--atseen-dim); text-align: center; }
+.planet-create-progress { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin: 0 0 18px; padding: 0 2px; }
+.world-publish-page { --atseen-line: rgba(255,255,255,.09); --atseen-blue: #9ccbff; --atseen-bg: #0a0c0f; --atseen-surface: #12151b; --atseen-surface-2: #181d25; --atseen-muted: rgba(255,255,255,.62); --atseen-dim: rgba(255,255,255,.4); }
+.planet-create-progress span { display: flex; align-items: center; gap: 6px; border-top: 2px solid var(--atseen-line); padding-top: 8px; color: var(--atseen-dim); font-size: 10px; font-weight: 800; }
+.planet-create-progress span.is-current { border-color: var(--atseen-blue); color: var(--atseen-blue); }
+.planet-create-progress b { display: grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; background: var(--atseen-surface-2); font-size: 9px; }
+.planet-create-fieldset { margin-top: 24px; padding: 18px; border: 1px solid var(--atseen-line); border-radius: 20px; background: rgba(255,255,255,.018); }
+.planet-category-options,.planet-price-options { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+.planet-category-options button { padding: 10px 16px; border: 1px solid var(--atseen-line); border-radius: 999px; color: var(--atseen-muted); font-size: 13px; font-weight: 700; }
+.planet-category-options button.is-selected { border-color: var(--atseen-blue); background: rgba(156,203,255,.12); color: var(--atseen-blue); }
+.planet-price-options button { position: relative; display: flex; min-width: 110px; flex: 1; align-items: baseline; justify-content: center; gap: 4px; padding: 17px 12px; border: 1px solid var(--atseen-line); border-radius: 16px; background: var(--atseen-surface); }
+.planet-price-options button.is-selected { border-color: var(--atseen-blue); background: rgba(156,203,255,.1); box-shadow: 0 0 0 1px rgba(156,203,255,.12); }
+.planet-price-options strong { font-size: 19px; }
+.planet-price-options small { color: var(--atseen-muted); font-size: 10px; }
+.planet-price-options em { position: absolute; left: 50%; top: -9px; transform: translateX(-50%); border: 1px solid rgba(156,203,255,.4); border-radius: 999px; background: var(--atseen-bg); padding: 2px 7px; color: var(--atseen-blue); font-size: 8px; font-style: normal; font-weight: 900; text-transform: uppercase; white-space: nowrap; }
+.planet-price-preview { display: grid; gap: 8px; margin-top: 14px; padding: 13px 15px; border-radius: 14px; background: var(--atseen-surface); }
+.planet-price-preview span { display: flex; justify-content: space-between; color: var(--atseen-muted); font-size: 12px; }
+.planet-price-preview b { color: var(--atseen-blue); }
+@media (max-width: 520px) { .planet-create-entry { padding-inline: 18px; } .planet-choice-card { grid-template-columns: auto 1fr; } .planet-choice-card > svg { display: none; } .planet-create-progress span { justify-content: center; font-size: 0; } }

@@ -156,7 +156,7 @@ function AppRoutes() {
           <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
-            <Route path="/create/world" element={<WorldComposerPage />} />
+            <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
             <Route path="/studio/worlds" element={<WorldManagerPage />} />
             <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
