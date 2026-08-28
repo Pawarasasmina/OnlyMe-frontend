@@ -25,7 +25,13 @@ function SeenFeedCard({ item, target }) {
   const complete = async (request) => { try { const response = await request; setError(""); await engagementQuery.refetch(); return response; } catch (requestError) { setError(actionError(requestError)); throw requestError; } };
   const reactionMutation = useMutation({ mutationFn: () => complete(engagementQuery.data?.viewerReaction === "LIKE" ? publicationService.removeSeenReaction(item.id) : publicationService.reactToSeen(item.id, "LIKE")) });
   const shareMutation = useMutation({ mutationFn: () => complete(engagementQuery.data?.viewerShared ? publicationService.removeSeenShare(item.id) : publicationService.shareSeen(item.id, shareCaption.trim())), onSuccess: () => { setShareOpen(false); setShareCaption(""); queryClient.invalidateQueries({ queryKey: ["unified-profile"] }); } });
-  const saveMutation = useMutation({ mutationFn: () => complete(publicationService.toggleSeenSave(item.id)), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-content"] }) });
+  const saveMutation = useMutation({
+    mutationFn: () => complete(publicationService.toggleSeenSave(item.id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+      queryClient.invalidateQueries({ queryKey: ["saved-content"] });
+    },
+  });
   const commentMutation = useMutation({ mutationFn: (text) => complete(publicationService.commentOnSeen(item.id, text)), onSuccess: () => setComment("") });
   const engagement = engagementQuery.data || { reactionCount: 0, commentCount: 0, shareCount: 0, comments: [] };
   const submitComment = (event) => { event.preventDefault(); const text = comment.trim(); if (text) commentMutation.mutate(text); };

@@ -574,6 +574,7 @@ export default function SeenReaderPage() {
       syncSeenEngagementCaches(next);
       queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
       queryClient.invalidateQueries({ queryKey: ["discover"] });
       setNotice("");
       setNoticeLink("");

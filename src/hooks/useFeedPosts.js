@@ -137,6 +137,7 @@ export function useToggleFeedPostSave() {
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
     },
   });

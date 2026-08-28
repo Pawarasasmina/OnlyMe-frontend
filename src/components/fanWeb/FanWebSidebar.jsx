@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import AtseenLogo from "../branding/AtseenLogo";
 import FanAvatar from "./shared/FanAvatar";
 import { useAuth } from "../../hooks/useAuth";
@@ -9,6 +9,7 @@ import { useLanguage } from "../../hooks/useLanguage";
 function FanWebSidebar({ capabilities, onCreate, status, unreadMessageCount = 0 }) {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const location = useLocation();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate ? { label: "Create ✦", onClick: onCreate } : null;
 
@@ -20,12 +21,14 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadMessageCount = 0 
       <nav aria-label="Fan navigation" className="space-y-2">
         {socialPrimaryNavItems.map((item) => (
           <NavLink
-            className={({ isActive }) =>
-              `flex min-h-11 items-center gap-4 rounded-xl px-3 py-3 text-[18px] font-bold transition duration-150 min-[1020px]:text-[18px] ${
-                isActive ? "text-white" : "text-atseen-muted hover:bg-atseen-surface-2 hover:text-white"
-              }`
-            }
+            className={({ isActive }) => {
+              const isProfileSection = item.to === "/profile" && location.pathname.startsWith("/saved");
+              return `flex min-h-11 items-center gap-4 rounded-xl px-3 py-3 text-[18px] font-bold transition duration-150 min-[1020px]:text-[18px] ${
+                isActive || isProfileSection ? "text-white !font-bold" : "text-atseen-muted hover:bg-atseen-surface-2 hover:text-white"
+              }`;
+            }}
             key={item.to}
+            aria-current={item.to === "/profile" && location.pathname.startsWith("/saved") ? "page" : undefined}
             to={item.to}
           >
             <span className="relative shrink-0">

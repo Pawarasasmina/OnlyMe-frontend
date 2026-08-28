@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiBookmark, FiCheck, FiEye, FiFlag, FiMessageCircle, FiMoreHorizontal, FiRepeat, FiSend, FiShare2, FiSmile } from "react-icons/fi";
+import { FiBookmark, FiCheck, FiEye, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiRepeat, FiSend, FiShare2, FiSmile } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
+import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import ShareSheet from "../../share/ShareSheet";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
@@ -88,8 +89,49 @@ function formatCount(value = 0) {
 
 function MediaItem({ item, title }) {
   const [failed, setFailed] = useState(false);
+  const translations = useMemo(() => item?.translations || [], [item?.translations]);
+  const [selectedTranslation, setSelectedTranslation] = useState(translations[0]?.language || "");
+  const activeTranslation = translations.find((translation) => translation.language === selectedTranslation) || translations[0] || null;
+  useEffect(() => {
+    if (!translations.length) return;
+    if (!translations.some((translation) => translation.language === selectedTranslation)) {
+      setSelectedTranslation(translations[0].language);
+    }
+  }, [selectedTranslation, translations]);
   if (!item?.url || failed) {
     return <span className="home-feed-media-fallback" role="img" aria-label="Media unavailable">Media unavailable</span>;
+  }
+  if (String(item.type || "").toLowerCase() === "audio") {
+    return (
+      <div className="home-feed-voice-card">
+        <div className="home-feed-voice-title"><FiMic aria-hidden="true" /> Voice note</div>
+        <VoiceMessageBubble audio={{ duration: item.duration, url: item.url, waveform: item.waveform }} label="Voice note" />
+        {item.transcript ? (
+          <div className="home-feed-voice-transcript">
+            <span>Original transcript</span>
+            <p>{item.transcript}</p>
+          </div>
+        ) : null}
+        {translations.length ? (
+          <div className="home-feed-voice-transcript">
+            <label>
+              View translation
+              <select onChange={(event) => setSelectedTranslation(event.target.value)} value={activeTranslation?.language || ""}>
+                {translations.map((translation) => {
+                  return <option key={translation.language} value={translation.language}>{translation.languageName || translation.language}</option>;
+                })}
+              </select>
+            </label>
+            {activeTranslation ? (
+              <>
+                <span>Translated to {activeTranslation.languageName || activeTranslation.language}</span>
+                <p>{activeTranslation.text}</p>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
   }
   if (String(item.type || "").toLowerCase().startsWith("video")) {
     return <video controls preload="metadata" src={item.url} title={`${title} video`} />;
@@ -246,7 +288,10 @@ function FeedPost({ post }) {
     ? `/wall?filter=${encodeURIComponent(contextFilter)}${normalized.location ? `&city=${encodeURIComponent(normalized.location)}` : ""}`
     : "/wall";
   const firstMedia = normalized.media?.[0] || {};
-  const mediaLayout = normalized.media?.length === 1 && String(firstMedia.type || "").toLowerCase().startsWith("video")
+  const firstMediaType = String(firstMedia.type || "").toLowerCase();
+  const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
+    ? "audio"
+    : normalized.media?.length === 1 && firstMediaType.startsWith("video")
     ? "hero"
     : "compact";
 
