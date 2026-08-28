@@ -36,13 +36,16 @@ import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
-import PlanetComingSoonPage from "../pages/create/PlanetComingSoonPage";
 import SeenComposerPage from "../pages/creator/SeenComposerPage";
 import SeenManagerPage from "../pages/creator/SeenManagerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
 import AdminModerationComingSoon from "../pages/admin/AdminModerationComingSoon";
+import ContentModeration from "../pages/admin/ContentModeration";
+import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
+import PublicationModeration from "../pages/admin/PublicationModeration";
+import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
 import WorldComposerPage from "../pages/creator/WorldComposerPage";
 import WorldManagerPage from "../pages/creator/WorldManagerPage";
@@ -68,6 +71,8 @@ import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage
 import ContentPreferencesPage from "../pages/settings/ContentPreferencesPage";
 import SupportPage from "../pages/settings/SupportPage";
 import GiftManagementPage from "../pages/admin/GiftManagementPage";
+import VerifiedCreatorPage from "../pages/creator/VerifiedCreatorPage";
+import VerifiedCreatorManagementPage from "../pages/admin/VerifiedCreatorManagementPage";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -135,6 +140,7 @@ function AppRoutes() {
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
           <Route path="/settings/content" element={<ContentPreferencesPage />} />
           <Route path="/settings/support/:section" element={<SupportPage />} />
+          <Route path="/creator/verified" element={<VerifiedCreatorPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
@@ -150,8 +156,8 @@ function AppRoutes() {
           <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
-            <Route path="/create/world" element={<PlanetComingSoonPage />} />
-            <Route path="/create/premium-world" element={<PlanetComingSoonPage />} />
+            <Route path="/create/world" element={<WorldComposerPage premium />} />
+            <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
             <Route path="/studio/worlds" element={<WorldManagerPage />} />
             <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
@@ -197,10 +203,11 @@ function AppRoutes() {
           <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
-          <Route path="/admin/content-moderation" element={<AdminModerationComingSoon />} />
-          <Route path="/admin/content-moderation/:id" element={<AdminModerationComingSoon />} />
-          <Route path="/admin/publication-moderation" element={<AdminModerationComingSoon />} />
-          <Route path="/admin/publication-moderation/:id" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/verified-creators" element={<VerifiedCreatorManagementPage />} />
+          <Route path="/admin/content-moderation" element={<ContentModeration />} />
+          <Route path="/admin/content-moderation/:id" element={<ContentModerationDetail />} />
+          <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
+          <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<AdminModerationComingSoon />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />

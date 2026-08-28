@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Component, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AtseenLogo from "../components/branding/AtseenLogo";
 import FanCreateSheet from "../components/fanWeb/FanCreateSheet";
@@ -20,6 +20,30 @@ import { moderationWarningService } from "../services/moderationWarningService";
 
 const STATUS_KEY = "atseen_social_status";
 
+class SocialContentErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <section className="mx-auto mt-10 max-w-lg rounded-2xl border border-red-400/25 bg-red-400/10 p-6 text-white">
+        <h1 className="text-xl font-black">This page could not load</h1>
+        <p className="mt-2 text-sm text-red-100/80">The draft screen hit a temporary rendering error.</p>
+        <button className="mt-5 rounded-full bg-atseen-blue px-4 py-2 text-sm font-black text-atseen-bg" onClick={() => window.location.reload()} type="button">
+          Reload page
+        </button>
+      </section>
+    );
+  }
+}
+
 function SocialAppShell({ children = null }) {
   const { user } = useAuth();
   const capabilities = useSocialCapabilities();
@@ -33,9 +57,7 @@ function SocialAppShell({ children = null }) {
   const isDiscoverPage = location.pathname === "/discover";
   const isHomePage = location.pathname === "/wall";
   const isSeenPage = location.pathname === "/seen"
-    || location.pathname.startsWith("/seen/")
-    || location.pathname === "/create/seen"
-    || (location.pathname.startsWith("/studio/seens/") && location.pathname.endsWith("/edit"));
+    || location.pathname.startsWith("/seen/");
   const isWorldComposePage = location.pathname === "/create/premium-world";
   const unreadMessageCount = useUnreadMessageCount(Boolean(user), { poll: !isMessagesPage });
   const contentScrollRef = useRef(null);
@@ -71,11 +93,23 @@ function SocialAppShell({ children = null }) {
     navigate({ pathname: "/wall", search: `?${params.toString()}` });
   };
 
+  const handleDraftNavigation = (event) => {
+    if (!location.pathname.startsWith("/studio/seens/")) return;
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const anchor = event.target.closest?.("a[href]");
+    if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+    const target = new URL(anchor.href, window.location.href);
+    if (target.origin !== window.location.origin) return;
+    if (`${target.pathname}${target.search}${target.hash}` === `${location.pathname}${location.search}${location.hash}`) return;
+    event.preventDefault();
+    window.location.assign(target.href);
+  };
+
   return (
     <FanToastProvider>
       <CallProvider user={user}>
       {currentWarning ? <div className="fixed inset-0 z-[300] grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="moderation-warning-title"><section className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#210b0d] p-6 text-white shadow-[0_24px_90px_rgba(220,38,38,.35)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-500/20 text-3xl text-red-400">!</div><p className="mt-5 text-center text-xs font-black uppercase tracking-[.2em] text-red-400">Account warning</p><h2 className="mt-2 text-center text-2xl font-black" id="moderation-warning-title">{currentWarning.title}</h2><p className="mt-4 text-center text-sm leading-6 text-red-50/80">{currentWarning.message}</p><p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">Future violations may lead to temporary restriction or account suspension.</p><button className="mt-6 w-full rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white disabled:opacity-50" disabled={acknowledgeWarning.isPending} onClick={() => acknowledgeWarning.mutate()} type="button">{acknowledgeWarning.isPending ? "Saving…" : "I understand"}</button></section></div> : null}
-      <div className="social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden">
+      <div className="social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden" onClickCapture={handleDraftNavigation}>
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] md:h-screen md:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadMessageCount={unreadMessageCount} />
           <div className="social-center-scroll min-w-0 flex-1 md:h-screen md:overflow-y-auto md:overscroll-contain" ref={contentScrollRef}>
@@ -91,14 +125,16 @@ function SocialAppShell({ children = null }) {
                 <button className="rounded-full border border-atseen-line px-3 py-2 text-xs font-bold text-atseen-muted" onClick={() => setAppModalOpen(true)} type="button">Get app</button>
               )}
             </header> : null}
-            <main className={isSeenPage || isWorldComposePage
+            <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
-              : isDiscoverPage || isHomePage
+              : isDiscoverPage || isHomePage || isSeenPage
               ? "social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-[980px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 md:h-screen md:px-0 md:pb-12 md:pt-9"
               : isMessagesPage
                 ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-none px-0 py-0 md:h-screen"
                 : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-5 md:pb-20 md:pt-[30px]"}>
-              {children || <Outlet context={outletContext} />}
+              <SocialContentErrorBoundary key={`${location.pathname}${location.search}`}>
+                <Fragment key={location.key}>{children || <Outlet context={outletContext} />}</Fragment>
+              </SocialContentErrorBoundary>
             </main>
           </div>
           <FanWebRightRail capabilities={capabilities} status={status} user={user} />

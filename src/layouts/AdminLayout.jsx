@@ -9,6 +9,7 @@ const links = [
   { label: "Fans", to: "/admin/fans", icon: FiUsers },
   { label: "Creators", to: "/admin/creators", icon: FiStar },
   { label: "Creator verifications", to: "/admin/creator-verifications", icon: FiShield },
+  { label: "Verified Creators", to: "/admin/verified-creators", icon: FiStar },
   { label: "Content moderation", to: "/admin/content-moderation", icon: FiFileText },
   { label: "Publication moderation", to: "/admin/publication-moderation", icon: FiFileText },
   { label: "Gift catalog", to: "/admin/gifts", icon: FiGift },

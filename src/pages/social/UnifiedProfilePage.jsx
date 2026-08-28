@@ -38,6 +38,7 @@ import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferMo
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import FanCard from "../../components/fanWeb/shared/FanCard";
 import FeedPostComposer from "../../components/posts/FeedPostComposer";
+import FeedPost from "../../components/fanWeb/home/FeedPost";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileConnectionsModal from "../../components/profile/ProfileConnectionsModal";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
@@ -735,17 +736,10 @@ function ContentTabsPanel({ data, isOwner, tab }) {
 }
 
 function WallPreview({ isOwner, posts = [] }) {
-  const visible = posts.slice(0, 2);
   return (
     <section className="profile-section profile-wall-section">
       <h2>Wall</h2>
-      {visible.length ? visible.map((post) => (
-        <article className="profile-wall-note" key={post.feedId || post.id}>
-          <small>{[post.context, post.location, relativeTime(post.feedCreatedAt || post.createdAt)].filter(Boolean).join(" - ")}</small>
-          <p>{post.text || post.shareCaption || "A Wall update"}</p>
-        </article>
-      )) : <p className="profile-empty-state">{isOwner ? "Your notes will appear here." : "No Wall notes yet."}</p>}
-      <Link className="profile-open-wall" to="/wall">Open the Wall <FiChevronRight /></Link>
+      {posts.length ? <div className="profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} />)}</div> : <p className="profile-empty-state">{isOwner ? "Your notes will appear here." : "No Wall notes yet."}</p>}
     </section>
   );
 }
@@ -779,7 +773,7 @@ function ProfileBody({ data, setConnectionsType, setStatus, statusContext }) {
       {!isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel"><ContentTabsPanel data={data} isOwner={isOwner} tab={tab} /></section>
-      <WallPreview isOwner={isOwner} posts={data.wallPosts || data.sharedWallPosts || []} />
+      <WallPreview isOwner={isOwner} posts={data.wallPosts || []} />
       {isOwner ? <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets} profile={profile} role={profile.role} /> : null}
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
     </div>

@@ -13,7 +13,6 @@ import { useFeedPosts, useMyFeedPosts } from "../../hooks/useFeedPosts";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 
-const HOME_LOCATION_KEY = "atseen_home_location";
 const HOME_FILTERS = [
   { key: "all", label: "All" },
   { key: "right_now", label: "Right now" },
@@ -93,12 +92,7 @@ function FanHomePage() {
   const composeSignal = searchParams.get("compose") === "note" ? "note" : "";
   const activeFilter = HOME_FILTERS.some((filter) => filter.key === requestedFilter) ? requestedFilter : "all";
   const requestedCity = searchParams.get("city") || "";
-  const [selectedLocation, setSelectedLocation] = useState(() => {
-    if (requestedCity) return requestedCity;
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem(HOME_LOCATION_KEY) || "";
-  });
-  const [locationInitialized, setLocationInitialized] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(requestedCity);
   const [page, setPage] = useState(1);
   const [feedPosts, setFeedPosts] = useState([]);
   const sentinelRef = useRef(null);
@@ -115,9 +109,10 @@ function FanHomePage() {
   const feedParams = useMemo(() => ({
     limit: 20,
     page,
+    _viewerId: user?.id || user?._id || "",
     ...(activeFilter !== "all" ? { filter: activeFilter } : {}),
     ...(feedLocation ? { location: feedLocation } : {}),
-  }), [activeFilter, feedLocation, page]);
+  }), [activeFilter, feedLocation, page, user?.id, user?._id]);
   const feedQuery = useFeedPosts(feedParams);
   const canPost = canCreateFeedPost(user);
   const myPostsQuery = useMyFeedPosts({
@@ -130,18 +125,6 @@ function FanHomePage() {
 
   const discoverParams = useMemo(() => ({ _viewerId: user?.id || user?._id || "", filter: "for_you", limit: 8 }), [user?.id, user?._id]);
   const discoverQuery = useDiscoverQuery(discoverParams);
-
-  useEffect(() => {
-    if (locationInitialized) return;
-    if (selectedLocation || requestedCity) {
-      setLocationInitialized(true);
-      return;
-    }
-    if (profileCity) {
-      setSelectedLocation(profileCity);
-      setLocationInitialized(true);
-    }
-  }, [locationInitialized, profileCity, requestedCity, selectedLocation]);
 
   useEffect(() => {
     setPage(1);
@@ -193,11 +176,6 @@ function FanHomePage() {
 
   const changeLocation = useCallback((location) => {
     setSelectedLocation(location);
-    setLocationInitialized(true);
-    if (typeof window !== "undefined") {
-      if (location) localStorage.setItem(HOME_LOCATION_KEY, location);
-      else localStorage.removeItem(HOME_LOCATION_KEY);
-    }
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       if (location) next.set("city", location);
