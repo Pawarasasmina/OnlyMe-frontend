@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiMapPin, FiMic, FiPlus, FiX } from "react-icons/fi";
+import { FiMapPin, FiMic, FiPlus, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
 import { useAuth } from "../../../hooks/useAuth";
 import { useWallStories } from "../../../hooks/useStories";
 import { useCreateFeedPost } from "../../../hooks/useFeedPosts";
 import { canCreateFeedPost } from "../../../utils/postPermissions";
+import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
+import WallVoiceRecorder from "../../voice/WallVoiceRecorder";
+import { formatVoiceTime } from "../../../hooks/useVoiceRecorder";
 import {
   POST_CONTEXTS,
   POST_IMAGE_TYPES,
@@ -52,12 +55,15 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
   const textRef = useRef(null);
   const fileInputRef = useRef(null);
   const filesRef = useRef([]);
+  const voiceAttachmentRef = useRef(null);
   const [statusOpen, setStatusOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
   const [text, setText] = useState("");
   const [selectedContext, setSelectedContext] = useState(noteContextOptions[0]);
   const [location, setLocation] = useState("");
   const [files, setFiles] = useState([]);
+  const [voiceAttachment, setVoiceAttachment] = useState(null);
   const [error, setError] = useState("");
   const [uploadLabel, setUploadLabel] = useState("");
   const [cropQueue, setCropQueue] = useState([]);
@@ -68,15 +74,20 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
   const activeStatus = wallStoriesQuery.data?.viewer?.activeStatus || user?.activeStatus || null;
   const trimmedText = text.trim();
   const validContextValue = POST_CONTEXTS.includes(selectedContext?.value) ? selectedContext.value : "";
-  const canPublish = canPostToHome && trimmedText.length > 0 && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
-  const hasDraft = Boolean(trimmedText || location.trim() || files.length);
+  const canPublish = canPostToHome && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
+  const hasDraft = Boolean(trimmedText || location.trim() || files.length || voiceAttachment);
 
   useEffect(() => {
     filesRef.current = files;
   }, [files]);
 
+  useEffect(() => {
+    voiceAttachmentRef.current = voiceAttachment;
+  }, [voiceAttachment]);
+
   useEffect(() => () => {
     filesRef.current.forEach((item) => URL.revokeObjectURL(item.url));
+    if (voiceAttachmentRef.current?.url) URL.revokeObjectURL(voiceAttachmentRef.current.url);
   }, []);
 
   useEffect(() => {
@@ -88,10 +99,12 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
 
   const resetComposer = () => {
     files.forEach((item) => URL.revokeObjectURL(item.url));
+    if (voiceAttachment?.url) URL.revokeObjectURL(voiceAttachment.url);
     setText("");
     setSelectedContext(noteContextOptions[0]);
     setLocation("");
     setFiles([]);
+    setVoiceAttachment(null);
     setError("");
     setUploadLabel("");
   };
@@ -148,9 +161,36 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     });
   };
 
+  const attachVoiceNote = (recording) => {
+    if (!recording?.file) return;
+    if (voiceAttachment?.url) URL.revokeObjectURL(voiceAttachment.url);
+    const url = URL.createObjectURL(recording.file);
+    setVoiceAttachment({
+      ...recording,
+      id: `${recording.file.name}-${recording.file.size}-${recording.file.lastModified}`,
+      url,
+    });
+    const transcript = recording.transcript?.trim();
+    if (transcript) {
+      setText((current) => {
+        if (!current.trim()) return transcript.slice(0, POST_TEXT_MAX_LENGTH);
+        const next = `${current.trimEnd()}\n\n${transcript}`;
+        return next.slice(0, POST_TEXT_MAX_LENGTH);
+      });
+    }
+    setError("");
+  };
+
+  const removeVoiceNote = () => {
+    setVoiceAttachment((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return null;
+    });
+  };
+
   const publish = () => {
     if (!canPublish) {
-      setError(trimmedText ? "This note is too long." : "Write something before publishing.");
+      setError(trimmedText ? "This note is too long." : "Write something or attach a voice note before publishing.");
       return;
     }
 
@@ -159,6 +199,14 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     formData.append("context", validContextValue);
     formData.append("location", location.trim());
     files.forEach((item) => formData.append("media", item.file));
+    if (voiceAttachment?.file) {
+      formData.append("voice", voiceAttachment.file);
+      formData.append("voiceDuration", String(voiceAttachment.duration || ""));
+      formData.append("voiceTranscript", voiceAttachment.transcript || "");
+      formData.append("voiceTranscriptLanguage", voiceAttachment.transcriptLanguage || "");
+      formData.append("voiceTranslations", JSON.stringify(voiceAttachment.translations || []));
+      formData.append("voiceWaveform", JSON.stringify(voiceAttachment.waveform || []));
+    }
     setError("");
     setUploadLabel("Publishing");
 
@@ -237,10 +285,47 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
             </div>
           ) : null}
 
+          {voiceAttachment ? (
+            <div className="home-note-voice-card">
+              <div className="home-note-voice-meta">
+                <span><FiMic aria-hidden="true" /></span>
+                <div>
+                  <strong>Voice note</strong>
+                  <small>{formatVoiceTime(voiceAttachment.duration)}</small>
+                </div>
+              </div>
+              <VoiceMessageBubble audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label="Voice note" />
+              {voiceAttachment.transcript || voiceAttachment.translations?.length ? (
+                <div className="home-note-voice-copy">
+                  {voiceAttachment.transcript ? (
+                    <>
+                      <span>Transcript</span>
+                      <p>{voiceAttachment.transcript}</p>
+                    </>
+                  ) : null}
+                  {voiceAttachment.translations?.length ? (
+                    <>
+                      <span>Translations</span>
+                      <div className="home-note-voice-translations">
+                        {voiceAttachment.translations.map((translation) => (
+                          <p key={translation.language}>
+                            <b>{translation.languageName || translation.language}</b>
+                            <span>{translation.text}</span>
+                          </p>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+              <button aria-label="Remove voice note" onClick={removeVoiceNote} type="button"><FiTrash2 /></button>
+            </div>
+          ) : null}
+
           <div className="home-note-footer">
             <div className="home-note-tools">
               <button aria-label="Attach image" onClick={() => fileInputRef.current?.click()} type="button"><FiPlus /></button>
-              <button aria-label="Record voice note" onClick={() => showToast("Voice notes for wall posts are coming soon.")} type="button"><FiMic /></button>
+              <button aria-label={voiceAttachment ? "Replace voice note" : "Record voice note"} className={voiceAttachment ? "is-selected" : ""} onClick={() => setVoiceRecorderOpen(true)} type="button"><FiMic /></button>
               <button
                 className="home-note-location"
                 onClick={() => {
@@ -292,6 +377,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
           wallStoriesQuery.refetch();
         }}
       />
+      <WallVoiceRecorder isOpen={voiceRecorderOpen} onClose={() => setVoiceRecorderOpen(false)} onUse={attachVoiceNote} />
     </>
   );
 }

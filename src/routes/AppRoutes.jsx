@@ -126,6 +126,7 @@ function AppRoutes() {
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<ActivityPage />} />
           <Route path="/saved" element={<SavedPage />} />
+          <Route path="/saved/:category" element={<SavedPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />

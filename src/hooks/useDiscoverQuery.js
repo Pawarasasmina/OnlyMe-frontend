@@ -250,6 +250,7 @@ export function useDiscoverOfferSaveMutation(params = {}) {
           })),
         };
       });
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
     },
   });

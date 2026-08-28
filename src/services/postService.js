@@ -16,6 +16,16 @@ function normalizePost(raw = {}) {
       id: item.id || item._id || item.assetId || item.url,
       url: item.url || item.secureUrl,
       type: item.type || "image",
+      duration: item.duration || null,
+      mimeType: item.mimeType || "",
+      transcript: item.transcript || "",
+      transcriptLanguage: item.transcriptLanguage || "",
+      translations: (item.translations || []).map((translation) => ({
+        language: translation.language,
+        languageName: translation.languageName || "",
+        text: translation.text,
+      })),
+      waveform: item.waveform || [],
     })),
   };
 }
