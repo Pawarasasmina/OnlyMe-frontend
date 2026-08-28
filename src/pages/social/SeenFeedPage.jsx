@@ -336,6 +336,7 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
     mutationFn: () => runAction(publicationService.toggleSeenSave(item.id)),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
       setNotice(response.data.data.engagement?.viewerSaved ? "Saved to library." : "Removed from library.");
     },
   });
