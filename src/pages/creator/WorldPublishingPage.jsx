@@ -7,10 +7,10 @@ import {
   FiEdit3,
   FiExternalLink,
   FiLock,
+  FiLoader,
   FiMoreHorizontal,
   FiPlus,
-  FiScissors,
-  FiUpload,
+  FiTrash2,
   FiX,
 } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
@@ -25,6 +25,7 @@ const PLANET = "\uD83E\uDE90";
 const FLEX = "\uD83D\uDCAA";
 const STAR = "\u2726";
 const STORY_PREVIEW_LIMIT = 3;
+const SUBSCRIBER_STORY_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 const WORLD_CATEGORIES = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
@@ -109,10 +110,14 @@ function storyPreviewsFromWorld(publication = {}) {
         caption: block.metadata?.caption || "",
         editorMetadata: block.metadata?.editorMetadata || null,
         media: block.media,
+        audience: chapter.isPreview ? "FREE" : "SUBSCRIBER",
         saved: true,
         url: block.media.secureUrl,
       })))
-    .slice(0, STORY_PREVIEW_LIMIT);
+    .filter((story, index, stories) => (
+      stories.slice(0, index).filter((item) => item.audience === story.audience).length
+        < (story.audience === "FREE" ? STORY_PREVIEW_LIMIT : SUBSCRIBER_STORY_LIMIT)
+    ));
 }
 
 function revokePreviewUrl(story) {
@@ -124,29 +129,38 @@ export default function WorldPublishingPage({ publicationId = "" }) {
   const { user } = useAuth();
   const coverInputRef = useRef(null);
   const storyPreviewsRef = useRef([]);
+  const autoSaveAttemptedStoryIds = useRef(new Set());
+  const draftAutoSaveTimer = useRef(null);
+  const saveDraftRef = useRef(null);
+  const storySaveResolvers = useRef(new Map());
   const [world, setWorld] = useState(freshWorld);
   const [storyPreviews, setStoryPreviews] = useState([]);
   const [activeStoryId, setActiveStoryId] = useState("");
+  const [storyAudience, setStoryAudience] = useState("FREE");
   const [activeChapter, setActiveChapter] = useState(null);
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
+  const [removingChapterId, setRemovingChapterId] = useState("");
   const [chapterStatus, setChapterStatus] = useState("");
   const [cropTarget, setCropTarget] = useState(null);
   const [storyComposerOpen, setStoryComposerOpen] = useState(false);
+  const [storyAutoSaving, setStoryAutoSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creationStarted, setCreationStarted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [, setNotice] = useState("");
   const [error, setError] = useState("");
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || "Max";
   const coverUrl = world.coverMedia?.secureUrl;
   const validation = useMemo(() => worldCompletenessBySection(world), [world]);
   const validationMessages = Object.values(validation).flat();
-  const readyToSubmit = world.id && !validationMessages.length && !saving && !uploading;
+  const readyToSubmit = world.id && !validationMessages.length && !saving && !uploading && !storyAutoSaving;
   const activeStory = useMemo(() => storyPreviews.find((story) => story.id === activeStoryId), [activeStoryId, storyPreviews]);
+  const freeStories = useMemo(() => storyPreviews.filter((story) => story.audience !== "SUBSCRIBER"), [storyPreviews]);
+  const subscriberStories = useMemo(() => storyPreviews.filter((story) => story.audience === "SUBSCRIBER"), [storyPreviews]);
 
   const loadWorld = useCallback(async () => {
     setLoading(true);
@@ -196,12 +210,19 @@ export default function WorldPublishingPage({ publicationId = "" }) {
 
   useEffect(() => () => {
     storyPreviewsRef.current.forEach(revokePreviewUrl);
+    window.clearTimeout(draftAutoSaveTimer.current);
   }, []);
+
+  const scheduleDraftSave = () => {
+    window.clearTimeout(draftAutoSaveTimer.current);
+    draftAutoSaveTimer.current = window.setTimeout(() => saveDraftRef.current?.(), 700);
+  };
 
   const updateWorld = (patch) => {
     setWorld((current) => ({ ...current, ...patch }));
-    setNotice("Unsaved changes");
+    setNotice("Saving...");
     setError("");
+    scheduleDraftSave();
   };
 
   const ensureDraft = async (snapshot = world) => {
@@ -233,44 +254,60 @@ export default function WorldPublishingPage({ publicationId = "" }) {
     const unsaved = previews.filter((preview) => preview.file && !preview.saved);
     if (!unsaved.length) return draft;
 
-    const targetChapter = draft.chapters?.find((chapter) => chapter.isPreview) || draft.chapters?.[0];
-    if (!targetChapter?.stableChapterId) {
-      throw new Error("Save a preview chapter before adding story photos.");
-    }
+    let next = draft;
+    for (const audience of ["FREE", "SUBSCRIBER"]) {
+      const audienceStories = unsaved.filter((preview) => (preview.audience || "FREE") === audience);
+      if (!audienceStories.length) continue;
 
-    const existingStoryCount = (targetChapter.blocks || []).filter(isStoryPreviewBlock).length;
-    const uploadQueue = unsaved.slice(0, Math.max(0, STORY_PREVIEW_LIMIT - existingStoryCount));
-    if (!uploadQueue.length) return draft;
+      let targetChapter = next.chapters?.find((chapter) => audience === "FREE" ? chapter.isPreview : !chapter.isPreview);
+      if (!targetChapter?.stableChapterId) {
+        await api.addChapter(next.id, {
+          blocks: [],
+          isPreview: audience === "FREE",
+          releaseMode: "IMMEDIATE",
+          statusVersion: next.statusVersion,
+          title: audience === "FREE" ? "Chapter 1" : "Subscriber stories",
+        });
+        next = await refreshWorld(next.id);
+        targetChapter = next.chapters?.find((chapter) => audience === "FREE" ? chapter.isPreview : !chapter.isPreview);
+      }
+      if (!targetChapter?.stableChapterId) throw new Error("A story chapter could not be prepared.");
 
-    setNotice("Saving story previews...");
-    const uploadedBlocks = [];
-    for (const preview of uploadQueue) {
-      const blockId = preview.blockId || crypto.randomUUID();
-      const uploaded = (await api.uploadMedia(draft.id, preview.file, {
-        blockId,
-        chapterId: targetChapter.stableChapterId,
-        mediaType: "IMAGE",
-        purpose: "BLOCK",
-      })).data.data;
-      uploadedBlocks.push({
-        id: blockId,
-        media: uploaded,
-        metadata: { caption: preview.caption || "", editorMetadata: preview.editorMetadata || null, label: preview.label, storyPreview: true },
-        order: (targetChapter.blocks || []).length + uploadedBlocks.length,
-        text: "",
-        type: "IMAGE",
+      const limit = audience === "FREE" ? STORY_PREVIEW_LIMIT : SUBSCRIBER_STORY_LIMIT;
+      const existingStoryCount = (targetChapter.blocks || []).filter(isStoryPreviewBlock).length;
+      const uploadQueue = audienceStories.slice(0, Math.max(0, limit - existingStoryCount));
+      if (!uploadQueue.length) continue;
+
+      setNotice(audience === "FREE" ? "Saving free preview stories..." : "Saving subscriber stories...");
+      const uploadedBlocks = [];
+      for (const preview of uploadQueue) {
+        const blockId = preview.blockId || crypto.randomUUID();
+        const uploaded = (await api.uploadMedia(next.id, preview.file, {
+          blockId,
+          chapterId: targetChapter.stableChapterId,
+          mediaType: "IMAGE",
+          purpose: "BLOCK",
+        })).data.data;
+        uploadedBlocks.push({
+          id: blockId,
+          media: uploaded,
+          metadata: { label: preview.label, storyPreview: true },
+          order: (targetChapter.blocks || []).length + uploadedBlocks.length,
+          text: "",
+          type: "IMAGE",
+        });
+      }
+
+      await api.updateChapter(next.id, targetChapter.stableChapterId, {
+        blocks: [...(targetChapter.blocks || []), ...uploadedBlocks].map((block, order) => ({ ...block, order })),
+        isPreview: audience === "FREE",
+        releaseMode: targetChapter.releaseMode || "IMMEDIATE",
+        statusVersion: next.statusVersion,
+        title: targetChapter.title || (audience === "FREE" ? "Chapter 1" : "Subscriber stories"),
       });
+      next = await refreshWorld(next.id);
     }
 
-    const nextBlocks = [...(targetChapter.blocks || []), ...uploadedBlocks].map((block, order) => ({ ...block, order }));
-    await api.updateChapter(draft.id, targetChapter.stableChapterId, {
-      blocks: nextBlocks,
-      isPreview: Boolean(targetChapter.isPreview),
-      releaseMode: targetChapter.releaseMode || "IMMEDIATE",
-      statusVersion: draft.statusVersion,
-      title: targetChapter.title || "Preview",
-    });
-    const next = await refreshWorld(draft.id);
     setStoryPreviews((current) => {
       current.forEach(revokePreviewUrl);
       return storyPreviewsFromWorld(next);
@@ -335,6 +372,31 @@ export default function WorldPublishingPage({ publicationId = "" }) {
     }
   };
 
+  saveDraftRef.current = saveDraft;
+
+  useEffect(() => {
+    if (!creationStarted) return undefined;
+    const pendingIds = storyPreviews
+      .filter((preview) => preview.file && !preview.saved && !autoSaveAttemptedStoryIds.current.has(preview.id))
+      .map((preview) => preview.id);
+    if (!pendingIds.length) return undefined;
+
+    pendingIds.forEach((storyId) => autoSaveAttemptedStoryIds.current.add(storyId));
+    const timer = window.setTimeout(async () => {
+      try {
+        const saved = await saveDraftRef.current?.();
+        for (const resolver of storySaveResolvers.current.values()) {
+          if (saved) resolver.resolve(saved);
+          else resolver.reject(new Error("Story upload could not be saved."));
+        }
+      } finally {
+        storySaveResolvers.current.clear();
+        setStoryAutoSaving(false);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [creationStarted, storyPreviews]);
+
   const uploadCover = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -357,12 +419,15 @@ export default function WorldPublishingPage({ publicationId = "" }) {
 
   const addStoryPreview = ({ caption = "", editorMetadata = null, file }) => {
     if (!file) return;
-    const remaining = Math.max(0, STORY_PREVIEW_LIMIT - storyPreviews.length);
+    const audienceStories = storyAudience === "SUBSCRIBER" ? subscriberStories : freeStories;
+    const limit = storyAudience === "SUBSCRIBER" ? SUBSCRIBER_STORY_LIMIT : STORY_PREVIEW_LIMIT;
+    const remaining = Math.max(0, limit - audienceStories.length);
     if (!remaining) {
-      setNotice("Only 3 story previews can be shown.");
+      setNotice(`Only ${limit} ${storyAudience === "SUBSCRIBER" ? "subscriber" : "free preview"} stories can be shown.`);
       return;
     }
     const nextStory = {
+      audience: storyAudience,
       caption,
       editorMetadata,
       file,
@@ -372,12 +437,31 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       url: URL.createObjectURL(file),
     };
 
+    setStoryAutoSaving(true);
     setStoryPreviews((current) => {
-      setNotice("Story preview added. Save the draft to keep it.");
+      setNotice(`Uploading ${storyAudience === "SUBSCRIBER" ? "subscriber" : "free preview"} story...`);
       return [...current, nextStory];
     });
     setActiveStoryId(nextStory.id);
     setError("");
+    return new Promise((resolve, reject) => {
+      storySaveResolvers.current.set(nextStory.id, { reject, resolve });
+    });
+  };
+
+  const removeCover = async () => {
+    if (!world.id || !world.coverMedia || uploading) return;
+    if (!window.confirm("Remove this cover image?")) return;
+    setUploading(true);
+    setError("");
+    try {
+      await api.deleteMedia(world.id, "cover", world.statusVersion);
+      await refreshWorld(world.id);
+    } catch (requestError) {
+      setError(publicationError(requestError));
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removeStoryPreview = (storyId) => {
@@ -396,6 +480,8 @@ export default function WorldPublishingPage({ publicationId = "" }) {
             : chapter
         )),
       }));
+      setNotice("Removing story...");
+      scheduleDraftSave();
     }
     if (activeStoryId === storyId) setActiveStoryId("");
     setNotice("Story preview removed.");
@@ -576,6 +662,39 @@ export default function WorldPublishingPage({ publicationId = "" }) {
     setNotice("New chapter added. Open it to start writing.");
   };
 
+  const removeChapter = async (index) => {
+    const chapter = chapters[index];
+    if (!chapter || removingChapterId) return;
+    const label = chapter.title || `Chapter ${index + 1}`;
+    if (!window.confirm(`Remove “${label}”? This also removes everything saved inside this chapter.`)) return;
+
+    if (!chapter.stableChapterId) {
+      updateWorld({ chapters: chapters.filter((_, chapterIndex) => chapterIndex !== index) });
+      setNotice("Chapter removed.");
+      return;
+    }
+
+    setRemovingChapterId(chapter.stableChapterId);
+    setError("");
+    setNotice("Removing chapter...");
+    try {
+      const saved = await saveDraft();
+      if (!saved) return;
+      await api.deleteChapter(saved.id, chapter.stableChapterId, saved.statusVersion);
+      const next = await refreshWorld(saved.id);
+      setStoryPreviews((current) => {
+        current.forEach(revokePreviewUrl);
+        return storyPreviewsFromWorld(next);
+      });
+      setNotice("Chapter removed.");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      setNotice("Chapter removal failed");
+    } finally {
+      setRemovingChapterId("");
+    }
+  };
+
   if (loading) return <div className="world-prototype-state">Opening planet...</div>;
 
   if (activePlanetEditorChapter) return (
@@ -635,11 +754,11 @@ export default function WorldPublishingPage({ publicationId = "" }) {
 
       <section className="world-prototype-story-previews">
         <div className="world-prototype-section-head is-compact">
-          <h2>Stories</h2>
-          <span>up to 3 - seen before purchase</span>
+          <h2>Free preview stories</h2>
+          <span>up to 3 - visible before subscription</span>
         </div>
         <div>
-          {storyPreviews.map((story) => (
+          {freeStories.map((story) => (
             <span className="world-prototype-story-thumb" key={story.id}>
               <button aria-label="Open story preview" className="world-prototype-story-open" onClick={() => setActiveStoryId(story.id)} type="button">
                 <img alt="World story preview" src={story.url} />
@@ -648,8 +767,8 @@ export default function WorldPublishingPage({ publicationId = "" }) {
               <button aria-label="Remove story preview" onClick={() => removeStoryPreview(story.id)} type="button"><FiX /></button>
             </span>
           ))}
-          {storyPreviews.length < STORY_PREVIEW_LIMIT ? (
-          <button className="world-prototype-story-add" onClick={() => setStoryComposerOpen(true)} type="button">
+          {freeStories.length < STORY_PREVIEW_LIMIT ? (
+          <button className="world-prototype-story-add" onClick={() => { setStoryAudience("FREE"); setStoryComposerOpen(true); }} type="button">
             <FiPlus />
             <span>add</span>
           </button>
@@ -658,12 +777,16 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       </section>
 
       <section className="world-prototype-story-rings">
-        <h2><FiScissors /> Stories</h2>
+        <h2><FiLock /> Subscriber stories</h2>
+        <p className="world-prototype-story-access-note">Only active subscribers can open these stories.</p>
         <div>
-          {storyPreviews.map((story) => (
-            <button className="is-active" key={story.id} onClick={() => setActiveStoryId(story.id)} type="button"><FiScissors /><span>{story.label}</span></button>
+          {subscriberStories.map((story) => (
+            <span className="world-prototype-story-ring-item" key={story.id}>
+              <button className="is-active" onClick={() => setActiveStoryId(story.id)} type="button"><FiLock /><span>{story.label}</span></button>
+              <button aria-label={`Remove subscriber story ${story.label}`} className="world-prototype-story-ring-remove" onClick={() => removeStoryPreview(story.id)} type="button"><FiX /></button>
+            </span>
           ))}
-          {storyPreviews.length < STORY_PREVIEW_LIMIT ? <button onClick={() => setStoryComposerOpen(true)} type="button"><FiPlus /><span>New</span></button> : null}
+          {subscriberStories.length < SUBSCRIBER_STORY_LIMIT ? <button onClick={() => { setStoryAudience("SUBSCRIBER"); setStoryComposerOpen(true); }} type="button"><FiPlus /><span>New</span></button> : null}
         </div>
       </section>
 
@@ -694,7 +817,8 @@ export default function WorldPublishingPage({ publicationId = "" }) {
 
       <div className="world-prototype-media world-publish-cover">
         {coverUrl ? <img alt={`${world.title || "Premium world"} cover`} src={coverUrl} /> : <div className="world-prototype-media-empty">Add a cover</div>}
-        <button aria-label="Upload cover media" className="world-prototype-media-edit" onClick={() => coverInputRef.current?.click()} type="button"><FiEdit3 /></button>
+        <button aria-label={uploading ? "Uploading cover" : "Upload cover media"} className="world-prototype-media-edit" disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">{uploading ? <FiLoader className="world-story-upload-spinner" /> : <FiEdit3 />}</button>
+        {coverUrl ? <button aria-label="Remove cover image" className="world-publish-cover-remove" disabled={uploading} onClick={removeCover} type="button"><FiTrash2 /></button> : null}
         <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" className="sr-only" onChange={uploadCover} ref={coverInputRef} type="file" />
       </div>
 
@@ -727,7 +851,8 @@ export default function WorldPublishingPage({ publicationId = "" }) {
           {chapters.map((chapter, index) => {
             const locked = index > 0;
             return (
-              <button className="world-prototype-chapter-row" key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button">
+              <div className="world-prototype-chapter-item" key={chapter.stableChapterId || chapter.localId || index}>
+                <button className="world-prototype-chapter-row" disabled={Boolean(removingChapterId)} onClick={() => openChapterEditor(index)} type="button">
                 <span>{index + 1}</span>
                 <span>
                   <b>{chapter.title || `Chapter ${index + 1}`}</b>
@@ -738,7 +863,18 @@ export default function WorldPublishingPage({ publicationId = "" }) {
                   </small>
                 </span>
                 <i>›</i>
-              </button>
+                </button>
+                <button
+                aria-label={`Remove ${chapter.title || `Chapter ${index + 1}`}`}
+                className="world-prototype-chapter-remove"
+                disabled={Boolean(removingChapterId) || saving || uploading}
+                onClick={() => removeChapter(index)}
+                title="Remove chapter"
+                type="button"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -754,8 +890,6 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       </section>
 
       <div className="world-publish-actionbar">
-        <span role={error ? "alert" : "status"}>{error || notice || statusLabel(world)}</span>
-        <button disabled={saving || uploading || submitting} onClick={saveDraft} type="button"><FiUpload /> Save draft</button>
         <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? "Submitting" : "Submit"}</button>
       </div>
     </article>

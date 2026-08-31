@@ -1,7 +1,7 @@
 import api from "../api/axiosInstance";
 
 export const adminFinancialService = {
-  listFanWallets: (params = {}) => api.get("/admin/wallets", { params }),
+  listUserWallets: (params = {}) => api.get("/admin/wallets", { params }),
   getPlatformRevenue: () => api.get("/admin/platform-revenue"),
   activateWallet: (userId, payload) => api.post(`/admin/wallets/${userId}/activate-ledger`, payload),
   creditStars: (userId, payload) => api.post(`/admin/wallets/${userId}/credit-stars`, payload),

@@ -383,8 +383,8 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
               ref={inputRef}
               value={story.text}
             />
-            <button className="story-composer-share" disabled={createMutation.isPending || upload.step === "Adding preview"} onClick={publish} type="button">
-              {createMutation.isPending || upload.step === "Adding preview" ? "..." : mode === "compose" ? "Add" : "Share"}
+            <button className="story-composer-share" disabled={createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step)} onClick={publish} type="button">
+              {createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step) ? <><FiRefreshCw className="story-composer-button-spinner" /> {mode === "compose" ? "Adding..." : "Sharing..."}</> : mode === "compose" ? "Add" : "Share"}
             </button>
           </div>
           {upload.step ? (
