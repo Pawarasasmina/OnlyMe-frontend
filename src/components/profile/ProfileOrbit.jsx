@@ -54,11 +54,12 @@ function OwnerPlanetAction({ planet }) {
 
 export default function ProfileOrbit({ capabilities, planets = [], profile, role }) {
   const premiumPlanets = planets.filter((planet) => planet.kind === "PREMIUM_WORLD");
-  if (role !== "creator" || (!premiumPlanets.length && !capabilities.isOwner)) return null;
+  if ((!profile?.isCreator && role !== "creator") || (!premiumPlanets.length && !capabilities.isOwner)) return null;
   const bySlot = Object.fromEntries(
     premiumPlanets.map((planet) => [planet.planet?.slot, planet]),
   );
-  const visible = [bySlot.PREMIUM].filter(Boolean);
+  const primaryPlanet = bySlot.PREMIUM || premiumPlanets[0];
+  const visible = [primaryPlanet].filter(Boolean);
 
   return (
     <section className="profile-planet-orbit">
@@ -83,7 +84,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
           <small>@{profile?.username}</small>
         </div>
         <div className="profile-orbit-position position-front">
-          <PlanetSlot compact owner={capabilities.isOwner} planet={bySlot.PREMIUM} premium />
+          <PlanetSlot compact owner={capabilities.isOwner} planet={primaryPlanet} premium />
         </div>
       </div>
 
@@ -93,11 +94,13 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
             const editable =
               capabilities.isOwner &&
               ["DRAFT", "CHANGES_REQUESTED"].includes(planet.status);
-            const target = editable
-              ? `/studio/worlds/${planet.id}/edit`
-              : planet.status === "PUBLISHED"
-                ? `/world/${planet.id}`
-                : `/studio/worlds/${planet.id}`;
+            const target = capabilities.isOwner
+              ? editable
+                ? `/studio/worlds/${planet.id}/edit`
+                : planet.status === "PUBLISHED"
+                  ? `/world/${planet.id}`
+                  : `/studio/worlds/${planet.id}`
+              : `/world/${planet.id}`;
             return (
               <article
                 className={`profile-world-card ${capabilities.isOwner ? "has-owner-actions" : ""}`}

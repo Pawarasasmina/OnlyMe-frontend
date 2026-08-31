@@ -536,11 +536,13 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
   };
   const profileWorld = planets.find((planet) => planet.kind === "PREMIUM_WORLD") || planets[0];
   const worldTarget = profileWorld
-    ? ["DRAFT", "CHANGES_REQUESTED"].includes(profileWorld.status) && isOwner
-      ? `/studio/worlds/${profileWorld.id}/edit`
-      : profileWorld.status === "PUBLISHED"
-        ? `/world/${profileWorld.id}`
-        : `/studio/worlds/${profileWorld.id}`
+    ? isOwner
+      ? ["DRAFT", "CHANGES_REQUESTED"].includes(profileWorld.status)
+        ? `/studio/worlds/${profileWorld.id}/edit`
+        : profileWorld.status === "PUBLISHED"
+          ? `/world/${profileWorld.id}`
+          : `/studio/worlds/${profileWorld.id}`
+      : `/world/${profileWorld.id}`
     : isOwner
       ? "/create/premium-world"
       : "";
@@ -701,13 +703,6 @@ function StatsRow({ metrics = {}, onConnectionsOpen }) {
   );
 }
 
-function VisitorWorldRow({ planets = [], profile }) {
-  if (!profile.isCreator) return null;
-  const world = planets.find((item) => item.kind === "PREMIUM_WORLD" && item.status === "PUBLISHED") || planets.find((item) => item.status === "PUBLISHED");
-  if (!world) return null;
-  return <Link className="profile-visitor-world" to={`/world/${world.id}`}><span>🪐</span><b>{world.title || "Premium World"}</b><strong>Join <FiChevronRight /></strong></Link>;
-}
-
 function ProfileTabs({ tab, setTab }) {
   const tabs = [
     ["seens", "Seens", FiGrid],
@@ -769,7 +764,7 @@ function ProfileBody({ data, setConnectionsType, setStatus, statusContext }) {
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <PhotosSection isOwner={isOwner} photos={data.photos || []} />
       <StatsRow metrics={publicMetrics} onConnectionsOpen={setConnectionsType} />
-      {!isOwner ? <VisitorWorldRow planets={data.planets || []} profile={profile} /> : null}
+      {!isOwner ? <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} /> : null}
       {!isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel"><ContentTabsPanel data={data} isOwner={isOwner} tab={tab} /></section>
