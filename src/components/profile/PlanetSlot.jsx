@@ -10,7 +10,7 @@ export default function PlanetSlot({ planet, premium = false, owner = false, com
       ? `/studio/worlds/${planet.id}/edit`
       : published
         ? `/world/${planet.id}`
-        : `/studio/worlds/${planet.id}`
+        : "/profile"
     : `/world/${planet.id}`;
   const chapters = planet.chapters || [];
   const locked = chapters.filter((chapter) => chapter.locked).length;

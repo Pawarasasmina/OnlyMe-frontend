@@ -1,13 +1,45 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FiCamera, FiChevronLeft, FiEye, FiFilm, FiImage, FiMapPin, FiMic, FiPlus, FiSave, FiScissors, FiType, FiUpload, FiX, FiZap } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiBarChart2,
+  FiCamera,
+  FiChevronLeft,
+  FiEye,
+  FiFilm,
+  FiImage,
+  FiLink,
+  FiList,
+  FiMapPin,
+  FiMic,
+  FiPlus,
+  FiSave,
+  FiScissors,
+  FiTrash2,
+  FiType,
+  FiUpload,
+  FiX,
+  FiZap,
+} from "react-icons/fi";
 import { publicationService as api } from "../../services/publicationService";
 import { searchService } from "../../services/searchService";
-import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
+import {
+  normalizeTags,
+  publicationError,
+  seenCompleteness,
+} from "../../utils/publicationValidation";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 
-const empty = { kind: "SEEN", title: "", summary: "", description: "", category: "", tags: [], chapters: [] };
+const empty = {
+  kind: "SEEN",
+  title: "",
+  summary: "",
+  description: "",
+  category: "",
+  tags: [],
+  chapters: [],
+};
 const categories = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
 const defaultSeries = ["Gym Life"];
 const VIDEO_RECORDER_TYPES = [
@@ -18,7 +50,6 @@ const VIDEO_RECORDER_TYPES = [
 const VIDEO_RECORDING_PAD_MS = 350;
 const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm";
-const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 
 function statusLabel(status, uploading) {
   if (uploading) return "Uploading media...";
@@ -27,46 +58,70 @@ function statusLabel(status, uploading) {
 }
 
 function seriesFromTags(tags = []) {
-  const raw = (Array.isArray(tags) ? tags : []).find((tag) => String(tag).startsWith("series:"));
+  const raw = (Array.isArray(tags) ? tags : []).find((tag) =>
+    String(tag).startsWith("series:"),
+  );
   return raw ? raw.replace(/^series:/, "").replace(/-/g, " ") : "";
 }
 
 function tagsWithSeries(tags = [], series = "") {
-  const base = normalizeTags(tags).filter((tag) => !String(tag).startsWith("series:"));
+  const base = normalizeTags(tags).filter(
+    (tag) => !String(tag).startsWith("series:"),
+  );
   const value = series.trim().toLowerCase().replace(/\s+/g, "-");
   return value ? [...base, `series:${value}`] : base;
 }
 
 function hasDraftContent(publication = {}, series = "") {
   return Boolean(
-    publication.title?.trim()
-      || publication.summary?.trim()
-      || publication.description?.trim()
-      || publication.category?.trim()
-      || normalizeTags(publication.tags).length
-      || series.trim()
-      || publication.coverMedia
-      || publication.chapters?.length,
+    publication.title?.trim() ||
+    publication.summary?.trim() ||
+    publication.description?.trim() ||
+    publication.category?.trim() ||
+    normalizeTags(publication.tags).length ||
+    series.trim() ||
+    publication.coverMedia ||
+    publication.chapters?.length,
   );
 }
 
 function newBlockId() {
-  return globalThis.crypto?.randomUUID?.() || `block-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ||
+    `block-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
 }
 
 export function chapterStoryText(chapter = {}) {
-  return (chapter.blocks || []).filter((block) => TEXT_BLOCK_TYPES.has(block.type) && !block.metadata?.location).map((block) => block.text || "").join("\n\n");
+  return (chapter.blocks || [])
+    .filter((block) => block.type === "TEXT" && !block.metadata?.location)
+    .map((block) => block.text || "")
+    .join("\n\n");
 }
 
 export function chapterBlocksWithStory(chapter = {}, story = "") {
   const trimmed = story.trim();
   const source = chapter.blocks || [];
-  const storyBlock = source.find((block) => block.type === "TEXT" && !block.metadata?.location);
-  const preserved = source.filter((block) => !TEXT_BLOCK_TYPES.has(block.type) || block.metadata?.location);
+  const storyBlock = source.find(
+    (block) => block.type === "TEXT" && !block.metadata?.location,
+  );
+  const preserved = source.filter(
+    (block) => block.type !== "TEXT" || block.metadata?.location,
+  );
   const blocks = trimmed
-    ? [...preserved, { id: storyBlock?.id || newBlockId(), order: storyBlock?.order ?? -1, text: trimmed, type: "TEXT" }]
+    ? [
+        ...preserved,
+        {
+          id: storyBlock?.id || newBlockId(),
+          order: storyBlock?.order ?? -1,
+          text: trimmed,
+          type: "TEXT",
+        },
+      ]
     : preserved;
-  return blocks.sort((a, b) => Number(a.order || 0) - Number(b.order || 0)).map((block, order) => ({ ...block, order }));
+  return blocks
+    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
+    .map((block, order) => ({ ...block, order }));
 }
 
 function mediaLabel(block = {}) {
@@ -85,7 +140,10 @@ function formatDuration(seconds = 0) {
 
 function supportedRecorderType() {
   if (typeof MediaRecorder === "undefined") return "";
-  return VIDEO_RECORDER_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+  return (
+    VIDEO_RECORDER_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) ||
+    ""
+  );
 }
 
 function seekVideo(video, time) {
@@ -125,7 +183,8 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
   const maxStart = Math.max(0, duration - limitSeconds);
   const end = Math.min(duration, start + limitSeconds);
   const clipLength = Math.max(0, end - start);
-  const canUploadOriginal = clipLength >= limitSeconds - 0.5 && duration <= limitSeconds + 0.5;
+  const canUploadOriginal =
+    clipLength >= limitSeconds - 0.5 && duration <= limitSeconds + 0.5;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -169,7 +228,9 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
         await uploadOriginal();
         return;
       }
-      setError(`This browser cannot crop the video here. Try Chrome or upload a ${formatDuration(limitSeconds)} clip.`);
+      setError(
+        `This browser cannot crop the video here. Try Chrome or upload a ${formatDuration(limitSeconds)} clip.`,
+      );
       return;
     }
     if (clipLength < limitSeconds - 0.5) {
@@ -190,12 +251,18 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
         recorder.ondataavailable = ({ data }) => {
           if (data.size) chunks.push(data);
         };
-        recorder.onerror = () => reject(new Error("The crop failed while recording."));
+        recorder.onerror = () =>
+          reject(new Error("The crop failed while recording."));
         recorder.onstop = resolve;
       });
       recorder.start(250);
       await video.play();
-      await new Promise((resolve) => window.setTimeout(resolve, Math.max(1000, limitSeconds * 1000 - VIDEO_RECORDING_PAD_MS)));
+      await new Promise((resolve) =>
+        window.setTimeout(
+          resolve,
+          Math.max(1000, limitSeconds * 1000 - VIDEO_RECORDING_PAD_MS),
+        ),
+      );
       video.pause();
       if (recorder.state !== "inactive") recorder.stop();
       await stopped;
@@ -203,10 +270,17 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
       const type = mimeType.split(";")[0] || "video/webm";
       const blob = new Blob(chunks, { type });
       if (!blob.size) throw new Error("The cropped clip was empty.");
-      const trimmed = new File([blob], `seen-${limitSeconds}s-${Date.now()}.webm`, { type });
+      const trimmed = new File(
+        [blob],
+        `seen-${limitSeconds}s-${Date.now()}.webm`,
+        { type },
+      );
       await onUpload(trimmed);
     } catch (trimError) {
-      setError(trimError.message || "Unable to crop this video. Please try another file.");
+      setError(
+        trimError.message ||
+          "Unable to crop this video. Please try another file.",
+      );
     } finally {
       setBusy(false);
     }
@@ -214,11 +288,26 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
 
   return (
     <div aria-modal="true" className="seen-video-trim-layer" role="dialog">
-      <button aria-label="Close video crop" className="seen-video-trim-dim" disabled={busy} onClick={onCancel} type="button" />
+      <button
+        aria-label="Close video crop"
+        className="seen-video-trim-dim"
+        disabled={busy}
+        onClick={onCancel}
+        type="button"
+      />
       <section className="seen-video-trim-sheet">
         <div className="seen-video-trim-head">
-          <span><FiScissors aria-hidden="true" /> Crop video</span>
-          <button aria-label="Close video crop" disabled={busy} onClick={onCancel} type="button"><FiX /></button>
+          <span>
+            <FiScissors aria-hidden="true" /> Crop video
+          </span>
+          <button
+            aria-label="Close video crop"
+            disabled={busy}
+            onClick={onCancel}
+            type="button"
+          >
+            <FiX />
+          </button>
         </div>
         <video
           controls
@@ -227,7 +316,9 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
             setDuration(nextDuration);
             setStart(0);
             if (nextDuration && nextDuration < limitSeconds - 0.5) {
-              setError(`This video is ${formatDuration(nextDuration)}. Choose at least ${formatDuration(limitSeconds)} for this upload.`);
+              setError(
+                `This video is ${formatDuration(nextDuration)}. Choose at least ${formatDuration(limitSeconds)} for this upload.`,
+              );
             }
           }}
           playsInline
@@ -238,7 +329,9 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
         <div className="seen-video-trim-copy">
           <strong>{formatDuration(limitSeconds)} video</strong>
           <small>
-            {duration ? `${formatDuration(start)} - ${formatDuration(end)} of ${formatDuration(duration)}` : "Loading video..."}
+            {duration
+              ? `${formatDuration(start)} - ${formatDuration(end)} of ${formatDuration(duration)}`
+              : "Loading video..."}
           </small>
         </div>
         <label className="seen-video-trim-range">
@@ -253,11 +346,26 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
             value={Math.min(start, maxStart)}
           />
         </label>
-        {error ? <p className="seen-video-trim-error" role="alert">{error}</p> : null}
+        {error ? (
+          <p className="seen-video-trim-error" role="alert">
+            {error}
+          </p>
+        ) : null}
         <div className="seen-video-trim-actions">
-          <button disabled={!duration || busy} onClick={previewClip} type="button">Preview</button>
-          <button disabled={!duration || busy || clipLength < limitSeconds - 0.5} onClick={uploadTrimmed} type="button">
-            <FiUpload aria-hidden="true" /> {busy ? "Cropping..." : `Upload ${formatDuration(limitSeconds)}`}
+          <button
+            disabled={!duration || busy}
+            onClick={previewClip}
+            type="button"
+          >
+            Preview
+          </button>
+          <button
+            disabled={!duration || busy || clipLength < limitSeconds - 0.5}
+            onClick={uploadTrimmed}
+            type="button"
+          >
+            <FiUpload aria-hidden="true" />{" "}
+            {busy ? "Cropping..." : `Upload ${formatDuration(limitSeconds)}`}
           </button>
         </div>
       </section>
@@ -265,10 +373,25 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
   );
 }
 
-export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, onMediaUpload, onRemoveBlock, onReorderBlocks, onStoryChange, story, status }) {
+export function SeenChapterEditor({
+  busy,
+  chapter,
+  error,
+  onAddBlocks,
+  onAddPlace,
+  onDone,
+  onMediaUpload,
+  onRemoveBlock,
+  onReorderBlocks,
+  onStoryChange,
+  onUpdateBlock,
+  story,
+  status,
+}) {
   const photoInput = useRef(null);
   const voiceInput = useRef(null);
   const textareaRef = useRef(null);
+  const structuredFormRef = useRef(null);
   const voiceRecorder = useRef(null);
   const voiceStream = useRef(null);
   const voiceTimer = useRef(null);
@@ -286,17 +409,51 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
   const [placeLoading, setPlaceLoading] = useState(false);
   const [draggingBlockId, setDraggingBlockId] = useState("");
   const [textToolsOpen, setTextToolsOpen] = useState(false);
-  const [textToolPosition, setTextToolPosition] = useState({ left: 32, top: 120 });
-  const storyBlock = (chapter?.blocks || []).find((block) => block.type === "TEXT" && !block.metadata?.location);
+  const [textToolPosition, setTextToolPosition] = useState({
+    left: 32,
+    top: 120,
+  });
+  const [structuredEditor, setStructuredEditor] = useState(null);
+  const [structuredDraft, setStructuredDraft] = useState({
+    label: "",
+    url: "",
+    items: ["", ""],
+    question: "",
+    options: ["", ""],
+    resultsVisibility: "SUBSCRIBERS",
+  });
+  const storyBlock = (chapter?.blocks || []).find(
+    (block) => block.type === "TEXT" && !block.metadata?.location,
+  );
   const editorBlocks = [
-    { ...(storyBlock || {}), id: storyBlock?.id || "__story__", order: storyBlock?.order ?? -1, type: "TEXT" },
-    ...(chapter?.blocks || []).filter((block) => !TEXT_BLOCK_TYPES.has(block.type) || block.metadata?.location),
+    {
+      ...(storyBlock || {}),
+      id: storyBlock?.id || "__story__",
+      order: storyBlock?.order ?? -1,
+      type: "TEXT",
+    },
+    ...(chapter?.blocks || []).filter(
+      (block) => block.type !== "TEXT" || block.metadata?.location,
+    ),
   ].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
-  const attachmentBlocks = editorBlocks.filter((block) => !TEXT_BLOCK_TYPES.has(block.type));
-  const locationBlocks = editorBlocks.filter((block) => block.metadata?.location?.label);
-  const visualOrder = (blockId) => editorBlocks.findIndex((block) => block.id === blockId) + 1;
+  const attachmentBlocks = editorBlocks.filter(
+    (block) =>
+      !["TEXT", "KEY_POINT", "LINK", "POLL"].includes(block.type) &&
+      !block.metadata?.location,
+  );
+  const structuredBlocks = editorBlocks.filter(
+    (block) =>
+      ["KEY_POINT", "LINK", "POLL"].includes(block.type) &&
+      !block.metadata?.location,
+  );
+  const locationBlocks = editorBlocks.filter(
+    (block) => block.metadata?.location?.label,
+  );
+  const visualOrder = (blockId) =>
+    editorBlocks.findIndex((block) => block.id === blockId) + 1;
   const dropBlock = (targetId) => {
-    if (draggingBlockId && draggingBlockId !== targetId) onReorderBlocks(draggingBlockId, targetId);
+    if (draggingBlockId && draggingBlockId !== targetId)
+      onReorderBlocks(draggingBlockId, targetId);
     setDraggingBlockId("");
   };
 
@@ -304,12 +461,16 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
     if (textareaRef.current) textareaRef.current.innerText = story || "";
   }, [chapter?.stableChapterId]);
 
-  useEffect(() => () => {
-    if (voiceTimer.current) window.clearInterval(voiceTimer.current);
-    if (voiceRecorder.current?.state === "recording") voiceRecorder.current.stop();
-    voiceStream.current?.getTracks().forEach((track) => track.stop());
-    if (recordedVoice?.url) URL.revokeObjectURL(recordedVoice.url);
-  }, [recordedVoice?.url]);
+  useEffect(
+    () => () => {
+      if (voiceTimer.current) window.clearInterval(voiceTimer.current);
+      if (voiceRecorder.current?.state === "recording")
+        voiceRecorder.current.stop();
+      voiceStream.current?.getTracks().forEach((track) => track.stop());
+      if (recordedVoice?.url) URL.revokeObjectURL(recordedVoice.url);
+    },
+    [recordedVoice?.url],
+  );
 
   useEffect(() => {
     if (!placeOpen || placeQuery.trim().length < 2) {
@@ -320,12 +481,20 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setPlaceLoading(true);
-      searchService.getSuggestions(placeQuery.trim(), controller.signal)
-        .then((data) => setPlaceSuggestions((data.suggestions || []).filter((item) => item.type === "place")))
+      searchService
+        .getSuggestions(placeQuery.trim(), controller.signal)
+        .then((data) =>
+          setPlaceSuggestions(
+            (data.suggestions || []).filter((item) => item.type === "place"),
+          ),
+        )
         .catch(() => setPlaceSuggestions([]))
         .finally(() => setPlaceLoading(false));
     }, 300);
-    return () => { window.clearTimeout(timer); controller.abort(); };
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [placeOpen, placeQuery]);
 
   const discardVoice = () => {
@@ -340,15 +509,21 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
     discardVoice();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
       const recorder = new MediaRecorder(stream, { mimeType });
       voiceStream.current = stream;
       voiceRecorder.current = recorder;
       voiceChunks.current = [];
-      recorder.ondataavailable = ({ data }) => { if (data.size) voiceChunks.current.push(data); };
+      recorder.ondataavailable = ({ data }) => {
+        if (data.size) voiceChunks.current.push(data);
+      };
       recorder.onstop = () => {
         const blob = new Blob(voiceChunks.current, { type: mimeType });
-        const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        const file = new File([blob], `voice-${Date.now()}.webm`, {
+          type: "audio/webm",
+        });
         setRecordedVoice({ file, url: URL.createObjectURL(blob) });
         setVoiceState("ready");
         stream.getTracks().forEach((track) => track.stop());
@@ -356,9 +531,14 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
       recorder.start(250);
       setVoiceState("recording");
       setVoiceSeconds(0);
-      voiceTimer.current = window.setInterval(() => setVoiceSeconds((seconds) => seconds + 1), 1000);
+      voiceTimer.current = window.setInterval(
+        () => setVoiceSeconds((seconds) => seconds + 1),
+        1000,
+      );
     } catch {
-      setVoiceError("Microphone access was not available. You can upload an audio file instead.");
+      setVoiceError(
+        "Microphone access was not available. You can upload an audio file instead.",
+      );
       setVoiceState("idle");
     }
   };
@@ -366,16 +546,25 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
   const stopVoiceRecording = () => {
     if (voiceTimer.current) window.clearInterval(voiceTimer.current);
     voiceTimer.current = null;
-    if (voiceRecorder.current?.state === "recording") voiceRecorder.current.stop();
+    if (voiceRecorder.current?.state === "recording")
+      voiceRecorder.current.stop();
   };
 
   const rememberSelection = () => {
     const selection = window.getSelection();
-    if (!selection?.rangeCount || selection.isCollapsed || !textareaRef.current?.contains(selection.anchorNode)) return;
+    if (
+      !selection?.rangeCount ||
+      selection.isCollapsed ||
+      !textareaRef.current?.contains(selection.anchorNode)
+    )
+      return;
     const range = selection.getRangeAt(0).cloneRange();
     const box = range.getBoundingClientRect();
     selectedRange.current = range;
-    setTextToolPosition({ left: Math.max(12, Math.min(window.innerWidth - 300, box.left)), top: Math.max(76, box.bottom + 10) });
+    setTextToolPosition({
+      left: Math.max(12, Math.min(window.innerWidth - 300, box.left)),
+      top: Math.max(76, box.bottom + 10),
+    });
     setTextToolsOpen(true);
   };
 
@@ -386,7 +575,96 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
     selection.addRange(selectedRange.current);
     document.execCommand(command, false, value);
     onStoryChange(textareaRef.current?.innerText || "");
-    selectedRange.current = selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+    selectedRange.current = selection.rangeCount
+      ? selection.getRangeAt(0).cloneRange()
+      : null;
+  };
+  const openStructuredEditor = (type, block = null) => {
+    setStructuredEditor({ type, blockId: block?.id || null });
+    setStructuredDraft(
+      type === "LINK"
+        ? {
+            label: block?.label || "",
+            url: block?.url || "",
+            items: ["", ""],
+            question: "",
+            options: ["", ""],
+          }
+        : type === "KEY_POINT"
+          ? {
+              label: "",
+              url: "",
+              items: block ? [block.text || ""] : ["", ""],
+              question: "",
+              options: ["", ""],
+            }
+          : {
+              label: "",
+              url: "",
+              items: ["", ""],
+              question: block?.metadata?.question || "",
+              options: block?.metadata?.options || ["", ""],
+              resultsVisibility:
+                block?.metadata?.resultsVisibility || "SUBSCRIBERS",
+            },
+    );
+    setActionsOpen(false);
+  };
+  const saveStructuredBlock = async () => {
+    if (structuredEditor.type === "LINK") {
+      const block = {
+        id: structuredEditor.blockId || newBlockId(),
+        type: "LINK",
+        label: structuredDraft.label.trim(),
+        url: structuredDraft.url.trim(),
+      };
+      if (!block.label || !/^https?:\/\//i.test(block.url))
+        return setVoiceError("Add a label and a full http or https link.");
+      const saved = await (structuredEditor.blockId
+        ? onUpdateBlock(block.id, block)
+        : onAddBlocks([block]));
+      if (saved === false) return;
+    } else if (structuredEditor.type === "KEY_POINT") {
+      const renderedItems = structuredFormRef.current
+        ? [...structuredFormRef.current.querySelectorAll('input[name="keyPoint"]')].map((input) => input.value)
+        : structuredDraft.items;
+      const items = renderedItems
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (!items.length) return setVoiceError("Add at least one key point.");
+      let saved;
+      if (structuredEditor.blockId)
+        saved = await onUpdateBlock(structuredEditor.blockId, {
+          text: items[0],
+          type: "KEY_POINT",
+        });
+      else
+        saved = await onAddBlocks(
+          items.map((text) => ({ id: newBlockId(), text, type: "KEY_POINT" })),
+        );
+      if (saved === false) return;
+    } else {
+      const options = structuredDraft.options
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (!structuredDraft.question.trim() || options.length < 2)
+        return setVoiceError("Add a question and at least two choices.");
+      const block = {
+        id: structuredEditor.blockId || newBlockId(),
+        type: "POLL",
+        metadata: {
+          question: structuredDraft.question.trim(),
+          options,
+          resultsVisibility: structuredDraft.resultsVisibility,
+        },
+      };
+      const saved = await (structuredEditor.blockId
+        ? onUpdateBlock(block.id, block)
+        : onAddBlocks([block]));
+      if (saved === false) return;
+    }
+    setVoiceError("");
+    setStructuredEditor(null);
   };
 
   return (
@@ -394,30 +672,92 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
       <header className="seen-chapter-editor-header">
         <div>
           <h1>{chapter?.title?.trim() || "Chapter name"}</h1>
-          <p>drag a block {"\u2014"} move {"\u00b7"} double-tap {"\u2014"} edit</p>
+          <p>
+            drag a block {"\u2014"} move {"\u00b7"} double-tap {"\u2014"} edit
+          </p>
         </div>
-        <button disabled={busy} onClick={onDone} type="button">{busy ? "Saving" : "Done"}</button>
+        <button disabled={busy} onClick={onDone} type="button">
+          {busy ? "Saving" : "Done"}
+        </button>
       </header>
 
       {textToolsOpen ? (
-        <div className="seen-chapter-text-tools" role="toolbar" aria-label="Text formatting" style={{ left: textToolPosition.left, top: textToolPosition.top }}>
+        <div
+          className="seen-chapter-text-tools"
+          role="toolbar"
+          aria-label="Text formatting"
+          style={{ left: textToolPosition.left, top: textToolPosition.top }}
+        >
           <div>
-            <button aria-label="Bold" onClick={() => applyTextFormat("bold")} type="button"><b>B</b></button>
-            <button aria-label="Italic" onClick={() => applyTextFormat("italic")} type="button"><i>I</i></button>
-            <button aria-label="Small text" onClick={() => applyTextFormat("fontSize", "3")} type="button">S</button>
-            <button aria-label="Large text" onClick={() => applyTextFormat("fontSize", "6")} type="button">L</button>
+            <button
+              aria-label="Bold"
+              onClick={() => applyTextFormat("bold")}
+              type="button"
+            >
+              <b>B</b>
+            </button>
+            <button
+              aria-label="Italic"
+              onClick={() => applyTextFormat("italic")}
+              type="button"
+            >
+              <i>I</i>
+            </button>
+            <button
+              aria-label="Small text"
+              onClick={() => applyTextFormat("fontSize", "3")}
+              type="button"
+            >
+              S
+            </button>
+            <button
+              aria-label="Large text"
+              onClick={() => applyTextFormat("fontSize", "6")}
+              type="button"
+            >
+              L
+            </button>
           </div>
           <div>
-            {["#ffffff", "#9CCBFF", "#F6C85F", "#F17878", "#6ECF97"].map((color) => (
-              <button aria-label={`Use ${color} text`} className="is-color" key={color} onClick={() => applyTextFormat("foreColor", color)} style={{ "--text-color": color }} type="button" />
-            ))}
+            {["#ffffff", "#9CCBFF", "#F6C85F", "#F17878", "#6ECF97"].map(
+              (color) => (
+                <button
+                  aria-label={`Use ${color} text`}
+                  className="is-color"
+                  key={color}
+                  onClick={() => applyTextFormat("foreColor", color)}
+                  style={{ "--text-color": color }}
+                  type="button"
+                />
+              ),
+            )}
           </div>
-          <button aria-label="Close text tools" className="seen-chapter-text-tools-close" onClick={() => setTextToolsOpen(false)} type="button"><FiX /></button>
+          <button
+            aria-label="Close text tools"
+            className="seen-chapter-text-tools-close"
+            onClick={() => setTextToolsOpen(false)}
+            type="button"
+          >
+            <FiX />
+          </button>
         </div>
       ) : null}
 
-      <div className="seen-chapter-writing-surface seen-chapter-sortable-block" onDragOver={(event) => event.preventDefault()} onDrop={() => dropBlock(storyBlock?.id || "__story__")} style={{ order: visualOrder(storyBlock?.id || "__story__") }}>
-        <button aria-label="Drag text block" className="seen-chapter-drag-handle" draggable onDragStart={() => setDraggingBlockId(storyBlock?.id || "__story__")} type="button">⋮⋮</button>
+      <div
+        className="seen-chapter-writing-surface seen-chapter-sortable-block"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={() => dropBlock(storyBlock?.id || "__story__")}
+        style={{ order: visualOrder(storyBlock?.id || "__story__") }}
+      >
+        <button
+          aria-label="Drag text block"
+          className="seen-chapter-drag-handle"
+          draggable
+          onDragStart={() => setDraggingBlockId(storyBlock?.id || "__story__")}
+          type="button"
+        >
+          ⋮⋮
+        </button>
         <span className="sr-only">Write the story</span>
         <div
           autoFocus
@@ -435,17 +775,94 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
       {attachmentBlocks.length ? (
         <div className="seen-chapter-block-strip">
           {attachmentBlocks.map((block) => (
-            <figure className={`seen-chapter-attachment seen-chapter-sortable-block is-${String(block.type || "media").toLowerCase()}`} draggable key={block.id} onDragEnd={() => setDraggingBlockId("")} onDragOver={(event) => event.preventDefault()} onDragStart={() => setDraggingBlockId(block.id)} onDrop={() => dropBlock(block.id)} style={{ order: visualOrder(block.id) }}>
-              <button aria-label={`Remove ${mediaLabel(block)}`} className="seen-chapter-attachment-remove" disabled={busy} onClick={() => onRemoveBlock(block.id)} type="button"><FiX /></button>
-              {block.type === "IMAGE" && block.media?.secureUrl ? <img alt="Chapter attachment" src={block.media.secureUrl} /> : null}
-              {block.type === "VIDEO" && block.media?.secureUrl ? <video controls playsInline preload="metadata" src={block.media.secureUrl} /> : null}
-              {["VOICE", "AUDIO"].includes(block.type) && block.media?.secureUrl ? <audio controls preload="metadata" src={block.media.secureUrl} /> : null}
-              {!block.media?.secureUrl ? <div className="seen-chapter-attachment-fallback">{mediaLabel(block)}</div> : null}
+            <figure
+              className={`seen-chapter-attachment seen-chapter-sortable-block is-${String(block.type || "media").toLowerCase()}`}
+              draggable
+              key={block.id}
+              onDragEnd={() => setDraggingBlockId("")}
+              onDragOver={(event) => event.preventDefault()}
+              onDragStart={() => setDraggingBlockId(block.id)}
+              onDrop={() => dropBlock(block.id)}
+              style={{ order: visualOrder(block.id) }}
+            >
+              <button
+                aria-label={`Remove ${mediaLabel(block)}`}
+                className="seen-chapter-attachment-remove"
+                disabled={busy}
+                onClick={() => onRemoveBlock(block.id)}
+                type="button"
+              >
+                <FiX />
+              </button>
+              {block.type === "IMAGE" && block.media?.secureUrl ? (
+                <img alt="Chapter attachment" src={block.media.secureUrl} />
+              ) : null}
+              {block.type === "VIDEO" && block.media?.secureUrl ? (
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  src={block.media.secureUrl}
+                />
+              ) : null}
+              {["VOICE", "AUDIO"].includes(block.type) &&
+              block.media?.secureUrl ? (
+                <audio
+                  controls
+                  preload="metadata"
+                  src={block.media.secureUrl}
+                />
+              ) : null}
+              {!block.media?.secureUrl ? (
+                <div className="seen-chapter-attachment-fallback">
+                  {mediaLabel(block)}
+                </div>
+              ) : null}
               <figcaption>
-              {mediaLabel(block)}
-              {block.media?.duration ? ` · ${Math.round(block.media.duration)}s` : ""}
+                {mediaLabel(block)}
+                {block.media?.duration
+                  ? ` · ${Math.round(block.media.duration)}s`
+                  : ""}
               </figcaption>
             </figure>
+          ))}
+        </div>
+      ) : null}
+
+      {structuredBlocks.length ? (
+        <div className="seen-chapter-structured-list">
+          {structuredBlocks.map((block) => (
+            <article
+              className={`seen-chapter-preview-block is-${block.type.toLowerCase()} ${draggingBlockId === block.id ? "is-dragging" : ""}`}
+              draggable
+              key={block.id}
+              onDragEnd={() => setDraggingBlockId("")}
+              onDragOver={(event) => event.preventDefault()}
+              onDragStart={() => setDraggingBlockId(block.id)}
+              onDrop={() => dropBlock(block.id)}
+              style={{ order: visualOrder(block.id) }}
+            >
+              <button aria-label="Drag to reorder" className="seen-chapter-preview-drag" type="button">⋮⋮</button>
+              <button
+                aria-label={`Edit ${mediaLabel(block)}`}
+                className="seen-chapter-structured-main"
+                onClick={() => openStructuredEditor(block.type, block)}
+                type="button"
+              >
+                {block.type === "KEY_POINT" ? <><span className="seen-key-point-number">{structuredBlocks.filter((item) => item.type === "KEY_POINT").findIndex((item) => item.id === block.id) + 1}</span><span><small>KEY POINT</small><b>{block.text}</b></span></> : null}
+                {block.type === "LINK" ? <><span><FiLink /></span><span><small>USEFUL LINK</small><b>{block.label}</b><em>{block.url}</em><i>Open link <FiArrowRight /></i></span></> : null}
+                {block.type === "POLL" ? <><span><FiBarChart2 /></span><span className="seen-poll-preview"><small>POLL · {block.metadata?.resultsVisibility === "CREATOR" ? "results private" : "results visible"}</small><b>{block.metadata?.question}</b><span>{(block.metadata?.options || []).map((option) => <i key={option}><u />{option}</i>)}</span><em>Tap to edit · subscribers can choose one answer</em></span></> : null}
+              </button>
+              <button
+                aria-label="Remove block"
+                className="seen-chapter-structured-remove"
+                disabled={busy}
+                onClick={() => onRemoveBlock(block.id)}
+                type="button"
+              >
+                <FiTrash2 />
+              </button>
+            </article>
           ))}
         </div>
       ) : null}
@@ -453,47 +870,469 @@ export function SeenChapterEditor({ busy, chapter, error, onAddPlace, onDone, on
       {locationBlocks.length ? (
         <div className="seen-chapter-location-chips">
           {locationBlocks.map((block) => (
-            <span className="seen-chapter-sortable-block" draggable key={block.id} onDragEnd={() => setDraggingBlockId("")} onDragOver={(event) => event.preventDefault()} onDragStart={() => setDraggingBlockId(block.id)} onDrop={() => dropBlock(block.id)} style={{ order: visualOrder(block.id) }}><b className="seen-chapter-drag-handle">⋮⋮</b><FiMapPin />{block.metadata.location.label}<button aria-label={`Remove ${block.metadata.location.label}`} onClick={() => onRemoveBlock(block.id)} type="button"><FiX /></button></span>
+            <span
+              className="seen-chapter-sortable-block"
+              draggable
+              key={block.id}
+              onDragEnd={() => setDraggingBlockId("")}
+              onDragOver={(event) => event.preventDefault()}
+              onDragStart={() => setDraggingBlockId(block.id)}
+              onDrop={() => dropBlock(block.id)}
+              style={{ order: visualOrder(block.id) }}
+            >
+              <b className="seen-chapter-drag-handle">⋮⋮</b>
+              <FiMapPin />
+              {block.metadata.location.label}
+              <button
+                aria-label={`Remove ${block.metadata.location.label}`}
+                onClick={() => onRemoveBlock(block.id)}
+                type="button"
+              >
+                <FiX />
+              </button>
+            </span>
           ))}
         </div>
       ) : null}
 
-      {error ? <p className="seen-chapter-editor-error" role="alert">{error}</p> : null}
-      {status ? <p className="seen-chapter-editor-status" role="status">{status}</p> : null}
+      {error ? (
+        <p className="seen-chapter-editor-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {status ? (
+        <p className="seen-chapter-editor-status" role="status">
+          {status}
+        </p>
+      ) : null}
       {voiceOpen ? (
-        <section className="seen-chapter-voice-recorder" aria-label="Voice recorder">
-          <div className="seen-chapter-voice-head"><strong>Voice</strong><button onClick={() => { if (voiceState === "recording") stopVoiceRecording(); setVoiceOpen(false); }} type="button"><FiX /></button></div>
-          {voiceState === "recording" ? <div className="seen-chapter-recording-live"><i /><b>{formatDuration(voiceSeconds)}</b><span>Recording...</span></div> : null}
-          {recordedVoice ? <audio controls preload="metadata" src={recordedVoice.url} /> : null}
+        <section
+          className="seen-chapter-voice-recorder"
+          aria-label="Voice recorder"
+        >
+          <div className="seen-chapter-voice-head">
+            <strong>Voice</strong>
+            <button
+              onClick={() => {
+                if (voiceState === "recording") stopVoiceRecording();
+                setVoiceOpen(false);
+              }}
+              type="button"
+            >
+              <FiX />
+            </button>
+          </div>
+          {voiceState === "recording" ? (
+            <div className="seen-chapter-recording-live">
+              <i />
+              <b>{formatDuration(voiceSeconds)}</b>
+              <span>Recording...</span>
+            </div>
+          ) : null}
+          {recordedVoice ? (
+            <audio controls preload="metadata" src={recordedVoice.url} />
+          ) : null}
           {voiceError ? <p>{voiceError}</p> : null}
           <div className="seen-chapter-voice-actions">
-            {voiceState !== "recording" ? <button onClick={startVoiceRecording} type="button"><FiMic />{recordedVoice ? "Re-record" : "Record live"}</button> : <button className="is-stop" onClick={stopVoiceRecording} type="button">Stop</button>}
-            <button disabled={voiceState === "recording"} onClick={() => voiceInput.current?.click()} type="button"><FiUpload />Upload file</button>
-            {recordedVoice ? <button onClick={discardVoice} type="button"><FiX />Discard</button> : null}
-            {recordedVoice ? <button className="is-primary" onClick={() => { onMediaUpload("VOICE", recordedVoice.file); setVoiceOpen(false); discardVoice(); }} type="button">Add voice</button> : null}
+            {voiceState !== "recording" ? (
+              <button onClick={startVoiceRecording} type="button">
+                <FiMic />
+                {recordedVoice ? "Re-record" : "Record live"}
+              </button>
+            ) : (
+              <button
+                className="is-stop"
+                onClick={stopVoiceRecording}
+                type="button"
+              >
+                Stop
+              </button>
+            )}
+            <button
+              disabled={voiceState === "recording"}
+              onClick={() => voiceInput.current?.click()}
+              type="button"
+            >
+              <FiUpload />
+              Upload file
+            </button>
+            {recordedVoice ? (
+              <button onClick={discardVoice} type="button">
+                <FiX />
+                Discard
+              </button>
+            ) : null}
+            {recordedVoice ? (
+              <button
+                className="is-primary"
+                onClick={() => {
+                  onMediaUpload("VOICE", recordedVoice.file);
+                  setVoiceOpen(false);
+                  discardVoice();
+                }}
+                type="button"
+              >
+                Add voice
+              </button>
+            ) : null}
           </div>
         </section>
       ) : null}
       {placeOpen ? (
-        <section className="seen-chapter-place-picker" aria-label="Add a location">
-          <div className="seen-chapter-place-head"><strong>Add location</strong><button onClick={() => setPlaceOpen(false)} type="button"><FiX /></button></div>
-          <label><FiMapPin /><input autoFocus onChange={(event) => setPlaceQuery(event.target.value)} placeholder="Search city, place, or country" value={placeQuery} /></label>
+        <section
+          className="seen-chapter-place-picker"
+          aria-label="Add a location"
+        >
+          <div className="seen-chapter-place-head">
+            <strong>Add location</strong>
+            <button onClick={() => setPlaceOpen(false)} type="button">
+              <FiX />
+            </button>
+          </div>
+          <label>
+            <FiMapPin />
+            <input
+              autoFocus
+              onChange={(event) => setPlaceQuery(event.target.value)}
+              placeholder="Search city, place, or country"
+              value={placeQuery}
+            />
+          </label>
           <div className="seen-chapter-place-results">
             {placeLoading ? <p>Searching locations...</p> : null}
-            {placeSuggestions.map((item) => <button key={item.id} onClick={() => { onAddPlace(item.value || item.label); setPlaceOpen(false); setPlaceQuery(""); }} type="button"><FiMapPin /><span><b>{item.label}</b><small>Place</small></span></button>)}
-            {!placeLoading && placeQuery.trim().length >= 2 ? <button onClick={() => { onAddPlace(placeQuery.trim()); setPlaceOpen(false); setPlaceQuery(""); }} type="button"><FiPlus /><span><b>Add “{placeQuery.trim()}”</b><small>Use this location</small></span></button> : null}
+            {placeSuggestions.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onAddPlace(item.value || item.label);
+                  setPlaceOpen(false);
+                  setPlaceQuery("");
+                }}
+                type="button"
+              >
+                <FiMapPin />
+                <span>
+                  <b>{item.label}</b>
+                  <small>Place</small>
+                </span>
+              </button>
+            ))}
+            {!placeLoading && placeQuery.trim().length >= 2 ? (
+              <button
+                onClick={() => {
+                  onAddPlace(placeQuery.trim());
+                  setPlaceOpen(false);
+                  setPlaceQuery("");
+                }}
+                type="button"
+              >
+                <FiPlus />
+                <span>
+                  <b>Add “{placeQuery.trim()}”</b>
+                  <small>Use this location</small>
+                </span>
+              </button>
+            ) : null}
           </div>
         </section>
       ) : null}
+      {structuredEditor ? (
+        <section
+          className="seen-chapter-structured-editor"
+          aria-label={`Add ${structuredEditor.type.toLowerCase()}`}
+          ref={structuredFormRef}
+        >
+          <header>
+            <span>
+              {structuredEditor.type === "LINK" ? (
+                <FiLink />
+              ) : structuredEditor.type === "POLL" ? (
+                <FiBarChart2 />
+              ) : (
+                <FiList />
+              )}
+            </span>
+            <div>
+              <strong>
+                {structuredEditor.blockId ? "Edit" : "Add"}{" "}
+                {structuredEditor.type === "KEY_POINT"
+                  ? "key points"
+                  : structuredEditor.type.toLowerCase()}
+              </strong>
+              <small>
+                {structuredEditor.type === "LINK"
+                  ? "Share a useful destination"
+                  : structuredEditor.type === "POLL"
+                    ? "Let members choose one answer"
+                    : "Turn ideas into a clear checklist"}
+              </small>
+            </div>
+            <button
+              aria-label="Close editor"
+              onClick={() => setStructuredEditor(null)}
+              type="button"
+            >
+              <FiX />
+            </button>
+          </header>
+          {structuredEditor.type === "LINK" ? (
+            <div className="seen-chapter-structured-fields">
+              <label>
+                Button label
+                <input
+                  autoFocus
+                  maxLength={120}
+                  onChange={(event) =>
+                    setStructuredDraft((draft) => ({
+                      ...draft,
+                      label: event.target.value,
+                    }))
+                  }
+                  placeholder="Read the full guide"
+                  value={structuredDraft.label}
+                />
+              </label>
+              <label>
+                Web address
+                <input
+                  maxLength={1000}
+                  onChange={(event) =>
+                    setStructuredDraft((draft) => ({
+                      ...draft,
+                      url: event.target.value,
+                    }))
+                  }
+                  placeholder="https://example.com"
+                  type="url"
+                  value={structuredDraft.url}
+                />
+              </label>
+            </div>
+          ) : structuredEditor.type === "KEY_POINT" ? (
+            <div className="seen-chapter-structured-fields">
+              <p>Key points</p>
+              {structuredDraft.items.map((item, index) => (
+                <label className="is-row" key={index}>
+                  <span>{index + 1}</span>
+                  <input
+                    autoFocus={index === 0}
+                    maxLength={240}
+                    name="keyPoint"
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setVoiceError("");
+                      setStructuredDraft((draft) => ({
+                        ...draft,
+                        items: draft.items.map((currentItem, itemIndex) =>
+                          itemIndex === index ? value : currentItem,
+                        ),
+                      }));
+                    }}
+                    placeholder={`Point ${index + 1}`}
+                    value={item}
+                  />
+                  {structuredDraft.items.length > 1 ? (
+                    <button
+                      aria-label={`Remove point ${index + 1}`}
+                      onClick={() =>
+                        setStructuredDraft((draft) => ({
+                          ...draft,
+                          items: draft.items.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        }))
+                      }
+                      type="button"
+                    >
+                      <FiX />
+                    </button>
+                  ) : null}
+                </label>
+              ))}
+              {!structuredEditor.blockId && structuredDraft.items.length < 8 ? (
+                <button
+                  className="seen-chapter-add-choice"
+                  onClick={() =>
+                    setStructuredDraft((draft) => ({
+                      ...draft,
+                      items: [...draft.items, ""],
+                    }))
+                  }
+                  type="button"
+                >
+                  <FiPlus /> Add another point
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <div className="seen-chapter-structured-fields">
+              <label>
+                Question
+                <input
+                  autoFocus
+                  maxLength={180}
+                  onChange={(event) =>
+                    setStructuredDraft((draft) => ({
+                      ...draft,
+                      question: event.target.value,
+                    }))
+                  }
+                  placeholder="What should we explore next?"
+                  value={structuredDraft.question}
+                />
+              </label>
+              <p>Choices</p>
+              {structuredDraft.options.map((option, index) => (
+                <label className="is-row" key={index}>
+                  <span>{index + 1}</span>
+                  <input
+                    maxLength={80}
+                    onChange={(event) =>
+                      setStructuredDraft((draft) => ({
+                        ...draft,
+                        options: draft.options.map((value, itemIndex) =>
+                          itemIndex === index ? event.target.value : value,
+                        ),
+                      }))
+                    }
+                    placeholder={`Choice ${index + 1}`}
+                    value={option}
+                  />
+                  {structuredDraft.options.length > 2 ? (
+                    <button
+                      aria-label={`Remove choice ${index + 1}`}
+                      onClick={() =>
+                        setStructuredDraft((draft) => ({
+                          ...draft,
+                          options: draft.options.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        }))
+                      }
+                      type="button"
+                    >
+                      <FiX />
+                    </button>
+                  ) : null}
+                </label>
+              ))}
+              {structuredDraft.options.length < 4 ? (
+                <button
+                  className="seen-chapter-add-choice"
+                  onClick={() =>
+                    setStructuredDraft((draft) => ({
+                      ...draft,
+                      options: [...draft.options, ""],
+                    }))
+                  }
+                  type="button"
+                >
+                  <FiPlus /> Add choice
+                </button>
+              ) : null}
+              <fieldset className="seen-poll-visibility">
+                <legend>Who can see results?</legend>
+                <label className={structuredDraft.resultsVisibility === "SUBSCRIBERS" ? "is-selected" : ""}>
+                  <input checked={structuredDraft.resultsVisibility === "SUBSCRIBERS"} name="poll-results-visibility" onChange={() => setStructuredDraft((draft) => ({ ...draft, resultsVisibility: "SUBSCRIBERS" }))} type="radio" />
+                  <span><b>Subscribers</b><small>Members can see totals and percentages</small></span>
+                </label>
+                <label className={structuredDraft.resultsVisibility === "CREATOR" ? "is-selected" : ""}>
+                  <input checked={structuredDraft.resultsVisibility === "CREATOR"} name="poll-results-visibility" onChange={() => setStructuredDraft((draft) => ({ ...draft, resultsVisibility: "CREATOR" }))} type="radio" />
+                  <span><b>Only me</b><small>Members can vote, but results stay private</small></span>
+                </label>
+              </fieldset>
+            </div>
+          )}
+          {voiceError ? (
+            <p className="seen-chapter-structured-error">{voiceError}</p>
+          ) : null}
+          <footer>
+            <button onClick={() => setStructuredEditor(null)} type="button">
+              Cancel
+            </button>
+            <button
+              className="is-primary"
+              disabled={busy}
+              onClick={saveStructuredBlock}
+              type="button"
+            >
+              {busy
+                ? "Saving…"
+                : structuredEditor.blockId
+                  ? "Save changes"
+                  : "Add block"}
+            </button>
+          </footer>
+        </section>
+      ) : null}
       {actionsOpen ? (
-        <div className="seen-chapter-add-menu">
-          <button onClick={() => { setTextToolsOpen((open) => !open); textareaRef.current?.focus(); setActionsOpen(false); }} type="button"><FiType />Text</button>
-          <button onClick={() => photoInput.current?.click()} type="button"><FiCamera />Photo</button>
-          <button onClick={() => { setVoiceOpen(true); setActionsOpen(false); }} type="button"><FiMic />Voice</button>
-          <button onClick={() => { setPlaceOpen(true); setActionsOpen(false); }} type="button"><FiMapPin />Place</button>
+        <div
+          aria-label="Story block types"
+          className="seen-chapter-add-menu"
+          role="menu"
+        >
+          <button
+            onClick={() => {
+              setTextToolsOpen((open) => !open);
+              textareaRef.current?.focus();
+              setActionsOpen(false);
+            }}
+            type="button"
+          >
+            <FiType />
+            Text
+          </button>
+          <button onClick={() => photoInput.current?.click()} type="button">
+            <FiCamera />
+            Photo
+          </button>
+          <button
+            onClick={() => {
+              setVoiceOpen(true);
+              setActionsOpen(false);
+            }}
+            type="button"
+          >
+            <FiMic />
+            Voice
+          </button>
+          <button
+            onClick={() => {
+              setPlaceOpen(true);
+              setActionsOpen(false);
+            }}
+            type="button"
+          >
+            <FiMapPin />
+            Place
+          </button>
+          <button onClick={() => openStructuredEditor("LINK")} type="button">
+            <FiLink />
+            Link
+          </button>
+          <button
+            onClick={() => openStructuredEditor("KEY_POINT")}
+            type="button"
+          >
+            <FiList />
+            Key points
+          </button>
+          <button onClick={() => openStructuredEditor("POLL")} type="button">
+            <FiBarChart2 />
+            Poll
+          </button>
         </div>
       ) : null}
-      <button aria-label="Add story block" className={`seen-chapter-editor-add ${actionsOpen ? "is-open" : ""}`} disabled={busy} onClick={() => setActionsOpen((open) => !open)} type="button"><FiPlus /></button>
+      <button
+        aria-expanded={actionsOpen}
+        aria-label={actionsOpen ? "Close block menu" : "Add story block"}
+        className={`seen-chapter-editor-add ${actionsOpen ? "is-open" : ""}`}
+        disabled={busy}
+        onClick={() => setActionsOpen((open) => !open)}
+        type="button"
+      >
+        <FiPlus />
+      </button>
       <input
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
@@ -534,19 +1373,28 @@ export default function SeenComposerPage() {
   const [searchParams] = useSearchParams();
   const fromDrafts = searchParams.get("from") === "drafts";
   const draftSuffix = fromDrafts ? "?from=drafts" : "";
-  const backTarget = id ? `/studio/seens/${id}${draftSuffix}` : fromDrafts ? "/studio/seens?status=drafts" : "/profile";
+  const backTarget = id
+    ? `/studio/seens/${id}${draftSuffix}`
+    : fromDrafts
+      ? "/studio/seens?status=drafts"
+      : "/profile";
   const replyToSeenId = id ? "" : searchParams.get("replyToSeenId") || "";
   const coverInput = useRef(null);
   const busy = useRef(false);
   const dirty = useRef(false);
   const pendingCoverKind = useRef("IMAGE");
   const pendingVideoLimit = useRef(15);
-  const [p, setP] = useState(() => ({ ...empty, replyToSeen: replyToSeenId || null }));
+  const [p, setP] = useState(() => ({
+    ...empty,
+    replyToSeen: replyToSeenId || null,
+  }));
   const [replySeen, setReplySeen] = useState(null);
   const [series, setSeries] = useState("");
   const [newSeries, setNewSeries] = useState("");
   const [savedSeries, setSavedSeries] = useState(defaultSeries);
-  const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem("atseen_seen_intro_dismissed"));
+  const [introOpen, setIntroOpen] = useState(
+    () => !localStorage.getItem("atseen_seen_intro_dismissed"),
+  );
   const [status, setStatus] = useState("Saved");
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState("");
@@ -563,13 +1411,18 @@ export default function SeenComposerPage() {
     const response = await api.getMyPublication(publicationId);
     let publication = response.data.data.publication;
     if (publication.status === "PUBLISHED") {
-      const revision = await api.startPublishedRevision(publication.id, publication.statusVersion);
+      const revision = await api.startPublishedRevision(
+        publication.id,
+        publication.statusVersion,
+      );
       publication = revision.data.data.publication;
     }
     const normalizedPublication = {
       ...empty,
       ...publication,
-      chapters: Array.isArray(publication?.chapters) ? publication.chapters : [],
+      chapters: Array.isArray(publication?.chapters)
+        ? publication.chapters
+        : [],
       tags: Array.isArray(publication?.tags) ? publication.tags : [],
     };
     setP(normalizedPublication);
@@ -592,7 +1445,8 @@ export default function SeenComposerPage() {
   useEffect(() => {
     if (!replyToSeenId) return undefined;
     let active = true;
-    api.getPublicPublication(replyToSeenId)
+    api
+      .getPublicPublication(replyToSeenId)
       .then((response) => {
         if (active) setReplySeen(response.data.data.publication);
       })
@@ -624,7 +1478,9 @@ export default function SeenComposerPage() {
     });
     const publication = response.data.data.publication;
     setP(publication);
-    nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, { replace: true });
+    nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
+      replace: true,
+    });
     return publication;
   };
 
@@ -639,15 +1495,17 @@ export default function SeenComposerPage() {
     setError("");
     try {
       let publication = await ensure();
-      publication = (await api.updatePublicationDraft(publication.id, {
-        title: p.title,
-        summary: p.summary || p.description,
-        description: p.description,
-        category: p.category,
-        tags: tagsWithSeries(p.tags, series),
-        replyToSeenId: p.replyToSeen || replyToSeenId || undefined,
-        statusVersion: publication.statusVersion,
-      })).data.data.publication;
+      publication = (
+        await api.updatePublicationDraft(publication.id, {
+          title: p.title,
+          summary: p.summary || p.description,
+          description: p.description,
+          category: p.category,
+          tags: tagsWithSeries(p.tags, series),
+          replyToSeenId: p.replyToSeen || replyToSeenId || undefined,
+          statusVersion: publication.statusVersion,
+        })
+      ).data.data.publication;
       setP(publication);
       dirty.current = false;
       setStatus("Saved");
@@ -662,12 +1520,15 @@ export default function SeenComposerPage() {
   };
 
   useEffect(() => {
-    if (!dirty.current || uploading || (!p.id && !hasDraftContent(p, series))) return undefined;
+    if (!dirty.current || uploading || (!p.id && !hasDraftContent(p, series)))
+      return undefined;
     const timer = setTimeout(save, 1800);
     return () => clearTimeout(timer);
   }, [p, series, uploading]);
 
-  const activeChapter = (p.chapters || []).find((chapter) => chapter.stableChapterId === activeChapterId);
+  const activeChapter = (p.chapters || []).find(
+    (chapter) => chapter.stableChapterId === activeChapterId,
+  );
 
   useEffect(() => {
     if (!activeChapter) return;
@@ -677,27 +1538,39 @@ export default function SeenComposerPage() {
   }, [activeChapterId]);
 
   useEffect(() => {
-    if (!chapterStatus || !/(saved|added|removed)$/i.test(chapterStatus)) return undefined;
+    if (!chapterStatus || !/(saved|added|removed)$/i.test(chapterStatus))
+      return undefined;
     const timer = window.setTimeout(() => setChapterStatus(""), 2600);
     return () => window.clearTimeout(timer);
   }, [chapterStatus]);
 
-  useEffect(() => () => {
-    if (videoToTrim?.url) URL.revokeObjectURL(videoToTrim.url);
-  }, [videoToTrim?.url]);
+  useEffect(
+    () => () => {
+      if (videoToTrim?.url) URL.revokeObjectURL(videoToTrim.url);
+    },
+    [videoToTrim?.url],
+  );
 
-  useEffect(() => () => {
-    if (coverPreview?.url) URL.revokeObjectURL(coverPreview.url);
-  }, [coverPreview?.url]);
+  useEffect(
+    () => () => {
+      if (coverPreview?.url) URL.revokeObjectURL(coverPreview.url);
+    },
+    [coverPreview?.url],
+  );
 
   const uploadCoverFile = async (file, kind = pendingCoverKind.current) => {
     if (!file) return;
     try {
-      const publication = dirty.current ? await save({ allowEmpty: true }) : await ensure();
+      const publication = dirty.current
+        ? await save({ allowEmpty: true })
+        : await ensure();
       if (!publication) return;
       setUploading(kind);
       setStatus("Uploading media...");
-      await api.uploadMedia(publication.id, file, { purpose: "COVER", statusVersion: publication.statusVersion });
+      await api.uploadMedia(publication.id, file, {
+        purpose: "COVER",
+        statusVersion: publication.statusVersion,
+      });
       await refresh(publication.id);
       setStatus("Media saved");
       setCoverPreview((current) => {
@@ -754,7 +1627,9 @@ export default function SeenComposerPage() {
   const chooseMedia = (kind, limitSeconds = 15) => {
     pendingCoverKind.current = kind;
     pendingVideoLimit.current = limitSeconds;
-    if (coverInput.current) coverInput.current.accept = kind === "VIDEO" ? VIDEO_ACCEPT : IMAGE_ACCEPT;
+    if (coverInput.current)
+      coverInput.current.accept =
+        kind === "VIDEO" ? VIDEO_ACCEPT : IMAGE_ACCEPT;
     coverInput.current?.click();
   };
 
@@ -763,10 +1638,14 @@ export default function SeenComposerPage() {
       setError("Maximum three chapters.");
       return;
     }
-    const publication = dirty.current ? await save({ allowEmpty: true }) : await ensure();
+    const publication = dirty.current
+      ? await save({ allowEmpty: true })
+      : await ensure();
     if (!publication) return;
     try {
-      const title = p.chapters.length ? `Chapter ${p.chapters.length + 1}` : "Chapter name";
+      const title = p.chapters.length
+        ? `Chapter ${p.chapters.length + 1}`
+        : "Chapter name";
       await api.addChapter(publication.id, {
         title,
         blocks: [],
@@ -817,7 +1696,8 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setStatus("Chapter save failed");
       setError(publicationError(requestError));
-      if (requestError.response?.status === 409 && p.id) await refresh(p.id).catch(() => {});
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
     } finally {
       setChapterSaving(false);
     }
@@ -843,7 +1723,8 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setChapterStatus("Chapter save failed");
       setError(publicationError(requestError));
-      if (requestError.response?.status === 409 && p.id) await refresh(p.id).catch(() => {});
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
     } finally {
       setChapterSaving(false);
     }
@@ -853,19 +1734,28 @@ export default function SeenComposerPage() {
     if (!activeChapter || !p.id || chapterSaving) return;
     const blockId = newBlockId();
     setChapterSaving(true);
-    setChapterStatus(`Uploading ${mediaLabel({ type: mediaType }).toLowerCase()}...`);
+    setChapterStatus(
+      `Uploading ${mediaLabel({ type: mediaType }).toLowerCase()}...`,
+    );
     setError("");
     try {
-      const uploaded = (await api.uploadMedia(p.id, file, {
-        purpose: "BLOCK",
-        mediaType,
-        chapterId: activeChapter.stableChapterId,
-        blockId,
-      })).data.data;
+      const uploaded = (
+        await api.uploadMedia(p.id, file, {
+          purpose: "BLOCK",
+          mediaType,
+          chapterId: activeChapter.stableChapterId,
+          blockId,
+        })
+      ).data.data;
       const storyBlocks = chapterBlocksWithStory(activeChapter, chapterStory);
       const blocks = [
         ...storyBlocks,
-        { id: blockId, media: uploaded, order: storyBlocks.length, type: mediaType },
+        {
+          id: blockId,
+          media: uploaded,
+          order: storyBlocks.length,
+          type: mediaType,
+        },
       ];
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
@@ -879,7 +1769,8 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setChapterStatus(`${mediaLabel({ type: mediaType })} upload failed`);
       setError(publicationError(requestError));
-      if (requestError.response?.status === 409 && p.id) await refresh(p.id).catch(() => {});
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
     } finally {
       setChapterSaving(false);
     }
@@ -903,7 +1794,9 @@ export default function SeenComposerPage() {
   };
 
   const addPlaceBlock = async (label) => {
-    const locationLabel = String(label || "").trim().slice(0, 120);
+    const locationLabel = String(label || "")
+      .trim()
+      .slice(0, 120);
     if (!locationLabel || !activeChapter || !p.id || chapterSaving) return;
     setChapterSaving(true);
     setChapterStatus("Adding place...");
@@ -912,7 +1805,13 @@ export default function SeenComposerPage() {
       const storyBlocks = chapterBlocksWithStory(activeChapter, chapterStory);
       const blocks = [
         ...storyBlocks,
-        { id: newBlockId(), metadata: { location: { label: locationLabel } }, order: storyBlocks.length, text: locationLabel, type: "KEY_POINT" },
+        {
+          id: newBlockId(),
+          metadata: { location: { label: locationLabel } },
+          order: storyBlocks.length,
+          text: locationLabel,
+          type: "KEY_POINT",
+        },
       ];
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
@@ -926,7 +1825,71 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setChapterStatus("Place was not added");
       setError(publicationError(requestError));
-      if (requestError.response?.status === 409 && p.id) await refresh(p.id).catch(() => {});
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
+    } finally {
+      setChapterSaving(false);
+    }
+  };
+
+  const addStructuredBlocks = async (newBlocks) => {
+    if (!activeChapter || !p.id || chapterSaving || !newBlocks?.length) return;
+    setChapterSaving(true);
+    setChapterStatus("Adding block...");
+    setError("");
+    try {
+      const current = chapterBlocksWithStory(activeChapter, chapterStory);
+      const blocks = [...current, ...newBlocks].map((block, order) => ({
+        ...block,
+        order,
+      }));
+      await api.updateChapter(p.id, activeChapter.stableChapterId, {
+        title: activeChapter.title || "Chapter name",
+        blocks,
+        isPreview: activeChapter.isPreview,
+        releaseMode: activeChapter.releaseMode || "IMMEDIATE",
+        statusVersion: p.statusVersion,
+      });
+      await refresh(p.id);
+      setChapterStatus("Block added");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      setChapterStatus("Block was not added");
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
+      throw requestError;
+    } finally {
+      setChapterSaving(false);
+    }
+  };
+
+  const updateStructuredBlock = async (blockId, changes) => {
+    if (!activeChapter || !p.id || chapterSaving) return;
+    setChapterSaving(true);
+    setChapterStatus("Saving block...");
+    setError("");
+    try {
+      const blocks = chapterBlocksWithStory(activeChapter, chapterStory).map(
+        (block, order) =>
+          block.id === blockId
+            ? { ...block, ...changes, id: blockId, order }
+            : { ...block, order },
+      );
+      await api.updateChapter(p.id, activeChapter.stableChapterId, {
+        title: activeChapter.title || "Chapter name",
+        blocks,
+        isPreview: activeChapter.isPreview,
+        releaseMode: activeChapter.releaseMode || "IMMEDIATE",
+        statusVersion: p.statusVersion,
+      });
+      await refresh(p.id);
+      setChapterStatus("Block saved");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      setChapterStatus("Block was not saved");
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
+      throw requestError;
     } finally {
       setChapterSaving(false);
     }
@@ -953,7 +1916,8 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setChapterStatus("Block was not removed");
       setError(publicationError(requestError));
-      if (requestError.response?.status === 409 && p.id) await refresh(p.id).catch(() => {});
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
     } finally {
       setChapterSaving(false);
     }
@@ -962,12 +1926,19 @@ export default function SeenComposerPage() {
   const reorderChapterBlocks = async (sourceId, targetId) => {
     if (!activeChapter || !p.id || chapterSaving) return;
     const blocks = chapterBlocksWithStory(activeChapter, chapterStory);
-    const storyId = blocks.find((block) => block.type === "TEXT" && !block.metadata?.location)?.id;
+    const storyId = blocks.find(
+      (block) => block.type === "TEXT" && !block.metadata?.location,
+    )?.id;
     const resolvedSourceId = sourceId === "__story__" ? storyId : sourceId;
     const resolvedTargetId = targetId === "__story__" ? storyId : targetId;
-    const sourceIndex = blocks.findIndex((block) => block.id === resolvedSourceId);
-    const targetIndex = blocks.findIndex((block) => block.id === resolvedTargetId);
-    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
+    const sourceIndex = blocks.findIndex(
+      (block) => block.id === resolvedSourceId,
+    );
+    const targetIndex = blocks.findIndex(
+      (block) => block.id === resolvedTargetId,
+    );
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex)
+      return;
     const reordered = [...blocks];
     const [moved] = reordered.splice(sourceIndex, 1);
     reordered.splice(targetIndex, 0, moved);
@@ -987,7 +1958,8 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setChapterStatus("Block order was not saved");
       setError(publicationError(requestError));
-      if (requestError.response?.status === 409 && p.id) await refresh(p.id).catch(() => {});
+      if (requestError.response?.status === 409 && p.id)
+        await refresh(p.id).catch(() => {});
     } finally {
       setChapterSaving(false);
     }
@@ -1013,7 +1985,11 @@ export default function SeenComposerPage() {
       return;
     }
     try {
-      await api[publication.status === "CHANGES_REQUESTED" ? "resubmitPublication" : "submitPublication"](publication.id, publication.statusVersion);
+      await api[
+        publication.status === "CHANGES_REQUESTED"
+          ? "resubmitPublication"
+          : "submitPublication"
+      ](publication.id, publication.statusVersion);
       nav(`/studio/seens/${publication.id}${draftSuffix}`);
     } catch (requestError) {
       setError(publicationError(requestError));
@@ -1035,47 +2011,79 @@ export default function SeenComposerPage() {
   }
 
   if (loadingPublication) {
-    return <p className="p-6 text-sm font-bold text-atseen-muted">Loading draft...</p>;
+    return (
+      <p className="p-6 text-sm font-bold text-atseen-muted">
+        Loading draft...
+      </p>
+    );
   }
 
   const mediaPreview = coverPreview?.url || p.coverMedia?.secureUrl;
-  const mediaKind = coverPreview?.kind || (p.coverMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE");
+  const mediaKind =
+    coverPreview?.kind ||
+    (p.coverMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE");
   const statusText = statusLabel(status, uploading);
 
   if (activeChapter) {
     return (
       <>
-      {cropTarget ? <ProfileImageCropper kind="seen" onCancel={closeImageCrop} onSave={useCroppedImage} source={cropTarget.url} /> : null}
-      <SeenChapterEditor
-        busy={chapterSaving}
-        chapter={activeChapter}
-        error={error}
-        onAddPlace={addPlaceBlock}
-        onDone={saveChapterStory}
-        onMediaUpload={requestChapterMedia}
-        onRemoveBlock={removeChapterBlock}
-        onReorderBlocks={reorderChapterBlocks}
-        onStoryChange={(value) => {
-          setChapterStory(value);
-          setChapterStatus(value.trim() ? "Unsaved chapter" : "");
-        }}
-        status={chapterStatus}
-        story={chapterStory}
-      />
+        {cropTarget ? (
+          <ProfileImageCropper
+            kind="seen"
+            onCancel={closeImageCrop}
+            onSave={useCroppedImage}
+            source={cropTarget.url}
+          />
+        ) : null}
+        <SeenChapterEditor
+          busy={chapterSaving}
+          chapter={activeChapter}
+          error={error}
+          onAddBlocks={addStructuredBlocks}
+          onAddPlace={addPlaceBlock}
+          onDone={saveChapterStory}
+          onMediaUpload={requestChapterMedia}
+          onRemoveBlock={removeChapterBlock}
+          onReorderBlocks={reorderChapterBlocks}
+          onStoryChange={(value) => {
+            setChapterStory(value);
+            setChapterStatus(value.trim() ? "Unsaved chapter" : "");
+          }}
+          onUpdateBlock={updateStructuredBlock}
+          status={chapterStatus}
+          story={chapterStory}
+        />
       </>
     );
   }
 
   return (
     <section className="seen-compose-page">
-      {cropTarget ? <ProfileImageCropper kind="seen" onCancel={closeImageCrop} onSave={useCroppedImage} source={cropTarget.url} /> : null}
+      {cropTarget ? (
+        <ProfileImageCropper
+          kind="seen"
+          onCancel={closeImageCrop}
+          onSave={useCroppedImage}
+          source={cropTarget.url}
+        />
+      ) : null}
       <header className="seen-compose-header">
-        <button aria-label="Back" className="seen-compose-back" onClick={() => nav(backTarget)} type="button"><FiChevronLeft /></button>
+        <button
+          aria-label="Back"
+          className="seen-compose-back"
+          onClick={() => nav(backTarget)}
+          type="button"
+        >
+          <FiChevronLeft />
+        </button>
         <div className="seen-compose-heading">
           <h1>New Seen</h1>
           {introOpen ? (
             <p>
-              <span>Seen {"\u2014"} a post made of chapters. People walk it like a small story.</span>
+              <span>
+                Seen {"\u2014"} a post made of chapters. People walk it like a
+                small story.
+              </span>
               <button
                 aria-label="Dismiss Seen intro"
                 onClick={() => {
@@ -1089,21 +2097,47 @@ export default function SeenComposerPage() {
             </p>
           ) : null}
         </div>
-        <button className="seen-compose-save" onClick={save} type="button"><FiSave aria-hidden="true" />Save for later</button>
+        <button className="seen-compose-save" onClick={save} type="button">
+          <FiSave aria-hidden="true" />
+          Save for later
+        </button>
       </header>
 
       <div className="seen-compose-body">
         {mediaPreview ? (
           <div className="seen-compose-cover">
-            {mediaKind === "VIDEO" ? <video controls preload="metadata" src={mediaPreview} /> : <img alt="Seen cover" src={mediaPreview} />}
-            <button aria-label="Remove selected cover" onClick={() => change({ coverMedia: null })} type="button"><FiX /></button>
-            {uploading ? <em>Uploading...</em> : mediaKind === "VIDEO" ? <span>Video</span> : null}
+            {mediaKind === "VIDEO" ? (
+              <video controls preload="metadata" src={mediaPreview} />
+            ) : (
+              <img alt="Seen cover" src={mediaPreview} />
+            )}
+            <button
+              aria-label="Remove selected cover"
+              onClick={() => change({ coverMedia: null })}
+              type="button"
+            >
+              <FiX />
+            </button>
+            {uploading ? (
+              <em>Uploading...</em>
+            ) : mediaKind === "VIDEO" ? (
+              <span>Video</span>
+            ) : null}
           </div>
         ) : (
           <div className="seen-compose-media-grid">
-            <button onClick={() => chooseMedia("VIDEO", 15)} type="button"><FiZap /><b>Video {"\u00b7"} 0:15</b></button>
-            <button onClick={() => chooseMedia("VIDEO", 30)} type="button"><FiFilm /><b>Video {"\u00b7"} 0:30</b></button>
-            <button onClick={() => chooseMedia("IMAGE")} type="button"><FiImage /><b>Photo</b></button>
+            <button onClick={() => chooseMedia("VIDEO", 15)} type="button">
+              <FiZap />
+              <b>Video {"\u00b7"} 0:15</b>
+            </button>
+            <button onClick={() => chooseMedia("VIDEO", 30)} type="button">
+              <FiFilm />
+              <b>Video {"\u00b7"} 0:30</b>
+            </button>
+            <button onClick={() => chooseMedia("IMAGE")} type="button">
+              <FiImage />
+              <b>Photo</b>
+            </button>
           </div>
         )}
         <input
@@ -1117,16 +2151,26 @@ export default function SeenComposerPage() {
           <VideoTrimSheet
             file={videoToTrim}
             limitSeconds={videoToTrim.limitSeconds}
-            onCancel={() => setVideoToTrim((current) => {
-              if (current?.url) URL.revokeObjectURL(current.url);
-              return null;
-            })}
+            onCancel={() =>
+              setVideoToTrim((current) => {
+                if (current?.url) URL.revokeObjectURL(current.url);
+                return null;
+              })
+            }
             onUpload={(file) => uploadCoverFile(file, "VIDEO")}
           />
         ) : null}
 
-        <p className="seen-compose-counter"><FiEye aria-hidden="true" /><b>0</b> saw this {"\u2014"} the counter comes alive after you publish</p>
-        {replyToSeenId ? <p className="seen-compose-reply-context">Replying to {replySeen?.title ? `\u201c${replySeen.title}\u201d` : "this Seen"}</p> : null}
+        <p className="seen-compose-counter">
+          <FiEye aria-hidden="true" />
+          <b>0</b> saw this {"\u2014"} the counter comes alive after you publish
+        </p>
+        {replyToSeenId ? (
+          <p className="seen-compose-reply-context">
+            Replying to{" "}
+            {replySeen?.title ? `\u201c${replySeen.title}\u201d` : "this Seen"}
+          </p>
+        ) : null}
 
         <label className="seen-compose-field seen-compose-title">
           <span className="sr-only">Title</span>
@@ -1142,13 +2186,24 @@ export default function SeenComposerPage() {
           <span className="sr-only">Description</span>
           <textarea
             maxLength={300}
-            onChange={(event) => change({ description: event.target.value, summary: event.target.value })}
-            placeholder={"About this experience \u2014 what happens inside, honestly"}
+            onChange={(event) =>
+              change({
+                description: event.target.value,
+                summary: event.target.value,
+              })
+            }
+            placeholder={
+              "About this experience \u2014 what happens inside, honestly"
+            }
             value={p.description || p.summary}
           />
         </label>
 
-        <div aria-label="Seen category" className="seen-compose-chips" role="group">
+        <div
+          aria-label="Seen category"
+          className="seen-compose-chips"
+          role="group"
+        >
           {categories.map((category) => (
             <button
               aria-pressed={p.category === category}
@@ -1164,45 +2219,75 @@ export default function SeenComposerPage() {
 
         <div className="seen-compose-section-title">
           <span>CHAPTERS</span>
-          <small>{p.chapters.length}/3 {"\u00b7"} like a post {"\u2014"} short</small>
+          <small>
+            {p.chapters.length}/3 {"\u00b7"} like a post {"\u2014"} short
+          </small>
         </div>
 
         <div className="seen-compose-chapters">
           {p.chapters.map((chapter, index) => (
-            <div className="seen-compose-chapter" key={chapter.stableChapterId || index}>
+            <div
+              className="seen-compose-chapter"
+              key={chapter.stableChapterId || index}
+            >
               <span>{index + 1}</span>
               <div className="seen-compose-chapter-copy">
                 {(() => {
                   const storyPreview = chapterStoryText(chapter);
                   return (
                     <>
-                <input
-                  aria-label={`Chapter ${index + 1} name`}
-                  disabled={chapterSaving}
-                  maxLength={120}
-                  onBlur={() => saveChapterTitle(chapter)}
-                  onChange={(event) => changeChapterTitle(chapter.stableChapterId, event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      event.currentTarget.blur();
-                    }
-                  }}
-                  placeholder="Chapter name"
-                  value={chapter.title || ""}
-                />
+                      <input
+                        aria-label={`Chapter ${index + 1} name`}
+                        disabled={chapterSaving}
+                        maxLength={120}
+                        onBlur={() => saveChapterTitle(chapter)}
+                        onChange={(event) =>
+                          changeChapterTitle(
+                            chapter.stableChapterId,
+                            event.target.value,
+                          )
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            event.currentTarget.blur();
+                          }
+                        }}
+                        placeholder="Chapter name"
+                        value={chapter.title || ""}
+                      />
                       {storyPreview ? <p>{storyPreview}</p> : null}
-                      <button onClick={() => openChapterEditor(chapter)} type="button">{storyPreview ? "Edit the story >" : "+ Write the story >"}</button>
+                      <button
+                        onClick={() => openChapterEditor(chapter)}
+                        type="button"
+                      >
+                        {storyPreview
+                          ? "Edit the story >"
+                          : "+ Write the story >"}
+                      </button>
                     </>
                   );
                 })()}
               </div>
-              <button aria-label={`Remove chapter ${index + 1}`} onClick={() => removeChapter(chapter)} type="button"><FiX /></button>
+              <button
+                aria-label={`Remove chapter ${index + 1}`}
+                onClick={() => removeChapter(chapter)}
+                type="button"
+              >
+                <FiX />
+              </button>
             </div>
           ))}
           {p.chapters.length < 3 ? (
-            <button className="seen-compose-add-chapter" onClick={addChapter} type="button">
-              <FiPlus aria-hidden="true" /> {p.chapters.length ? "Add chapter" : "Chapter 1 - where it starts"}
+            <button
+              className="seen-compose-add-chapter"
+              onClick={addChapter}
+              type="button"
+            >
+              <FiPlus aria-hidden="true" />{" "}
+              {p.chapters.length
+                ? "Add chapter"
+                : "Chapter 1 - where it starts"}
             </button>
           ) : null}
         </div>
@@ -1217,7 +2302,7 @@ export default function SeenComposerPage() {
               className={series === item ? "is-selected" : ""}
               key={item}
               onClick={() => {
-                setSeries((current) => current === item ? "" : item);
+                setSeries((current) => (current === item ? "" : item));
                 dirty.current = true;
                 setStatus("Unsaved changes");
               }}
@@ -1241,12 +2326,30 @@ export default function SeenComposerPage() {
             />
           </label>
         </div>
-        <p className="seen-compose-series-help">Parts of a series live together on your profile {"\u2014"} people watch them like episodes</p>
+        <p className="seen-compose-series-help">
+          Parts of a series live together on your profile {"\u2014"} people
+          watch them like episodes
+        </p>
 
-        {error ? <p className="seen-compose-error" role="alert">{error}</p> : null}
-        {statusText ? <p className="seen-compose-status" role="status">{statusText}</p> : null}
+        {error ? (
+          <p className="seen-compose-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {statusText ? (
+          <p className="seen-compose-status" role="status">
+            {statusText}
+          </p>
+        ) : null}
 
-        <button className="seen-compose-publish" disabled={Boolean(uploading)} onClick={submit} type="button">{p.publishedVersion ? "Republish" : "Publish"}</button>
+        <button
+          className="seen-compose-publish"
+          disabled={Boolean(uploading)}
+          onClick={submit}
+          type="button"
+        >
+          {p.publishedVersion ? "Republish" : "Publish"}
+        </button>
       </div>
     </section>
   );

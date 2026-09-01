@@ -7,26 +7,28 @@ export const messageService = {
     `/messages/conversations/${userId}`,
     { params: { limit, ...(cursor ? { cursor } : {}), ...(directAccessWindowId ? { directAccessWindowId } : {}) } },
   ),
-  send: (userId, body, replyToId = null, clientMessageId, directAccessWindowId = null) => axiosInstance.post(
+  send: (userId, body, replyToId = null, clientMessageId, directAccessWindowId = null, disappearAfterSeconds = null) => axiosInstance.post(
     `/messages/conversations/${userId}`,
-    { body, replyToId, clientMessageId, directAccessWindowId },
+    { body, replyToId, clientMessageId, directAccessWindowId, disappearAfterSeconds },
   ),
-  sendGift: (userId, giftId, idempotencyKey) => axiosInstance.post(`/messages/conversations/${userId}/gifts`, { giftId, idempotencyKey }),
-  sendVoice: (userId, blob, waveform = [], directAccessWindowId = null, clientMessageId = null) => {
+  sendGift: (userId, giftId, idempotencyKey, disappearAfterSeconds = null) => axiosInstance.post(`/messages/conversations/${userId}/gifts`, { giftId, idempotencyKey, disappearAfterSeconds }),
+  sendVoice: (userId, blob, waveform = [], directAccessWindowId = null, clientMessageId = null, disappearAfterSeconds = null) => {
     const data = new FormData();
     const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
     data.append("voice", blob, `voice-${Date.now()}.${extension}`);
     data.append("waveform", JSON.stringify(waveform));
     data.append("clientMessageId", clientMessageId);
+    if (disappearAfterSeconds !== null) data.append("disappearAfterSeconds", disappearAfterSeconds);
     if (directAccessWindowId) data.append("directAccessWindowId", directAccessWindowId);
     return axiosInstance.post(`/messages/conversations/${userId}/voice`, data);
   },
-  sendVideoNote: (userId, blob, onProgress, directAccessWindowId = null, clientMessageId = null) => {
+  sendVideoNote: (userId, blob, onProgress, directAccessWindowId = null, clientMessageId = null, disappearAfterSeconds = null) => {
     const data = new FormData();
     const extension = blob.type.includes("mp4") ? "mp4" : "webm";
     const uploadBlob = new Blob([blob], { type: extension === "mp4" ? "video/mp4" : "video/webm" });
     data.append("video", uploadBlob, `video-note-${Date.now()}.${extension}`);
     data.append("clientMessageId", clientMessageId);
+    if (disappearAfterSeconds !== null) data.append("disappearAfterSeconds", disappearAfterSeconds);
     if (directAccessWindowId) data.append("directAccessWindowId", directAccessWindowId);
     return axiosInstance.post(`/messages/conversations/${userId}/video-note`, data, {
       onUploadProgress: (event) => {
@@ -34,10 +36,11 @@ export const messageService = {
       },
     });
   },
-  sendImage: (userId, file, clientMessageId, onProgress, directAccessWindowId = null) => {
+  sendImage: (userId, file, clientMessageId, onProgress, directAccessWindowId = null, disappearAfterSeconds = null) => {
     const data = new FormData();
     data.append("image", file);
     data.append("clientMessageId", clientMessageId);
+    if (disappearAfterSeconds !== null) data.append("disappearAfterSeconds", disappearAfterSeconds);
     if (directAccessWindowId) data.append("directAccessWindowId", directAccessWindowId);
     return axiosInstance.post(`/messages/conversations/${userId}/image`, data, {
       onUploadProgress: (event) => {
@@ -46,6 +49,8 @@ export const messageService = {
     });
   },
   deleteMessage: (messageId, scope = "me") => axiosInstance.delete(`/messages/${messageId}`, { params: { scope } }),
+  openDisappearing: (messageId) => axiosInstance.put(`/messages/${messageId}/open`),
+  consumeDisappearing: (messageId) => axiosInstance.put(`/messages/${messageId}/consume`),
   deleteConversation: (userId) => axiosInstance.delete(`/messages/conversations/${userId}`),
   archiveConversation: (userId, archived = true) => axiosInstance.put(`/messages/conversations/${userId}/archive`, { archived }),
   muteConversation: (userId, muted = true) => axiosInstance.put(`/messages/conversations/${userId}/mute`, { muted }),

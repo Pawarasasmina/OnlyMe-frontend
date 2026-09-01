@@ -48,8 +48,6 @@ import PublicationModeration from "../pages/admin/PublicationModeration";
 import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
 import WorldComposerPage from "../pages/creator/WorldComposerPage";
-import WorldManagerPage from "../pages/creator/WorldManagerPage";
-import WorldOwnerDetailPage from "../pages/creator/WorldOwnerDetailPage";
 import WorldReaderPage from "../pages/social/WorldReaderPage";
 import OrbitPage from "../pages/social/OrbitPage";
 import WalletPage from "../pages/social/WalletPage";
@@ -159,8 +157,8 @@ function AppRoutes() {
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
-            <Route path="/studio/worlds" element={<WorldManagerPage />} />
-            <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
+            <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
+            <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
           </Route>
           <Route path="/fan/dashboard" element={<Navigate replace to="/wall" />} />

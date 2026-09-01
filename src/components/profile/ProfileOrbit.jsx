@@ -24,7 +24,7 @@ function OwnerPlanetAction({ planet }) {
   if (["DRAFT", "CHANGES_REQUESTED"].includes(planet.status))
     return (
       <Link to={`/studio/worlds/${planet.id}/edit`}>
-        <FiEdit3 /> Edit planet details
+        <FiEdit3 /> {planet.status === "CHANGES_REQUESTED" ? "Edit and resubmit" : "Continue editing"}
       </Link>
     );
   if (planet.status === "PUBLISHED")
@@ -41,14 +41,12 @@ function OwnerPlanetAction({ planet }) {
     );
   if (planet.status === "PENDING_REVIEW")
     return (
-      <span>
-        <FiClock /> Under review
-      </span>
+      <button disabled type="button">
+        <FiClock /> Waiting for approval
+      </button>
     );
   return (
-    <Link to={`/studio/worlds/${planet.id}`}>
-      <FiEye /> View details
-    </Link>
+    <span><FiEye /> {planet.status.replaceAll("_", " ")}</span>
   );
 }
 
@@ -60,6 +58,23 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   );
   const primaryPlanet = bySlot.PREMIUM || premiumPlanets[0];
   const visible = [primaryPlanet].filter(Boolean);
+  const subscribed = !capabilities.isOwner && primaryPlanet?.access === "ACTIVE_PREMIUM_MEMBER";
+
+  if (subscribed) {
+    const creatorFirstName = profile?.displayName?.split(" ")[0] || "Creator";
+    return (
+      <section className="profile-subscribed-world">
+        <header><h2>{creatorFirstName}&apos;s World</h2><p>One world — where you step closer.</p></header>
+        <Link aria-label={`Open ${primaryPlanet.title}`} className="profile-subscribed-world-card" to={`/world/${primaryPlanet.id}`}>
+          <span className="profile-subscribed-stars" aria-hidden="true" />
+          <span className="profile-subscribed-orbit orbit-one" aria-hidden="true" />
+          <span className="profile-subscribed-orbit orbit-two" aria-hidden="true" />
+          <span className="profile-subscribed-symbols" aria-hidden="true"><i>🧠</i><b>{primaryPlanet.planet?.emoji || "🪐"}</b></span>
+          <span className="profile-subscribed-copy"><strong>{primaryPlanet.title}</strong><small>you&apos;re inside ✓</small></span>
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="profile-planet-orbit">
@@ -68,7 +83,6 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
           <p className="profile-orbit-overline">{capabilities.isOwner ? "Your World" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s World`}</p>
           <h2>One world - everything about you, by subscription.</h2>
         </div>
-        {capabilities.isOwner ? <Link to="/studio/worlds">Manage</Link> : null}
       </div>
 
       <div className="profile-orbit-sky" aria-label="Creator World orbit">
@@ -99,7 +113,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
                 ? `/studio/worlds/${planet.id}/edit`
                 : planet.status === "PUBLISHED"
                   ? `/world/${planet.id}`
-                  : `/studio/worlds/${planet.id}`
+                  : "/profile"
               : `/world/${planet.id}`;
             return (
               <article
