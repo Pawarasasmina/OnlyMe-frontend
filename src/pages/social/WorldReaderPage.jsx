@@ -15,6 +15,7 @@ import {
   FiVideo,
 } from "react-icons/fi";
 import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
+import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { walletService } from "../../services/walletService";
@@ -220,6 +221,7 @@ export default function WorldReaderPage() {
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
+  const [showPremiumWelcome, setShowPremiumWelcome] = useState(false);
   const query = useQuery({ queryKey: ["world", id], queryFn: () => api.getPublicPublication(id).then((response) => response.data.data.publication), retry: false });
   const memberships = useQuery({ queryKey: ["memberships"], queryFn: () => walletService.getMemberships().then((response) => response.data.data.items), enabled: Boolean(user), retry: false });
   const engagement = useQuery({ queryKey: ["world-engagement", id], queryFn: () => api.getSeenEngagement(id).then((response) => response.data.data.engagement), retry: false });
@@ -250,6 +252,7 @@ export default function WorldReaderPage() {
           onRequireAuth={() => navigate("/login", { state: { from: { pathname: location.pathname } } })}
           onSuccess={async () => {
             await Promise.all([query.refetch(), memberships.refetch()]);
+            setShowPremiumWelcome(true);
           }}
           open
           publication={publication}
@@ -288,6 +291,7 @@ export default function WorldReaderPage() {
   };
 
   return (
+    <>
     <article className="world-prototype-page">
       <header className="world-prototype-top">
         <button aria-label="Back to profile" onClick={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
@@ -352,5 +356,7 @@ export default function WorldReaderPage() {
       {chapters.length ? <button className="world-prototype-complete" onClick={completeWorld} type="button"><FiCheck /> Continue</button> : null}
       {activeMembership ? <p className="world-prototype-membership">Member · window renews {new Date(activeMembership.currentPeriodEnd).toLocaleDateString()} · <Link to="/memberships">Manage</Link></p> : null}
     </article>
+    {showPremiumWelcome ? <PremiumWelcomeSheet onClose={() => setShowPremiumWelcome(false)} publication={publication} /> : null}
+    </>
   );
 }
