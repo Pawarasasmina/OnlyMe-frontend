@@ -9,13 +9,16 @@ const GOALS = [500, 900, 1500, 2500, 5000];
 const SPARKLE = String.fromCharCode(10024);
 const STAR = String.fromCharCode(10022);
 const giftImageTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
-const celebrationParticles = Array.from({ length: 18 }, (_, index) => ({ angle: index * 20, delay: (index % 6) * 45, distance: 78 + (index % 4) * 17, size: 3 + (index % 3) * 2 }));
+const celebrationParticles = Array.from({ length: 28 }, (_, index) => ({ angle: index * (360 / 28), delay: (index % 7) * 34, distance: 92 + (index % 5) * 18, size: 8 + (index % 4) * 3 }));
 
 function GiftCelebration({ gift }) {
   return <div aria-live="polite" className="gift-celebration-layer">
+    <div className="gift-celebration-veil" />
     <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>You&apos;re part of this Dream now</strong><small>{gift.name} · {STAR}{gift.stars.toLocaleString()} sent</small></span></div>
     <div className="gift-celebration-stage">
       <div className="gift-celebration-glow" />
+      <i className="gift-celebration-ring is-outer" />
+      <i className="gift-celebration-ring is-inner" />
       {celebrationParticles.map((particle, index) => <i className="gift-celebration-particle" key={index} style={{ "--angle": `${particle.angle}deg`, "--delay": `${particle.delay}ms`, "--distance": `${particle.distance}px`, "--size": `${particle.size}px` }} />)}
       <div className="gift-celebration-image"><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></div>
       <strong className="gift-celebration-name">{gift.name}</strong>
@@ -189,7 +192,7 @@ function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
           {gifts.map((gift) => (
             <button
               className={`dream-gift-tile ${sending === gift.key ? "is-sending" : ""}`}
-              disabled={Boolean(sending)}
+              disabled={Boolean(sending) || Boolean(sent)}
               key={gift.key}
               onClick={() => send(gift)}
               type="button"
@@ -204,7 +207,7 @@ function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
         </div> : <p className="dream-gift-empty">No gifts are currently available.</p>}
         <p className="dream-gift-supporters">Made possible by {dream.supporterCount} {dream.supporterCount === 1 ? "person" : "people"}</p>
         <label className="dream-gift-private">
-          <input checked={privateSupport} disabled={Boolean(sending)} onChange={(event) => setPrivateSupport(event.target.checked)} type="checkbox" />
+          <input checked={privateSupport} disabled={Boolean(sending) || Boolean(sent)} onChange={(event) => setPrivateSupport(event.target.checked)} type="checkbox" />
           Support privately
         </label>
         {error ? (
@@ -317,7 +320,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
       ) : null}
 
       {editor ? <Editor dream={dream?.status === "ACTIVE" ? dream : null} onClose={() => setEditor(false)} onSaved={update} /> : null}
-      {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={update} /> : null}
+      {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={() => query.refetch()} /> : null}
     </section>
   );
 }
