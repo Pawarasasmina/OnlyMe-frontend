@@ -42,8 +42,6 @@ import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
 import AdminModerationComingSoon from "../pages/admin/AdminModerationComingSoon";
-import ContentModeration from "../pages/admin/ContentModeration";
-import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
 import PublicationModeration from "../pages/admin/PublicationModeration";
 import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
@@ -203,8 +201,8 @@ function AppRoutes() {
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
           <Route path="/admin/verified-creators" element={<VerifiedCreatorManagementPage />} />
-          <Route path="/admin/content-moderation" element={<ContentModeration />} />
-          <Route path="/admin/content-moderation/:id" element={<ContentModerationDetail />} />
+          <Route path="/admin/content-moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
+          <Route path="/admin/content-moderation/:id" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<AdminModerationComingSoon />} />
