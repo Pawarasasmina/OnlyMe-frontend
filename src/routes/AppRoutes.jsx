@@ -54,8 +54,8 @@ import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
-import MessageReportsPage from "../pages/admin/MessageReportsPage";
-import MessageReportsOnlyPage from "../pages/admin/MessageReportsOnlyPage";
+import AdminReportListPage from "../pages/admin/AdminReportListPage";
+import AdminReportDetailPage from "../pages/admin/AdminReportDetailPage";
 import SearchPage from "../pages/social/SearchPage";
 import DiscoverPage from "../pages/social/DiscoverPage";
 import PostDetailPage from "../pages/social/PostDetailPage";
@@ -209,8 +209,12 @@ function AppRoutes() {
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
-          <Route path="/admin/message-reports" element={<MessageReportsOnlyPage />} />
-          <Route path="/admin/user-reports" element={<MessageReportsPage />} />
+          <Route path="/admin/message-reports" element={<AdminReportListPage type="message" />} />
+          <Route path="/admin/message-reports/:reportId" element={<AdminReportDetailPage type="message" />} />
+          <Route path="/admin/user-reports" element={<AdminReportListPage type="user" />} />
+          <Route path="/admin/user-reports/:reportId" element={<AdminReportDetailPage type="user" />} />
+          <Route path="/admin/post-reports" element={<AdminReportListPage type="post" />} />
+          <Route path="/admin/post-reports/:reportId" element={<AdminReportDetailPage type="post" />} />
           <Route path="/admin/gifts" element={<GiftManagementPage />} />
         </Route>
       </Route>
