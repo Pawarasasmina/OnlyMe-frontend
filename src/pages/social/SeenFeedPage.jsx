@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiBookmark, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlus, FiRepeat, FiSearch, FiSend, FiSlash } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
@@ -62,6 +63,7 @@ function normalizeSeen(raw = {}) {
       id: chapter.stableChapterId || chapter.id || `${raw.id}-${index}`,
       title: chapter.title || `Chapter ${index + 1}`,
     })),
+    attachedEntities: raw.attachedEntities || [],
     creator: {
       id: String(creator.id || creator._id || ""),
       displayName: creator.name || creator.displayName || creator.username || "Creator",
@@ -457,6 +459,7 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
     <div className="seen-feed-copy">
       {item.description ? <p className="seen-description">{item.description}</p> : null}
       <ChapterPreview chapter={item.chapters[0]} target={target} />
+      <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       <PreviewComment comment={item.previewComment} />
       <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={copyLink} onReactOpen={() => { setMenuOpen(false); setReactionPickerOpen(true); }} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}

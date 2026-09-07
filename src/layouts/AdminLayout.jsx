@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { FiActivity, FiAlertTriangle, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiBarChart2, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 
@@ -15,6 +15,7 @@ const links = [
   { label: "Gift catalog", to: "/admin/gifts", icon: FiGift },
   { label: "Message reports", to: "/admin/message-reports", icon: FiAlertTriangle },
   { label: "User reports", to: "/admin/user-reports", icon: FiAlertTriangle },
+  { label: "Reports & Analytics", to: "/admin/analytics", icon: FiBarChart2 },
   { label: "Financial operations", to: "/admin/financial", icon: FiCreditCard },
   { label: "Welcome email", to: "/admin/welcome-email", icon: FiMail },
 ];
@@ -31,7 +32,7 @@ function AdminLayout() {
           <Link className="flex items-center gap-3" to="/admin/dashboard"><span className="grid h-9 w-9 place-items-center rounded-xl bg-orange-500 font-black text-white">O</span><span><strong className="block leading-none">OnlyMe</strong><small className="text-xs text-slate-400">Admin console</small></span></Link>
           <button className="rounded-lg p-2 text-slate-500 lg:hidden" onClick={() => setOpen(false)} type="button"><FiX /></button>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
           <p className="px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Workspace</p>
           {links.map((item) => <NavLink className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-orange-50 text-orange-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`} key={item.to} onClick={() => setOpen(false)} to={item.to}><item.icon className="text-lg" />{item.label}</NavLink>)}
           <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Account</p>

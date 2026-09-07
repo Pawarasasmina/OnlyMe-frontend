@@ -23,6 +23,7 @@ import ContentComposerPage from "../pages/creator/ContentComposerPage";
 import ContentDetailPage from "../pages/creator/ContentDetailPage";
 import EarningsPage from "../pages/creator/EarningsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminAnalyticsPage from "../pages/admin/AdminAnalyticsPage";
 import UserManagement from "../pages/admin/UserManagement";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
 import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
@@ -58,6 +59,7 @@ import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
+import EntityDetailPage from "../pages/social/EntityDetailPage";
 import MessageReportsPage from "../pages/admin/MessageReportsPage";
 import MessageReportsOnlyPage from "../pages/admin/MessageReportsOnlyPage";
 import SearchPage from "../pages/social/SearchPage";
@@ -73,12 +75,13 @@ import SupportPage from "../pages/settings/SupportPage";
 import GiftManagementPage from "../pages/admin/GiftManagementPage";
 import VerifiedCreatorPage from "../pages/creator/VerifiedCreatorPage";
 import VerifiedCreatorManagementPage from "../pages/admin/VerifiedCreatorManagementPage";
+import { defaultDestinationFor } from "../utils/socialAccess";
 
 function RootRedirect() {
   const { loading, user } = useAuth();
   if (loading) return null;
   if (user?.role === ROLES.ADMIN) return <Navigate replace to="/admin/dashboard" />;
-  return <Navigate replace to={user ? "/wall" : "/login"} />;
+  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/login"} />;
 }
 
 function LegacyCreatorProfileRedirect() {
@@ -133,6 +136,8 @@ function AppRoutes() {
           <Route path="/activity" element={<ActivityPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/saved/:category" element={<SavedPage />} />
+          <Route path="/places/:id" element={<EntityDetailPage />} />
+          <Route path="/books/:id" element={<EntityDetailPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
@@ -163,8 +168,8 @@ function AppRoutes() {
             <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
           </Route>
-          <Route path="/fan/dashboard" element={<Navigate replace to="/wall" />} />
-          <Route path="/fan/home" element={<Navigate replace to="/wall" />} />
+          <Route path="/fan/dashboard" element={<Navigate replace to="/seen" />} />
+          <Route path="/fan/home" element={<Navigate replace to="/seen" />} />
           <Route path="/fan/orbit" element={<Navigate replace to="/orbit" />} />
           <Route path="/fan/messages" element={<Navigate replace to="/messages" />} />
           <Route path="/fan/activity" element={<Navigate replace to="/activity" />} />
@@ -180,7 +185,7 @@ function AppRoutes() {
 
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<CreatorAppShell />}>
-            <Route path="/creator/dashboard" element={<Navigate replace to="/wall" />} />
+            <Route path="/creator/dashboard" element={<Navigate replace to="/seen" />} />
             <Route path="/creator/application" element={<CreatorApplicationPage />} />
             <Route path="/creator/profile" element={<Navigate replace to="/profile" />} />
             <Route path="/creator/settings" element={<CreatorSettingsPage />} />
@@ -199,6 +204,7 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/fans" element={<UserManagement fixedRole="fan" />} />
           <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />

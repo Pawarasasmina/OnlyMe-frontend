@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FiImage, FiMapPin, FiRefreshCw, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
+import EntityAttachmentPicker from "../contentEntities/EntityAttachmentPicker";
 import ProfileImageCropper from "../profile/ProfileImageCropper";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import {
@@ -68,6 +69,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
   const [location, setLocation] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [files, setFiles] = useState([]);
+  const [attachedEntities, setAttachedEntities] = useState([]);
   const [serverMedia, setServerMedia] = useState([]);
   const [errors, setErrors] = useState({});
   const [confirmClose, setConfirmClose] = useState(false);
@@ -90,6 +92,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     setLocation(initialPost?.location || "");
     setLocationSearch("");
     setFiles([]);
+    setAttachedEntities(initialPost?.attachedEntities || []);
     setServerMedia(initialPost?.media || []);
     setErrors({});
     setConfirmClose(false);
@@ -107,7 +110,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     filesRef.current.forEach((item) => URL.revokeObjectURL(item.url));
   }, []);
 
-  const hasUnsaved = Boolean(text.trim() || context || location || files.length || serverMedia.length || loadedDraftId);
+  const hasUnsaved = Boolean(text.trim() || context || location || files.length || serverMedia.length || attachedEntities.length || loadedDraftId);
   const trimmedText = text.trim();
   const isValid = trimmedText.length > 0 && trimmedText.length <= POST_TEXT_MAX_LENGTH && !Object.values(errors).some(Boolean);
   const busy = createMutation.isPending || saveDraftMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
@@ -186,6 +189,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     formData.append("text", trimmedText);
     formData.append("context", context);
     formData.append("location", location);
+    formData.append("entityRefs", JSON.stringify(attachedEntities.map((entity) => ({ entityId: entity.id, entityType: entity.type }))));
     files.forEach((item) => formData.append("media", item.file));
     return formData;
   };
@@ -219,7 +223,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
       updateMutation.mutate(
         {
           postId: initialPost?.id || loadedDraftId,
-          payload: { context, location, publish: loadedDraftId ? "true" : undefined, text: trimmedText },
+          payload: { context, entityRefs: attachedEntities.map((entity) => ({ entityId: entity.id, entityType: entity.type })), location, publish: loadedDraftId ? "true" : undefined, text: trimmedText },
         },
         { onError, onSuccess }
       );
@@ -259,6 +263,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     setContext(draft.context || "");
     setLocation(draft.location || "");
     setFiles([]);
+    setAttachedEntities(draft.attachedEntities || []);
     setServerMedia(draft.media || []);
     setLoadedDraftId(draft.id);
     setErrors({});
@@ -360,6 +365,8 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
             </div>
           </div>
 
+          <EntityAttachmentPicker context={context} disabled={busy} onChange={setAttachedEntities} value={attachedEntities} />
+
           <div className="mt-5">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">Images</p>
@@ -407,6 +414,15 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
               </div>
             </div>
             {context || location ? <p className="mt-3 inline-flex rounded-full border border-atseen-blue/20 bg-atseen-blue/10 px-2.5 py-1 text-[10px] font-bold text-atseen-blue">{[context, location].filter(Boolean).join(" - ")}</p> : null}
+            {attachedEntities.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {attachedEntities.map((entity) => (
+                  <span className="rounded-[13px] border border-atseen-blue/20 bg-atseen-blue/10 px-2.5 py-1.5 text-[11px] font-bold text-atseen-blue" key={`${entity.type}-${entity.id}`}>
+                    {entity.title}
+                  </span>
+                ))}
+              </div>
+            ) : null}
             <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-white/85">{trimmedText || "Your post preview will appear here."}</p>
             {existingMedia.length || files.length ? (
               <div className="mt-3 grid grid-cols-2 gap-2">

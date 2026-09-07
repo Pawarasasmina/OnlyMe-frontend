@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 function Sidebar({ links }) {
   const { user } = useAuth();
-  return <aside className="rounded-3xl border border-white/10 bg-white/5 p-4">
+  return <aside className="max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-white/5 p-4">
     <nav className="space-y-2">
       {links.map((link) => {
         const locked = link.requiresApproval && user?.creatorApprovalStatus !== "approved";

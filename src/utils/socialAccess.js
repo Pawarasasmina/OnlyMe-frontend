@@ -1,5 +1,5 @@
 export function defaultDestinationFor(role) {
-  return role === "admin" ? "/admin/dashboard" : "/wall";
+  return role === "admin" ? "/admin/dashboard" : "/seen";
 }
 
 export function isConsumerRole(role) {

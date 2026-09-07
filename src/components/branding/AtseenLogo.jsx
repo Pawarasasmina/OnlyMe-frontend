@@ -11,7 +11,7 @@ function AtseenLogo({ className = "", iconOnly = false, size = 30, wordmarkOnly 
         <path d="M2 20 C14 3 50 3 62 20 C50 37 14 37 2 20 Z" fill="#8AB8FF" />
         <circle cx="32" cy="20" fill="#0A0C0F" r="8.5" />
       </svg>}
-      {iconOnly ? null : <span className="text-[20px] font-extrabold tracking-[-0.03em] text-atseen-text">@seen</span>}
+      {iconOnly ? null : <span className="text-[20px] font-extrabold tracking-[-0.03em] text-atseen-text"><em className="not-italic text-atseen-blue">@</em>seen</span>}
       <span className="sr-only">Atseen</span>
     </span>
   );

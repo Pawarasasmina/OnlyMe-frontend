@@ -5,12 +5,14 @@ function normalizePost(raw = {}) {
   return {
     ...raw,
     id: raw.id || raw._id,
+    attachedEntities: raw.attachedEntities || [],
     author: raw.author || raw.creator || null,
     comments: (raw.comments || []).map((comment) => ({
       ...comment,
       id: comment.id || comment._id,
       author: comment.author || comment.user || null,
     })),
+    entityRefs: raw.entityRefs || [],
     media: media.map((item) => ({
       ...item,
       id: item.id || item._id || item.assetId || item.url,
