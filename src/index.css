@@ -14719,8 +14719,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 .world-chapter-reader-poll button span:nth-child(2) { flex: 1; }
 .world-chapter-reader-poll > p { margin-top: 11px; color: rgba(255,255,255,.42); font-size: 9px; }
 
-/* Final Activity page geometry: keep the center timeline compact like the
-   latest web prototype while continuing to use the shared social shell. */
+/* Activity uses the same desktop shell geometry as the other social pages. */
 @media (min-width: 768px) {
   .social-app-shell .social-center-scroll > main:has(> .activity-prototype-page) {
     padding: 30px 20px 80px !important;
@@ -14729,26 +14728,26 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 
 @media (min-width: 1020px) {
   .social-app-shell:has(.activity-prototype-page) .social-app-frame {
-    max-width: 1128px !important;
-    justify-content: center !important;
+    max-width: 1240px !important;
+    justify-content: initial !important;
   }
 
   .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
-    width: 580px !important;
-    flex: 0 0 580px !important;
-    margin-left: 0 !important;
+    width: auto !important;
+    flex: 1 1 0% !important;
+    margin-left: 20px !important;
     background: #0A0C0F;
   }
 
   .social-app-shell:has(.activity-prototype-page) .activity-prototype-page {
     width: 100%;
-    max-width: 560px;
+    max-width: none;
   }
 
   .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-fixed-rail:last-child {
     width: 300px !important;
     flex-basis: 300px !important;
-    padding: 30px 14px 24px 12px !important;
+    padding: 34px 20px 24px !important;
   }
 
   .social-app-shell:has(.activity-prototype-page) .home-right-rail {
@@ -14783,7 +14782,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 
 @media (min-width: 1240px) {
   .social-app-shell:has(.activity-prototype-page) .social-app-frame > .fan-web-sidebar {
-    width: 248px !important;
-    flex-basis: 248px !important;
+    width: 240px !important;
+    flex-basis: 240px !important;
   }
 }
