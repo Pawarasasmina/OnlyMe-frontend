@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
   FiArrowUp,
+  FiBookmark,
   FiCheck,
   FiEdit3,
   FiExternalLink,
@@ -18,6 +19,7 @@ import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
 import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
+import { savedService } from "../../services/savedService";
 import { walletService } from "../../services/walletService";
 
 const PLANET = String.fromCodePoint(0x1FA90);
@@ -217,11 +219,13 @@ function ChapterExperience({ chapter, chapterIndex, chapters, onBack, onSelect }
 export default function WorldReaderPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
   const [showPremiumWelcome, setShowPremiumWelcome] = useState(false);
+  const [commentSavePending, setCommentSavePending] = useState("");
   const query = useQuery({ queryKey: ["world", id], queryFn: () => api.getPublicPublication(id).then((response) => response.data.data.publication), retry: false });
   const memberships = useQuery({ queryKey: ["memberships"], queryFn: () => walletService.getMemberships().then((response) => response.data.data.items), enabled: Boolean(user), retry: false });
   const engagement = useQuery({ queryKey: ["world-engagement", id], queryFn: () => api.getSeenEngagement(id).then((response) => response.data.data.engagement), retry: false });
@@ -284,9 +288,29 @@ export default function WorldReaderPage() {
     engagement.refetch();
   };
 
+  const toggleCommentSave = async (targetComment) => {
+    if (!targetComment?.id || commentSavePending) return;
+    setCommentSavePending(targetComment.id);
+    try {
+      const action = targetComment.viewerSaved ? savedService.unsaveComment : savedService.saveComment;
+      const response = await action(targetComment.id);
+      const nextSaved = Boolean(response.data?.data?.saved);
+      queryClient.setQueryData(["world-engagement", id], (current) => current ? {
+        ...current,
+        comments: (current.comments || []).map((item) => item.id === targetComment.id ? { ...item, viewerSaved: nextSaved } : item),
+      } : current);
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+    } finally {
+      setCommentSavePending("");
+    }
+  };
+
   const completeWorld = async () => {
     localStorage.setItem(`atseen_walked_world_${publicationId}`, new Date().toISOString());
-    if (user) await api.markWorldWalked(publicationId).catch(() => null);
+    if (user) {
+      await api.markWorldWalked(publicationId).catch(() => null);
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+    }
     navigate("/seen", { state: { walkedWorld: { id: publicationId, title: publication.title, creator: publication.creator } } });
   };
 
@@ -347,6 +371,9 @@ export default function WorldReaderPage() {
               <article key={item.id}>
                 <b>{item.author?.name || "Fan"}</b>
                 <p>{item.text}</p>
+                <button aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"} disabled={commentSavePending === item.id} onClick={() => toggleCommentSave(item)} type="button">
+                  <FiBookmark aria-hidden="true" fill={item.viewerSaved ? "currentColor" : "none"} />
+                </button>
               </article>
             ))}
           </div>

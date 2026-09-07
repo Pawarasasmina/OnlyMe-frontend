@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 
 const dashboardFor = (user) => {
   if (user.role === "admin") return "/admin/dashboard";
-  if (user.role === "creator" || user.role === "fan") return "/wall";
+  if (user.role === "creator" || user.role === "fan") return "/seen";
   return "/login";
 };
 

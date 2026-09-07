@@ -5,6 +5,7 @@ import FeedPost from "../../components/fanWeb/home/FeedPost";
 import HomeHeader from "../../components/fanWeb/home/HomeHeader";
 import PostComposer from "../../components/fanWeb/home/PostComposer";
 import StoriesRow from "../../components/fanWeb/home/StoriesRow";
+import WallSeenTodayNotice from "../../components/fanWeb/home/WallSeenTodayNotice";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
 import { useAuth } from "../../hooks/useAuth";
@@ -51,22 +52,6 @@ function HomeFeedFilters({ activeFilter, onChange }) {
         </button>
       ))}
     </nav>
-  );
-}
-
-function SeenTodayLink({ count = 0 }) {
-  if (!count) {
-    return (
-      <Link className="home-seen-today is-empty" to="/activity">
-        No one has seen you today yet
-      </Link>
-    );
-  }
-
-  return (
-    <Link className="home-seen-today" to="/activity">
-      <strong>{count}</strong> saw you today <span aria-hidden="true">&gt;</span>
-    </Link>
   );
 }
 
@@ -154,7 +139,6 @@ function FanHomePage() {
     if (discoverQuery.data?.suggestedUsers?.length) return discoverQuery.data.suggestedUsers;
     return recommendations.filter((card) => !(card.isFollowing || card.following || card.actions?.following)).slice(0, 4);
   }, [discoverQuery.data?.suggestedUsers, recommendations]);
-  const seenTodayCount = Number(discoverQuery.data?.seenTodayCount || discoverQuery.data?.activity?.seenTodayCount || 0);
   const locationOptions = useMemo(() => uniqueList([
     profileCity,
     display.location,
@@ -203,7 +187,7 @@ function FanHomePage() {
         />
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
         <HomeFeedFilters activeFilter={activeFilter} onChange={changeFilter} />
-        <SeenTodayLink count={seenTodayCount} />
+        <WallSeenTodayNotice />
         {canPost ? <PostComposer currentUser={display} onComposeOpened={clearComposeSignal} onStatusChange={setStatus} openSignal={composeSignal} status={status} /> : null}
 
         {loading ? <LoadingSkeleton className="h-20" count={4} /> : null}

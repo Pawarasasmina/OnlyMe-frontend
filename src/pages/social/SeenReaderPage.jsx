@@ -3,8 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMessageCircle, FiMoreHorizontal, FiPlay, FiRepeat, FiSend, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { publicationService } from "../../services/publicationService";
+import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const reactionEmoji = {
@@ -137,6 +139,7 @@ function normalizeSeenDetail(publication, engagement) {
     title: publication?.title || "Untitled Seen",
     description: publication?.description || publication?.summary || "",
     creator: publication?.creator || {},
+    attachedEntities: publication?.attachedEntities || [],
     heroMedia: heroMedia ? { ...heroMedia, durationSeconds: mediaDuration(heroMedia) } : null,
     previewMedia: [...previewMap.values()].slice(0, 3),
     chapters,
@@ -352,6 +355,7 @@ function SeenOverview({
   noticeLink,
   onBack,
   onCopyLink,
+  onNotice,
   onOpenChapter,
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -430,6 +434,7 @@ function SeenOverview({
       </Link>
 
       {detail.description ? <p className="seen-detail-description">{detail.description}</p> : null}
+      <ContentEntityList entities={detail.attachedEntities} onNotice={onNotice} />
       <button className="seen-detail-reply" onClick={() => navigate(`/create/seen?replyToSeenId=${encodeURIComponent(detail.id)}`)} type="button">
         <span aria-hidden="true">\u21aa</span> Reply with your Seen
       </button>
@@ -482,6 +487,7 @@ function SeenOverview({
 export default function SeenReaderPage() {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const accessToken = searchParams.get("access") || searchParams.get("token") || "";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const readerTopRef = useRef(null);
@@ -490,17 +496,18 @@ export default function SeenReaderPage() {
   const [chapterIndex, setChapterIndex] = useState(Number.isSafeInteger(requestedChapter) && requestedChapter >= 0 ? requestedChapter : 0);
   const [comment, setComment] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentSavePending, setCommentSavePending] = useState("");
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
 
   const publicationQuery = useQuery({
-    queryKey: ["seen-detail", id],
-    queryFn: () => publicationService.getPublicPublication(id).then((response) => response.data.data.publication),
+    queryKey: ["seen-detail", id, accessToken],
+    queryFn: () => publicationService.getPublicPublication(id, accessToken ? { access: accessToken } : undefined).then((response) => response.data.data.publication),
     retry: false,
   });
   const engagementQuery = useQuery({
-    queryKey: ["seen-engagement", id],
-    queryFn: () => publicationService.getSeenEngagement(id).then((response) => response.data.data.engagement),
+    queryKey: ["seen-engagement", id, accessToken],
+    queryFn: () => publicationService.getSeenEngagement(id, accessToken ? { access: accessToken } : undefined).then((response) => response.data.data.engagement),
     retry: false,
   });
 
@@ -586,9 +593,9 @@ export default function SeenReaderPage() {
     }
   };
 
-  const reactionMutation = useMutation({ mutationFn: () => updateEngagement(engagement.viewerReaction ? publicationService.removeSeenReaction(id) : publicationService.reactToSeen(id, "LIKE")) });
+  const reactionMutation = useMutation({ mutationFn: () => updateEngagement(engagement.viewerReaction ? publicationService.removeSeenReaction(id, accessToken) : publicationService.reactToSeen(id, "LIKE", accessToken)) });
   const shareMutation = useMutation({
-    mutationFn: () => updateEngagement(engagement.viewerShared ? publicationService.removeSeenShare(id) : publicationService.shareSeen(id)),
+    mutationFn: () => updateEngagement(engagement.viewerShared ? publicationService.removeSeenShare(id, accessToken) : publicationService.shareSeen(id, "", accessToken)),
     onSuccess: (next) => {
       if (next.viewerShared) {
         setNotice("Reposted to your profile.");
@@ -600,7 +607,7 @@ export default function SeenReaderPage() {
     },
   });
   const saveMutation = useMutation({
-    mutationFn: () => updateEngagement(publicationService.toggleSeenSave(id)),
+    mutationFn: () => updateEngagement(publicationService.toggleSeenSave(id, accessToken)),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["seen-engagement", id] });
       const previous = queryClient.getQueryData(["seen-engagement", id]) || engagement || DEFAULT_ENGAGEMENT;
@@ -619,12 +626,32 @@ export default function SeenReaderPage() {
     },
   });
   const commentMutation = useMutation({
-    mutationFn: (text) => updateEngagement(publicationService.commentOnSeen(id, text)),
+    mutationFn: (text) => updateEngagement(publicationService.commentOnSeen(id, text, accessToken)),
     onSuccess: () => {
       setComment("");
       setCommentsOpen(true);
     },
   });
+  const toggleCommentSave = async (targetComment) => {
+    if (!targetComment?.id || commentSavePending) return;
+    setCommentSavePending(targetComment.id);
+    try {
+      const action = targetComment.viewerSaved ? savedService.unsaveComment : savedService.saveComment;
+      const response = await action(targetComment.id);
+      const nextSaved = Boolean(response.data?.data?.saved);
+      const next = {
+        ...engagement,
+        comments: (engagement.comments || []).map((item) => item.id === targetComment.id ? { ...item, viewerSaved: nextSaved } : item),
+      };
+      syncSeenEngagementCaches(next);
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+      setNotice(nextSaved ? "Comment saved." : "Comment removed from Saved.");
+    } catch (error) {
+      setNotice(actionError(error));
+    } finally {
+      setCommentSavePending("");
+    }
+  };
   const reportMutation = useMutation({
     mutationFn: (payload) => publicationService.reportSeen(id, payload),
     retry: false,
@@ -676,6 +703,10 @@ export default function SeenReaderPage() {
       noticeLink={noticeLink}
       onBack={backFromOverview}
       onCopyLink={copyLink}
+      onNotice={(message) => {
+        setNotice(message);
+        setNoticeLink("");
+      }}
       onOpenChapter={openChapter}
     />;
   }
@@ -733,6 +764,14 @@ export default function SeenReaderPage() {
         {(engagement.comments || []).map((item) => <article key={item.id}>
           <strong>{item.author?.name || "Fan"}</strong>
           <p>{item.text}</p>
+          <button
+            aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"}
+            disabled={commentSavePending === item.id}
+            onClick={() => toggleCommentSave(item)}
+            type="button"
+          >
+            <FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} />
+          </button>
         </article>)}
       </section> : null}
       <div className="seen-reader-nav">

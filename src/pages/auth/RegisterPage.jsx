@@ -64,7 +64,7 @@ function RegisterPage() {
     setSubmitting(true);
     try {
       await register(form);
-      navigate("/wall", { replace: true });
+      navigate("/seen", { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to create your account. Please try again.");
     } finally {

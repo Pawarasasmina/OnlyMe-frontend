@@ -8,6 +8,7 @@ import { useCreateFeedPost } from "../../../hooks/useFeedPosts";
 import { canCreateFeedPost } from "../../../utils/postPermissions";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import WallVoiceRecorder from "../../voice/WallVoiceRecorder";
+import EntityAttachmentPicker from "../../contentEntities/EntityAttachmentPicker";
 import { formatVoiceTime } from "../../../hooks/useVoiceRecorder";
 import {
   POST_CONTEXTS,
@@ -63,6 +64,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
   const [selectedContext, setSelectedContext] = useState(noteContextOptions[0]);
   const [location, setLocation] = useState("");
   const [files, setFiles] = useState([]);
+  const [attachedEntities, setAttachedEntities] = useState([]);
   const [voiceAttachment, setVoiceAttachment] = useState(null);
   const [error, setError] = useState("");
   const [uploadLabel, setUploadLabel] = useState("");
@@ -75,7 +77,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
   const trimmedText = text.trim();
   const validContextValue = POST_CONTEXTS.includes(selectedContext?.value) ? selectedContext.value : "";
   const canPublish = canPostToHome && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
-  const hasDraft = Boolean(trimmedText || location.trim() || files.length || voiceAttachment);
+  const hasDraft = Boolean(trimmedText || location.trim() || files.length || voiceAttachment || attachedEntities.length);
 
   useEffect(() => {
     filesRef.current = files;
@@ -104,6 +106,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     setSelectedContext(noteContextOptions[0]);
     setLocation("");
     setFiles([]);
+    setAttachedEntities([]);
     setVoiceAttachment(null);
     setError("");
     setUploadLabel("");
@@ -198,6 +201,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     formData.append("text", trimmedText);
     formData.append("context", validContextValue);
     formData.append("location", location.trim());
+    formData.append("entityRefs", JSON.stringify(attachedEntities.map((entity) => ({ entityId: entity.id, entityType: entity.type }))));
     files.forEach((item) => formData.append("media", item.file));
     if (voiceAttachment?.file) {
       formData.append("voice", voiceAttachment.file);
@@ -273,6 +277,8 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
               </button>
             ))}
           </div>
+
+          <EntityAttachmentPicker context={validContextValue} disabled={createMutation.isPending} onChange={setAttachedEntities} value={attachedEntities} />
 
           {files.length ? (
             <div className="home-note-preview-grid">

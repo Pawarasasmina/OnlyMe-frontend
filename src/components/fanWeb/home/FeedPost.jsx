@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { FiBookmark, FiCheck, FiEye, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiRepeat, FiSend, FiShare2, FiSmile } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
+import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import ShareSheet from "../../share/ShareSheet";
 import FanAvatar from "../shared/FanAvatar";
@@ -10,6 +12,8 @@ import VerifiedBadge from "../shared/VerifiedBadge";
 import { useFanToast } from "../shared/FanToastContext";
 import { atseenCreators, atseenReportReasons } from "../../../data/atseenMockData";
 import { useAuth } from "../../../hooks/useAuth";
+import { savedService } from "../../../services/savedService";
+import { analyticsService } from "../../../services/analyticsService";
 import {
   useBlockFeedPostAuthor,
   useCreateFeedPostComment,
@@ -149,6 +153,7 @@ function normalizeFeedPost(post = {}) {
       text: comment.text || "",
       author: comment.author || comment.user || null,
       creatorId: comment.creatorId,
+      viewerSaved: Boolean(comment.viewerSaved || comment.saved),
     }))
     : post.seededComments || [];
 
@@ -170,6 +175,8 @@ function normalizeFeedPost(post = {}) {
     context: post.context || "",
     contextEmoji: post.contextEmoji || "",
     createdAt: post.createdAt || post.publishedAt,
+    attachedEntities: post.attachedEntities || [],
+    entityRefs: post.entityRefs || [],
     isOwner: Boolean(post.isOwner),
     location: post.location || "",
     media,
@@ -201,6 +208,7 @@ function filterForContext(context = "", location = "") {
 
 function FeedPost({ post }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
   const creator = normalized.author;
   const { user } = useAuth();
@@ -216,6 +224,7 @@ function FeedPost({ post }) {
   const viewMutation = useMarkFeedPostViewed();
   const articleRef = useRef(null);
   const commentInputRef = useRef(null);
+  const impressionTrackedRef = useRef(false);
   const viewTrackedRef = useRef(false);
   const [reaction, setReaction] = useState(normalized.viewerReaction);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
@@ -229,6 +238,7 @@ function FeedPost({ post }) {
   const [emojiPanelOpen, setEmojiPanelOpen] = useState(false);
   const [activeEmojiGroupKey, setActiveEmojiGroupKey] = useState(homeCommentEmojiGroups[0].key);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentSavePending, setCommentSavePending] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
@@ -326,28 +336,51 @@ function FeedPost({ post }) {
 
   useEffect(() => {
     viewTrackedRef.current = false;
+    impressionTrackedRef.current = false;
   }, [actionPostId]);
 
   useEffect(() => {
     const target = articleRef.current;
     if (!target || ownsPost || !mongoIdPattern.test(String(actionPostId || ""))) return undefined;
+    let impressionTimer = null;
 
     const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting || viewTrackedRef.current || viewMutation.isPending) return;
-      viewTrackedRef.current = true;
-      viewMutation.mutate(actionPostId, {
-        onSuccess: (result) => {
-          if (Number.isFinite(Number(result?.viewCount))) setViewCount(Number(result.viewCount));
-        },
-        onError: () => {
-          viewTrackedRef.current = false;
-        },
-      });
+      if (!entry.isIntersecting) {
+        if (impressionTimer) window.clearTimeout(impressionTimer);
+        impressionTimer = null;
+        return;
+      }
+      if (!impressionTrackedRef.current && !impressionTimer) {
+        impressionTimer = window.setTimeout(() => {
+          impressionTrackedRef.current = true;
+          impressionTimer = null;
+          analyticsService.queueContentImpression({
+            entityId: actionPostId,
+            entityType: "feed_post",
+            metadata: { placement: "home_feed", position: Number(normalized.position || 0), visibleMs: 500, visibleThreshold: 0.55 },
+            source: "home",
+          });
+        }, 500);
+      }
+      if (!viewTrackedRef.current && !viewMutation.isPending) {
+        viewTrackedRef.current = true;
+        viewMutation.mutate(actionPostId, {
+          onSuccess: (result) => {
+            if (Number.isFinite(Number(result?.viewCount))) setViewCount(Number(result.viewCount));
+          },
+          onError: () => {
+            viewTrackedRef.current = false;
+          },
+        });
+      }
     }, { threshold: 0.55 });
 
     observer.observe(target);
-    return () => observer.disconnect();
-  }, [actionPostId, ownsPost, viewMutation]);
+    return () => {
+      if (impressionTimer) window.clearTimeout(impressionTimer);
+      observer.disconnect();
+    };
+  }, [actionPostId, normalized.position, ownsPost, viewMutation]);
 
   const syncSavedPost = (savedPost) => {
     const next = normalizeFeedPost(savedPost);
@@ -434,6 +467,24 @@ function FeedPost({ post }) {
         },
       }
     );
+  };
+
+  const toggleCommentSave = async (targetComment) => {
+    if (!targetComment?.id || commentSavePending) return;
+    if (!requireDatabasePost()) return;
+    setCommentSavePending(targetComment.id);
+    try {
+      const action = targetComment.viewerSaved ? savedService.unsaveComment : savedService.saveComment;
+      const response = await action(targetComment.id);
+      const nextSaved = Boolean(response.data?.data?.saved);
+      setComments((current) => current.map((item) => item.id === targetComment.id ? { ...item, viewerSaved: nextSaved } : item));
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+      showToast(nextSaved ? "Comment saved." : "Comment removed from Saved.");
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be saved.");
+    } finally {
+      setCommentSavePending("");
+    }
   };
 
   const saveReaction = (nextReaction) => {
@@ -544,6 +595,7 @@ function FeedPost({ post }) {
       setMoreOpen(false);
       setDeleteOpen(true);
     } else if (action === "view") {
+      void analyticsService.trackContentView({ entityId: actionPostId, entityType: "feed_post", source: "home" });
       window.location.assign(postUrl);
       setMoreOpen(false);
     }
@@ -600,6 +652,7 @@ function FeedPost({ post }) {
             {expanded ? "Show less" : "Show more"}
           </button>
         ) : null}
+        <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
             <FiCheck aria-hidden="true" /> {normalized.result}
@@ -729,6 +782,15 @@ function FeedPost({ post }) {
                   <p className="text-xs font-bold text-atseen-text">{commentCreator.name}</p>
                   <p className="mt-1 text-sm leading-6 text-white/85">{comment.text}</p>
                 </div>
+                <button
+                  aria-label={comment.viewerSaved ? "Remove saved comment" : "Save comment"}
+                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${comment.viewerSaved ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted"}`}
+                  disabled={commentSavePending === comment.id}
+                  onClick={() => toggleCommentSave(comment)}
+                  type="button"
+                >
+                  <FiBookmark aria-hidden="true" fill={comment.viewerSaved ? "currentColor" : "none"} />
+                </button>
               </div>
             );
           })}

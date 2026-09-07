@@ -49,9 +49,11 @@ import StatusPicker from "../../components/stories/StatusPicker";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useAuth } from "../../hooks/useAuth";
 import { messageService } from "../../services/messageService";
+import { analyticsService } from "../../services/analyticsService";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
+import { followInvalidationKeys } from "../../utils/savedPeople";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { atseenReportReasons } from "../../data/atseenMockData";
@@ -100,6 +102,10 @@ async function copyText(value) {
   const copied = document.execCommand("copy");
   document.body.removeChild(textarea);
   return copied;
+}
+
+function invalidateFollowSurfaces(queryClient) {
+  return Promise.all(followInvalidationKeys().map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 }
 
 function ProfileViewersSheet({ isOpen, onClose }) {
@@ -448,7 +454,7 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
   });
   const follow = () => run(relationship.following ? "Unfollow" : "Follow", async () => {
     await profileService.toggleFollow(profile.username);
-    await client.invalidateQueries({ queryKey: ["unified-profile"] });
+    await invalidateFollowSurfaces(client);
     onClose();
   });
   const mute = () => run(muted ? "Unmute" : "Mute", async () => {
@@ -521,6 +527,9 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
     onSuccess: () => {
       showSeenConfirmation();
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["wall", "saw-you-today"] });
+      queryClient.invalidateQueries({ queryKey: ["profile", "me", "viewers"] });
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
     },
   });
 
@@ -531,8 +540,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
   }, [seenConfirmation]);
 
   const markProfileSeen = () => {
-    if (relationship.seeSignalSent) showSeenConfirmation();
-    else seeSignal.mutate();
+    if (!seeSignal.isPending) seeSignal.mutate();
   };
   const profileWorld = planets.find((planet) => planet.kind === "PREMIUM_WORLD") || planets[0];
   const worldTarget = profileWorld
@@ -616,7 +624,7 @@ function VisitorFollowButton({ profile, relationship = {} }) {
   const client = useQueryClient();
   const follow = useMutation({
     mutationFn: () => profileService.toggleFollow(profile.username),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["unified-profile"] }),
+    onSuccess: () => invalidateFollowSurfaces(client),
   });
   const following = Boolean(relationship.following);
   return <button className="profile-action-chip" disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? <FiUserCheck /> : <FiUserPlus />} {following ? "Following" : "Follow"}</button>;
@@ -785,6 +793,12 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     enabled: owner || Boolean(username),
     retry: false,
   });
+
+  useEffect(() => {
+    const profileUserId = profileQuery.data?.profile?.ownerUserId;
+    if (owner || !profileUserId || profileQuery.data?.viewerCapabilities?.isOwner) return;
+    void analyticsService.trackProfileView({ profileUserId, source: "profile" });
+  }, [owner, profileQuery.data?.profile?.ownerUserId, profileQuery.data?.viewerCapabilities?.isOwner]);
 
   let body;
   if (profileQuery.isLoading) body = <ProfileSkeleton />;

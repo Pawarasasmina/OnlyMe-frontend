@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { discoverService } from "../services/discoverService";
 import { orbitService } from "../services/orbitService";
 import { profileService } from "../services/profileService";
+import { followInvalidationKeys } from "../utils/savedPeople";
 
 export const discoverKeys = {
   all: ["discover"],
@@ -172,8 +173,7 @@ export function useDiscoverFollowMutation(_params = {}) {
         followers: Number(relationship?.followerCount) || item.followers,
         followersCount: Number(relationship?.followerCount) || item.followersCount,
       }));
-      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["orbit"] });
+      followInvalidationKeys().forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
     },
   });
 }
