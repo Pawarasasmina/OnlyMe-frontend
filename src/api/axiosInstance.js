@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAnalyticsSessionId } from "../services/analyticsSession";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api",
@@ -12,6 +13,7 @@ axiosInstance.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    config.headers["X-Analytics-Session-Id"] = getAnalyticsSessionId();
   }
 
   return config;

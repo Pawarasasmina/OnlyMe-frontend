@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { FiClock, FiEye, FiMessageCircle, FiShare2, FiShield, FiUserCheck, FiUserPlus, FiZap } from "react-icons/fi";
 import { profileService } from "../../services/profileService";
+import { followInvalidationKeys } from "../../utils/savedPeople";
 import DirectAccessOfferModal from "./DirectAccessOfferModal";
 
 export default function ProfileSocialActions({ capabilities, profile, relationship = {} }) {
@@ -12,9 +13,10 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
   const [messagePrompt, setMessagePrompt] = useState(false);
   const [messageBusy, setMessageBusy] = useState(false);
   const [directAccessOpen, setDirectAccessOpen] = useState(false);
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-  const follow = useMutation({ mutationFn: () => profileService.toggleFollow(profile.username), onSuccess: () => { setError(""); refresh(); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to update this follow.") });
-  const signal = useMutation({ mutationFn: () => profileService.toggleSeeSignal(profile.username), onSuccess: () => { setError(""); refresh(); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to send this signal.") });
+  const refreshProfile = () => queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+  const refreshFollowSurfaces = () => Promise.all(followInvalidationKeys().map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+  const follow = useMutation({ mutationFn: () => profileService.toggleFollow(profile.username), onSuccess: () => { setError(""); refreshFollowSurfaces(); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to update this follow.") });
+  const signal = useMutation({ mutationFn: () => profileService.toggleSeeSignal(profile.username), onSuccess: () => { setError(""); refreshProfile(); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to send this signal.") });
   const openMessage = () => {
     if (relationship.following) navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`);
     else setMessagePrompt(true);
@@ -24,7 +26,7 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
     setMessageBusy(true); setError("");
     try {
       await profileService.toggleFollow(profile.username);
-      await refresh();
+      await refreshFollowSurfaces();
       navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`);
     } catch (requestError) { setError(requestError.response?.data?.message || "Unable to follow this creator."); }
     finally { setMessageBusy(false); }

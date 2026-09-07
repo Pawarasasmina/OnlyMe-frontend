@@ -2,6 +2,8 @@
 import { authService } from "../services/authService";
 import { AuthContext } from "./AuthContext";
 import { disconnectMessageSocket, getMessageSocket } from "../services/messageSocket";
+import { analyticsService } from "../services/analyticsService";
+import { clearAnalyticsSession } from "../services/analyticsSession";
 
 const ACCESS_TOKEN_KEY = "onlyme_access_token";
 
@@ -71,10 +73,12 @@ export function AuthProvider({ children }) {
       return nextUser;
     },    logout: async () => {
       try {
+        void analyticsService.endSession().catch(() => {});
         await authService.logout();
       } finally {
         disconnectMessageSocket();
         localStorage.removeItem(ACCESS_TOKEN_KEY);
+        clearAnalyticsSession();
         setUser(null);
       }
     },

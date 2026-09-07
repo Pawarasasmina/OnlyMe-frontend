@@ -4,7 +4,7 @@ import { useLanguage } from "../../hooks/useLanguage";
 
 function FanMobileNav({ unreadMessageCount = 0 }) {
   const { t } = useLanguage();
-  const mobileItems = socialPrimaryNavItems.filter((item) => ["Home", "Seen", "Discover", "Messages", "Profile"].includes(item.label));
+  const mobileItems = socialPrimaryNavItems.filter((item) => ["Seen", "Discover", "Wall", "Messages", "Profile"].includes(item.label));
 
   return (
     <nav

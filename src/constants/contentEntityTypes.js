@@ -1,0 +1,20 @@
+export const CONTENT_ENTITY_TYPES = {
+  BOOK: "book",
+  EXPERIENCE: "experience",
+  JOURNEY: "journey",
+  PLACE: "place",
+};
+
+export const CONTENT_ENTITY_LABELS = {
+  [CONTENT_ENTITY_TYPES.BOOK]: "Book",
+  [CONTENT_ENTITY_TYPES.EXPERIENCE]: "Experience",
+  [CONTENT_ENTITY_TYPES.JOURNEY]: "Journey",
+  [CONTENT_ENTITY_TYPES.PLACE]: "Place",
+};
+
+export const CONTENT_ENTITY_ICONS = {
+  [CONTENT_ENTITY_TYPES.BOOK]: "Book",
+  [CONTENT_ENTITY_TYPES.EXPERIENCE]: "Experience",
+  [CONTENT_ENTITY_TYPES.JOURNEY]: "Journey",
+  [CONTENT_ENTITY_TYPES.PLACE]: "Place",
+};

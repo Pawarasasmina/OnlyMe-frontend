@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { FiCopy } from "react-icons/fi";
 import { publicationService } from "../../services/publicationService";
 
 function SeenCoverPreview({ media }) {
@@ -32,6 +33,23 @@ function SeenCoverPreview({ media }) {
   );
 }
 
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return copied;
+}
+
 export default function SeenOwnerDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -40,6 +58,7 @@ export default function SeenOwnerDetailPage() {
   const editTarget = `/studio/seens/${id}/edit${fromDrafts ? "?from=drafts" : ""}`;
   const [p, setP] = useState();
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const load = () =>
     publicationService
@@ -74,6 +93,12 @@ export default function SeenOwnerDetailPage() {
       </div>
 
       {p.creatorVisibleFeedback ? <p className="mt-5 rounded-xl bg-orange-400/10 p-4">{p.creatorVisibleFeedback}</p> : null}
+      {p.visibility === "LINK_ONLY" && p.shareUrl ? (
+        <div className="mt-5 grid gap-2 rounded-2xl border border-atseen-blue/20 bg-atseen-blue/10 p-4 text-sm text-atseen-blue sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <span className="min-w-0 truncate">{p.shareUrl}</span>
+          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-atseen-blue px-3 py-2 font-black text-atseen-bg" onClick={async () => { if (await copyText(p.shareUrl)) { setCopied(true); window.setTimeout(() => setCopied(false), 1600); } }} type="button"><FiCopy />{copied ? "Copied" : "Copy link"}</button>
+        </div>
+      ) : null}
       <SeenCoverPreview media={p.coverMedia} />
       <p className="mt-5 text-atseen-muted">{p.summary}</p>
 

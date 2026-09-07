@@ -5,9 +5,14 @@ import {
   FiArrowRight,
   FiBarChart2,
   FiCamera,
+  FiCheck,
   FiChevronLeft,
+  FiChevronRight,
+  FiCopy,
   FiEye,
   FiFilm,
+  FiGlobe,
+  FiGrid,
   FiImage,
   FiLink,
   FiList,
@@ -16,32 +21,27 @@ import {
   FiPlus,
   FiSave,
   FiScissors,
+  FiTag,
   FiTrash2,
   FiType,
   FiUpload,
+  FiUsers,
   FiX,
   FiZap,
 } from "react-icons/fi";
 import { publicationService as api } from "../../services/publicationService";
 import { searchService } from "../../services/searchService";
-import {
-  normalizeTags,
-  publicationError,
-  seenCompleteness,
-} from "../../utils/publicationValidation";
+import EntityAttachmentPicker from "../../components/contentEntities/EntityAttachmentPicker";
+import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 
-const empty = {
-  kind: "SEEN",
-  title: "",
-  summary: "",
-  description: "",
-  category: "",
-  tags: [],
-  chapters: [],
-};
-const categories = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
-const defaultSeries = ["Gym Life"];
+const empty = { attachedEntities: [], entityRefs: [], kind: "SEEN", title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
+const fallbackCategories = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
+const audienceOptions = [
+  { icon: FiGlobe, label: "Everyone", value: "PUBLIC" },
+  { description: "Only mutual friends", icon: FiUsers, label: "Friends", value: "FRIENDS" },
+  { description: "Hidden from your profile and Seen", icon: FiLink, label: "Anyone with the link", value: "LINK_ONLY" },
+];
 const VIDEO_RECORDER_TYPES = [
   "video/webm;codecs=vp9,opus",
   "video/webm;codecs=vp8,opus",
@@ -57,31 +57,20 @@ function statusLabel(status, uploading) {
   return status;
 }
 
-function seriesFromTags(tags = []) {
-  const raw = (Array.isArray(tags) ? tags : []).find((tag) =>
-    String(tag).startsWith("series:"),
-  );
-  return raw ? raw.replace(/^series:/, "").replace(/-/g, " ") : "";
-}
+const tagsWithoutSeries = (tags = []) => normalizeTags(tags).filter((tag) => !String(tag).startsWith("series:"));
 
-function tagsWithSeries(tags = [], series = "") {
-  const base = normalizeTags(tags).filter(
-    (tag) => !String(tag).startsWith("series:"),
-  );
-  const value = series.trim().toLowerCase().replace(/\s+/g, "-");
-  return value ? [...base, `series:${value}`] : base;
-}
-
-function hasDraftContent(publication = {}, series = "") {
+function hasDraftContent(publication = {}) {
   return Boolean(
-    publication.title?.trim() ||
-    publication.summary?.trim() ||
-    publication.description?.trim() ||
-    publication.category?.trim() ||
-    normalizeTags(publication.tags).length ||
-    series.trim() ||
-    publication.coverMedia ||
-    publication.chapters?.length,
+    publication.title?.trim()
+      || publication.summary?.trim()
+      || publication.description?.trim()
+      || publication.category?.trim()
+      || publication.attachedEntities?.length
+      || normalizeTags(publication.tags).length
+      || publication.seriesId
+      || publication.series?.id
+      || publication.coverMedia
+      || publication.chapters?.length,
   );
 }
 
@@ -373,21 +362,159 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
   );
 }
 
-export function SeenChapterEditor({
-  busy,
-  chapter,
-  error,
-  onAddBlocks,
-  onAddPlace,
-  onDone,
-  onMediaUpload,
-  onRemoveBlock,
-  onReorderBlocks,
-  onStoryChange,
-  onUpdateBlock,
-  story,
-  status,
-}) {
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return copied;
+}
+
+function SelectionSheet({ children, onClose, subtitle, title }) {
+  const panelRef = useRef(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+      if (event.key !== "Tab") return;
+      const focusables = [...(panelRef.current?.querySelectorAll("button:not(:disabled),input:not(:disabled)") || [])];
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.setTimeout(() => panelRef.current?.querySelector("button,input")?.focus(), 0);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      previous?.focus?.();
+    };
+  }, [onClose]);
+
+  return (
+    <div aria-modal="true" className="seen-settings-sheet-layer" role="dialog">
+      <button aria-label={`Close ${title}`} className="seen-settings-sheet-dim" onClick={onClose} type="button" />
+      <section className="seen-settings-sheet" ref={panelRef}>
+        <span className="seen-settings-sheet-handle" aria-hidden="true" />
+        <header>
+          <h2>{title}</h2>
+          {subtitle ? <p>{subtitle}</p> : null}
+        </header>
+        {children}
+      </section>
+    </div>
+  );
+}
+
+function SheetRow({ description = "", Icon, label, onClick, selected }) {
+  return (
+    <button className={`seen-settings-option ${selected ? "is-selected" : ""}`} onClick={onClick} type="button">
+      {Icon ? <Icon aria-hidden="true" /> : null}
+      <span>
+        <b>{label}</b>
+        {description ? <small>{description}</small> : null}
+      </span>
+      {selected ? <FiCheck aria-hidden="true" /> : null}
+    </button>
+  );
+}
+
+function CategorySheet({ categories: categoryOptions, onClose, onSelect, value }) {
+  return (
+    <SelectionSheet onClose={onClose} title="Category">
+      <div className="seen-settings-options">
+        {categoryOptions.map((category) => (
+          <SheetRow
+            Icon={FiTag}
+            key={category.id || category.name || category}
+            label={category.name || category}
+            onClick={() => onSelect(category.name || category)}
+            selected={value === (category.name || category)}
+          />
+        ))}
+      </div>
+    </SelectionSheet>
+  );
+}
+
+function AudienceSheet({ onClose, onSelect, value }) {
+  return (
+    <SelectionSheet onClose={onClose} title="Audience">
+      <div className="seen-settings-options">
+        {audienceOptions.map((option) => (
+          <SheetRow
+            Icon={option.icon}
+            description={option.description}
+            key={option.value}
+            label={option.label}
+            onClick={() => onSelect(option.value)}
+            selected={value === option.value}
+          />
+        ))}
+      </div>
+    </SelectionSheet>
+  );
+}
+
+function SeriesSheet({ creating, error, items, loading, newSeries, onClose, onCreate, onInput, onRemove, onSelect, selectedId }) {
+  return (
+    <SelectionSheet onClose={onClose} subtitle="Episodes that live together on your profile" title="Series">
+      <div className="seen-settings-options">
+        {loading ? <p className="seen-settings-empty">Loading Series...</p> : null}
+        {!loading && !items.length ? <p className="seen-settings-empty">No Series yet. Create one below.</p> : null}
+        {items.map((item) => (
+          <SheetRow
+            Icon={FiGrid}
+            key={item.id}
+            label={item.name}
+            onClick={() => onSelect(item)}
+            selected={selectedId === item.id}
+          />
+        ))}
+      </div>
+      <form className="seen-series-create" onSubmit={onCreate}>
+        <input
+          aria-label="New series name"
+          maxLength={24}
+          onChange={(event) => onInput(event.target.value)}
+          placeholder="New series..."
+          value={newSeries}
+        />
+        <button aria-label="Create series" disabled={creating || !newSeries.trim()} type="submit"><FiPlus /></button>
+      </form>
+      {error ? <p className="seen-settings-error" role="alert">{error}</p> : null}
+      <button className="seen-settings-remove" disabled={!selectedId} onClick={onRemove} type="button">Remove from series</button>
+    </SelectionSheet>
+  );
+}
+
+function SettingsRow({ Icon, label, onClick, value }) {
+  return (
+    <button className="seen-compose-settings-row" onClick={onClick} type="button">
+      <Icon aria-hidden="true" />
+      <span>{label}</span>
+      <b>{value}</b>
+      <FiChevronRight aria-hidden="true" />
+    </button>
+  );
+}
+
+export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlace, onDone, onMediaUpload, onRemoveBlock, onReorderBlocks, onStoryChange, onUpdateBlock, story, status }) {
   const photoInput = useRef(null);
   const voiceInput = useRef(null);
   const textareaRef = useRef(null);
@@ -1389,14 +1516,18 @@ export default function SeenComposerPage() {
     replyToSeen: replyToSeenId || null,
   }));
   const [replySeen, setReplySeen] = useState(null);
-  const [series, setSeries] = useState("");
   const [newSeries, setNewSeries] = useState("");
-  const [savedSeries, setSavedSeries] = useState(defaultSeries);
-  const [introOpen, setIntroOpen] = useState(
-    () => !localStorage.getItem("atseen_seen_intro_dismissed"),
-  );
+  const [savedSeries, setSavedSeries] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState(fallbackCategories.map((name) => ({ id: name, name })));
+  const [settingsSheet, setSettingsSheet] = useState("");
+  const [seriesLoading, setSeriesLoading] = useState(false);
+  const [seriesCreating, setSeriesCreating] = useState(false);
+  const [seriesError, setSeriesError] = useState("");
+  const [linkOnlyShare, setLinkOnlyShare] = useState(null);
+  const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem("atseen_seen_intro_dismissed"));
   const [status, setStatus] = useState("Saved");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState("");
   const [coverPreview, setCoverPreview] = useState(null);
   const [videoToTrim, setVideoToTrim] = useState(null);
@@ -1424,12 +1555,37 @@ export default function SeenComposerPage() {
         ? publication.chapters
         : [],
       tags: Array.isArray(publication?.tags) ? publication.tags : [],
+      series: publication?.series || null,
+      seriesId: publication?.seriesId || publication?.series?.id || null,
+      visibility: publication?.visibility || "PUBLIC",
     };
     setP(normalizedPublication);
-    setSeries(seriesFromTags(publication.tags));
     dirty.current = false;
     return normalizedPublication;
   };
+
+  const loadSeries = async () => {
+    setSeriesLoading(true);
+    setSeriesError("");
+    try {
+      const response = await api.listMySeries();
+      setSavedSeries(response.data?.data?.items || []);
+    } catch (requestError) {
+      setSeriesError(publicationError(requestError, "Unable to load Series"));
+    } finally {
+      setSeriesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    api.listSeenCategories()
+      .then((response) => {
+        const next = response.data?.data?.categories || [];
+        if (next.length) setCategoryOptions(next);
+      })
+      .catch(() => setCategoryOptions(fallbackCategories.map((name) => ({ id: name, name }))));
+    loadSeries();
+  }, []);
 
   useEffect(() => {
     if (!id) {
@@ -1462,6 +1618,7 @@ export default function SeenComposerPage() {
     dirty.current = true;
     setStatus("Unsaved changes");
     setError("");
+    setLinkOnlyShare(null);
     setP((current) => ({ ...current, ...values }));
   };
 
@@ -1473,7 +1630,10 @@ export default function SeenComposerPage() {
       summary: p.summary || p.description,
       description: p.description,
       category: p.category,
-      tags: tagsWithSeries(p.tags, series),
+      seriesId: p.seriesId || p.series?.id || null,
+      visibility: p.visibility || "PUBLIC",
+      entityRefs: (p.attachedEntities || []).map((entity) => ({ entityId: entity.id, entityType: entity.type })),
+      tags: tagsWithoutSeries(p.tags),
       replyToSeenId: p.replyToSeen || replyToSeenId || undefined,
     });
     const publication = response.data.data.publication;
@@ -1486,7 +1646,7 @@ export default function SeenComposerPage() {
 
   const save = async ({ allowEmpty = false } = {}) => {
     if (busy.current) return null;
-    if (!p.id && !allowEmpty && !hasDraftContent(p, series)) {
+    if (!p.id && !allowEmpty && !hasDraftContent(p)) {
       setStatus("Add something to save as a draft");
       return null;
     }
@@ -1495,17 +1655,18 @@ export default function SeenComposerPage() {
     setError("");
     try {
       let publication = await ensure();
-      publication = (
-        await api.updatePublicationDraft(publication.id, {
-          title: p.title,
-          summary: p.summary || p.description,
-          description: p.description,
-          category: p.category,
-          tags: tagsWithSeries(p.tags, series),
-          replyToSeenId: p.replyToSeen || replyToSeenId || undefined,
-          statusVersion: publication.statusVersion,
-        })
-      ).data.data.publication;
+      publication = (await api.updatePublicationDraft(publication.id, {
+        title: p.title,
+        summary: p.summary || p.description,
+        description: p.description,
+        category: p.category,
+        seriesId: p.seriesId || p.series?.id || null,
+        visibility: p.visibility || "PUBLIC",
+        entityRefs: (p.attachedEntities || []).map((entity) => ({ entityId: entity.id, entityType: entity.type })),
+        tags: tagsWithoutSeries(p.tags),
+        replyToSeenId: p.replyToSeen || replyToSeenId || undefined,
+        statusVersion: publication.statusVersion,
+      })).data.data.publication;
       setP(publication);
       dirty.current = false;
       setStatus("Saved");
@@ -1520,11 +1681,10 @@ export default function SeenComposerPage() {
   };
 
   useEffect(() => {
-    if (!dirty.current || uploading || (!p.id && !hasDraftContent(p, series)))
-      return undefined;
+    if (!dirty.current || uploading || (!p.id && !hasDraftContent(p))) return undefined;
     const timer = setTimeout(save, 1800);
     return () => clearTimeout(timer);
-  }, [p, series, uploading]);
+  }, [p, uploading]);
 
   const activeChapter = (p.chapters || []).find(
     (chapter) => chapter.stableChapterId === activeChapterId,
@@ -1984,26 +2144,47 @@ export default function SeenComposerPage() {
       setError(errors.join(" \u00b7 "));
       return;
     }
+    setSubmitting(true);
     try {
-      await api[
-        publication.status === "CHANGES_REQUESTED"
-          ? "resubmitPublication"
-          : "submitPublication"
-      ](publication.id, publication.statusVersion);
+      const response = await api[publication.status === "CHANGES_REQUESTED" ? "resubmitPublication" : "submitPublication"](publication.id, publication.statusVersion);
+      const published = response.data?.data?.publication;
+      if (published?.visibility === "LINK_ONLY" && published.shareUrl) {
+        setP((current) => ({ ...current, ...published, chapters: current.chapters }));
+        dirty.current = false;
+        setLinkOnlyShare({ copied: false, url: published.shareUrl });
+        setStatus("Link-only Seen published");
+        return;
+      }
       nav(`/studio/seens/${publication.id}${draftSuffix}`);
     } catch (requestError) {
       setError(publicationError(requestError));
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const addNewSeries = () => {
-    const value = newSeries.trim().slice(0, 24);
-    if (!value) return;
-    setSavedSeries((current) => [...new Set([...current, value])]);
-    setSeries(value);
-    setNewSeries("");
-    dirty.current = true;
-    setStatus("Unsaved changes");
+  const createNewSeries = async (event) => {
+    event.preventDefault();
+    const value = newSeries.trim().replace(/\s+/g, " ").slice(0, 24);
+    if (!value || seriesCreating) return;
+    if (savedSeries.some((item) => item.name.toLowerCase() === value.toLowerCase())) {
+      setSeriesError("You already have a Series with that name.");
+      return;
+    }
+    setSeriesCreating(true);
+    setSeriesError("");
+    try {
+      const response = await api.createSeries(value);
+      const created = response.data?.data?.series;
+      if (!created) throw new Error("Series was not created");
+      setSavedSeries((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+      change({ series: created, seriesId: created.id });
+      setNewSeries("");
+    } catch (requestError) {
+      setSeriesError(publicationError(requestError, "Unable to create Series"));
+    } finally {
+      setSeriesCreating(false);
+    }
   };
 
   if (p.id && !["DRAFT", "CHANGES_REQUESTED"].includes(p.status)) {
@@ -2023,6 +2204,19 @@ export default function SeenComposerPage() {
     coverPreview?.kind ||
     (p.coverMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE");
   const statusText = statusLabel(status, uploading);
+  const selectedAudience = audienceOptions.find((option) => option.value === (p.visibility || "PUBLIC")) || audienceOptions[0];
+  const selectedSeriesLabel = p.series?.name || savedSeries.find((item) => item.id === p.seriesId)?.name || "None";
+  const AudienceIcon = selectedAudience.icon;
+  const copyShareLink = async () => {
+    if (!linkOnlyShare?.url) return;
+    try {
+      await copyText(linkOnlyShare.url);
+      setLinkOnlyShare((current) => current ? { ...current, copied: true } : current);
+      window.setTimeout(() => setLinkOnlyShare((current) => current ? { ...current, copied: false } : current), 1600);
+    } catch {
+      setError("Could not copy link.");
+    }
+  };
 
   if (activeChapter) {
     return (
@@ -2204,7 +2398,7 @@ export default function SeenComposerPage() {
           className="seen-compose-chips"
           role="group"
         >
-          {categories.map((category) => (
+          {fallbackCategories.map((category) => (
             <button
               aria-pressed={p.category === category}
               className={p.category === category ? "is-selected" : ""}
@@ -2216,6 +2410,7 @@ export default function SeenComposerPage() {
             </button>
           ))}
         </div>
+        <EntityAttachmentPicker context={p.category} disabled={Boolean(uploading)} onChange={(attachedEntities) => change({ attachedEntities })} value={p.attachedEntities || []} />
 
         <div className="seen-compose-section-title">
           <span>CHAPTERS</span>
@@ -2292,65 +2487,67 @@ export default function SeenComposerPage() {
           ) : null}
         </div>
 
-        <div className="seen-compose-section-title seen-compose-series-title">
-          <span>SERIES</span>
-          <small>{"\u00b7"} optional</small>
+        <div className="seen-compose-settings" aria-label="Seen settings">
+          <SettingsRow Icon={FiTag} label="Category" onClick={() => setSettingsSheet("category")} value={p.category || "-"} />
+          <SettingsRow Icon={FiGrid} label="Series" onClick={() => { setSeriesError(""); setSettingsSheet("series"); }} value={selectedSeriesLabel} />
+          <SettingsRow Icon={AudienceIcon} label="Audience" onClick={() => setSettingsSheet("audience")} value={selectedAudience.label} />
         </div>
-        <div className="seen-compose-series">
-          {savedSeries.map((item) => (
-            <button
-              className={series === item ? "is-selected" : ""}
-              key={item}
-              onClick={() => {
-                setSeries((current) => (current === item ? "" : item));
-                dirty.current = true;
-                setStatus("Unsaved changes");
-              }}
-              type="button"
-            >
-              {item}
-            </button>
-          ))}
-          <label>
-            <span className="sr-only">New series</span>
-            <input
-              onChange={(event) => setNewSeries(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addNewSeries();
-                }
-              }}
-              placeholder={"+ New series..."}
-              value={newSeries}
-            />
-          </label>
-        </div>
-        <p className="seen-compose-series-help">
-          Parts of a series live together on your profile {"\u2014"} people
-          watch them like episodes
-        </p>
-
-        {error ? (
-          <p className="seen-compose-error" role="alert">
-            {error}
-          </p>
-        ) : null}
-        {statusText ? (
-          <p className="seen-compose-status" role="status">
-            {statusText}
-          </p>
+        {error ? <p className="seen-compose-error" role="alert">{error}</p> : null}
+        {statusText ? <p className="seen-compose-status" role="status">{statusText}</p> : null}
+        {linkOnlyShare?.url ? (
+          <div className="seen-compose-share-link">
+            <span>{linkOnlyShare.url}</span>
+            <button onClick={copyShareLink} type="button"><FiCopy aria-hidden="true" />{linkOnlyShare.copied ? "Copied" : "Copy link"}</button>
+          </div>
         ) : null}
 
-        <button
-          className="seen-compose-publish"
-          disabled={Boolean(uploading)}
-          onClick={submit}
-          type="button"
-        >
-          {p.publishedVersion ? "Republish" : "Publish"}
-        </button>
+        <button className="seen-compose-publish" disabled={Boolean(uploading || submitting)} onClick={submit} type="button">{submitting ? "Publishing..." : p.publishedVersion ? "Republish" : "Publish"}</button>
       </div>
+      {settingsSheet === "category" ? (
+        <CategorySheet
+          categories={categoryOptions}
+          onClose={() => setSettingsSheet("")}
+          onSelect={(category) => {
+            change({ category });
+            setSettingsSheet("");
+          }}
+          value={p.category}
+        />
+      ) : null}
+      {settingsSheet === "series" ? (
+        <SeriesSheet
+          creating={seriesCreating}
+          error={seriesError}
+          items={savedSeries}
+          loading={seriesLoading}
+          newSeries={newSeries}
+          onClose={() => setSettingsSheet("")}
+          onCreate={createNewSeries}
+          onInput={(value) => {
+            setNewSeries(value.slice(0, 24));
+            setSeriesError("");
+          }}
+          onRemove={() => {
+            change({ series: null, seriesId: null });
+            setSettingsSheet("");
+          }}
+          onSelect={(item) => {
+            change({ series: item, seriesId: item.id });
+            setSettingsSheet("");
+          }}
+          selectedId={p.seriesId || p.series?.id || ""}
+        />
+      ) : null}
+      {settingsSheet === "audience" ? (
+        <AudienceSheet
+          onClose={() => setSettingsSheet("")}
+          onSelect={(visibility) => {
+            change({ visibility });
+            setSettingsSheet("");
+          }}
+          value={p.visibility || "PUBLIC"}
+        />
+      ) : null}
     </section>
   );
 }

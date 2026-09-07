@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { canAccessSharedSocial, defaultDestinationFor, socialCapabilitiesFor } from "./socialAccess.js";
 
-test("fan and creator default to Wall while admin remains in Admin", () => {
-  assert.equal(defaultDestinationFor("fan"), "/wall");
-  assert.equal(defaultDestinationFor("creator"), "/wall");
+test("fan and creator default to Seen while admin remains in Admin", () => {
+  assert.equal(defaultDestinationFor("fan"), "/seen");
+  assert.equal(defaultDestinationFor("creator"), "/seen");
   assert.equal(defaultDestinationFor("admin"), "/admin/dashboard");
 });
 

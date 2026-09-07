@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 function ApprovedCreatorRoute() {
   const { user } = useAuth();
   if (!user) return <Navigate replace to="/login" />;
-  if (!["fan", "creator"].includes(user.role)) return <Navigate replace to={user.role === "admin" ? "/admin/dashboard" : "/wall"} />;
+  if (!["fan", "creator"].includes(user.role)) return <Navigate replace to={user.role === "admin" ? "/admin/dashboard" : "/seen"} />;
   if (user.creatorApprovalStatus !== "approved") {
     return <Navigate replace state={{ approvalRequired: true }} to="/creator/verification" />;
   }

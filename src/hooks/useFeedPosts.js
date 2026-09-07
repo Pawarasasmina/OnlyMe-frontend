@@ -115,6 +115,7 @@ export function useReactToFeedPost() {
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
     },
   });
 }
@@ -126,6 +127,7 @@ export function useCreateFeedPostComment() {
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
     },
   });
 }

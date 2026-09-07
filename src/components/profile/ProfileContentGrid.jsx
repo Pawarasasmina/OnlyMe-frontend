@@ -1,12 +1,17 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiBookOpen,
+  FiCamera,
+  FiCheck,
   FiFileText,
   FiGrid,
   FiHeadphones,
+  FiEye,
   FiImage,
+  FiLink,
   FiLock,
+  FiMessageSquare,
   FiRepeat,
   FiScissors,
   FiVideo,
@@ -35,11 +40,97 @@ function viewsFor(item) {
   return Number(item?.viewCount || item?.views || item?.steppedInside || item?.metrics?.views || 0);
 }
 
+function creatorNameFor(item) {
+  const creator = item?.creator || item?.author || {};
+  return creator.name || creator.displayName || creator.username || item?.creatorName || "Creator";
+}
+
 function seriesFor(item) {
   const value = item?.series?.name || item?.series?.title || item?.seriesName || item?.seriesTitle || item?.collection?.title || item?.collectionName;
   if (value) return value;
   const seriesTag = (item?.tags || []).find((tag) => String(tag).startsWith("series:"));
   return seriesTag ? String(seriesTag).slice(7).replace(/-/g, " ") : "";
+}
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return copied;
+}
+
+function SeenShareSheet({ item, onClose, shareUrl }) {
+  const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
+  const title = item?.title || "Untitled Seen";
+  const creatorName = creatorNameFor(item);
+  const shortUrl = shareUrl.replace(/^https?:\/\//, "").replace(/^www\./, "");
+
+  const copy = async () => {
+    setError("");
+    try {
+      const ok = await copyText(shareUrl);
+      if (!ok) throw new Error("Copy failed");
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+      return true;
+    } catch {
+      setError("Could not copy link.");
+      return false;
+    }
+  };
+
+  const shareStory = async () => {
+    await copy();
+    onClose();
+    navigate("/create");
+  };
+
+  const shareWhatsApp = () => {
+    const text = `${title} on @seen - ${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <div aria-modal="true" className="profile-share-backdrop is-seen-share" onMouseDown={onClose} role="dialog">
+      <section className="profile-share-sheet is-seen-share" onMouseDown={(event) => event.stopPropagation()}>
+        <span className="profile-share-handle" />
+        <h2>Share</h2>
+        <div className="profile-share-preview">
+          <i className="profile-share-seen-mark"><FiEye aria-hidden="true" /></i>
+          <strong>{title}</strong>
+          <small>a Seen by {creatorName}</small>
+          <span>{shortUrl}</span>
+        </div>
+        <div className="profile-share-actions">
+          <button onClick={copy} type="button">
+            <i>{copied ? <FiCheck /> : <FiLink />}</i>
+            <span>{copied ? "Copied" : "Copy link"}</span>
+          </button>
+          <button onClick={shareStory} type="button">
+            <i><FiCamera /></i>
+            <span>Your story</span>
+          </button>
+          <button onClick={shareWhatsApp} type="button">
+            <i><FiMessageSquare /></i>
+            <span>WhatsApp</span>
+          </button>
+        </div>
+        {error ? <p className="profile-share-error">{error}</p> : null}
+      </section>
+    </div>
+  );
 }
 
 function SeriesSheet({ currentSeries, onClose, onSetSeries }) {
@@ -92,6 +183,7 @@ function SeriesSheet({ currentSeries, onClose, onSetSeries }) {
 
 function SeenPreviewSheet({ item, onClose, owner }) {
   const [seriesOpen, setSeriesOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [localSeries, setLocalSeries] = useState(() => seriesFor(item));
   const media = findMedia(item);
   const chapters = item?.chapters || [];
@@ -99,6 +191,7 @@ function SeenPreviewSheet({ item, onClose, owner }) {
   const isVideo = ["video", "VIDEO"].includes(media?.resourceType || media?.mediaType || media?.type);
   const editTarget = `/studio/seens/${item.id}/edit?from=drafts`;
   const seenTarget = `/seen/${item.id}`;
+  const shareUrl = typeof window === "undefined" ? seenTarget : `${window.location.origin}${seenTarget}`;
 
   return (
     <div aria-modal="true" className="profile-seen-preview-backdrop" onMouseDown={onClose} role="dialog">
@@ -143,9 +236,10 @@ function SeenPreviewSheet({ item, onClose, owner }) {
 
         <div className="profile-seen-preview-actions">
           {owner ? <Link to={editTarget}>Edit</Link> : <Link to={seenTarget}>Open</Link>}
-          <button type="button">Share</button>
+          <button onClick={() => setShareOpen(true)} type="button">Share</button>
           <button aria-label="Close Seen preview" className="is-close" onClick={onClose} type="button"><FiX /></button>
         </div>
+        {shareOpen ? <SeenShareSheet item={item} onClose={() => setShareOpen(false)} shareUrl={shareUrl} /> : null}
         {seriesOpen ? (
           <SeriesSheet
             currentSeries={localSeries}
