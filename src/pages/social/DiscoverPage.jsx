@@ -79,7 +79,6 @@ function DiscoverPage() {
   const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
   const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
   const viewerId = user?.id || user?._id || "";
-  const isFanViewer = String(user?.role || "").toLowerCase() === "fan";
   const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8 }), [activeFilter, viewerId]);
   const discoverQuery = useDiscoverSlidesQuery(queryParams);
   const followMutation = useDiscoverFollowMutation(queryParams);
@@ -93,48 +92,17 @@ function DiscoverPage() {
   const firstPage = pages[0] || {};
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])), [pages]);
   const filters = useMemo(() => (firstPage.filters || []).filter((filter) => SUPPORTED_FILTERS.has(filter.id)), [firstPage.filters]);
-  const friendCandidates = useMemo(() => {
-    const excludeViewer = (items = []) => items.filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""));
-    const mutualFriends = excludeViewer(firstPage.friends || []);
-    if (mutualFriends.length) {
-      return {
-        people: dedupeByProfile(mutualFriends).slice(0, 12),
-        title: "Friends",
-        subtitle: "People you follow who follow you back",
-      };
-    }
-
-    if (!isFanViewer) {
-      return {
-        people: [],
-        title: "Friends",
-        subtitle: "People you follow who follow you back",
-      };
-    }
-
-    const following = excludeViewer(firstPage.following || []);
-    if (following.length) {
-      return {
-        people: dedupeByProfile(following).slice(0, 12),
-        title: "Top friends",
-        subtitle: "People you follow, ranked by recent activity",
-      };
-    }
-
-    const suggested = excludeViewer(firstPage.suggestedUsers || []);
-    return {
-      people: dedupeByProfile(suggested).slice(0, 12),
-      title: "Top friends",
-      subtitle: "People you may want to follow",
-    };
-  }, [firstPage.friends, firstPage.following, firstPage.suggestedUsers, isFanViewer, viewerId]);
   const followingPeople = useMemo(
     () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))).slice(0, 12),
     [firstPage.following, viewerId],
   );
+  const followingStoryPeople = useMemo(
+    () => followingPeople.filter((person) => Array.isArray(person.stories) && person.stories.length > 0),
+    [followingPeople],
+  );
   const activeStoryPerson = useMemo(
-    () => [...(friendCandidates.people || []), ...followingPeople].find((person) => person.id === storyViewer.personId),
-    [followingPeople, friendCandidates.people, storyViewer.personId],
+    () => followingStoryPeople.find((person) => person.id === storyViewer.personId),
+    [followingStoryPeople, storyViewer.personId],
   );
 
   const changeFilter = useCallback((filterId) => {
@@ -286,10 +254,10 @@ function DiscoverPage() {
             </div>
 
             <DiscoverPeopleSections
-              friends={friendCandidates.people}
-              friendSectionTitle={friendCandidates.title}
-              friendSectionSubtitle={friendCandidates.subtitle}
-              following={followingPeople}
+              friends={followingStoryPeople}
+              friendSectionTitle="Following"
+              friendSectionSubtitle="People you already chose"
+              following={[]}
               onOpenFollowingStories={openPersonStories}
               onOpenFriendStories={openPersonStories}
             />

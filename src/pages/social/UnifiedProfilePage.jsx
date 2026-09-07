@@ -541,7 +541,7 @@ function IdentitySection({ onStatusChange, planets = [], profile, relationship =
         ? `/studio/worlds/${profileWorld.id}/edit`
         : profileWorld.status === "PUBLISHED"
           ? `/world/${profileWorld.id}`
-          : `/studio/worlds/${profileWorld.id}`
+          : "/profile"
       : `/world/${profileWorld.id}`
     : isOwner
       ? "/create/premium-world"

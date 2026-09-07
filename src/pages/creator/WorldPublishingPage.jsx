@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
   FiArrowUpRight,
@@ -73,6 +74,15 @@ function blockPayload(block = {}, order) {
     return payload;
   }
 
+  if (type === "POLL") {
+    payload.metadata = {
+      question: block.metadata?.question || "",
+      options: Array.isArray(block.metadata?.options) ? block.metadata.options : [],
+      resultsVisibility: block.metadata?.resultsVisibility || "SUBSCRIBERS",
+    };
+    return payload;
+  }
+
   return { ...payload, text: block.text || "" };
 }
 
@@ -126,12 +136,15 @@ function revokePreviewUrl(story) {
 
 export default function WorldPublishingPage({ publicationId = "" }) {
   const nav = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const coverInputRef = useRef(null);
   const storyPreviewsRef = useRef([]);
   const autoSaveAttemptedStoryIds = useRef(new Set());
   const draftAutoSaveTimer = useRef(null);
+  const pendingDraftSaveRef = useRef(false);
   const saveDraftRef = useRef(null);
+  const worldEditVersionRef = useRef(0);
   const storySaveResolvers = useRef(new Map());
   const [world, setWorld] = useState(freshWorld);
   const [storyPreviews, setStoryPreviews] = useState([]);
@@ -219,13 +232,29 @@ export default function WorldPublishingPage({ publicationId = "" }) {
   };
 
   const updateWorld = (patch) => {
+    worldEditVersionRef.current += 1;
     setWorld((current) => ({ ...current, ...patch }));
     setNotice("Saving...");
     setError("");
     scheduleDraftSave();
   };
 
-  const ensureDraft = async (snapshot = world) => {
+  const preserveNewerLocalEdits = (current, next, requestEditVersion) => {
+    if (worldEditVersionRef.current <= requestEditVersion) return next;
+    return {
+      ...next,
+      category: current.category,
+      chapters: current.chapters,
+      description: current.description,
+      planet: current.planet,
+      pricing: current.pricing,
+      summary: current.summary,
+      tags: current.tags,
+      title: current.title,
+    };
+  };
+
+  const ensureDraft = async (snapshot = world, requestEditVersion = worldEditVersionRef.current) => {
     if (snapshot.id) return snapshot;
     const response = await api.createPublicationDraft({
       category: snapshot.category,
@@ -238,19 +267,23 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       title: snapshot.title,
     });
     const draft = { ...snapshot, ...response.data.data.publication, chapters: snapshot.chapters };
-    setWorld(draft);
+    setWorld((current) => preserveNewerLocalEdits(current, draft, requestEditVersion));
     history.replaceState({}, "", "/create/premium-world");
     return draft;
   };
 
-  const refreshWorld = async (id) => {
+  const refreshWorld = async (id, requestEditVersion = worldEditVersionRef.current) => {
     const response = await api.getMyPublication(id);
     const next = response.data.data.publication;
-    setWorld((current) => ({ ...current, ...next }));
+    setWorld((current) => preserveNewerLocalEdits(
+      current,
+      { ...current, ...next, coverMedia: next.coverMedia || null },
+      requestEditVersion,
+    ));
     return next;
   };
 
-  const attachStoryPreviews = async (draft, previews) => {
+  const attachStoryPreviews = async (draft, previews, requestEditVersion) => {
     const unsaved = previews.filter((preview) => preview.file && !preview.saved);
     if (!unsaved.length) return draft;
 
@@ -268,7 +301,7 @@ export default function WorldPublishingPage({ publicationId = "" }) {
           statusVersion: next.statusVersion,
           title: audience === "FREE" ? "Chapter 1" : "Subscriber stories",
         });
-        next = await refreshWorld(next.id);
+        next = await refreshWorld(next.id, requestEditVersion);
         targetChapter = next.chapters?.find((chapter) => audience === "FREE" ? chapter.isPreview : !chapter.isPreview);
       }
       if (!targetChapter?.stableChapterId) throw new Error("A story chapter could not be prepared.");
@@ -305,7 +338,7 @@ export default function WorldPublishingPage({ publicationId = "" }) {
         statusVersion: next.statusVersion,
         title: targetChapter.title || (audience === "FREE" ? "Chapter 1" : "Subscriber stories"),
       });
-      next = await refreshWorld(next.id);
+      next = await refreshWorld(next.id, requestEditVersion);
     }
 
     setStoryPreviews((current) => {
@@ -316,13 +349,17 @@ export default function WorldPublishingPage({ publicationId = "" }) {
   };
 
   const saveDraft = async () => {
-    if (saving || uploading) return null;
+    if (saving || uploading) {
+      pendingDraftSaveRef.current = true;
+      return null;
+    }
     setSaving(true);
     setError("");
     setNotice("Saving...");
     const snapshot = world;
+    const requestEditVersion = worldEditVersionRef.current;
     try {
-      let draft = await ensureDraft(snapshot);
+      let draft = await ensureDraft(snapshot, requestEditVersion);
       draft = (await api.updatePublicationDraft(draft.id, {
         category: snapshot.category,
         description: snapshot.description,
@@ -346,7 +383,7 @@ export default function WorldPublishingPage({ publicationId = "" }) {
             statusVersion: draft.statusVersion,
           });
         }
-        draft = await refreshWorld(draft.id);
+        draft = await refreshWorld(draft.id, requestEditVersion);
       }
 
       if (storyPreviews.some((preview) => preview.file && !preview.saved) && !draft.chapters?.length) {
@@ -357,10 +394,10 @@ export default function WorldPublishingPage({ publicationId = "" }) {
           statusVersion: draft.statusVersion,
           title: "Chapter 1",
         });
-        draft = await refreshWorld(draft.id);
+        draft = await refreshWorld(draft.id, requestEditVersion);
       }
 
-      draft = await attachStoryPreviews(draft, storyPreviews);
+      draft = await attachStoryPreviews(draft, storyPreviews, requestEditVersion);
       setNotice("Draft saved");
       return draft;
     } catch (requestError) {
@@ -369,6 +406,10 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       return null;
     } finally {
       setSaving(false);
+      if (pendingDraftSaveRef.current) {
+        pendingDraftSaveRef.current = false;
+        scheduleDraftSave();
+      }
     }
   };
 
@@ -397,23 +438,26 @@ export default function WorldPublishingPage({ publicationId = "" }) {
     return () => window.clearTimeout(timer);
   }, [creationStarted, storyPreviews]);
 
-  const uploadCover = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
+  const uploadCover = async (file) => {
     if (!file) return;
+    const requestEditVersion = worldEditVersionRef.current;
     setUploading(true);
     setError("");
     setNotice("Uploading cover...");
     try {
-      const draft = await ensureDraft(world);
+      const draft = await ensureDraft(world, requestEditVersion);
       await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion });
-      await refreshWorld(draft.id);
+      await refreshWorld(draft.id, requestEditVersion);
       setNotice("Cover saved");
     } catch (requestError) {
       setError(publicationError(requestError));
       setNotice("Cover upload failed");
     } finally {
       setUploading(false);
+      if (pendingDraftSaveRef.current) {
+        pendingDraftSaveRef.current = false;
+        scheduleDraftSave();
+      }
     }
   };
 
@@ -461,7 +505,24 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       setError(publicationError(requestError));
     } finally {
       setUploading(false);
+      if (pendingDraftSaveRef.current) {
+        pendingDraftSaveRef.current = false;
+        scheduleDraftSave();
+      }
     }
+  };
+
+  const requestCoverUpload = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.type.startsWith("image/")) {
+      setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
+      return;
+    }
+
+    uploadCover(file);
   };
 
   const removeStoryPreview = (storyId) => {
@@ -582,7 +643,7 @@ export default function WorldPublishingPage({ publicationId = "" }) {
   };
 
   const requestChapterMedia = (mediaType, file) => {
-    if (mediaType === "IMAGE") setCropTarget({ url: URL.createObjectURL(file) });
+    if (mediaType === "IMAGE") setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
     else uploadChapterMedia(mediaType, file);
   };
 
@@ -591,11 +652,35 @@ export default function WorldPublishingPage({ publicationId = "" }) {
     setCropTarget(null);
   };
 
+  const useAdjustedImage = (file) => {
+    const targetKind = cropTarget?.kind;
+    closeImageCrop();
+    if (targetKind === "cover") uploadCover(file);
+    else uploadChapterMedia("IMAGE", file);
+  };
+
   const addPlaceBlock = (label) => {
     const locationLabel = String(label || "").trim().slice(0, 120);
     if (!locationLabel || !activePlanetEditorChapter) return;
     const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
     updateActiveChapterBlocks([...blocks, { id: crypto.randomUUID(), metadata: { location: { label: locationLabel } }, order: blocks.length, text: locationLabel, type: "KEY_POINT" }], "Adding place...");
+  };
+
+  const addStructuredBlocks = (newBlocks) => {
+    if (!activePlanetEditorChapter || !newBlocks?.length) return false;
+    const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
+    return updateActiveChapterBlocks(
+      [...blocks, ...newBlocks].map((block, order) => ({ ...block, order })),
+      "Adding block...",
+    );
+  };
+
+  const updateStructuredBlock = (blockId, changes) => {
+    if (!activePlanetEditorChapter || !blockId) return false;
+    const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory).map((block, order) =>
+      block.id === blockId ? { ...block, ...changes, id: blockId, order } : { ...block, order },
+    );
+    return updateActiveChapterBlocks(blocks, "Saving block...");
   };
 
   const removeChapterBlock = (blockId) => {
@@ -634,7 +719,8 @@ export default function WorldPublishingPage({ publicationId = "" }) {
       const submitted = response.data.data.publication;
       setWorld((current) => ({ ...current, ...submitted }));
       setNotice("Submitted for review");
-      nav(`/studio/worlds/${submitted.id}`);
+      await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      nav("/profile", { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError));
       setNotice("Submit failed");
@@ -699,17 +785,19 @@ export default function WorldPublishingPage({ publicationId = "" }) {
 
   if (activePlanetEditorChapter) return (
     <>
-      {cropTarget ? <ProfileImageCropper kind="chapter" onCancel={closeImageCrop} onSave={(file) => { closeImageCrop(); uploadChapterMedia("IMAGE", file); }} source={cropTarget.url} /> : null}
+      {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} source={cropTarget.url} /> : null}
       <SeenChapterEditor
         busy={chapterSaving}
         chapter={activePlanetEditorChapter}
         error={error}
+        onAddBlocks={addStructuredBlocks}
         onAddPlace={addPlaceBlock}
         onDone={saveChapterStory}
         onMediaUpload={requestChapterMedia}
         onRemoveBlock={removeChapterBlock}
         onReorderBlocks={reorderChapterBlocks}
         onStoryChange={setChapterStory}
+        onUpdateBlock={updateStructuredBlock}
         status={chapterStatus}
         story={chapterStory}
       />
@@ -732,6 +820,8 @@ export default function WorldPublishingPage({ publicationId = "" }) {
   );
 
   return (
+    <>
+    {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
     <article className="world-prototype-page world-publish-page">
       <nav className="planet-create-progress" aria-label="World creation progress">
         {["Identity", "Stories", "Chapters", "Access"].map((label, index) => <span className={index === 0 ? "is-current" : ""} key={label}><b>{index + 1}</b>{label}</span>)}
@@ -819,7 +909,7 @@ export default function WorldPublishingPage({ publicationId = "" }) {
         {coverUrl ? <img alt={`${world.title || "Premium world"} cover`} src={coverUrl} /> : <div className="world-prototype-media-empty">Add a cover</div>}
         <button aria-label={uploading ? "Uploading cover" : "Upload cover media"} className="world-prototype-media-edit" disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">{uploading ? <FiLoader className="world-story-upload-spinner" /> : <FiEdit3 />}</button>
         {coverUrl ? <button aria-label="Remove cover image" className="world-publish-cover-remove" disabled={uploading} onClick={removeCover} type="button"><FiTrash2 /></button> : null}
-        <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" className="sr-only" onChange={uploadCover} ref={coverInputRef} type="file" />
+        <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
       </div>
 
       <textarea
@@ -893,5 +983,6 @@ export default function WorldPublishingPage({ publicationId = "" }) {
         <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? "Submitting" : "Submit"}</button>
       </div>
     </article>
+    </>
   );
 }

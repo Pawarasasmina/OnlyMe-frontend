@@ -15,6 +15,7 @@ import {
   FiVideo,
 } from "react-icons/fi";
 import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
+import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { walletService } from "../../services/walletService";
@@ -166,11 +167,28 @@ function ChapterBlock({ block }) {
   if (block.type === "VIDEO" && block.media?.secureUrl) return <video className="world-chapter-reader-video" controls playsInline preload="metadata" src={block.media.secureUrl} />;
   if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio className="world-chapter-reader-audio" controls preload="metadata" src={block.media.secureUrl} />;
   if (block.type === "LINK" && block.url) return <a className="world-chapter-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || "Open link"} <FiExternalLink /></a>;
+  if (block.type === "POLL") return <ChapterPoll block={block} />;
   return null;
 }
 
+function ChapterPoll({ block }) {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const chapterId = block.chapterId;
+  const poll = useQuery({ queryKey: ["publication-poll", id, chapterId, block.id], queryFn: () => api.getPoll(id, chapterId, block.id).then((response) => response.data.data), enabled: Boolean(id && chapterId), retry: false });
+  const [busy, setBusy] = useState(false);
+  const vote = async (optionIndex) => {
+    if (!user) return;
+    setBusy(true);
+    try { const result = await api.votePoll(id, chapterId, block.id, optionIndex).then((response) => response.data.data); poll.refetch(); return result; } finally { setBusy(false); }
+  };
+  const resultsVisible = poll.data?.resultsVisible !== false;
+  const total = resultsVisible ? poll.data?.totalVotes || 0 : 0;
+  return <section className="world-chapter-reader-poll"><h3>{block.metadata?.question}</h3><div>{(block.metadata?.options || []).map((option, index) => { const count = resultsVisible ? poll.data?.counts?.[index] || 0 : 0; const percent = total ? Math.round(count * 100 / total) : 0; const selected = poll.data?.viewerChoice === index; return <button className={selected ? "is-selected" : ""} disabled={busy || !user} key={option} onClick={() => vote(index)} type="button"><span className="world-poll-fill" style={{ width: `${percent}%` }} /><span>{option}</span><b>{resultsVisible && total ? `${percent}%` : ""}</b></button>; })}</div><p>{!user ? "Sign in to vote" : resultsVisible ? `${total} ${total === 1 ? "vote" : "votes"} · you can change your answer` : poll.data?.viewerChoice == null ? "Results are private to the creator" : "Vote saved · results are private to the creator"}</p></section>;
+}
+
 function ChapterExperience({ chapter, chapterIndex, chapters, onBack, onSelect }) {
-  const blocks = [...(chapter.blocks || [])].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  const blocks = [...(chapter.blocks || [])].sort((a, b) => Number(a.order || 0) - Number(b.order || 0)).map((block) => ({ ...block, chapterId: chapter.stableChapterId }));
   const nextIndex = chapterIndex + 1 < chapters.length ? chapterIndex + 1 : null;
   return (
     <article className="world-chapter-reader">
@@ -203,6 +221,7 @@ export default function WorldReaderPage() {
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
+  const [showPremiumWelcome, setShowPremiumWelcome] = useState(false);
   const query = useQuery({ queryKey: ["world", id], queryFn: () => api.getPublicPublication(id).then((response) => response.data.data.publication), retry: false });
   const memberships = useQuery({ queryKey: ["memberships"], queryFn: () => walletService.getMemberships().then((response) => response.data.data.items), enabled: Boolean(user), retry: false });
   const engagement = useQuery({ queryKey: ["world-engagement", id], queryFn: () => api.getSeenEngagement(id).then((response) => response.data.data.engagement), retry: false });
@@ -227,14 +246,13 @@ export default function WorldReaderPage() {
   if (premium && !owner && !canViewSubscriberStories) {
     return (
       <article className="premium-locked-page">
-        <header className="world-prototype-top">
-          <button aria-label="Back to profile" onClick={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
-        </header>
         <JoinPremiumModal
           authenticated={Boolean(user)}
+          onClose={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
           onRequireAuth={() => navigate("/login", { state: { from: { pathname: location.pathname } } })}
           onSuccess={async () => {
             await Promise.all([query.refetch(), memberships.refetch()]);
+            setShowPremiumWelcome(true);
           }}
           open
           publication={publication}
@@ -273,6 +291,7 @@ export default function WorldReaderPage() {
   };
 
   return (
+    <>
     <article className="world-prototype-page">
       <header className="world-prototype-top">
         <button aria-label="Back to profile" onClick={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
@@ -337,5 +356,7 @@ export default function WorldReaderPage() {
       {chapters.length ? <button className="world-prototype-complete" onClick={completeWorld} type="button"><FiCheck /> Continue</button> : null}
       {activeMembership ? <p className="world-prototype-membership">Member · window renews {new Date(activeMembership.currentPeriodEnd).toLocaleDateString()} · <Link to="/memberships">Manage</Link></p> : null}
     </article>
+    {showPremiumWelcome ? <PremiumWelcomeSheet onClose={() => setShowPremiumWelcome(false)} publication={publication} /> : null}
+    </>
   );
 }

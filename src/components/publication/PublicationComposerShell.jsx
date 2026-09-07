@@ -30,6 +30,8 @@ const emptyBlock = (type, order) => ({
   order,
   ...(MEDIA_TYPES.includes(type)
     ? {}
+    : type === "POLL"
+      ? { metadata: { question: "", options: ["", ""] } }
     : type === "LINK"
       ? { url: "", label: "" }
       : { text: "" }),
@@ -293,6 +295,7 @@ function FanWorldPreview({ publication, onClose }) {
           {block.label || block.url || "Link"}
         </span>
       );
+    if (block.type === "POLL") return <div className="rounded-2xl border border-atseen-blue/20 bg-atseen-blue/5 p-4"><b>{block.metadata?.question}</b><div className="mt-3 grid gap-2">{(block.metadata?.options || []).map((option) => <span className="rounded-xl border border-atseen-line px-3 py-2 text-sm" key={option}>{option}</span>)}</div></div>;
     if (!block.media?.secureUrl)
       return <p className="text-sm text-atseen-muted">Media not added yet</p>;
     if (block.type === "IMAGE")
@@ -1136,6 +1139,12 @@ export default function PublicationComposerShell({ kind }) {
                     }
                     value={block.label}
                   />
+                </div>
+              ) : block.type === "POLL" ? (
+                <div className="mt-3 grid gap-2">
+                  <input className="w-full border p-3" maxLength={180} onChange={(event) => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, question: event.target.value } } : item) })} placeholder="Poll question" value={block.metadata?.question || ""} />
+                  {(block.metadata?.options || ["", ""]).map((option, index) => <input className="w-full border p-3" key={index} maxLength={80} onChange={(event) => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, options: (item.metadata?.options || ["", ""]).map((value, optionIndex) => optionIndex === index ? event.target.value : value) } } : item) })} placeholder={`Choice ${index + 1}`} value={option} />)}
+                  {(block.metadata?.options?.length || 2) < 4 ? <button onClick={() => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, options: [...(item.metadata?.options || ["", ""]), ""] } } : item) })} type="button">+ Add choice</button> : null}
                 </div>
               ) : block.type === "VOICE" ? (
                   <VoiceRecorder

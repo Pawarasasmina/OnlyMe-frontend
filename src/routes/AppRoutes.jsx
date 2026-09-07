@@ -42,14 +42,10 @@ import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
 import AdminModerationComingSoon from "../pages/admin/AdminModerationComingSoon";
-import ContentModeration from "../pages/admin/ContentModeration";
-import ContentModerationDetail from "../pages/admin/ContentModerationDetail";
 import PublicationModeration from "../pages/admin/PublicationModeration";
 import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
 import WorldComposerPage from "../pages/creator/WorldComposerPage";
-import WorldManagerPage from "../pages/creator/WorldManagerPage";
-import WorldOwnerDetailPage from "../pages/creator/WorldOwnerDetailPage";
 import WorldReaderPage from "../pages/social/WorldReaderPage";
 import OrbitPage from "../pages/social/OrbitPage";
 import WalletPage from "../pages/social/WalletPage";
@@ -58,8 +54,8 @@ import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
-import MessageReportsPage from "../pages/admin/MessageReportsPage";
-import MessageReportsOnlyPage from "../pages/admin/MessageReportsOnlyPage";
+import AdminReportListPage from "../pages/admin/AdminReportListPage";
+import AdminReportDetailPage from "../pages/admin/AdminReportDetailPage";
 import SearchPage from "../pages/social/SearchPage";
 import DiscoverPage from "../pages/social/DiscoverPage";
 import PostDetailPage from "../pages/social/PostDetailPage";
@@ -159,8 +155,8 @@ function AppRoutes() {
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
-            <Route path="/studio/worlds" element={<WorldManagerPage />} />
-            <Route path="/studio/worlds/:id" element={<WorldOwnerDetailPage />} />
+            <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
+            <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
           </Route>
           <Route path="/fan/dashboard" element={<Navigate replace to="/wall" />} />
@@ -205,16 +201,20 @@ function AppRoutes() {
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
           <Route path="/admin/verified-creators" element={<VerifiedCreatorManagementPage />} />
-          <Route path="/admin/content-moderation" element={<ContentModeration />} />
-          <Route path="/admin/content-moderation/:id" element={<ContentModerationDetail />} />
+          <Route path="/admin/content-moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
+          <Route path="/admin/content-moderation/:id" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<AdminModerationComingSoon />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
-          <Route path="/admin/message-reports" element={<MessageReportsOnlyPage />} />
-          <Route path="/admin/user-reports" element={<MessageReportsPage />} />
+          <Route path="/admin/message-reports" element={<AdminReportListPage type="message" />} />
+          <Route path="/admin/message-reports/:reportId" element={<AdminReportDetailPage type="message" />} />
+          <Route path="/admin/user-reports" element={<AdminReportListPage type="user" />} />
+          <Route path="/admin/user-reports/:reportId" element={<AdminReportDetailPage type="user" />} />
+          <Route path="/admin/post-reports" element={<AdminReportListPage type="post" />} />
+          <Route path="/admin/post-reports/:reportId" element={<AdminReportDetailPage type="post" />} />
           <Route path="/admin/gifts" element={<GiftManagementPage />} />
         </Route>
       </Route>
