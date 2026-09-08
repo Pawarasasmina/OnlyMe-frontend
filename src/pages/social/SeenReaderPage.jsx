@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMessageCircle, FiMoreHorizontal, FiPlay, FiRepeat, FiSend, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
+import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { publicationService } from "../../services/publicationService";
 import { savedService } from "../../services/savedService";
@@ -87,6 +88,49 @@ function creatorFirstName(creator = {}) {
 
 function creatorRoute(creator = {}) {
   return creator.username ? `/profile/${encodeURIComponent(creator.username)}` : "/discover";
+}
+
+function SeenEngagementBar({ engagement, mutations, onCommentToggle, onCopyLink, saved, commentsOpen }) {
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [reactionFilter, setReactionFilter] = useState("ALL");
+  const reactionKeys = engagement.topReactions?.length
+    ? engagement.topReactions
+    : Object.entries(engagement.reactionBreakdown || {}).sort((left, right) => right[1] - left[1]).map(([key]) => key);
+  const reactionIcons = reactionKeys.slice(0, 3).map((key) => reactionEmoji[key]).filter(Boolean);
+  if (!reactionIcons.length) reactionIcons.push(reactionEmoji.LIKE);
+  const reactors = engagement.reactors || [];
+  const visibleReactors = reactionFilter === "ALL" ? reactors : reactors.filter((item) => item.reaction === reactionFilter);
+  const filterKeys = Object.keys(engagement.reactionBreakdown || {}).sort((left, right) => (engagement.reactionBreakdown[right] || 0) - (engagement.reactionBreakdown[left] || 0));
+
+  return <>
+  <div className="seen-compact-engagement" aria-label="Seen engagement">
+    <button aria-expanded={reactionsOpen} aria-label="Open reactions" className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
+    <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
+    <button aria-label={engagement.viewerShared ? "Remove repost" : "Repost Seen"} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button>
+    <span aria-label={`${formatCount(engagement.viewCount || 0)} views`}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
+    <span className="seen-compact-spacer" />
+    <button aria-label={saved ? "Remove Seen from Saved" : "Save Seen"} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
+    <button aria-label="Share Seen link" onClick={onCopyLink} type="button"><FiSend /></button>
+  </div>
+  {reactionsOpen ? <div className="seen-reactions-layer">
+    <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionsOpen(false)} type="button" />
+    <section aria-label="Seen reactions" aria-modal="true" className="seen-reactions-sheet" role="dialog">
+      <span className="seen-reactions-handle" />
+      <header><h2>Reactions <small>{formatCount(engagement.reactionCount)}</small></h2><button aria-label="Close reactions" onClick={() => setReactionsOpen(false)} type="button"><FiX /></button></header>
+      <nav aria-label="Filter reactions">
+        <button className={reactionFilter === "ALL" ? "is-active" : ""} onClick={() => setReactionFilter("ALL")} type="button">All</button>
+        {filterKeys.map((key) => <button className={reactionFilter === key ? "is-active" : ""} key={key} onClick={() => setReactionFilter(key)} type="button">{reactionEmoji[key] || reactionEmoji.LIKE} <small>{formatCount(engagement.reactionBreakdown[key])}</small></button>)}
+      </nav>
+      <div className="seen-reactions-list">
+        {visibleReactors.map((item) => <article key={item.id}><FanAvatar className="seen-reaction-avatar" name={item.user?.name} size="h-[34px] w-[34px]" src={item.user?.avatar} /><span className="seen-reaction-person-copy"><strong>{item.user?.name || "User"}</strong>{item.user?.username ? <small>@{item.user.username}</small> : null}</span><i>{reactionEmoji[item.reaction] || reactionEmoji.LIKE}</i></article>)}
+        {!visibleReactors.length ? <p>No reactions in this group yet.</p> : null}
+      </div>
+      <footer aria-label="Choose your reaction">
+        {Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} className={engagement.viewerReaction === key ? "is-active" : ""} disabled={mutations.reaction.isPending} key={key} onClick={() => mutations.reaction.mutate(key)} type="button">{icon}</button>)}
+      </footer>
+    </section>
+  </div> : null}
+  </>;
 }
 
 function normalizeSeenDetail(publication, engagement) {
@@ -348,6 +392,9 @@ function SeenReportSheet({ error, isDone, isOpen, isSubmitting, onClose, onDone,
 }
 
 function SeenOverview({
+  comment,
+  commentsOpen,
+  commentSavePending,
   detail,
   engagement,
   mutations,
@@ -355,8 +402,15 @@ function SeenOverview({
   noticeLink,
   onBack,
   onCopyLink,
+  onCommentChange,
+  onCommentSave,
+  onCommentSubmit,
+  onCommentToggle,
   onNotice,
   onOpenChapter,
+  onShareClose,
+  sharePayload,
+  shareSheetOpen,
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -398,9 +452,14 @@ function SeenOverview({
       },
     );
   };
+  const startSeenFromScreen = (event) => {
+    if (event.target.closest?.("a, button, input, textarea, select, video, audio, .seen-detail-engagement")) return;
+    const firstOpenChapter = detail.chapters.findIndex((chapter) => !chapter.locked);
+    if (firstOpenChapter >= 0) onOpenChapter(firstOpenChapter);
+  };
 
   return <>
-  <section className="seen-detail-page">
+  <section className="seen-detail-page is-screen-clickable" onClick={startSeenFromScreen}>
     <header className="seen-detail-header">
       <button aria-label="Back to Seen" className="seen-detail-circle" onClick={onBack} type="button"><FiArrowLeft /></button>
       <div className="seen-detail-title">
@@ -470,6 +529,21 @@ function SeenOverview({
       </div> : <p className="seen-detail-empty">No chapters yet.</p>}
 
       {notice ? <p className="seen-detail-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
+
+      <footer className="seen-detail-engagement">
+        <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={mutations} onCommentToggle={onCommentToggle} onCopyLink={onCopyLink} saved={saved} />
+        {commentsOpen ? <section className="seen-reader-comments">
+          <form onSubmit={onCommentSubmit}>
+            <input aria-label="Add a Seen comment" maxLength={500} onChange={onCommentChange} placeholder="Add a comment..." value={comment} />
+            <button disabled={!comment.trim() || mutations.comment.isPending} type="submit">Post</button>
+          </form>
+          {(engagement.comments || []).map((item) => <article key={item.id}>
+            <strong>{item.author?.name || "Fan"}</strong>
+            <p>{item.text}</p>
+            <button aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"} disabled={commentSavePending === item.id} onClick={() => onCommentSave(item)} type="button"><FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} /></button>
+          </article>)}
+        </section> : null}
+      </footer>
     </div>
   </section>
   <SeenReportSheet
@@ -481,6 +555,7 @@ function SeenOverview({
     onDone={closeReport}
     onSelectReason={submitReport}
   />
+  <ShareSheet isOpen={shareSheetOpen} onClose={onShareClose} payload={sharePayload} variant="seen" />
   </>;
 }
 
@@ -499,6 +574,7 @@ export default function SeenReaderPage() {
   const [commentSavePending, setCommentSavePending] = useState("");
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   const publicationQuery = useQuery({
     queryKey: ["seen-detail", id, accessToken],
@@ -512,6 +588,30 @@ export default function SeenReaderPage() {
   });
 
   const publication = publicationQuery.data;
+  const creatorId = String(publication?.creator?.id || publication?.creator?._id || "");
+  const creatorSeensQuery = useQuery({
+    queryKey: ["seen-creator-sequence", creatorId],
+    queryFn: async () => {
+      const creatorResponse = await publicationService.listPublishedSeens({ creator: creatorId, limit: 50 });
+      const creatorItems = (creatorResponse.data.data.items || []).filter((item) => (
+        String(item.creator?.id || item.creator?._id || "") === creatorId
+      ));
+      if (creatorItems.length > 1) return creatorItems;
+
+      // A running API instance may not yet support the creator filter, or an
+      // intermediate cache may contain only the current Seen. Verify against
+      // the visible feed before deciding that the creator sequence is over.
+      const feedResponse = await publicationService.listPublishedSeens({ limit: 50 });
+      const feedMatches = (feedResponse.data.data.items || []).filter((item) => (
+        String(item.creator?.id || item.creator?._id || "") === creatorId
+      ));
+      const merged = new Map([...creatorItems, ...feedMatches].map((item) => [String(item.id || item._id), item]));
+      return [...merged.values()];
+    },
+    enabled: Boolean(creatorId),
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
   const engagement = engagementQuery.data || DEFAULT_ENGAGEMENT;
   const detail = useMemo(() => normalizeSeenDetail(publication, engagement), [publication, engagement]);
   const chapters = detail.chapters;
@@ -524,12 +624,38 @@ export default function SeenReaderPage() {
   const checklistIds = new Set(checklistPoints.map(blockKey));
   const hasInlineMedia = visibleBlocks.some(isMediaBlock);
   const hasChapterContent = visibleBlocks.some((block) => block.text?.trim() || block.url || block.media?.secureUrl);
-  const usefulActive = Boolean(engagement.viewerReaction);
-  const selectedReaction = reactionEmoji[engagement.viewerReaction] || reactionEmoji.LIKE;
   const shareUrl = useMemo(() => (typeof window === "undefined" ? "" : `${window.location.origin}/seen/${id}`), [id]);
+  const sharePayload = useMemo(() => ({
+    author: {
+      avatarUrl: publication?.creator?.avatar || "",
+      id: publication?.creator?.id || publication?.creator?._id || "",
+      name: creatorName(publication?.creator),
+      username: publication?.creator?.username || "",
+    },
+    canonicalUrl: shareUrl,
+    contentId: id,
+    contentType: "seen",
+    destinationRoute: `/seen/${encodeURIComponent(id)}`,
+    imageUrl: mediaUrl(publication?.coverMedia),
+    textPreview: publication?.title || "Seen",
+    title: publication?.title || "Seen",
+  }), [id, publication, shareUrl]);
+  const nextSeen = useMemo(() => {
+    if (publication?.nextSeen && String(publication.nextSeen.id || publication.nextSeen._id) !== String(id)) {
+      return publication.nextSeen;
+    }
+    const creatorSeens = creatorSeensQuery.data || [];
+    const currentIndex = creatorSeens.findIndex((item) => String(item.id || item._id) === String(id));
+    if (currentIndex < 0) return creatorSeens.find((item) => String(item.id || item._id) !== String(id)) || null;
+    return [
+      ...creatorSeens.slice(currentIndex + 1),
+      ...creatorSeens.slice(0, currentIndex),
+    ].find((item) => String(item.id || item._id) !== String(id)) || null;
+  }, [creatorSeensQuery.data, id, publication?.nextSeen]);
 
   const syncSeenEngagementCaches = (next) => {
     if (!next) return;
+    queryClient.setQueryData(["seen-engagement", id, accessToken], next);
     queryClient.setQueryData(["seen-engagement", id], next);
     queryClient.setQueriesData({ queryKey: ["seen-feed"] }, (current = []) => Array.isArray(current)
       ? current.map((entry) => String(entry.id) === String(id) ? {
@@ -593,7 +719,11 @@ export default function SeenReaderPage() {
     }
   };
 
-  const reactionMutation = useMutation({ mutationFn: () => updateEngagement(engagement.viewerReaction ? publicationService.removeSeenReaction(id, accessToken) : publicationService.reactToSeen(id, "LIKE", accessToken)) });
+  const reactionMutation = useMutation({
+    mutationFn: (reaction) => engagement.viewerReaction === reaction
+      ? updateEngagement(publicationService.removeSeenReaction(id, accessToken))
+      : updateEngagement(publicationService.reactToSeen(id, reaction || "LIKE", accessToken)),
+  });
   const shareMutation = useMutation({
     mutationFn: () => updateEngagement(engagement.viewerShared ? publicationService.removeSeenShare(id, accessToken) : publicationService.shareSeen(id, "", accessToken)),
     onSuccess: (next) => {
@@ -609,8 +739,8 @@ export default function SeenReaderPage() {
   const saveMutation = useMutation({
     mutationFn: () => updateEngagement(publicationService.toggleSeenSave(id, accessToken)),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["seen-engagement", id] });
-      const previous = queryClient.getQueryData(["seen-engagement", id]) || engagement || DEFAULT_ENGAGEMENT;
+      await queryClient.cancelQueries({ queryKey: ["seen-engagement", id, accessToken], exact: true });
+      const previous = queryClient.getQueryData(["seen-engagement", id, accessToken]) || engagement || DEFAULT_ENGAGEMENT;
       const viewerSaved = !previous.viewerSaved;
       const optimistic = {
         ...DEFAULT_ENGAGEMENT,
@@ -662,18 +792,6 @@ export default function SeenReaderPage() {
     const text = comment.trim();
     if (text) commentMutation.mutate(text);
   };
-  const copyLink = async () => {
-    if (navigator.share && publication) {
-      try {
-        await navigator.share({ title: publication.title || "Seen", url: shareUrl });
-        return;
-      } catch {
-        // Fall through to clipboard when native share is cancelled or unavailable.
-      }
-    }
-    await navigator.clipboard?.writeText(shareUrl);
-    setNotice("Seen link copied.");
-  };
   const changeChapter = (nextIndex) => {
     const next = Math.min(Math.max(nextIndex, 0), Math.max(chapters.length - 1, 0));
     setChapterIndex(next);
@@ -686,6 +804,19 @@ export default function SeenReaderPage() {
     nextParams.set("chapter", String(nextIndex));
     setSearchParams(nextParams, { replace: false });
   };
+  const openNextSeen = () => {
+    if (!nextSeen) return;
+    setChapterIndex(0);
+    navigate(`/seen/${encodeURIComponent(nextSeen.id || nextSeen._id)}`);
+  };
+  const continueReader = () => {
+    if (safeChapterIndex < chapters.length - 1) changeChapter(safeChapterIndex + 1);
+    else openNextSeen();
+  };
+  const handleReaderClick = (event) => {
+    if (event.target.closest?.("a, button, input, textarea, select, video, audio")) return;
+    continueReader();
+  };
   const backFromOverview = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate("/seen");
@@ -696,18 +827,28 @@ export default function SeenReaderPage() {
 
   if (!hasChapterParam) {
     return <SeenOverview
+      comment={comment}
+      commentsOpen={commentsOpen}
+      commentSavePending={commentSavePending}
       detail={detail}
       engagement={engagement}
-      mutations={{ save: saveMutation, share: shareMutation, report: reportMutation }}
+      mutations={{ comment: commentMutation, reaction: reactionMutation, save: saveMutation, share: shareMutation, report: reportMutation }}
       notice={notice}
       noticeLink={noticeLink}
       onBack={backFromOverview}
-      onCopyLink={copyLink}
+      onCopyLink={() => setShareSheetOpen(true)}
+      onCommentChange={(event) => setComment(event.target.value)}
+      onCommentSave={toggleCommentSave}
+      onCommentSubmit={submitComment}
+      onCommentToggle={() => setCommentsOpen((value) => !value)}
       onNotice={(message) => {
         setNotice(message);
         setNoticeLink("");
       }}
       onOpenChapter={openChapter}
+      onShareClose={() => setShareSheetOpen(false)}
+      sharePayload={sharePayload}
+      shareSheetOpen={shareSheetOpen}
     />;
   }
 
@@ -735,7 +876,7 @@ export default function SeenReaderPage() {
       {(chapters.length ? chapters : [chapter]).map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index <= safeChapterIndex ? "is-active" : ""} key={item?.stableChapterId || index} onClick={() => changeChapter(index)} type="button" />)}
     </div>
 
-    <article className="seen-reader-content">
+    <article className="seen-reader-content" onClick={handleReaderClick}>
       {hasChapterContent ? <>
         {chapterContent}
         {!hasInlineMedia && publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} className="seen-reader-media" loading="lazy" src={mediaUrl(publication.coverMedia)} /> : null}
@@ -748,13 +889,12 @@ export default function SeenReaderPage() {
     </article>
 
     <footer className="seen-reader-footer">
-      <div className="seen-reader-actions">
-        <button aria-label={usefulActive ? "Remove reaction" : "Mark useful"} className={usefulActive ? "is-active" : ""} disabled={reactionMutation.isPending} onClick={() => reactionMutation.mutate()} type="button"><span>{selectedReaction}</span><b>Useful</b><small>{formatCount(engagement.reactionCount)}</small></button>
-        <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-active" : ""} onClick={() => setCommentsOpen((value) => !value)} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
-        <button aria-label={engagement.viewerShared ? "Remove repost" : "Repost Seen"} className={engagement.viewerShared ? "is-active" : ""} disabled={shareMutation.isPending} onClick={() => shareMutation.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button>
-        <button aria-label="Share Seen link" onClick={copyLink} type="button"><FiSend /></button>
-        <span><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
-      </div>
+      {safeChapterIndex === chapters.length - 1 && nextSeen ? <button className="seen-reader-up-next" onClick={openNextSeen} type="button">
+        {mediaUrl(nextSeen.coverMedia) ? <img alt="" src={mediaUrl(nextSeen.coverMedia)} /> : <span aria-hidden="true"><FiEye /></span>}
+        <span><small>Up next from {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || "Next Seen"}</strong><em>{nextSeen.chapters?.length || 0} chapters</em></span>
+        <FiChevronRight aria-hidden="true" />
+      </button> : null}
+      <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
       {notice ? <p className="seen-reader-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
       {commentsOpen ? <section className="seen-reader-comments">
         <form onSubmit={submitComment}>
@@ -775,9 +915,14 @@ export default function SeenReaderPage() {
         </article>)}
       </section> : null}
       <div className="seen-reader-nav">
-        {safeChapterIndex < chapters.length - 1 ? <button onClick={() => changeChapter(safeChapterIndex + 1)} type="button">Next {"\u2192"}</button> : <strong>Seen complete</strong>}
+        {safeChapterIndex < chapters.length - 1
+          ? <button onClick={continueReader} type="button">Next {"\u2192"}</button>
+          : nextSeen
+            ? <button onClick={openNextSeen} type="button">Next Seen {"\u2192"}</button>
+            : <strong>{creatorSeensQuery.isLoading ? "Finding next Seen..." : "Seen complete"}</strong>}
         <button aria-label="Close Seen reader" onClick={() => navigate(`/seen/${id}`, { replace: true })} type="button"><FiX /></button>
       </div>
     </footer>
+    <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
   </section>;
 }
