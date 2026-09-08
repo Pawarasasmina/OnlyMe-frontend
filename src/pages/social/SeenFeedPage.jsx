@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiBookmark, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlus, FiRepeat, FiSearch, FiSend, FiSlash } from "react-icons/fi";
+import { FiBookmark, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlus, FiRepeat, FiSearch, FiSend, FiSlash, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -15,6 +15,7 @@ import { canCreateStory } from "../../utils/storyPermissions";
 import { useAuth } from "../../hooks/useAuth";
 import { useSocialCapabilities } from "../../hooks/useSocialCapabilities";
 import { atseenReportReasons } from "../../data/atseenMockData";
+import { relativeTime } from "../../utils/relativeTime";
 
 const seenReactionOptions = [
   { key: "LIKE", label: "Support", icon: "\uD83E\uDD1D" },
@@ -46,6 +47,14 @@ function formatDuration(seconds) {
   return `${minutes}:${rest}`;
 }
 
+function formatReadTime(chapters = []) {
+  const words = chapters.reduce((total, chapter) => total + (chapter.blocks || []).reduce((count, block) => {
+    const text = [block.text, block.label, block.url].filter(Boolean).join(" ");
+    return count + text.trim().split(/\s+/u).filter(Boolean).length;
+  }, 0), 0);
+  return Math.max(1, Math.ceil(words / 220));
+}
+
 function normalizeSeen(raw = {}) {
   const media = raw.coverMedia || {};
   const creator = raw.creator || {};
@@ -53,6 +62,7 @@ function normalizeSeen(raw = {}) {
     id: String(raw.id || raw._id),
     title: raw.title || "Untitled Seen",
     description: raw.description || raw.summary || "",
+    category: raw.category || raw.topic || "",
     createdAt: raw.publishedAt || raw.createdAt || "",
     media: {
       type: String(media.mediaType || media.resourceType || "IMAGE").toLowerCase().includes("video") ? "video" : "image",
@@ -62,6 +72,7 @@ function normalizeSeen(raw = {}) {
     chapters: (raw.chapters || []).map((chapter, index) => ({
       id: chapter.stableChapterId || chapter.id || `${raw.id}-${index}`,
       title: chapter.title || `Chapter ${index + 1}`,
+      blocks: chapter.blocks || [],
     })),
     attachedEntities: raw.attachedEntities || [],
     creator: {
@@ -92,6 +103,7 @@ function normalizeSeen(raw = {}) {
       avatarUrl: raw.previewComment.author?.avatar || "",
       text: raw.previewComment.text || "",
     } : null,
+    readMinutes: formatReadTime(raw.chapters || []),
   };
 }
 
@@ -104,12 +116,12 @@ function actionError(error) {
 function SeenSkeleton() {
   return <div className="seen-proto-skeleton" aria-label="Loading Seen">
     <div className="seen-proto-skeleton-head"><span /><div><i /><b /></div></div>
-    <div className="seen-proto-skeleton-media" />
+    <div className="seen-proto-skeleton-content"><div className="seen-proto-skeleton-media" /><div><span /><span /><span /></div></div>
     <div className="seen-proto-skeleton-lines"><span /><span /><em /></div>
   </div>;
 }
 
-function SeenHeader({ activeTab, onTabChange, onCreate, onSearch }) {
+function SeenHeader({ activeTab, onTabChange, onCreate, onSearch, onSpark }) {
   return <header className="seen-proto-header">
     <nav aria-label="Seen feed tabs" className="seen-proto-tabs">
       <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><FiEye aria-hidden="true" />Seen</button>
@@ -118,20 +130,23 @@ function SeenHeader({ activeTab, onTabChange, onCreate, onSearch }) {
     <div className="seen-proto-header-actions">
       <button aria-label="Create a Seen" onClick={onCreate} type="button"><FiPlus /></button>
       <button aria-label="Search" onClick={onSearch} type="button"><FiSearch /></button>
+      <button aria-label="Open Orbit" onClick={onSpark} type="button"><FiZap /></button>
     </div>
   </header>;
 }
 
-function CreatorHeader({ creator, onMenuToggle, menuOpen }) {
+function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, menuOpen, views }) {
   const profileTo = creator.username ? `/profile/${encodeURIComponent(creator.username)}` : "/profile";
+  const meta = [creator.location || creator.status || (creator.username ? `@${creator.username}` : "At seen"), relativeTime(createdAt, "")].filter(Boolean).join(" - ");
   return <div className="seen-item-creator">
     <Link aria-label={`Open ${creator.displayName} profile`} className={`seen-avatar-ring ${creator.hasUnseenStory ? "has-story" : ""}`} to={profileTo}>
       <FanAvatar alt="" name={creator.displayName} size="h-[31px] w-[31px]" src={creator.avatarUrl} />
     </Link>
     <Link className="seen-creator-copy" to={profileTo}>
-      <strong>{creator.displayName}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
-      <span>{creator.location || creator.status || (creator.username ? `@${creator.username}` : "At seen")}</span>
+      <strong>{creator.displayName}{isOwn ? <em> - you</em> : null}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
+      <span>{meta}</span>
     </Link>
+    <span className="seen-creator-views"><FiEye aria-hidden="true" />{formatCount(views)}</span>
     <button aria-expanded={menuOpen} aria-label="Open Seen options" className="seen-more-button" onClick={onMenuToggle} type="button"><FiMoreHorizontal /></button>
   </div>;
 }
@@ -180,26 +195,40 @@ function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
   return <div className="seen-feed-options-layer"><button aria-label="Close report" className="seen-feed-options-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="seen-feed-options-sheet" role="dialog"><span className="seen-feed-options-handle" /><h2>{done ? "Report received" : `Report ${title}`}</h2>{done ? <div className="p-4"><p className="text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="mt-4 w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={onClose} type="button">Done</button></div> : <div className="seen-feed-options-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this Seen?</p>{atseenReportReasons.map((reason) => <button disabled={pending} key={reason} onClick={() => onReport(reason)} type="button"><FiFlag /><span><b>{reason}</b></span></button>)}</div>}</section></div>;
 }
 
-function SeenMedia({ item, target }) {
-  const chapterCount = item.chapters.length;
+function CompactSeenMedia({ item, target }) {
   return <Link className="seen-media" to={target}>
     {item.media.url ? <img alt={`${item.title} cover`} loading="lazy" src={item.media.url} /> : <span className="seen-media-fallback">@seen</span>}
-    <span className="seen-media-shade" aria-hidden="true" />
     {item.media.type === "video" && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
-    <span className="seen-media-copy">
-      <strong>{item.title}</strong>
-      {chapterCount > 1 ? <small>{chapterCount} chapters</small> : null}
-    </span>
   </Link>;
 }
 
-function ChapterPreview({ chapter, target }) {
-  if (!chapter) return null;
-  return <Link className="seen-chapter-preview" to={target}>
-    <span>01</span>
-    <strong>{chapter.title}</strong>
-    <em>Open ›</em>
-  </Link>;
+function SeenSummary({ item, target }) {
+  const chapterCount = item.chapters.length;
+  const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
+  const meta = [item.category, `${chapterCount} ${chapterWord}`, `~${item.readMinutes} min`].filter(Boolean).join(" - ");
+  return <div className="seen-summary">
+    <CompactSeenMedia item={item} target={target} />
+    <Link className="seen-summary-copy" to={target}>
+      <strong>{item.title}</strong>
+      <small>{meta}</small>
+      {item.description ? <p>{item.description}</p> : null}
+    </Link>
+  </div>;
+}
+
+function ChapterPreviewList({ chapters, target }) {
+  if (!chapters.length) return null;
+  const visible = chapters.slice(0, 3);
+  const extra = chapters.length - visible.length;
+  return <div className="seen-chapter-list" aria-label="Seen chapters">
+    {visible.map((chapter, index) => (
+      <Link className="seen-chapter-preview" key={chapter.id || index} to={`${target}?chapter=${index}`}>
+        <span>{String(index + 1).padStart(2, "0")}</span>
+        <strong>{chapter.title}</strong>
+      </Link>
+    ))}
+    {extra > 0 ? <Link className="seen-chapter-preview is-more" to={target}><span>+{extra}</span><strong>more inside</strong></Link> : null}
+  </div>;
 }
 
 function PreviewComment({ comment }) {
@@ -277,7 +306,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
   </div>;
 }
 
-function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedUpdate }) {
+function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedUpdate }) {
   const item = normalizeSeen(rawItem);
   const target = `/seen/${encodeURIComponent(item.id)}`;
   const queryClient = useQueryClient();
@@ -428,10 +457,12 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
   const menuPending = saveMutation.isPending || repostMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
   const pending = reactionMutation.isPending || repostMutation.isPending || saveMutation.isPending || commentMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
 
+  const isOwn = String(item.creator.id || "") === String(currentUserId || "");
+
   return <article className={reactionPickerOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}>
     {reactionPickerOpen ? <button aria-label="Close reactions" className="seen-reaction-scrim" onClick={() => setReactionPickerOpen(false)} type="button" /> : null}
     <div className="seen-item-menu-wrap">
-      <CreatorHeader creator={item.creator} menuOpen={menuOpen} onMenuToggle={() => setMenuOpen((value) => !value)} />
+      <CreatorHeader createdAt={item.createdAt} creator={item.creator} isOwn={isOwn} menuOpen={menuOpen} onMenuToggle={() => setMenuOpen((value) => !value)} views={item.engagement.views} />
       <SeenOptionsSheet
         creatorName={item.creator.displayName}
         isOpen={menuOpen}
@@ -455,10 +486,9 @@ function SeenFeedItem({ item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFe
     </div>
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
-    <SeenMedia item={item} target={target} />
     <div className="seen-feed-copy">
-      {item.description ? <p className="seen-description">{item.description}</p> : null}
-      <ChapterPreview chapter={item.chapters[0]} target={target} />
+      <SeenSummary item={item} target={target} />
+      <ChapterPreviewList chapters={item.chapters} target={target} />
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       <PreviewComment comment={item.previewComment} />
       <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={copyLink} onReactOpen={() => { setMenuOpen(false); setReactionPickerOpen(true); }} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
@@ -535,7 +565,7 @@ export default function SeenFeedPage() {
   };
 
   return <section className="seen-prototype-page">
-    <SeenHeader activeTab={tab} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onTabChange={setTab} />
+    <SeenHeader activeTab={tab} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onSpark={() => navigate("/orbit")} onTabChange={setTab} />
     <FanCreateSheet
       canCreateSeen={capabilities.canCreate}
       canCreateWorld={capabilities.isApprovedCreator}
@@ -556,7 +586,7 @@ export default function SeenFeedPage() {
     {query.isLoading ? <div className="seen-feed-list"><SeenSkeleton /><SeenSkeleton /></div> : null}
     {query.isError ? <div className="seen-feed-error"><p>Couldn’t load Seens.</p><button onClick={() => query.refetch()} type="button">Try again</button></div> : null}
     {!query.isLoading && !query.isError ? items.length ? <div className="seen-feed-list">
-      {items.map((item) => <SeenFeedItem item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedUpdate={updateFeedItem} />)}
+      {items.map((item) => <SeenFeedItem currentUserId={user?.id || user?._id || ""} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedUpdate={updateFeedItem} />)}
       <EndState onCreate={openCreate} />
     </div> : <EmptyState tab={tab} /> : null}
   </section>;

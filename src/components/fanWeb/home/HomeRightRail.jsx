@@ -150,12 +150,18 @@ function FreshSeensCard({ seens = [] }) {
 }
 
 function HomeRailFooter() {
-  const labels = ["About", "Creators", "Terms", "Privacy", "Help"];
+  const links = [
+    ["About", "/settings/support/about"],
+    ["Creators", "/discover"],
+    ["Terms", "/settings/support/terms"],
+    ["Privacy", "/settings/privacy"],
+    ["Help", "/settings/support/help"],
+  ];
 
   return (
     <footer className="home-rail-footer" aria-label="@seen information">
       <div aria-label="Home feed information">
-        {labels.map((label) => <button key={label} type="button">{label}</button>)}
+        {links.map(([label, to]) => <Link key={label} to={to}>{label}</Link>)}
       </div>
       <p>@seen - We see you. Every day.</p>
     </footer>

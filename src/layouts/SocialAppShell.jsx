@@ -128,7 +128,9 @@ function SocialAppShell({ children = null }) {
             </header> : null}
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
-              : isDiscoverPage || isHomePage || isSeenPage
+              : isSeenPage
+              ? "seen-shell-main social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
+              : isDiscoverPage || isHomePage
               ? "social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-[980px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 md:h-screen md:px-0 md:pb-12 md:pt-9"
               : isMessagesPage
                 ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-none px-0 py-0 md:h-screen"

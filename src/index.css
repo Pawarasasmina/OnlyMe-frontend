@@ -4025,8 +4025,10 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 .home-rail-fresh-row > span:first-child { background: radial-gradient(circle at 30% 20%,rgba(255,255,255,.2),transparent 36%),#222833; }
 .home-rail-footer { display: grid; gap: 9px; padding: 8px 6px 0; color: rgba(255,255,255,.44); font-size: 11px; font-weight: 700; }
 .home-rail-footer > div { display: flex; flex-wrap: wrap; gap: 9px; }
-.home-rail-footer button { color: inherit; cursor: pointer; font: inherit; }
-.home-rail-footer button:hover { color: rgba(255,255,255,.7); }
+.home-rail-footer button,
+.home-rail-footer a { color: inherit; cursor: pointer; font: inherit; }
+.home-rail-footer button:hover,
+.home-rail-footer a:hover { color: rgba(255,255,255,.7); }
 .home-rail-footer p { color: rgba(255,255,255,.38); }
 .home-rail-discover-link { display: inline-flex; width: fit-content; align-items: center; gap: 6px; color: rgba(156,203,255,.72); font-size: 12px; font-weight: 900; }
 @media (max-width: 1239px) { .home-prototype-page { grid-template-columns: minmax(0,604px); justify-content: center; } .home-prototype-main { border-right: 0; padding-right: 0; } .home-right-rail { display: none; } }
@@ -14784,5 +14786,344 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   .social-app-shell:has(.activity-prototype-page) .social-app-frame > .fan-web-sidebar {
     width: 240px !important;
     flex-basis: 240px !important;
+  }
+}
+
+/* /seen desktop redesign: compact v113 feed, scoped to the Seen shell. */
+.social-app-shell:has(.seen-shell-main) {
+  --seen-bg: #0A0C0F;
+  --seen-surface: #12151B;
+  --seen-surface-2: #181D25;
+  --seen-blue: #9CCBFF;
+  --seen-blue-2: #6FA9E8;
+  --seen-line: rgba(255,255,255,.08);
+  --seen-text-2: rgba(255,255,255,.62);
+  --seen-text-3: rgba(255,255,255,.4);
+  background: var(--seen-bg);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-prototype-page {
+  width: min(600px, 100vw);
+  max-width: 600px;
+  min-height: 100%;
+  border-right: 1px solid rgba(255,255,255,.055);
+  border-left: 1px solid rgba(255,255,255,.055);
+  background: var(--seen-bg);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-header {
+  min-height: 72px;
+  padding: 16px 20px 10px;
+}
+
+.seen-creator-copy strong em {
+  color: var(--seen-text-2, rgba(255,255,255,.62));
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.seen-creator-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--seen-text-3, rgba(255,255,255,.4));
+  font-size: 10.5px;
+  font-weight: 750;
+}
+
+.seen-creator-views svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 1.9;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-feed-item {
+  padding: 15px 0 4px;
+  border-bottom: 7px solid rgba(255,255,255,.028);
+  background: var(--seen-bg);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-feed-copy {
+  padding: 0 20px;
+}
+
+.seen-summary {
+  display: grid;
+  grid-template-columns: 96px minmax(0,1fr);
+  gap: 17px;
+  align-items: start;
+}
+
+.seen-summary .seen-media {
+  width: 96px;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+}
+
+.seen-summary .seen-media img,
+.seen-summary .seen-media-fallback {
+  border-radius: inherit;
+}
+
+.seen-summary .seen-media:hover img {
+  transform: scale(1.025);
+}
+
+.seen-summary .seen-media img {
+  transition: transform .18s ease;
+}
+
+.seen-summary .seen-video-pill {
+  top: auto;
+  right: 6px;
+  bottom: 7px;
+  padding: 2px 7px;
+  font-size: 9px;
+}
+
+.seen-summary-copy {
+  display: block;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.seen-summary-copy strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #fff;
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.seen-summary-copy small {
+  display: block;
+  overflow: hidden;
+  margin-top: 5px;
+  color: var(--seen-text-3, rgba(255,255,255,.4));
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seen-summary-copy p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 8px;
+  color: var(--seen-text-2, rgba(255,255,255,.62));
+  font-size: 11.75px;
+  font-weight: 500;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.seen-chapter-list {
+  display: grid;
+  gap: 3px;
+  margin-top: 14px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview {
+  display: grid;
+  grid-template-columns: 22px minmax(0,1fr);
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview span {
+  color: var(--seen-blue, #9CCBFF);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview strong {
+  color: var(--seen-text-2, rgba(255,255,255,.62));
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview:hover strong {
+  color: #fff;
+}
+
+.seen-chapter-preview.is-more span,
+.seen-chapter-preview.is-more strong {
+  color: var(--seen-text-3, rgba(255,255,255,.4));
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-preview-comment {
+  margin-top: 11px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-engagement-bar {
+  margin-top: 12px;
+  padding: 10px 0 5px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-skeleton-content {
+  display: grid;
+  grid-template-columns: 96px minmax(0,1fr);
+  gap: 17px;
+  padding: 0 20px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-skeleton-media {
+  width: 96px;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+}
+
+.seen-proto-skeleton-content > div:last-child {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  padding-top: 6px;
+}
+
+.seen-proto-skeleton-content > div:last-child span {
+  display: block;
+  height: 11px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#12151B,#181D25,#12151B);
+  background-size: 200% 100%;
+  animation: atseen-shimmer 1.4s infinite;
+}
+
+.seen-proto-skeleton-content > div:last-child span:first-child {
+  width: 92%;
+  height: 18px;
+}
+
+.seen-proto-skeleton-content > div:last-child span:nth-child(2) {
+  width: 74%;
+}
+
+.seen-proto-skeleton-content > div:last-child span:nth-child(3) {
+  width: 100%;
+  height: 30px;
+}
+
+@media (min-width: 1241px) {
+  .social-app-shell:has(.seen-shell-main) .social-app-frame {
+    width: 1202px !important;
+    max-width: 1202px !important;
+    justify-content: center;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .fan-web-sidebar {
+    width: 262px !important;
+    flex: 0 0 262px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll {
+    width: 600px !important;
+    flex: 0 0 600px !important;
+    margin-left: 0 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .seen-shell-main {
+    width: 600px;
+    max-width: 600px;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-shared-right-rail {
+    display: grid !important;
+    width: 340px !important;
+    flex: 0 0 340px !important;
+    padding: 30px 26px 30px 24px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .home-right-rail {
+    width: 340px !important;
+    gap: 15px;
+    padding: 30px 26px 30px 24px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .home-rail-live-card,
+  .social-app-shell:has(.seen-shell-main) .home-rail-card,
+  .social-app-shell:has(.seen-shell-main) .home-rail-trending {
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 20px;
+    background: rgba(255,255,255,.028);
+    padding: 17px;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .home-rail-live-card {
+    min-height: 86px;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .home-rail-card h2,
+  .social-app-shell:has(.seen-shell-main) .home-rail-live-card strong {
+    font-size: 13.5px;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .home-rail-trending {
+    min-height: 145px;
+    padding: 0;
+  }
+}
+
+@media (min-width: 881px) and (max-width: 1240px) {
+  .social-app-shell:has(.seen-shell-main) .social-app-frame {
+    width: min(862px, 100vw) !important;
+    max-width: min(862px, 100vw) !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll {
+    width: min(600px, calc(100vw - 262px)) !important;
+    flex: 0 1 min(600px, calc(100vw - 262px)) !important;
+    margin-left: 0 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .seen-shell-main {
+    width: min(600px, calc(100vw - 262px));
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 880px) {
+  .social-app-shell:has(.seen-shell-main) .seen-prototype-page {
+    width: 100vw;
+    max-width: 100vw;
+    border-right: 0;
+    border-left: 0;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .social-app-frame,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .seen-shell-main {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    flex: 0 0 100vw !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) > nav[aria-label="Mobile fan navigation"] {
+    display: block !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .seen-summary {
+    grid-template-columns: 88px minmax(0,1fr);
+    gap: 13px;
+  }
+
+  .seen-summary .seen-media {
+    width: 88px;
   }
 }
