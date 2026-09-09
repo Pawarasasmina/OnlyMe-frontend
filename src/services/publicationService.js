@@ -26,6 +26,7 @@ export const publicationService = {
   getPoll: (id, chapterId, blockId) => axiosInstance.get(`/publications/${id}/chapters/${chapterId}/polls/${blockId}`),
   votePoll: (id, chapterId, blockId, optionIndex) => axiosInstance.put(`/publications/${id}/chapters/${chapterId}/polls/${blockId}`, { optionIndex }),
   getSeenEngagement: (id, params) => axiosInstance.get(`/publications/${id}/engagement`, { params }),
+  listSeenReactors: (id, params) => axiosInstance.get(`/publications/${id}/reactions`, { params }),
   reactToSeen: (id, reaction, accessToken = "") => axiosInstance.put(`/publications/${id}/reaction`, { reaction, accessToken }),
   removeSeenReaction: (id, accessToken = "") => axiosInstance.delete(`/publications/${id}/reaction`, { data: { accessToken } }),
   commentOnSeen: (id, text, accessToken = "") => axiosInstance.post(`/publications/${id}/comments`, { text, accessToken }),

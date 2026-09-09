@@ -13558,14 +13558,22 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   line-height: 1;
 }
 
-.seen-reaction-scrim {
+.seen-sheet-lock {
+  overflow: hidden;
+}
+
+.seen-reactions-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.seen-reactions-scrim {
   position: absolute;
   inset: 0;
-  z-index: 12;
-  display: block;
   width: 100%;
   border: 0;
-  background: rgba(0,0,0,.68);
+  background: rgba(0,0,0,.58);
   cursor: default;
 }
 
@@ -13580,23 +13588,28 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 }
 
 .seen-reaction-sheet {
-  position: relative;
-  z-index: 30;
-  margin: 12px -20px -4px;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 91;
+  width: min(548px,100vw);
+  max-height: min(86dvh,560px);
   border: 1px solid rgba(255,255,255,.08);
   border-bottom: 0;
-  border-radius: 15px 15px 0 0;
-  background: #1c232e;
-  padding: 14px 24px 26px;
-  box-shadow: 0 -20px 60px rgba(0,0,0,.55);
+  border-radius: 16px 16px 0 0;
+  background: #0C0F14;
+  padding: 14px 24px max(36px,env(safe-area-inset-bottom));
+  box-shadow: 0 -26px 80px rgba(0,0,0,.55);
+  transform: translateX(-50%);
+  animation: seenMoreSheetIn .32s cubic-bezier(.32,.72,0,1) both;
 }
 
 .seen-reaction-handle {
   width: 40px;
-  height: 5px;
-  margin: 0 auto 28px;
+  height: 4px;
+  margin: 0 auto 26px;
   border-radius: 999px;
-  background: rgba(255,255,255,.34);
+  background: rgba(255,255,255,.28);
 }
 
 .seen-reaction-grid {
@@ -13610,7 +13623,8 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   min-width: 0;
   justify-items: center;
   gap: 6px;
-  border-radius: 16px;
+  min-height: 58px;
+  border-radius: 14px;
   color: rgba(255,255,255,.72);
   padding: 6px 4px;
   transition: background .16s ease, color .16s ease, transform .16s ease;
@@ -13630,10 +13644,10 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 
 .seen-reaction-option span {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 36px;
   place-items: center;
-  font-size: 31px;
+  font-size: 29px;
   line-height: 1;
   filter: drop-shadow(0 5px 8px rgba(0,0,0,.42));
 }
@@ -13655,6 +13669,208 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   font-size: 12px;
   font-weight: 750;
   text-align: center;
+}
+
+.seen-reactors-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 91;
+  display: flex;
+  width: min(548px,100vw);
+  max-height: min(78dvh,540px);
+  flex-direction: column;
+  border: 1px solid rgba(255,255,255,.08);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: #0C0F14;
+  padding: 14px 24px max(34px,env(safe-area-inset-bottom));
+  box-shadow: 0 -26px 80px rgba(0,0,0,.55);
+  transform: translateX(-50%);
+  animation: seenMoreSheetIn .32s cubic-bezier(.32,.72,0,1) both;
+}
+
+.seen-reactors-handle {
+  width: 41px;
+  height: 4px;
+  margin: 0 auto 19px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.28);
+}
+
+.seen-reactors-header {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.seen-reactors-header h2 {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.seen-reactors-header span {
+  color: rgba(255,255,255,.42);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.seen-reactors-tabs {
+  display: flex;
+  gap: 9px;
+  margin: 14px -4px 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 0 4px 4px;
+  scrollbar-width: none;
+}
+
+.seen-reactors-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.seen-reactors-tabs button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  border-radius: 9px;
+  color: rgba(255,255,255,.62);
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 750;
+  transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.seen-reactors-tabs button:hover,
+.seen-reactors-tabs button.is-active {
+  background: rgba(156,203,255,.13);
+  color: #fff;
+}
+
+.seen-reactors-tabs button:active {
+  transform: scale(.96);
+}
+
+.seen-reactors-list {
+  min-height: 0;
+  max-height: min(360px,calc(100dvh - 270px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  scrollbar-color: rgba(255,255,255,.32) transparent;
+  scrollbar-width: thin;
+}
+
+.seen-reactor-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  padding: 9px 0;
+  color: #fff;
+  text-align: left;
+  transition: background .16s ease, transform .16s ease;
+}
+
+.seen-reactor-row:hover {
+  background: rgba(255,255,255,.025);
+}
+
+.seen-reactor-row:active {
+  transform: scale(.99);
+}
+
+.seen-reactor-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.seen-reactor-copy strong {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seen-reactor-copy small {
+  overflow: hidden;
+  color: rgba(255,255,255,.38);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seen-reactor-verified {
+  width: 13px;
+  height: 13px;
+  font-size: 8px;
+}
+
+.seen-reactor-emoji {
+  flex: none;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.seen-reactors-add,
+.seen-reactors-more,
+.seen-reactors-state button {
+  color: #9CCBFF;
+  font-size: 12px;
+  font-weight: 800;
+  transition: color .16s ease, transform .16s ease, opacity .16s ease;
+}
+
+.seen-reactors-add {
+  align-self: center;
+  margin-top: 17px;
+  padding: 5px 12px;
+}
+
+.seen-reactors-more {
+  display: block;
+  margin: 12px auto 0;
+  padding: 6px 12px;
+}
+
+.seen-reactors-add:hover,
+.seen-reactors-more:hover,
+.seen-reactors-state button:hover {
+  color: #c4e0ff;
+}
+
+.seen-reactors-add:active,
+.seen-reactors-more:active,
+.seen-reactors-state button:active {
+  transform: scale(.96);
+}
+
+.seen-reactors-more:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.seen-reactors-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px 0;
+  color: rgba(255,255,255,.42);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .seen-item-notice {
