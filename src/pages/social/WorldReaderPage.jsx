@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi";
 import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
 import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
+import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { savedService } from "../../services/savedService";
@@ -39,7 +40,7 @@ function mediaFor(publication, chapters) {
 
 function storyItems(publication, chapters, audience = "FREE") {
   const storyPreviewMedia = chapters
-    .filter((chapter) => audience === "FREE" ? chapter.isPreview : !chapter.isPreview && !chapter.locked)
+    .filter((chapter) => publication?.kind === "EXPERIENCE" || (audience === "FREE" ? chapter.isPreview : !chapter.isPreview && !chapter.locked))
     .flatMap((chapter) =>
     (chapter.blocks || [])
       .filter((block) => block.metadata?.storyPreview && ["IMAGE", "VIDEO"].includes(block.type) && block.media?.secureUrl)
@@ -225,6 +226,7 @@ export default function WorldReaderPage() {
   const [comment, setComment] = useState("");
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
   const [showPremiumWelcome, setShowPremiumWelcome] = useState(false);
+  const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
   const [commentSavePending, setCommentSavePending] = useState("");
   const query = useQuery({ queryKey: ["world", id], queryFn: () => api.getPublicPublication(id).then((response) => response.data.data.publication), retry: false });
   const memberships = useQuery({ queryKey: ["memberships"], queryFn: () => walletService.getMemberships().then((response) => response.data.data.items), enabled: Boolean(user), retry: false });
@@ -234,10 +236,11 @@ export default function WorldReaderPage() {
   const publicationId = publication?.id || publication?._id;
   const chapters = useMemo(() => publication?.chapters || [], [publication]);
   const premium = publication?.kind === "PREMIUM_WORLD";
+  const experience = publication?.kind === "EXPERIENCE";
   const membership = memberships.data?.find((item) => String(item.premiumPublication?._id || item.premiumPublication?.id) === String(publicationId));
   const owner = String(user?.id || user?._id || "") === String(publication?.creator?.id || publication?.creator?._id || "");
   const media = mediaFor(publication, chapters);
-  const canViewSubscriberStories = owner || publication?.access === "ACTIVE_PREMIUM_MEMBER";
+  const canViewSubscriberStories = owner || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_EXPERIENCE"].includes(publication?.access);
   const activeMembership = membership && ["ACTIVE", "CANCEL_AT_PERIOD_END"].includes(membership.status) && new Date(membership.currentPeriodEnd) > new Date() ? membership : null;
   const stories = storyItems(publication, chapters, "FREE");
   const subscriberStories = storyItems(publication, chapters, "SUBSCRIBER");
@@ -272,8 +275,9 @@ export default function WorldReaderPage() {
   const openChapter = (index) => {
     const chapter = chapters[index];
     if (!chapter) return;
-    if (chapterIsLocked(chapter, premium, index) && !canViewSubscriberStories) {
+    if (chapterIsLocked(chapter, premium || experience, index) && !canViewSubscriberStories) {
       if (!user) return navigate("/login", { state: { from: { pathname: location.pathname } } });
+      if (experience) setShowExperienceUnlock(true);
       return;
     }
     setActiveChapterIndex(index);
@@ -311,7 +315,7 @@ export default function WorldReaderPage() {
       await api.markWorldWalked(publicationId).catch(() => null);
       queryClient.invalidateQueries({ queryKey: ["saved"] });
     }
-    navigate("/seen", { state: { walkedWorld: { id: publicationId, title: publication.title, creator: publication.creator } } });
+    navigate(experience && publication.creator?.username ? `/profile/${publication.creator.username}` : "/seen", { state: { walkedWorld: { id: publicationId, title: publication.title, creator: publication.creator } } });
   };
 
   return (
@@ -325,15 +329,15 @@ export default function WorldReaderPage() {
         </div>
       </header>
 
-      <section className="world-prototype-planet">
+      {!experience ? <section className="world-prototype-planet">
         <button aria-label={owner ? "Change planet face" : "Planet face"} onClick={() => owner && navigate(`/studio/worlds/${publicationId}/edit`)} type="button">
           <span>{FLEX}</span>
           <span>{publication.planet?.emoji || PLANET}</span>
         </button>
         {owner ? <p>tap the planet to change its face</p> : null}
-      </section>
+      </section> : null}
 
-      <WorldStories
+      {!experience ? <WorldStories
         canViewSubscriberStories={canViewSubscriberStories}
         chapters={chapters}
         onJoin={() => {
@@ -344,20 +348,24 @@ export default function WorldReaderPage() {
         owner={owner}
         stories={stories}
         subscriberStories={subscriberStories}
-      />
+      /> : null}
 
       <section className="world-prototype-creator">
         <span>{firstName(creatorName)} <b>✓</b> - <strong>{views ? views.toLocaleString() : "0"}</strong> stepped inside</span>
       </section>
 
-      <div className="world-prototype-premium-pill">{PLANET} {premium ? "Premium World" : "Free World"} - 1 free chapter - {STAR}{publication.pricing?.starsAmount || 190}/mo</div>
+      <div className="world-prototype-premium-pill">{experience ? publication.pricing?.mode === "FREE" ? "Free Experience - every chapter is open" : `Premium Experience - all chapters unlock for ${STAR}${publication.pricing?.starsAmount} once` : `${PLANET} ${premium ? "Premium World" : "Free World"} - 1 free chapter - ${STAR}${publication.pricing?.starsAmount || 190}/mo`}</div>
 
       <h1 className="world-prototype-title">{publication.title}</h1>
-      <WorldMedia media={media} owner={owner} title={publication.title} onEdit={() => navigate(`/studio/worlds/${publicationId}/edit`)} />
+      <WorldMedia media={media} owner={owner} title={publication.title} onEdit={() => navigate(experience ? `/studio/experiences/${publicationId}/edit` : `/studio/worlds/${publicationId}/edit`)} />
 
       <p className="world-prototype-summary">{publication.description || publication.summary || "Step inside this world."}</p>
 
-      <WorldChapterList canAccessPremium={owner || canViewSubscriberStories} chapters={chapters} editTarget={`/studio/worlds/${publicationId}/edit`} onOpen={openChapter} owner={owner} premium={premium} />
+      <WorldChapterList canAccessPremium={owner || canViewSubscriberStories} chapters={chapters} editTarget={experience ? `/studio/experiences/${publicationId}/edit` : `/studio/worlds/${publicationId}/edit`} onOpen={openChapter} owner={owner} premium={premium || experience} />
+
+      {experience && publication.allowDownload && (owner || canViewSubscriberStories || publication.pricing?.mode === "FREE") ? <button className="experience-download-pdf" onClick={() => window.print()} type="button">↥ Download PDF · watermarked for @{user?.username || "guest"}</button> : null}
+
+      {experience && publication.pricing?.mode === "ONE_TIME" && !canViewSubscriberStories ? <button className="world-prototype-complete" onClick={() => user ? setShowExperienceUnlock(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })} type="button">Unlock every chapter · {STAR}{publication.pricing?.starsAmount}</button> : null}
 
       <section className="world-prototype-comments">
         <h2>Comments</h2>
@@ -380,10 +388,11 @@ export default function WorldReaderPage() {
         ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> No comments yet.</p>}
       </section>
 
-      {chapters.length ? <button className="world-prototype-complete" onClick={completeWorld} type="button"><FiCheck /> Continue</button> : null}
+      {chapters.length ? <button className="world-prototype-complete" onClick={completeWorld} type="button"><FiCheck /> {experience ? "Finish Experience" : "Continue"}</button> : null}
       {activeMembership ? <p className="world-prototype-membership">Member · window renews {new Date(activeMembership.currentPeriodEnd).toLocaleDateString()} · <Link to="/memberships">Manage</Link></p> : null}
     </article>
     {showPremiumWelcome ? <PremiumWelcomeSheet onClose={() => setShowPremiumWelcome(false)} publication={publication} /> : null}
+    <PurchaseWorldModal onClose={() => setShowExperienceUnlock(false)} onSuccess={() => query.refetch()} open={showExperienceUnlock} publication={publication} />
     </>
   );
 }

@@ -163,17 +163,20 @@ function readVideoDuration(url) {
   });
 }
 
-function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
+export function VideoTrimSheet({ enableCrop = false, file, limitSeconds, onCancel, onUpload }) {
   const videoRef = useRef(null);
   const [duration, setDuration] = useState(0);
   const [start, setStart] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [aspect, setAspect] = useState("16:9");
+  const [zoom, setZoom] = useState(1);
+  const [positionX, setPositionX] = useState(50);
+  const [positionY, setPositionY] = useState(50);
   const maxStart = Math.max(0, duration - limitSeconds);
   const end = Math.min(duration, start + limitSeconds);
   const clipLength = Math.max(0, end - start);
-  const canUploadOriginal =
-    clipLength >= limitSeconds - 0.5 && duration <= limitSeconds + 0.5;
+  const canUploadOriginal = !enableCrop && duration > 0 && duration <= limitSeconds + 0.1;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -222,7 +225,7 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
       );
       return;
     }
-    if (clipLength < limitSeconds - 0.5) {
+    if (duration > limitSeconds + 0.1 && clipLength < limitSeconds - 0.5) {
       setError(`Choose a video at least ${limitSeconds} seconds long.`);
       return;
     }
@@ -233,7 +236,40 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
       video.pause();
       video.muted = false;
       await seekVideo(video, start);
-      const stream = captureStream.call(video);
+      const sourceStream = captureStream.call(video);
+      let stream = sourceStream;
+      let stopDrawing = null;
+      if (enableCrop) {
+        const [ratioWidth, ratioHeight] = aspect.split(":").map(Number);
+        const ratio = ratioWidth / ratioHeight;
+        const sourceWidth = video.videoWidth;
+        const sourceHeight = video.videoHeight;
+        let cropWidth = sourceWidth;
+        let cropHeight = cropWidth / ratio;
+        if (cropHeight > sourceHeight) {
+          cropHeight = sourceHeight;
+          cropWidth = cropHeight * ratio;
+        }
+        cropWidth /= zoom;
+        cropHeight /= zoom;
+        const sourceX = (sourceWidth - cropWidth) * (positionX / 100);
+        const sourceY = (sourceHeight - cropHeight) * (positionY / 100);
+        const outputWidth = Math.min(1280, Math.max(2, Math.round(cropWidth / 2) * 2));
+        const outputHeight = Math.max(2, Math.round((outputWidth / ratio) / 2) * 2);
+        const canvas = document.createElement("canvas");
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+        const context = canvas.getContext("2d", { alpha: false });
+        let animationFrame = 0;
+        const draw = () => {
+          context.drawImage(video, sourceX, sourceY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
+          animationFrame = window.requestAnimationFrame(draw);
+        };
+        draw();
+        stream = canvas.captureStream(30);
+        sourceStream.getAudioTracks().forEach((track) => stream.addTrack(track));
+        stopDrawing = () => window.cancelAnimationFrame(animationFrame);
+      }
       const recorder = new MediaRecorder(stream, { mimeType });
       const chunks = [];
       const stopped = new Promise((resolve, reject) => {
@@ -249,13 +285,15 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
       await new Promise((resolve) =>
         window.setTimeout(
           resolve,
-          Math.max(1000, limitSeconds * 1000 - VIDEO_RECORDING_PAD_MS),
+          Math.max(500, clipLength * 1000 - VIDEO_RECORDING_PAD_MS),
         ),
       );
       video.pause();
       if (recorder.state !== "inactive") recorder.stop();
       await stopped;
+      stopDrawing?.();
       stream.getTracks().forEach((track) => track.stop());
+      if (stream !== sourceStream) sourceStream.getTracks().forEach((track) => track.stop());
       const type = mimeType.split(";")[0] || "video/webm";
       const blob = new Blob(chunks, { type });
       if (!blob.size) throw new Error("The cropped clip was empty.");
@@ -298,23 +336,20 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
             <FiX />
           </button>
         </div>
-        <video
+        <div className={`seen-video-crop-preview ${enableCrop ? `aspect-${aspect.replace(":", "-")}` : "is-original"}`}><video
           controls
           onLoadedMetadata={(event) => {
             const nextDuration = Number(event.currentTarget.duration) || 0;
             setDuration(nextDuration);
             setStart(0);
-            if (nextDuration && nextDuration < limitSeconds - 0.5) {
-              setError(
-                `This video is ${formatDuration(nextDuration)}. Choose at least ${formatDuration(limitSeconds)} for this upload.`,
-              );
-            }
+            setError("");
           }}
           playsInline
           preload="metadata"
           ref={videoRef}
           src={file.url}
-        />
+            style={enableCrop ? { objectPosition: `${positionX}% ${positionY}%`, transform: `scale(${zoom})`, transformOrigin: `${positionX}% ${positionY}%` } : undefined}
+        /></div>
         <div className="seen-video-trim-copy">
           <strong>{formatDuration(limitSeconds)} video</strong>
           <small>
@@ -335,6 +370,12 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
             value={Math.min(start, maxStart)}
           />
         </label>
+        {enableCrop ? <div className="seen-video-adjust-controls">
+          <div className="seen-video-aspects" aria-label="Video crop ratio" role="group">{["16:9", "4:5", "1:1"].map((value) => <button className={aspect === value ? "is-selected" : ""} disabled={busy} key={value} onClick={() => setAspect(value)} type="button">{value}</button>)}</div>
+          <label><span>Zoom</span><input disabled={busy} max="2" min="1" onChange={(event) => setZoom(Number(event.target.value))} step="0.05" type="range" value={zoom} /></label>
+          <label><span>Horizontal</span><input disabled={busy} max="100" min="0" onChange={(event) => setPositionX(Number(event.target.value))} type="range" value={positionX} /></label>
+          <label><span>Vertical</span><input disabled={busy} max="100" min="0" onChange={(event) => setPositionY(Number(event.target.value))} type="range" value={positionY} /></label>
+        </div> : null}
         {error ? (
           <p className="seen-video-trim-error" role="alert">
             {error}
@@ -349,12 +390,12 @@ function VideoTrimSheet({ file, limitSeconds, onCancel, onUpload }) {
             Preview
           </button>
           <button
-            disabled={!duration || busy || clipLength < limitSeconds - 0.5}
-            onClick={uploadTrimmed}
+            disabled={!duration || busy}
+            onClick={canUploadOriginal ? uploadOriginal : uploadTrimmed}
             type="button"
           >
             <FiUpload aria-hidden="true" />{" "}
-            {busy ? "Cropping..." : `Upload ${formatDuration(limitSeconds)}`}
+            {busy ? "Preparing..." : canUploadOriginal ? `Upload ${formatDuration(duration)}` : enableCrop ? "Apply crop & upload" : `Trim & upload ${formatDuration(limitSeconds)}`}
           </button>
         </div>
       </section>
