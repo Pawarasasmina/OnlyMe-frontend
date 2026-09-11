@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMessageCircle, FiMoreHorizontal, FiPlay, FiRepeat, FiSend, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMessageCircle, FiMoreHorizontal, FiPlay, FiPlus, FiRepeat, FiSend, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { publicationService } from "../../services/publicationService";
+import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
 
@@ -136,12 +137,14 @@ function normalizeSeenDetail(publication, engagement) {
 
   return {
     id: publication?.id,
+    access: publication?.access || "",
     title: publication?.title || "Untitled Seen",
     description: publication?.description || publication?.summary || "",
     creator: publication?.creator || {},
     attachedEntities: publication?.attachedEntities || [],
     heroMedia: heroMedia ? { ...heroMedia, durationSeconds: mediaDuration(heroMedia) } : null,
     previewMedia: [...previewMap.values()].slice(0, 3),
+    mediaCandidates: seenProfileMediaCandidates(publication),
     chapters,
     metrics: {
       comments: Number(engagement?.commentCount) || 0,
@@ -155,6 +158,34 @@ function normalizeSeenDetail(publication, engagement) {
       reaction: engagement?.viewerReaction || null,
     },
   };
+}
+
+function seenProfileMediaCandidates(publication) {
+  const candidates = [];
+  const seenAssets = new Set();
+  const addCandidate = ({ label, media, sourceMediaId }) => {
+    if (!media || !["IMAGE", "VIDEO"].includes(media.mediaType) || !media.assetId || seenAssets.has(media.assetId)) return;
+    const type = media.mediaType === "VIDEO" || media.resourceType === "video" ? "video" : "image";
+    const url = mediaUrl(media);
+    if (!url) return;
+    seenAssets.add(media.assetId);
+    candidates.push({
+      assetId: media.assetId,
+      duration: mediaDuration(media),
+      label,
+      sourceMediaId,
+      thumbnailUrl: resolveMediaUrl(media.thumbnailUrl || "") || url,
+      type,
+      url,
+    });
+  };
+  addCandidate({ label: "Cover", media: publication?.coverMedia, sourceMediaId: "cover" });
+  (publication?.chapters || []).forEach((chapter) => {
+    (chapter.blocks || []).forEach((block) => {
+      addCandidate({ label: chapter.title || "Seen media", media: block.media, sourceMediaId: block.id });
+    });
+  });
+  return candidates;
 }
 
 function MarkedText({ text, highlight, tone = "blue" }) {
@@ -279,7 +310,7 @@ function SeenIntroMedia({ media, title }) {
   </>;
 }
 
-function SeenDetailMoreMenu({ onClose, onReport, onShare }) {
+function SeenDetailMoreMenu({ canAddToMedia, onAddToMedia, onClose, onReport, onShare }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -297,9 +328,70 @@ function SeenDetailMoreMenu({ onClose, onReport, onShare }) {
         <FiSend aria-hidden="true" />
         <span>Share</span>
       </button>
+      {canAddToMedia ? (
+        <button onClick={onAddToMedia} type="button">
+          <FiPlus aria-hidden="true" />
+          <span>Add to Profile Media</span>
+        </button>
+      ) : null}
       <button onClick={onReport} type="button">
         <FiFlag aria-hidden="true" />
         <span>Report Experience</span>
+      </button>
+    </section>
+  </div>;
+}
+
+function SeenToMediaPicker({ addedKeys, candidates, isOpen, isSubmitting, onClose, onSubmit }) {
+  const [selected, setSelected] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) setSelected([]);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const toggle = (candidate) => {
+    if (addedKeys.has(candidate.sourceMediaId) || isSubmitting) return;
+    setSelected((current) => current.includes(candidate.sourceMediaId)
+      ? current.filter((id) => id !== candidate.sourceMediaId)
+      : [...current, candidate.sourceMediaId]);
+  };
+
+  return <div className="seen-detail-sheet-layer">
+    <button aria-label="Close Add to Profile Media" className="seen-detail-sheet-scrim" disabled={isSubmitting} onClick={onClose} type="button" />
+    <section aria-label="Add to Profile Media" aria-modal="true" className="seen-profile-media-sheet" role="dialog">
+      <span className="seen-detail-sheet-handle" aria-hidden="true" />
+      <div className="seen-profile-media-head">
+        <div>
+          <h2>Add to Profile Media</h2>
+          <p>Choose what you want to keep on your profile.</p>
+        </div>
+        <button aria-label="Close Add to Profile Media" disabled={isSubmitting} onClick={onClose} type="button"><FiX /></button>
+      </div>
+      <div className="seen-profile-media-grid">
+        {candidates.map((candidate) => {
+          const alreadyAdded = addedKeys.has(candidate.sourceMediaId);
+          const checked = selected.includes(candidate.sourceMediaId);
+          return (
+            <button
+              aria-label={`${alreadyAdded ? "Already in Media" : checked ? "Deselect" : "Select"} ${candidate.type} from ${candidate.label}`}
+              aria-pressed={checked || alreadyAdded}
+              className={`${checked ? "is-selected " : ""}${alreadyAdded ? "is-added " : ""}seen-profile-media-tile`}
+              disabled={isSubmitting || alreadyAdded}
+              key={candidate.sourceMediaId}
+              onClick={() => toggle(candidate)}
+              type="button"
+            >
+              <img alt="" loading="lazy" src={candidate.thumbnailUrl || candidate.url} />
+              {candidate.type === "video" ? <span className="seen-profile-media-video"><FiPlay />{candidate.duration ? formatDuration(candidate.duration) : "Video"}</span> : null}
+              <strong>{alreadyAdded ? "✓ In Media" : checked ? "Selected" : candidate.label}</strong>
+            </button>
+          );
+        })}
+      </div>
+      <button className="seen-profile-media-submit" disabled={!selected.length || isSubmitting} onClick={() => onSubmit(selected)} type="button">
+        {isSubmitting ? "Adding..." : "Add selected"}
       </button>
     </section>
   </div>;
@@ -355,6 +447,7 @@ function SeenOverview({
   noticeLink,
   onBack,
   onCopyLink,
+  onOpenMediaPicker,
   onNotice,
   onOpenChapter,
 }) {
@@ -364,6 +457,7 @@ function SeenOverview({
   const [reportError, setReportError] = useState("");
   const navigate = useNavigate();
   const creator = detail.creator;
+  const canAddToMedia = detail.access === "OWNER" && detail.mediaCandidates.length > 0;
   const saved = Boolean(engagement.viewerSaved);
   const chapterWord = detail.chapters.length === 1 ? "chapter" : "chapters";
   const metadata = `${creatorFirstName(creator)} \u00b7 ${detail.chapters.length} ${chapterWord} \u00b7 ${formatCount(detail.metrics.views)} saw this`;
@@ -381,6 +475,10 @@ function SeenOverview({
     setReportDone(false);
     setReportOpen(true);
     setReportError("");
+  };
+  const addToMedia = () => {
+    setMoreOpen(false);
+    onOpenMediaPicker();
   };
   const closeReport = () => {
     setReportOpen(false);
@@ -418,7 +516,7 @@ function SeenOverview({
       </button>
       <div className="seen-detail-more-wrap">
         <button aria-expanded={moreOpen} aria-label="More Seen actions" className="seen-detail-circle" onClick={() => setMoreOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
-        {moreOpen ? <SeenDetailMoreMenu onClose={() => setMoreOpen(false)} onReport={report} onShare={share} /> : null}
+        {moreOpen ? <SeenDetailMoreMenu canAddToMedia={canAddToMedia} onAddToMedia={addToMedia} onClose={() => setMoreOpen(false)} onReport={report} onShare={share} /> : null}
       </div>
     </header>
 
@@ -497,6 +595,7 @@ export default function SeenReaderPage() {
   const [comment, setComment] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentSavePending, setCommentSavePending] = useState("");
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
 
@@ -514,6 +613,17 @@ export default function SeenReaderPage() {
   const publication = publicationQuery.data;
   const engagement = engagementQuery.data || DEFAULT_ENGAGEMENT;
   const detail = useMemo(() => normalizeSeenDetail(publication, engagement), [publication, engagement]);
+  const isOwner = detail.access === "OWNER";
+  const ownMediaQuery = useQuery({
+    enabled: Boolean(isOwner),
+    queryKey: ["profile-media", "me"],
+    queryFn: () => profileService.getOwnMedia().then((response) => response.data.data),
+    retry: false,
+  });
+  const addedSeenMediaIds = useMemo(() => new Set((ownMediaQuery.data?.media || [])
+    .filter((item) => item.sourceType === "seen" && String(item.sourceId) === String(id))
+    .map((item) => item.sourceMediaId)
+    .filter(Boolean)), [id, ownMediaQuery.data]);
   const chapters = detail.chapters;
   const safeChapterIndex = Math.min(Math.max(chapterIndex, 0), Math.max(chapters.length - 1, 0));
   const chapter = chapters[safeChapterIndex] || null;
@@ -656,6 +766,24 @@ export default function SeenReaderPage() {
     mutationFn: (payload) => publicationService.reportSeen(id, payload),
     retry: false,
   });
+  const addSeenMediaMutation = useMutation({
+    mutationFn: (mediaIds) => profileService.addSeenMediaToProfileMedia(id, mediaIds).then((response) => response.data?.data),
+    onSuccess: async (result) => {
+      const count = Number(result?.added?.length) || 0;
+      const duplicateCount = Number(result?.skippedDuplicates?.length) || 0;
+      setMediaPickerOpen(false);
+      setNotice(count > 1 ? `Added ${count} items to Profile Media ✓` : count === 1 ? "Added to Profile Media ✓" : duplicateCount ? "Already in Profile Media ✓" : "No Media added.");
+      setNoticeLink("/profile?tab=media");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["profile-media"] }),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+      ]);
+    },
+    onError: (error) => {
+      setNotice(error?.response?.data?.message || "Some selected media could not be added");
+      setNoticeLink("");
+    },
+  });
 
   const submitComment = (event) => {
     event.preventDefault();
@@ -673,6 +801,19 @@ export default function SeenReaderPage() {
     }
     await navigator.clipboard?.writeText(shareUrl);
     setNotice("Seen link copied.");
+  };
+  const openMediaAdd = () => {
+    const candidates = detail.mediaCandidates.filter((candidate) => !addedSeenMediaIds.has(candidate.sourceMediaId));
+    if (!candidates.length) {
+      setNotice("Already in Profile Media ✓");
+      setNoticeLink("/profile?tab=media");
+      return;
+    }
+    if (detail.mediaCandidates.length === 1) {
+      addSeenMediaMutation.mutate([detail.mediaCandidates[0].sourceMediaId]);
+      return;
+    }
+    setMediaPickerOpen(true);
   };
   const changeChapter = (nextIndex) => {
     const next = Math.min(Math.max(nextIndex, 0), Math.max(chapters.length - 1, 0));
@@ -695,20 +836,31 @@ export default function SeenReaderPage() {
   if (publicationQuery.isError || !publication) return <div className="seen-reader-page"><section className="seen-reader-error"><h1>This Seen is not available.</h1><Link to="/seen">Back to Seen</Link></section></div>;
 
   if (!hasChapterParam) {
-    return <SeenOverview
-      detail={detail}
-      engagement={engagement}
-      mutations={{ save: saveMutation, share: shareMutation, report: reportMutation }}
-      notice={notice}
-      noticeLink={noticeLink}
-      onBack={backFromOverview}
-      onCopyLink={copyLink}
-      onNotice={(message) => {
-        setNotice(message);
-        setNoticeLink("");
-      }}
-      onOpenChapter={openChapter}
-    />;
+    return <>
+      <SeenOverview
+        detail={detail}
+        engagement={engagement}
+        mutations={{ save: saveMutation, share: shareMutation, report: reportMutation }}
+        notice={notice}
+        noticeLink={noticeLink}
+        onBack={backFromOverview}
+        onCopyLink={copyLink}
+        onNotice={(message) => {
+          setNotice(message);
+          setNoticeLink("");
+        }}
+        onOpenChapter={openChapter}
+        onOpenMediaPicker={openMediaAdd}
+      />
+      <SeenToMediaPicker
+        addedKeys={addedSeenMediaIds}
+        candidates={detail.mediaCandidates}
+        isOpen={mediaPickerOpen}
+        isSubmitting={addSeenMediaMutation.isPending}
+        onClose={() => setMediaPickerOpen(false)}
+        onSubmit={(mediaIds) => addSeenMediaMutation.mutate(mediaIds)}
+      />
+    </>;
   }
 
   let renderedChecklist = false;

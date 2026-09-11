@@ -617,6 +617,7 @@ function ProfileSettingsPage() {
           queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
           queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
         }}
+        profile={{ avatar: account.avatar, displayName: account.name, username: account.username }}
       />
       <NotificationSheet isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
       <GiftSettingsSheet isOpen={giftSettingsOpen} onClose={() => setGiftSettingsOpen(false)} />
