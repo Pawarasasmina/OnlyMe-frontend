@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFlag, FiGift, FiImage, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiTrash2, FiUserPlus, FiX, FiZap } from "react-icons/fi";
+import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiX, FiZap } from "react-icons/fi";
 import { FiExternalLink } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
@@ -72,6 +72,17 @@ const REPORT_REASONS = [
   ["VIOLENCE", "Violence or threats"],
   ["SCAM", "Scam or fraud"],
   ["OTHER", "Something else"],
+];
+
+const INBOX_FILTERS = [
+  { id: "all", icon: FiInbox, label: "All" },
+  { id: "unread", icon: FiCircle, label: "Unread" },
+  { id: "unanswered", icon: FiMessageCircle, label: "Unanswered" },
+  { id: "verified", icon: FiShield, label: "Verified" },
+  { id: "story", icon: FiEye, label: "Story replies" },
+  { id: "members", icon: FiUsers, label: "My World members", subtitle: "they pay monthly", creatorOnly: true },
+  { id: "experience", icon: FiUnlock, label: "Unlocked my experience", subtitle: "one-time buyers", creatorOnly: true },
+  { id: "dream", icon: FiStar, label: "Dream keepers", subtitle: "they backed your dream", creatorOnly: true },
 ];
 
 const newClientMessageId = () => globalThis.crypto?.randomUUID?.()
@@ -274,6 +285,8 @@ export default function MessagesPage() {
   const [forwardSelection, setForwardSelection] = useState(() => new Set());
   const [groupMessageInfo, setGroupMessageInfo] = useState(null);
   const [inboxTab, setInboxTab] = useState(() => searchParams.get("tab") === "direct" ? "direct" : "all");
+  const [inboxFilter, setInboxFilter] = useState("all");
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [requestBusy, setRequestBusy] = useState(false);
   const [storyViewer, setStoryViewer] = useState(null);
   const [expiredStoryIds, setExpiredStoryIds] = useState(() => new Set());
@@ -320,6 +333,14 @@ export default function MessagesPage() {
     document.addEventListener("pointerdown", dismissPopovers);
     return () => document.removeEventListener("pointerdown", dismissPopovers);
   }, [chatMenuOpen, inboxRowMenu, messageMenu, reactionFor]);
+  useEffect(() => {
+    if (!filterSheetOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setFilterSheetOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [filterSheetOpen]);
   const conversationsQuery = useQuery({
     queryKey: ["messages", "conversations"],
     queryFn: () => messageService.getConversations().then((r) => r.data.data.conversations),
@@ -777,14 +798,27 @@ export default function MessagesPage() {
   };
 
   const orderedPeople = useMemo(() => peopleQuery.data || [], [peopleQuery.data]);
-  const shownConversations = useMemo(() => inboxTab === "direct"
-    ? []
-    : [
+  const shownConversations = useMemo(() => {
+    if (inboxTab === "direct") return [];
+    const items = [
       ...(inboxTab === "all" ? (groupsQuery.data || []).filter((item) => !item.archived) : []),
       ...conversations.filter((item) => {
-      if (inboxTab === "requests") return item.status === "REQUEST" && item.requestReceived;
-      return !item.archived && item.status !== "DECLINED" && (item.status !== "REQUEST" || !item.requestReceived);
-    })], [conversations, groupsQuery.data, inboxTab]);
+        if (inboxTab === "requests") return item.status === "REQUEST" && item.requestReceived;
+        return !item.archived && item.status !== "DECLINED" && (item.status !== "REQUEST" || !item.requestReceived);
+      }),
+    ];
+    if (inboxTab !== "all" || inboxFilter === "all") return items;
+    return items.filter((item) => {
+      if (inboxFilter === "unread") return Number(item.unreadCount) > 0;
+      if (inboxFilter === "unanswered") return item.isUnanswered ?? (item.lastMessage?.senderId !== myId);
+      if (inboxFilter === "verified") return item.type !== "group" && Boolean(item.participant?.isVerified);
+      if (inboxFilter === "story") return Boolean(item.hasStoryReply || item.lastMessage?.storyReply);
+      if (inboxFilter === "members") return Boolean(item.isWorldMember);
+      if (inboxFilter === "experience") return Boolean(item.unlockedExperience);
+      if (inboxFilter === "dream") return Boolean(item.isDreamKeeper);
+      return true;
+    });
+  }, [conversations, groupsQuery.data, inboxFilter, inboxTab, myId]);
   const archivedConversations = useMemo(() => [
     ...(groupsQuery.data || []).filter((item) => item.archived),
     ...conversations.filter((item) => item.archived),
@@ -1615,17 +1649,36 @@ export default function MessagesPage() {
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
           <button aria-label="Open activity" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><FiZap /><span className="absolute -right-0.5 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black text-atseen-bg">{[...conversations, ...(groupsQuery.data || [])].reduce((total, item) => total + (Number(item.unreadCount) || 0), 0)}</span></button>
         </header>
-        <nav aria-label="Message inbox filters" className="mx-3 grid grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1 sm:mx-5">
-          {([{ id: "all", label: "All" }, { id: "requests", label: "Requests" }, { id: "direct", label: "Direct Access" }]).map((tab) => {
-            const count = tab.id === "requests"
-              ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
-              : tab.id === "direct"
-                ? creatorMode ? directConversations.filter((item) => item.settlementStatus === "HELD").length : directConversations.length
-                : 0;
-            return <button className={`min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => setInboxTab(tab.id)} type="button"><span className="break-words">{tab.label}</span>{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
-          })}
-        </nav>
+        <div className="mx-3 flex items-center gap-3 sm:mx-5">
+          <nav aria-label="Message inbox tabs" className="grid min-w-0 flex-1 grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1">
+            {([{ id: "all", label: "All" }, { id: "requests", label: "Requests" }, { id: "direct", label: "Direct Access" }]).map((tab) => {
+              const count = tab.id === "requests"
+                ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
+                : tab.id === "direct"
+                  ? creatorMode ? directConversations.filter((item) => item.settlementStatus === "HELD").length : directConversations.length
+                  : 0;
+              return <button className={`min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => { setInboxTab(tab.id); if (tab.id !== "all") setInboxFilter("all"); }} type="button"><span className="break-words">{tab.label}</span>{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
+            })}
+          </nav>
+          <button aria-label="Filter conversations" className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border transition ${inboxFilter !== "all" ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface text-atseen-muted hover:text-white"}`} onClick={() => setFilterSheetOpen(true)} type="button"><FiFilter /></button>
+        </div>
         {inboxTab === "requests" ? <p className="px-5 pb-2 pt-3 text-[10px] leading-4 text-atseen-muted">People you don’t follow yet. They won’t know you’ve seen it until you accept.</p> : null}
+        {filterSheetOpen ? <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget) setFilterSheetOpen(false); }}>
+          <section aria-labelledby="message-filter-title" aria-modal="true" className="w-full max-w-[460px] rounded-t-[22px] border border-b-0 border-atseen-line bg-[#0d1015] px-5 pb-7 pt-2 shadow-[0_-24px_70px_rgba(0,0,0,.58)]" role="dialog">
+            <div className="mx-auto mb-3 h-1 w-8 rounded-full bg-white/35" />
+            <div className="flex items-center justify-between"><h2 className="text-xl font-black" id="message-filter-title">Filter</h2><button aria-label="Close filters" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setFilterSheetOpen(false)} type="button"><FiX /></button></div>
+            <div className="mt-3 max-h-[70dvh] overflow-y-auto">
+              {INBOX_FILTERS.filter((item) => !item.creatorOnly || creatorMode).map((item) => {
+                const Icon = item.icon;
+                return <button className={`flex min-h-[50px] w-full items-center gap-4 border-b border-white/[0.07] px-2 py-2 text-left last:border-0 ${item.id === "members" ? "mt-1 border-t pt-3" : ""}`} key={item.id} onClick={() => { setInboxFilter(item.id); setInboxTab("all"); setShowArchived(false); setFilterSheetOpen(false); }} type="button">
+                  <Icon className={inboxFilter === item.id ? "text-atseen-blue" : "text-atseen-muted"} />
+                  <span className="min-w-0 flex-1"><strong className="block text-sm font-bold">{item.label}</strong>{item.subtitle ? <small className="mt-0.5 block text-[11px] text-atseen-muted">{item.subtitle}</small> : null}</span>
+                  {inboxFilter === item.id ? <FiCheck className="text-atseen-blue" /> : null}
+                </button>;
+              })}
+            </div>
+          </section>
+        </div> : null}
         <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {inboxTab === "direct" && user?.role === "creator" ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border border-dashed border-atseen-blue/45 bg-atseen-blue/[0.025] p-4 text-left transition hover:bg-atseen-blue/[0.06]" onClick={() => { setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-atseen-blue"><FiPlus /></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-atseen-blue">Set up Direct Access</span><span className="mt-0.5 block text-[11px] text-atseen-muted">Your prices for priority messages and calls</span></span></button> : null}
           {inboxTab === "direct" && directWindowsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading Direct Access…</p> : null}
@@ -1642,8 +1695,8 @@ export default function MessagesPage() {
             </button>;
           })}</section> : null) : null}
           {inboxTab === "direct" && !directWindowsQuery.isLoading && !directConversations.length ? <div className="grid place-items-center px-8 py-20 text-center"><FiMessageCircle className="text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">{user?.role === "fan" ? "No Priority messages" : "No Direct Access messages"}</h2><p className="mt-2 text-sm text-atseen-muted">Direct Access conversations will appear here.</p></div> : null}
-          {inboxTab === "all" && archivedConversations.length ? <button className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm hover:bg-white/[0.03]" onClick={() => setShowArchived((current) => !current)} type="button"><span className="grid h-10 w-10 place-items-center rounded-full border border-atseen-line bg-white/[0.03] text-atseen-muted"><FiArchive /></span><span className="flex-1 font-bold">{showArchived ? "Back to messages" : "Archived"}</span><span className="text-xs text-atseen-muted">{archivedConversations.length}</span></button> : null}
-          {inboxTab !== "direct" && !conversationsQuery.isLoading && !shownConversations.length ? <div className="grid place-items-center px-8 py-20 text-center"><FiMessageCircle className="text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">{inboxTab === "requests" ? "No message requests" : "No conversations yet"}</h2><p className="mt-2 text-sm text-atseen-muted">{inboxTab === "requests" ? "Messages from non-following fans appear here." : user?.role === "fan" ? "Start a private chat with a creator." : "Accepted fan conversations appear here."}</p></div> : null}
+          {inboxTab === "all" && inboxFilter === "all" && archivedConversations.length ? <button className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm hover:bg-white/[0.03]" onClick={() => setShowArchived((current) => !current)} type="button"><span className="grid h-10 w-10 place-items-center rounded-full border border-atseen-line bg-white/[0.03] text-atseen-muted"><FiArchive /></span><span className="flex-1 font-bold">{showArchived ? "Back to messages" : "Archived"}</span><span className="text-xs text-atseen-muted">{archivedConversations.length}</span></button> : null}
+          {inboxTab !== "direct" && !conversationsQuery.isLoading && !shownConversations.length ? <div className="grid place-items-center px-8 py-20 text-center"><FiMessageCircle className="text-4xl text-atseen-blue" /><h2 className="mt-4 font-bold">{inboxTab === "requests" ? "No message requests" : inboxFilter !== "all" ? "No matching conversations" : "No conversations yet"}</h2><p className="mt-2 text-sm text-atseen-muted">{inboxTab === "requests" ? "Messages from non-following fans appear here." : inboxFilter !== "all" ? "Try another filter or return to All." : user?.role === "fan" ? "Start a private chat with a creator." : "Accepted fan conversations appear here."}</p>{inboxFilter !== "all" ? <button className="mt-4 rounded-full border border-atseen-blue/35 px-4 py-2 text-xs font-bold text-atseen-blue" onClick={() => setInboxFilter("all")} type="button">Show all</button> : null}</div> : null}
           {inboxTab === "requests" ? shownConversations.map((conversation) => {
             const person = conversation.participant;
             const last = conversation.lastMessage;

@@ -121,7 +121,7 @@ function SeenSkeleton() {
   </div>;
 }
 
-function SeenHeader({ activeTab, onTabChange, onCreate, onSearch, onSpark }) {
+function SeenHeader({ activeTab, onTabChange, onActivity, onCreate, onSearch }) {
   return <header className="seen-proto-header">
     <nav aria-label="Seen feed tabs" className="seen-proto-tabs">
       <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><FiEye aria-hidden="true" />Seen</button>
@@ -130,7 +130,7 @@ function SeenHeader({ activeTab, onTabChange, onCreate, onSearch, onSpark }) {
     <div className="seen-proto-header-actions">
       <button aria-label="Create a Seen" onClick={onCreate} type="button"><FiPlus /></button>
       <button aria-label="Search" onClick={onSearch} type="button"><FiSearch /></button>
-      <button aria-label="Open Orbit" onClick={onSpark} type="button"><FiZap /></button>
+      <button aria-label="Open activity" onClick={onActivity} type="button"><FiZap /></button>
     </div>
   </header>;
 }
@@ -560,7 +560,7 @@ export default function SeenFeedPage() {
   };
 
   return <section className="seen-prototype-page">
-    <SeenHeader activeTab={tab} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onSpark={() => navigate("/orbit")} onTabChange={setTab} />
+    <SeenHeader activeTab={tab} onActivity={() => navigate("/activity")} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onTabChange={setTab} />
     <FanCreateSheet
       canCreateSeen={capabilities.canCreate}
       canCreateWorld={capabilities.isApprovedCreator}

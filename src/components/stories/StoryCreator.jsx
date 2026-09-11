@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FiImage, FiMinus, FiRefreshCw, FiType, FiX } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FiCamera, FiImage, FiMinus, FiRefreshCw, FiRepeat, FiTrash2, FiType, FiX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { useCreateStory } from "../../hooks/useStories";
 import { canCreateStory } from "../../utils/storyPermissions";
@@ -14,17 +14,16 @@ const STORY_GRADIENTS = [
 ];
 const STORY_STYLE_COUNT = 5;
 
+function newTextOverlay() {
+  return { id: `text-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, color: "#D6EAFF", size: 26, style: 0, text: "", x: 0.5, y: 0.42 };
+}
+
 function freshStory() {
   return {
-    color: "#D6EAFF",
     gradient: 0,
     photo: false,
-    size: 26,
-    style: 0,
-    text: "",
+    texts: [newTextOverlay()],
     uploadedUrl: "",
-    x: 0.5,
-    y: 0.42,
   };
 }
 
@@ -90,29 +89,29 @@ async function renderStoryFile(story) {
   context.fillStyle = shade;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  const text = story.text.trim();
-  if (text) {
-    const fontSize = story.size * 3.1;
-    const x = story.x * canvas.width;
-    const y = story.y * canvas.height;
+  story.texts.filter((item) => item.text.trim()).forEach((overlay) => {
+    const text = overlay.text.trim();
+    const fontSize = overlay.size * 3.1;
+    const x = overlay.x * canvas.width;
+    const y = overlay.y * canvas.height;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.font = `${story.style === 1 || story.style === 2 ? 800 : 650} ${fontSize}px ${
-      story.style === 3 ? "Georgia" : story.style === 4 ? "Consolas" : "system-ui"
+    context.font = `${overlay.style === 1 || overlay.style === 2 ? 800 : 650} ${fontSize}px ${
+      overlay.style === 3 ? "Georgia" : overlay.style === 4 ? "Consolas" : "system-ui"
     }`;
     const width = Math.min(canvas.width * 0.82, context.measureText(text).width + 96);
-    if (story.style === 2) {
-      context.fillStyle = story.color;
+    if (overlay.style === 2) {
+      context.fillStyle = overlay.color;
       roundRect(context, x - width / 2, y - fontSize * 0.75, width, fontSize * 1.5, 42);
       context.fill();
-      context.fillStyle = story.color === "#0A0C0F" ? "#FFFFFF" : "#0A0C0F";
+      context.fillStyle = overlay.color === "#0A0C0F" ? "#FFFFFF" : "#0A0C0F";
     } else {
       context.shadowColor = "rgba(0,0,0,.55)";
       context.shadowBlur = 24;
-      context.fillStyle = story.color;
+      context.fillStyle = overlay.color;
     }
     context.fillText(text, x, y, canvas.width * 0.82);
-  }
+  });
 
   return fileFromCanvas(canvas);
 }
@@ -134,24 +133,91 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
   const inputRef = useRef(null);
   const uploadInputRef = useRef(null);
   const stageRef = useRef(null);
+  const videoRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const cameraRequestRef = useRef(0);
   const dragRef = useRef(null);
+  const draggingTextIdRef = useRef("");
+  const deleteTargetRef = useRef(null);
+  const deleteArmedRef = useRef(false);
   const uploadedUrlRef = useRef("");
   const createMutation = useCreateStory();
   const [story, setStory] = useState(freshStory);
+  const [activeTextId, setActiveTextId] = useState(() => story.texts[0].id);
   const [hintOpen, setHintOpen] = useState(() => !localStorage.getItem("atseen_story_comp_hint"));
   const [upload, setUpload] = useState({ error: "", progress: 0, step: "" });
   const [cropSource, setCropSource] = useState("");
+  const [cameraStatus, setCameraStatus] = useState("idle");
+  const [cameraError, setCameraError] = useState("");
+  const [facingMode, setFacingMode] = useState("environment");
+  const [canSwitchCamera, setCanSwitchCamera] = useState(false);
+  const [textDragging, setTextDragging] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
 
-  const colorIndex = useMemo(() => STORY_COLORS.indexOf(story.color), [story.color]);
+  const activeText = useMemo(() => story.texts.find((item) => item.id === activeTextId) || story.texts[0], [activeTextId, story.texts]);
+  const colorIndex = useMemo(() => STORY_COLORS.indexOf(activeText?.color), [activeText?.color]);
   const backgroundStyle = story.photo
     ? { backgroundImage: `url("${story.uploadedUrl}")` }
     : { background: `linear-gradient(160deg,${STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length].join(",")})` };
 
+  const stopCamera = useCallback(() => {
+    cameraRequestRef.current += 1;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  const startCamera = useCallback(async (nextFacingMode = "environment") => {
+    stopCamera();
+    const requestId = ++cameraRequestRef.current;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraStatus("unavailable");
+      setCameraError("Camera is not available in this browser. Choose an image instead.");
+      return;
+    }
+    setCameraStatus("starting");
+    setCameraError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: nextFacingMode }, height: { ideal: 1920 }, width: { ideal: 1080 } },
+      });
+      if (requestId !== cameraRequestRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      cameraStreamRef.current = stream;
+      setFacingMode(nextFacingMode);
+      setCameraStatus("live");
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setCanSwitchCamera(devices.filter((device) => device.kind === "videoinput").length > 1);
+      window.requestAnimationFrame(() => {
+        if (!videoRef.current || cameraStreamRef.current !== stream) return;
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      });
+    } catch (error) {
+      if (error?.name === "NotAllowedError") setCameraError("Camera access was blocked. Allow camera permission or choose an image.");
+      else if (error?.name === "NotFoundError") setCameraError("No camera was found. Choose an image instead.");
+      else setCameraError("Could not open the camera. Choose an image instead.");
+      setCameraStatus("unavailable");
+    }
+  }, [stopCamera]);
+
   useEffect(() => {
-    if (!isOpen) return undefined;
-    const timer = window.setTimeout(() => inputRef.current?.focus(), 220);
-    return () => window.clearTimeout(timer);
-  }, [isOpen]);
+    if (!isOpen) {
+      stopCamera();
+      return undefined;
+    }
+    startCamera("environment");
+    return stopCamera;
+  }, [isOpen, startCamera, stopCamera]);
+
+  useEffect(() => {
+    if (cameraStatus !== "live" || !videoRef.current || !cameraStreamRef.current) return;
+    videoRef.current.srcObject = cameraStreamRef.current;
+    videoRef.current.play().catch(() => {});
+  }, [cameraStatus, facingMode]);
 
   useEffect(() => {
     uploadedUrlRef.current = story.uploadedUrl;
@@ -162,13 +228,35 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
   }, []);
 
   const updateStory = (patch) => setStory((current) => ({ ...current, ...patch }));
+  const updateActiveText = (patch) => setStory((current) => ({
+    ...current,
+    texts: current.texts.map((item) => item.id === activeTextId ? { ...item, ...patch } : item),
+  }));
+
+  const enterTextMode = () => {
+    if (story.photo || cameraStatus === "text") return;
+    if (["starting", "live"].includes(cameraStatus)) stopCamera();
+    setCameraStatus("text");
+    setCameraError("");
+  };
+
+  const addText = () => {
+    enterTextMode();
+    const overlay = newTextOverlay();
+    setStory((current) => ({ ...current, texts: [...current.texts, overlay] }));
+    setActiveTextId(overlay.id);
+    window.setTimeout(() => inputRef.current?.focus(), 40);
+  };
 
   const close = () => {
+    stopCamera();
     setUpload({ error: "", progress: 0, step: "" });
+    const fresh = freshStory();
     setStory((current) => {
       if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
-      return freshStory();
+      return fresh;
     });
+    setActiveTextId(fresh.texts[0].id);
     onClose();
   };
 
@@ -180,8 +268,33 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
       showToast("Choose an image file.");
       return;
     }
+    stopCamera();
     setCropSource(URL.createObjectURL(file));
   };
+
+  const capturePhoto = async () => {
+    const video = videoRef.current;
+    if (!video?.videoWidth || cameraStatus !== "live") return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (facingMode === "user") {
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const file = await fileFromCanvas(canvas);
+    const url = URL.createObjectURL(file);
+    setStory((current) => {
+      if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
+      return { ...current, photo: true, uploadedUrl: url };
+    });
+    stopCamera();
+    setCameraStatus("captured");
+  };
+
+  const switchCamera = () => startCamera(facingMode === "environment" ? "user" : "environment");
 
   const useCroppedImage = (file) => {
     const url = URL.createObjectURL(file);
@@ -191,26 +304,49 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
     });
     URL.revokeObjectURL(cropSource);
     setCropSource("");
+    setCameraStatus("captured");
   };
 
-  const beginDrag = (event) => {
-    if (!story.text.trim() || !stageRef.current) return;
+  const beginDrag = (event, textId) => {
+    const overlay = story.texts.find((item) => item.id === textId);
+    if (!overlay?.text.trim() || !stageRef.current) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragRef.current = true;
+    draggingTextIdRef.current = textId;
+    setActiveTextId(textId);
+    setTextDragging(true);
   };
 
   const moveDrag = (event) => {
     if (!dragRef.current || !stageRef.current) return;
     const rect = stageRef.current.getBoundingClientRect();
-    updateStory({
-      x: Math.min(0.95, Math.max(0.05, (event.clientX - rect.left) / rect.width)),
-      y: Math.min(0.85, Math.max(0.08, (event.clientY - rect.top) / rect.height)),
-    });
+    const x = Math.min(0.95, Math.max(0.05, (event.clientX - rect.left) / rect.width));
+    const y = Math.min(0.85, Math.max(0.08, (event.clientY - rect.top) / rect.height));
+    setStory((current) => ({ ...current, texts: current.texts.map((item) => item.id === draggingTextIdRef.current ? { ...item, x, y } : item) }));
+    const deleteRect = deleteTargetRef.current?.getBoundingClientRect();
+    const isOverDelete = Boolean(deleteRect
+      && event.clientX >= deleteRect.left
+      && event.clientX <= deleteRect.right
+      && event.clientY >= deleteRect.top
+      && event.clientY <= deleteRect.bottom);
+    deleteArmedRef.current = isOverDelete;
+    setDeleteArmed(isOverDelete);
   };
 
   const endDrag = () => {
+    if (deleteArmedRef.current) {
+      const deletedId = draggingTextIdRef.current;
+      const remaining = story.texts.filter((item) => item.id !== deletedId);
+      const texts = remaining.length ? remaining : [newTextOverlay()];
+      setStory((current) => ({ ...current, texts }));
+      setActiveTextId(texts.at(-1).id);
+    }
     dragRef.current = null;
+    draggingTextIdRef.current = "";
+    deleteArmedRef.current = false;
+    setTextDragging(false);
+    setDeleteArmed(false);
   };
 
   const publish = async () => {
@@ -218,7 +354,9 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
       showToast("Story publishing is not available for this account.");
       return;
     }
-    if (!story.text.trim() && !story.photo) {
+    const storyTexts = story.texts.filter((item) => item.text.trim());
+    const caption = storyTexts.map((item) => item.text.trim()).join(" ");
+    if (!storyTexts.length && !story.photo) {
       showToast("Write something first.");
       return;
     }
@@ -227,11 +365,11 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
       const file = await renderStoryFile(story);
       const editorMetadata = {
         prototypeComposer: true,
-        textOverlays: story.text.trim() ? [{ color: story.color, fontSize: story.size, style: story.style, text: story.text.trim(), x: story.x * 100, y: story.y * 100 }] : [],
+        textOverlays: storyTexts.map((item) => ({ color: item.color, fontSize: item.size, style: item.style, text: item.text.trim(), x: item.x * 100, y: item.y * 100 })),
       };
       if (mode === "compose") {
         setUpload({ error: "", progress: 70, step: "Adding preview" });
-        await onSave?.({ caption: story.text.trim(), editorMetadata, file });
+        await onSave?.({ caption, editorMetadata, file });
         setUpload({ error: "", progress: 100, step: "Added" });
         close();
         return;
@@ -240,7 +378,7 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
       formData.append("image", file);
       formData.append("mediaType", "image");
       formData.append("duration", "5");
-      formData.append("caption", story.text.trim());
+      formData.append("caption", caption);
       formData.append("audience", "everyone");
       formData.append("allowReactions", "true");
       formData.append("allowReplies", "true");
@@ -290,31 +428,37 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
       <section
         className="story-composer-stage"
         onPointerMove={moveDrag}
+        onPointerCancel={endDrag}
         onPointerUp={endDrag}
         ref={stageRef}
       >
         <div aria-hidden="true" className="story-composer-bg" style={backgroundStyle} />
-        <button aria-label="Focus story text" className="story-composer-focus" onClick={() => inputRef.current?.focus()} type="button" />
+        {!story.photo && ["starting", "live"].includes(cameraStatus) ? <video aria-label="Camera preview" autoPlay className={`story-composer-camera ${facingMode === "user" ? "is-mirrored" : ""}`} muted playsInline ref={videoRef} /> : null}
+        <button aria-label="Focus story text" className="story-composer-focus" onClick={() => { enterTextMode(); inputRef.current?.focus(); }} type="button" />
 
         <header className="story-composer-head">
           <button aria-label="Close Story composer" onClick={close} type="button"><FiX /></button>
           <span />
-          <button aria-label="Upload image from device" onClick={() => uploadInputRef.current?.click()} type="button">
-            <FiImage />
-          </button>
+          <button aria-label="Add another text" onClick={addText} type="button"><FiType /></button>
           <button
-            aria-label="Refresh background"
+            aria-label={cameraStatus === "live" ? "Switch camera" : story.photo ? "Retake photo" : "Refresh background"}
+            className={cameraStatus === "live" && !canSwitchCamera ? "invisible" : ""}
             onClick={() => {
+              if (cameraStatus === "live") {
+                if (canSwitchCamera) switchCamera();
+                return;
+              }
               if (story.uploadedUrl) {
                 URL.revokeObjectURL(story.uploadedUrl);
                 updateStory({ photo: false, uploadedUrl: "" });
+                startCamera(facingMode);
               } else {
                 updateStory({ gradient: story.gradient + 1 });
               }
             }}
             type="button"
           >
-            <FiRefreshCw />
+            {cameraStatus === "live" ? <FiRepeat /> : <FiRefreshCw />}
           </button>
         </header>
         <input accept="image/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
@@ -335,53 +479,65 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
           </div>
         ) : null}
 
-        {!story.photo && !story.text.trim() ? (
+        {!story.photo && !story.texts.some((item) => item.text.trim()) && !["starting", "live", "text"].includes(cameraStatus) ? (
           <div className="story-composer-empty">
             <button onClick={() => uploadInputRef.current?.click()} type="button">
               <span><FiImage /></span>
               <strong>Add image to your story</strong>
             </button>
-            <p>Or add text using the field below</p>
+            <p>{cameraError || "Or add text using the field below"}</p>
           </div>
         ) : null}
 
-        {story.text ? (
+        {cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) ? <button className="story-composer-text-prompt" onClick={() => inputRef.current?.focus()} type="button">Type your story</button> : null}
+
+        {cameraStatus === "starting" ? <div className="story-composer-camera-loading"><FiRefreshCw /> Opening camera…</div> : null}
+
+        {story.texts.filter((item) => item.text).map((item) => (
           <button
-            className={storyTextClass(story.style)}
-            onPointerDown={beginDrag}
+            className={`${storyTextClass(item.style)} ${activeTextId === item.id ? "is-active" : ""}`}
+            key={item.id}
+            onPointerDown={(event) => beginDrag(event, item.id)}
             style={{
-              color: story.style === 2 && story.color !== "#0A0C0F" ? "#0A0C0F" : story.color,
-              fontSize: `${story.size}px`,
-              left: `${story.x * 100}%`,
-              top: `${story.y * 100}%`,
-              ...(story.style === 2 ? { backgroundColor: story.color } : null),
+              color: item.style === 2 && item.color !== "#0A0C0F" ? "#0A0C0F" : item.color,
+              fontSize: `${item.size}px`,
+              left: `${item.x * 100}%`,
+              top: `${item.y * 100}%`,
+              ...(item.style === 2 ? { backgroundColor: item.color } : null),
             }}
             type="button"
           >
-            {story.text}
+            {item.text}
           </button>
-        ) : null}
+        ))}
+
+        {textDragging ? <div aria-label="Drag here to delete text" className={`story-composer-delete-target ${deleteArmed ? "is-armed" : ""}`} ref={deleteTargetRef} role="status"><FiTrash2 /><span>{deleteArmed ? "Release to delete" : "Drag here to delete"}</span></div> : null}
 
         <button aria-label="Add an image" className="story-composer-gallery-thumb" onClick={() => uploadInputRef.current?.click()} type="button">
           <FiImage />
         </button>
 
+        {cameraStatus === "live" ? <div className="story-composer-camera-controls">
+          <button aria-label="Take photo" className="story-composer-shutter" onClick={capturePhoto} type="button"><span><FiCamera /></span></button>
+        </div> : null}
+
         <div className="story-composer-bottom">
           <div className="story-composer-toolbar">
-            <button aria-label="Change text style" className={story.style === 2 ? "is-selected" : ""} onClick={() => updateStory({ style: (story.style + 1) % STORY_STYLE_COUNT })} type="button">
+            <button aria-label="Change text style" className={activeText?.style === 2 ? "is-selected" : ""} onClick={() => updateActiveText({ style: (activeText.style + 1) % STORY_STYLE_COUNT })} type="button">
               <FiType />
             </button>
-            <button aria-label="Change text color" className="story-composer-color" onClick={() => updateStory({ color: STORY_COLORS[(colorIndex + 1 + STORY_COLORS.length) % STORY_COLORS.length] })} type="button">
-              <span style={{ backgroundColor: story.color }} />
+            <button aria-label="Change text color" className="story-composer-color" onClick={() => updateActiveText({ color: STORY_COLORS[(colorIndex + 1 + STORY_COLORS.length) % STORY_COLORS.length] })} type="button">
+              <span style={{ backgroundColor: activeText?.color }} />
             </button>
-            <button aria-label="Decrease text size" onClick={() => updateStory({ size: Math.max(16, story.size - 3) })} type="button"><FiMinus /></button>
-            <button aria-label="Increase text size" onClick={() => updateStory({ size: Math.min(44, story.size + 3) })} type="button">+</button>
+            <button aria-label="Decrease text size" onClick={() => updateActiveText({ size: Math.max(16, activeText.size - 3) })} type="button"><FiMinus /></button>
+            <button aria-label="Increase text size" onClick={() => updateActiveText({ size: Math.min(44, activeText.size + 3) })} type="button">+</button>
             <input
               aria-label="Story text"
-              onChange={(event) => updateStory({ text: event.target.value })}
+              onChange={(event) => updateActiveText({ text: event.target.value })}
+              onFocus={enterTextMode}
               placeholder="Say it..."
               ref={inputRef}
-              value={story.text}
+              value={activeText?.text || ""}
             />
             <button className="story-composer-share" disabled={createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step)} onClick={publish} type="button">
               {createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step) ? <><FiRefreshCw className="story-composer-button-spinner" /> {mode === "compose" ? "Adding..." : "Sharing..."}</> : mode === "compose" ? "Add" : "Share"}

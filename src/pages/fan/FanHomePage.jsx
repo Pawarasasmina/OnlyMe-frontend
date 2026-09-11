@@ -188,7 +188,7 @@ function FanHomePage() {
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
         <HomeFeedFilters activeFilter={activeFilter} onChange={changeFilter} />
         <WallSeenTodayNotice />
-        {canPost ? <PostComposer currentUser={display} onComposeOpened={clearComposeSignal} onStatusChange={setStatus} openSignal={composeSignal} status={status} /> : null}
+        {canPost ? <PostComposer currentUser={display} onComposeOpened={clearComposeSignal} openSignal={composeSignal} /> : null}
 
         {loading ? <LoadingSkeleton className="h-20" count={4} /> : null}
         {feedQuery.isError ? (
