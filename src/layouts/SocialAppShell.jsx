@@ -59,7 +59,7 @@ function SocialAppShell({ children = null }) {
   const isHomePage = location.pathname === "/wall";
   const isSeenPage = location.pathname === "/seen"
     || location.pathname.startsWith("/seen/");
-  const isWorldComposePage = location.pathname === "/create/premium-world";
+  const isWorldComposePage = location.pathname === "/create/premium-world" || location.pathname === "/create/experience" || location.pathname.startsWith("/studio/experiences/");
   const unreadMessageCount = useUnreadMessageCount(Boolean(user), { poll: !isMessagesPage });
   const contentScrollRef = useRef(null);
   const [status, setStatus] = useState(() => localStorage.getItem(STATUS_KEY) || "");

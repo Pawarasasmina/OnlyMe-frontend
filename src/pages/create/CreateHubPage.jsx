@@ -15,14 +15,16 @@ function CreateHubPage() {
   const capabilities = socialCapabilitiesFor(user);
   const publicationsQuery = useQuery({
     queryKey: ["creation-capacity"],
-    queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD", limit: 50 })
+    queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD,EXPERIENCE", limit: 50 })
       .then((response) => response.data.data.items || []),
     enabled: capabilities.isApprovedCreator,
   });
   const active = (publicationsQuery.data || []).filter((item) =>
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
+  const experiences = active.filter((item) => item.kind === "EXPERIENCE").length;
   const cards = [
+    ...(capabilities.isApprovedCreator ? [{ title: "Premium Experience", text: `Multi-chapter journey · first chapter free · one-time unlock · ${experiences}/3 active`, to: "/create/experience", disabled: experiences >= 3 }] : []),
     { title: "Seen", text: "Free public publication with 1–3 chapters", to: "/create/seen" },
     ...(capabilities.isApprovedCreator ? [{ title: "Premium World", text: `Monthly private ecosystem · 1–2 previews · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];

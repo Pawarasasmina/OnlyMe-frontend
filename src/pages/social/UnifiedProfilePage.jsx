@@ -44,6 +44,7 @@ import ProfileConnectionsModal from "../../components/profile/ProfileConnections
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileDream from "../../components/profile/ProfileDream";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
+import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StatusPicker from "../../components/stories/StatusPicker";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
@@ -771,6 +772,7 @@ function ProfileBody({ data, setConnectionsType, setStatus, statusContext }) {
       {isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <PhotosSection isOwner={isOwner} photos={data.photos || []} />
+      <ProfileExperiences creatorName={profile.displayName} experiences={data.experiences || []} owner={isOwner} />
       <StatsRow metrics={publicMetrics} onConnectionsOpen={setConnectionsType} />
       {!isOwner ? <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} /> : null}
       {!isOwner ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}

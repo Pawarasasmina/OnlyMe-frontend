@@ -8,6 +8,7 @@ export const searchService = {
   search: (params, signal) => axiosInstance.get("/search", { params, signal }).then(unpack),
   getSearchDefaults: (signal) => axiosInstance.get("/search/defaults", { signal }).then(unpack),
   getSuggestions: (q, signal) => axiosInstance.get("/search/suggestions", { params: { q }, signal }).then(unpack),
+  searchLocations: (params, signal) => axiosInstance.get("/search/locations", { params, signal }).then((response) => unpack(response).items || []),
   getRecentSearches: (signal) => axiosInstance.get("/search/recent", { signal }).then((response) => unpack(response).recent || []),
   removeRecentSearch: (id) => axiosInstance.delete(`/search/recent/${id}`).then(unpack),
   clearRecentSearches: () => axiosInstance.delete("/search/recent").then(unpack),

@@ -1,14 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FiMapPin, FiMic, FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import { useEffect, useRef, useState } from "react";
+import { FiMapPin, FiMic, FiNavigation, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
 import { useAuth } from "../../../hooks/useAuth";
-import { useWallStories } from "../../../hooks/useStories";
 import { useCreateFeedPost } from "../../../hooks/useFeedPosts";
 import { canCreateFeedPost } from "../../../utils/postPermissions";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import WallVoiceRecorder from "../../voice/WallVoiceRecorder";
-import EntityAttachmentPicker from "../../contentEntities/EntityAttachmentPicker";
 import { formatVoiceTime } from "../../../hooks/useVoiceRecorder";
 import {
   POST_CONTEXTS,
@@ -17,8 +15,8 @@ import {
   POST_MAX_IMAGES,
   POST_TEXT_MAX_LENGTH,
 } from "../../../data/postOptions";
-import StatusPicker from "../../stories/StatusPicker";
 import ProfileImageCropper from "../../profile/ProfileImageCropper";
+import { searchService } from "../../../services/searchService";
 
 const noteContextOptions = [
   { icon: "⚡", label: "Right now", value: "Right now" },
@@ -36,6 +34,115 @@ const noteContextOptions = [
   { icon: "💄", label: "Beauty", value: "Other" },
 ];
 
+function LocationPicker({ onClose, onSelect, selected }) {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [position, setPosition] = useState(null);
+  const [positioning, setPositioning] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.setTimeout(() => inputRef.current?.focus(), 80);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    const query = search.trim();
+    if (query.length < 2) {
+      setResults([]);
+      setLoading(false);
+      setSearchError("");
+      return undefined;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      setSearchError("");
+      searchService.searchLocations({
+        q: query,
+        language: navigator.language || "en",
+        latitude: position?.latitude,
+        longitude: position?.longitude,
+      }, controller.signal)
+        .then(setResults)
+        .catch((error) => {
+          if (error?.code !== "ERR_CANCELED") {
+            setResults([]);
+            setSearchError(error?.response?.data?.message || "Could not search locations. Try again.");
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 450);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [position, search]);
+
+  const useCurrentArea = () => {
+    if (!navigator.geolocation) {
+      setSearchError("Location access is not supported by this browser.");
+      return;
+    }
+    setPositioning(true);
+    setSearchError("");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setPosition({ latitude: coords.latitude, longitude: coords.longitude });
+        setPositioning(false);
+        inputRef.current?.focus();
+      },
+      () => {
+        setPositioning(false);
+        setSearchError("Allow location access to prioritize places near you.");
+      },
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 },
+    );
+  };
+
+  return (
+    <div className="home-note-location-layer" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section aria-label="Choose a location" aria-modal="true" className="home-note-location-sheet" role="dialog">
+        <div className="home-note-location-handle" aria-hidden="true" />
+        <header><h2>Location</h2><button aria-label="Close location picker" onClick={onClose} type="button"><FiX /></button></header>
+        <label className="home-note-location-search">
+          <FiSearch aria-hidden="true" />
+          <span className="sr-only">Search a country or city</span>
+          <input onChange={(event) => setSearch(event.target.value)} placeholder="Search a country or city" ref={inputRef} value={search} />
+        </label>
+        <button className={`home-note-location-nearby ${position ? "is-active" : ""}`} disabled={positioning} onClick={useCurrentArea} type="button">
+          <FiNavigation aria-hidden="true" />{positioning ? "Finding your area…" : position ? "Results prioritized near you" : "Use my current area"}
+        </button>
+        {selected ? <button className="home-note-location-clear" onClick={() => { onSelect(""); onClose(); }} type="button">Remove location</button> : null}
+        <div className="home-note-location-results">
+          {loading ? <p aria-live="polite">Searching locations…</p> : null}
+          {!loading && searchError ? <p role="alert">{searchError}</p> : null}
+          {!loading && !searchError && search.trim().length < 2 ? <p>Type at least 2 letters to find any city, country, address, landmark, or venue.</p> : null}
+          {!loading && results.map((item) => (
+            <button aria-pressed={selected === item.label} className={selected === item.label ? "is-selected" : ""} key={item.code + item.label} onClick={() => { onSelect(item.label); onClose(); }} type="button">
+              <span>{item.code || <FiMapPin aria-hidden="true" />}</span><span className="home-note-location-result-copy"><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>
+            </button>
+          ))}
+          {!loading && !searchError && search.trim().length >= 2 && !results.length ? <p>No locations found.</p> : null}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function fileError(file) {
   if (!POST_IMAGE_TYPES.includes(file.type)) return "Only JPEG, PNG, or WebP images are allowed.";
   if (file.size > POST_MAX_IMAGE_SIZE) return "Images must be 15 MB or smaller.";
@@ -50,34 +157,30 @@ function previewFile(file) {
   };
 }
 
-function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal = "", status }) {
+function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const textRef = useRef(null);
   const fileInputRef = useRef(null);
   const filesRef = useRef([]);
   const voiceAttachmentRef = useRef(null);
-  const [statusOpen, setStatusOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [text, setText] = useState("");
   const [selectedContext, setSelectedContext] = useState(noteContextOptions[0]);
   const [location, setLocation] = useState("");
   const [files, setFiles] = useState([]);
-  const [attachedEntities, setAttachedEntities] = useState([]);
   const [voiceAttachment, setVoiceAttachment] = useState(null);
   const [error, setError] = useState("");
   const [uploadLabel, setUploadLabel] = useState("");
   const [cropQueue, setCropQueue] = useState([]);
   const canPostToHome = canCreateFeedPost(user);
-  const viewerId = user?.id || user?._id;
-  const wallStoriesQuery = useWallStories({ fallbackUser: { ...currentUser, ...user }, viewerId });
   const createMutation = useCreateFeedPost();
-  const activeStatus = wallStoriesQuery.data?.viewer?.activeStatus || user?.activeStatus || null;
   const trimmedText = text.trim();
   const validContextValue = POST_CONTEXTS.includes(selectedContext?.value) ? selectedContext.value : "";
   const canPublish = canPostToHome && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
-  const hasDraft = Boolean(trimmedText || location.trim() || files.length || voiceAttachment || attachedEntities.length);
+  const hasDraft = Boolean(trimmedText || location.trim() || files.length || voiceAttachment);
 
   useEffect(() => {
     filesRef.current = files;
@@ -106,7 +209,6 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     setSelectedContext(noteContextOptions[0]);
     setLocation("");
     setFiles([]);
-    setAttachedEntities([]);
     setVoiceAttachment(null);
     setError("");
     setUploadLabel("");
@@ -123,6 +225,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
 
   const closeComposer = () => {
     resetComposer();
+    setLocationPickerOpen(false);
     setComposerOpen(false);
   };
 
@@ -201,7 +304,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     formData.append("text", trimmedText);
     formData.append("context", validContextValue);
     formData.append("location", location.trim());
-    formData.append("entityRefs", JSON.stringify(attachedEntities.map((entity) => ({ entityId: entity.id, entityType: entity.type }))));
+    formData.append("entityRefs", "[]");
     files.forEach((item) => formData.append("media", item.file));
     if (voiceAttachment?.file) {
       formData.append("voice", voiceAttachment.file);
@@ -237,8 +340,7 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
     );
   };
 
-  const suggestedLocation = useMemo(() => currentUser?.location || user?.city || user?.location?.city || "", [currentUser?.location, user?.city, user?.location?.city]);
-  const locationLabel = location.trim() || suggestedLocation || "Location";
+  const locationLabel = location.trim() || "Location";
 
   return (
     <>
@@ -267,18 +369,19 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
           <div className="home-note-chip-row" aria-label="Note context">
             {noteContextOptions.map((option) => (
               <button
-                aria-pressed={selectedContext.label === option.label}
-                className={selectedContext.label === option.label ? "is-selected" : ""}
+                aria-pressed={option.label === "Place" ? Boolean(location) : selectedContext.label === option.label}
+                className={(option.label === "Place" ? Boolean(location) : selectedContext.label === option.label) ? "is-selected" : ""}
                 key={option.label}
-                onClick={() => setSelectedContext(option)}
+                onClick={() => {
+                  if (option.label === "Place") setLocationPickerOpen(true);
+                  else setSelectedContext(option);
+                }}
                 type="button"
               >
                 <span aria-hidden="true">{option.icon}</span>{option.label}
               </button>
             ))}
           </div>
-
-          <EntityAttachmentPicker context={validContextValue} disabled={createMutation.isPending} onChange={setAttachedEntities} value={attachedEntities} />
 
           {files.length ? (
             <div className="home-note-preview-grid">
@@ -334,16 +437,12 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
               <button aria-label={voiceAttachment ? "Replace voice note" : "Record voice note"} className={voiceAttachment ? "is-selected" : ""} onClick={() => setVoiceRecorderOpen(true)} type="button"><FiMic /></button>
               <button
                 className="home-note-location"
-                onClick={() => {
-                  if (location) setLocation("");
-                  else if (suggestedLocation) setLocation(suggestedLocation);
-                  else showToast("Add a city on your profile to tag location.");
-                }}
+                onClick={() => setLocationPickerOpen(true)}
                 type="button"
               >
                 <FiMapPin />{locationLabel}
               </button>
-              <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => addFiles(event.target.files || [])} ref={fileInputRef} type="file" />
+              <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => { addFiles(event.target.files || []); event.target.value = ""; }} ref={fileInputRef} type="file" />
             </div>
             <div className="home-note-actions">
               {error ? <span role="status">{error}</span> : uploadLabel ? <span role="status">{uploadLabel}</span> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
@@ -362,27 +461,9 @@ function PostComposer({ currentUser, onStatusChange, onComposeOpened, openSignal
             <FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} />
             <span className="truncate">Share what you&apos;ve seen...</span>
           </button>
-          <button
-            aria-label={activeStatus ? `Change status badge, currently ${activeStatus.label}` : "Set status badge"}
-            className={`home-composer-status ${activeStatus ? "" : "is-empty"}`}
-            onClick={() => setStatusOpen(true)}
-            type="button"
-          >
-            {activeStatus?.emoji ? <span aria-hidden="true">{activeStatus.emoji}</span> : null}
-            {activeStatus?.label || status || "Set status"}
-          </button>
         </div>
       )}
-
-      <StatusPicker
-        activeStatus={activeStatus}
-        isOpen={statusOpen}
-        onClose={() => setStatusOpen(false)}
-        onStatusChange={(nextStatusLabel) => {
-          onStatusChange?.(nextStatusLabel);
-          wallStoriesQuery.refetch();
-        }}
-      />
+      {locationPickerOpen ? <LocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={setLocation} selected={location} /> : null}
       <WallVoiceRecorder isOpen={voiceRecorderOpen} onClose={() => setVoiceRecorderOpen(false)} onUse={attachVoiceNote} />
     </>
   );

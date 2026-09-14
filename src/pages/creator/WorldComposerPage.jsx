@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import WorldPublishingPage from "./WorldPublishingPage";
 
-export default function WorldComposerPage() {
+export default function WorldComposerPage({ experience = false }) {
   const { id } = useParams();
-  return <WorldPublishingPage publicationId={id} />;
+  return <WorldPublishingPage experience={experience} publicationId={id} />;
 }

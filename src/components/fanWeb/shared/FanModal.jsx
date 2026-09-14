@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 
-function FanModal({ children, className = "", hideHeader = false, isOpen, onClose, overlayClassName = "", title }) {
+function FanModal({ children, className = "", hideHeader = false, isOpen, onClose, overlayClassName = "", portal = false, title }) {
   const titleId = useId();
   const dialogRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -57,7 +58,7 @@ function FanModal({ children, className = "", hideHeader = false, isOpen, onClos
     return null;
   }
 
-  return (
+  const modal = (
     <div
       aria-label={hideHeader ? title : undefined}
       aria-labelledby={hideHeader ? undefined : titleId}
@@ -92,6 +93,8 @@ function FanModal({ children, className = "", hideHeader = false, isOpen, onClos
       </div>
     </div>
   );
+
+  return portal ? createPortal(modal, document.body) : modal;
 }
 
 export default FanModal;

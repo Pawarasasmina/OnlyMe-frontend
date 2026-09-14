@@ -160,6 +160,8 @@ function AppRoutes() {
             <Route path="/studio" element={<CreatorStudio />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
+            <Route path="/create/experience" element={<WorldComposerPage experience />} />
+            <Route path="/studio/experiences/:id/edit" element={<WorldComposerPage experience />} />
             <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
@@ -228,6 +230,7 @@ function AppRoutes() {
 
     <Route path="/profile/:username" element={<ProfileRoute />} />
     <Route path="/world/:id" element={<WorldRoute />} />
+    <Route path="/experience/:id" element={<WorldRoute />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />

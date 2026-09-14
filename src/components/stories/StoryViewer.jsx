@@ -1,21 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { FiBarChart2, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiSend, FiTrash2, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { FiBarChart2, FiEye, FiEyeOff, FiFlag, FiGift, FiLink, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiSend, FiTrash2, FiUserMinus, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
-import { useDeleteStory, useMarkStoryViewed, useReactToStory } from "../../hooks/useStories";
+import { useDeleteStory, useMarkStoryViewed } from "../../hooks/useStories";
 import { storyService } from "../../services/storyService";
-import { canCreateStory, canDeleteStory, canReactToStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
+import { messageService } from "../../services/messageService";
+import { profileService } from "../../services/profileService";
+import { canCreateStory, canDeleteStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
 import StoryInsightsModal from "./StoryInsightsModal";
-import StoryReactionTray from "./StoryReactionTray";
+import StoryGiftPicker from "./StoryGiftPicker";
+import ShareSheet from "../share/ShareSheet";
 
 const IMAGE_DURATION_MS = 5000;
 const VIEW_THRESHOLD_MS = 1000;
-const REACTIONS_KEY = "atseen_story_reactions";
+const REPORT_REASONS = ["Spam", "Harassment or bullying", "Hate speech", "Nudity or sexual content", "Violence", "False information", "Something else"];
 
 function formatStoryTimeAgo(value) {
   const created = new Date(value).getTime();
@@ -29,14 +33,6 @@ function formatStoryTimeAgo(value) {
   if (hours < 24) return `${hours}h`;
 
   return `${Math.floor(hours / 24)}d`;
-}
-
-function readReactions() {
-  try {
-    return JSON.parse(localStorage.getItem(REACTIONS_KEY) || "{}");
-  } catch {
-    return {};
-  }
 }
 
 function StoryMedia({ muted, onDurationChange, onEnded, onPlay, story, videoRef }) {
@@ -134,18 +130,17 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   const [muted, setMuted] = useState(true);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
-  const [recentReaction, setRecentReaction] = useState(null);
   const [seeYouNotice, setSeeYouNotice] = useState(false);
-  const [reactions, setReactions] = useState(readReactions);
   const [replyText, setReplyText] = useState("");
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [reportMenuOpen, setReportMenuOpen] = useState(false);
+  const [menuBusy, setMenuBusy] = useState("");
   const markViewedMutation = useMarkStoryViewed();
-  const reactionMutation = useReactToStory();
   const deleteMutation = useDeleteStory();
-  const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen;
+  const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || giftOpen || shareOpen;
 
   const activeStory = stories[index] || null;
-  const selectedReaction = activeStory ? reactions[activeStory.id]?.reaction || activeStory.viewerReaction : null;
-  const canReact = canReactToStory(user, activeStory);
   const canReply = canReplyToStory(user, activeStory);
   const canDelete = canDeleteStory(user, activeStory);
   const canViewInsights = canViewStoryInsights(user, activeStory);
@@ -181,6 +176,11 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
       setHoldPaused(false);
       setSystemPaused(false);
       setOwnerMenuOpen(false);
+      setReplyText("");
+      setGiftOpen(false);
+      setShareOpen(false);
+      setReportMenuOpen(false);
+      setMenuBusy("");
     }
   }, [boundedIndex, isOpen]);
 
@@ -197,6 +197,11 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
       setHoldPaused(false);
       setSystemPaused(false);
       setOwnerMenuOpen(false);
+      setReplyText("");
+      setGiftOpen(false);
+      setShareOpen(false);
+      setReportMenuOpen(false);
+      setMenuBusy("");
       return next;
     });
   }, [onClose, stories.length]);
@@ -280,32 +285,6 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
     }
   }, [activeStory, paused]);
 
-  const react = (reaction) => {
-    if (!activeStory || !canReact || reactionMutation.isPending) {
-      return;
-    }
-
-    setSystemPaused(true);
-    reactionMutation.mutate(
-      { reaction, storyId: activeStory.id },
-      {
-        onSuccess: () => {
-          const next = { ...reactions, [activeStory.id]: { reaction, reactedAt: new Date().toISOString() } };
-          localStorage.setItem(REACTIONS_KEY, JSON.stringify(next));
-          setReactions(next);
-          setRecentReaction(reaction);
-          window.setTimeout(() => setRecentReaction(null), 700);
-          showToast("Reaction sent.");
-        },
-        onError: (error) => {
-          const status = error?.response?.status;
-          showToast(status === 403 ? "You do not have permission to react to this story." : "Reaction could not be sent.");
-        },
-        onSettled: () => setSystemPaused(false),
-      }
-    );
-  };
-
   const deleteStory = () => {
     if (!activeStory || !canDelete || deleteMutation.isPending) {
       showToast("You do not have permission to delete this story.");
@@ -327,13 +306,82 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   const submitReply = (event) => {
     event.preventDefault();
     const body = replyText.trim();
-    if (!activeStory || !canReply || !body || replyMutation.isPending) return;
+    if (!activeStory || !canReply || replyMutation.isPending) return;
+    if (!body) {
+      setShareOpen(true);
+      return;
+    }
     replyMutation.mutate({ body, storyId: activeStory.id });
   };
 
   const sendSeeYou = () => {
     if (!activeStory || !canReply || seeYouMutation.isPending) return;
     seeYouMutation.mutate({ storyId: activeStory.id });
+  };
+
+  const openGiftPicker = () => {
+    if (!activeStory?.owner?.id && !activeStory?.ownerId) {
+      showToast("This creator cannot receive direct gifts right now.");
+      return;
+    }
+    setGiftOpen(true);
+  };
+
+  const copyStoryLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/stories/${activeStory.id}`);
+      setOwnerMenuOpen(false);
+      showToast("Story link copied.");
+    } catch {
+      showToast("Story link could not be copied.");
+    }
+  };
+
+  const unfollowOwner = async () => {
+    if (!activeStory.owner.username || menuBusy) return;
+    setMenuBusy("unfollow");
+    try {
+      await profileService.toggleFollow(activeStory.owner.username);
+      await queryClient.invalidateQueries({ queryKey: ["discover"] });
+      await queryClient.invalidateQueries({ queryKey: ["stories"] });
+      showToast(`Unfollowed ${activeStory.owner.name}.`);
+      onClose();
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Could not unfollow this account.");
+    } finally {
+      setMenuBusy("");
+    }
+  };
+
+  const hideOwnerStories = async () => {
+    const ownerId = activeStory.owner.id || activeStory.ownerId;
+    if (!ownerId || menuBusy) return;
+    setMenuBusy("hide");
+    try {
+      await messageService.muteConversation(ownerId, true);
+      await queryClient.invalidateQueries({ queryKey: ["stories"] });
+      showToast(`Stories from ${activeStory.owner.name} are now hidden.`);
+      onClose();
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Could not hide these stories.");
+    } finally {
+      setMenuBusy("");
+    }
+  };
+
+  const reportStory = async (reason) => {
+    if (menuBusy) return;
+    setMenuBusy("report");
+    try {
+      await storyService.reportStory(activeStory.id, reason);
+      showToast("Report received. Thank you for helping keep @seen safe.");
+      setReportMenuOpen(false);
+      setOwnerMenuOpen(false);
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Could not report this story.");
+    } finally {
+      setMenuBusy("");
+    }
   };
 
   if (!activeStory) {
@@ -344,6 +392,14 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   const replyName = (activeStory.owner.name || "Story").split(" ").filter(Boolean)[0] || "Story";
   const ownerProfileKey = activeStory.owner.username || activeStory.username || activeStory.owner.id || activeStory.ownerId;
   const ownerProfilePath = ownerProfileKey ? `/profile/${encodeURIComponent(ownerProfileKey)}` : null;
+  const sharePayload = {
+    contentId: activeStory.id,
+    contentType: "story",
+    imageUrl: activeStory.mediaUrl || activeStory.image || "",
+    previewText: activeStory.caption || `Story from ${activeStory.owner.name}`,
+    route: `/stories/${activeStory.id}`,
+    title: `${activeStory.owner.name}'s story`,
+  };
   const openOwnerProfile = (event) => {
     event.stopPropagation();
     if (ownerProfilePath) navigate(ownerProfilePath);
@@ -352,15 +408,16 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   return (
     <>
       <FanModal
-        className={`h-[100dvh] max-h-[100dvh] max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:h-auto sm:max-w-[440px] sm:rounded-[26px] ${inline ? "discover-story-inline-dialog" : ""}`}
+        className="story-viewer-dialog h-[100dvh] max-h-[100dvh] max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none"
         hideHeader
         isOpen={isOpen}
         onClose={onClose}
-        overlayClassName={`${inline ? "discover-story-inline-overlay" : ""} p-0 sm:p-4`}
+        overlayClassName="story-viewer-overlay !p-0"
+        portal
         title="Story viewer"
       >
         <div
-          className={`relative h-[100dvh] overflow-hidden bg-black ${inline ? "discover-story-inline-surface" : "sm:h-[min(88vh,760px)] sm:rounded-[26px]"}`}
+          className={`story-viewer-surface relative h-[100dvh] overflow-hidden bg-black ${inline ? "discover-story-inline-surface" : ""}`}
           onPointerDown={() => setHoldPaused(true)}
           onPointerLeave={() => setHoldPaused(false)}
           onPointerUp={() => setHoldPaused(false)}
@@ -427,6 +484,41 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
                 {muted ? <FiVolumeX aria-hidden="true" /> : <FiVolume2 aria-hidden="true" />}
               </button>
             ) : null}
+            {canDelete || canViewInsights || canAdd ? (
+              <div
+                className="relative shrink-0"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                onPointerUp={(event) => event.stopPropagation()}
+              >
+                <button
+                  aria-label="Open story menu"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55"
+                  onClick={() => setOwnerMenuOpen((current) => !current)}
+                  type="button"
+                >
+                  <FiMoreHorizontal aria-hidden="true" />
+                </button>
+                {ownerMenuOpen ? (
+                  <div className="absolute right-0 top-11 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#111410]/95 p-1.5 text-sm shadow-[0_18px_50px_rgba(0,0,0,.7)] backdrop-blur-xl">
+                    {canDelete ? <>
+                      {canAdd ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-white hover:bg-white/10" onClick={onAddStory} type="button"><FiPlus /> Add another Story</button> : null}
+                      {canViewInsights ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-white hover:bg-white/10" onClick={() => setInsightsOpen(true)} type="button"><FiBarChart2 /> View insights</button> : null}
+                      <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-atseen-danger hover:bg-atseen-danger/10" onClick={deleteStory} type="button"><FiTrash2 /> Delete Story</button>
+                    </> : reportMenuOpen ? <>
+                      <p className="px-3 pb-1 pt-2 text-[10px] font-black uppercase tracking-wider text-white/45">Why are you reporting this?</p>
+                      {REPORT_REASONS.map((reason) => <button className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white hover:bg-white/10 disabled:opacity-45" disabled={Boolean(menuBusy)} key={reason} onClick={() => reportStory(reason)} type="button">{reason}</button>)}
+                      <button className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-atseen-blue hover:bg-white/10" onClick={() => setReportMenuOpen(false)} type="button">Back</button>
+                    </> : <>
+                      <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold text-rose-400 hover:bg-rose-400/10 disabled:opacity-45" disabled={Boolean(menuBusy)} onClick={() => setReportMenuOpen(true)} type="button"><FiFlag /> Report</button>
+                      <button className="flex w-full items-center gap-3 border-t border-white/10 px-3 py-3 text-left font-bold text-white hover:bg-white/10 disabled:opacity-45" disabled={Boolean(menuBusy) || !activeStory.owner.username} onClick={unfollowOwner} type="button"><FiUserMinus /> {menuBusy === "unfollow" ? "Unfollowing…" : "Unfollow"}</button>
+                      <button className="flex w-full items-center gap-3 border-t border-white/10 px-3 py-3 text-left font-bold text-white hover:bg-white/10 disabled:opacity-45" disabled={Boolean(menuBusy)} onClick={hideOwnerStories} type="button"><FiEyeOff /> {menuBusy === "hide" ? "Hiding…" : "Hide stories"}</button>
+                      <button className="flex w-full items-center gap-3 border-t border-white/10 px-3 py-3 text-left font-bold text-white hover:bg-white/10 disabled:opacity-45" disabled={Boolean(menuBusy)} onClick={copyStoryLink} type="button"><FiLink /> Copy link</button>
+                    </>}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <button aria-label="Close story" className="flex h-9 w-9 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur transition hover:bg-black/45" onClick={onClose} type="button">
               <FiX aria-hidden="true" />
             </button>
@@ -437,58 +529,17 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
               <span>{"\u2192"} {replyName}</span>
             </div>
           ) : null}
-          {canDelete || canViewInsights || canAdd ? (
-            <div
-              className="absolute right-4 top-20 z-40"
-              onClick={(event) => event.stopPropagation()}
-              onPointerDown={(event) => event.stopPropagation()}
-              onPointerUp={(event) => event.stopPropagation()}
-            >
-              <button
-                aria-label="Open story owner menu"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setOwnerMenuOpen((current) => !current);
-                }}
-                type="button"
-              >
-                <FiMoreHorizontal aria-hidden="true" />
-              </button>
-              {ownerMenuOpen ? (
-                <div className="mt-2 w-48 rounded-2xl border border-white/10 bg-[#0B0E13]/95 p-2 text-sm shadow-glow backdrop-blur">
-                  {canAdd ? <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-white hover:bg-white/10" onClick={onAddStory} type="button"><FiPlus /> Add another Story</button> : null}
-                  {canViewInsights ? <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-white hover:bg-white/10" onClick={() => setInsightsOpen(true)} type="button"><FiBarChart2 /> View insights</button> : null}
-                  {canDelete ? <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-atseen-danger hover:bg-atseen-danger/10" onClick={deleteStory} type="button"><FiTrash2 /> Delete Story</button> : null}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
           {activeStory.caption ? <p className="absolute bottom-32 left-5 right-5 z-30 text-left text-base font-bold leading-6 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,.6)]">{activeStory.caption}</p> : null}
-          {recentReaction ? <span aria-live="polite" className="pointer-events-none absolute bottom-32 left-1/2 z-30 -translate-x-1/2 animate-bounce text-5xl motion-reduce:animate-none">{recentReaction}</span> : null}
-          {canReact || canReply ? (
-            <div className={`absolute left-[22px] right-[22px] z-30 ${canReply ? "bottom-[78px]" : "bottom-[max(20px,env(safe-area-inset-bottom))]"}`}>
-              <StoryReactionTray
-                canSeeYou={canReply}
-                canReact={canReact}
-                onReact={react}
-                pending={reactionMutation.isPending}
-                onSeeYou={sendSeeYou}
-                seeYouPending={seeYouMutation.isPending}
-                selectedReaction={selectedReaction}
-              />
-            </div>
-          ) : null}
           {canReply ? (
             <form
-              className="absolute bottom-[max(26px,env(safe-area-inset-bottom))] left-3.5 right-3.5 z-40 flex gap-2.5"
+              className="absolute bottom-[max(22px,env(safe-area-inset-bottom))] left-3.5 right-3.5 z-40 flex items-center gap-2 rounded-[28px] bg-black/20 p-1.5 shadow-[0_12px_36px_rgba(0,0,0,.28)] backdrop-blur-sm"
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onSubmit={submitReply}
             >
               <input
                 aria-label="Reply to story"
-                className="min-w-0 flex-1 rounded-full border border-white/35 bg-black/45 px-4 py-3 text-sm text-white outline-none backdrop-blur placeholder:text-white/55 focus:border-white/70"
+                className="min-w-0 flex-1 rounded-full border border-white/40 bg-black/50 px-4 py-3 text-sm text-white outline-none backdrop-blur-md transition placeholder:text-white/60 focus:border-white/80 focus:bg-black/60 focus:ring-2 focus:ring-white/10"
                 maxLength={1000}
                 onBlur={() => setSystemPaused(false)}
                 onChange={(event) => setReplyText(event.target.value)}
@@ -497,9 +548,26 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
                 value={replyText}
               />
               <button
-                aria-label="Send story reply"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/35 bg-black/45 text-white backdrop-blur disabled:opacity-45"
-                disabled={!replyText.trim() || replyMutation.isPending}
+                aria-label="Send a gift"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 bg-black/35 text-lg text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/15 disabled:opacity-45"
+                onClick={openGiftPicker}
+                type="button"
+              >
+                <FiGift aria-hidden="true" />
+              </button>
+              <button
+                aria-label="Send I see you"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 bg-black/35 text-lg text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/15 disabled:opacity-45"
+                disabled={seeYouMutation.isPending}
+                onClick={sendSeeYou}
+                type="button"
+              >
+                <FiEye aria-hidden="true" />
+              </button>
+              <button
+                aria-label={replyText.trim() ? "Send story reply" : "Share story in messages"}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/45 bg-white/10 text-lg text-white shadow-[0_6px_18px_rgba(0,0,0,.3)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20 disabled:opacity-45"
+                disabled={replyMutation.isPending}
                 type="submit"
               >
                 <FiSend aria-hidden="true" />
@@ -511,6 +579,17 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
         </div>
       </FanModal>
       <StoryInsightsModal isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} story={activeStory} />
+      {giftOpen ? createPortal((
+        <StoryGiftPicker
+          onClose={() => setGiftOpen(false)}
+          onSent={() => showToast("Gift sent in Messages.")}
+          recipient={{ ...activeStory.owner, id: activeStory.owner.id || activeStory.ownerId }}
+        />
+      ), document.body) : null}
+      {shareOpen ? createPortal(
+        <ShareSheet isOpen onClose={() => setShareOpen(false)} payload={sharePayload} />,
+        document.body
+      ) : null}
     </>
   );
 }
