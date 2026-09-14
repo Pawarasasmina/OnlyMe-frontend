@@ -1265,7 +1265,7 @@ body::-webkit-scrollbar-thumb {
 .share-sheet-overlay {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 150;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4160,9 +4160,36 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 .discover-rail-skeleton { min-height: 490px; border-radius: 24px; }
 @keyframes atseen-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 @keyframes discover-story-pulse { 0%,100% { box-shadow: 0 0 10px rgba(138,184,255,.18); } 50% { box-shadow: 0 0 19px rgba(138,184,255,.36); } }
-.discover-story-inline-overlay { position: static; inset: auto; z-index: auto; min-height: calc(100vh - 76px); align-items: flex-start; background: transparent; backdrop-filter: none; }
-.discover-story-inline-dialog { width: min(100%,548px); max-width: 548px; outline: none; }
-.discover-story-inline-surface { height: calc(100vh - 76px); border-radius: 0; }
+.story-viewer-overlay,
+.discover-story-inline-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 18%,rgba(68,104,154,.2),transparent 36%),
+    rgba(2,4,7,.94);
+  backdrop-filter: blur(20px);
+}
+.story-viewer-dialog,
+.discover-story-inline-dialog {
+  width: min(100%,500px);
+  max-width: 500px;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  border-right: 1px solid rgba(255,255,255,.1) !important;
+  border-left: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  outline: none;
+  box-shadow: 0 0 90px rgba(0,0,0,.78),0 0 34px rgba(112,169,255,.09) !important;
+}
+.story-viewer-surface,
+.discover-story-inline-surface { height: 100dvh; border-radius: 0; }
 .discover-rec-story { position: relative; min-height: calc(100vh - 76px); overflow: hidden; background: #000; color: #fff; }
 .discover-rec-story-media,.discover-rec-story-fallback,.discover-rec-story-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
 .discover-rec-story-media { object-fit: cover; }
@@ -5547,7 +5574,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 .dream-gift-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 150;
   display: flex;
   align-items: flex-end;
   justify-content: center;

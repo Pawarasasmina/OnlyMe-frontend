@@ -11,10 +11,10 @@ const STAR = String.fromCharCode(10022);
 const giftImageTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
 const celebrationParticles = Array.from({ length: 28 }, (_, index) => ({ angle: index * (360 / 28), delay: (index % 7) * 34, distance: 92 + (index % 5) * 18, size: 8 + (index % 4) * 3 }));
 
-function GiftCelebration({ gift }) {
+export function GiftCelebration({ detail, gift, message = "You're part of this Dream now" }) {
   return <div aria-live="polite" className="gift-celebration-layer">
     <div className="gift-celebration-veil" />
-    <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>You&apos;re part of this Dream now</strong><small>{gift.name} · {STAR}{gift.stars.toLocaleString()} sent</small></span></div>
+    <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>{message}</strong><small>{detail || `${gift.name} · ${STAR}${gift.stars.toLocaleString()} sent`}</small></span></div>
     <div className="gift-celebration-stage">
       <div className="gift-celebration-glow" />
       <i className="gift-celebration-ring is-outer" />
@@ -143,7 +143,7 @@ function Editor({ dream, onClose, onSaved }) {
   );
 }
 
-function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
+export function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
   const queryClient = useQueryClient();
   const [privateSupport, setPrivateSupport] = useState(false);
   const [sending, setSending] = useState("");
