@@ -18314,3 +18314,138 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   padding: 0 0 80px;
   background: transparent;
 }
+
+.social-app-shell .social-center-scroll > main:has(.profile-dream-page) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.profile-dream-page {
+  width: 100%;
+  min-height: 100dvh;
+  background: #090d12;
+  color: #fff;
+}
+.profile-dream-editor-layer.is-page {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  display: block;
+  width: 100%;
+  min-height: 100dvh;
+  pointer-events: auto;
+}
+.profile-dream-editor-sheet.is-page {
+  width: 100%;
+  max-height: none;
+  min-height: 100dvh;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 28px clamp(22px, 5vw, 42px) 80px;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-editor-close {
+  top: 18px;
+  right: auto;
+  left: clamp(22px, 5vw, 42px);
+  width: 40px;
+  height: 40px;
+  background: #171b21;
+  color: #fff;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-editor-handle,
+.profile-dream-editor-sheet.is-page .profile-dream-editor-title > span,
+.profile-dream-editor-sheet.is-page .profile-dream-emoji-input {
+  display: none;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-editor-title {
+  min-height: 42px;
+  display: block;
+  padding: 0 0 0 52px;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-editor-title h2 {
+  padding-top: 4px;
+  font-size: 20px;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-editor-title p {
+  max-width: none;
+  margin: 24px 0 0 -52px;
+  color: rgba(255,255,255,.78);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-input-row {
+  grid-template-columns: 1fr;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-label {
+  margin-top: 22px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-text-input {
+  min-height: 50px;
+  background: #11151b;
+  font-size: 14px;
+  font-weight: 400;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-textarea {
+  padding-top: 15px;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-goals button {
+  min-height: 38px;
+  padding-inline: 15px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.profile-dream-editor-sheet.is-page .profile-dream-submit {
+  min-height: 50px;
+  margin-top: 28px;
+  font-size: 16px;
+}
+.profile-dream-page-state {
+  display: grid;
+  place-content: center;
+  gap: 14px;
+  text-align: center;
+}
+.profile-dream-page-state button { color: #9CCBFF; }
+.dream-photo-editor { margin-top: 10px; }
+.dream-photo-crop { width: min(100%, 360px); aspect-ratio: 5/3; overflow: hidden; border: 1px solid var(--profile-line); border-radius: 13px; background: #11151b; }
+.dream-photo-crop img { width: 100%; height: 100%; object-fit: cover; }
+.dream-photo-empty { display: grid; width: 150px; aspect-ratio: 5/3; place-items: center; border: 1px dashed var(--profile-line); border-radius: 13px; color: var(--profile-dim); font-size: 11px; }
+.dream-photo-actions { display: flex; gap: 9px; margin-top: 9px; }
+.dream-photo-actions button,.profile-dream-preview-button { min-height: 34px; border: 1px solid rgba(156,203,255,.3); border-radius: 999px; padding: 0 15px; color: var(--profile-blue); font-size: 11px; font-weight: 600; }
+.dream-photo-adjust { display: grid; gap: 7px; max-width: 360px; margin-top: 12px; }
+.dream-photo-adjust label { display: grid; grid-template-columns: 80px 1fr; align-items: center; color: var(--profile-muted); font-size: 10px; }
+.profile-dream-preview-button { display: block; margin: 24px auto 0; color: #fff; }
+.dream-preview-backdrop { position: fixed; inset: 0; z-index: 210; display: grid; place-items: center; background: rgba(3,5,8,.88); padding: 22px; backdrop-filter: blur(12px); }
+.dream-preview-card { width: min(100%, 520px); text-align: center; }
+.dream-preview-card > small { display: inline-flex; border: 1px solid rgba(156,203,255,.5); border-radius: 999px; padding: 5px 12px; color: var(--profile-blue); font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.dream-preview-card > div { margin-top: 8px; border: 1px solid var(--profile-line); border-radius: 18px; padding: 22px; text-align: left; }
+.dream-preview-card h3 { margin: 0 0 10px; font-size: 15px; }.dream-preview-card article { position: relative; min-height: 130px; border-radius: 15px; background: #10141a; padding: 16px; }.dream-preview-card article img { width: 72px; height: 52px; float: left; margin: 0 12px 8px 0; border-radius: 9px; object-fit: cover; }.dream-preview-card h4 { margin: 0; font-size: 14px; }.dream-preview-card article p { margin: 8px 0; color: var(--profile-muted); font-size: 12px; font-style: italic; }.dream-preview-card article b { font-size: 10px; color: var(--profile-muted); }.dream-preview-card article strong { float: right; color: var(--profile-blue); font-size: 11px; }.dream-preview-card > p { color: var(--profile-dim); font-size: 10px; }
+
+/* One desktop divider only: the sidebar owns the boundary with the center. */
+@media (min-width: 768px) {
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll {
+    margin-left: 0 !important;
+    border-left: 0 !important;
+  }
+}
+
+/* Consistent, slightly narrower center column across every desktop page. */
+@media (min-width: 1020px) {
+  .social-app-shell .social-app-frame,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame {
+    width: 100% !important;
+    max-width: 1180px !important;
+  }
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll {
+    width: 640px !important;
+    flex: 0 1 640px !important;
+  }
+}
