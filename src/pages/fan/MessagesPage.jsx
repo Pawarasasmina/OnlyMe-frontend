@@ -318,6 +318,16 @@ export default function MessagesPage() {
   const bottomRef = useRef(null);
   const threadRef = useRef(null);
   const scrollDateTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (searchParams.get("gift") !== "1" || !selected?.id || selected.type === "group") return;
+    setGiftOpen(true);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("gift");
+      return next;
+    }, { replace: true });
+  }, [searchParams, selected?.id, selected?.type, setSearchParams]);
   const imageInputRef = useRef(null);
   const groupAvatarInputRef = useRef(null);
   const newGroupAvatarInputRef = useRef(null);
@@ -1275,8 +1285,8 @@ export default function MessagesPage() {
     try {
       const response = await messageService.sendGift(selected.id, gift.id, newClientMessageId(), disappearAfterSeconds);
       const sent = response.data.data.message;
-      queryClient.setQueryData(["messages", selected.id], (current) => current ? { ...current, messages: current.messages.some((message) => message.id === sent.id) ? current.messages : [...current.messages, sent] } : current);
-      await Promise.all([queryClient.invalidateQueries({ queryKey: ["wallet"] }), queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] }), queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] })]);
+      if (sent) queryClient.setQueryData(["messages", selected.id], (current) => current ? { ...current, messages: current.messages.some((message) => message.id === sent.id) ? current.messages : [...current.messages, sent] } : current);
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ["wallet"] }), queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] }), queryClient.invalidateQueries({ queryKey: ["fan", "activity"] })]);
       setGiftOpen(false);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Could not send this gift.");

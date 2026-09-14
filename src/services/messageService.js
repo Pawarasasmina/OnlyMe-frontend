@@ -11,7 +11,7 @@ export const messageService = {
     `/messages/conversations/${userId}`,
     { body, replyToId, clientMessageId, directAccessWindowId, disappearAfterSeconds },
   ),
-  sendGift: (userId, giftId, idempotencyKey, disappearAfterSeconds = null) => axiosInstance.post(`/messages/conversations/${userId}/gifts`, { giftId, idempotencyKey, disappearAfterSeconds }),
+  sendGift: (userId, giftId, idempotencyKey, disappearAfterSeconds = null, sourceType = "DIRECT") => axiosInstance.post(`/messages/conversations/${userId}/gifts`, { giftId, idempotencyKey, disappearAfterSeconds, sourceType }),
   sendVoice: (userId, blob, waveform = [], directAccessWindowId = null, clientMessageId = null, disappearAfterSeconds = null) => {
     const data = new FormData();
     const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";

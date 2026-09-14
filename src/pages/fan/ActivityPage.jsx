@@ -338,11 +338,7 @@ function displayAmount(item) {
 }
 
 function canPersistAcknowledge(item) {
-  return Boolean(
-    item?.warningId ||
-    String(item?.id || "").startsWith("notification-") ||
-    String(item?.id || "").startsWith("profile-see-received-"),
-  );
+  return Boolean(item?.direction === "received" && item?.canAcknowledge);
 }
 
 function ActivityAvatar({ item }) {
@@ -400,7 +396,7 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
 
   const openItem = () => {
     if (!interactive) return;
-    if (item.canAcknowledge && !acknowledged) onAcknowledge(item.id);
+    if (item.direction === "received" && item.canAcknowledge && !acknowledged) onAcknowledge(item.id);
     onOpen(item);
   };
 
@@ -423,13 +419,14 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
       <div className="activity-prototype-copy">
         {item.warning ? <strong>{"HIGH PRIORITY \u00b7 ACCOUNT WARNING"}</strong> : null}
         <ActivityTitle item={item} />
+        {item.metadata?.giftSource ? <span className="mt-1 inline-flex w-fit rounded-full border border-atseen-blue/20 bg-atseen-blue/10 px-2 py-0.5 text-[9px] font-medium text-atseen-blue">{item.metadata.giftSource}</span> : null}
         {item.preview ? <span className="activity-prototype-preview">&quot;{item.preview}&quot;</span> : null}
         <time dateTime={item.createdAt ? new Date(item.createdAt).toISOString() : undefined}>{relativeTime(item.createdAt)}</time>
       </div>
 
       <div className="activity-prototype-right">
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
-        {item.canAcknowledge ? (
+        {item.direction === "received" && item.canAcknowledge ? (
           <button
             aria-label={acknowledged ? "Marked as seen" : "Mark activity as seen"}
             className={acknowledged ? "is-seen" : ""}
@@ -441,7 +438,7 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
           >
             {acknowledged ? <><span>Seen</span><FiCheck aria-hidden="true" /></> : <FiEye aria-hidden="true" />}
           </button>
-        ) : null}
+        ) : item.direction === "sent" && acknowledged ? <span className="is-seen" aria-label="Seen"><span>Seen</span><FiCheck aria-hidden="true" /></span> : null}
       </div>
     </article>
   );

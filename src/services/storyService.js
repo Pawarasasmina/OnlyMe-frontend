@@ -420,6 +420,7 @@ export const storyService = {
 
     throw new Error("Story replies are not enabled in this environment.");
   },
+  seeStory: (storyId) => axiosInstance.post(`/stories/${storyId}/see-you`),
 
   deleteStory: async (storyId) => {
     if (STORY_API_ENABLED) {
