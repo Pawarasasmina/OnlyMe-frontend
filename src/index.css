@@ -18439,13 +18439,102 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 /* Consistent, slightly narrower center column across every desktop page. */
 @media (min-width: 1020px) {
   .social-app-shell .social-app-frame,
-  .social-app-shell:has(.seen-shell-main) .social-app-frame {
+  .social-app-shell:has(.seen-shell-main) .social-app-frame,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
     width: 100% !important;
     max-width: 1180px !important;
   }
   .social-app-shell .social-center-scroll,
-  .social-app-shell:has(.seen-shell-main) .social-center-scroll {
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
     width: 640px !important;
     flex: 0 1 640px !important;
   }
+}
+
+/* Stable three-column desktop shell: route content may change only inside center. */
+@media (min-width: 1240px) {
+  .social-app-shell .social-app-frame,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
+    width: 1180px !important;
+    max-width: 1180px !important;
+    justify-content: flex-start !important;
+  }
+  .social-app-shell .social-app-frame > .fan-web-sidebar,
+  .social-app-shell .social-app-frame > .social-fixed-rail:first-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .fan-web-sidebar {
+    width: 240px !important;
+    min-width: 240px !important;
+    flex: 0 0 240px !important;
+  }
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
+    width: 640px !important;
+    min-width: 0 !important;
+    flex: 0 0 640px !important;
+    margin: 0 !important;
+  }
+  .social-app-shell .social-app-frame > .social-shared-right-rail,
+  .social-app-shell .social-app-frame > .social-fixed-rail:last-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-shared-right-rail {
+    width: 300px !important;
+    min-width: 300px !important;
+    flex: 0 0 300px !important;
+  }
+}
+
+/* Profile Experience cards: prevent legacy thumbnail sizing from overlapping copy. */
+.profile-experiences .profile-experience-card {
+  grid-template-columns: 104px minmax(0, 1fr) 18px;
+  gap: 14px;
+  min-width: 0;
+  padding: 10px;
+}
+.profile-experiences .profile-experience-cover {
+  width: 100%;
+  min-width: 0;
+  height: 78px;
+}
+.profile-experiences .profile-experience-copy {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.profile-experiences .profile-experience-copy small,
+.profile-experiences .profile-experience-copy strong,
+.profile-experiences .profile-experience-copy em {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .profile-experiences .profile-experience-card {
+    grid-template-columns: 86px minmax(0, 1fr) 16px;
+    gap: 10px;
+    padding: 8px;
+  }
+  .profile-experiences .profile-experience-cover { height: 70px; }
+}
+
+/* Profile tab content stays on one swipeable row. */
+.profile-grid-panel .profile-seens-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.profile-grid-panel .profile-seens-grid::-webkit-scrollbar { display: none; }
+.profile-grid-panel .profile-seens-grid > .profile-seen-tile {
+  width: calc((100% - 10px) / 3);
+  min-width: calc((100% - 10px) / 3);
+  flex: 0 0 calc((100% - 10px) / 3);
+  scroll-snap-align: start;
 }
