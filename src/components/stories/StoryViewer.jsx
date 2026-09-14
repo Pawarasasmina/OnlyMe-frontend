@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { FiBarChart2, FiEye, FiEyeOff, FiFlag, FiGift, FiLink, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiSend, FiTrash2, FiUserMinus, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { FiBarChart2, FiCheck, FiEye, FiEyeOff, FiFlag, FiGift, FiLink, FiMoreHorizontal, FiPause, FiPlay, FiPlus, FiSend, FiTrash2, FiUserMinus, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
@@ -145,6 +145,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   const canDelete = canDeleteStory(user, activeStory);
   const canViewInsights = canViewStoryInsights(user, activeStory);
   const canAdd = canCreateStory(user);
+  const canAddToProfileMedia = canDelete && ["image", "video"].includes(activeStory?.mediaType);
   const replyMutation = useMutation({
     mutationFn: ({ body, storyId }) => storyService.replyToStory(storyId, body),
     onSuccess: () => {
@@ -164,6 +165,26 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
       showToast("I SEE YOU sent.");
     },
     onError: (error) => showToast(error?.response?.data?.message || "I SEE YOU could not be sent."),
+  });
+  const addToProfileMediaMutation = useMutation({
+    mutationFn: ({ storyId }) => profileService.addStoryToProfileMedia(storyId).then((response) => response.data?.data),
+    onSuccess: (_result, { storyId }) => {
+      queryClient.invalidateQueries({ queryKey: ["profile-media"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      const markInCache = (current) => {
+        if (!current) return current;
+        const mark = (story) => story?.id === storyId ? { ...story, isInProfileMedia: true } : story;
+        if (Array.isArray(current)) return current.map(mark);
+        if (current.viewer?.stories) return { ...current, viewer: { ...current.viewer, stories: current.viewer.stories.map(mark) } };
+        if (current.items) return { ...current, items: current.items.map((group) => ({ ...group, stories: (group.stories || []).map(mark) })) };
+        return current;
+      };
+      queryClient.setQueriesData({ queryKey: ["stories"] }, markInCache);
+      queryClient.setQueriesData({ queryKey: ["wall-stories"] }, markInCache);
+      showToast("Added to Profile Media ✓");
+      setOwnerMenuOpen(false);
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Story no longer available"),
   });
 
   const boundedIndex = useMemo(() => Math.max(0, Math.min(stories.length - 1, initialIndex)), [initialIndex, stories.length]);
@@ -301,6 +322,11 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
         showToast(status === 403 ? "You do not have permission to delete this story." : "Story could not be deleted.");
       },
     });
+  };
+
+  const addToProfileMedia = () => {
+    if (!activeStory || !canAddToProfileMedia || activeStory.isInProfileMedia || addToProfileMediaMutation.isPending) return;
+    addToProfileMediaMutation.mutate({ storyId: activeStory.id });
   };
 
   const submitReply = (event) => {
@@ -502,6 +528,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
                 {ownerMenuOpen ? (
                   <div className="absolute right-0 top-11 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#111410]/95 p-1.5 text-sm shadow-[0_18px_50px_rgba(0,0,0,.7)] backdrop-blur-xl">
                     {canDelete ? <>
+                      {canAddToProfileMedia ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-white hover:bg-white/10 disabled:cursor-default disabled:text-white/55" disabled={activeStory.isInProfileMedia || addToProfileMediaMutation.isPending} onClick={addToProfileMedia} type="button">{activeStory.isInProfileMedia ? <FiCheck /> : <FiPlus />} {activeStory.isInProfileMedia ? "Added to Profile Media ✓" : addToProfileMediaMutation.isPending ? "Adding..." : "Add to Profile Media"}</button> : null}
                       {canAdd ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-white hover:bg-white/10" onClick={onAddStory} type="button"><FiPlus /> Add another Story</button> : null}
                       {canViewInsights ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-white hover:bg-white/10" onClick={() => setInsightsOpen(true)} type="button"><FiBarChart2 /> View insights</button> : null}
                       <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-atseen-danger hover:bg-atseen-danger/10" onClick={deleteStory} type="button"><FiTrash2 /> Delete Story</button>

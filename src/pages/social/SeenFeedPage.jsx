@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiBookmark, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlus, FiRepeat, FiSearch, FiSend, FiSlash, FiX, FiZap } from "react-icons/fi";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FiBookmark, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlus, FiRepeat, FiSearch, FiSend, FiSlash, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -24,14 +24,23 @@ const seenReactionOptions = [
   { key: "CLAP", label: "Clap", icon: "\uD83D\uDC4F" },
   { key: "LAUGH", label: "Laugh", icon: "\uD83D\uDE02" },
   { key: "SEE_YOU", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
-  { key: "SAD", label: "Feel you", icon: "\uD83E\uDD72" },
-  { key: "PHONE", label: "Call me", icon: "\uD83D\uDCF1" },
+  { key: "WOW", label: "Surprised", icon: "\uD83D\uDE2E" },
+  { key: "TEARY", label: "Moved", icon: "\uD83E\uDD79" },
+  { key: "ADMIRE", label: "Adore", icon: "\uD83D\uDE0D" },
+  { key: "SAD", label: "Sad", icon: "\uD83D\uDE22" },
+  { key: "HUG", label: "Hug", icon: "\uD83E\uDEC2" },
   { key: "STRONG", label: "Strong", icon: "\uD83D\uDCAA" },
   { key: "PRAY", label: "Respect", icon: "\uD83D\uDE4F" },
+  { key: "HUNDRED", label: "One hundred", icon: "\uD83D\uDCAF" },
+  { key: "SPARKLES", label: "Sparkles", icon: "\u2728" },
 ];
 
 const reactionLabel = Object.fromEntries(seenReactionOptions.map((item) => [item.key, item.icon]));
 reactionLabel.INSIGHTFUL = "\uD83D\uDD25";
+reactionLabel.PHONE = "\uD83D\uDCF1";
+const reactionMeta = Object.fromEntries(seenReactionOptions.map((item, index) => [item.key, { ...item, order: index }]));
+reactionMeta.INSIGHTFUL = { key: "INSIGHTFUL", label: "Fire", icon: "\uD83D\uDD25", order: 2 };
+reactionMeta.PHONE = { key: "PHONE", label: "Call me", icon: "\uD83D\uDCF1", order: 99 };
 
 function formatCount(value = 0) {
   const count = Number(value) || 0;
@@ -53,6 +62,44 @@ function formatReadTime(chapters = []) {
     return count + text.trim().split(/\s+/u).filter(Boolean).length;
   }, 0), 0);
   return Math.max(1, Math.ceil(words / 220));
+}
+
+function orderedReactionCounts(reactionBreakdown = {}) {
+  return Object.entries(reactionBreakdown)
+    .map(([type, count]) => ({ type, count: Number(count) || 0, icon: reactionLabel[type] || reactionLabel.INSIGHTFUL, order: reactionMeta[type]?.order ?? 100 }))
+    .filter((item) => item.count > 0)
+    .sort((first, second) => second.count - first.count || first.order - second.order || first.type.localeCompare(second.type));
+}
+
+function nextEngagementFromReaction(item, nextReaction) {
+  const previousReaction = item.viewerState.reaction;
+  const sameReaction = previousReaction && previousReaction === nextReaction;
+  const reactionBreakdown = { ...(item.engagement.reactionBreakdown || {}) };
+  let reactionCount = Number(item.engagement.reactions) || 0;
+
+  if (previousReaction) {
+    reactionBreakdown[previousReaction] = Math.max(0, (Number(reactionBreakdown[previousReaction]) || 0) - 1);
+    if (!reactionBreakdown[previousReaction]) delete reactionBreakdown[previousReaction];
+    reactionCount = Math.max(0, reactionCount - 1);
+  }
+
+  if (nextReaction && !sameReaction) {
+    reactionBreakdown[nextReaction] = (Number(reactionBreakdown[nextReaction]) || 0) + 1;
+    reactionCount += 1;
+  }
+
+  return {
+    reactionCount,
+    reactionBreakdown,
+    topReactions: orderedReactionCounts(reactionBreakdown).slice(0, 3).map((reaction) => reaction.type),
+    commentCount: item.engagement.comments,
+    shareCount: item.engagement.reposts,
+    saveCount: item.engagement.saveCount || 0,
+    viewCount: item.engagement.views,
+    viewerReaction: sameReaction ? null : nextReaction || null,
+    viewerShared: item.viewerState.reposted,
+    viewerSaved: item.viewerState.saved,
+  };
 }
 
 function normalizeSeen(raw = {}) {
@@ -91,6 +138,7 @@ function normalizeSeen(raw = {}) {
       topReactions: raw.engagement?.topReactions || raw.topReactions || [],
       comments: Number(raw.engagement?.commentCount ?? raw.commentCount) || 0,
       reposts: Number(raw.engagement?.shareCount ?? raw.shareCount) || 0,
+      saveCount: Number(raw.engagement?.saveCount ?? raw.saveCount) || 0,
       views: Number(raw.engagement?.viewCount ?? raw.viewCount) || 0,
     },
     viewerState: {
@@ -257,43 +305,104 @@ function CommentsPanel({ engagementQuery, item, mutation, value, onChange, onSub
 }
 
 function reactionCluster(item) {
-  const top = item.engagement.topReactions?.length ? item.engagement.topReactions : ["LIKE", "LOVE", "FIRE"];
+  const top = item.engagement.topReactions?.length ? item.engagement.topReactions : orderedReactionCounts(item.engagement.reactionBreakdown).map((reaction) => reaction.type);
   return top.slice(0, 3).map((key) => reactionLabel[key] || reactionLabel.INSIGHTFUL).join("");
 }
 
-function ReactionPicker({ engagement, item, onClose, onSelect, pending }) {
-  const [filter, setFilter] = useState("ALL");
-  const selectedReaction = item.viewerState.reaction;
-  const total = Number(engagement?.reactionCount ?? item.engagement.reactions) || 0;
-  const breakdown = engagement?.reactionBreakdown || item.engagement.reactionBreakdown || {};
-  const reactors = engagement?.reactors || [];
-  const filters = Object.keys(breakdown).sort((left, right) => (breakdown[right] || 0) - (breakdown[left] || 0));
-  const visibleReactors = filter === "ALL" ? reactors : reactors.filter((entry) => entry.reaction === filter);
+function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
+  const navigate = useNavigate();
+  const [activeReaction, setActiveReaction] = useState(null);
+  const reactionCounts = orderedReactionCounts(item.engagement.reactionBreakdown);
+  const query = useInfiniteQuery({
+    enabled: Boolean(item?.id),
+    initialPageParam: 1,
+    queryKey: ["seen-reactors", item.id, activeReaction],
+    queryFn: ({ pageParam }) => publicationService.listSeenReactors(item.id, { reaction: activeReaction || undefined, page: pageParam, limit: 20 }).then((response) => response.data.data),
+    getNextPageParam: (lastPage) => lastPage.pagination?.hasMore ? (lastPage.pagination.page || 1) + 1 : undefined,
+    retry: false,
+  });
+  const reactors = query.data?.pages.flatMap((pageData) => pageData.items || []) || [];
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    document.body.classList.add("seen-sheet-lock");
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.classList.remove("seen-sheet-lock");
+    };
+  }, [onClose]);
+
+  const openProfile = (user) => {
+    onClose();
+    navigate(user.username ? `/profile/${encodeURIComponent(user.username)}` : "/profile");
+  };
+
+  return <div className="seen-reactions-layer">
+    <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
+    <section aria-label={`Reactions for ${item.title}`} aria-modal="true" className="seen-reactors-sheet" role="dialog">
+      <span aria-hidden="true" className="seen-reactors-handle" />
+      <header className="seen-reactors-header">
+        <h2>Reactions</h2>
+        <span>{formatCount(item.engagement.reactions)}</span>
+      </header>
+      <div aria-label="Reaction filters" className="seen-reactors-tabs" role="tablist">
+        <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction(null)} role="tab" type="button">All</button>
+        {reactionCounts.map((reaction) => <button aria-selected={activeReaction === reaction.type} className={activeReaction === reaction.type ? "is-active" : ""} key={reaction.type} onClick={() => setActiveReaction(reaction.type)} role="tab" type="button"><span aria-hidden="true">{reaction.icon}</span>{formatCount(reaction.count)}</button>)}
+      </div>
+      <div className="seen-reactors-list">
+        {query.isLoading ? <p className="seen-reactors-state">Loading reactions...</p> : null}
+        {query.isError ? <div className="seen-reactors-state"><p>Could not load reactions</p><button onClick={() => query.refetch()} type="button">Retry</button></div> : null}
+        {!query.isLoading && !query.isError && reactors.length ? reactors.map((reactor) => {
+          const isCurrentUser = String(reactor.user?.id || "") === String(currentUserId || "");
+          const name = isCurrentUser ? "You" : reactor.user?.displayName || reactor.user?.username || "Atseen user";
+          return <button className="seen-reactor-row" key={reactor.id} onClick={() => openProfile(reactor.user || {})} type="button">
+            <FanAvatar alt={`${name} avatar`} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatarUrl} />
+            <span className="seen-reactor-copy">
+              <strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>
+              {reactor.user?.username ? <small>@{reactor.user.username}</small> : null}
+            </span>
+            <span aria-label={reactionMeta[reactor.reaction]?.label || "Reaction"} className="seen-reactor-emoji">{reactionLabel[reactor.reaction] || reactionLabel.INSIGHTFUL}</span>
+          </button>;
+        }) : null}
+        {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
+        {query.hasNextPage ? <button className="seen-reactors-more" disabled={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} type="button">{query.isFetchingNextPage ? "Loading..." : "Load more"}</button> : null}
+      </div>
+      {!item.viewerState.reaction ? <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button> : null}
+    </section>
+  </div>;
+}
+
+function ReactionPicker({ item, onClose, onSelect, pending }) {
+  const selectedReaction = item.viewerState.reaction;
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    document.body.classList.add("seen-sheet-lock");
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.classList.remove("seen-sheet-lock");
+    };
   }, [onClose]);
 
   return <div className="seen-reactions-layer">
     <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
-    <section aria-label={`Reactions for ${item.title}`} aria-modal="true" className="seen-reactions-sheet" role="dialog">
-      <span className="seen-reactions-handle" />
-      <header><h2>Reactions <small>{formatCount(total)}</small></h2><button aria-label="Close reactions" onClick={onClose} type="button"><FiX /></button></header>
-      <nav aria-label="Filter reactions">
-        <button className={filter === "ALL" ? "is-active" : ""} onClick={() => setFilter("ALL")} type="button">All</button>
-        {filters.map((key) => <button className={filter === key ? "is-active" : ""} key={key} onClick={() => setFilter(key)} type="button">{reactionLabel[key] || reactionLabel.INSIGHTFUL} <small>{formatCount(breakdown[key])}</small></button>)}
-      </nav>
-      <div className="seen-reactions-list">
-        {visibleReactors.map((entry) => <article key={entry.id}><FanAvatar className="seen-reaction-avatar" name={entry.user?.name} size="h-[34px] w-[34px]" src={entry.user?.avatar} /><span className="seen-reaction-person-copy"><strong>{entry.user?.name || "User"}</strong>{entry.user?.username ? <small>@{entry.user.username}</small> : null}</span><i>{reactionLabel[entry.reaction] || reactionLabel.INSIGHTFUL}</i></article>)}
-        {!visibleReactors.length ? <p>No reactions in this group yet.</p> : null}
-      </div>
-      <footer aria-label="Choose your reaction">{seenReactionOptions.map((reaction) => {
+    <section aria-label={`Choose a reaction for ${item.title}`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
+    <span aria-hidden="true" className="seen-reaction-handle" />
+    <div aria-label="Choose a Seen reaction" className="seen-reaction-grid" role="group">
+      {seenReactionOptions.map((reaction) => {
+        const count = Number(item.engagement.reactionBreakdown?.[reaction.key]) || 0;
         const selected = selectedReaction === reaction.key || (selectedReaction === "INSIGHTFUL" && reaction.key === "FIRE");
-        return <button aria-label={`${selected ? "Remove" : "Send"} ${reaction.label} reaction`} className={selected ? "is-active" : ""} disabled={pending} key={reaction.key} onClick={() => onSelect(selected ? "" : reaction.key)} type="button">{reaction.icon}</button>;
-      })}</footer>
+        return <button aria-label={`${selected ? "Remove" : "Send"} ${reaction.label} reaction`} aria-pressed={selected} className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"} disabled={pending} key={reaction.key} onClick={() => onSelect(selected ? "" : reaction.key)} type="button">
+          <span aria-hidden="true">{reaction.icon}</span>
+          <small>{count || ""}</small>
+        </button>;
+      })}
+    </div>
+    <p>One reaction \u2014 make it yours</p>
     </section>
   </div>;
 }
@@ -322,6 +431,7 @@ function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedR
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -356,7 +466,31 @@ function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedR
 
   const reactionMutation = useMutation({
     mutationFn: (reaction) => runAction(reaction ? publicationService.reactToSeen(item.id, reaction) : publicationService.removeSeenReaction(item.id)),
-    onSuccess: () => setReactionPickerOpen(false),
+    onMutate: async (reaction) => {
+      const next = nextEngagementFromReaction(item, reaction);
+      mergeEngagement(next);
+      return { next };
+    },
+    onSuccess: (response) => {
+      mergeEngagement(response.data.data.engagement);
+      queryClient.invalidateQueries({ queryKey: ["seen-reactors", item.id] });
+      setReactionPickerOpen(false);
+    },
+    onError: (error) => {
+      mergeEngagement({
+        reactionCount: item.engagement.reactions,
+        reactionBreakdown: item.engagement.reactionBreakdown,
+        topReactions: item.engagement.topReactions,
+        commentCount: item.engagement.comments,
+        shareCount: item.engagement.reposts,
+        saveCount: item.engagement.saveCount,
+        viewCount: item.engagement.views,
+        viewerReaction: item.viewerState.reaction,
+        viewerShared: item.viewerState.reposted,
+        viewerSaved: item.viewerState.saved,
+      });
+      setNotice(actionError(error));
+    },
   });
   const repostMutation = useMutation({
     mutationFn: () => runAction(item.viewerState.reposted ? publicationService.removeSeenShare(item.id) : publicationService.shareSeen(item.id)),
@@ -450,12 +584,21 @@ function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedR
     if (reactionMutation.isPending) return;
     reactionMutation.mutate(reaction);
   };
+  const openReactions = () => {
+    setMenuOpen(false);
+    if (item.engagement.reactions > 0) setReactionsSheetOpen(true);
+    else setReactionPickerOpen(true);
+  };
+  const openPickerFromSheet = () => {
+    setReactionsSheetOpen(false);
+    setReactionPickerOpen(true);
+  };
   const menuPending = saveMutation.isPending || repostMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
   const pending = reactionMutation.isPending || repostMutation.isPending || saveMutation.isPending || commentMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
 
   const isOwn = String(item.creator.id || "") === String(currentUserId || "");
 
-  return <article className="seen-feed-item">
+  return <article className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}>
     <div className="seen-item-menu-wrap">
       <CreatorHeader createdAt={item.createdAt} creator={item.creator} isOwn={isOwn} menuOpen={menuOpen} onMenuToggle={() => setMenuOpen((value) => !value)} views={item.engagement.views} />
       <SeenOptionsSheet
@@ -486,8 +629,9 @@ function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedR
       <ChapterPreviewList chapters={item.chapters} target={target} />
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       <PreviewComment comment={item.previewComment} />
-      <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={() => { setMenuOpen(false); setReactionPickerOpen(true); }} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
-      {reactionPickerOpen ? <ReactionPicker engagement={engagementQuery.data} item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
+      <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
+      {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={currentUserId} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
+      {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
       {commentsOpen ? <CommentsPanel engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onSubmit={submitComment} value={comment} /> : null}
     </div>

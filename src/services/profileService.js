@@ -6,11 +6,27 @@ export const profileService = {
   getOwnConnections: (type) => axiosInstance.get("/profiles/me/connections", { params: { type } }),
   getConnections: (username, type) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/connections`, { params: { type } }),
   getOwnViewers: (params = {}) => axiosInstance.get("/profiles/me/viewers", { params }),
+  getOwnMedia: () => axiosInstance.get("/profiles/me/media"),
+  getProfileMedia: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/media`),
+  addProfileMedia: (file, caption = "") => {
+    const formData = new FormData();
+    formData.append("media", file);
+    if (caption) formData.append("caption", caption);
+    return axiosInstance.post("/profiles/me/media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  addStoryToProfileMedia: (storyId) => axiosInstance.post("/profiles/me/media/from-story", { storyId }),
+  addSeenMediaToProfileMedia: (seenId, mediaIds) => axiosInstance.post("/profiles/me/media/from-seen", { seenId, mediaIds }),
+  removeProfileMedia: (mediaId) => axiosInstance.delete(`/profiles/me/media/${encodeURIComponent(mediaId)}`),
+  toggleProfileMediaLike: (username, mediaId) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/like`),
+  reportProfileMedia: (username, mediaId, payload) => axiosInstance.post(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/report`, payload),
   getUnifiedProfile: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}`),
   getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),
   toggleFollow: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/follow`),
   toggleSeeSignal: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/see-signal`),
   reportProfile: (username, payload) => axiosInstance.post(`/profiles/${encodeURIComponent(username)}/report`, payload),
+  updateStatus: (payload) => axiosInstance.patch("/profiles/me/status", payload),
   updateMe: (payload) => axiosInstance.patch("/profile/me", payload),
   changePassword: (payload) => axiosInstance.patch("/profile/me/password", payload),
   getCompletion: () => axiosInstance.get("/profile/me/completion"),

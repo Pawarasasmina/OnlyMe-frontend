@@ -175,6 +175,7 @@ function normalizeStory(story = {}) {
     timeAgo: timeAgo(createdAt),
     isOwner: Boolean(story.isOwner || story.isOwn),
     isOwn: Boolean(story.isOwner || story.isOwn),
+    isInProfileMedia: Boolean(story.isInProfileMedia),
   };
 }
 

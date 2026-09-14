@@ -15,4 +15,22 @@ export const STATUS_PRESET_OPTIONS = Object.entries(STATUS_PRESETS).map(([preset
 }));
 
 export const CUSTOM_STATUS_PRESET_KEY = "custom";
-export const STATUS_LABEL_MAX_LENGTH = 32;
+export const STATUS_LABEL_MAX_LENGTH = 120;
+
+const cp = (...values) => String.fromCodePoint(...values);
+
+export const PROFILE_STATUS_SUGGESTIONS = Object.freeze([
+  `${cp(0x1F441)} At seen`,
+  `${cp(0x1F3BE)} Tennis?`,
+  `${cp(0x1F305)} Morning person`,
+  `${cp(0x1F4AA)} At the gym`,
+  `${cp(0x1F4DA)} Reading`,
+  `${cp(0x2615)} Coffee walk`,
+  `${cp(0x1F3A7)} Deep work`,
+  `${cp(0x2708, 0xFE0F)} Traveling`,
+  `${cp(0x270D, 0xFE0F)} New Seen soon`,
+  `${cp(0x1F4D6)} Writing a chapter`,
+  `${cp(0x1F4AC)} Replying to everyone`,
+  `${cp(0x1F4DE)} Open for calls`,
+  `${cp(0x1F30D)} My World is open`,
+]);
