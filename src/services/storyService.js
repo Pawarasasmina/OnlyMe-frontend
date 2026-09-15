@@ -32,7 +32,7 @@ function isExpired(story) {
 }
 
 function isStatusActive(status) {
-  return Boolean(status?.label && status?.expiresAt && new Date(status.expiresAt).getTime() > Date.now());
+  return Boolean(status?.label && (!status.expiresAt || new Date(status.expiresAt).getTime() > Date.now()));
 }
 
 function statusExpiresAt(hours = 2) {

@@ -2,7 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 
-function FanModal({ children, className = "", hideHeader = false, isOpen, onClose, overlayClassName = "", portal = false, title }) {
+function FanModal({ children, className = "", hideHeader = false, isOpen, onClose, overlayClassName = "", overlayStyle, portal = false, title }) {
   const titleId = useId();
   const dialogRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -64,6 +64,7 @@ function FanModal({ children, className = "", hideHeader = false, isOpen, onClos
       aria-labelledby={hideHeader ? undefined : titleId}
       aria-modal="true"
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md ${overlayClassName}`}
+      style={overlayStyle}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();

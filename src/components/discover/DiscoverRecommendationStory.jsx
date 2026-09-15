@@ -1,8 +1,15 @@
-import { memo, useCallback, useEffect, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FiChevronUp, FiX } from "react-icons/fi";
+import { FiEye, FiGift, FiSend, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
+import { useFanToast } from "../fanWeb/shared/FanToastContext";
+import ShareSheet from "../share/ShareSheet";
+import StoryGiftPicker from "../stories/StoryGiftPicker";
+import { messageService } from "../../services/messageService";
+import { profileService } from "../../services/profileService";
+import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { resolveMediaUrl } from "../../utils/media";
 
 function displayName(card = {}) {
@@ -32,18 +39,56 @@ function DiscoverRecommendationStory({
   onFollow,
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { showToast } = useFanToast();
+  const [message, setMessage] = useState("");
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const name = displayName(card);
   const first = firstName(card);
   const route = profileRoute(card);
   const imageUrl = resolveMediaUrl(card?.coverImage || card?.media?.url || card?.creator?.cover || card?.avatar);
   const avatar = resolveMediaUrl(card?.avatar || card?.creator?.avatar);
   const place = placeLabel(card);
-  const detail = card?.dream?.title || card?.dream?.text || card?.quote || card?.recommendationReason || card?.reason?.detail || "";
   const caption = storyLine(card);
   const statusMeta = [card?.category || card?.creator?.status || "Creator", place].filter(Boolean).join(" - ");
   const following = Boolean(card?.following ?? card?.isFollowing ?? card?.actions?.following ?? card?.creator?.following);
   const relatedStoryCount = Math.max(1, card?.stories?.length || 1);
   const progressItems = useMemo(() => Array.from({ length: relatedStoryCount }), [relatedStoryCount]);
+  const recipientId = card?.id || card?.creator?.id || card?.creator?._id || "";
+  const username = card?.username || card?.creator?.username || "";
+  const sharePayload = {
+    contentId: recipientId,
+    contentType: "profile",
+    imageUrl,
+    previewText: caption,
+    route,
+    title: `${name} on @seen`,
+  };
+  const messageMutation = useMutation({
+    mutationFn: (body) => messageService.send(recipientId, body, null, createIdempotencyKey("discover-story-message")),
+    onError: (error) => showToast(error?.response?.data?.message || "Message could not be sent."),
+    onSuccess: () => {
+      setMessage("");
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      showToast(`Message sent to ${first}.`);
+    },
+  });
+  const seenMutation = useMutation({
+    mutationFn: () => profileService.toggleSeeSignal(username),
+    onError: (error) => showToast(error?.response?.data?.message || "Seen signal could not be sent."),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+      showToast(`${first} can now see that you saw them.`);
+    },
+  });
+
+  const sendMessage = (event) => {
+    event.preventDefault();
+    const body = message.trim();
+    if (!body || !recipientId || messageMutation.isPending) return;
+    messageMutation.mutate(body);
+  };
 
   const openProfile = useCallback((event) => {
     event.stopPropagation();
@@ -61,6 +106,7 @@ function DiscoverRecommendationStory({
   if (!card) return null;
 
   return (
+    <>
     <section className="discover-rec-story" aria-label={`${name} discover story`}>
       {imageUrl ? <img alt="" className="discover-rec-story-media" src={imageUrl} /> : <span className="discover-rec-story-fallback" aria-hidden="true">{first.slice(0, 1)}</span>}
       <span className="discover-rec-story-shade" aria-hidden="true" />
@@ -95,21 +141,16 @@ function DiscoverRecommendationStory({
         </button>
       </header>
 
-      <div className="discover-rec-story-copy">
-        {detail ? (
-          <div className="discover-rec-story-context">
-            <span>Happening now</span>
-            <strong>&quot;{detail}&quot;</strong>
-          </div>
-        ) : null}
-        <h2>{caption}</h2>
-        <button className="discover-rec-story-profile" onClick={openProfile} type="button">
-          <FiChevronUp aria-hidden="true" />
-          <span>Profile</span>
-        </button>
-        <small>1 / {relatedStoryCount}</small>
-      </div>
+      <form className="discover-rec-story-actions" onSubmit={sendMessage}>
+        <input aria-label={`Message ${first}`} disabled={messageMutation.isPending} maxLength={1000} onChange={(event) => setMessage(event.target.value)} placeholder={`Reply to ${first}...`} value={message} />
+        <button aria-label={`Send a gift to ${first}`} disabled={!recipientId} onClick={() => setGiftOpen(true)} type="button"><FiGift aria-hidden="true" /></button>
+        <button aria-label={`Let ${first} know you saw them`} className={seenMutation.isSuccess ? "is-active" : ""} disabled={!username || seenMutation.isPending} onClick={() => seenMutation.mutate()} type="button"><FiEye aria-hidden="true" /></button>
+        <button aria-label={message.trim() ? `Send message to ${first}` : `Share ${first}'s profile`} disabled={messageMutation.isPending} onClick={message.trim() ? undefined : () => setShareOpen(true)} type={message.trim() ? "submit" : "button"}><FiSend aria-hidden="true" /></button>
+      </form>
     </section>
+    {giftOpen ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => showToast(`Gift sent to ${first}.`)} recipient={{ id: recipientId, name }} sourceType="DIRECT" /> : null}
+    {shareOpen ? <ShareSheet isOpen onClose={() => setShareOpen(false)} payload={sharePayload} /> : null}
+    </>
   );
 }
 

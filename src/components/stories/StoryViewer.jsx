@@ -363,6 +363,41 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
     }
   };
 
+  const saveStoryMedia = async () => {
+    const mediaUrl = activeStory.mediaUrl || activeStory.image;
+    if (!mediaUrl || menuBusy) return;
+    setMenuBusy("save");
+    try {
+      const response = await fetch(mediaUrl);
+      if (!response.ok) throw new Error("Download failed");
+      const blobUrl = URL.createObjectURL(await response.blob());
+      const download = document.createElement("a");
+      download.href = blobUrl;
+      download.download = `story-${activeStory.id}.${activeStory.mediaType === "video" ? "mp4" : "jpg"}`;
+      document.body.appendChild(download);
+      download.click();
+      download.remove();
+      URL.revokeObjectURL(blobUrl);
+      setOwnerMenuOpen(false);
+      showToast("Story saved to your device.");
+    } catch {
+      showToast("Story could not be saved.");
+    } finally {
+      setMenuBusy("");
+    }
+  };
+
+  const addAnotherStory = () => {
+    setOwnerMenuOpen(false);
+    onClose();
+    onAddStory?.();
+  };
+
+  const sendStory = () => {
+    setOwnerMenuOpen(false);
+    setShareOpen(true);
+  };
+
   const unfollowOwner = async () => {
     if (!activeStory.owner.username || menuBusy) return;
     setMenuBusy("unfollow");
@@ -525,7 +560,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
                 >
                   <FiMoreHorizontal aria-hidden="true" />
                 </button>
-                {ownerMenuOpen ? (
+                {ownerMenuOpen && !canDelete ? (
                   <div className="absolute right-0 top-11 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#111410]/95 p-1.5 text-sm shadow-[0_18px_50px_rgba(0,0,0,.7)] backdrop-blur-xl">
                     {canDelete ? <>
                       {canAddToProfileMedia ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left font-bold text-white hover:bg-white/10 disabled:cursor-default disabled:text-white/55" disabled={activeStory.isInProfileMedia || addToProfileMediaMutation.isPending} onClick={addToProfileMedia} type="button">{activeStory.isInProfileMedia ? <FiCheck /> : <FiPlus />} {activeStory.isInProfileMedia ? "Added to Profile Media ✓" : addToProfileMediaMutation.isPending ? "Adding..." : "Add to Profile Media"}</button> : null}
@@ -550,6 +585,28 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
               <FiX aria-hidden="true" />
             </button>
           </div>
+          {ownerMenuOpen && canDelete ? (
+            <div
+              className="story-owner-actions-layer"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+            >
+              <button aria-label="Close story actions" className="story-owner-actions-scrim" onClick={() => setOwnerMenuOpen(false)} type="button" />
+              <section aria-label="Story actions" aria-modal="true" className="story-owner-actions-sheet" role="dialog">
+                <span className="story-owner-actions-handle" aria-hidden="true" />
+                <div className="story-owner-actions-list">
+                  {canAddToProfileMedia ? <button disabled={activeStory.isInProfileMedia || addToProfileMediaMutation.isPending} onClick={addToProfileMedia} type="button">{activeStory.isInProfileMedia ? "Added to Profile Media ✓" : addToProfileMediaMutation.isPending ? "Adding..." : "Add to Profile Media"}</button> : null}
+                  {canAdd ? <button onClick={addAnotherStory} type="button">Add another Story</button> : null}
+                  <button className="is-danger" disabled={deleteMutation.isPending} onClick={deleteStory} type="button">{deleteMutation.isPending ? "Deleting..." : "Delete story"}</button>
+                  <button disabled={Boolean(menuBusy)} onClick={saveStoryMedia} type="button">{menuBusy === "save" ? "Saving..." : "Save story"}</button>
+                  <button disabled={Boolean(menuBusy)} onClick={copyStoryLink} type="button">Copy link</button>
+                  <button disabled={Boolean(menuBusy)} onClick={sendStory} type="button">Send</button>
+                </div>
+                <button className="story-owner-actions-done" onClick={() => setOwnerMenuOpen(false)} type="button">Done</button>
+              </section>
+            </div>
+          ) : null}
           {seeYouNotice ? (
             <div className="pointer-events-none absolute left-1/2 top-[74px] z-40 -translate-x-1/2 rounded-full bg-[#121721]/90 px-4 py-2 text-sm font-extrabold text-white shadow-2xl backdrop-blur">
               <span aria-hidden="true" className="mr-2">{"\ud83d\udc41\ufe0f"}</span>

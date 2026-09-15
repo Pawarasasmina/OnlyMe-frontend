@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiBookmark, FiCheck, FiEye, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiRepeat, FiSend, FiShare2, FiSmile } from "react-icons/fi";
+import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiSmile, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import ShareSheet from "../../share/ShareSheet";
+import StoryCreator from "../../stories/StoryCreator";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import VerifiedBadge from "../shared/VerifiedBadge";
@@ -14,8 +15,10 @@ import { atseenCreators, atseenReportReasons } from "../../../data/atseenMockDat
 import { useAuth } from "../../../hooks/useAuth";
 import { savedService } from "../../../services/savedService";
 import { analyticsService } from "../../../services/analyticsService";
+import { profileService } from "../../../services/profileService";
 import {
   useBlockFeedPostAuthor,
+  useArchiveFeedPost,
   useCreateFeedPostComment,
   useDeleteFeedPost,
   useHideFeedPost,
@@ -51,6 +54,36 @@ const postReactionOptions = [
   { key: "strong", label: "Strong", icon: "\uD83D\uDCAA" },
   { key: "pray", label: "Respect", icon: "\uD83D\uDE4F" },
 ];
+
+function useWallSheetPosition(isOpen) {
+  const [sheetPosition, setSheetPosition] = useState(undefined);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setSheetPosition({
+        "--wall-sheet-center-x": `${bounds.left + (bounds.width / 2)}px`,
+        "--wall-sheet-column-width": `${bounds.width}px`,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
+
+  return sheetPosition;
+}
 
 function reactionDisplayFor(key) {
   return postReactionOptions.find((reactionItem) => reactionItem.key === key)
@@ -214,6 +247,7 @@ function FeedPost({ post }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const deleteMutation = useDeleteFeedPost();
+  const archiveMutation = useArchiveFeedPost();
   const reactionMutation = useReactToFeedPost();
   const commentMutation = useCreateFeedPostComment();
   const saveMutation = useToggleFeedPostSave();
@@ -240,12 +274,15 @@ function FeedPost({ post }) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentSavePending, setCommentSavePending] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
+  const wallSheetPosition = useWallSheetPosition(moreOpen);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [viewCount, setViewCount] = useState(normalized.viewCount);
+  const [moreBusy, setMoreBusy] = useState("");
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
   const headerName = ownsPost ? "You" : creator.name;
@@ -582,6 +619,49 @@ function FeedPost({ post }) {
     } else if (action === "not-useful") {
       hidePost();
       setMoreOpen(false);
+    } else if (action === "show-more") {
+      saveReaction("useful");
+      showToast("Thanks. We will show you more notes like this.");
+      setMoreOpen(false);
+    } else if (action === "hide") {
+      hidePost();
+      setMoreOpen(false);
+    } else if (action === "unfollow") {
+      if (!creator.username || moreBusy) return;
+      setMoreBusy("unfollow");
+      profileService.toggleFollow(creator.username)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+          queryClient.invalidateQueries({ queryKey: ["discover"] });
+          queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+          showToast(`Unfollowed ${creator.name.split(" ")[0]}.`);
+          setMoreOpen(false);
+        })
+        .catch((error) => showToast(error?.response?.data?.message || "Could not unfollow this account."))
+        .finally(() => setMoreBusy(""));
+    } else if (action === "report-spam") {
+      reportPost("SPAM");
+      setMoreOpen(false);
+    } else if (action === "add-story") {
+      setMoreOpen(false);
+      setStoryCreatorOpen(true);
+    } else if (action === "repost") {
+      setMoreOpen(false);
+      toggleShare();
+    } else if (action === "archive") {
+      if (archiveMutation.isPending || !requireDatabasePost()) return;
+      setMoreBusy("archive");
+      archiveMutation.mutate(actionPostId, {
+        onError: (error) => {
+          setMoreBusy("");
+          showToast(error?.response?.data?.message || "Note could not be archived.");
+        },
+        onSuccess: () => {
+          setMoreBusy("");
+          setMoreOpen(false);
+          showToast("Note archived. Its statistics are preserved.");
+        },
+      });
     } else if (action === "block") {
       blockAuthor();
       setMoreOpen(false);
@@ -916,38 +996,52 @@ function FeedPost({ post }) {
         isOpen={moreOpen}
         onClose={() => setMoreOpen(false)}
         overlayClassName="home-post-more-overlay"
-        title="This note"
+        overlayStyle={wallSheetPosition}
+        title={ownsPost ? "Your note" : "This note"}
       >
         <span className="home-post-more-handle" aria-hidden="true" />
-        <h2 className="home-post-more-title">This note</h2>
+        <h2 className="home-post-more-title">{ownsPost ? "Your note" : "This note"}</h2>
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              ["edit", "Edit Post", FiMoreHorizontal],
-              ["delete", "Delete Post", FiFlag],
-              ["copy", "Copy Link", FiShare2],
-              ["view", "View Post", FiMoreHorizontal],
+              { key: "add-story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
+              { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
+              { key: "share", label: "Share", icon: FiSend },
+              { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
+              { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
             ]
             : [
-              ["save", saved ? "Remove saved post" : "Save post", FiBookmark],
-              ["share", "Share", FiShare2],
-              ["copy", "Copy Link", FiShare2],
-              ["not-useful", "Not useful", FiMoreHorizontal],
-              ["report", "Report", FiFlag],
-              ["block", `Block ${creator.name.split(" ")[0]}`, FiFlag],
-            ]).map(([key, label, Icon]) => (
+              { key: "share", label: "Share", icon: FiSend },
+              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: FiEye },
+              { key: "hide", label: "Hide this note", icon: FiEyeOff },
+              { key: "unfollow", label: `Unfollow ${creator.name.split(" ")[0]}`, icon: FiUserMinus },
+              { key: "report-spam", label: "Report spam", subtitle: "Spam, misleading links or repeated promotions", icon: FiSlash, danger: true },
+              { key: "report", label: "Report", icon: FiFlag },
+              { key: "block", label: `Block ${creator.name.split(" ")[0]}`, icon: FiSlash, danger: true },
+            ]).map(({ danger, icon: Icon, key, label, subtitle }) => (
             <button
-              className={key === "block" || key === "delete" ? "is-danger" : ""}
+              className={danger || key === "delete" ? "is-danger" : ""}
+              disabled={moreBusy === key}
               key={key}
               onClick={() => moreAction(key)}
               type="button"
             >
               <Icon aria-hidden="true" />
-              <span>{label}</span>
+              <span><strong>{moreBusy === key ? "Please wait..." : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
             </button>
           ))}
         </div>
       </FanModal>
+
+      <StoryCreator
+        initialContent={{ caption: normalized.text, imageUrl: normalized.media?.find((item) => String(item.type || "").toLowerCase() === "image")?.url || "" }}
+        isOpen={storyCreatorOpen}
+        onClose={() => setStoryCreatorOpen(false)}
+        onPublished={() => {
+          setStoryCreatorOpen(false);
+          showToast("Note added to your story.");
+        }}
+      />
 
       <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
 

@@ -73,6 +73,7 @@ function ProfileStatusPage() {
       updateCachedProfileStatus(queryClient, activeStatus || null);
       queryClient.invalidateQueries({ queryKey: ["unified-profile", "me"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
       showToast(activeStatus ? "Now it's seen" : "Status removed");
       navigate("/profile", { replace: true });
     },

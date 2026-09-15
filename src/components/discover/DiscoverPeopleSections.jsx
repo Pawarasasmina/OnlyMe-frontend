@@ -2,6 +2,8 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
+import StoryPresenceLabel from "../stories/StoryPresenceLabel";
+import StoryStatusBadge from "../stories/StoryStatusBadge";
 import { resolveMediaUrl } from "../../utils/media";
 import {
   friendDisplayName,
@@ -28,9 +30,11 @@ function FriendAvatarContent({ friend }) {
     <>
       <span className={`discover-friend-avatar ${ringClass}`}>
         <FanAvatar name={friendDisplayName(friend)} size="h-[52px] w-[52px]" src={friend.avatar} />
-        {friend.hasPremiumOffering ? <i aria-label="Premium access available" /> : null}
+        {friend.hasPremiumOffering && !friend.activeStatus ? <i aria-label="Premium access available" /> : null}
+        <StoryStatusBadge status={friend.activeStatus} />
       </span>
       <small><PersonName person={friend} /></small>
+      <StoryPresenceLabel status={friend.activeStatus} />
     </>
   );
 }
