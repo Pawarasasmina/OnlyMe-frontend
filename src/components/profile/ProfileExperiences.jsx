@@ -6,7 +6,7 @@ export default function ProfileExperiences({ experiences = [], owner = false, cr
   return (
     <section className="profile-experiences">
       <header>
-        <div><small>STRUCTURED JOURNEYS</small><h2>Experiences</h2><p>Go deeper, chapter by chapter.</p></div>
+        <div><small>STRUCTURED JOURNEYS</small><h2>Experiences <span className="profile-coming-soon-badge">Coming soon</span></h2><p>Guided creator journeys, chapter by chapter.</p></div>
         {owner && experiences.length < 3 ? <Link aria-label="Create Premium Experience" to="/create/experience"><FiPlus /></Link> : null}
       </header>
       <div className="profile-experience-grid">

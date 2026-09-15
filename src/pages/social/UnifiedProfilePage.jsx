@@ -122,10 +122,9 @@ function ProfileViewersSheet({ isOpen, onClose }) {
   });
   const signals = viewersQuery.data?.signals || [];
   const todaySignals = signals.filter((item) => isToday(item.createdAt));
-  const visibleRows = todaySignals.slice(0, 2);
   const count = Number(viewersQuery.data?.seenTodayCount) || 0;
   const worldVisitorCount = Number(viewersQuery.data?.worldVisitorCount) || 0;
-  const hiddenCount = Math.max(0, count - visibleRows.length);
+  const hiddenCount = Math.max(0, count - todaySignals.length);
 
   if (!isOpen) return null;
 
@@ -148,7 +147,7 @@ function ProfileViewersSheet({ isOpen, onClose }) {
         ) : null}
         {!viewersQuery.isLoading && !viewersQuery.isError ? (
           <div className="profile-viewers-list">
-            {visibleRows.map((item) => {
+            {todaySignals.map((item) => {
               const actor = item.actor;
               return (
                 <Link className="profile-viewers-row" key={item.id} to={actor?.username ? `/profile/${actor.username}` : "/activity"}>
@@ -268,7 +267,7 @@ function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, 
   if (!isOpen) return null;
   const options = [
     { icon: FiEye, label: "Seen", to: "/create/seen", disabled: !canCreateSeen },
-    { icon: FiImage, label: "Experience", to: "/create/world", disabled: !canCreateWorld },
+    { icon: FiImage, label: "Experience", to: "/create/experience", disabled: !canCreateWorld },
     { icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
     { icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
     { icon: FiGlobe, label: "World", to: "/create/premium-world", disabled: !canCreateWorld },
