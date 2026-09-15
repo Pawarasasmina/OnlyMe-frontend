@@ -49,6 +49,7 @@ import ProfileMediaSection from "../../components/profile/ProfileMediaSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryCreator from "../../components/stories/StoryCreator";
+import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useAuth } from "../../hooks/useAuth";
 import { messageService } from "../../services/messageService";
@@ -518,6 +519,7 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, planets = [], profil
   const queryClient = useQueryClient();
   const [viewersOpen, setViewersOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [directGiftOpen, setDirectGiftOpen] = useState(false);
   const [seenConfirmation, setSeenConfirmation] = useState(false);
   const isOwner = viewerCapabilities.isOwner;
   const cover = resolveMediaUrl(profile.cover);
@@ -628,11 +630,13 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, planets = [], profil
         {!isOwner ? <button aria-label={`Let ${profile.displayName} know you saw them`} className={`profile-visitor-eye ${relationship.seeSignalSent ? "is-seen" : ""}`} disabled={seeSignal.isPending} onClick={markProfileSeen} type="button"><FiEye /></button> : null}
         {!isOwner && viewerCapabilities.canFollow ? <VisitorFollowButton profile={profile} relationship={relationship} /> : null}
         {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button"><FiMessageCircle /> Message</button> : null}
+        {!isOwner && viewerCapabilities.canMessage ? <button aria-label={`Send ${profile.displayName} a gift`} className="profile-visitor-gifts" onClick={() => setDirectGiftOpen(true)} type="button"><FiGift /></button> : null}
         {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button> : null}
         {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
       </div>
       <ProfileViewersSheet isOpen={viewersOpen} onClose={() => setViewersOpen(false)} />
       <ProfileShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} shareUrl={shareUrl} viewerCapabilities={viewerCapabilities} />
+      {directGiftOpen ? <StoryGiftPicker onClose={() => setDirectGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName }} sourceType="DIRECT" /> : null}
     </section>
   );
 }
@@ -644,7 +648,7 @@ function VisitorFollowButton({ profile, relationship = {} }) {
     onSuccess: () => invalidateFollowSurfaces(client),
   });
   const following = Boolean(relationship.following);
-  return <button className="profile-action-chip" disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? <FiUserCheck /> : <FiUserPlus />} {following ? "Following" : "Follow"}</button>;
+  return <button className="profile-action-chip profile-follow-action" disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? <FiUserCheck /> : <FiUserPlus />} {following ? "Following" : "Follow"}</button>;
 }
 
 function DirectAccessRow({ profile, viewerCapabilities }) {
@@ -683,7 +687,7 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
 }
 
 function ProfileAccessGroup({ profile, viewerCapabilities }) {
-  const canShowDashboard = profile.isCreator && viewerCapabilities.canAccessStudio;
+  const canShowDashboard = profile.isCreator && viewerCapabilities.isOwner && viewerCapabilities.canAccessStudio;
   const canShowDirect = profile.isCreator && (viewerCapabilities.isOwner || viewerCapabilities.canMessage) && (viewerCapabilities.isOwner || profile.directAccess?.enabled || profile.directAccess?.callEnabled);
   if (!canShowDashboard && !canShowDirect) return null;
   return (
@@ -701,6 +705,7 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
 }
 
 function ProfileGiftStrip({ profile, viewerCapabilities }) {
+  const [giftsOpen, setGiftsOpen] = useState(false);
   const query = useQuery({
     queryKey: ["creator-dream", profile?.username],
     queryFn: () => dreamService.getCreatorDream(profile.username).then((response) => response.data.data),
@@ -708,25 +713,62 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
     retry: false,
     staleTime: 30000,
   });
-  if (profile?.role !== "creator" || query.isLoading || query.isError) return null;
+  if (profile?.role === "creator" && (query.isLoading || query.isError)) return null;
+  if (profile?.role !== "creator" && !viewerCapabilities.isOwner) return null;
   const dream = query.data?.dream;
   const gifts = query.data?.gifts || [];
   const supporters = dream?.supporters || [];
   const count = Number(dream?.supporterCount || supporters.length || 0);
   if (!dream && !gifts.length && !viewerCapabilities.isOwner) return null;
   return (
-    <section className="profile-gift-strip">
+    <>
+    <button className="profile-gift-strip" id="profile-gifts" onClick={() => viewerCapabilities.isOwner && setGiftsOpen(true)} type="button">
       <span className="profile-gift-art" aria-hidden="true">
         {gifts.slice(0, 4).map((gift) => gift.imageUrl ? <img alt="" key={gift.key || gift.id || gift.name} src={gift.imageUrl} /> : <i key={gift.key || gift.id || gift.name}><FiGift /></i>)}
         {!gifts.length ? <i><FiGift /></i> : null}
       </span>
       <span className="profile-gift-copy">
-        <b>{count ? `${compact(count)} ${count === 1 ? "supporter" : "supporters"}` : "Gifts"}</b>
+        <b>{viewerCapabilities.isOwner ? (count ? `${compact(count)} ${count === 1 ? "supporter" : "supporters"}` : "Gifts") : `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}`}</b>
         <small>{dream ? "Dream support and received gifts" : "Gift support opens with Dream"}</small>
       </span>
       <FiChevronRight />
-    </section>
+    </button>
+    <ReceivedGiftsSheet isOpen={giftsOpen} onClose={() => setGiftsOpen(false)} />
+    </>
   );
+}
+
+function ReceivedGiftsSheet({ isOpen, onClose }) {
+  const query = useQuery({
+    queryKey: ["profile", "received-gifts"],
+    queryFn: () => profileService.getOwnReceivedGifts().then((response) => response.data.data),
+    enabled: isOpen,
+    retry: false,
+  });
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const close = (event) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [isOpen, onClose]);
+  if (!isOpen) return null;
+  const gifts = query.data?.gifts || [];
+  return <div aria-labelledby="received-gifts-title" aria-modal="true" className="fixed inset-0 z-[190] flex items-end justify-center bg-black/75" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog">
+    <section className="max-h-[88dvh] min-h-[55dvh] w-full max-w-lg overflow-y-auto rounded-t-[22px] border border-b-0 border-white/10 bg-[#0b0f14] px-5 pb-10 pt-3 text-white shadow-2xl">
+      <span className="mx-auto block h-1 w-10 rounded-full bg-white/30" />
+      <header className="mt-5 flex items-start justify-between"><div><h2 className="flex items-center gap-2 text-base font-black" id="received-gifts-title"><FiGift /> My gifts</h2><p className="mt-1 text-[11px] text-white/45">{query.isLoading ? "Loading..." : `${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}`}</p></div><button aria-label="Close gifts" className="grid h-8 w-8 place-items-center rounded-full text-white/55 hover:bg-white/5" onClick={onClose} type="button"><FiX /></button></header>
+      {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
+      {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
+      <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-7">
+        {gifts.map((gift) => <article className="min-w-0 text-center" key={gift.id}>
+          <span className="mx-auto grid h-24 w-24 max-w-full place-items-center"><img alt={gift.name} className="max-h-full max-w-full object-contain drop-shadow-[0_8px_14px_rgba(80,130,255,.3)]" src={gift.imageUrl} /></span>
+          <strong className="mt-2 block truncate text-[11px]">{gift.name}</strong>
+          <small className="mt-1 block truncate text-[9px] text-[#9CCBFF]">{gift.sender?.name || "Someone"}</small>
+          <small className="mt-0.5 block text-[8px] font-bold uppercase tracking-wide text-white/35">{gift.source}</small>
+        </article>)}
+      </div>
+    </section>
+  </div>;
 }
 
 function ProfileTabs({ tab, setTab }) {
@@ -787,11 +829,11 @@ function ProfileBody({ data, setConnectionsType }) {
     setSearchParams(nextParams, { replace: true });
   };
   return (
-    <div className="profile-prototype">
+    <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-visitor-profile"}`}>
       {isOwner ? <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <IdentitySection metrics={publicMetrics} onConnectionsOpen={setConnectionsType} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
-      <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
+      {isOwner ? <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
       <ProfileExperiences creatorName={profile.displayName} experiences={data.experiences || []} owner={isOwner} />
       <ProfileTabs setTab={setTab} tab={tab} />
@@ -835,7 +877,7 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
   }
 
   if (owner || embedded) return body;
-  return <div className="min-h-screen bg-atseen-bg px-4 py-6 text-atseen-text sm:px-6"><main className="mx-auto max-w-[610px]">{body}</main></div>;
+  return body;
 }
 
 export default UnifiedProfilePage;

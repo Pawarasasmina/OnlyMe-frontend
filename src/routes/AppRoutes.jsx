@@ -36,6 +36,7 @@ import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
 import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
 import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
 import ProfileStatusPage from "../pages/social/ProfileStatusPage";
+import DreamEditorPage from "../pages/social/DreamEditorPage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
 import SeenComposerPage from "../pages/creator/SeenComposerPage";
@@ -137,6 +138,7 @@ function AppRoutes() {
           <Route path="/books/:id" element={<EntityDetailPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
           <Route path="/profile/status" element={<ProfileStatusPage />} />
+          <Route path="/profile/dream" element={<DreamEditorPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
           <Route path="/settings/account" element={<AccountSettingsPage />} />

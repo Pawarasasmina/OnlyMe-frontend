@@ -157,7 +157,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
     onError: (error) => showToast(error?.response?.data?.message || "Story reply could not be sent."),
   });
   const seeYouMutation = useMutation({
-    mutationFn: ({ storyId }) => storyService.replyToStory(storyId, "I SEE YOU"),
+    mutationFn: ({ storyId }) => storyService.seeStory(storyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
       setSeeYouNotice(true);

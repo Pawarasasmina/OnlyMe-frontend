@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { FiCheck, FiChevronRight, FiGift, FiTrash2, FiX } from "react-icons/fi";
+import { Link, useNavigate } from "react-router-dom";
+import { FiArrowLeft, FiCheck, FiChevronRight, FiGift, FiTrash2, FiX } from "react-icons/fi";
 import { dreamService } from "../../services/dreamService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
@@ -10,6 +10,16 @@ const SPARKLE = String.fromCharCode(10024);
 const STAR = String.fromCharCode(10022);
 const giftImageTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
 const celebrationParticles = Array.from({ length: 28 }, (_, index) => ({ angle: index * (360 / 28), delay: (index % 7) * 34, distance: 92 + (index % 5) * 18, size: 8 + (index % 4) * 3 }));
+async function croppedDreamPhoto(file, url, crop) {
+  const image = await new Promise((resolve, reject) => { const value = new Image(); value.onload = () => resolve(value); value.onerror = reject; value.src = url; });
+  const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = 720;
+  const context = canvas.getContext("2d"); const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) * crop.zoom;
+  const width = image.naturalWidth * scale; const height = image.naturalHeight * scale;
+  context.drawImage(image, (canvas.width - width) / 2 + crop.x * canvas.width, (canvas.height - height) / 2 + crop.y * canvas.height, width, height);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .9));
+  if (!blob) throw new Error("Could not prepare Dream photo");
+  return new File([blob], "dream-photo.jpg", { type: "image/jpeg" });
+}
 
 export function GiftCelebration({ detail, gift, message = "You're part of this Dream now" }) {
   return <div aria-live="polite" className="gift-celebration-layer">
@@ -44,7 +54,8 @@ const giftEmoji = {
   crown: "♛",
 };
 
-function Editor({ dream, onClose, onSaved }) {
+export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
+  const photoInput = useRef(null);
   const [form, setForm] = useState({
     emoji: dream?.emoji || SPARKLE,
     title: dream?.title || "",
@@ -54,6 +65,12 @@ function Editor({ dream, onClose, onSaved }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState(dream?.photo?.url || "");
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [crop, setCrop] = useState({ zoom: 1, x: 0, y: 0 });
+  const [previewOpen, setPreviewOpen] = useState(false);
+  useEffect(() => { if (!photoFile) return undefined; const url = URL.createObjectURL(photoFile); setPhotoUrl(url); return () => URL.revokeObjectURL(url); }, [photoFile]);
 
   const save = async (event) => {
     event.preventDefault();
@@ -62,7 +79,10 @@ function Editor({ dream, onClose, onSaved }) {
 
     try {
       const response = await dreamService.saveMine(form);
-      onSaved(response.data.data.dream);
+      const saved = response.data.data.dream;
+      if (photoFile) await dreamService.savePhoto(saved.id, await croppedDreamPhoto(photoFile, photoUrl, crop));
+      else if (removePhoto && dream?.id) await dreamService.removePhoto(dream.id);
+      onSaved(saved);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to save Dream");
     } finally {
@@ -71,10 +91,10 @@ function Editor({ dream, onClose, onSaved }) {
   };
 
   return (
-    <div className="profile-dream-editor-layer" role="presentation">
-      <form aria-label="My Dream Experience" className="profile-dream-editor-sheet" onSubmit={save}>
+    <div className={`profile-dream-editor-layer ${fullPage ? "is-page" : ""}`} role="presentation">
+      <form aria-label="My Dream Experience" className={`profile-dream-editor-sheet ${fullPage ? "is-page" : ""}`} onSubmit={save}>
         <button aria-label="Close Dream Experience" className="profile-dream-editor-close" onClick={onClose} type="button">
-          <FiX />
+          {fullPage ? <FiArrowLeft /> : <FiX />}
         </button>
         <span className="profile-dream-editor-handle" />
         <div className="profile-dream-editor-title">
@@ -117,6 +137,14 @@ function Editor({ dream, onClose, onSaved }) {
           value={form.reason}
         />
 
+        <span className="profile-dream-label">Dream photo</span>
+        <div className="dream-photo-editor">
+          {photoUrl && !removePhoto ? <div className="dream-photo-crop"><img alt="Dream crop preview" src={photoUrl} style={{ transform: `translate(${crop.x * 100}%, ${crop.y * 100}%) scale(${crop.zoom})` }} /></div> : <span className="dream-photo-empty">Add one photo</span>}
+          <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { setPhotoFile(event.target.files?.[0] || null); setRemovePhoto(false); setCrop({ zoom: 1, x: 0, y: 0 }); }} ref={photoInput} type="file" />
+          <div className="dream-photo-actions"><button onClick={() => photoInput.current?.click()} type="button">{photoUrl && !removePhoto ? "Replace" : "Upload"}</button>{photoUrl && !removePhoto ? <button onClick={() => { setPhotoFile(null); setPhotoUrl(""); setRemovePhoto(true); }} type="button">Remove</button> : null}</div>
+          {photoFile ? <div className="dream-photo-adjust"><label>Zoom <input max="2.5" min="1" onChange={(e) => setCrop({ ...crop, zoom: Number(e.target.value) })} step="0.05" type="range" value={crop.zoom} /></label><label>Left / right <input max="0.4" min="-0.4" onChange={(e) => setCrop({ ...crop, x: Number(e.target.value) })} step="0.02" type="range" value={crop.x} /></label><label>Up / down <input max="0.4" min="-0.4" onChange={(e) => setCrop({ ...crop, y: Number(e.target.value) })} step="0.02" type="range" value={crop.y} /></label></div> : null}
+        </div>
+
         <span className="profile-dream-label">Goal</span>
         <div className="profile-dream-goals" role="radiogroup" aria-label="Dream star goal">
           {GOALS.map((goal) => (
@@ -135,9 +163,11 @@ function Editor({ dream, onClose, onSaved }) {
 
         <p className="profile-dream-helper">Supporters send gifts - every coin goes toward the goal</p>
         {error ? <p className="profile-dream-error">{error}</p> : null}
+        {fullPage ? <button className="profile-dream-preview-button" onClick={() => setPreviewOpen(true)} type="button">Preview</button> : null}
         <button className="profile-dream-submit" disabled={saving} type="submit">
-          {saving ? "Saving..." : dream ? "Save Dream" : `Light the dream ${SPARKLE}`}
+          {saving ? "Saving..." : fullPage ? "Save" : dream ? "Save Dream" : `Light the dream ${SPARKLE}`}
         </button>
+        {previewOpen ? <div className="dream-preview-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setPreviewOpen(false)}><section className="dream-preview-card"><small>PREVIEW — as guests see it</small><div><h3>Dream</h3><article>{photoUrl && !removePhoto ? <img alt="" src={photoUrl} /> : <span>{form.emoji}</span>}<h4>{form.title || "Your Dream"}</h4><p>{form.reason || "Why this dream matters"}</p><b>{STAR}{Number(dream?.receivedStars || 0).toLocaleString()} of {STAR}{Number(form.goalStars).toLocaleString()}</b><strong>Help make it happen ›</strong></article></div><p>tap outside to close</p></section></div> : null}
       </form>
     </div>
   );
@@ -239,7 +269,7 @@ function DreamEntryRow({ dream, isOwner, onCreate, onGift }) {
         <button onClick={onCreate} type="button">Edit</button>
       </div> : null}
       <div className="profile-dream-main">
-        <span>{dream.emoji || SPARKLE}</span>
+        {dream.photo?.url ? <img alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover" src={dream.photo.url} /> : <span>{dream.emoji || SPARKLE}</span>}
         <div>
           <h2>{dream.title}</h2>
           <p>{dream.reason}</p>
@@ -253,7 +283,7 @@ function DreamEntryRow({ dream, isOwner, onCreate, onGift }) {
 }
 
 export default function ProfileDream({ capabilities, profile, role }) {
-  const [editor, setEditor] = useState(false);
+  const navigate = useNavigate();
   const [picker, setPicker] = useState(false);
   const query = useQuery({
     queryKey: ["creator-dream", profile?.username],
@@ -272,7 +302,6 @@ export default function ProfileDream({ capabilities, profile, role }) {
   const progress = dream ? Math.min(100, Math.round((dream.receivedStars / dream.goalStars) * 100)) : 0;
   const update = () => {
     query.refetch();
-    setEditor(false);
     setPicker(false);
   };
   const status = async (action) => {
@@ -287,7 +316,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
 
   return (
     <section className={`profile-dream-card ${dream ? "" : "is-empty"}`}>
-      <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => setEditor(true)} onGift={() => setPicker(true)} />
+      <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onGift={() => setPicker(true)} />
 
       {dream && capabilities.isOwner ? (
         <>
@@ -319,7 +348,6 @@ export default function ProfileDream({ capabilities, profile, role }) {
         </>
       ) : null}
 
-      {editor ? <Editor dream={dream?.status === "ACTIVE" ? dream : null} onClose={() => setEditor(false)} onSaved={update} /> : null}
       {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={() => query.refetch()} /> : null}
     </section>
   );

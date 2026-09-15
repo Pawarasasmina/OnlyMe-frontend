@@ -10,7 +10,7 @@ import { GiftCelebration } from "../profile/ProfileDream";
 const STAR = String.fromCharCode(10022);
 const giftTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
 
-export default function StoryGiftPicker({ onClose, onSent, recipient }) {
+export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType = "STORY" }) {
   const queryClient = useQueryClient();
   const [sending, setSending] = useState("");
   const [sent, setSent] = useState(null);
@@ -33,7 +33,8 @@ export default function StoryGiftPicker({ onClose, onSent, recipient }) {
     setSending(gift.id);
     setError("");
     try {
-      const response = await messageService.sendGift(recipientId, gift.id, createIdempotencyKey("story-direct-gift"));
+      const direct = sourceType === "DIRECT";
+      const response = await messageService.sendGift(recipientId, gift.id, createIdempotencyKey(direct ? "profile-direct-gift" : "story-direct-gift"), null, sourceType);
       if (response.data.data?.wallet) queryClient.setQueryData(["wallet"], response.data.data.wallet);
       queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
       queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] });
@@ -51,11 +52,11 @@ export default function StoryGiftPicker({ onClose, onSent, recipient }) {
   const balance = Number(walletQuery.data?.balance || 0);
   return (
     <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()}>
-      <section aria-label="Send a direct gift" className="dream-gift-sheet">
-        {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their chat"}`} /> : null}
+      <section aria-label={sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"} className="dream-gift-sheet">
+        {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their activity"}`} /> : null}
         <span className="dream-gift-handle" />
         <div className="dream-gift-header">
-          <div><h2>Send a gift</h2><p>A direct gift to <strong>{recipient?.name || "this creator"}</strong> in Messages</p></div>
+          <div><h2>{sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"}</h2><p>{sourceType === "DIRECT" ? "Send directly to" : "Send from this story to"} <strong>{recipient?.name || "this creator"}</strong></p></div>
           <button aria-label="Close gift picker" disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button>
         </div>
         <p className="dream-gift-progress-copy">Your balance: <strong>{STAR}{walletQuery.isLoading ? "…" : balance.toLocaleString()}</strong></p>
