@@ -18,6 +18,7 @@ import {
 import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
 import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
+import ComingSoonOverlay from "../../components/common/ComingSoonOverlay";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { savedService } from "../../services/savedService";
@@ -249,6 +250,17 @@ export default function WorldReaderPage() {
 
   if (query.isLoading) return <div className="world-prototype-state">Opening planet...</div>;
   if (query.isError || !publication) return <div className="world-prototype-state"><h1>World unavailable</h1><p>It may be unpublished, archived, or missing.</p></div>;
+
+  if (["EXPERIENCE", "WORLD", "PREMIUM_WORLD"].includes(publication.kind)) return <ComingSoonOverlay
+    description={experience
+      ? "Experiences will let you follow a creator’s structured journey chapter by chapter, with free and permanent-unlock options."
+      : "Worlds will be private creator spaces with premium chapters, stories, and closer subscriber access."}
+    highlights={experience
+      ? ["Step-by-step chapters", "Rich photos, video, and voice", "Keep premium access permanently"]
+      : ["Exclusive creator stories", "Premium member chapters", "A closer community space"]}
+    icon={experience ? "✦" : "🪐"}
+    title={experience ? "Experience viewing" : "World viewing"}
+  />;
 
   if (premium && !owner && !canViewSubscriberStories) {
     return (
