@@ -1,9 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
+  FiArchive,
+  FiBarChart2,
+  FiBookmark,
   FiBookOpen,
   FiCamera,
+  FiChevronLeft,
   FiCheck,
+  FiEdit3,
   FiFileText,
   FiGrid,
   FiHeadphones,
@@ -12,11 +18,19 @@ import {
   FiLink,
   FiLock,
   FiMessageSquare,
+  FiMoreHorizontal,
+  FiPlusCircle,
   FiRepeat,
   FiScissors,
+  FiSend,
+  FiTrash2,
+  FiUploadCloud,
   FiVideo,
   FiX,
+  FiZap,
 } from "react-icons/fi";
+import SeriesPickerSheet from "../publication/SeriesPickerSheet";
+import { publicationService } from "../../services/publicationService";
 
 const icons = { IMAGE: FiImage, VIDEO: FiVideo, AUDIO: FiHeadphones, TEXT: FiFileText };
 
@@ -50,6 +64,265 @@ function seriesFor(item) {
   if (value) return value;
   const seriesTag = (item?.tags || []).find((tag) => String(tag).startsWith("series:"));
   return seriesTag ? String(seriesTag).slice(7).replace(/-/g, " ") : "";
+}
+
+function seriesIdFor(item) {
+  return item?.seriesId || item?.series?.id || item?.series?._id || "";
+}
+
+function formatReadTime(chapters = []) {
+  const words = chapters.reduce((total, chapter) => total + (chapter.blocks || []).reduce((count, block) => {
+    const text = [block.text, block.label, block.url].filter(Boolean).join(" ");
+    return count + text.trim().split(/\s+/u).filter(Boolean).length;
+  }, 0), 0);
+  return Math.max(1, Math.ceil(words / 220));
+}
+
+function compactCount(value = 0) {
+  const count = Number(value) || 0;
+  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
+  return count.toLocaleString();
+}
+
+const profileReactionLabel = {
+  LIKE: "\uD83E\uDD1D",
+  LOVE: "\u2764\uFE0F",
+  FIRE: "\uD83D\uDD25",
+  INSIGHTFUL: "\uD83D\uDD25",
+  CLAP: "\uD83D\uDC4F",
+  LAUGH: "\uD83D\uDE02",
+  SEE_YOU: "\uD83D\uDC41\uFE0F",
+  WOW: "\uD83D\uDE2E",
+  TEARY: "\uD83E\uDD79",
+  ADMIRE: "\uD83D\uDE0D",
+  SAD: "\uD83D\uDE22",
+  HUG: "\uD83E\uDEC2",
+  STRONG: "\uD83D\uDCAA",
+  PRAY: "\uD83D\uDE4F",
+  HUNDRED: "\uD83D\uDCAF",
+  SPARKLES: "\u2728",
+};
+
+function normalizeProfileEngagement(item = {}, liveEngagement = null) {
+  const source = liveEngagement || item.engagement || {};
+  return {
+    reactionBreakdown: source.reactionBreakdown || item.reactionBreakdown || {},
+    reactions: Number(source.reactionCount ?? source.reactions ?? item.reactionCount ?? item.reactions) || 0,
+    comments: Number(source.commentCount ?? source.comments ?? item.commentCount) || 0,
+    reposts: Number(source.shareCount ?? source.reposts ?? item.shareCount) || 0,
+    saved: Boolean(source.viewerSaved || item.viewerSaved),
+    topReactions: source.topReactions || item.topReactions || [],
+  };
+}
+
+function profileReactionCluster(engagement) {
+  const top = engagement.topReactions?.length
+    ? engagement.topReactions
+    : Object.entries(engagement.reactionBreakdown || {})
+      .filter(([, count]) => Number(count) > 0)
+      .sort((left, right) => Number(right[1]) - Number(left[1]))
+      .map(([key]) => key);
+  return top.slice(0, 3).map((key) => profileReactionLabel[key] || profileReactionLabel.FIRE).join("") || profileReactionLabel.LIKE;
+}
+
+function ProfileSeenEngagementBar({ item }) {
+  const engagementQuery = useQuery({
+    enabled: Boolean(item?.id),
+    queryKey: ["seen-engagement", item?.id],
+    queryFn: () => publicationService.getSeenEngagement(item.id).then((response) => response.data.data.engagement),
+    retry: false,
+    staleTime: 30000,
+  });
+  const engagement = normalizeProfileEngagement(item, engagementQuery.data);
+  const target = `/seen/${item.id}`;
+  return (
+    <div className="seen-engagement-bar profile-seen-engagement-bar">
+      <div className="seen-engagement-left">
+        <Link aria-label={`Open reactions for ${item.title || "Seen"}`} className="seen-reactions" to={target}>
+          <span>{profileReactionCluster(engagement)}</span>
+          <b>{compactCount(engagement.reactions)}</b>
+        </Link>
+        <Link aria-label={`Open comments for ${item.title || "Seen"}`} to={target}>
+          <FiMessageSquare />
+          <b>{compactCount(engagement.comments)}</b>
+        </Link>
+        <Link aria-label={`Open reposts for ${item.title || "Seen"}`} to={target}>
+          <FiRepeat />
+          <b>{compactCount(engagement.reposts)}</b>
+        </Link>
+      </div>
+      <div className="seen-engagement-right">
+        <Link aria-label={`Save ${item.title || "Seen"}`} className={engagement.saved ? "is-selected" : ""} to={target}><FiBookmark fill={engagement.saved ? "currentColor" : "none"} /></Link>
+        <Link aria-label={`Share ${item.title || "Seen"}`} to={target}><FiSend /></Link>
+      </div>
+    </div>
+  );
+}
+
+function ProfileSeenActionRow({ danger = false, icon: Icon, onClick, subtitle = "", title, to = "" }) {
+  const content = (
+    <>
+      <Icon aria-hidden="true" />
+      <span>
+        <b>{title}</b>
+        {subtitle ? <small>{subtitle}</small> : null}
+      </span>
+    </>
+  );
+  if (to) {
+    return <Link className={danger ? "is-danger seen-owner-action-row" : "seen-owner-action-row"} onClick={onClick} to={to}>{content}</Link>;
+  }
+  return <button className={danger ? "is-danger seen-owner-action-row" : "seen-owner-action-row"} onClick={onClick} type="button">{content}</button>;
+}
+
+function ProfileSeenActionsSheet({ item, onClose }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  const title = item?.title || "Untitled Seen";
+  const chapterCount = item?.chapters?.length || Number(item?.chapterCount || 0);
+  const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
+  const seriesName = seriesFor(item);
+  const metadata = ["Seen", `${chapterCount || 1} ${chapterWord}`].join(" - ");
+  const editTarget = `/studio/seens/${item.id}/edit?from=seen`;
+
+  return (
+    <div className="seen-feed-options-layer seen-owner-options-layer profile-seen-actions-layer">
+      <button aria-label="Close Seen owner actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
+      <section aria-label={`Manage ${title}`} aria-modal="true" className="seen-owner-actions-sheet" role="dialog">
+        <span className="seen-feed-options-handle" aria-hidden="true" />
+        <header className="seen-owner-actions-header">
+          <h2>{title}</h2>
+          <p>{metadata}</p>
+        </header>
+        <div className="seen-owner-actions-list">
+          <ProfileSeenActionRow icon={FiUploadCloud} onClick={onClose} title="Share" to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiPlusCircle} onClick={onClose} title="Add to your story" to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiBarChart2} onClick={onClose} title="Insights" to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiEdit3} onClick={onClose} title="Edit" to={editTarget} />
+          <ProfileSeenActionRow icon={FiImage} onClick={onClose} title="Change cover" to={`${editTarget}&focus=cover`} />
+          <ProfileSeenActionRow icon={FiZap} onClick={onClose} title={isPinnedSeen(item) ? "Unpin" : "Pin to profile"} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiGrid} onClick={onClose} title={seriesName ? `Series: ${seriesName}` : "Add to a series"} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiArchive} onClick={onClose} subtitle="hidden from profile, stats stay" title="Archive" to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow danger icon={FiTrash2} onClick={onClose} subtitle="gone for everyone" title="Delete" to={`/seen/${item.id}`} />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// eslint-disable-next-line no-unused-vars
+function reactionsFor(item = {}) {
+  const breakdown = item.engagement?.reactionBreakdown || item.reactionBreakdown || {};
+  const total = Number(item.engagement?.reactionCount || item.reactionCount || item.reactions || 0);
+  const icons = { LIKE: "🤝", LOVE: "❤️", FIRE: "🔥", SAD: "😢", CLAP: "👏" };
+  const top = Object.entries(breakdown).filter(([, count]) => Number(count) > 0).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 3).map(([key]) => icons[key] || "🔥");
+  return { icons: top.join(""), total };
+}
+
+function isPinnedSeen(item = {}) {
+  return Boolean(item.pinned || item.pin || item.isPinned);
+}
+
+function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
+  const media = findMedia(item);
+  const chapters = item.chapters || [];
+  const chapterCount = chapters.length || Number(item.chapterCount || 0);
+  const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
+  const seenTarget = `/seen/${item.id}`;
+  const description = descriptionFor(item);
+  const firstChapter = chapters[0];
+  const views = viewsFor(item);
+  const pinned = isPinnedSeen(item);
+
+  return (
+    <article className="profile-series-feed-item" data-profile-seen-row={item.id}>
+      <div className="profile-series-feed-top">
+        <Link className="profile-series-feed-cover" to={seenTarget}>
+          {media?.secureUrl ? <img alt={`${item.title} cover`} loading="lazy" src={media.secureUrl} /> : <span><FiBookOpen /></span>}
+        </Link>
+        <div className="profile-series-feed-copy">
+          <div className="profile-series-feed-actions">
+            <span><FiEye /> {compactCount(views)}</span>
+            {owner ? <span aria-hidden="true"><FiBookmark /></span> : null}
+            <button aria-label={`More actions for ${item.title || "Seen"}`} onClick={() => onMore(item)} type="button"><FiMoreHorizontal /></button>
+          </div>
+          <Link to={seenTarget}>
+            {pinned ? <span className="profile-series-feed-pinned">PINNED</span> : null}
+            <h3>{item.title || "Untitled Seen"}</h3>
+            <small>{[item.category, `${chapterCount} ${chapterWord}`, `~${formatReadTime(chapters)} min`].filter(Boolean).join(" - ")}</small>
+            {description ? <p>{description}</p> : null}
+          </Link>
+        </div>
+      </div>
+      {showChapterList ? (
+        <div className="profile-series-feed-chapters">
+          {chapters.slice(0, 3).map((chapter, index) => (
+            <Link className="profile-series-feed-chapter" key={chapter.stableChapterId || `${item.id}-${index}`} to={`${seenTarget}?chapter=${index}`}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <b>{chapter.title || `Chapter ${index + 1}`}</b>
+            </Link>
+          ))}
+        </div>
+      ) : firstChapter ? <Link className="profile-series-feed-chapter" to={`${seenTarget}?chapter=0`}><span>01</span><b>{firstChapter.title || "Chapter 1"}</b></Link> : null}
+      <ProfileSeenEngagementBar item={item} />
+    </article>
+  );
+}
+
+function SeenListDetailView({ focusSeenId = "", items, onBack, onMore, owner }) {
+  useEffect(() => {
+    if (!focusSeenId) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const selector = `[data-profile-seen-row="${CSS.escape(String(focusSeenId))}"]`;
+      document.querySelector(selector)?.scrollIntoView({ block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusSeenId]);
+
+  return (
+    <section className="profile-series-feed-view profile-seen-list-feed-view">
+      <header className="profile-series-feed-head">
+        <button aria-label="Back to Seens" className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
+        <h2>My Seens</h2>
+        <b>{items.length}</b>
+      </header>
+      <div className="profile-series-feed-list">
+        {items.map((item) => <SeriesSeenRow item={item} key={item.id} onMore={onMore} owner={owner} showChapterList />)}
+      </div>
+      {!items.length ? <p className="profile-empty-state">No Seens yet.</p> : null}
+    </section>
+  );
+}
+
+function SeriesDetailView({ activeSeries, items, onBack, onMore, owner }) {
+  const name = activeSeries?.name || activeSeries?.title || "Untitled Series";
+  return (
+    <section className="profile-series-feed-view">
+      <header className="profile-series-feed-head">
+        <button aria-label="Back to Seens" className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
+        <h2>{name}</h2>
+        <span>SERIES</span>
+        <b>{items.length}</b>
+      </header>
+      {activeSeries?.description ? <p className="profile-series-feed-description">{activeSeries.description}</p> : null}
+      <div className="profile-series-feed-list">
+        {items.map((item) => <SeriesSeenRow item={item} key={item.id} onMore={onMore} owner={owner} />)}
+      </div>
+      {!items.length ? <p className="profile-empty-state">No Seens in this Series yet.</p> : null}
+    </section>
+  );
 }
 
 async function copyText(value) {
@@ -133,58 +406,10 @@ function SeenShareSheet({ item, onClose, shareUrl }) {
   );
 }
 
-function SeriesSheet({ currentSeries, onClose, onSetSeries }) {
-  const [draftSeries, setDraftSeries] = useState("");
-  const [selectedSeries, setSelectedSeries] = useState(currentSeries || "");
-
-  const addSeries = () => {
-    const next = draftSeries.trim();
-    if (!next) return;
-    setSelectedSeries(next);
-    onSetSeries(next);
-    setDraftSeries("");
-  };
-
-  const removeSeries = () => {
-    setSelectedSeries("");
-    onSetSeries("");
-  };
-
-  return (
-    <div aria-modal="true" className="profile-series-backdrop" onMouseDown={onClose} role="dialog">
-      <section className="profile-series-sheet" onMouseDown={(event) => event.stopPropagation()}>
-        <span className="profile-series-handle" />
-        <h2>Series</h2>
-        <p>One tap - the Seen joins the book.</p>
-
-        {selectedSeries ? (
-          <button className="profile-series-pill" onClick={() => onSetSeries(selectedSeries)} type="button">{selectedSeries}</button>
-        ) : null}
-
-        <div className="profile-series-create">
-          <input
-            aria-label="New series name"
-            maxLength={40}
-            onChange={(event) => setDraftSeries(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") addSeries();
-            }}
-            placeholder="New series..."
-            value={draftSeries}
-          />
-          <button aria-label="Create series" onClick={addSeries} type="button">+</button>
-        </div>
-
-        <button className="profile-series-remove" disabled={!selectedSeries} onClick={removeSeries} type="button">Remove from series</button>
-      </section>
-    </div>
-  );
-}
-
-function SeenPreviewSheet({ item, onClose, owner }) {
+function SeenPreviewSheet({ item, onClose, onSeriesChanged, owner }) {
   const [seriesOpen, setSeriesOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [localSeries, setLocalSeries] = useState(() => seriesFor(item));
+  const [localItem, setLocalItem] = useState(item);
   const media = findMedia(item);
   const chapters = item?.chapters || [];
   const views = viewsFor(item);
@@ -192,6 +417,7 @@ function SeenPreviewSheet({ item, onClose, owner }) {
   const editTarget = `/studio/seens/${item.id}/edit?from=drafts`;
   const seenTarget = `/seen/${item.id}`;
   const shareUrl = typeof window === "undefined" ? seenTarget : `${window.location.origin}${seenTarget}`;
+  const localSeries = seriesFor(localItem);
 
   return (
     <div aria-modal="true" className="profile-seen-preview-backdrop" onMouseDown={onClose} role="dialog">
@@ -207,7 +433,7 @@ function SeenPreviewSheet({ item, onClose, owner }) {
         </div>
 
         <p className="profile-seen-preview-views">
-          <span aria-hidden="true">🔥</span>
+          <FiEye aria-hidden="true" />
           <b>{views ? views.toLocaleString() : "0"}</b> stepped inside
         </p>
         <p className="profile-seen-preview-description">{descriptionFor(item)}</p>
@@ -223,14 +449,14 @@ function SeenPreviewSheet({ item, onClose, owner }) {
           </div>
         ) : null}
 
-        <button className="profile-seen-preview-series" onClick={() => setSeriesOpen(true)} type="button">
+        {owner || localSeries ? <button className="profile-seen-preview-series" disabled={!owner} onClick={() => owner && setSeriesOpen(true)} type="button">
           <span><FiGrid /></span>
           <span>
             <b>{localSeries ? `Series: ${localSeries}` : "Add to a series"}</b>
-            <small>{localSeries ? "Tap to change or remove" : "Group Seens into one book"}</small>
+            <small>{owner ? (localSeries ? "Tap to change or remove" : "Group Seens into one book") : "Part of this creator's Series"}</small>
           </span>
-          <i>›</i>
-        </button>
+          {owner ? <i aria-hidden="true">&rsaquo;</i> : null}
+        </button> : null}
 
         <button className="profile-seen-preview-story" type="button"><FiScissors /> Add to your story</button>
 
@@ -241,10 +467,17 @@ function SeenPreviewSheet({ item, onClose, owner }) {
         </div>
         {shareOpen ? <SeenShareSheet item={item} onClose={() => setShareOpen(false)} shareUrl={shareUrl} /> : null}
         {seriesOpen ? (
-          <SeriesSheet
-            currentSeries={localSeries}
+          <SeriesPickerSheet
+            isOpen={seriesOpen}
             onClose={() => setSeriesOpen(false)}
-            onSetSeries={(next) => setLocalSeries(next)}
+            onSelected={(next) => {
+              const updated = next ? { ...localItem, series: next, seriesId: next.id } : { ...localItem, series: null, seriesId: null };
+              setLocalItem(updated);
+              onSeriesChanged?.(updated);
+            }}
+            seenId={item.id}
+            selectedSeries={localItem.series}
+            selectedSeriesId={seriesIdFor(localItem)}
           />
         ) : null}
       </section>
@@ -252,34 +485,103 @@ function SeenPreviewSheet({ item, onClose, owner }) {
   );
 }
 
-function ProfileContentGrid({ content = [], emptyText = "", kind = "content", owner = false, reposted = false }) {
+function ProfileContentGrid({
+  activeSeriesId = "",
+  activeSeenListId = "",
+  content = [],
+  emptyText = "",
+  kind = "content",
+  onActiveSeriesChange,
+  onActiveSeenListChange,
+  owner = false,
+  reposted = false,
+  series = [],
+}) {
   const [activeSeen, setActiveSeen] = useState(null);
-  const [activeSeries, setActiveSeries] = useState("");
+  const [actionSeen, setActionSeen] = useState(null);
+  const [localActiveSeriesId, setLocalActiveSeriesId] = useState("");
   const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt) : content || [], [content, kind]);
+  const [localContent, setLocalContent] = useState(null);
+  const effectiveContent = localContent || visibleContent;
+  useEffect(() => {
+    setLocalContent(null);
+  }, [visibleContent]);
 
   if (kind === "seens") {
-    if (!visibleContent.length) return <div className="profile-empty-state">{emptyText || "No published Seens yet."}</div>;
-    const seriesGroups = new Map();
-    visibleContent.forEach((item) => {
-      const name = seriesFor(item);
-      if (!name) return;
-      if (!seriesGroups.has(name)) seriesGroups.set(name, []);
-      seriesGroups.get(name).push(item);
+    if (!effectiveContent.length && !series.length) return <div className="profile-empty-state">{emptyText || "No published Seens yet."}</div>;
+    const seriesGroups = new Map(series.map((item) => [String(item.id), { ...item, seens: [] }]));
+    effectiveContent.forEach((item) => {
+      const id = seriesIdFor(item);
+      if (!id) return;
+      if (!seriesGroups.has(String(id))) seriesGroups.set(String(id), { id: String(id), name: seriesFor(item), title: seriesFor(item), seens: [] });
+      seriesGroups.get(String(id)).seens.push(item);
     });
-    const items = activeSeries ? seriesGroups.get(activeSeries) || [] : visibleContent.filter((item) => !seriesFor(item));
+    const seriesTiles = [...seriesGroups.values()].filter((item) => owner || item.seenCount || item.seens.length);
+    const selectedSeriesId = activeSeriesId || localActiveSeriesId;
+    const activeSeries = selectedSeriesId ? seriesGroups.get(String(selectedSeriesId)) : null;
+    const items = activeSeries ? (seriesGroups.get(String(activeSeries.id))?.seens || []) : effectiveContent.filter((item) => !seriesIdFor(item));
+    const openSeries = (seriesItem) => {
+      const nextId = String(seriesItem.id);
+      setLocalActiveSeriesId(nextId);
+      onActiveSeriesChange?.(nextId);
+    };
+    const closeSeries = () => {
+      setLocalActiveSeriesId("");
+      onActiveSeriesChange?.("");
+    };
+    const closeSeenList = () => {
+      onActiveSeenListChange?.("");
+    };
+    if (activeSeenListId) {
+      return (
+        <>
+          <SeenListDetailView
+            focusSeenId={activeSeenListId}
+            items={effectiveContent}
+            onBack={closeSeenList}
+            onMore={setActionSeen}
+            owner={owner}
+          />
+          {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} onSeriesChanged={(updated) => {
+            setLocalContent((current) => (current || effectiveContent).map((item) => item.id === updated.id ? updated : item));
+            setActiveSeen(updated);
+          }} owner={owner} /> : null}
+          {actionSeen ? <ProfileSeenActionsSheet item={actionSeen} onClose={() => setActionSeen(null)} /> : null}
+        </>
+      );
+    }
+    if (activeSeries) {
+      return (
+        <>
+          <SeriesDetailView
+            activeSeries={activeSeries}
+            items={items}
+            onBack={closeSeries}
+            onMore={setActionSeen}
+            owner={owner}
+          />
+          {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} onSeriesChanged={(updated) => {
+            setLocalContent((current) => (current || effectiveContent).map((item) => item.id === updated.id ? updated : item));
+            setActiveSeen(updated);
+          }} owner={owner} /> : null}
+          {actionSeen ? <ProfileSeenActionsSheet item={actionSeen} onClose={() => setActionSeen(null)} /> : null}
+        </>
+      );
+    }
     return (
       <>
-        {activeSeries ? <button className="profile-series-path" onClick={() => setActiveSeries("")} type="button">‹ My Seens <span>·</span> {activeSeries} <span>·</span> {items.length}</button> : null}
         <div className="profile-seens-grid">
-          {!activeSeries ? [...seriesGroups.entries()].map(([name, seriesItems]) => {
-            const media = findMedia(seriesItems[0]);
-            return <button className="profile-seen-tile profile-series-tile" key={name} onClick={() => setActiveSeries(name)} type="button">
+          {seriesTiles.map((seriesItem) => {
+            const media = seriesItem.coverMedia || findMedia(seriesItem.seens?.[0]) || seriesItem.previewSeens?.find((item) => item.coverMedia)?.coverMedia;
+            const count = seriesItem.seenCount ?? seriesItem.seens?.length ?? 0;
+            const name = seriesItem.name || seriesItem.title || "Untitled Series";
+            return <button className="profile-seen-tile profile-series-tile" key={seriesItem.id} onClick={() => openSeries(seriesItem)} type="button">
               {media?.secureUrl ? <img alt={`${name} series cover`} loading="lazy" src={media.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
               <span className="profile-seen-shade" />
-              <span className="profile-seen-badge">SERIES <b>{seriesItems.length}</b></span>
-              <span className="profile-seen-copy"><strong>{name}</strong><small>{seriesItems.length} {seriesItems.length === 1 ? "Seen" : "Seens"}</small></span>
+              <span className="profile-seen-badge">SERIES <b>{count}</b></span>
+              <span className="profile-seen-copy"><strong>{name}</strong><small>{count} {count === 1 ? "Seen" : "Seens"}</small></span>
             </button>;
-          }) : null}
+          })}
           {items.map((item) => {
             const chapters = item.chapters?.length || 0;
             const tile = (
@@ -295,13 +597,16 @@ function ProfileContentGrid({ content = [], emptyText = "", kind = "content", ow
             );
 
             return (
-              <button className="profile-seen-tile" key={item.id} onClick={() => setActiveSeen(item)} type="button">
+              <button className="profile-seen-tile" key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
                 {tile}
               </button>
             );
           })}
         </div>
-        {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} owner={owner} /> : null}
+        {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} onSeriesChanged={(updated) => {
+          setLocalContent((current) => (current || effectiveContent).map((item) => item.id === updated.id ? updated : item));
+          setActiveSeen(updated);
+        }} owner={owner} /> : null}
       </>
     );
   }
@@ -328,3 +633,4 @@ function ProfileContentGrid({ content = [], emptyText = "", kind = "content", ow
 }
 
 export default ProfileContentGrid;
+

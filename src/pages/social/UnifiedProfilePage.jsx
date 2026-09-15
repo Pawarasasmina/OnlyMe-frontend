@@ -791,7 +791,7 @@ function ContentTabsPanel({ data, isOwner, tab }) {
     enabled: isOwner && tab === "saved",
     retry: false,
   });
-  if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} />;
+  if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
   if (tab === "reposts") return <ProfileContentGrid content={data.sharedSeens || []} emptyText="No reposted Seens yet." kind="seens" reposted />;
   if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
@@ -816,18 +816,63 @@ function ProfileBody({ data, setConnectionsType }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
+  const [activeSeriesId, setActiveSeriesId] = useState("");
+  const [activeSeenListId, setActiveSeenListId] = useState("");
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   useEffect(() => {
     setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   }, [requestedTab]);
+  useEffect(() => {
+    if (tab !== "seens") {
+      setActiveSeriesId("");
+      setActiveSeenListId("");
+    }
+  }, [tab]);
+  useEffect(() => {
+    if (!activeSeriesId && !activeSeenListId) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector(".social-center-scroll")?.scrollTo({ top: 0, behavior: "instant" });
+      window.scrollTo({ top: 0, behavior: "instant" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeSeenListId, activeSeriesId]);
   const setTab = (nextTab) => {
     setTabState(nextTab);
+    setActiveSeriesId("");
+    setActiveSeenListId("");
     const nextParams = new URLSearchParams(searchParams);
     if (nextTab === "seens") nextParams.delete("tab");
     else nextParams.set("tab", nextTab);
     setSearchParams(nextParams, { replace: true });
   };
+  const setSeriesFocus = (nextId) => {
+    setActiveSeriesId(nextId);
+    if (nextId) setActiveSeenListId("");
+  };
+  const setSeenListFocus = (nextId) => {
+    setActiveSeenListId(nextId);
+    if (nextId) setActiveSeriesId("");
+  };
+  if ((activeSeriesId || activeSeenListId) && tab === "seens") {
+    return (
+      <div className="profile-prototype is-series-focused">
+        <section className="profile-grid-panel">
+          <ProfileContentGrid
+            activeSeriesId={activeSeriesId}
+            activeSeenListId={activeSeenListId}
+            content={data.seens || []}
+            emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."}
+            kind="seens"
+            onActiveSeriesChange={setSeriesFocus}
+            onActiveSeenListChange={setSeenListFocus}
+            owner={isOwner}
+            series={data.series || []}
+          />
+        </section>
+      </div>
+    );
+  }
   return (
     <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-visitor-profile"}`}>
       {isOwner ? <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
@@ -837,7 +882,19 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
       <ProfileExperiences creatorName={profile.displayName} experiences={data.experiences || []} owner={isOwner} />
       <ProfileTabs setTab={setTab} tab={tab} />
-      <section className="profile-grid-panel"><ContentTabsPanel data={data} isOwner={isOwner} tab={tab} /></section>
+      <section className="profile-grid-panel">
+        {tab === "seens" ? (
+          <ProfileContentGrid
+            content={data.seens || []}
+            emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."}
+            kind="seens"
+            onActiveSeriesChange={setSeriesFocus}
+            onActiveSeenListChange={setSeenListFocus}
+            owner={isOwner}
+            series={data.series || []}
+          />
+        ) : <ContentTabsPanel data={data} isOwner={isOwner} tab={tab} />}
+      </section>
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <WallPreview isOwner={isOwner} posts={data.wallPosts || []} />
       <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />

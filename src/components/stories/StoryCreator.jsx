@@ -14,16 +14,18 @@ const STORY_GRADIENTS = [
 ];
 const STORY_STYLE_COUNT = 5;
 
-function newTextOverlay() {
-  return { id: `text-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, color: "#D6EAFF", size: 26, style: 0, text: "", x: 0.5, y: 0.42 };
+function newTextOverlay(text = "") {
+  return { id: `text-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, color: "#D6EAFF", size: 26, style: 0, text, x: 0.5, y: 0.42 };
 }
 
-function freshStory() {
+function freshStory(initialContent = null) {
+  const initialText = String(initialContent?.caption || "").slice(0, 300);
+  const imageUrl = initialContent?.imageUrl || "";
   return {
     gradient: 0,
-    photo: false,
-    texts: [newTextOverlay()],
-    uploadedUrl: "",
+    photo: Boolean(imageUrl),
+    texts: [newTextOverlay(initialText)],
+    uploadedUrl: imageUrl,
   };
 }
 
@@ -126,7 +128,7 @@ function roundRect(context, x, y, width, height, radius) {
   context.closePath();
 }
 
-function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }) {
+function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose, onPublished, onSave }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
@@ -142,7 +144,7 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
   const deleteArmedRef = useRef(false);
   const uploadedUrlRef = useRef("");
   const createMutation = useCreateStory();
-  const [story, setStory] = useState(freshStory);
+  const [story, setStory] = useState(() => freshStory(initialContent));
   const [activeTextId, setActiveTextId] = useState(() => story.texts[0].id);
   const [hintOpen, setHintOpen] = useState(() => !localStorage.getItem("atseen_story_comp_hint"));
   const [upload, setUpload] = useState({ error: "", progress: 0, step: "" });
@@ -209,9 +211,12 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
       stopCamera();
       return undefined;
     }
+    const next = freshStory(initialContent);
+    setStory(next);
+    setActiveTextId(next.texts[0].id);
     startCamera("environment");
     return stopCamera;
-  }, [isOpen, startCamera, stopCamera]);
+  }, [initialContent, isOpen, startCamera, stopCamera]);
 
   useEffect(() => {
     if (cameraStatus !== "live" || !videoRef.current || !cameraStreamRef.current) return;
@@ -224,7 +229,7 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
   }, [story.uploadedUrl]);
 
   useEffect(() => () => {
-    if (uploadedUrlRef.current) URL.revokeObjectURL(uploadedUrlRef.current);
+    if (uploadedUrlRef.current?.startsWith("blob:")) URL.revokeObjectURL(uploadedUrlRef.current);
   }, []);
 
   const updateStory = (patch) => setStory((current) => ({ ...current, ...patch }));
@@ -251,9 +256,9 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
   const close = () => {
     stopCamera();
     setUpload({ error: "", progress: 0, step: "" });
-    const fresh = freshStory();
+    const fresh = freshStory(initialContent);
     setStory((current) => {
-      if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
+      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
       return fresh;
     });
     setActiveTextId(fresh.texts[0].id);
@@ -287,7 +292,7 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
     const file = await fileFromCanvas(canvas);
     const url = URL.createObjectURL(file);
     setStory((current) => {
-      if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
+      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
       return { ...current, photo: true, uploadedUrl: url };
     });
     stopCamera();
@@ -299,7 +304,7 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
   const useCroppedImage = (file) => {
     const url = URL.createObjectURL(file);
     setStory((current) => {
-      if (current.uploadedUrl) URL.revokeObjectURL(current.uploadedUrl);
+      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
       return { ...current, photo: true, uploadedUrl: url };
     });
     URL.revokeObjectURL(cropSource);
@@ -449,7 +454,7 @@ function StoryCreator({ isOpen, mode = "publish", onClose, onPublished, onSave }
                 return;
               }
               if (story.uploadedUrl) {
-                URL.revokeObjectURL(story.uploadedUrl);
+                if (story.uploadedUrl.startsWith("blob:")) URL.revokeObjectURL(story.uploadedUrl);
                 updateStory({ photo: false, uploadedUrl: "" });
                 startCamera(facingMode);
               } else {

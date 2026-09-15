@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FiAperture, FiDisc, FiEdit3, FiEye } from "react-icons/fi";
+import { FiAperture, FiDisc, FiEdit3, FiEye, FiImage } from "react-icons/fi";
 
 function FanCreateSheet({
   canCreateSeen = true,
-  canCreateWorld = false,
   canCreateStoryNow = true,
   canPostNote = true,
   isOpen,
@@ -13,10 +12,11 @@ function FanCreateSheet({
   onStory,
 }) {
   const options = [
-    ...(canCreateSeen ? [{ description: "A post of what you've seen", icon: FiEye, label: "Seen", to: "/create/seen" }] : []),
-    { description: "24 hours - then it's gone", icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
-    { description: "One line on the wall", icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
-    ...(canCreateWorld ? [{ description: "Your space by subscription", icon: FiDisc, label: "World", labelAccent: "\uD83E\uDE90", to: "/create/premium-world" }] : []),
+    { disabled: !canCreateSeen, icon: FiEye, label: "Seen", to: "/create/seen" },
+    { icon: FiImage, label: "Experience", to: "/create/experience" },
+    { disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
+    { disabled: !canPostNote, icon: FiEdit3, label: "Note", onClick: onNote },
+    { icon: FiDisc, label: "World", to: "/create/premium-world" },
   ];
 
   useEffect(() => {
@@ -42,19 +42,14 @@ function FanCreateSheet({
   return (
     <div aria-modal="true" className="seen-create-layer" role="dialog">
       <button aria-label="Close create menu" className="seen-create-dim" onClick={onClose} type="button" />
-      <section className="seen-create-sheet">
-        <span aria-hidden="true" className="seen-create-grab" />
-        <h2>Create</h2>
+      <section aria-label="Create" className="seen-create-sheet">
         <div className="seen-create-list">
           {options.map((option) => {
             const Icon = option.icon;
             const content = (
               <>
                 <span className="seen-create-option-icon"><Icon aria-hidden="true" /></span>
-                <span className="seen-create-option-copy">
-                  <b>{option.label}{option.labelAccent ? <i aria-hidden="true">{option.labelAccent}</i> : null}</b>
-                  <small>{option.description}</small>
-                </span>
+                <span className="seen-create-option-copy"><b>{option.label}</b></span>
               </>
             );
 
