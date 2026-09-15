@@ -20,18 +20,19 @@
 
 .seen-owner-actions-sheet {
   position: fixed;
-  right: max(16px, calc((100vw - 640px) / 2));
-  bottom: 0;
-  left: max(16px, calc((100vw - 640px) / 2));
+  top: 50%;
+  left: 50%;
   z-index: 80;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(86dvh, 720px);
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.075);
-  border-bottom: 0;
-  border-radius: 16px 16px 0 0;
+  border-radius: 16px;
   background: #0c0f14;
   color: #fff;
-  box-shadow: 0 -24px 60px rgba(0,0,0,.5);
-  animation: seenMoreSheetIn .32s cubic-bezier(.32,.72,0,1) both;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  transform: translate(-50%, -50%);
+  animation: seenOwnerActionsIn .28s cubic-bezier(.32,.72,0,1) both;
 }
 
 .seen-owner-actions-header {
@@ -164,10 +165,23 @@
 
 @media (max-width: 720px) {
   .seen-owner-actions-sheet {
+    top: auto;
     right: 0;
+    bottom: 0;
     left: 0;
+    width: auto;
     max-height: min(86vh, 720px);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -24px 60px rgba(0,0,0,.5);
+    transform: none;
+    animation: seenMoreSheetInDesktop .32s cubic-bezier(.32,.72,0,1) both;
   }
+}
+
+@keyframes seenOwnerActionsIn {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 18px)); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
 }
 
 /* Dream dialogs follow the prototype's bottom-sheet pattern at every viewport
