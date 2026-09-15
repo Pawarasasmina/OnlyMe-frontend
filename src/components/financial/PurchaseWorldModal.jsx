@@ -26,7 +26,7 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
     setBusy(true); setError("");
     try {
       await purchaseService.purchaseWorld(publication.id, key);
-      await Promise.all([client.invalidateQueries({ queryKey: ["wallet"] }), client.invalidateQueries({ queryKey: ["world-entitlements"] }), client.invalidateQueries({ queryKey: ["world", publication.id] })]);
+      await Promise.all([client.invalidateQueries({ queryKey: ["wallet"] }), client.invalidateQueries({ queryKey: ["world-entitlements"] }), client.invalidateQueries({ queryKey: ["world", publication.id] }), client.invalidateQueries({ queryKey: ["unified-profile"] })]);
       await onSuccess?.(); onClose();
     } catch (requestError) {
       const code = financialErrorCode(requestError);

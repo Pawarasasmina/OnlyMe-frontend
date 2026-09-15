@@ -14,10 +14,12 @@ export default function ProfileExperiences({ experiences = [], owner = false, cr
           const free = item.pricing?.mode === "FREE";
           const accessible = owner || free || ["PUBLIC_FULL", "ENTITLED_EXPERIENCE", "ACTIVE_PREMIUM_MEMBER"].includes(item.access);
           const purchased = !owner && !free && accessible;
+          const ownerCount = Number(item.ownerCount) || 0;
+          const ownerLabel = `${ownerCount} ${ownerCount === 1 ? "owner" : "owners"}`;
           const target = owner && ["DRAFT", "CHANGES_REQUESTED"].includes(item.status) ? `/studio/experiences/${item.id}/edit` : `/experience/${item.id}`;
           return <Link className="profile-experience-card" key={item.id} to={target}>
             <span className="profile-experience-cover">{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i>✦</i>}<b>{owner ? <><FiCheck /> Yours</> : free ? <><FiCheck /> Free</> : purchased ? <><FiCheck /> Yours</> : <><FiLock /> ✦{item.pricing?.starsAmount} once</>}</b></span>
-            <span className="profile-experience-copy"><small>{item.category || "EXPERIENCE"} · {(item.chapters || []).length} chapters</small><strong>{item.title || "Untitled Experience"}</strong><em>{owner ? item.status === "CHANGES_REQUESTED" ? "Editing · published version stays live" : item.status?.replaceAll("_", " ") : free ? "Free · view every chapter" : purchased ? "Purchased · permanent access" : `Premium · one-time unlock by ${creatorName}`}</em></span>
+            <span className="profile-experience-copy"><small>{item.category || "EXPERIENCE"} · {(item.chapters || []).length} chapters</small><strong>{item.title || "Untitled Experience"}</strong><em>{owner ? item.status === "CHANGES_REQUESTED" ? `Editing · published version stays live · ${ownerLabel}` : `${item.status?.replaceAll("_", " ")} · ${ownerLabel}` : free ? `Free · view every chapter · ${ownerLabel}` : purchased ? `Purchased · permanent access · ${ownerLabel}` : `Premium · one-time unlock by ${creatorName} · ${ownerLabel}`}</em></span>
             <FiArrowUpRight />
           </Link>;
         })}
