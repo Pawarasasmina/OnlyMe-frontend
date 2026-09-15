@@ -109,8 +109,10 @@ function inputClass(extra = "") {
   return `world-publish-input ${extra}`.trim();
 }
 
-function statusLabel(world) {
+function statusLabel(world, experience = false) {
   if (!world?.id) return "New draft";
+  if (experience && world.status === "CHANGES_REQUESTED") return "Editing published Experience";
+  if (experience && world.status === "PUBLISHED") return "Published";
   return String(world.status || "DRAFT").replaceAll("_", " ");
 }
 
@@ -275,7 +277,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         current.forEach(revokePreviewUrl);
         return storyPreviewsFromWorld(publication);
       });
-      setNotice(`${statusLabel(publication)} opened.`);
+      setNotice(`${statusLabel(publication, experience)} opened.`);
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
@@ -801,7 +803,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (!saved) return;
     const validationTarget = experience ? {
       ...saved,
-      chapters: (saved.chapters || []).map((chapter, index) => ({
+      chapters: (saved.chapters || []).map((chapter) => ({
         ...chapter,
         isPreview: saved.pricing?.mode === "FREE",
       })),
@@ -812,7 +814,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       return;
     }
     setSubmitting(true);
-    setNotice("Submitting...");
+    setNotice(experience ? "Publishing..." : "Submitting...");
     try {
       const response = await api[saved.status === "CHANGES_REQUESTED" ? "resubmitPublication" : "submitPublication"](saved.id, saved.statusVersion);
       const submitted = response.data.data.publication;
@@ -822,7 +824,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       nav(experience ? `/experience/${submitted.id}` : "/profile", { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError));
-      setNotice("Submit failed");
+      setNotice(experience ? "Publish failed" : "Submit failed");
     } finally {
       setSubmitting(false);
     }
@@ -1103,7 +1105,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <div className="experience-chapter-list">
           {chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button"><span>{index + 1}</span><strong>{chapter.title || `Chapter ${index + 1}`}</strong><small>{world.pricing?.mode === "FREE" ? "FREE" : "LOCKED UNTIL PURCHASE"}</small><i>›</i></button>)}
         </div>
-        <p className="experience-preview-note">Everything in Chapter 1 is the free preview.</p>
+        <p className="experience-preview-note">{world.pricing?.mode === "FREE" ? "Every chapter is available to everyone." : "Every chapter unlocks after the one-time purchase."}</p>
 
         <p className="experience-field-label">PRICE</p>
         <div className="experience-price-input"><span>✦</span><input min="10" onChange={(event) => { const price = Math.max(10, Number(event.target.value) || 10); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${price}`, starsAmount: price } }); }} placeholder="Price in coins" type="number" value={world.pricing?.starsAmount || 190} /></div>
@@ -1118,13 +1120,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (!creationStarted) return (
     <article className="planet-create-entry">
       <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><span>{experience ? "Experience creation" : "World creation"}</span><h1>Create {experience ? "an experience" : "a world"}</h1></div></header>
-      <p className="planet-create-intro">{experience ? "Premium Experiences are structured journeys made of chapters. Chapter one is free; fans unlock the rest once and keep access forever." : "A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside."}</p>
+      <p className="planet-create-intro">{experience ? "Experiences are structured journeys made of chapters. Publish directly as free for everyone, or premium with one-time permanent access." : "A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside."}</p>
       <button className="planet-choice-card is-selected" onClick={() => setCreationStarted(true)} type="button">
         <span className="planet-choice-orbit"><i>{FLEX}</i><b>{experience ? STAR : PLANET}</b></span>
-        <span><strong>{experience ? "Premium Experience" : "Your World"}</strong><small>{experience ? "Up to 3 active · one-time unlock · independent from World" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused journey with a free opening chapter and permanent access after unlock." : "Premium chapters, private stories and closer access—all together."}</em></span>
+        <span><strong>{experience ? "Experience" : "Your World"}</strong><small>{experience ? "Up to 3 premium Experiences · free or one-time unlock" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused journey that publishes immediately. Free Experiences open fully; premium Experiences unlock permanently after purchase." : "Premium chapters, private stories and closer access—all together."}</em></span>
         <FiArrowUpRight />
       </button>
-      <div className="planet-create-principles"><span><FiCheck /> {experience ? "One-time unlock" : "One clear monthly price"}</span><span><FiCheck /> 1 free preview chapter</span><span><FiCheck /> {experience ? "Independent from World" : "Up to 3 preview stories"}</span></div>
+      <div className="planet-create-principles"><span><FiCheck /> {experience ? "Publishes immediately" : "One clear monthly price"}</span><span><FiCheck /> {experience ? "Free or one-time unlock" : "1 free preview chapter"}</span><span><FiCheck /> {experience ? "No approval required" : "Up to 3 preview stories"}</span></div>
       <button className="planet-create-continue" onClick={() => setCreationStarted(true)} type="button">Build my {experience ? "Experience" : "World"} <FiArrowUpRight /></button>
       <small className="planet-create-footnote">{experience ? "Experiences live in their own profile section. World inclusion is optional access, never ownership or placement." : "Worlds live on your profile only—they never appear as ordinary feed posts."}</small>
     </article>
