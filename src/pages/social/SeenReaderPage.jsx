@@ -1034,9 +1034,9 @@ export default function SeenReaderPage() {
         {!hasInlineMedia && publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} className="seen-reader-media" loading="lazy" src={mediaUrl(publication.coverMedia)} /> : null}
       </> : <section className="seen-reader-empty-chapter">
         {publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} className="seen-reader-media" loading="lazy" src={mediaUrl(publication.coverMedia)} /> : null}
-        <h2>This chapter needs content</h2>
-        <p>{publication.summary || "Add text, key points, highlights, links, or media blocks to this chapter so readers have something to step through."}</p>
-        <Link to="/studio/seens">Open Seen manager</Link>
+        <h2>{isOwner ? "This chapter needs content" : "This chapter is empty"}</h2>
+        <p>{isOwner ? "Add text, key points, highlights, links, or media so readers have something to step through." : "The creator has not added anything to this chapter yet."}</p>
+        {isOwner ? <Link to={`/studio/seens/${encodeURIComponent(id)}/edit?from=seen`}>Edit this Seen</Link> : null}
       </section>}
     </article>
 

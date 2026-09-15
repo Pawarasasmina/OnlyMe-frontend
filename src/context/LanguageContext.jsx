@@ -43,7 +43,8 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(LANGUAGE_KEY, language);
     document.documentElement.lang = language;
-    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    document.documentElement.dir = "ltr";
+    document.documentElement.dataset.language = language;
   }, [language]);
   const value = useMemo(() => ({ language, setLanguage, t: (text) => translations[language]?.[text] || text }), [language, setLanguage]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

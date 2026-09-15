@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiAward, FiCheck, FiCreditCard, FiSearch, FiShield, FiStar } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { FiArrowLeft, FiAward, FiCheck, FiCreditCard, FiSearch, FiShield, FiStar } from "react-icons/fi";
 import Loader from "../../components/common/Loader";
 import { useAuth } from "../../hooks/useAuth";
 import { verifiedCreatorService } from "../../services/verifiedCreatorService";
@@ -15,6 +16,7 @@ const benefits = [
 
 export default function VerifiedCreatorPage({ embedded = false, onClose }) {
   const client = useQueryClient();
+  const navigate = useNavigate();
   const { setUser } = useAuth();
   const [statement, setStatement] = useState("");
   const [confirm, setConfirm] = useState(false);
@@ -29,8 +31,13 @@ export default function VerifiedCreatorPage({ embedded = false, onClose }) {
   const amount = `${subscription?.starsPerMonth || data.plan?.starsPerMonth || 190} Stars`;
   const active = status === "APPROVED" && subscription?.paymentStatus === "PAID" && (!subscription.currentPeriodEnd || new Date(subscription.currentPeriodEnd) > new Date());
   const shell = embedded ? "fixed inset-x-3 bottom-3 z-[200] mx-auto max-h-[90vh] max-w-xl overflow-y-auto rounded-[28px] border border-white/10 bg-[#151A22] p-6 shadow-2xl" : "mx-auto max-w-2xl px-4 py-8";
+  const goBack = () => {
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate("/profile", { replace: true });
+  };
   return <main className={shell}>
     {embedded ? <button className="float-right text-sm text-white/50" onClick={onClose} type="button">Close</button> : null}
+    {!embedded ? <button aria-label="Go back" className="mb-5 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[.035] text-xl text-white/70 transition hover:border-atseen-blue/40 hover:text-atseen-blue" onClick={goBack} type="button"><FiArrowLeft /></button> : null}
     <p className="text-[11px] font-black uppercase tracking-[.18em] text-atseen-blue">Verified Creator</p><h1 className="mt-2 text-3xl font-black">Earn the blue tick</h1><p className="mt-2 text-sm leading-6 text-white/55">Creator approval gives publishing access. Verified Creator is a separate, reviewed monthly subscription.</p>
     <div className="mt-6 grid gap-3 sm:grid-cols-2">{benefits.map(([Icon, title, text]) => <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4" key={title}><Icon className="text-xl text-atseen-blue" /><b className="mt-3 block text-sm">{title}</b><p className="mt-1 text-xs leading-5 text-white/45">{text}</p></div>)}</div>
     <section className="mt-6 rounded-2xl border border-atseen-blue/25 bg-atseen-blue/[.07] p-5"><div className="flex items-end justify-between gap-3"><div><small className="font-bold uppercase tracking-wider text-atseen-blue">Monthly plan</small><p className="mt-1 text-3xl font-black">{amount}<span className="text-sm font-medium text-white/45"> / month</span></p></div><FiCreditCard className="text-2xl text-atseen-blue" /></div><p className="mt-3 text-xs leading-5 text-white/50">The badge is removed automatically if the monthly renewal is not paid. We’ll send an in-app notice when that happens.</p></section>
