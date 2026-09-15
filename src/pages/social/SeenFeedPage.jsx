@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiBookmark, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlus, FiRepeat, FiSearch, FiSend, FiSlash, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
+import SeriesPickerSheet from "../../components/publication/SeriesPickerSheet";
 import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
+import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { publicationService } from "../../services/publicationService";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
@@ -16,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useSocialCapabilities } from "../../hooks/useSocialCapabilities";
 import { atseenReportReasons } from "../../data/atseenMockData";
 import { relativeTime } from "../../utils/relativeTime";
+import { isSeenOwner, normalizeId } from "../../utils/seenOwnership";
 
 const seenReactionOptions = [
   { key: "LIKE", label: "Support", icon: "\uD83E\uDD1D" },
@@ -111,6 +114,8 @@ function normalizeSeen(raw = {}) {
     description: raw.description || raw.summary || "",
     category: raw.category || raw.topic || "",
     createdAt: raw.publishedAt || raw.createdAt || "",
+    statusVersion: Number(raw.statusVersion ?? 0),
+    isPinned: Boolean(raw.isPinned || raw.pinned || raw.profilePinned || raw.featured),
     media: {
       type: String(media.mediaType || media.resourceType || "IMAGE").toLowerCase().includes("video") ? "video" : "image",
       url: resolveMediaUrl(media.secureUrl || media.url || ""),
@@ -122,6 +127,10 @@ function normalizeSeen(raw = {}) {
       blocks: chapter.blocks || [],
     })),
     attachedEntities: raw.attachedEntities || [],
+    series: raw.series || null,
+    seriesId: raw.seriesId || raw.series?._id || raw.series?.id || "",
+    access: raw.access || "",
+    creatorId: raw.creatorId || raw.ownerId || raw.createdBy || creator.id || creator._id || "",
     creator: {
       id: String(creator.id || creator._id || ""),
       displayName: creator.name || creator.displayName || creator.username || "Creator",
@@ -176,7 +185,7 @@ function SeenHeader({ activeTab, onTabChange, onActivity, onCreate, onSearch }) 
       <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">Friends</button>
     </nav>
     <div className="seen-proto-header-actions">
-      <button aria-label="Create a Seen" onClick={onCreate} type="button"><FiPlus /></button>
+      <button aria-label="Create" onClick={onCreate} type="button"><FiPlus /></button>
       <button aria-label="Search" onClick={onSearch} type="button"><FiSearch /></button>
       <button aria-label="Open activity" onClick={onActivity} type="button"><FiZap /></button>
     </div>
@@ -236,6 +245,118 @@ function SeenOptionsSheet({ creatorName, isOpen, itemTitle, onBlock, onClose, on
       </div>
     </section>
   </div>;
+}
+
+function SeenActionRow({ danger = false, disabled = false, icon: Icon, onClick, pending = false, subtitle = "", title }) {
+  return (
+    <button className={danger ? "is-danger seen-owner-action-row" : "seen-owner-action-row"} disabled={disabled || pending} onClick={onClick} type="button">
+      <Icon aria-hidden="true" />
+      <span>
+        <b>{title}</b>
+        {subtitle ? <small>{subtitle}</small> : null}
+      </span>
+      {pending ? <FiRefreshCw aria-hidden="true" className="seen-owner-action-spinner" /> : null}
+    </button>
+  );
+}
+
+function OwnerSeenActionsSheet({ busyAction = "", isOpen, item, onAddStory, onArchive, onChangeCover, onClose, onDelete, onEdit, onInsights, onPinToggle, onSeries, onShare }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const chapterCount = item.chapters.length;
+  const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
+  const seriesName = item.series?.name || item.series?.title || "";
+  const metadata = ["Seen", `${chapterCount} ${chapterWord}`, relativeTime(item.createdAt, "") || `~${item.readMinutes} min`].filter(Boolean).join(" · ");
+  const busy = Boolean(busyAction);
+
+  const actions = [
+    { icon: FiUploadCloud, key: "share", title: "Share", onClick: onShare },
+    { icon: FiPlusCircle, key: "story", title: "Add to your story", onClick: onAddStory },
+    { icon: FiBarChart2, key: "insights", title: "Insights", onClick: onInsights },
+    { icon: FiEdit3, key: "edit", title: "Edit", onClick: onEdit },
+    { icon: FiImage, key: "cover", title: "Change cover", onClick: onChangeCover },
+    { icon: FiZap, key: "pin", title: item.isPinned ? "Unpin" : "Pin to profile", onClick: onPinToggle },
+    { icon: FiGrid, key: "series", title: seriesName ? `Series: ${seriesName}` : "Add to a series", onClick: onSeries },
+    { icon: FiArchive, key: "archive", title: "Archive", subtitle: "hidden from profile, stats stay", onClick: onArchive },
+    { danger: true, icon: FiTrash2, key: "delete", title: "Delete", subtitle: "gone for everyone", onClick: onDelete },
+  ];
+
+  return (
+    <div className="seen-feed-options-layer seen-owner-options-layer">
+      <button aria-label="Close Seen owner actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
+      <section aria-label={`Manage ${item.title}`} aria-modal="true" className="seen-owner-actions-sheet" role="dialog">
+        <span className="seen-feed-options-handle" aria-hidden="true" />
+        <header className="seen-owner-actions-header">
+          <h2>{item.title}</h2>
+          <p>{metadata}</p>
+        </header>
+        <div className="seen-owner-actions-list">
+          {actions.map((action) => (
+            <SeenActionRow
+              danger={action.danger}
+              disabled={busy && busyAction !== action.key}
+              icon={action.icon}
+              key={action.key}
+              onClick={action.onClick}
+              pending={busyAction === action.key}
+              subtitle={action.subtitle}
+              title={action.title}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+  const insights = insightsQuery.data?.data?.data?.insights || insightsQuery.data?.data?.insights || {};
+  const rows = [
+    ["Views", insights.views],
+    ["Unique viewers", insights.uniqueViewers],
+    ["Saves", insights.saves],
+    ["Shares", insights.shares],
+    ["Reactions", insights.reactions],
+    ["Comments", insights.comments],
+    ["Impressions", insights.impressions],
+    ["Opens", insights.opens],
+  ];
+  return (
+    <div className="seen-feed-options-layer">
+      <button aria-label="Close Seen insights" className="seen-feed-options-scrim" onClick={onClose} type="button" />
+      <section aria-label={`Insights for ${title}`} aria-modal="true" className="seen-owner-actions-sheet seen-insights-sheet" role="dialog">
+        <span className="seen-feed-options-handle" aria-hidden="true" />
+        <header className="seen-owner-actions-header"><h2>Insights</h2><p>{title}</p></header>
+        {insightsQuery.isLoading ? <p className="seen-insights-state">Loading insights...</p> : null}
+        {insightsQuery.isError ? <button className="seen-insights-state" onClick={() => insightsQuery.refetch()} type="button">Unable to load insights. Retry</button> : null}
+        {!insightsQuery.isLoading && !insightsQuery.isError ? <div className="seen-insights-grid">{rows.map(([label, value]) => <span key={label}><b>{Number(value || 0).toLocaleString()}</b><small>{label}</small></span>)}</div> : null}
+      </section>
+    </div>
+  );
 }
 
 function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
@@ -424,20 +545,26 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
   </div>;
 }
 
-function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedUpdate }) {
+function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
   const item = normalizeSeen(rawItem);
   const target = `/seen/${encodeURIComponent(item.id)}`;
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { showToast } = useFanToast();
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
+  const [seriesOpen, setSeriesOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
+  const [busyOwnerAction, setBusyOwnerAction] = useState("");
   const engagementQuery = useQuery({
     enabled: commentsOpen || reactionPickerOpen,
     queryKey: ["seen-engagement", item.id],
@@ -558,6 +685,61 @@ function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedR
     },
     onError: (error) => setNotice(actionError(error)),
   });
+  const pinMutation = useMutation({
+    mutationFn: () => publicationService.pinSeen(item.id, !item.isPinned, item.statusVersion),
+    onMutate: () => setBusyOwnerAction("pin"),
+    onSuccess: async (response) => {
+      const publication = response.data?.data?.publication;
+      if (publication) onFeedReplace(item.id, publication);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["seen-feed"] }),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["series"] }),
+      ]);
+      setMenuOpen(false);
+      showToast(!item.isPinned ? "Pinned" : "Unpinned");
+    },
+    onError: (error) => showToast(actionError(error)),
+    onSettled: () => setBusyOwnerAction(""),
+  });
+  const archiveMutation = useMutation({
+    mutationFn: () => publicationService.archivePublication(item.id, item.statusVersion),
+    onMutate: () => setBusyOwnerAction("archive"),
+    onSuccess: async () => {
+      setMenuOpen(false);
+      onFeedRemove(item.id);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["seen-feed"] }),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["series"] }),
+      ]);
+      showToast("In archive - restore anytime");
+    },
+    onError: (error) => showToast(actionError(error)),
+    onSettled: () => setBusyOwnerAction(""),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: () => publicationService.deleteSeen(item.id, item.statusVersion),
+    onMutate: () => setBusyOwnerAction("delete"),
+    onSuccess: async () => {
+      setMenuOpen(false);
+      onFeedRemove(item.id);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["seen-feed"] }),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["series"] }),
+      ]);
+      showToast("Seen deleted.");
+    },
+    onError: (error) => showToast(actionError(error)),
+    onSettled: () => setBusyOwnerAction(""),
+  });
+  const insightsQuery = useQuery({
+    enabled: insightsOpen,
+    queryKey: ["seen-insights", item.id],
+    queryFn: () => publicationService.getSeenInsights(item.id),
+    retry: false,
+  });
 
   const shareUrl = `${window.location.origin}${target}`;
   const sharePayload = useMemo(() => ({
@@ -594,43 +776,86 @@ function SeenFeedItem({ currentUserId = "", item: rawItem, onFeedRemove, onFeedR
     setReactionPickerOpen(true);
   };
   const menuPending = saveMutation.isPending || repostMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
-  const pending = reactionMutation.isPending || repostMutation.isPending || saveMutation.isPending || commentMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
+  const pending = reactionMutation.isPending || repostMutation.isPending || saveMutation.isPending || commentMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending || pinMutation.isPending || archiveMutation.isPending || deleteMutation.isPending;
 
-  const isOwn = String(item.creator.id || "") === String(currentUserId || "");
+  const isOwn = isSeenOwner(currentUser, rawItem) || isSeenOwner(currentUser, item);
+  const ownerStoryContent = useMemo(() => ({
+    caption: `${item.title}\n${shareUrl}`,
+    imageUrl: item.media.url,
+  }), [item.media.url, item.title, shareUrl]);
+  const openChangeCover = () => {
+    setMenuOpen(false);
+    navigate(`/studio/seens/${item.id}/edit?from=seen&focus=cover`);
+  };
+  const confirmDelete = () => {
+    if (!window.confirm("Delete this Seen?\n\nThis will permanently remove it for everyone.")) return;
+    deleteMutation.mutate();
+  };
 
   return <article className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}>
     <div className="seen-item-menu-wrap">
       <CreatorHeader createdAt={item.createdAt} creator={item.creator} isOwn={isOwn} menuOpen={menuOpen} onMenuToggle={() => setMenuOpen((value) => !value)} views={item.engagement.views} />
-      <SeenOptionsSheet
-        creatorName={item.creator.displayName}
-        isOpen={menuOpen}
-        itemTitle={item.title}
-        onBlock={() => blockMutation.mutate()}
-        onClose={() => setMenuOpen(false)}
-        onHide={() => hideMutation.mutate()}
-        onMute={() => muteMutation.mutate()}
-        onReport={() => { setMenuOpen(false); setReportDone(false); setReportOpen(true); }}
-        onSave={() => {
-          setMenuOpen(false);
-          saveMutation.mutate();
-        }}
-        onShare={() => {
-          setMenuOpen(false);
-          setShareSheetOpen(true);
-        }}
-        pending={menuPending}
-        saved={item.viewerState.saved}
-      />
+      {isOwn ? (
+        <OwnerSeenActionsSheet
+          busyAction={busyOwnerAction}
+          isOpen={menuOpen}
+          item={item}
+          onAddStory={() => { setMenuOpen(false); setStoryCreatorOpen(true); }}
+          onArchive={() => archiveMutation.mutate()}
+          onChangeCover={openChangeCover}
+          onClose={() => setMenuOpen(false)}
+          onDelete={confirmDelete}
+          onEdit={() => { setMenuOpen(false); navigate(`/studio/seens/${item.id}/edit?from=seen`); }}
+          onInsights={() => { setMenuOpen(false); setInsightsOpen(true); }}
+          onPinToggle={() => pinMutation.mutate()}
+          onSeries={() => { setMenuOpen(false); setSeriesOpen(true); }}
+          onShare={() => { setMenuOpen(false); setShareSheetOpen(true); }}
+        />
+      ) : (
+        <SeenOptionsSheet
+          creatorName={item.creator.displayName}
+          isOpen={menuOpen}
+          itemTitle={item.title}
+          onBlock={() => blockMutation.mutate()}
+          onClose={() => setMenuOpen(false)}
+          onHide={() => hideMutation.mutate()}
+          onMute={() => muteMutation.mutate()}
+          onReport={() => { setMenuOpen(false); setReportDone(false); setReportOpen(true); }}
+          onSave={() => {
+            setMenuOpen(false);
+            saveMutation.mutate();
+          }}
+          onShare={() => {
+            setMenuOpen(false);
+            setShareSheetOpen(true);
+          }}
+          pending={menuPending}
+          saved={item.viewerState.saved}
+        />
+      )}
     </div>
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
+    <StoryCreator initialContent={ownerStoryContent} isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
+    <SeenInsightsSheet insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
+    <SeriesPickerSheet
+      isOpen={seriesOpen}
+      onClose={() => setSeriesOpen(false)}
+      onSelected={(series) => {
+        const updated = { ...rawItem, series, seriesId: series?.id || null };
+        onFeedReplace(item.id, updated);
+      }}
+      seenId={item.id}
+      selectedSeries={item.series}
+      selectedSeriesId={item.seriesId}
+    />
     <div className="seen-feed-copy">
       <SeenSummary item={item} target={target} />
       <ChapterPreviewList chapters={item.chapters} target={target} />
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       <PreviewComment comment={item.previewComment} />
       <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
-      {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={currentUserId} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
+      {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
       {commentsOpen ? <CommentsPanel engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onSubmit={submitComment} value={comment} /> : null}
@@ -696,6 +921,9 @@ export default function SeenFeedPage() {
       previewComment: engagement.comments?.at(-1) || entry.previewComment || null,
     } : entry));
   };
+  const replaceFeedItem = (id, nextItem) => {
+    queryClient.setQueryData(["seen-feed", tab], (current = []) => current.map((entry) => String(entry.id || entry._id) === String(id) ? { ...entry, ...nextItem } : entry));
+  };
   const removeFeedItem = (id) => {
     queryClient.setQueryData(["seen-feed", tab], (current = []) => current.filter((entry) => String(entry.id) !== String(id)));
   };
@@ -725,7 +953,7 @@ export default function SeenFeedPage() {
     {query.isLoading ? <div className="seen-feed-list"><SeenSkeleton /><SeenSkeleton /></div> : null}
     {query.isError ? <div className="seen-feed-error"><p>Couldn’t load Seens.</p><button onClick={() => query.refetch()} type="button">Try again</button></div> : null}
     {!query.isLoading && !query.isError ? items.length ? <div className="seen-feed-list">
-      {items.map((item) => <SeenFeedItem currentUserId={user?.id || user?._id || ""} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedUpdate={updateFeedItem} />)}
+      {items.map((item) => <SeenFeedItem currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} />)}
       <EndState onCreate={openCreate} />
     </div> : <EmptyState tab={tab} /> : null}
   </section>;
