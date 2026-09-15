@@ -24,7 +24,6 @@ import {
   FiMessageCircle,
   FiMessageSquare,
   FiMoreHorizontal,
-  FiPenTool,
   FiPlus,
   FiRefreshCw,
   FiRepeat,
@@ -395,12 +394,6 @@ function OwnerQuickActionsSheet({ isOpen, onClose, profile, viewerCapabilities =
       label: "Saved",
       sub: "Your library",
       to: "/saved",
-    },
-    {
-      icon: FiPenTool,
-      label: "Drafts",
-      sub: "Unfinished notes",
-      to: isCreator && viewerCapabilities.canAccessStudio ? "/studio/seens?status=drafts" : "/create",
     },
     {
       icon: FiSettings,
@@ -784,6 +777,20 @@ function ProfileTabs({ tab, setTab }) {
   );
 }
 
+function ProfileMixedContentPanel({ emptyText, reposted = false, seens = [], wallPosts = [] }) {
+  if (!seens.length && !wallPosts.length) return <div className="profile-empty-state">{emptyText}</div>;
+  return <div className="profile-mixed-content">
+    {wallPosts.length ? <section className="profile-mixed-section">
+      <header><h2>Wall notes</h2><span>{wallPosts.length}</span></header>
+      <div className="profile-notes-list">{wallPosts.map((post) => <FeedPost key={post.feedId || post.shareId || post.id} post={post} />)}</div>
+    </section> : null}
+    {seens.length ? <section className="profile-mixed-section is-seens">
+      <header><h2>Seens</h2><span>{seens.length}</span></header>
+      <ProfileContentGrid content={seens} kind="seens" reposted={reposted} />
+    </section> : null}
+  </div>;
+}
+
 function ContentTabsPanel({ data, isOwner, tab }) {
   const saved = useQuery({
     queryKey: ["saved-content"],
@@ -792,10 +799,11 @@ function ContentTabsPanel({ data, isOwner, tab }) {
     retry: false,
   });
   if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
-  if (tab === "reposts") return <ProfileContentGrid content={data.sharedSeens || []} emptyText="No reposted Seens yet." kind="seens" reposted />;
+  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
   if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
-  return <ProfileContentGrid content={saved.data?.seens || []} emptyText="No saved Seens yet." kind="seens" />;
+  if (saved.isError) return <div className="profile-empty-state">Saved items could not be loaded.</div>;
+  return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
 }
 
 function WallPreview({ isOwner, posts = [] }) {
