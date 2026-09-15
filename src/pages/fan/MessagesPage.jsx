@@ -85,6 +85,35 @@ const INBOX_FILTERS = [
   { id: "dream", icon: FiStar, label: "Dream keepers", subtitle: "they backed your dream", creatorOnly: true },
 ];
 
+function useMessageSheetPosition(isOpen) {
+  const [position, setPosition] = useState(undefined);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setPosition({
+        "--message-sheet-center-x": `${bounds.left + (bounds.width / 2)}px`,
+        "--message-sheet-column-width": `${bounds.width}px`,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
+
+  return position;
+}
+
 const newClientMessageId = () => globalThis.crypto?.randomUUID?.()
   || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 
@@ -287,6 +316,7 @@ export default function MessagesPage() {
   const [inboxTab, setInboxTab] = useState(() => searchParams.get("tab") === "direct" ? "direct" : "all");
   const [inboxFilter, setInboxFilter] = useState("all");
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const filterSheetPosition = useMessageSheetPosition(filterSheetOpen);
   const [requestBusy, setRequestBusy] = useState(false);
   const [storyViewer, setStoryViewer] = useState(null);
   const [expiredStoryIds, setExpiredStoryIds] = useState(() => new Set());
@@ -1673,8 +1703,8 @@ export default function MessagesPage() {
           <button aria-label="Filter conversations" className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border transition ${inboxFilter !== "all" ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface text-atseen-muted hover:text-white"}`} onClick={() => setFilterSheetOpen(true)} type="button"><FiFilter /></button>
         </div>
         {inboxTab === "requests" ? <p className="px-5 pb-2 pt-3 text-[10px] leading-4 text-atseen-muted">People you don’t follow yet. They won’t know you’ve seen it until you accept.</p> : null}
-        {filterSheetOpen ? <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget) setFilterSheetOpen(false); }}>
-          <section aria-labelledby="message-filter-title" aria-modal="true" className="w-full max-w-[460px] rounded-t-[22px] border border-b-0 border-atseen-line bg-[#0d1015] px-5 pb-7 pt-2 shadow-[0_-24px_70px_rgba(0,0,0,.58)]" role="dialog">
+        {filterSheetOpen ? <div className="message-filter-overlay fixed inset-0 z-[100] flex items-end bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget) setFilterSheetOpen(false); }} style={filterSheetPosition}>
+          <section aria-labelledby="message-filter-title" aria-modal="true" className="message-filter-sheet w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#0d1015] px-5 pb-7 pt-2 shadow-[0_-24px_70px_rgba(0,0,0,.58)]" role="dialog">
             <div className="mx-auto mb-3 h-1 w-8 rounded-full bg-white/35" />
             <div className="flex items-center justify-between"><h2 className="text-xl font-black" id="message-filter-title">Filter</h2><button aria-label="Close filters" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={() => setFilterSheetOpen(false)} type="button"><FiX /></button></div>
             <div className="mt-3 max-h-[70dvh] overflow-y-auto">

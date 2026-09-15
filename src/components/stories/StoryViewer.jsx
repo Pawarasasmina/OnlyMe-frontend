@@ -21,6 +21,31 @@ const IMAGE_DURATION_MS = 5000;
 const VIEW_THRESHOLD_MS = 1000;
 const REPORT_REASONS = ["Spam", "Harassment or bullying", "Hate speech", "Nudity or sexual content", "Violence", "False information", "Something else"];
 
+function useStoryViewerPosition(isOpen) {
+  const [position, setPosition] = useState(undefined);
+
+  useEffect(() => {
+    if (!isOpen || window.innerWidth < 768) { setPosition(undefined); return undefined; }
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      if (window.innerWidth < 768) { setPosition(undefined); return; }
+      const bounds = centerColumn.getBoundingClientRect();
+      setPosition({ left: `${bounds.left}px`, right: "auto", width: `${bounds.width}px` });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
+
+  return position;
+}
+
 function formatStoryTimeAgo(value) {
   const created = new Date(value).getTime();
   if (!created) return "Now";
@@ -115,6 +140,7 @@ function StoryOverlays({ story }) {
 }
 
 function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentation = "modal", stories = [] }) {
+  const viewerPosition = useStoryViewerPosition(isOpen);
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const queryClient = useQueryClient();
@@ -474,6 +500,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
         isOpen={isOpen}
         onClose={onClose}
         overlayClassName="story-viewer-overlay !p-0"
+        overlayStyle={viewerPosition}
         portal
         title="Story viewer"
       >

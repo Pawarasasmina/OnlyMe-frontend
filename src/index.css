@@ -19456,3 +19456,336 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   }
   .profile-series-feed-cover { width: 88px; }
 }
+
+/* Shared prototype geometry.
+   Keep the social canvas identical between routes so the center divider and
+   page content do not move when navigating. */
+@media (min-width: 1020px) {
+  .social-app-shell {
+    --social-left-width: 240px;
+    --social-center-width: 440px;
+    --social-right-width: 300px;
+  }
+
+  .social-app-shell .social-app-frame,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
+    width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  .social-app-shell .social-app-frame > .fan-web-sidebar,
+  .social-app-shell .social-app-frame > .social-fixed-rail:first-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .fan-web-sidebar {
+    width: var(--social-left-width) !important;
+    min-width: var(--social-left-width) !important;
+    flex: 0 0 var(--social-left-width) !important;
+  }
+
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
+    width: var(--social-center-width) !important;
+    min-width: var(--social-center-width) !important;
+    max-width: var(--social-center-width) !important;
+    flex: 0 0 var(--social-center-width) !important;
+    margin: 0 !important;
+  }
+
+  .social-app-shell .social-app-frame > .social-shared-right-rail,
+  .social-app-shell .social-app-frame > .social-fixed-rail:last-child,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-shared-right-rail {
+    width: var(--social-right-width) !important;
+    min-width: var(--social-right-width) !important;
+    flex: 0 0 var(--social-right-width) !important;
+  }
+
+  .social-app-shell .home-prototype-page,
+  .social-app-shell .discover-orb-page {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .social-app-shell:has(.seen-shell-main) .seen-shell-main,
+  .social-app-shell:has(.seen-shell-main) .seen-prototype-page {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+.message-filter-sheet {
+  position: fixed;
+  right: auto;
+  bottom: 0;
+  left: var(--message-sheet-center-x, 50%);
+  width: min(100vw, var(--message-sheet-column-width, 440px));
+  max-width: var(--message-sheet-column-width, 440px);
+  transform: translateX(-50%);
+}
+
+@media (max-width: 767px) {
+  .message-filter-sheet {
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
+  }
+}
+
+/* Discover reference layout: compact header, four Following avatars, three
+   filters, and a regular two-column portrait grid. */
+.social-app-shell .discover-orb-main {
+  padding: 0 10px 28px 15px;
+}
+
+.social-app-shell .discover-orb-toolbar {
+  min-height: 42px;
+  margin-bottom: 10px;
+}
+
+.social-app-shell .discover-orb-toolbar > div {
+  gap: 8px;
+}
+
+.social-app-shell .discover-orb-icon {
+  width: 42px;
+  height: 42px;
+  font-size: 17px;
+}
+
+.social-app-shell .discover-orb-section {
+  margin-bottom: 17px;
+}
+
+.social-app-shell .discover-orb-heading-row {
+  margin-bottom: 8px;
+}
+
+.social-app-shell .discover-orb-heading-row h2,
+.social-app-shell .discover-recommendation-heading h2 {
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.social-app-shell .discover-orb-heading-row p {
+  font-size: 8px;
+}
+
+.discover-following-dismiss {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  color: rgba(255,255,255,.35);
+  font-size: 12px;
+}
+
+.discover-following-dismiss:hover {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.75);
+}
+
+.social-app-shell .discover-friends-strip {
+  gap: 10px;
+}
+
+.discover-recommendation-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.discover-recommendation-heading h2 {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+
+.social-app-shell .discover-recommendation-heading .discover-orb-filters {
+  flex: 0 0 auto;
+  gap: 7px;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+
+.social-app-shell .discover-recommendation-heading .discover-orb-chip {
+  padding: 6px 12px;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.social-app-shell .discover-orb-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  column-count: initial;
+  column-gap: initial;
+}
+
+.social-app-shell .discover-orb-card,
+.social-app-shell .discover-orb-card.is-tall,
+.social-app-shell .discover-orb-card.is-wide,
+.social-app-shell .discover-orb-card.is-short {
+  min-height: 0;
+  aspect-ratio: 4 / 5;
+  margin: 0;
+  border-radius: 13px;
+}
+
+.social-app-shell .discover-orb-card-copy {
+  right: 10px;
+  bottom: 9px;
+  left: 10px;
+}
+
+.social-app-shell .discover-orb-card-copy strong {
+  font-size: 13px;
+}
+
+.social-app-shell .discover-orb-card-copy small,
+.social-app-shell .discover-orb-card-copy em,
+.social-app-shell .discover-orb-place {
+  font-size: 8px;
+}
+
+@media (max-width: 420px) {
+  .social-app-shell .discover-orb-main { padding-inline: 12px; }
+  .social-app-shell .discover-recommendation-heading .discover-orb-chip { padding-inline: 9px; }
+  .social-app-shell .discover-orb-grid { gap: 12px; }
+}
+
+/* Match the gift picker to the shared center-column menu sheets. */
+.dream-gift-sheet {
+  position: fixed;
+  right: auto;
+  bottom: 0;
+  left: var(--gift-sheet-center-x, 50%);
+  width: min(100vw, var(--gift-sheet-column-width, 440px));
+  max-width: var(--gift-sheet-column-width, 440px);
+  max-height: min(82dvh, 560px);
+  border-color: rgba(255,255,255,.08);
+  border-radius: 16px 16px 0 0;
+  background: #0c0f14;
+  padding: 14px 24px max(34px, env(safe-area-inset-bottom));
+  box-shadow: 0 -26px 80px rgba(0,0,0,.55);
+  transform: translateX(-50%);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.dream-gift-sheet::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.dream-gift-handle {
+  width: 41px;
+  margin-bottom: 20px;
+  background: rgba(255,255,255,.32);
+}
+
+.dream-gift-tile {
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+}
+
+.dream-gift-sections {
+  display: grid;
+  gap: 24px;
+  margin-top: 18px;
+}
+
+.dream-gift-category h3 {
+  margin: 0 0 12px;
+  color: rgba(255,255,255,.5);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.dream-gift-category .dream-gift-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 10px;
+  margin-top: 0;
+}
+
+.dream-gift-category .dream-gift-grid.is-most-gifted {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dream-gift-category .dream-gift-tile {
+  min-height: 112px;
+  padding: 6px 3px;
+  background: transparent;
+}
+
+.dream-gift-category .dream-gift-tile > span {
+  width: 68px;
+  height: 68px;
+}
+
+.dream-gift-grid.is-most-gifted .dream-gift-tile > span {
+  width: 58px;
+  height: 58px;
+}
+
+@media (max-width: 767px) {
+  .dream-gift-sheet {
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
+  }
+}
+
+/* Stories replace the center canvas only; desktop rails remain in place. */
+@media (min-width: 768px) {
+  .story-viewer-overlay {
+    top: 0;
+    bottom: 0;
+    min-height: 100dvh;
+    padding: 0 !important;
+    backdrop-filter: none;
+  }
+
+  .story-viewer-overlay .story-viewer-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    border-right: 1px solid rgba(255,255,255,.08) !important;
+    border-left: 1px solid rgba(255,255,255,.08) !important;
+    box-shadow: none !important;
+  }
+
+  .story-viewer-overlay .story-viewer-surface {
+    width: 100%;
+    height: 100dvh;
+  }
+}
+
+/* Notes and Seens use the same bottom-menu geometry. On desktop the sheet is
+   centered on (and no wider than) the shared center column, not the viewport. */
+@media (min-width: 768px) {
+  .home-post-more-sheet {
+    left: var(--wall-sheet-center-x, 50%) !important;
+    width: var(--wall-sheet-column-width, 440px) !important;
+    max-width: var(--wall-sheet-column-width, 440px) !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .seen-feed-options-sheet,
+  .social-app-shell:has(.seen-shell-main) .seen-owner-actions-sheet {
+    right: auto !important;
+    left: var(--seen-sheet-center-x, 50%) !important;
+    width: var(--seen-sheet-column-width, 440px) !important;
+    max-width: var(--seen-sheet-column-width, 440px) !important;
+    transform: translateX(-50%) !important;
+  }
+}

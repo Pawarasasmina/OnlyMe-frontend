@@ -16,6 +16,11 @@ import { resolveMediaUrl } from "../../utils/media";
 
 const DEFAULT_FILTER = "for_you";
 const SUPPORTED_FILTERS = new Set(["for_you", "nearby", "rising", "new", "creators"]);
+const PROTOTYPE_FILTERS = [
+  { id: "nearby", label: "Nearby" },
+  { id: "creators", label: "Creators" },
+  { id: "new", label: "New" },
+];
 
 function dedupeByProfile(items = []) {
   const seen = new Set();
@@ -87,11 +92,11 @@ function DiscoverPage() {
   const storyTriggerRef = useRef(null);
   const [storyViewer, setStoryViewer] = useState({ personId: null, index: 0 });
   const [activeRecommendationStory, setActiveRecommendationStory] = useState(null);
+  const [showFollowing, setShowFollowing] = useState(true);
 
   const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
   const firstPage = pages[0] || {};
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])), [pages]);
-  const filters = useMemo(() => (firstPage.filters || []).filter((filter) => SUPPORTED_FILTERS.has(filter.id)), [firstPage.filters]);
   const followingPeople = useMemo(
     () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))).slice(0, 12),
     [firstPage.following, viewerId],
@@ -253,20 +258,21 @@ function DiscoverPage() {
               </div>
             </div>
 
-            <DiscoverPeopleSections
-              friends={followingStoryPeople}
+            {showFollowing ? <DiscoverPeopleSections
+              friends={followingPeople.slice(0, 4)}
               friendSectionTitle="Following"
               friendSectionSubtitle="People you already chose"
               following={[]}
+              onDismissFriends={() => setShowFollowing(false)}
               onOpenFollowingStories={openPersonStories}
               onOpenFriendStories={openPersonStories}
-            />
+            /> : null}
 
-            <p className="discover-orb-kicker">{"Discover \u2014 people worth seeing next"}</p>
             {firstPage.sharedWalks?.length ? <div className="mb-4 grid gap-2">{firstPage.sharedWalks.map((walk) => <Link className="flex items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-300/[0.07] px-4 py-3 text-left" key={walk.id} to={`/world/${walk.world.id}`}><span className="text-xl">{walk.world.emoji}</span><span className="min-w-0"><b className="block truncate text-xs text-amber-200">You both walked {walk.world.title}</b><span className="block truncate text-[10px] text-atseen-muted">with {walk.person.name || `@${walk.person.username}`}</span></span></Link>)}</div> : null}
-            {filters.length ? (
+            <div className="discover-recommendation-heading">
+              <h2>People worth seeing next</h2>
               <div className="discover-orb-filters" role="tablist" aria-label="Discover filters">
-                {filters.map((filter) => (
+                {PROTOTYPE_FILTERS.map((filter) => (
                   <button
                     aria-selected={activeFilter === filter.id}
                     className={`discover-orb-chip ${activeFilter === filter.id ? "is-selected" : ""}`}
@@ -279,7 +285,7 @@ function DiscoverPage() {
                   </button>
                 ))}
               </div>
-            ) : null}
+            </div>
 
             {recommendations.length ? (
               <>
