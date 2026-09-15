@@ -490,7 +490,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
         {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
         {query.hasNextPage ? <button className="seen-reactors-more" disabled={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} type="button">{query.isFetchingNextPage ? "Loading..." : "Load more"}</button> : null}
       </div>
-      {!item.viewerState.reaction ? <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button> : null}
+      <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button>
     </section>
   </div>;
 }
