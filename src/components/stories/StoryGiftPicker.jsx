@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FiX } from "react-icons/fi";
+import { FiChevronRight, FiX } from "react-icons/fi";
 import { messageService } from "../../services/messageService";
 import { walletService } from "../../services/walletService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
@@ -41,6 +41,9 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
   const [sending, setSending] = useState("");
   const [sent, setSent] = useState(null);
   const [error, setError] = useState("");
+  const [selectedGift, setSelectedGift] = useState(null);
+  const [message, setMessage] = useState("");
+  const [visibility, setVisibility] = useState("EVERYONE");
   const sheetPosition = useGiftSheetPosition();
   const recipientId = recipient?.id;
   const giftsQuery = useQuery({
@@ -55,13 +58,14 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
     retry: false,
   });
 
-  const send = async (gift) => {
+  const send = async () => {
+    const gift = selectedGift;
     if (sending || sent || !recipientId) return;
     setSending(gift.id);
     setError("");
     try {
       const direct = sourceType === "DIRECT";
-      const response = await messageService.sendGift(recipientId, gift.id, createIdempotencyKey(direct ? "profile-direct-gift" : "story-direct-gift"), null, sourceType);
+      const response = await messageService.sendGift(recipientId, gift.id, createIdempotencyKey(direct ? "profile-direct-gift" : "story-direct-gift"), null, sourceType, message, visibility);
       if (response.data.data?.wallet) queryClient.setQueryData(["wallet"], response.data.data.wallet);
       queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
       queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] });
@@ -87,7 +91,7 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
   const sections = [...categories.values()].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
   const giftTile = (gift) => {
     const affordable = balance >= Number(gift.stars || 0);
-    return <button className={`dream-gift-tile ${sending === gift.id ? "is-sending" : ""}`} disabled={Boolean(sending) || Boolean(sent) || walletQuery.isLoading || !affordable} key={gift.id} onClick={() => send(gift)} type="button">
+    return <button className={`dream-gift-tile ${selectedGift?.id === gift.id ? "is-selected" : ""}`} disabled={Boolean(sending) || Boolean(sent) || walletQuery.isLoading || !affordable} key={gift.id} onClick={() => { setSelectedGift(gift); setError(""); }} type="button">
       <span><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftTransform(gift) }} /></span>
       <strong>{sending === gift.id ? "Sending..." : gift.name}</strong>
       <small>{STAR}{Number(gift.stars || 0).toLocaleString()}</small>
@@ -98,6 +102,7 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
       <section aria-label={sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"} className="dream-gift-sheet">
         {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their activity"}`} /> : null}
         <span className="dream-gift-handle" />
+        {!selectedGift ? <>
         <div className="dream-gift-header">
           <div><h2>{sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"}</h2><p>{sourceType === "DIRECT" ? "Send directly to" : "Send from this story to"} <strong>{recipient?.name || "this creator"}</strong></p></div>
           <button aria-label="Close gift picker" disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button>
@@ -109,6 +114,19 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
             {sections.map((section) => <section className="dream-gift-category" key={section.id}><h3>{section.name}</h3><div className="dream-gift-grid">{section.gifts.map(giftTile)}</div></section>)}
           </div>
         )}
+        </> : <div className="dream-gift-confirm">
+          <button className="dream-gift-change" disabled={Boolean(sending)} onClick={() => setSelectedGift(null)} type="button">Change gift</button>
+          <span className="dream-gift-confirm-image"><img alt={selectedGift.name} src={selectedGift.imageUrl} style={{ transform: giftTransform(selectedGift) }} /></span>
+          <h2>{selectedGift.name}</h2>
+          <p>“{message.trim() || "A gift chosen for you"}”</p>
+          <small>for <strong>{recipient?.name || "this creator"}</strong> · {STAR}{Number(selectedGift.stars || 0).toLocaleString()}</small>
+          <em>{recipient?.name || "They"} receives this as real earnings</em>
+          <div className="dream-gift-arrival-note">{recipient?.name || "They"} sees it the moment it lands — first on the shelf</div>
+          <button className="dream-gift-visibility" disabled={Boolean(sending)} onClick={() => setVisibility((current) => current === "EVERYONE" ? "RECIPIENT_ONLY" : "EVERYONE")} type="button"><span>Visibility</span><b>{visibility === "EVERYONE" ? "Everyone" : "Only recipient"}</b><FiChevronRight aria-hidden="true" /></button>
+          <label className="dream-gift-message"><span>Add a message · optional</span><input maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder="Say something..." value={message} /></label>
+          <button className="dream-gift-send" disabled={Boolean(sending) || balance < Number(selectedGift.stars || 0)} onClick={send} type="button">{sending ? "Sending…" : <>Send gift · <span>{STAR}{Number(selectedGift.stars || 0).toLocaleString()}</span></>}</button>
+          <p className="dream-gift-open-note">You’ll know the moment {recipient?.name || "they"} opens it ✦</p>
+        </div>}
         {error ? <div className="mt-4 rounded-xl bg-red-400/10 p-3 text-xs text-red-300">{error}{error.toLowerCase().includes("insufficient") ? <Link className="ml-2 font-bold underline" to="/wallet">Open wallet</Link> : null}</div> : null}
       </section>
     </div>
