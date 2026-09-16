@@ -259,7 +259,7 @@ function DiscoverPage() {
             </div>
 
             {showFollowing ? <DiscoverPeopleSections
-              friends={followingPeople.slice(0, 4)}
+              friends={followingStoryPeople.slice(0, 4)}
               friendSectionTitle="Following"
               friendSectionSubtitle="People you already chose"
               following={[]}

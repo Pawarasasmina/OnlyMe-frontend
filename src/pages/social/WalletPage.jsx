@@ -5,8 +5,8 @@ import LedgerList from "../../components/financial/LedgerList";
 import WalletBalance from "../../components/financial/WalletBalance";
 import { walletService } from "../../services/walletService";
 
-// Beta-only switch. Set to false (or remove the mask below) to restore the wallet UI.
-const WALLET_BETA_MASK_ENABLED = true;
+// The live wallet UI is available; keep the legacy beta mask disabled.
+const WALLET_BETA_MASK_ENABLED = false;
 
 function WalletAccessLink({ count, description, icon: Icon, label, to }) {
   return <Link className="group flex items-center gap-4 rounded-2xl border border-atseen-line bg-atseen-surface p-5 transition hover:border-atseen-blue/50 hover:bg-atseen-blue/[0.04]" to={to}>

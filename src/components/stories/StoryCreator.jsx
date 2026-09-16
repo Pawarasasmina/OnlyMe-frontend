@@ -155,6 +155,28 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const [canSwitchCamera, setCanSwitchCamera] = useState(false);
   const [textDragging, setTextDragging] = useState(false);
   const [deleteArmed, setDeleteArmed] = useState(false);
+  const [composerPosition, setComposerPosition] = useState(undefined);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setComposerPosition({
+        "--story-composer-center-x": `${bounds.left + bounds.width / 2}px`,
+        "--story-composer-column-width": `${bounds.width}px`,
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
 
   const activeText = useMemo(() => story.texts.find((item) => item.id === activeTextId) || story.texts[0], [activeTextId, story.texts]);
   const colorIndex = useMemo(() => STORY_COLORS.indexOf(activeText?.color), [activeText?.color]);
@@ -428,7 +450,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   if (!isOpen || !canCreate) return null;
 
   return (
-    <div aria-label="Create Story" aria-modal="true" className="story-composer-overlay" role="dialog">
+    <div aria-label="Create Story" aria-modal="true" className="story-composer-overlay" role="dialog" style={composerPosition}>
       {cropSource ? <ProfileImageCropper kind="story" onCancel={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} onSave={useCroppedImage} source={cropSource} /> : null}
       <section
         className="story-composer-stage"
