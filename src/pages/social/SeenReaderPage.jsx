@@ -5,7 +5,6 @@ import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
-import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { publicationService } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
@@ -85,10 +84,6 @@ function creatorName(creator = {}) {
 
 function creatorFirstName(creator = {}) {
   return creatorName(creator).split(" ")[0] || "Creator";
-}
-
-function creatorRoute(creator = {}) {
-  return creator.username ? `/profile/${encodeURIComponent(creator.username)}` : "/discover";
 }
 
 function SeenEngagementBar({ engagement, mutations, onCommentToggle, onCopyLink, saved, commentsOpen }) {
@@ -304,56 +299,6 @@ function ReaderSkeleton() {
   </div>;
 }
 
-function SeenIntroMedia({ media, title }) {
-  const videoRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
-  const [duration, setDuration] = useState(mediaDuration(media));
-  const isVideo = media?.type === "video";
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return undefined;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    const onMetadata = () => setDuration(mediaDuration(media) || mediaDuration({ duration: video.duration }));
-    video.addEventListener("play", onPlay);
-    video.addEventListener("pause", onPause);
-    video.addEventListener("loadedmetadata", onMetadata);
-    return () => {
-      video.removeEventListener("play", onPlay);
-      video.removeEventListener("pause", onPause);
-      video.removeEventListener("loadedmetadata", onMetadata);
-    };
-  }, [media]);
-
-  const toggle = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) video.play().catch(() => {});
-    else video.pause();
-  };
-
-  if (!media?.url) {
-    return <div className="seen-detail-media-fallback" aria-label="No intro media available" />;
-  }
-
-  if (!isVideo) {
-    return <div className="seen-detail-hero" aria-label={`${title || "Seen"} intro media`}>
-      <img alt={`${title || "Seen"} intro media`} src={media.url} />
-    </div>;
-  }
-
-  return <>
-    <button aria-label={playing ? "Pause Seen intro" : "Play Seen intro"} className="seen-detail-hero" onClick={toggle} type="button">
-      <video autoPlay muted playsInline poster={media.thumbnailUrl || undefined} preload="metadata" ref={videoRef} src={media.url} />
-    </button>
-    {isVideo ? <div className="seen-detail-playback" aria-live="polite">
-      <FiPlay aria-hidden="true" />
-      <span>{formatDuration(duration)} <i aria-hidden="true">\u2022</i> {playing ? "playing" : "paused"}</span>
-    </div> : null}
-  </>;
-}
-
 function SeenDetailMoreMenu({ canAddToMedia, onAddToMedia, onClose, onReport, onShare }) {
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -509,17 +454,11 @@ function SeenOverview({
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState("");
-  const navigate = useNavigate();
   const creator = detail.creator;
   const canAddToMedia = detail.access === "OWNER" && detail.mediaCandidates.length > 0;
   const saved = Boolean(engagement.viewerSaved);
   const chapterWord = detail.chapters.length === 1 ? "chapter" : "chapters";
   const metadata = `${creatorFirstName(creator)} \u00b7 ${detail.chapters.length} ${chapterWord} \u00b7 ${formatCount(detail.metrics.views)} saw this`;
-  const introSeconds = mediaDuration(detail.heroMedia);
-  const creatorContext = detail.heroMedia?.type === "video"
-    ? `${introSeconds ? `${introSeconds} seconds` : "Video intro"} \u2014 why this world exists`
-    : "why this Seen exists";
-
   const share = () => {
     setMoreOpen(false);
     onCopyLink();
@@ -558,54 +497,29 @@ function SeenOverview({
 
   return <>
   <section className="seen-detail-page is-screen-clickable" onClick={startSeenFromScreen}>
-    <header className="seen-detail-header">
-      <button aria-label="Back to Seen" className="seen-detail-circle" onClick={onBack} type="button"><FiArrowLeft /></button>
+    <header className="seen-detail-header seen-detail-prototype-header">
+      <span className="seen-detail-type">SEEN</span>
       <div className="seen-detail-title">
         <h1>{detail.title}</h1>
         <p>{metadata}</p>
       </div>
-      <button
-        aria-label={saved ? "Remove Seen from Saved" : "Save Seen"}
-        className={saved ? "is-active seen-detail-circle" : "seen-detail-circle"}
-        disabled={mutations.save.isPending}
-        onClick={() => mutations.save.mutate()}
-        type="button"
-      >
-        <FiBookmark fill={saved ? "currentColor" : "none"} />
-      </button>
+      <button aria-label="Close Seen" className="seen-detail-close" onClick={onBack} type="button"><FiX /></button>
       <div className="seen-detail-more-wrap">
-        <button aria-expanded={moreOpen} aria-label="More Seen actions" className="seen-detail-circle" onClick={() => setMoreOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
+        <button aria-expanded={moreOpen} aria-label="More Seen actions" className="sr-only" onClick={() => setMoreOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
         {moreOpen ? <SeenDetailMoreMenu canAddToMedia={canAddToMedia} onAddToMedia={addToMedia} onClose={() => setMoreOpen(false)} onReport={report} onShare={share} /> : null}
       </div>
     </header>
 
-    <SeenIntroMedia media={detail.heroMedia} title={detail.title} />
-
-    <div className="seen-detail-body">
-      <Link className="seen-detail-creator" to={creatorRoute(creator)}>
-        <FanAvatar name={creatorName(creator)} size="h-[30px] w-[30px]" src={creator.avatar} />
-        <span>
-          <strong>{creatorName(creator)}{creator.verified ? <VerifiedBadge className="seen-detail-verified" /> : null}</strong>
-          <small>{creatorContext}</small>
-        </span>
-      </Link>
+    <div className="seen-detail-body seen-detail-prototype-body">
+      <div className="seen-detail-overview">
+        <button aria-label={`Start ${detail.title}`} className="seen-detail-cover" onClick={() => onOpenChapter(0)} type="button">
+          {detail.heroMedia?.thumbnailUrl || detail.heroMedia?.url ? <img alt={`${detail.title} cover`} src={detail.heroMedia.thumbnailUrl || detail.heroMedia.url} /> : <span aria-hidden="true">@seen</span>}
+        </button>
+        <div><h2>{detail.title}</h2><p>{creatorFirstName(creator)} · {detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</p></div>
+      </div>
 
       {detail.description ? <p className="seen-detail-description">{detail.description}</p> : null}
       <ContentEntityList entities={detail.attachedEntities} onNotice={onNotice} />
-      <button className="seen-detail-reply" onClick={() => navigate(`/create/seen?replyToSeenId=${encodeURIComponent(detail.id)}`)} type="button">
-        <span aria-hidden="true">\u21aa</span> Reply with your Seen
-      </button>
-
-      {detail.previewMedia.length ? <div className="seen-detail-preview-grid">
-        {detail.previewMedia.map((item, index) => (
-          <button aria-label={`Open ${item.title || detail.title} preview`} key={item.url} onClick={() => onOpenChapter(item.chapterIndex || 0)} type="button">
-            <img alt={`${detail.title} preview ${index + 1}`} loading="lazy" src={item.thumbnailUrl || item.url} />
-            {item.type === "video" ? <span><FiPlay aria-hidden="true" /></span> : null}
-          </button>
-        ))}
-      </div> : null}
-
-      <h2 className="seen-detail-journey-label">THE JOURNEY</h2>
       {detail.chapters.length ? <div className="seen-detail-journey-list">
         {detail.chapters.map((chapter, index) => {
           const locked = Boolean(chapter.locked);
@@ -618,9 +532,9 @@ function SeenOverview({
               onClick={() => onOpenChapter(index)}
               type="button"
             >
-              <span>{index + 1}</span>
+              <span>{String(index + 1).padStart(2, "0")}</span>
               <strong>{chapter.title || `Chapter ${index + 1}`}</strong>
-              {locked ? <FiLock aria-hidden="true" /> : <em aria-hidden="true">\u203a</em>}
+              {locked ? <FiLock aria-hidden="true" /> : null}
             </button>
           );
         })}
@@ -629,6 +543,7 @@ function SeenOverview({
       {notice ? <p className="seen-detail-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
 
       <footer className="seen-detail-engagement">
+        <div className="seen-detail-start-meta"><span>{detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</span><span>Tap to start ›</span></div>
         <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={mutations} onCommentToggle={onCommentToggle} onCopyLink={onCopyLink} saved={saved} />
         {commentsOpen ? <section className="seen-reader-comments">
           <form onSubmit={onCommentSubmit}>

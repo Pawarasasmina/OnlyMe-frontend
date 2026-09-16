@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -447,20 +447,52 @@ function PreviewComment({ comment }) {
   </div>;
 }
 
-function CommentsPanel({ engagementQuery, item, mutation, value, onChange, onSubmit }) {
+function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagementChange, value, onChange, onSubmit }) {
   const comments = engagementQuery.data?.comments || [];
-  return <section className="seen-comments-panel">
-    <form onSubmit={onSubmit}>
-      <input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => onChange(event.target.value)} placeholder="Add a comment..." value={value} />
-      <button disabled={!value.trim() || mutation.isPending} type="submit">Post</button>
-    </form>
-    <div className="seen-comments-list">
-      {comments.map((comment) => <article key={comment.id}>
-        <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
+  const [replyTo, setReplyTo] = useState(null);
+  const [reactionTarget, setReactionTarget] = useState(null);
+  const commentReactionMutation = useMutation({
+    mutationFn: ({ comment, reaction }) => (reaction
+      ? publicationService.reactToSeenComment(item.id, comment.id, reaction)
+      : publicationService.removeSeenCommentReaction(item.id, comment.id)),
+    onSuccess: (response) => {
+      onEngagementChange(response.data.data.engagement);
+      setReactionTarget(null);
+    },
+  });
+  useEffect(() => {
+    if (!mutation.isSuccess) return;
+    setReplyTo(null);
+  }, [mutation.isSuccess]);
+  const beginReply = (comment) => {
+    setReplyTo(comment);
+    onChange("");
+  };
+  const renderComment = (comment, nested = false) => {
+    const reactionIcons = (comment.topReactions || []).map((key) => reactionLabel[key] || reactionLabel.INSIGHTFUL).join("") || "🤝";
+    return <article className={nested ? "is-reply" : ""} key={comment.id}>
+      <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
+      <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link>{comment.text}</p>
-      </article>)}
+        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}</span>
+      </div>
+    </article>;
+  };
+  return <section className="seen-comments-panel">
+    <div className="seen-comments-list">
+      {comments.slice(0, 2).map((comment) => <div className="seen-comment-thread" key={comment.id}>{renderComment(comment)}{(comment.replies || []).slice(0, 2).map((reply) => renderComment(reply, true))}</div>)}
       {!comments.length && !engagementQuery.isLoading ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
     </div>
+    {replyTo ? <div className="seen-replying-to"><span>Replying to <b>{replyTo.author?.name || "Fan"}</b></span><button aria-label="Cancel reply" onClick={() => setReplyTo(null)} type="button">×</button></div> : null}
+    <form onSubmit={(event) => onSubmit(event, replyTo?.id)}>
+      <FanAvatar alt="" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
+      <label>
+        <input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => onChange(event.target.value)} placeholder="Add a comment..." value={value} />
+        <button aria-label="Record a voice comment" className="seen-comment-mic" type="button"><FiMic /></button>
+      </label>
+      <button className="seen-comment-post" disabled={!value.trim() || mutation.isPending} type="submit">Post</button>
+    </form>
+    {reactionTarget ? <ReactionPicker item={{ title: `Comment by ${reactionTarget.author?.name || "Fan"}`, engagement: { reactionBreakdown: reactionTarget.reactionBreakdown || {} }, viewerState: { reaction: reactionTarget.viewerReaction } }} onClose={() => setReactionTarget(null)} onSelect={(reaction) => commentReactionMutation.mutate({ comment: reactionTarget, reaction })} pending={commentReactionMutation.isPending} /> : null}
   </section>;
 }
 
@@ -683,7 +715,7 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
     },
   });
   const commentMutation = useMutation({
-    mutationFn: (text) => runAction(publicationService.commentOnSeen(item.id, text)),
+    mutationFn: ({ text, parentCommentId }) => runAction(publicationService.commentOnSeen(item.id, text, "", parentCommentId)),
     onSuccess: () => {
       setComment("");
       setCommentsOpen(true);
@@ -798,10 +830,10 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
     textPreview: `${item.title} — ${item.creator.displayName.split(" ").filter(Boolean)[0] || item.creator.displayName}`,
     title: item.title,
   }), [item.creator.avatarUrl, item.creator.displayName, item.creator.id, item.creator.username, item.id, item.media.url, item.title, shareUrl, target]);
-  const submitComment = (event) => {
+  const submitComment = (event, parentCommentId = "") => {
     event.preventDefault();
     const text = comment.trim();
-    if (text) commentMutation.mutate(text);
+    if (text) commentMutation.mutate({ text, parentCommentId });
   };
   const selectReaction = (reaction) => {
     if (reactionMutation.isPending) return;
@@ -904,7 +936,7 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
-      {commentsOpen ? <CommentsPanel engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onSubmit={submitComment} value={comment} /> : null}
+      {commentsOpen ? <CommentsPanel currentUser={currentUser} engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onEngagementChange={mergeEngagement} onSubmit={submitComment} value={comment} /> : null}
     </div>
   </article>;
 }

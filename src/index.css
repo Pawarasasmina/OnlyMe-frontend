@@ -7994,6 +7994,100 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
     padding: 0 !important;
   }
 }
+
+/* Popup typography follows the quieter prototype hierarchy. */
+.seen-owner-actions-header {
+  padding: 18px 20px 10px;
+}
+
+.seen-owner-actions-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.seen-owner-actions-header p {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 450;
+}
+
+.seen-owner-actions-list {
+  padding: 0 20px 20px;
+}
+
+.seen-owner-action-row {
+  min-height: 41px;
+  grid-template-columns: 25px minmax(0,1fr) 16px;
+  gap: 12px;
+}
+
+.seen-owner-action-row svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.65;
+}
+
+.seen-owner-action-row b {
+  font-size: 13px;
+  font-weight: 620;
+}
+
+.seen-owner-action-row small {
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 450;
+}
+
+:is(
+  .seen-owner-actions-sheet,
+  .seen-feed-options-sheet,
+  .seen-reaction-sheet,
+  .seen-reactors-sheet,
+  .share-sheet-panel,
+  .dream-gift-sheet,
+  .message-filter-sheet,
+  .seen-create-sheet,
+  .profile-create-sheet,
+  .profile-share-sheet,
+  .story-owner-actions-sheet,
+  .home-post-more-sheet
+) :is(h1, h2, h3) {
+  font-weight: 700 !important;
+}
+
+:is(
+  .seen-owner-actions-sheet,
+  .seen-feed-options-sheet,
+  .seen-reaction-sheet,
+  .seen-reactors-sheet,
+  .share-sheet-panel,
+  .dream-gift-sheet,
+  .message-filter-sheet,
+  .seen-create-sheet,
+  .profile-create-sheet,
+  .profile-share-sheet,
+  .story-owner-actions-sheet,
+  .home-post-more-sheet
+) :is(strong, b, button) {
+  font-weight: 620 !important;
+}
+
+:is(
+  .seen-owner-actions-sheet,
+  .seen-feed-options-sheet,
+  .seen-reaction-sheet,
+  .seen-reactors-sheet,
+  .share-sheet-panel,
+  .dream-gift-sheet,
+  .message-filter-sheet,
+  .seen-create-sheet,
+  .profile-create-sheet,
+  .profile-share-sheet,
+  .story-owner-actions-sheet,
+  .home-post-more-sheet
+) :is(p, small, em) {
+  font-weight: 450 !important;
+}
 @media (max-width: 767px) {
   .profile-status-route {
     width: 100%;
@@ -17122,7 +17216,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   .social-app-shell .fan-web-sidebar .fan-sidebar-wordmark > span:not(.sr-only) {
     color: #fff;
     font-size: 26px;
-    font-weight: 800;
+    font-weight: 750;
     letter-spacing: -.8px;
     line-height: 1;
   }
@@ -19595,6 +19689,496 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   font-size: 11px;
 }
 
+/* Seen feed prototype density. Keep this scoped to the feed so detail pages,
+   sheets and the shared 440px center column are unaffected. */
+.social-app-shell:has(.seen-shell-main) .seen-proto-header {
+  min-height: 58px;
+  padding: 12px 14px 6px 20px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-tabs {
+  gap: 22px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-tabs button {
+  gap: 8px;
+  font-size: 16.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-tabs button.is-active {
+  font-weight: 690;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-tabs button:not(.is-active) {
+  color: rgba(255,255,255,.3);
+  opacity: 1;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-tabs button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-header-actions {
+  gap: 8px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-proto-header-actions button {
+  width: 42px;
+  height: 42px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-feed-item {
+  padding: 11px 0 0;
+  border-bottom: 1px solid rgba(255,255,255,.065);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-item-creator {
+  gap: 8px;
+  padding: 0 20px 8px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-avatar-ring {
+  width: 36px;
+  height: 36px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-creator-copy strong {
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-creator-copy strong em {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-creator-copy span {
+  font-size: 9.5px;
+  font-weight: 450;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-verified {
+  width: 13px;
+  height: 13px;
+  font-size: 8px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-creator-views {
+  font-size: 9.5px;
+  font-weight: 650;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-more-button {
+  width: 27px;
+  height: 27px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-feed-copy {
+  padding: 0 20px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-summary {
+  grid-template-columns: 96px minmax(0,1fr);
+  gap: 13px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-summary .seen-media {
+  width: 96px;
+  border-radius: 13px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-summary-copy {
+  padding-top: 3px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-summary-copy strong {
+  font-size: 15.5px;
+  font-weight: 760;
+  line-height: 1.16;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-summary-copy small {
+  margin-top: 3px;
+  font-size: 9.5px;
+  font-weight: 550;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-summary-copy p {
+  margin-top: 7px;
+  font-size: 11.25px;
+  font-weight: 450;
+  line-height: 1.43;
+  -webkit-line-clamp: 3;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-list {
+  gap: 2px;
+  margin-top: 11px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview {
+  grid-template-columns: 18px minmax(0,1fr);
+  gap: 7px;
+  line-height: 1.45;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview span,
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview strong {
+  font-size: 11px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-chapter-preview strong {
+  font-weight: 520;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-preview-comment {
+  margin-top: 9px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-preview-comment p {
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-engagement-bar {
+  margin-top: 10px;
+  padding: 8px 2px 9px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-engagement-left,
+.social-app-shell:has(.seen-shell-main) .seen-engagement-right {
+  gap: 12px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-engagement-bar button,
+.social-app-shell:has(.seen-shell-main) .seen-view-count {
+  gap: 4px;
+  font-size: 15px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-engagement-bar svg {
+  width: 15px;
+  height: 15px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-engagement-bar b {
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-reactions {
+  padding: 3px 8px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel {
+  margin-top: 0;
+  border-top: 0;
+  padding: 4px 0 8px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-list {
+  gap: 12px;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+  padding: 0 2px 12px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-thread {
+  display: grid;
+  gap: 11px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-list article {
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-list p {
+  color: rgba(255,255,255,.84);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-list a {
+  margin-right: 5px;
+  font-weight: 720;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-copy > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: rgba(255,255,255,.42);
+  font-size: 9.5px;
+  line-height: 1;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-copy > span b {
+  color: #d6a92c;
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-copy > span button {
+  margin-left: 6px;
+  color: rgba(255,255,255,.55);
+  font-size: 9.5px;
+  font-weight: 650;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-copy > span .seen-comment-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 0;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comment-copy > span .seen-comment-reaction.is-selected {
+  color: var(--seen-blue, #9ccbff);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-list article.is-reply {
+  margin-left: 31px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-replying-to {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 32px 6px;
+  color: rgba(255,255,255,.46);
+  font-size: 9.5px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-replying-to b {
+  color: rgba(255,255,255,.72);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-replying-to button {
+  width: 18px;
+  height: 18px;
+  color: rgba(255,255,255,.5);
+  font-size: 15px;
+}
+
+/* Shared right rail: match the compact dark prototype on every social page. */
+.social-app-shell .social-shared-right-rail.home-right-rail {
+  gap: 15px;
+  padding-top: 16px !important;
+  padding-bottom: 22px !important;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-live-card,
+.social-app-shell .social-shared-right-rail .home-rail-card,
+.social-app-shell .social-shared-right-rail .home-rail-trending {
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 20px;
+  background: #0c0f12;
+  box-shadow: none;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-live-card {
+  min-height: 80px;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-avatar-stack > span,
+.social-app-shell .social-shared-right-rail .home-rail-avatar-stack img {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-live-card strong,
+.social-app-shell .social-shared-right-rail .home-rail-card h2 {
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-live-card small {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 450;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-live-card i {
+  width: 8px;
+  height: 8px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-card {
+  padding: 17px 16px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-suggestion-list {
+  margin-top: 12px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-suggestion-row {
+  gap: 10px;
+  min-height: 53px;
+  padding: 5px 0;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-suggestion-row > span:first-child,
+.social-app-shell .social-shared-right-rail .home-rail-suggestion-row img {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-suggestion-row strong,
+.social-app-shell .social-shared-right-rail .home-rail-fresh-row strong {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-suggestion-row small,
+.social-app-shell .social-shared-right-rail .home-rail-fresh-row small {
+  margin-top: 3px;
+  font-size: 9.5px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-follow {
+  min-width: 70px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-trending {
+  min-height: 145px;
+  padding: 6px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-trending img,
+.social-app-shell .social-shared-right-rail .home-rail-seen-fallback {
+  border-radius: 15px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-trending-copy {
+  right: 17px;
+  bottom: 16px;
+  left: 17px;
+  gap: 2px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-trending-copy small {
+  font-size: 8.5px;
+  font-weight: 750;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-trending-copy strong {
+  font-size: 13.5px;
+  font-weight: 720;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-trending-copy em {
+  font-size: 9.5px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-fresh-list {
+  gap: 0;
+  margin-top: 12px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-fresh-row {
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px 0;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-fresh-row img,
+.social-app-shell .social-shared-right-rail .home-rail-fresh-row > span:first-child {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-footer {
+  gap: 8px;
+  padding: 5px 7px 0;
+  font-size: 9.5px;
+  font-weight: 500;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-footer > div {
+  gap: 0;
+}
+
+.social-app-shell .social-shared-right-rail .home-rail-footer > div a:not(:last-child)::after {
+  content: " · ";
+  color: rgba(255,255,255,.28);
+  white-space: pre;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel form {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel form > label {
+  position: relative;
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel input {
+  width: 100%;
+  height: 36px;
+  background: #12151b;
+  padding: 8px 38px 8px 13px;
+  font-size: 11px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel form .seen-comment-mic {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  color: rgba(255,255,255,.42);
+  transform: translateY(-50%);
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel form .seen-comment-mic svg {
+  width: 13px;
+  height: 13px;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel form .seen-comment-post {
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--seen-blue, #9ccbff);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.social-app-shell:has(.seen-shell-main) .seen-comments-panel form .seen-comment-post:disabled {
+  color: rgba(156,203,255,.38);
+  opacity: 1;
+}
+
 /* Share sheets use the exact center-column width and axis. Scrolling remains
    available for long recipient lists, but the browser scrollbar stays hidden. */
 /* The shared top-plus menu always rises from the bottom of the center column. */
@@ -19741,8 +20325,9 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 }
 
 .social-app-shell .discover-orb-toolbar {
-  min-height: 42px;
+  min-height: 54px;
   margin-bottom: 10px;
+  padding-top: 12px;
 }
 
 .social-app-shell .discover-orb-toolbar > div {
@@ -20028,3 +20613,270 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
     transform: translateX(-50%) !important;
   }
 }
+
+/* Final popup weight pass; kept last so legacy component rules cannot restore
+   the heavier pre-prototype typography. */
+.seen-owner-actions-header { padding: 18px 20px 10px; }
+.seen-owner-actions-header h2 { font-size: 14px; font-weight: 700; }
+.seen-owner-actions-header p { margin-top: 3px; font-size: 10px; font-weight: 450; }
+.seen-owner-actions-list { padding: 0 20px 20px; }
+.seen-owner-action-row { min-height: 41px; grid-template-columns: 25px minmax(0,1fr) 16px; gap: 12px; }
+.seen-owner-action-row svg { width: 16px; height: 16px; stroke-width: 1.65; }
+.seen-owner-action-row b { font-size: 13px; font-weight: 620; }
+.seen-owner-action-row small { margin-top: 2px; font-size: 10.5px; font-weight: 450; }
+
+:is(.seen-owner-actions-sheet,.seen-feed-options-sheet,.seen-reaction-sheet,.seen-reactors-sheet,.share-sheet-panel,.dream-gift-sheet,.message-filter-sheet,.seen-create-sheet,.profile-create-sheet,.profile-share-sheet,.story-owner-actions-sheet,.home-post-more-sheet) :is(h1,h2,h3) {
+  font-weight: 700 !important;
+}
+
+:is(.seen-owner-actions-sheet,.seen-feed-options-sheet,.seen-reaction-sheet,.seen-reactors-sheet,.share-sheet-panel,.dream-gift-sheet,.message-filter-sheet,.seen-create-sheet,.profile-create-sheet,.profile-share-sheet,.story-owner-actions-sheet,.home-post-more-sheet) :is(strong,b,button) {
+  font-weight: 620 !important;
+}
+
+:is(.seen-owner-actions-sheet,.seen-feed-options-sheet,.seen-reaction-sheet,.seen-reactors-sheet,.share-sheet-panel,.dream-gift-sheet,.message-filter-sheet,.seen-create-sheet,.profile-create-sheet,.profile-share-sheet,.story-owner-actions-sheet,.home-post-more-sheet) :is(p,small,em) {
+  font-weight: 450 !important;
+}
+
+/* The visitor Seen-options sheet intentionally has the stronger hierarchy
+   shown in the prototype; other popup families keep the quieter weights. */
+.seen-feed-options-sheet {
+  padding: 14px 24px max(42px,env(safe-area-inset-bottom));
+}
+
+.seen-feed-options-sheet .seen-feed-options-handle {
+  margin-bottom: 24px;
+}
+
+.seen-feed-options-sheet h2 {
+  margin-bottom: 18px;
+  font-size: 24px;
+  font-weight: 760 !important;
+  line-height: 1.12;
+}
+
+.seen-feed-options-sheet .seen-feed-options-list button {
+  min-height: 51px;
+  gap: 26px;
+  font-size: 16px;
+  font-weight: 680 !important;
+}
+
+.seen-feed-options-sheet .seen-feed-options-list button b {
+  font-weight: 680 !important;
+}
+
+.seen-feed-options-sheet .seen-feed-options-list button small {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 450 !important;
+}
+
+.seen-feed-options-sheet .seen-feed-options-list svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+}
+
+/* Discover portrait cards use the lighter type and softer contrast from the
+   reference rather than the older extra-bold treatment. */
+.social-app-shell .discover-orb-card-shade {
+  background: linear-gradient(180deg,rgba(0,0,0,.035) 38%,rgba(0,0,0,.82) 100%);
+}
+
+.social-app-shell .discover-orb-card-copy {
+  right: 10px;
+  bottom: 9px;
+  left: 10px;
+  gap: 2px;
+}
+
+.social-app-shell .discover-orb-card-copy strong {
+  color: rgba(255,255,255,.96);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.social-app-shell .discover-orb-card-copy small {
+  color: rgba(255,255,255,.58);
+  font-size: 8px;
+  font-weight: 450;
+  line-height: 1.25;
+}
+
+.social-app-shell .discover-orb-card-copy em {
+  color: #82b9f3;
+  font-size: 8px;
+  font-weight: 620;
+  line-height: 1.25;
+}
+
+.social-app-shell .discover-orb-card-copy .seen-verified {
+  width: 12px;
+  height: 12px;
+}
+
+/* Wall location uses the same center-column bottom sheet as other social
+   menus, backed by the real location search service. */
+.home-location-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+}
+
+.home-location-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(0,0,0,.72);
+  cursor: default;
+}
+
+.home-location-layer .home-location-sheet {
+  position: fixed;
+  top: auto;
+  right: auto;
+  bottom: 0;
+  left: var(--home-location-center-x,50%);
+  z-index: 96;
+  width: min(100vw,var(--home-location-column-width,440px));
+  max-height: min(76dvh,560px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,.08);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: #0c0f14;
+  padding: 11px 20px max(24px,env(safe-area-inset-bottom));
+  box-shadow: 0 -24px 80px rgba(0,0,0,.55);
+  scrollbar-width: none;
+  transform: translateX(-50%);
+  animation: seenMoreSheetIn .22s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.home-location-layer .home-location-sheet::-webkit-scrollbar {
+  display: none;
+}
+
+.home-location-layer .home-location-sheet-handle {
+  width: 32px;
+  height: 4px;
+  margin: 0 auto 18px;
+  background: rgba(255,255,255,.32);
+}
+
+.home-location-layer .home-location-sheet-title {
+  display: block;
+}
+
+.home-location-layer .home-location-sheet-title h2 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.home-location-layer .home-location-sheet-subtitle {
+  margin-top: 5px;
+  color: rgba(255,255,255,.65);
+  font-size: 12px;
+  font-weight: 450;
+}
+
+.home-location-layer .home-location-search {
+  height: 48px;
+  margin-top: 12px;
+  border-radius: 13px;
+  background: #12151b;
+}
+
+.home-location-layer .home-location-search input {
+  min-height: 46px;
+  font-size: 12px;
+}
+
+.home-location-layer .home-location-quick {
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.home-location-layer .home-location-quick button {
+  min-height: 31px;
+  border-color: rgba(255,255,255,.09);
+  background: rgba(255,255,255,.035);
+  color: rgba(255,255,255,.75);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.home-location-results {
+  display: grid;
+  margin-top: 10px;
+}
+
+.home-location-results > button {
+  display: grid;
+  min-height: 47px;
+  grid-template-columns: 28px minmax(0,1fr);
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.065);
+  color: rgba(255,255,255,.88);
+  text-align: left;
+}
+
+.home-location-results > button > span:first-child {
+  color: #9ccbff;
+  font-size: 10px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.home-location-results > button > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.home-location-results strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-location-results small,
+.home-location-results > p {
+  color: rgba(255,255,255,.43);
+  font-size: 10px;
+  font-weight: 450;
+}
+
+.home-location-results > p {
+  padding: 18px 4px;
+  text-align: center;
+}
+
+/* Seen overview follows the compact editorial prototype. */
+.seen-detail-page .seen-detail-prototype-header { min-height: 82px; gap: 10px; padding: 24px 17px 14px; }
+.seen-detail-type { display:inline-flex;height:22px;align-items:center;border:1px solid rgba(156,203,255,.34);border-radius:999px;background:rgba(156,203,255,.1);padding:0 11px;color:#c5e2ff;font-size:9px;font-weight:700;letter-spacing:.12em; }
+.seen-detail-prototype-header .seen-detail-title h1 { font-size:13px;font-weight:700; }
+.seen-detail-prototype-header .seen-detail-title p { margin-top:1px;font-size:9px;font-weight:450; }
+.seen-detail-close { display:grid;width:30px;height:30px;place-items:center;color:rgba(255,255,255,.86); }
+.seen-detail-close svg { width:20px;height:20px; }
+.seen-detail-prototype-body { padding:28px 22px 0; }
+.seen-detail-overview { display:grid;grid-template-columns:112px minmax(0,1fr);align-items:start;gap:14px; }
+.seen-detail-cover { display:block;width:112px;height:140px;overflow:hidden;border-radius:13px;background:#12151b; }
+.seen-detail-cover img { width:100%;height:100%;object-fit:cover; }
+.seen-detail-cover > span { display:grid;width:100%;height:100%;place-items:center;color:rgba(156,203,255,.4); }
+.seen-detail-overview h2 { margin-top:6px;color:#fff;font-size:21px;font-weight:720;line-height:1.12; }
+.seen-detail-overview p { margin-top:10px;color:rgba(255,255,255,.45);font-size:9.5px;font-weight:450; }
+.seen-detail-prototype-body .seen-detail-description { margin-top:19px;color:rgba(255,255,255,.74);font-size:12.5px;font-weight:450;line-height:1.7; }
+.seen-detail-prototype-body .seen-detail-journey-list { gap:1px;margin-top:13px; }
+.seen-detail-prototype-body .seen-detail-journey-list button { min-height:23px;gap:9px;border:0;border-radius:0;background:transparent;padding:2px 0; }
+.seen-detail-prototype-body .seen-detail-journey-list button:hover:not(:disabled) { background:transparent; }
+.seen-detail-prototype-body .seen-detail-journey-list span { width:17px;color:#9ccbff;font-size:9px;font-weight:700; }
+.seen-detail-prototype-body .seen-detail-journey-list strong { color:rgba(255,255,255,.68);font-size:11.5px;font-weight:450; }
+.seen-detail-start-meta { display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;color:rgba(255,255,255,.42);font-size:9.5px;font-weight:450; }
+.seen-detail-prototype-body .seen-detail-engagement { padding:8px 0 18px; }
