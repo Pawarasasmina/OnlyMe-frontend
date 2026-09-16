@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCheck, FiChevronRight, FiGift, FiTrash2, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiChevronRight, FiEdit2, FiGift, FiMoreHorizontal, FiShare2, FiTrash2, FiX } from "react-icons/fi";
 import { dreamService } from "../../services/dreamService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
@@ -251,7 +251,7 @@ export function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
   );
 }
 
-function DreamEntryRow({ dream, isOwner, onCreate, onGift }) {
+function DreamEntryRow({ dream, isOwner, onCreate, onGift, onMenu }) {
   if (!dream) {
     return (
       <button className="profile-dream-entry" onClick={onCreate} type="button">
@@ -266,7 +266,7 @@ function DreamEntryRow({ dream, isOwner, onCreate, onGift }) {
     <div className={`profile-dream-live ${isOwner ? "is-owner" : "is-supportable"}`}>
       {isOwner ? <div className="profile-dream-head">
         <p>My Dream</p>
-        <button onClick={onCreate} type="button">Edit</button>
+        <button aria-label="Open Dream menu" className="profile-dream-menu-trigger" onClick={onMenu} type="button"><FiMoreHorizontal /></button>
       </div> : null}
       <div className="profile-dream-main">
         {dream.photo?.url ? <img alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover" src={dream.photo.url} /> : <span>{dream.emoji || SPARKLE}</span>}
@@ -285,12 +285,35 @@ function DreamEntryRow({ dream, isOwner, onCreate, onGift }) {
 export default function ProfileDream({ capabilities, profile, role }) {
   const navigate = useNavigate();
   const [picker, setPicker] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState(undefined);
   const query = useQuery({
     queryKey: ["creator-dream", profile?.username],
     queryFn: () => dreamService.getCreatorDream(profile.username).then((response) => response.data.data),
     enabled: role === "creator" && Boolean(profile?.username),
     retry: false,
   });
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setMenuPosition({
+        "--dream-menu-center-x": `${bounds.left + bounds.width / 2}px`,
+        "--dream-menu-column-width": `${bounds.width}px`,
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [menuOpen]);
 
   if (role !== "creator" || query.isLoading || query.isError) return null;
 
@@ -314,9 +337,22 @@ export default function ProfileDream({ capabilities, profile, role }) {
     }
   };
 
+  const shareDream = async () => {
+    const url = window.location.href;
+    const shareData = { title: dream?.title || "My Dream", text: dream?.reason || "See this Dream on @seen", url };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else await navigator.clipboard.writeText(url);
+    } catch (error) {
+      if (error?.name !== "AbortError") return;
+    } finally {
+      setMenuOpen(false);
+    }
+  };
+
   return (
     <section className={`profile-dream-card ${dream ? "" : "is-empty"}`}>
-      <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onGift={() => setPicker(true)} />
+      <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onGift={() => setPicker(true)} onMenu={() => setMenuOpen(true)} />
 
       {dream && capabilities.isOwner ? (
         <>
@@ -327,11 +363,6 @@ export default function ProfileDream({ capabilities, profile, role }) {
           </div>
           {dream.status === "COMPLETED" ? (
             <p className="profile-dream-complete"><FiCheck /> Dream completed</p>
-          ) : capabilities.isOwner ? (
-            <div className="profile-dream-actions">
-              <button onClick={() => status("complete")} type="button"><FiCheck /> Mark completed</button>
-              <button onClick={() => status("remove")} type="button"><FiTrash2 /> Remove</button>
-            </div>
           ) : null}
           {dream.supporters?.length ? (
             <div className="profile-dream-supporters">
@@ -349,6 +380,17 @@ export default function ProfileDream({ capabilities, profile, role }) {
       ) : null}
 
       {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={() => query.refetch()} /> : null}
+      {menuOpen && dream ? (
+        <div className="profile-dream-menu-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setMenuOpen(false)} style={menuPosition}>
+          <section aria-label="Dream actions" aria-modal="true" className="profile-dream-menu-sheet" role="dialog">
+            <span className="profile-dream-menu-handle" />
+            <button onClick={shareDream} type="button"><FiShare2 /><span>Share</span></button>
+            <button onClick={() => { setMenuOpen(false); navigate("/profile/dream"); }} type="button"><FiEdit2 /><span>Edit</span></button>
+            {dream.status !== "COMPLETED" ? <button onClick={() => { setMenuOpen(false); status("complete"); }} type="button"><FiCheck className="is-success" /><span>Mark as done</span></button> : null}
+            <button className="is-danger" onClick={() => { setMenuOpen(false); status("remove"); }} type="button"><FiTrash2 /><span>Delete</span></button>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

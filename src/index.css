@@ -1462,7 +1462,7 @@ body::-webkit-scrollbar-thumb {
   overflow-y: auto;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 20px;
-  background: #1C212B;
+  background: #0C0F14;
   padding: 22px 25px 24px;
   color: #FFFFFF;
   box-shadow: 0 22px 70px rgba(0,0,0,0.38);
@@ -1637,7 +1637,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .share-recipient-ring > span:first-child {
-  border: 2px solid #1C212B;
+  border: 2px solid #0C0F14;
 }
 
 .share-recipient-item.is-selected .share-recipient-ring {
@@ -1826,7 +1826,7 @@ body::-webkit-scrollbar-thumb {
   border-bottom: 0;
   border-left: 1px solid rgba(255,255,255,.08);
   border-radius: 16px 16px 0 0;
-  background: #1C212B;
+  background: #0C0F14;
   padding: 14px 24px max(42px,env(safe-area-inset-bottom));
   box-shadow: 0 -26px 80px rgba(0,0,0,.55);
   animation: seenMoreSheetIn .22s cubic-bezier(.2,.8,.2,1) both;
@@ -5789,6 +5789,16 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   font-weight: 900;
 }
 .profile-dream-actions button:last-child { color: #F17878; }
+.profile-dream-head .profile-dream-menu-trigger {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--profile-muted);
+  font-size: 17px;
+}
+.profile-dream-head .profile-dream-menu-trigger:hover { background: rgba(255,255,255,.06); color: #fff; }
 .profile-dream-gift { color: var(--profile-blue); }
 .profile-dream-supporters {
   margin-top: 12px;
@@ -7799,38 +7809,38 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 
 /* Persistent Profile Status screen. */
 .profile-status-route {
-  width: min(600px, 100%);
+  width: 100%;
   min-height: calc(100dvh - 60px);
   margin: 0 auto;
   overflow-x: hidden;
   background: #0A0C0F;
   color: #fff;
-  padding: 0 26px max(28px, env(safe-area-inset-bottom));
+  padding: 0 20px max(28px, env(safe-area-inset-bottom));
 }
 .profile-status-header {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding-top: 10px;
+  padding-top: 20px;
 }
 .profile-status-header h1 {
   margin: 0;
   color: #fff;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 950;
   letter-spacing: 0;
 }
 .profile-status-back {
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   flex: none;
   place-items: center;
   border: 1px solid rgba(255,255,255,.06);
   border-radius: 50%;
   background: rgba(255,255,255,.055);
   color: #fff;
-  font-size: 18px;
+  font-size: 15px;
 }
 .profile-status-back:focus-visible,
 .profile-status-chip:focus-visible,
@@ -7844,29 +7854,29 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 56px;
+  padding-top: 44px;
 }
 .profile-status-avatar-ring {
   display: grid;
-  width: 128px;
-  height: 128px;
+  width: 102px;
+  height: 102px;
   place-items: center;
   border: 2px solid rgba(156,203,255,.92);
   border-radius: 50%;
-  box-shadow: 0 0 34px rgba(156,203,255,.38);
+  box-shadow: 0 0 26px rgba(156,203,255,.34);
 }
 .profile-status-avatar-ring > span {
   border: 2px solid #0A0C0F;
 }
 .profile-status-input {
-  width: min(100%, 300px);
-  margin-top: 28px;
+  width: min(100%, 230px);
+  margin-top: 22px;
   border: 0;
   background: transparent;
   color: rgba(255,255,255,.9);
   caret-color: #9CCBFF;
   font-family: inherit;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.35;
@@ -7905,21 +7915,21 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px 8px;
-  width: min(100%, 380px);
-  margin-top: 34px;
+  gap: 8px;
+  width: min(100%, 300px);
+  margin-top: 30px;
 }
 .profile-status-chip {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 34px;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255,255,255,.075);
   border-radius: 999px;
   background: rgba(255,255,255,.045);
   color: rgba(255,255,255,.72);
-  padding: 0 15px;
-  font-size: 13px;
+  padding: 0 12px;
+  font-size: 11px;
   font-weight: 850;
   line-height: 1;
 }
@@ -7943,15 +7953,15 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 }
 .profile-status-show {
   display: flex;
-  width: min(100%, 350px);
-  min-height: 54px;
+  width: min(100%, 280px);
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  margin-top: 34px;
-  border-radius: 16px;
+  margin-top: 30px;
+  border-radius: 14px;
   background: #86BCF3;
   color: #07101a;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 950;
   box-shadow: 0 12px 30px rgba(134,188,243,.18);
 }
@@ -7978,10 +7988,10 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 }
 @media (min-width: 768px) {
   .social-app-shell .social-center-scroll > main:has(> .profile-status-route) {
-    width: 600px;
-    max-width: 600px;
+    width: 100%;
+    max-width: 100%;
     margin-inline: auto;
-    padding: 30px 0 80px !important;
+    padding: 0 !important;
   }
 }
 @media (max-width: 767px) {
@@ -19514,6 +19524,170 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   }
 }
 
+/* Compact chat composer: keep every action small so the message field retains
+   most of the center-column width. */
+.message-composer-form {
+  padding: 8px 10px !important;
+}
+
+.message-composer-form > .flex.items-end {
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 4px !important;
+}
+
+.message-composer-form > .flex.items-end > .relative.min-w-0.flex-1 {
+  order: -1;
+}
+
+.message-composer-form textarea[aria-label="Message"] {
+  min-height: 38px !important;
+  border-radius: 999px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 13px;
+  font-size: 11px;
+  line-height: 20px;
+}
+
+.message-composer-form button[aria-label="Record video note"],
+.message-composer-form button[aria-label="Record voice message"],
+.message-composer-form button[aria-label="Send image"],
+.message-composer-form button[aria-label="Send a gift"],
+.message-composer-form button[aria-label="Open emoji picker"] {
+  width: 30px !important;
+  height: 30px !important;
+  border-color: transparent !important;
+  background: transparent;
+  font-size: 13px;
+}
+
+.message-composer-form button[aria-label="Send message"] {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px;
+  font-size: 14px;
+}
+
+.message-composer-form button[aria-label="Disappearing message timer"] {
+  width: 25px;
+  height: 25px;
+  font-size: 11px;
+}
+
+/* Share sheets use the exact center-column width and axis. Scrolling remains
+   available for long recipient lists, but the browser scrollbar stays hidden. */
+/* The shared top-plus menu always rises from the bottom of the center column. */
+@media (min-width: 768px) {
+  .seen-create-layer {
+    transform: none !important;
+  }
+
+  .seen-create-sheet {
+    position: fixed;
+    right: auto;
+    bottom: 16px;
+    left: var(--create-menu-center-x, 50%);
+    width: 184px;
+    margin: 0 !important;
+    transform: translateX(-50%);
+  }
+
+  .seen-create-option {
+    min-height: 44px;
+    padding: 9px 14px;
+  }
+}
+
+.profile-dream-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 170;
+  background: rgba(0,0,0,.68);
+}
+
+.profile-dream-menu-sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  max-height: 82dvh;
+  border: 1px solid rgba(255,255,255,.08);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: #0c0f14;
+  padding: 10px 14px max(24px, env(safe-area-inset-bottom));
+  box-shadow: 0 -26px 80px rgba(0,0,0,.55);
+}
+
+.profile-dream-menu-handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.32);
+}
+
+.profile-dream-menu-sheet button {
+  display: grid;
+  min-height: 42px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 13px;
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+  padding: 0 15px;
+  color: rgba(255,255,255,.9);
+  font-size: 12px;
+  font-weight: 750;
+  text-align: left;
+}
+
+.profile-dream-menu-sheet button:hover { border-color: rgba(156,203,255,.34); background: rgba(156,203,255,.06); }
+.profile-dream-menu-sheet button svg { color: rgba(255,255,255,.72); }
+.profile-dream-menu-sheet button svg.is-success { color: #6ecf97; }
+.profile-dream-menu-sheet button.is-danger,
+.profile-dream-menu-sheet button.is-danger svg { color: #f17878; }
+
+@media (min-width: 768px) {
+  .profile-dream-menu-sheet {
+    right: auto;
+    left: var(--dream-menu-center-x, 50%);
+    width: var(--dream-menu-column-width, 440px);
+    max-width: var(--dream-menu-column-width, 440px);
+    transform: translateX(-50%);
+  }
+}
+
+.share-sheet-panel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.share-sheet-panel::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (min-width: 768px) {
+  .share-sheet-overlay .share-sheet-panel,
+  .share-sheet-overlay.is-seen-share .share-sheet-panel {
+    position: fixed;
+    right: auto !important;
+    bottom: 0;
+    left: var(--share-sheet-center-x, 50%) !important;
+    width: var(--share-sheet-column-width, 440px) !important;
+    max-width: var(--share-sheet-column-width, 440px) !important;
+    margin: 0 !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
 .message-filter-sheet {
   position: fixed;
   right: auto;
@@ -19522,6 +19696,12 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   width: min(100vw, var(--message-sheet-column-width, 440px));
   max-width: var(--message-sheet-column-width, 440px);
   transform: translateX(-50%);
+}
+
+/* Keep the Messages create/chat/group sheets on the same dark surface used by
+   the other center-column popups. */
+.social-center-scroll section[class*="bg-[#1b212c]"] {
+  background: #0c0f14 !important;
 }
 
 @media (max-width: 767px) {
@@ -19623,9 +19803,9 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 .social-app-shell .discover-orb-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  column-gap: 18px;
+  row-gap: 18px;
   column-count: initial;
-  column-gap: initial;
 }
 
 .social-app-shell .discover-orb-card,
@@ -19795,6 +19975,18 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   .story-viewer-overlay .story-viewer-surface {
     width: 100%;
     height: 100dvh;
+  }
+}
+
+/* Seen reaction picker and reactor list share the center-column sheet axis. */
+@media (min-width: 768px) {
+  .seen-reactions-layer .seen-reaction-sheet,
+  .seen-reactions-layer .seen-reactors-sheet {
+    right: auto !important;
+    left: var(--seen-sheet-center-x, 50%) !important;
+    width: var(--seen-sheet-column-width, 440px) !important;
+    max-width: var(--seen-sheet-column-width, 440px) !important;
+    transform: translateX(-50%) !important;
   }
 }
 

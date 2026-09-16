@@ -471,6 +471,7 @@ function reactionCluster(item) {
 
 function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
   const navigate = useNavigate();
+  const sheetPosition = useSeenSheetPosition(true);
   const [activeReaction, setActiveReaction] = useState(null);
   const reactionCounts = orderedReactionCounts(item.engagement.reactionBreakdown);
   const query = useInfiniteQuery({
@@ -499,7 +500,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
     navigate(user.username ? `/profile/${encodeURIComponent(user.username)}` : "/profile");
   };
 
-  return <div className="seen-reactions-layer">
+  return <div className="seen-reactions-layer" style={sheetPosition}>
     <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
     <section aria-label={`Reactions for ${item.title}`} aria-modal="true" className="seen-reactors-sheet" role="dialog">
       <span aria-hidden="true" className="seen-reactors-handle" />
@@ -536,6 +537,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
 
 function ReactionPicker({ item, onClose, onSelect, pending }) {
   const selectedReaction = item.viewerState.reaction;
+  const sheetPosition = useSeenSheetPosition(true);
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -548,7 +550,7 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
     };
   }, [onClose]);
 
-  return <div className="seen-reactions-layer">
+  return <div className="seen-reactions-layer" style={sheetPosition}>
     <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
     <section aria-label={`Choose a reaction for ${item.title}`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
     <span aria-hidden="true" className="seen-reaction-handle" />

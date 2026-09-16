@@ -1021,7 +1021,7 @@ export default function SeenReaderPage() {
         <span>Chapter {safeChapterIndex + 1} of {chapters.length || 1} {"\u00b7"} {publication.title}</span>
         <h1>{chapter?.title || publication.title}</h1>
       </div>
-      <button aria-label={engagement.viewerSaved ? "Unpin Seen" : "Pin Seen"} className={engagement.viewerSaved ? "is-active seen-reader-circle" : "seen-reader-circle"} disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()} type="button"><FiBookmark fill={engagement.viewerSaved ? "currentColor" : "none"} /></button>
+      <button aria-label="Close Seen reader" className="seen-reader-circle" onClick={() => navigate("/seen")} type="button"><FiX /></button>
     </header>
 
     <div className="seen-reader-progress" aria-label="Chapter progress">

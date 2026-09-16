@@ -11,6 +11,7 @@ import { canonicalShareUrl } from "../../services/shareService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const quickEmojis = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDD25", "\uD83D\uDE0D", "\uD83D\uDC4F", "\uD83D\uDE2E", "\uD83D\uDE4F", "\uD83E\uDD1D"];
+const MAX_VISIBLE_DIRECT_CHATS = 8;
 
 function contentTypeLabel(type = "content") {
   if (type === "feed_post") return "POST";
@@ -92,6 +93,37 @@ function selectedLabel(recipients = []) {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
 }
 
+function useShareSheetPosition(isOpen) {
+  const [position, setPosition] = useState(undefined);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setPosition({
+        "--share-sheet-center-x": `${bounds.left + bounds.width / 2}px`,
+        "--share-sheet-column-width": `${bounds.width}px`,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    resizeObserver?.observe(centerColumn);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      resizeObserver?.disconnect();
+    };
+  }, [isOpen]);
+
+  return position;
+}
+
 function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -108,7 +140,12 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const sendMutation = useSendSharedContent();
   const canonicalUrl = useMemo(() => canonicalShareUrl(payload || {}), [payload]);
   const selectedRecipients = useMemo(() => [...selected.values()], [selected]);
+  const visibleRecipients = useMemo(
+    () => (recipientsQuery.data || []).slice(0, MAX_VISIBLE_DIRECT_CHATS),
+    [recipientsQuery.data]
+  );
   const canClose = !sendMutation.isPending;
+  const sheetPosition = useShareSheetPosition(isOpen);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -256,6 +293,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         if (event.target === event.currentTarget) close();
       }}
       role="dialog"
+      style={sheetPosition}
     >
       <div className="share-sheet-panel" ref={panelRef} tabIndex={-1}>
         <div className="share-sheet-handle" aria-hidden="true" />
@@ -285,7 +323,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
 
         <div className="share-recipient-grid" role="list">
           {recipientsQuery.isLoading ? Array.from({ length: 8 }).map((_, index) => <span className="share-recipient-skeleton" key={index} />) : null}
-          {!recipientsQuery.isLoading && (recipientsQuery.data || []).map((person) => (
+          {!recipientsQuery.isLoading && visibleRecipients.map((person) => (
             <RecipientItem key={person.id} onToggle={toggleRecipient} person={person} selected={selected.has(person.id)} />
           ))}
         </div>
