@@ -40,7 +40,11 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                 </span>
               ) : null}
-              {item.to === "/activity" && unreadActivityCount > 0 ? <span aria-hidden="true" className="fan-sidebar-activity-dot absolute left-[14px] top-0 h-[7px] w-[7px] rounded-full bg-[#9CCBFF]" /> : null}
+              {item.to === "/activity" && unreadActivityCount > 0 ? (
+                <span aria-hidden="true" className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg min-[1020px]:hidden">
+                  {unreadActivityCount > 99 ? "99+" : unreadActivityCount}
+                </span>
+              ) : null}
             </span>
 
             <span className="flex min-w-0 items-center gap-2 max-[1019px]:sr-only">
@@ -48,6 +52,11 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
               {item.to === "/messages" && unreadMessageCount > 0 ? (
                 <span aria-label={`${unreadMessageCount} unread chats`} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                </span>
+              ) : null}
+              {item.to === "/activity" && unreadActivityCount > 0 ? (
+                <span aria-label={`${unreadActivityCount} unread activities`} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">
+                  {unreadActivityCount > 99 ? "99+" : unreadActivityCount}
                 </span>
               ) : null}
             </span>

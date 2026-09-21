@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -208,7 +208,40 @@ function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, menuOpen, view
   </div>;
 }
 
-function SeenOptionsSheet({ creatorName, isOpen, itemTitle, onBlock, onClose, onHide, onMute, onReport, onSave, onShare, pending, saved }) {
+function useSeenSheetPosition(isOpen) {
+  const [sheetPosition, setSheetPosition] = useState(undefined);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setSheetPosition({
+        "--seen-sheet-center-x": `${bounds.left + (bounds.width / 2)}px`,
+        "--seen-sheet-column-width": `${bounds.width}px`,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
+
+  return sheetPosition;
+}
+
+function SeenOptionsSheet({ creatorName, isOpen, itemTitle, onBlock, onClose, onHide, onReport, onSave, onShare, onShowMore, pending, saved }) {
+  const sheetPosition = useSeenSheetPosition(isOpen);
+
   useEffect(() => {
     if (!isOpen) return undefined;
     const onKeyDown = (event) => {
@@ -224,22 +257,22 @@ function SeenOptionsSheet({ creatorName, isOpen, itemTitle, onBlock, onClose, on
   const actions = [
     { icon: FiBookmark, label: saved ? "Remove from library" : "Save to library", onClick: onSave },
     { icon: FiSend, label: "Share", onClick: onShare },
+    { icon: FiEye, label: "Show more like this", subtitle: "Tunes your feed", onClick: onShowMore },
     { icon: FiEyeOff, label: "Not interested", onClick: onHide },
-    { icon: FiEyeOff, label: `Mute ${firstName}`, onClick: onMute },
     { icon: FiFlag, label: "Report", onClick: onReport },
     { danger: true, icon: FiSlash, label: `Block ${firstName}`, onClick: onBlock },
   ];
 
-  return <div className="seen-feed-options-layer">
+  return <div className="seen-feed-options-layer" style={sheetPosition}>
     <button aria-label="Close Seen options" className="seen-feed-options-scrim" onClick={onClose} type="button" />
     <section aria-label={`Options for ${itemTitle}`} aria-modal="true" className="seen-feed-options-sheet" role="dialog">
       <span className="seen-feed-options-handle" aria-hidden="true" />
       <h2>{itemTitle}</h2>
       <div className="seen-feed-options-list">
-        {actions.map(({ danger, icon: Icon, label, onClick }) => (
+        {actions.map(({ danger, icon: Icon, label, onClick, subtitle }) => (
           <button className={danger ? "is-danger" : ""} disabled={pending} key={label} onClick={onClick} type="button">
             <Icon aria-hidden="true" />
-            <span>{label}</span>
+            <span><b>{label}</b>{subtitle ? <small>{subtitle}</small> : null}</span>
           </button>
         ))}
       </div>
@@ -261,6 +294,8 @@ function SeenActionRow({ danger = false, disabled = false, icon: Icon, onClick, 
 }
 
 function OwnerSeenActionsSheet({ busyAction = "", isOpen, item, onAddStory, onArchive, onChangeCover, onClose, onDelete, onEdit, onInsights, onPinToggle, onSeries, onShare }) {
+  const sheetPosition = useSeenSheetPosition(isOpen);
+
   useEffect(() => {
     if (!isOpen) return undefined;
     const previousOverflow = document.body.style.overflow;
@@ -296,7 +331,7 @@ function OwnerSeenActionsSheet({ busyAction = "", isOpen, item, onAddStory, onAr
   ];
 
   return (
-    <div className="seen-feed-options-layer seen-owner-options-layer">
+    <div className="seen-feed-options-layer seen-owner-options-layer" style={sheetPosition}>
       <button aria-label="Close Seen owner actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
       <section aria-label={`Manage ${item.title}`} aria-modal="true" className="seen-owner-actions-sheet" role="dialog">
         <span className="seen-feed-options-handle" aria-hidden="true" />
@@ -324,6 +359,8 @@ function OwnerSeenActionsSheet({ busyAction = "", isOpen, item, onAddStory, onAr
 }
 
 function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
+  const sheetPosition = useSeenSheetPosition(isOpen);
+
   useEffect(() => {
     if (!isOpen) return undefined;
     const onKeyDown = (event) => {
@@ -346,7 +383,7 @@ function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
     ["Opens", insights.opens],
   ];
   return (
-    <div className="seen-feed-options-layer">
+    <div className="seen-feed-options-layer" style={sheetPosition}>
       <button aria-label="Close Seen insights" className="seen-feed-options-scrim" onClick={onClose} type="button" />
       <section aria-label={`Insights for ${title}`} aria-modal="true" className="seen-owner-actions-sheet seen-insights-sheet" role="dialog">
         <span className="seen-feed-options-handle" aria-hidden="true" />
@@ -360,8 +397,10 @@ function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
 }
 
 function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
+  const sheetPosition = useSeenSheetPosition(isOpen);
+
   if (!isOpen) return null;
-  return <div className="seen-feed-options-layer"><button aria-label="Close report" className="seen-feed-options-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="seen-feed-options-sheet" role="dialog"><span className="seen-feed-options-handle" /><h2>{done ? "Report received" : `Report ${title}`}</h2>{done ? <div className="p-4"><p className="text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="mt-4 w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={onClose} type="button">Done</button></div> : <div className="seen-feed-options-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this Seen?</p>{atseenReportReasons.map((reason) => <button disabled={pending} key={reason} onClick={() => onReport(reason)} type="button"><FiFlag /><span><b>{reason}</b></span></button>)}</div>}</section></div>;
+  return <div className="seen-feed-options-layer" style={sheetPosition}><button aria-label="Close report" className="seen-feed-options-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="seen-feed-options-sheet" role="dialog"><span className="seen-feed-options-handle" /><h2>{done ? "Report received" : `Report ${title}`}</h2>{done ? <div className="p-4"><p className="text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="mt-4 w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={onClose} type="button">Done</button></div> : <div className="seen-feed-options-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this Seen?</p>{atseenReportReasons.map((reason) => <button disabled={pending} key={reason} onClick={() => onReport(reason)} type="button"><FiFlag /><span><b>{reason}</b></span></button>)}</div>}</section></div>;
 }
 
 function CompactSeenMedia({ item, target }) {
@@ -408,20 +447,52 @@ function PreviewComment({ comment }) {
   </div>;
 }
 
-function CommentsPanel({ engagementQuery, item, mutation, value, onChange, onSubmit }) {
+function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagementChange, value, onChange, onSubmit }) {
   const comments = engagementQuery.data?.comments || [];
-  return <section className="seen-comments-panel">
-    <form onSubmit={onSubmit}>
-      <input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => onChange(event.target.value)} placeholder="Add a comment..." value={value} />
-      <button disabled={!value.trim() || mutation.isPending} type="submit">Post</button>
-    </form>
-    <div className="seen-comments-list">
-      {comments.map((comment) => <article key={comment.id}>
-        <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
+  const [replyTo, setReplyTo] = useState(null);
+  const [reactionTarget, setReactionTarget] = useState(null);
+  const commentReactionMutation = useMutation({
+    mutationFn: ({ comment, reaction }) => (reaction
+      ? publicationService.reactToSeenComment(item.id, comment.id, reaction)
+      : publicationService.removeSeenCommentReaction(item.id, comment.id)),
+    onSuccess: (response) => {
+      onEngagementChange(response.data.data.engagement);
+      setReactionTarget(null);
+    },
+  });
+  useEffect(() => {
+    if (!mutation.isSuccess) return;
+    setReplyTo(null);
+  }, [mutation.isSuccess]);
+  const beginReply = (comment) => {
+    setReplyTo(comment);
+    onChange("");
+  };
+  const renderComment = (comment, nested = false) => {
+    const reactionIcons = (comment.topReactions || []).map((key) => reactionLabel[key] || reactionLabel.INSIGHTFUL).join("") || "🤝";
+    return <article className={nested ? "is-reply" : ""} key={comment.id}>
+      <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
+      <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link>{comment.text}</p>
-      </article>)}
+        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}</span>
+      </div>
+    </article>;
+  };
+  return <section className="seen-comments-panel">
+    <div className="seen-comments-list">
+      {comments.slice(0, 2).map((comment) => <div className="seen-comment-thread" key={comment.id}>{renderComment(comment)}{(comment.replies || []).slice(0, 2).map((reply) => renderComment(reply, true))}</div>)}
       {!comments.length && !engagementQuery.isLoading ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
     </div>
+    {replyTo ? <div className="seen-replying-to"><span>Replying to <b>{replyTo.author?.name || "Fan"}</b></span><button aria-label="Cancel reply" onClick={() => setReplyTo(null)} type="button">×</button></div> : null}
+    <form onSubmit={(event) => onSubmit(event, replyTo?.id)}>
+      <FanAvatar alt="" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
+      <label>
+        <input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => onChange(event.target.value)} placeholder="Add a comment..." value={value} />
+        <button aria-label="Record a voice comment" className="seen-comment-mic" type="button"><FiMic /></button>
+      </label>
+      <button className="seen-comment-post" disabled={!value.trim() || mutation.isPending} type="submit">Post</button>
+    </form>
+    {reactionTarget ? <ReactionPicker item={{ title: `Comment by ${reactionTarget.author?.name || "Fan"}`, engagement: { reactionBreakdown: reactionTarget.reactionBreakdown || {} }, viewerState: { reaction: reactionTarget.viewerReaction } }} onClose={() => setReactionTarget(null)} onSelect={(reaction) => commentReactionMutation.mutate({ comment: reactionTarget, reaction })} pending={commentReactionMutation.isPending} /> : null}
   </section>;
 }
 
@@ -432,6 +503,7 @@ function reactionCluster(item) {
 
 function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
   const navigate = useNavigate();
+  const sheetPosition = useSeenSheetPosition(true);
   const [activeReaction, setActiveReaction] = useState(null);
   const reactionCounts = orderedReactionCounts(item.engagement.reactionBreakdown);
   const query = useInfiniteQuery({
@@ -460,7 +532,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
     navigate(user.username ? `/profile/${encodeURIComponent(user.username)}` : "/profile");
   };
 
-  return <div className="seen-reactions-layer">
+  return <div className="seen-reactions-layer" style={sheetPosition}>
     <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
     <section aria-label={`Reactions for ${item.title}`} aria-modal="true" className="seen-reactors-sheet" role="dialog">
       <span aria-hidden="true" className="seen-reactors-handle" />
@@ -490,13 +562,14 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
         {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
         {query.hasNextPage ? <button className="seen-reactors-more" disabled={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} type="button">{query.isFetchingNextPage ? "Loading..." : "Load more"}</button> : null}
       </div>
-      {!item.viewerState.reaction ? <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button> : null}
+      <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button>
     </section>
   </div>;
 }
 
 function ReactionPicker({ item, onClose, onSelect, pending }) {
   const selectedReaction = item.viewerState.reaction;
+  const sheetPosition = useSeenSheetPosition(true);
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -509,7 +582,7 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
     };
   }, [onClose]);
 
-  return <div className="seen-reactions-layer">
+  return <div className="seen-reactions-layer" style={sheetPosition}>
     <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
     <section aria-label={`Choose a reaction for ${item.title}`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
     <span aria-hidden="true" className="seen-reaction-handle" />
@@ -642,7 +715,7 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
     },
   });
   const commentMutation = useMutation({
-    mutationFn: (text) => runAction(publicationService.commentOnSeen(item.id, text)),
+    mutationFn: ({ text, parentCommentId }) => runAction(publicationService.commentOnSeen(item.id, text, "", parentCommentId)),
     onSuccess: () => {
       setComment("");
       setCommentsOpen(true);
@@ -757,10 +830,10 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
     textPreview: `${item.title} — ${item.creator.displayName.split(" ").filter(Boolean)[0] || item.creator.displayName}`,
     title: item.title,
   }), [item.creator.avatarUrl, item.creator.displayName, item.creator.id, item.creator.username, item.id, item.media.url, item.title, shareUrl, target]);
-  const submitComment = (event) => {
+  const submitComment = (event, parentCommentId = "") => {
     event.preventDefault();
     const text = comment.trim();
-    if (text) commentMutation.mutate(text);
+    if (text) commentMutation.mutate({ text, parentCommentId });
   };
   const selectReaction = (reaction) => {
     if (reactionMutation.isPending) return;
@@ -819,7 +892,6 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
           onBlock={() => blockMutation.mutate()}
           onClose={() => setMenuOpen(false)}
           onHide={() => hideMutation.mutate()}
-          onMute={() => muteMutation.mutate()}
           onReport={() => { setMenuOpen(false); setReportDone(false); setReportOpen(true); }}
           onSave={() => {
             setMenuOpen(false);
@@ -828,6 +900,12 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
           onShare={() => {
             setMenuOpen(false);
             setShareSheetOpen(true);
+          }}
+          onShowMore={() => {
+            setMenuOpen(false);
+            reactionMutation.mutate("ADMIRE", {
+              onSuccess: () => setNotice("Thanks. We will show you more Seens like this."),
+            });
           }}
           pending={menuPending}
           saved={item.viewerState.saved}
@@ -858,7 +936,7 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
-      {commentsOpen ? <CommentsPanel engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onSubmit={submitComment} value={comment} /> : null}
+      {commentsOpen ? <CommentsPanel currentUser={currentUser} engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onEngagementChange={mergeEngagement} onSubmit={submitComment} value={comment} /> : null}
     </div>
   </article>;
 }

@@ -2,7 +2,7 @@ import { FiPlus } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import StoryPresenceLabel from "./StoryPresenceLabel";
 
-function OwnStoryItem({ activeStatus, hasStories, onAdd, onOpen, storyCount = 0, user }) {
+function OwnStoryItem({ activeStatus, hasStories, onAdd, onOpen, onStatus, storyCount = 0, user }) {
   const label = hasStories ? `View your story, ${storyCount} item${storyCount === 1 ? "" : "s"}` : "Add to your story";
   return (
     <div className="wall-story-item wall-story-own-story">
@@ -15,7 +15,7 @@ function OwnStoryItem({ activeStatus, hasStories, onAdd, onOpen, storyCount = 0,
         <span className="wall-story-name">Your story</span>
         <StoryPresenceLabel status={activeStatus || (!hasStories ? { label: "Add story", color: "rgba(255,255,255,.62)", expiresAt: new Date(Date.now() + 1000).toISOString() } : null)} />
       </button>
-      <button aria-label="Add Story" className="wall-story-add-badge" onClick={onAdd} type="button">
+      <button aria-label="Create status" className="wall-story-add-badge" onClick={onStatus} type="button">
         <FiPlus aria-hidden="true" />
       </button>
     </div>

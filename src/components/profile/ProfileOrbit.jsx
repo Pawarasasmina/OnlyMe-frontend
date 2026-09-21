@@ -64,7 +64,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     const creatorFirstName = profile?.displayName?.split(" ")[0] || "Creator";
     return (
       <section className="profile-subscribed-world">
-        <header><h2>{creatorFirstName}&apos;s World</h2><p>One world — where you step closer.</p></header>
+        <header><h2>{creatorFirstName}&apos;s World <span className="profile-coming-soon-badge">Coming soon</span></h2><p>One world — where you step closer.</p></header>
         <Link aria-label={`Open ${primaryPlanet.title}`} className="profile-subscribed-world-card" to={`/world/${primaryPlanet.id}`}>
           <span className="profile-subscribed-stars" aria-hidden="true" />
           <span className="profile-subscribed-orbit orbit-one" aria-hidden="true" />
@@ -80,7 +80,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     <section className="profile-planet-orbit">
       <div className="profile-orbit-heading">
         <div>
-          <p className="profile-orbit-overline">{capabilities.isOwner ? "Your World" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s World`}</p>
+          <p className="profile-orbit-overline">{capabilities.isOwner ? "Your World" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s World`} <span className="profile-coming-soon-badge">Coming soon</span></p>
           <h2>One world - everything about you, by subscription.</h2>
         </div>
       </div>

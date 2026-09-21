@@ -363,9 +363,17 @@ export default function CreatorStudio() {
   const dashboardQuery = useQuery({
     queryKey: ["creator-dashboard"],
     queryFn: () => creatorService.getDashboard().then((response) => response.data.data),
+    enabled: true,
     retry: false,
     staleTime: 30000,
   });
+
+  /* Obsolete availability overlay removed.
+    description="A focused command center for understanding your audience, tracking earnings, and growing everything you create on @seen."
+    highlights={["Audience and content insights", "Earnings and payout overview", "Growth signals in one place"]}
+    icon="⌁"
+    title="Creator Dashboard"
+  */
 
   if (dashboardQuery.isLoading) {
     return (

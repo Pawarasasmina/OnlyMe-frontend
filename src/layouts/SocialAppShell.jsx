@@ -11,6 +11,7 @@ import { FanToastProvider } from "../components/fanWeb/shared/FanToast";
 import StoryCreator from "../components/stories/StoryCreator";
 import { useAuth } from "../hooks/useAuth";
 import { useUnreadMessageCount } from "../hooks/useUnreadMessageCount";
+import { useUnreadActivityCount } from "../hooks/useUnreadActivityCount";
 import { useSocialCapabilities } from "../hooks/useSocialCapabilities";
 import { CallProvider } from "../context/CallContext";
 import { canCreateFeedPost } from "../utils/postPermissions";
@@ -52,7 +53,7 @@ function SocialAppShell({ children = null }) {
   const queryClient = useQueryClient();
   const warningQuery = useQuery({ queryKey: ["moderation-warnings", user?.id], queryFn: () => moderationWarningService.listPending().then((response) => response.data.data.warnings || []), enabled: Boolean(user), retry: false });
   const currentWarning = warningQuery.data?.[0] || null;
-  const unreadActivityCount = warningQuery.data?.filter((warning) => !warning.acknowledgedAt).length || 0;
+  const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const acknowledgeWarning = useMutation({ mutationFn: () => moderationWarningService.acknowledge(currentWarning.id), onSuccess: () => { queryClient.setQueryData(["moderation-warnings", user?.id], (warnings = []) => warnings.filter((warning) => warning.id !== currentWarning.id)); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); } });
   const isMessagesPage = location.pathname === "/messages";
   const isDiscoverPage = location.pathname === "/discover";
@@ -60,6 +61,9 @@ function SocialAppShell({ children = null }) {
   const isSeenPage = location.pathname === "/seen"
     || location.pathname.startsWith("/seen/");
   const isWorldComposePage = location.pathname === "/create/premium-world" || location.pathname === "/create/experience" || location.pathname.startsWith("/studio/experiences/");
+  const isFullWidthUtilityPage = location.pathname.startsWith("/create/")
+    || location.pathname.startsWith("/settings")
+    || location.pathname.startsWith("/studio/seens/");
   const unreadMessageCount = useUnreadMessageCount(Boolean(user), { poll: !isMessagesPage });
   const contentScrollRef = useRef(null);
   const [status, setStatus] = useState(() => localStorage.getItem(STATUS_KEY) || "");
@@ -128,6 +132,8 @@ function SocialAppShell({ children = null }) {
             </header> : null}
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
+              : isFullWidthUtilityPage
+              ? "mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 md:pb-0"
               : isSeenPage
               ? "seen-shell-main social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
               : isDiscoverPage || isHomePage

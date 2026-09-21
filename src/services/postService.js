@@ -95,5 +95,6 @@ export const postService = {
     const response = await axiosInstance.put(`/posts/${postId}/block-author`);
     return response.data?.data;
   },
+  archivePost: async (postId) => axiosInstance.post(`/posts/${postId}/archive`).then((response) => response.data?.data),
   deletePost: async (postId) => axiosInstance.delete(`/posts/${postId}`).then((response) => response.data?.data),
 };

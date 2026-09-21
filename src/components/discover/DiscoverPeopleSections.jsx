@@ -1,7 +1,9 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
+import StoryPresenceLabel from "../stories/StoryPresenceLabel";
+import StoryStatusBadge from "../stories/StoryStatusBadge";
 import { resolveMediaUrl } from "../../utils/media";
 import {
   friendDisplayName,
@@ -28,15 +30,18 @@ function FriendAvatarContent({ friend }) {
     <>
       <span className={`discover-friend-avatar ${ringClass}`}>
         <FanAvatar name={friendDisplayName(friend)} size="h-[52px] w-[52px]" src={friend.avatar} />
-        {friend.hasPremiumOffering ? <i aria-label="Premium access available" /> : null}
+        {friend.hasPremiumOffering && !friend.activeStatus ? <i aria-label="Premium access available" /> : null}
+        <StoryStatusBadge status={friend.activeStatus} />
       </span>
       <small><PersonName person={friend} /></small>
+      <StoryPresenceLabel status={friend.activeStatus} />
     </>
   );
 }
 
 function DiscoverFriendsSection({
   friends = [],
+  onDismiss,
   onOpenFriendStories,
   title = "Friends",
   subtitle = "People you follow who follow you back",
@@ -50,6 +55,7 @@ function DiscoverFriendsSection({
           <h2 id="discover-friends-title">{title}</h2>
           <p>{subtitle}</p>
         </div>
+        {onDismiss ? <button aria-label="Hide Following" className="discover-following-dismiss" onClick={onDismiss} type="button"><FiX aria-hidden="true" /></button> : null}
       </div>
       <div className="discover-friends-strip atseen-hide-scrollbar" role="list">
         {friends.map((friend) => {
@@ -191,6 +197,7 @@ function DiscoverPeopleSections({
   friendSectionTitle,
   friendSectionSubtitle,
   following,
+  onDismissFriends,
   onOpenFriendStories,
   onOpenFollowingStories,
 }) {
@@ -198,6 +205,7 @@ function DiscoverPeopleSections({
     <>
       <DiscoverFriendsSection
         friends={friends}
+        onDismiss={onDismissFriends}
         onOpenFriendStories={onOpenFriendStories}
         subtitle={friendSectionSubtitle}
         title={friendSectionTitle}
