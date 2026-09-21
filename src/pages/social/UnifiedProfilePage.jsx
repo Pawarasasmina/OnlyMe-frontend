@@ -78,6 +78,15 @@ function compact(value) {
   return number.toLocaleString();
 }
 
+const PUBLIC_WORLD_STATUSES = new Set(["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"]);
+
+function worldCreateTarget(planets = []) {
+  const existing = planets.find((planet) => PUBLIC_WORLD_STATUSES.has(planet.status))
+    || planets.find((planet) => planet.status === "DRAFT");
+  if (!existing?.id) return "";
+  return PUBLIC_WORLD_STATUSES.has(existing.status) ? `/world/${existing.id}` : `/studio/worlds/${existing.id}/edit`;
+}
+
 function isToday(value) {
   if (!value) return false;
   const date = new Date(value);
@@ -261,11 +270,11 @@ function ProfileSkeleton() {
   );
 }
 
-function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, canPostNote, isOpen, onClose, onNote, onStory }) {
-  return <FanCreateSheet canCreateSeen={canCreateSeen} canCreateStoryNow={canCreateStoryNow} canCreateWorld={canCreateWorld} canPostNote={canPostNote} isOpen={isOpen} onClose={onClose} onNote={onNote} onStory={onStory} />;
+function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, canPostNote, isOpen, onClose, onNote, onStory, worldTarget = "" }) {
+  return <FanCreateSheet canCreateSeen={canCreateSeen} canCreateStoryNow={canCreateStoryNow} canCreateWorld={canCreateWorld} canPostNote={canPostNote} isOpen={isOpen} onClose={onClose} onNote={onNote} onStory={onStory} worldTarget={worldTarget} />;
 }
 
-function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
+function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities = {} }) {
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
@@ -273,6 +282,7 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
   const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
+  const worldTarget = worldCreateTarget(planets);
   const currentUser = {
     ...user,
     avatar: profile.avatar || user?.avatar,
@@ -319,6 +329,7 @@ function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
         onClose={() => setCreateOpen(false)}
         onNote={openNote}
         onStory={openStory}
+        worldTarget={worldTarget}
       />
       <StoryCreator isOpen={storyOpen} onClose={() => setStoryOpen(false)} />
       <FeedPostComposer currentUser={currentUser} isOpen={noteOpen} onClose={() => setNoteOpen(false)} />
@@ -842,7 +853,7 @@ function ProfileBody({ data, setConnectionsType }) {
   }
   return (
     <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-visitor-profile"}`}>
-      {isOwner ? <TopProfileBar profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
+      {isOwner ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       <IdentitySection metrics={publicMetrics} onConnectionsOpen={setConnectionsType} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       {isOwner ? <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} /> : null}

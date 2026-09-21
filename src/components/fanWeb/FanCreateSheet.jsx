@@ -11,6 +11,7 @@ function FanCreateSheet({
   onClose,
   onNote,
   onStory,
+  worldTarget = "",
 }) {
   const [position, setPosition] = useState(undefined);
   const options = [
@@ -18,7 +19,7 @@ function FanCreateSheet({
     { disabled: !canCreateWorld, icon: FiImage, label: "Experience", to: "/create/experience" },
     { disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
     { disabled: !canPostNote, icon: FiEdit3, label: "Note", onClick: onNote },
-    { disabled: !canCreateWorld, icon: FiDisc, label: "World", to: "/create/premium-world" },
+    { disabled: !canCreateWorld, icon: FiDisc, label: "World", to: worldTarget || "/create/premium-world" },
   ];
 
   useEffect(() => {
