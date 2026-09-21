@@ -18,6 +18,7 @@ import { canCreateFeedPost } from "../utils/postPermissions";
 import { canCreateStory } from "../utils/storyPermissions";
 import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
 import { moderationWarningService } from "../services/moderationWarningService";
+import { publicationService } from "../services/publicationService";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -52,6 +53,13 @@ function SocialAppShell({ children = null }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const warningQuery = useQuery({ queryKey: ["moderation-warnings", user?.id], queryFn: () => moderationWarningService.listPending().then((response) => response.data.data.warnings || []), enabled: Boolean(user), retry: false });
+  const worldQuery = useQuery({
+    queryKey: ["create-menu-world-target", user?.id],
+    queryFn: () => publicationService.listMyPublications({ kind: "PREMIUM_WORLD", limit: 10 }).then((response) => response.data.data.items || []),
+    enabled: Boolean(user && capabilities.isApprovedCreator),
+    retry: false,
+    staleTime: 1000 * 60,
+  });
   const currentWarning = warningQuery.data?.[0] || null;
   const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const acknowledgeWarning = useMutation({ mutationFn: () => moderationWarningService.acknowledge(currentWarning.id), onSuccess: () => { queryClient.setQueryData(["moderation-warnings", user?.id], (warnings = []) => warnings.filter((warning) => warning.id !== currentWarning.id)); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); } });
@@ -90,6 +98,13 @@ function SocialAppShell({ children = null }) {
       : null;
   const canCreateStoryNow = capabilities.canCreate && canCreateStory(user);
   const canPostNote = capabilities.canCreate && canCreateFeedPost(user);
+  const existingWorld = (worldQuery.data || []).find((item) => ["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"].includes(item.status))
+    || (worldQuery.data || []).find((item) => item.status === "DRAFT");
+  const worldTarget = existingWorld
+    ? ["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"].includes(existingWorld.status)
+      ? `/world/${existingWorld.id}`
+      : `/studio/worlds/${existingWorld.id}/edit`
+    : "";
 
   const openNoteComposer = () => {
     const params = location.pathname === "/wall" ? new URLSearchParams(location.search) : new URLSearchParams();
@@ -165,6 +180,7 @@ function SocialAppShell({ children = null }) {
           setCreateOpen(false);
           setStoryCreatorOpen(true);
         }}
+        worldTarget={worldTarget}
       />
       <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
       {verificationOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerificationOpen(false)} type="button" /><CreatorVerificationPage /></> : null}

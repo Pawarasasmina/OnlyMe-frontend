@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
@@ -31,12 +31,17 @@ import { SeenChapterEditor, VideoTrimSheet, chapterBlocksWithStory, chapterStory
 const PLANET = "\uD83E\uDE90";
 const FLEX = "\uD83D\uDCAA";
 const STAR = "\u2726";
+const PLANET_FACE_OPTIONS = ["💪", "📚", "💅", "✈️", "☕", "🎾", "🧘", "🎨", "🍳", "📷", "🏄", "🎧", "💼", "🌱", "🍷", "👶"];
 const STORY_PREVIEW_LIMIT = 3;
 const SUBSCRIBER_STORY_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 const WORLD_CATEGORIES = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
-const MONTHLY_PRICES = [90, 190, 290];
+const MONTHLY_PRICES = [90, 190, 290, 390, 500, 1000];
+
+function planetFaceEmoji(planet = {}) {
+  return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
+}
 
 function freshWorld(experience = false) {
   return {
@@ -49,7 +54,7 @@ function freshWorld(experience = false) {
     experiencePath: "",
     experienceLocation: "",
     kind: experience ? "EXPERIENCE" : "PREMIUM_WORLD",
-    ...(experience ? {} : { planet: { accent: "ice-white", emoji: PLANET } }),
+    ...(experience ? {} : { planet: { accent: "ice-white", emoji: PLANET, faceEmoji: FLEX } }),
     pricing: experience ? { mode: "FREE", presetId: null, starsAmount: null } : { mode: "MONTHLY", presetId: "MONTHLY_190", starsAmount: 190 },
     status: "DRAFT",
     summary: "",
@@ -188,6 +193,42 @@ function ExperienceVoiceSheet({ onClose, onSave, onUploadFile }) {
   </div>;
 }
 
+function PlanetFaceSheet({ busy, onClose, onSave, planet }) {
+  const [selected, setSelected] = useState(planetFaceEmoji(planet));
+  const [custom, setCustom] = useState("");
+  const value = custom.trim() || selected;
+  return (
+    <div aria-labelledby="world-editor-face-title" aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
+      <section className="world-bottom-sheet" onMouseDown={(event) => event.stopPropagation()}>
+        <span className="world-sheet-grab" />
+        <h2 id="world-editor-face-title">The face of your planet</h2>
+        <p className="world-sheet-copy">One emoji on top — the topic people see from orbit.</p>
+        <div aria-label="Planet face options" className="world-face-grid" role="listbox">
+          {PLANET_FACE_OPTIONS.map((emoji) => (
+            <button
+              aria-label={`Use ${emoji} as planet face`}
+              aria-selected={value === emoji}
+              className={value === emoji ? "is-selected" : ""}
+              key={emoji}
+              onClick={() => {
+                setSelected(emoji);
+                setCustom("");
+              }}
+              type="button"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+        <div className="world-face-custom">
+          <input aria-label="Custom planet face emoji" maxLength={16} onChange={(event) => setCustom(event.target.value)} placeholder="Or any emoji..." value={custom} />
+          <button disabled={busy || !value} onClick={() => onSave(value)} type="button">{busy ? "Saving..." : "OK"}</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function ExperienceProgress({ step }) {
   const stages = ["Experience", "Chapters", "Publish"];
   return <div aria-label={`Step ${step} of 3: ${stages[step - 1]}`} className="experience-progress" role="progressbar" aria-valuemax="3" aria-valuemin="1" aria-valuenow={step}>
@@ -197,6 +238,7 @@ function ExperienceProgress({ step }) {
 
 export default function WorldPublishingPage({ experience = false, publicationId = "" }) {
   const nav = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const coverInputRef = useRef(null);
@@ -205,6 +247,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const videoInputRef = useRef(null);
   const voiceInputRef = useRef(null);
   const storyPreviewsRef = useRef([]);
+  const autoOpenStoryComposerRef = useRef(false);
   const autoSaveAttemptedStoryIds = useRef(new Set());
   const draftAutoSaveTimer = useRef(null);
   const pendingDraftSaveRef = useRef(false);
@@ -237,6 +280,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [newChapterTitle, setNewChapterTitle] = useState("");
   const [videoTrimFile, setVideoTrimFile] = useState(null);
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
+  const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || "Max";
   const coverUrl = world.coverMedia?.secureUrl;
@@ -292,6 +336,21 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   useEffect(() => {
     storyPreviewsRef.current = storyPreviews;
   }, [storyPreviews]);
+
+  useEffect(() => {
+    if (experience || loading || !creationStarted || autoOpenStoryComposerRef.current) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get("addStory") !== "free") return;
+
+    autoOpenStoryComposerRef.current = true;
+    setStoryAudience("FREE");
+    setStoryComposerOpen(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById("world-preview-stories")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    params.delete("addStory");
+    nav({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : "" }, { replace: true });
+  }, [creationStarted, experience, loading, location.pathname, location.search, nav]);
 
   useEffect(() => () => {
     storyPreviewsRef.current.forEach(revokePreviewUrl);
@@ -1148,14 +1207,15 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       </header>
 
       {!experience ? <><section className="world-prototype-planet world-publish-planet">
-        <button aria-label="Change planet face" onClick={() => updateWorld({ planet: { ...world.planet, emoji: world.planet?.emoji === PLANET ? "\uD83C\uDF0D" : PLANET } })} type="button">
-          <span>{FLEX}</span>
-          <span>{world.planet?.emoji || PLANET}</span>
+        <button aria-label="Change planet face" onClick={() => setFaceSheetOpen(true)} type="button">
+          <span>{planetFaceEmoji(world.planet)}</span>
+          <span>{PLANET}</span>
         </button>
         <p>tap the planet to change its face</p>
       </section>
+      {faceSheetOpen ? <PlanetFaceSheet busy={saving} onClose={() => setFaceSheetOpen(false)} onSave={(emoji) => { updateWorld({ planet: { ...world.planet, emoji: world.planet?.emoji || PLANET, faceEmoji: emoji } }); setFaceSheetOpen(false); }} planet={world.planet} /> : null}
 
-      <section className="world-prototype-story-previews">
+      <section className="world-prototype-story-previews" id="world-preview-stories">
         <div className="world-prototype-section-head is-compact">
           <h2>Free preview stories</h2>
           <span>up to 3 - visible before subscription</span>
