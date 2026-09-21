@@ -178,6 +178,18 @@ function DiscoverPage() {
     setActiveRecommendationStory(null);
   }, []);
 
+  const moveRecommendationStory = useCallback((direction) => {
+    const currentIndex = recommendations.findIndex((card) => (card.id || card.username) === (activeRecommendationStory?.id || activeRecommendationStory?.username));
+    if (currentIndex < 0) return;
+    const nextIndex = currentIndex + direction;
+    if (nextIndex < 0) return;
+    if (nextIndex >= recommendations.length) {
+      if (discoverQuery.hasNextPage && !discoverQuery.isFetchingNextPage) discoverQuery.fetchNextPage();
+      return;
+    }
+    setActiveRecommendationStory(recommendations[nextIndex]);
+  }, [activeRecommendationStory, discoverQuery, recommendations]);
+
   useEffect(() => {
     const target = sentinelRef.current;
     if (!target || !discoverQuery.hasNextPage) return undefined;
@@ -243,6 +255,10 @@ function DiscoverPage() {
             followPending={followMutation.isPending}
             onClose={closeRecommendationStory}
             onFollow={toggleFollow}
+            onNext={() => moveRecommendationStory(1)}
+            onPrevious={() => moveRecommendationStory(-1)}
+            position={recommendations.findIndex((card) => (card.id || card.username) === (activeRecommendationStory.id || activeRecommendationStory.username)) + 1}
+            total={recommendations.length}
           />
         ) : (
           <>

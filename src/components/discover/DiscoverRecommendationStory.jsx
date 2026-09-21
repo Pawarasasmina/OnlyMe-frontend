@@ -37,6 +37,10 @@ function DiscoverRecommendationStory({
   followPending = false,
   onClose,
   onFollow,
+  onNext,
+  onPrevious,
+  position = 1,
+  total = 1,
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -98,10 +102,12 @@ function DiscoverRecommendationStory({
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose?.();
+      if (event.key === "ArrowRight") onNext?.();
+      if (event.key === "ArrowLeft") onPrevious?.();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, onNext, onPrevious]);
 
   if (!card) return null;
 
@@ -110,10 +116,12 @@ function DiscoverRecommendationStory({
     <section className="discover-rec-story" aria-label={`${name} discover story`}>
       {imageUrl ? <img alt="" className="discover-rec-story-media" src={imageUrl} /> : <span className="discover-rec-story-fallback" aria-hidden="true">{first.slice(0, 1)}</span>}
       <span className="discover-rec-story-shade" aria-hidden="true" />
+      <button aria-label="Previous discovery" className="absolute bottom-20 left-0 top-20 z-[5] w-1/3 cursor-default opacity-0" onClick={onPrevious} type="button" />
+      <button aria-label="Next discovery" className="absolute bottom-20 right-0 top-20 z-[5] w-2/3 cursor-default opacity-0" onClick={onNext} type="button" />
 
       <div className="discover-rec-story-progress" aria-label="Discover story position" role="group">
         {progressItems.map((_, index) => (
-          <span className={index === 0 ? "is-filled" : ""} key={index} />
+          <span className={index < position ? "is-filled" : ""} key={index} />
         ))}
       </div>
 

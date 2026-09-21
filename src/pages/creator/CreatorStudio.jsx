@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -169,7 +169,7 @@ function PerformerRow({ detail, icon, title, to }) {
   const content = (
     <>
       <span className="creator-studio-row-icon">{icon}</span>
-      <span>
+      <span className="creator-studio-performer-copy">
         <b>{title}</b>
         <small>{detail}</small>
       </span>
@@ -180,14 +180,14 @@ function PerformerRow({ detail, icon, title, to }) {
 
 function BestPerformers({ data = {} }) {
   const seen = data.seen;
-  const status = data.status;
+  const wallPost = data.wallPost || data.status;
   const location = data.location;
   return (
     <section className="creator-studio-section">
       <SectionTitle>Best performers</SectionTitle>
       <PerformerRow detail={seen ? `Best Seen ${DOT} ${seen.metricLabel}` : "Best Seen · Publish a Seen to unlock this"} icon={<FiEye />} title={seen?.title || "No Seen yet"} to={seen?.id ? `/studio/seens/${seen.id}` : "/create/seen"} />
-      <PerformerRow detail={status ? `Best status ${DOT} ${status.metricLabel}` : "Best status · No status data yet"} icon={<FiMonitor />} title={status?.title || "No status data yet"} />
-      <PerformerRow detail={location ? `Best location ${DOT} ${location.metricLabel}` : "Best location · No location data yet"} icon={<FiMapPin />} title={location?.title || "No location data yet"} to={location ? "/wall" : null} />
+      <PerformerRow detail={wallPost ? `Best wall post ${DOT} ${wallPost.metricLabel}` : "Best wall post · Write a wall post to unlock this"} icon={<FiMonitor />} title={wallPost?.title || "No wall posts yet"} to={wallPost?.id ? `/wall?post=${wallPost.id}` : "/wall?compose=note"} />
+      <PerformerRow detail={location ? `Most used location ${DOT} ${location.metricLabel}` : "Most used location · Add a location to a wall post"} icon={<FiMapPin />} title={location?.title || "No locations yet"} to={location ? "/wall" : "/wall?compose=note"} />
     </section>
   );
 }
@@ -332,15 +332,37 @@ function Earnings({ data = {}, onPayouts }) {
         <SectionTitle>Recent earnings</SectionTitle>
         {earnings.recent?.length ? earnings.recent.map((item) => <EarningRow item={item} key={item.id} />) : <p className="creator-studio-empty">No earnings yet</p>}
       </section>
-      <Link className="creator-studio-wallet-row" to="/wallet/ledger"><span>Wallet & payouts</span><FiChevronRight /></Link>
+      <Link className="creator-studio-wallet-row" to="/wallet"><span>Wallet & payouts</span><FiChevronRight /></Link>
       <p className="creator-studio-note">Your numbers are yours. No subscription, no paywall - ever. {STAR} <button onClick={onPayouts} type="button">How payouts work <FiChevronRight /></button></p>
     </div>
   );
 }
 
 function PayoutsSheet({ onClose }) {
+  const [sheetPosition, setSheetPosition] = useState(undefined);
+
+  useEffect(() => {
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setSheetPosition({
+        "--creator-payouts-center-x": `${bounds.left + bounds.width / 2}px`,
+        "--creator-payouts-column-width": `${bounds.width}px`,
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="creator-payouts-backdrop" onClick={onClose} role="presentation">
+    <div className="creator-payouts-backdrop" onClick={onClose} role="presentation" style={sheetPosition}>
       <section aria-modal="true" className="creator-payouts-sheet" onClick={(event) => event.stopPropagation()} role="dialog">
         <span className="creator-payouts-handle" />
         <h2>How payouts work</h2>

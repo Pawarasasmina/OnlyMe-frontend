@@ -5,6 +5,7 @@ export const publicationService = {
   getMyPublication: (id) => axiosInstance.get(`/publications/mine/${id}`),
   createPublicationDraft: (payload) => axiosInstance.post("/publications/drafts", payload),
   updatePublicationDraft: (id, payload) => axiosInstance.put(`/publications/mine/${id}`, payload),
+  setCommentsEnabled: (id, enabled) => axiosInstance.put(`/publications/mine/${id}/comments-enabled`, { enabled }),
   addChapter: (id, payload) => axiosInstance.post(`/publications/mine/${id}/chapters`, payload),
   updateChapter: (id, chapterId, payload) => axiosInstance.put(`/publications/mine/${id}/chapters/${chapterId}`, payload),
   deleteChapter: (id, chapterId, statusVersion) => axiosInstance.delete(`/publications/mine/${id}/chapters/${chapterId}`, { data: { statusVersion } }),
