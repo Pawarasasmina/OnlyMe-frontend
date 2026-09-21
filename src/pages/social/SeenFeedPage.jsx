@@ -977,7 +977,21 @@ export default function SeenFeedPage() {
     retry: 1,
     staleTime: 1000 * 60,
   });
+  const worldQuery = useQuery({
+    queryKey: ["create-menu-world-target", user?.id],
+    queryFn: () => publicationService.listMyPublications({ kind: "PREMIUM_WORLD", limit: 10 }).then((response) => response.data.data.items || []),
+    enabled: Boolean(user && capabilities.isApprovedCreator),
+    retry: false,
+    staleTime: 1000 * 60,
+  });
   const items = useMemo(() => query.data || [], [query.data]);
+  const existingWorld = (worldQuery.data || []).find((item) => ["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"].includes(item.status))
+    || (worldQuery.data || []).find((item) => item.status === "DRAFT");
+  const worldTarget = existingWorld
+    ? ["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"].includes(existingWorld.status)
+      ? `/world/${existingWorld.id}`
+      : `/studio/worlds/${existingWorld.id}/edit`
+    : "";
   const canCreateStoryNow = capabilities.canCreate && canCreateStory(user);
   const canPostNote = capabilities.canCreate && canCreateFeedPost(user);
   const openCreate = () => setCreateOpen(true);
@@ -1026,6 +1040,7 @@ export default function SeenFeedPage() {
         setCreateOpen(false);
         setStoryCreatorOpen(true);
       }}
+      worldTarget={worldTarget}
     />
     <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
     {query.isLoading ? <div className="seen-feed-list"><SeenSkeleton /><SeenSkeleton /></div> : null}

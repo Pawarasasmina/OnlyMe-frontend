@@ -14,6 +14,7 @@ test("free World allows one to seven fully open chapters", () => {
 test("Premium Planet accepts creator presets and only Chapter 1 is free", () => {
   const publication = { ...base, kind: "PREMIUM_WORLD", pricing: { mode: "MONTHLY", starsAmount: 190 }, chapters: [{ isPreview: true }, { isPreview: false }] };
   assert.deepEqual(worldCompleteness(publication), []);
+  assert.deepEqual(worldCompleteness({ ...publication, pricing: { mode: "MONTHLY", starsAmount: 1000 } }), []);
   assert.ok(worldCompleteness({ ...publication, pricing: { mode: "MONTHLY", starsAmount: 100 } }).length);
   assert.ok(worldCompleteness({ ...publication, chapters: [{ isPreview: false }, { isPreview: true }] }).length);
   assert.equal(isPlanet(publication), true);
