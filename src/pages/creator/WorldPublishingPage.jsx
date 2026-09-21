@@ -10,6 +10,7 @@ import {
   FiExternalLink,
   FiLock,
   FiLoader,
+  FiMapPin,
   FiMic,
   FiMoreHorizontal,
   FiPause,
@@ -852,7 +853,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   const previewExperience = async () => {
     const saved = await saveDraft();
-    if (saved?.id) window.open(`/experience/${saved.id}`, "_blank", "noopener,noreferrer");
+    if (saved?.id) nav(`/experience/${saved.id}?preview=visitor`);
   };
 
   const addNamedExperienceChapter = () => {
@@ -963,7 +964,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
       {videoTrimFile ? <VideoTrimSheet enableCrop file={videoTrimFile} limitSeconds={30} onCancel={() => { URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} onUpload={async (file) => { await addStoryPreview({ file, caption: "Preview video", replaceId: videoTrimFile.replaceId }); URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} /> : null}
       {voiceSheetOpen ? <ExperienceVoiceSheet onClose={() => setVoiceSheetOpen(false)} onSave={(file) => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return addStoryPreview({ file, caption: "Voice hello", replaceId: voice?.id || "" }); }} onUploadFile={() => voiceInputRef.current?.click()} /> : null}
-      <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><h1>Name your Experience</h1><p>A stage of life — with a beginning and a result</p></div></header>
+      <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><h1>Name your Experience</h1><p>A stage of life — with a beginning and a result</p></div><button className="experience-first-preview" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
       <ExperienceProgress step={1} />
       <main>
         <input className="experience-step-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={'Title — e.g. “Moving to Dubai”'} value={world.title} />
@@ -1035,30 +1036,20 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   );
 
   if (experience && creationStarted && experienceStep === 3) return (
-    <article className="experience-final-preview">
-      <header><button aria-label="Back to chapters" onClick={() => setExperienceStep(2)} type="button"><FiArrowLeft /></button><div><span>FINAL PREVIEW</span><h1>Your Experience</h1></div><button disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></header>
+    <article className="experience-final-preview experience-final-review">
+      <header><button aria-label="Back to chapters" onClick={() => setExperienceStep(2)} type="button"><FiArrowLeft /></button><div><h1>One last look</h1><p>Exactly what people will see</p></div><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
       <ExperienceProgress step={3} />
       <main>
-        <section className="experience-preview-hero">
-          {coverUrl ? <img alt={`${world.title} cover`} src={coverUrl} /> : null}
-          <div className="experience-preview-hero-shade" />
-          <div className="experience-preview-hero-copy"><span>{world.category}</span><h2>{world.title}</h2><p>{world.experiencePath}</p><small>{chapters.length} chapters · {world.pricing?.mode === "FREE" ? "Free" : `✦${world.pricing?.starsAmount} one-time`}</small></div>
+        <section className="experience-review-card">
+          <div className="experience-review-cover">{coverUrl ? <img alt={`${world.title} cover`} src={coverUrl} /> : null}<FiEye /></div>
+          <div className="experience-review-summary"><h2>{world.title}</h2><p>{world.category || "Experience"} · {chapters.length} chapters · {world.pricing?.mode === "FREE" ? `${chapters.length} free · Free world` : `1 free · ${STAR}${world.pricing?.starsAmount} one-time`}</p></div>
+          <div className="experience-review-creator">{user?.avatar ? <img alt="" src={user.avatar} /> : <span>{(user?.name || user?.username || "C").slice(0, 1).toUpperCase()}</span>}<strong>{user?.name || user?.username || "Creator"}</strong><FiCheck /></div>
+          <div className="experience-review-chapters">
+            {chapters.map((chapter, index) => { const free = world.pricing?.mode === "FREE" || index === 0; return <div key={chapter.stableChapterId || chapter.localId || index}><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong><em>{free ? "✓ free" : <FiLock />}</em></div>; })}
+          </div>
         </section>
-        <div className="experience-preview-badges"><span><FiCheck /> {world.pricing?.mode === "FREE" ? "Every chapter is free" : "Every chapter unlocks after purchase"}</span>{world.allowDownload ? <span>Download enabled</span> : null}{world.includedInWorld ? <span>Included in World</span> : null}</div>
-        <section className="experience-preview-chapters">
-          <div className="experience-preview-section-title"><div><span>WHAT THEY’LL GET</span><h3>Inside this Experience</h3></div><small>{chapters.length} chapters</small></div>
-          {chapters.map((chapter, index) => <article className="experience-preview-chapter" key={chapter.stableChapterId || chapter.localId || index}>
-            <div className="experience-preview-chapter-head"><b>{String(index + 1).padStart(2, "0")}</b><span><strong>{chapter.title || `Chapter ${index + 1}`}</strong><small>{world.pricing?.mode === "FREE" ? "FREE" : "UNLOCKED AFTER PURCHASE"}</small></span>{world.pricing?.mode !== "FREE" ? <FiLock /> : <FiCheck />}</div>
-            <div className="experience-preview-chapter-content">{(chapter.blocks || []).filter((block) => !block.metadata?.storyPreview).slice(0, 4).map((block) => {
-              if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type)) return <p key={block.id}>{block.text}</p>;
-              if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt="" key={block.id} src={block.media.secureUrl} />;
-              if (block.type === "VIDEO" && block.media?.secureUrl) return <video controls key={block.id} playsInline preload="metadata" src={block.media.secureUrl} />;
-              if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio controls key={block.id} preload="metadata" src={block.media.secureUrl} />;
-              return null;
-            })}</div>
-          </article>)}
-        </section>
-        <section className="experience-preview-publish-card"><span>Ready to share?</span><h3>Publish your Experience</h3><p>Publish immediately on its own Experience page. Premium access is a one-time unlock.</p><button disabled={chapters.length < 2 || saving || uploading || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Publishing…</> : "Publish Experience"}</button><small>Your Experience becomes available immediately after publishing.</small></section>
+        <button className="experience-review-location" onClick={() => setExperienceStep(1)} type="button"><FiMapPin /><strong>{world.experienceLocation || "Location"}</strong><span>{world.experienceLocation ? "Edit" : "Add"}</span><b>›</b></button>
+        <button className="experience-review-save" disabled={chapters.length < 2 || saving || uploading || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Saving…</> : "Save"}</button>
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
       </main>
     </article>
