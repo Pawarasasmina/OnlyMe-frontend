@@ -89,15 +89,16 @@ function LegacyCreatorProfileRedirect() {
 function ProfileRoute() {
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user && [ROLES.FAN, ROLES.CREATOR].includes(user.role)) return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
+  if (user && user.role !== ROLES.ADMIN) return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
   return <UnifiedProfilePage />;
 }
 
 function WorldRoute() {
+  const { id } = useParams();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user && [ROLES.FAN, ROLES.CREATOR].includes(user.role)) return <SocialAppShell><WorldReaderPage /></SocialAppShell>;
-  return <WorldReaderPage />;
+  if (user && user.role !== ROLES.ADMIN) return <SocialAppShell><WorldReaderPage key={id} /></SocialAppShell>;
+  return <WorldReaderPage key={id} />;
 }
 
 function AppRoutes() {

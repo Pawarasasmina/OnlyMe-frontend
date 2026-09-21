@@ -28,7 +28,7 @@ export const WORLD_CONFIG = {
   },
 };
 
-export const PREMIUM_PRESETS = [90, 190, 290];
+export const PREMIUM_PRESETS = [90, 190, 290, 390, 500, 1000];
 
 export function worldCompletenessBySection(publication) {
   const config = WORLD_CONFIG[publication?.kind];
