@@ -1540,9 +1540,12 @@ export default function SeenComposerPage() {
   const nav = useNavigate();
   const [searchParams] = useSearchParams();
   const fromDrafts = searchParams.get("from") === "drafts";
+  const fromSeen = searchParams.get("from") === "seen";
   const draftSuffix = fromDrafts ? "?from=drafts" : "";
   const backTarget = id
-    ? `/studio/seens/${id}${draftSuffix}`
+    ? fromSeen
+      ? "/seen"
+      : `/studio/seens/${id}${draftSuffix}`
     : fromDrafts
       ? "/studio/seens?status=drafts"
       : "/profile";
@@ -1719,6 +1722,11 @@ export default function SeenComposerPage() {
     } finally {
       busy.current = false;
     }
+  };
+
+  const saveForLater = async () => {
+    const publication = await save();
+    if (publication && fromSeen && id) nav("/seen", { replace: true });
   };
 
   useEffect(() => {
@@ -2196,7 +2204,7 @@ export default function SeenComposerPage() {
         setStatus("Link-only Seen published");
         return;
       }
-      nav(`/studio/seens/${publication.id}${draftSuffix}`);
+      nav(fromSeen ? "/seen" : `/studio/seens/${publication.id}${draftSuffix}`, { replace: fromSeen });
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
@@ -2332,7 +2340,7 @@ export default function SeenComposerPage() {
             </p>
           ) : null}
         </div>
-        <button className="seen-compose-save" onClick={save} type="button">
+        <button className="seen-compose-save" onClick={saveForLater} type="button">
           <FiSave aria-hidden="true" />
           Save for later
         </button>

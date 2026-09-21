@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useWallStories } from "../../hooks/useStories";
@@ -24,6 +25,7 @@ function ownUser(currentUser, user, viewer) {
 }
 
 function StoriesRow({ currentUser }) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
@@ -77,6 +79,7 @@ function StoriesRow({ currentUser }) {
             hasStories={ownStories.length > 0}
             onAdd={openCreator}
             onOpen={openOwnStory}
+            onStatus={() => navigate("/profile/status")}
             storyCount={ownStories.length}
             user={me}
           />

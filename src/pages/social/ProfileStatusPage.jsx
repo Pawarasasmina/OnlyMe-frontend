@@ -73,6 +73,7 @@ function ProfileStatusPage() {
       updateCachedProfileStatus(queryClient, activeStatus || null);
       queryClient.invalidateQueries({ queryKey: ["unified-profile", "me"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
       showToast(activeStatus ? "Now it's seen" : "Status removed");
       navigate("/profile", { replace: true });
     },
@@ -142,7 +143,7 @@ function ProfileStatusPage() {
 
       <form className="profile-status-form" onSubmit={submit}>
         <div className="profile-status-avatar-ring">
-          <FanAvatar alt={`${profile?.displayName || "Your"} avatar`} name={profile?.displayName || profile?.username || "You"} size="h-[112px] w-[112px]" src={resolveMediaUrl(profile?.avatar)} />
+          <FanAvatar alt={`${profile?.displayName || "Your"} avatar`} name={profile?.displayName || profile?.username || "You"} size="h-[88px] w-[88px]" src={resolveMediaUrl(profile?.avatar)} />
         </div>
 
         <label className="sr-only" htmlFor="profile-status-input">Right now status</label>

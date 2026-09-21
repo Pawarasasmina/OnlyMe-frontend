@@ -44,7 +44,6 @@ import SeenManagerPage from "../pages/creator/SeenManagerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
-import AdminModerationComingSoon from "../pages/admin/AdminModerationComingSoon";
 import PublicationModeration from "../pages/admin/PublicationModeration";
 import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
@@ -217,7 +216,7 @@ function AppRoutes() {
           <Route path="/admin/content-moderation/:id" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
-          <Route path="/admin/moderation" element={<AdminModerationComingSoon />} />
+          <Route path="/admin/moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />

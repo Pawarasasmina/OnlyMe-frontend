@@ -108,6 +108,19 @@ export function useDeleteFeedPost() {
   });
 }
 
+export function useArchiveFeedPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: postService.archivePost,
+    retry: false,
+    onSuccess: (_data, postId) => {
+      removePostFromCaches(queryClient, postId);
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+    },
+  });
+}
+
 export function useReactToFeedPost() {
   const queryClient = useQueryClient();
   return useMutation({

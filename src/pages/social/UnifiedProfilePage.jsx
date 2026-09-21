@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  FiAperture,
   FiArrowLeft,
   FiBarChart2,
   FiBell,
@@ -16,9 +15,7 @@ import {
   FiEyeOff,
   FiFlag,
   FiGift,
-  FiGlobe,
   FiGrid,
-  FiImage,
   FiLink,
   FiMapPin,
   FiMessageCircle,
@@ -37,6 +34,7 @@ import {
 } from "react-icons/fi";
 import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanCard from "../../components/fanWeb/shared/FanCard";
 import FeedPostComposer from "../../components/posts/FeedPostComposer";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
@@ -264,45 +262,7 @@ function ProfileSkeleton() {
 }
 
 function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, canPostNote, isOpen, onClose, onNote, onStory }) {
-  if (!isOpen) return null;
-  const options = [
-    { icon: FiEye, label: "Seen", to: "/create/seen", disabled: !canCreateSeen },
-    { icon: FiImage, label: "Experience", to: "/create/experience", disabled: !canCreateWorld },
-    { icon: FiAperture, label: "Story", onClick: onStory, disabled: !canCreateStoryNow },
-    { icon: FiEdit3, label: "Note", onClick: onNote, disabled: !canPostNote },
-    { icon: FiGlobe, label: "World", to: "/create/premium-world", disabled: !canCreateWorld },
-  ];
-
-  return (
-    <div aria-modal="true" className="profile-create-backdrop" onMouseDown={onClose} role="dialog">
-      <section className="profile-create-sheet" onMouseDown={(event) => event.stopPropagation()}>
-        <div className="profile-create-list">
-          {options.map(({ disabled, icon: Icon, label, onClick, to }) => {
-            const content = (
-              <>
-                <span className="profile-create-icon"><Icon /></span>
-                <span className="profile-create-copy">
-                  <b>{label}</b>
-                </span>
-              </>
-            );
-            if (to) {
-              return (
-                <Link className={`profile-create-row ${disabled ? "is-disabled" : ""}`} key={label} onClick={onClose} to={disabled ? "/create" : to}>
-                  {content}
-                </Link>
-              );
-            }
-            return (
-              <button className={`profile-create-row ${disabled ? "is-disabled" : ""}`} disabled={disabled} key={label} onClick={onClick} type="button">
-                {content}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-    </div>
-  );
+  return <FanCreateSheet canCreateSeen={canCreateSeen} canCreateStoryNow={canCreateStoryNow} canCreateWorld={canCreateWorld} canPostNote={canPostNote} isOpen={isOpen} onClose={onClose} onNote={onNote} onStory={onStory} />;
 }
 
 function TopProfileBar({ profile, unread = 0, viewerCapabilities = {} }) {
