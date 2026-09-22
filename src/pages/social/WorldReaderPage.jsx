@@ -6,6 +6,7 @@ import {
   FiArrowLeft,
   FiArrowUp,
   FiArrowUpRight,
+  FiArchive,
   FiBarChart2,
   FiBookmark,
   FiCheck,
@@ -13,6 +14,7 @@ import {
   FiCopy,
   FiEdit3,
   FiImage,
+  FiLink,
   FiLock,
   FiMessageCircle,
   FiMoreHorizontal,
@@ -23,6 +25,8 @@ import {
   FiShield,
   FiSearch,
   FiUpload,
+  FiUserPlus,
+  FiTrash2,
   FiX,
   FiZap,
 } from "react-icons/fi";
@@ -214,7 +218,7 @@ function QuickChapterNameSheet({ busy, chapterNumber, error, onClose, onNext, ti
     <BottomSheet labelledBy="quick-chapter-name-title" onClose={busy ? undefined : onClose}>
       <section className="quick-chapter-sheet">
         <h2 id="quick-chapter-name-title">Chapter {chapterNumber}</h2>
-        <p>Name it - then add the image. Up to 2,000 characters each.</p>
+        <p>Name it — then write the page. Up to 2,000 characters each.</p>
         <input
           autoFocus
           maxLength={120}
@@ -227,26 +231,6 @@ function QuickChapterNameSheet({ busy, chapterNumber, error, onClose, onNext, ti
         />
         {error ? <small className="quick-chapter-error">{error}</small> : null}
         <button disabled={busy || !trimmed} onClick={onNext} type="button">Create & write</button>
-      </section>
-    </BottomSheet>
-  );
-}
-
-function QuickChapterImageSheet({ busy, error, image, onBack, onClose, onDone, onPick }) {
-  const inputRef = useRef(null);
-  return (
-    <BottomSheet labelledBy="quick-chapter-image-title" onClose={busy ? undefined : onClose}>
-      <section className="quick-chapter-sheet quick-chapter-image-sheet">
-        <header>
-          <button aria-label="Back to chapter name" disabled={busy} onClick={onBack} type="button"><FiArrowLeft /></button>
-          <div><h2 id="quick-chapter-image-title">Add the image</h2><p>This becomes the first block in the new chapter.</p></div>
-        </header>
-        <button className={`quick-chapter-image-drop ${image?.url ? "has-image" : ""}`} disabled={busy} onClick={() => inputRef.current?.click()} type="button">
-          {image?.url ? <img alt="New chapter" src={image.url} /> : <><FiImage /><span>Upload chapter image</span></>}
-        </button>
-        <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) onPick(file); }} ref={inputRef} type="file" />
-        {error ? <small className="quick-chapter-error">{error}</small> : null}
-        <button disabled={busy || !image?.file} onClick={onDone} type="button">{busy ? "Adding..." : "Done"}</button>
       </section>
     </BottomSheet>
   );
@@ -756,7 +740,9 @@ export default function WorldReaderPage() {
   const [comment, setComment] = useState("");
   const [commentPostPending, setCommentPostPending] = useState(false);
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
-  const [experienceChaptersOpen, setExperienceChaptersOpen] = useState(false);
+  const [experienceChaptersOpen, setExperienceChaptersOpen] = useState(true);
+  const [experienceSettingsOpen, setExperienceSettingsOpen] = useState(false);
+  const [tagPeopleOpen, setTagPeopleOpen] = useState(false);
   const [sheet, setSheet] = useState(new URLSearchParams(location.search).get("worldPanel") || "");
   const [showPremiumWelcome, setShowPremiumWelcome] = useState(false);
   const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
@@ -775,7 +761,6 @@ export default function WorldReaderPage() {
   const [activeStory, setActiveStory] = useState(null);
   const [quickChapterStep, setQuickChapterStep] = useState("");
   const [quickChapterTitle, setQuickChapterTitle] = useState("");
-  const [quickChapterImage, setQuickChapterImage] = useState(null);
   const [quickChapterSaving, setQuickChapterSaving] = useState(false);
   const [quickChapterError, setQuickChapterError] = useState("");
   const [worldSettingsOpen, setWorldSettingsOpen] = useState(false);
@@ -816,7 +801,7 @@ export default function WorldReaderPage() {
   const moderatorCandidates = useQuery({
     queryKey: ["world-moderator-candidates", publicationId],
     queryFn: () => api.getWorldModeratorCandidates(publicationId).then((response) => response.data.data.candidates || []),
-    enabled: Boolean(owner && publicationId && sheet === "moderators"),
+    enabled: Boolean(owner && publicationId && (sheet === "moderators" || (experience && experienceSettingsOpen && tagPeopleOpen))),
     retry: false,
   });
   const pricingQuery = useQuery({
@@ -880,6 +865,15 @@ export default function WorldReaderPage() {
     },
     onError: (error) => showToast(error?.response?.data?.message || "World price could not be updated."),
   });
+  const archiveExperience = useMutation({
+    mutationFn: () => api.archivePublication(publicationId, managedPublication.statusVersion),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      showToast("Experience removed from sale.");
+      navigate(creator.username ? `/profile/${creator.username}` : "/profile", { replace: true });
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Experience could not be removed from sale."),
+  });
   const coverUpload = useMutation({
     mutationFn: (file) => api.uploadWorldCover(publicationId, file, setCoverProgress),
     onSuccess: async () => {
@@ -932,10 +926,6 @@ export default function WorldReaderPage() {
   useEffect(() => () => {
     if (storyDraft?.url) URL.revokeObjectURL(storyDraft.url);
   }, [storyDraft?.url]);
-
-  useEffect(() => () => {
-    if (quickChapterImage?.url) URL.revokeObjectURL(quickChapterImage.url);
-  }, [quickChapterImage?.url]);
 
   useEffect(() => {
     if (!introPriceToast) return undefined;
@@ -1074,29 +1064,12 @@ export default function WorldReaderPage() {
     setQuickChapterStep("");
     setQuickChapterTitle("");
     setQuickChapterError("");
-    setQuickChapterImage((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return null;
-    });
   };
 
   const startQuickChapterFlow = () => {
     setQuickChapterTitle("");
     setQuickChapterError("");
-    setQuickChapterImage((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return null;
-    });
     setQuickChapterStep("name");
-  };
-
-  const pickQuickChapterImage = (file) => {
-    if (!file) return;
-    setQuickChapterError("");
-    setQuickChapterImage((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return { file, url: URL.createObjectURL(file) };
-    });
   };
 
   const saveQuickChapter = async () => {
@@ -1104,10 +1077,6 @@ export default function WorldReaderPage() {
     if (!title) {
       setQuickChapterError("Name this chapter first.");
       setQuickChapterStep("name");
-      return;
-    }
-    if (!quickChapterImage?.file) {
-      setQuickChapterError("Add an image before saving.");
       return;
     }
     setQuickChapterSaving(true);
@@ -1124,32 +1093,8 @@ export default function WorldReaderPage() {
         statusVersion: editable.statusVersion,
         title,
       }).then((response) => response.data.data.chapter);
-      editable = await api.getMyPublication(publicationId).then((response) => response.data.data.publication);
-      const chapter = editable.chapters?.find((item) => item.stableChapterId === added.stableChapterId) || editable.chapters?.[editable.chapters.length - 1];
-      if (!chapter?.stableChapterId) throw new Error("Chapter was created, but could not be reopened.");
-
-      const blockId = crypto.randomUUID();
-      const uploaded = await api.uploadMedia(publicationId, quickChapterImage.file, {
-        blockId,
-        chapterId: chapter.stableChapterId,
-        mediaType: "IMAGE",
-        purpose: "BLOCK",
-      }).then((response) => response.data.data);
-      await api.updateChapter(publicationId, chapter.stableChapterId, {
-        blocks: [{ id: blockId, media: uploaded, order: 0, type: "IMAGE" }],
-        isPreview: Boolean(chapter.isPreview || editable.pricing?.mode === "FREE"),
-        releaseMode: chapter.releaseMode || "IMMEDIATE",
-        statusVersion: editable.statusVersion,
-        title,
-      });
-
-      const next = await api.getMyPublication(publicationId).then((response) => response.data.data.publication);
-      queryClient.setQueryData(["world", id], (current) => current ? { ...current, ...next } : next);
-      queryClient.setQueryData(["world-management", publicationId], (current) => current ? { ...current, publication: { ...(current.publication || {}), ...next } } : current);
-      await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      setExperienceChaptersOpen(true);
       resetQuickChapterFlow();
-      showToast("Chapter added.");
+      navigate(`/studio/experiences/${publicationId}/edit?chapter=${encodeURIComponent(added.stableChapterId)}`);
     } catch (error) {
       setQuickChapterError(error?.response?.data?.message || error?.message || "Chapter could not be added.");
     } finally {
@@ -1176,9 +1121,28 @@ export default function WorldReaderPage() {
     ? "Free Experience · every chapter is open"
     : `Premium Experience · ${STAR}${priceStars || managedPublication.pricing?.starsAmount || 0} · one-time`;
 
+  if (experience && owner && sheet === "actions") return (
+    <article className="experience-actions-page">
+      <header>
+        <button aria-label="Back to Experience" onClick={() => setSheet("")} type="button"><FiArrowLeft /></button>
+        <h1>{managedPublication.title}</h1>
+        <p>{managedPublication.pricing?.mode === "FREE" ? "Free Experience" : `Premium Experience · ${STAR}${priceStars || managedPublication.pricing?.starsAmount || 0} · one-time`}</p>
+      </header>
+      <nav aria-label="Experience actions">
+        <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
+        <button onClick={async () => { await navigator.clipboard.writeText(window.location.href); showToast("Experience link copied."); }} type="button"><FiLink /><span><b>Access by link</b><small>send a link — you confirm who enters</small></span></button>
+        <button onClick={() => navigate(`/studio/experiences/${publicationId}/edit`)} type="button"><FiEdit3 /><span><b>Edit</b><small>title, path, price, chapters</small></span></button>
+        <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
+        <button disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
+        <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product’s own cleanup team</small></span></button>
+        <button className="is-remove" disabled={archiveExperience.isPending} onClick={() => window.confirm("Remove this Experience from sale? Buyers keep their permanent access.") && archiveExperience.mutate()} type="button"><FiTrash2 /><span><b>{archiveExperience.isPending ? "Removing…" : "Remove from sale"}</b><small>buyers keep it forever</small></span></button>
+      </nav>
+    </article>
+  );
+
   return (
     <>
-      <article className="world-prototype-page">
+      <article className={`world-prototype-page ${experience ? "is-experience-detail" : ""}`}>
         <header className="world-prototype-top">
           <button aria-label="Back to profile" onClick={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
           <div>
@@ -1225,10 +1189,32 @@ export default function WorldReaderPage() {
         ) : null}
 
         {experience ? (
-          <button className="experience-detail-settings" onClick={() => owner && setSheet("actions")} type="button">
-            <span><FiSettings /> Settings</span>
-            <FiChevronRight />
-          </button>
+          <section className={`experience-detail-settings-panel ${experienceSettingsOpen ? "is-open" : ""}`}>
+            <button aria-expanded={experienceSettingsOpen} className="experience-detail-settings" onClick={() => owner && setExperienceSettingsOpen((open) => !open)} type="button">
+              <span><FiSettings /> Settings</span>
+              <FiChevronRight />
+            </button>
+            {owner && experienceSettingsOpen ? (
+              <div className="experience-detail-settings-list">
+                <button onClick={() => setStoryUploadSheetOpen(true)} type="button"><FiPlus /><span>Add to your story</span></button>
+                <button disabled={updateWorld.isPending} onClick={() => updateWorld.mutate({ allowDownload: !managedPublication.allowDownload })} type="button"><FiUpload /><span>Allow download</span><b>{managedPublication.allowDownload ? "✓" : "Off"}</b></button>
+                <button aria-expanded={tagPeopleOpen} onClick={() => setTagPeopleOpen((open) => !open)} type="button"><FiUserPlus /><span>Tag people</span><b>{managedPublication.taggedPeople?.length || "None"}</b></button>
+                {tagPeopleOpen ? <div className="experience-tag-people-list">
+                  {moderatorCandidates.isLoading ? <small>Loading people…</small> : (moderatorCandidates.data || []).map((person) => {
+                    const personId = String(person.id || person._id);
+                    const selected = (managedPublication.taggedPeople || []).map(String).includes(personId);
+                    return <button className={selected ? "is-selected" : ""} disabled={updateWorld.isPending} key={personId} onClick={() => updateWorld.mutate({ taggedPeople: selected ? managedPublication.taggedPeople.filter((taggedId) => String(taggedId) !== personId) : [...(managedPublication.taggedPeople || []), personId] })} type="button"><FanAvatar user={person} /><span><b>{person.name || person.username}</b><small>@{person.username}</small></span><i>{selected ? "✓" : "+"}</i></button>;
+                  })}
+                </div> : null}
+                <button className="is-danger-muted" disabled={archiveExperience.isPending} onClick={() => window.confirm("Remove this Experience from sale?") && archiveExperience.mutate()} type="button"><FiArchive /><span>{archiveExperience.isPending ? "Removing…" : "Remove from sale"}</span></button>
+                <button className="experience-premium-world-setting" disabled={updateWorld.isPending} onClick={() => updateWorld.mutate({ includedInWorld: !managedPublication.includedInWorld })} type="button">
+                  <i>{PLANET}</i>
+                  <span><strong>Include in my Premium World</strong><small>World members get it with their subscription</small></span>
+                  <b>{managedPublication.includedInWorld ? "✓" : "Off"}</b>
+                </button>
+              </div>
+            ) : null}
+          </section>
         ) : null}
 
         {!experience ? (
@@ -1348,7 +1334,9 @@ export default function WorldReaderPage() {
                     <button
                       className="world-prototype-chapter-row"
                       key={chapter.stableChapterId || chapter.id || index}
-                      onClick={() => locked ? setShowExperienceUnlock(true) : setActiveChapterIndex(index)}
+                      onClick={() => owner
+                        ? navigate(`/studio/experiences/${publicationId}/edit?chapter=${encodeURIComponent(chapter.stableChapterId)}`)
+                        : locked ? setShowExperienceUnlock(true) : setActiveChapterIndex(index)}
                       type="button"
                     >
                       <span>{index + 1}</span>
@@ -1465,22 +1453,10 @@ export default function WorldReaderPage() {
               setQuickChapterError("Name this chapter first.");
               return;
             }
-            setQuickChapterError("");
-            setQuickChapterStep("image");
+            saveQuickChapter();
           }}
           onTitleChange={setQuickChapterTitle}
           title={quickChapterTitle}
-        />
-      ) : null}
-      {quickChapterStep === "image" ? (
-        <QuickChapterImageSheet
-          busy={quickChapterSaving}
-          error={quickChapterError}
-          image={quickChapterImage}
-          onBack={() => !quickChapterSaving && setQuickChapterStep("name")}
-          onClose={resetQuickChapterFlow}
-          onDone={saveQuickChapter}
-          onPick={pickQuickChapterImage}
         />
       ) : null}
       {sheet === "actions" ? (

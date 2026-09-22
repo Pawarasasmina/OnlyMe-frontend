@@ -13,17 +13,19 @@ function activityTitle(item) {
   const person = item.counterparty?.name;
   const publication = item.publication?.title;
   if (item.event === "CREDIT_ADMIN") return "Coin pack";
-  if (item.event.includes("DA_")) return `Direct Access${person ? ` · ${person}` : ""}`;
-  if (item.event.includes("CALL_")) return `Call${person ? ` · ${person}` : ""}`;
-  if (item.event.includes("GIFT")) return `Gift${person ? ` · ${person}` : ""}`;
-  if (item.event.includes("PREMIUM")) return publication || `World month${person ? ` · ${person}` : ""}`;
-  if (item.event.includes("WORLD")) return publication || "World unlock";
+  if (item.event.includes("DA_")) return person ? `${person} unlocked your question` : "Direct Access unlocked";
+  if (item.event.includes("CALL_")) return person ? `${person} booked a call` : "Paid call";
+  if (item.event.includes("GIFT")) return person ? `${person} sent a gift` : "Gift received";
+  if (item.event.includes("DREAM")) return person ? `${person} supported your dream${publication ? ` “${publication}”` : ""}` : publication || "Dream support";
+  if (item.event.includes("PREMIUM")) return person ? `${person} subscribed to your World` : publication || "World subscription";
+  if (item.event.includes("WORLD")) return person ? `${person} bought ${publication || "your World"}` : publication || "World unlock";
   return item.event.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function ActivityRow({ item, rate, income = false }) {
   const positive = Number(item.starsChange) >= 0;
-  return <article className="wallet-prototype-activity-row"><div className="wallet-prototype-activity-copy">{income && item.counterparty?.avatar ? <img alt="" src={item.counterparty.avatar} /> : null}<span><strong>{activityTitle(item)}</strong><small>{item.counterparty?.username ? `@${item.counterparty.username} · ` : ""}{new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small></span></div><b className={positive ? "is-credit" : "is-debit"}>{positive ? "+" : "−"} {income ? money(Math.abs(item.starsChange) / rate) : <>{STAR}{Math.abs(item.starsChange).toLocaleString()}</>}</b></article>;
+  const initials = (item.counterparty?.name || item.counterparty?.username || "S").split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+  return <article className="wallet-prototype-activity-row"><div className="wallet-prototype-activity-copy">{income ? <span className="wallet-prototype-avatar">{item.counterparty?.avatar ? <img alt="" src={item.counterparty.avatar} /> : <b>{initials}</b>}</span> : null}<span><strong>{activityTitle(item)}</strong><small>{item.counterparty?.username ? `@${item.counterparty.username} · ` : ""}{new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small></span></div><b className={positive ? "is-credit" : "is-debit"}>{positive ? "+" : "−"} {income ? money(Math.abs(item.starsChange) / rate) : <>{STAR}{Math.abs(item.starsChange).toLocaleString()}</>}</b></article>;
 }
 
 export default function WalletPage() {

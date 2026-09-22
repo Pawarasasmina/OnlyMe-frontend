@@ -255,6 +255,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const saveDraftRef = useRef(null);
   const worldEditVersionRef = useRef(0);
   const storySaveResolvers = useRef(new Map());
+  const deepLinkedChapterOpenedRef = useRef(false);
   const [world, setWorld] = useState(() => freshWorld(experience));
   const [storyPreviews, setStoryPreviews] = useState([]);
   const [activeStoryId, setActiveStoryId] = useState("");
@@ -333,6 +334,19 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   useEffect(() => {
     loadWorld();
   }, [loadWorld]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const chapterId = params.get("chapter");
+    if (!experience || loading || !chapterId || deepLinkedChapterOpenedRef.current) return;
+    const index = (world.chapters || []).findIndex((chapter) => chapter.stableChapterId === chapterId);
+    if (index < 0) return;
+    deepLinkedChapterOpenedRef.current = true;
+    setExperienceStep(2);
+    setActiveChapter(index);
+    setChapterStory(chapterStoryText(world.chapters[index]));
+    setChapterStatus("");
+  }, [experience, loading, location.search, world.chapters]);
 
   useEffect(() => {
     storyPreviewsRef.current = storyPreviews;
@@ -759,8 +773,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (!activePlanetEditorChapter) return;
     const saved = await updateActiveChapterBlocks(chapterBlocksWithStory(activePlanetEditorChapter, chapterStory), "Saving chapter...");
     if (saved) {
+      const openedDirectly = new URLSearchParams(location.search).has("chapter");
       setActiveChapter(null);
       setChapterStatus("");
+      if (openedDirectly && world.id) nav(`/experience/${world.id}`, { replace: true });
     }
   };
 

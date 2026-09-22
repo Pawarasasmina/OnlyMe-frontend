@@ -669,19 +669,26 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
 
 function ProfileGiftStrip({ profile, viewerCapabilities }) {
   const [giftsOpen, setGiftsOpen] = useState(false);
-  const query = useQuery({
+  const dreamQuery = useQuery({
     queryKey: ["creator-dream", profile?.username],
     queryFn: () => dreamService.getCreatorDream(profile.username).then((response) => response.data.data),
-    enabled: profile?.role === "creator" && Boolean(profile?.username),
+    enabled: profile?.role === "creator" && Boolean(profile?.username) && !viewerCapabilities.isOwner,
     retry: false,
     staleTime: 30000,
   });
-  if (profile?.role === "creator" && (query.isLoading || query.isError)) return null;
+  const receivedQuery = useQuery({
+    queryKey: ["profile", "received-gifts"],
+    queryFn: () => profileService.getOwnReceivedGifts().then((response) => response.data.data),
+    enabled: viewerCapabilities.isOwner,
+    retry: false,
+    staleTime: 30000,
+  });
+  if (!viewerCapabilities.isOwner && profile?.role === "creator" && (dreamQuery.isLoading || dreamQuery.isError)) return null;
   if (profile?.role !== "creator" && !viewerCapabilities.isOwner) return null;
-  const dream = query.data?.dream;
-  const gifts = query.data?.gifts || [];
+  const dream = dreamQuery.data?.dream;
+  const gifts = viewerCapabilities.isOwner ? receivedQuery.data?.gifts || [] : dreamQuery.data?.gifts || [];
   const supporters = dream?.supporters || [];
-  const count = Number(dream?.supporterCount || supporters.length || 0);
+  const count = viewerCapabilities.isOwner ? Number(receivedQuery.data?.total || gifts.length || 0) : Number(dream?.supporterCount || supporters.length || 0);
   if (!dream && !gifts.length && !viewerCapabilities.isOwner) return null;
   return (
     <>
@@ -691,8 +698,8 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
         {!gifts.length ? <i><FiGift /></i> : null}
       </span>
       <span className="profile-gift-copy">
-        <b>{viewerCapabilities.isOwner ? (count ? `${compact(count)} ${count === 1 ? "supporter" : "supporters"}` : "Gifts") : `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}`}</b>
-        <small>{dream ? "Dream support and received gifts" : "Gift support opens with Dream"}</small>
+        <b>{viewerCapabilities.isOwner ? `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}` : `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}`}</b>
+        {!viewerCapabilities.isOwner ? <small>{dream ? "Dream support and received gifts" : "Gift support opens with Dream"}</small> : null}
       </span>
       <FiChevronRight />
     </button>
@@ -702,6 +709,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
 }
 
 function ReceivedGiftsSheet({ isOpen, onClose }) {
+  const [sheetPosition, setSheetPosition] = useState(undefined);
   const query = useQuery({
     queryKey: ["profile", "received-gifts"],
     queryFn: () => profileService.getOwnReceivedGifts().then((response) => response.data.data),
@@ -714,20 +722,36 @@ function ReceivedGiftsSheet({ isOpen, onClose }) {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [isOpen, onClose]);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setSheetPosition({ "--profile-gifts-center-x": `${bounds.left + bounds.width / 2}px` });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
   if (!isOpen) return null;
   const gifts = query.data?.gifts || [];
-  return <div aria-labelledby="received-gifts-title" aria-modal="true" className="fixed inset-0 z-[190] flex items-end justify-center bg-black/75" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog">
-    <section className="max-h-[88dvh] min-h-[55dvh] w-full max-w-lg overflow-y-auto rounded-t-[22px] border border-b-0 border-white/10 bg-[#0b0f14] px-5 pb-10 pt-3 text-white shadow-2xl">
-      <span className="mx-auto block h-1 w-10 rounded-full bg-white/30" />
-      <header className="mt-5 flex items-start justify-between"><div><h2 className="flex items-center gap-2 text-base font-black" id="received-gifts-title"><FiGift /> My gifts</h2><p className="mt-1 text-[11px] text-white/45">{query.isLoading ? "Loading..." : `${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}`}</p></div><button aria-label="Close gifts" className="grid h-8 w-8 place-items-center rounded-full text-white/55 hover:bg-white/5" onClick={onClose} type="button"><FiX /></button></header>
+  return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog" style={sheetPosition}>
+    <section className="profile-received-gifts-sheet">
+      <span className="profile-received-gifts-handle" />
+      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">My gifts</h2><p>{query.isLoading ? "Loading..." : `${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}`}</p></div></header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
-      <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-7">
-        {gifts.map((gift) => <article className="min-w-0 text-center" key={gift.id}>
-          <span className="mx-auto grid h-24 w-24 max-w-full place-items-center"><img alt={gift.name} className="max-h-full max-w-full object-contain drop-shadow-[0_8px_14px_rgba(80,130,255,.3)]" src={gift.imageUrl} /></span>
-          <strong className="mt-2 block truncate text-[11px]">{gift.name}</strong>
-          <small className="mt-1 block truncate text-[9px] text-[#9CCBFF]">{gift.sender?.name || "Someone"}</small>
-          <small className="mt-0.5 block text-[8px] font-bold uppercase tracking-wide text-white/35">{gift.source}</small>
+      <div className="profile-received-gifts-grid">
+        {gifts.map((gift) => <article className="profile-received-gift" key={gift.id}>
+          <span><img alt={gift.name} src={gift.imageUrl} /></span>
+          <strong>{gift.name}</strong>
+          <small>{gift.sender?.name || "Someone"}{gift.visibility && gift.visibility !== "EVERYONE" ? ` · ${gift.visibility.toLowerCase()}` : ""}</small>
         </article>)}
       </div>
     </section>
