@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCheck, FiChevronRight, FiEdit2, FiGift, FiMoreHorizontal, FiShare2, FiTrash2, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiChevronRight, FiEdit2, FiMoreHorizontal, FiShare2, FiTrash2, FiX } from "react-icons/fi";
 import { dreamService } from "../../services/dreamService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
@@ -251,7 +251,7 @@ export function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
   );
 }
 
-function DreamEntryRow({ dream, isOwner, onCreate, onGift, onMenu }) {
+function DreamEntryRow({ dream, isOwner, onCreate, onMenu }) {
   if (!dream) {
     return (
       <button className="profile-dream-entry" onClick={onCreate} type="button">
@@ -264,20 +264,16 @@ function DreamEntryRow({ dream, isOwner, onCreate, onGift, onMenu }) {
 
   return (
     <div className={`profile-dream-live ${isOwner ? "is-owner" : "is-supportable"}`}>
-      {isOwner ? <div className="profile-dream-head">
-        <p>My Dream</p>
-        <button aria-label="Open Dream menu" className="profile-dream-menu-trigger" onClick={onMenu} type="button"><FiMoreHorizontal /></button>
-      </div> : null}
-      <div className="profile-dream-main">
-        {dream.photo?.url ? <img alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover" src={dream.photo.url} /> : <span>{dream.emoji || SPARKLE}</span>}
-        <div>
-          <h2>{dream.title}</h2>
-          <p>{dream.reason}</p>
+      <div className={`profile-dream-story ${dream.photo?.url ? "has-photo" : ""}`}>
+        {dream.photo?.url ? <img alt="" className="profile-dream-thumbnail" src={dream.photo.url} /> : null}
+        <div className="profile-dream-story-copy">
+          <div className="profile-dream-main">
+            <h2><span aria-hidden="true">{dream.emoji || SPARKLE}</span>{dream.title}</h2>
+            {isOwner ? <button aria-label="Open Dream menu" className="profile-dream-menu-trigger" onClick={onMenu} type="button"><FiMoreHorizontal /></button> : null}
+          </div>
+          <p className="profile-dream-reason">“{dream.reason}”</p>
         </div>
       </div>
-      {!isOwner && dream.status === "ACTIVE" ? (
-        <button className="profile-dream-gift" onClick={onGift} type="button"><FiGift /> Help Make It Happen</button>
-      ) : null}
     </div>
   );
 }
@@ -352,32 +348,28 @@ export default function ProfileDream({ capabilities, profile, role }) {
 
   return (
     <section className={`profile-dream-card ${dream ? "" : "is-empty"}`}>
-      <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onGift={() => setPicker(true)} onMenu={() => setMenuOpen(true)} />
+      <div className="profile-dream-section-head">
+        <h2>Dream</h2>
+        {dream?.cameTrueCount > 0 ? <span>{dream.cameTrueCount} CAME TRUE</span> : null}
+      </div>
+      <div className="profile-dream-panel">
+        <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onMenu={() => setMenuOpen(true)} />
 
-      {dream && capabilities.isOwner ? (
-        <>
-          <div className="profile-dream-progress"><i style={{ width: `${progress}%` }} /></div>
-          <div className="profile-dream-meta">
-            <span>{STAR}{dream.receivedStars.toLocaleString()} of {STAR}{dream.goalStars.toLocaleString()}</span>
-            <span>{dream.supporterCount} supporters - {progress}%</span>
-          </div>
-          {dream.status === "COMPLETED" ? (
-            <p className="profile-dream-complete"><FiCheck /> Dream completed</p>
-          ) : null}
-          {dream.supporters?.length ? (
-            <div className="profile-dream-supporters">
-              <p>Recent supporters</p>
-              <div>
-                {dream.supporters.slice(0, 6).map((supporter, index) => (
-                  supporter.avatar
-                    ? <img alt={supporter.name} key={`${supporter.username}-${index}`} src={supporter.avatar} />
-                    : <span key={`${supporter.username}-${index}`}>{supporter.name?.slice(0, 1)}</span>
-                ))}
-              </div>
+        {dream ? (
+          <>
+            <div className="profile-dream-progress-row"><div className="profile-dream-progress"><i style={{ width: `${progress}%` }} /></div><b>{progress}%</b></div>
+            <div className="profile-dream-meta">
+              <span>{dream.supporterCount} in this story</span>
+              {capabilities.isOwner
+                ? <button onClick={() => navigate("/profile/dream")} type="button">Edit <FiChevronRight /></button>
+                : dream.status === "ACTIVE" ? <button onClick={() => setPicker(true)} type="button">Help make it happen <FiChevronRight /></button> : null}
             </div>
-          ) : null}
-        </>
-      ) : null}
+            {dream.status === "COMPLETED" && capabilities.isOwner ? (
+              <p className="profile-dream-complete"><FiCheck /> Dream completed</p>
+            ) : null}
+          </>
+        ) : null}
+      </div>
 
       {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={() => query.refetch()} /> : null}
       {menuOpen && dream ? (

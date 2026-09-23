@@ -519,6 +519,7 @@ function ShareSheet({ onClose, publication, viewerId }) {
   const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState("");
   const { showToast } = useFanToast();
+  const shareNoun = publication?.kind === "EXPERIENCE" ? "Experience" : "World";
   const url = shareUrlFor(publication);
   const recipients = useShareRecipients({ enabled: true, query: search, viewerId });
   const sendMutation = useSendSharedContent();
@@ -569,11 +570,11 @@ function ShareSheet({ onClose, publication, viewerId }) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      showToast("World link copied.");
+      showToast(`${shareNoun} link copied.`);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
       setError("Could not copy this link.");
-      showToast("Could not copy the world link.");
+      showToast(`Could not copy the ${shareNoun.toLowerCase()} link.`);
     }
   };
   const shareToStory = async () => {
@@ -704,30 +705,67 @@ function WorldStoryViewer({ creator, onClose, story, title }) {
 }
 
 function ChapterBlock({ block }) {
-  if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type)) return <p className={`world-chapter-reader-text ${block.type === "HIGHLIGHT" ? "is-highlight" : ""}`}>{block.text}</p>;
-  if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt="Chapter attachment" className="world-chapter-reader-image" src={block.media.secureUrl} />;
-  if (block.type === "VIDEO" && block.media?.secureUrl) return <video className="world-chapter-reader-video" controls playsInline preload="metadata" src={block.media.secureUrl} />;
-  if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio className="world-chapter-reader-audio" controls preload="metadata" src={block.media.secureUrl} />;
-  if (block.type === "LINK" && block.url) return <a className="world-chapter-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || "Open link"}</a>;
+  if (block.type === "KEY_POINT") return <section className="seen-reader-keypoint"><span>KEY POINT</span><p>{block.text}</p></section>;
+  if (block.type === "HIGHLIGHT") return <p className="seen-reader-paragraph"><mark>{block.text}</mark></p>;
+  if (block.type === "TEXT") return <p className="seen-reader-paragraph">{block.text}</p>;
+  if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt="Chapter attachment" className="seen-reader-media" src={block.media.secureUrl} />;
+  if (block.type === "VIDEO" && block.media?.secureUrl) return <video className="seen-reader-media" controls playsInline preload="metadata" src={block.media.secureUrl} />;
+  if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio className="seen-reader-audio" controls preload="metadata" src={block.media.secureUrl} />;
+  if (block.type === "LINK" && block.url) return <a className="seen-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || "Open link"}<FiArrowUpRight /></a>;
   return null;
 }
 
-function ChapterExperience({ chapter, chapterIndex, chapters, onBack, onSelect }) {
+function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, onBack, onSelect }) {
   const blocks = [...(chapter.blocks || [])].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  const nextChapter = () => {
+    if (chapterIndex < chapters.length - 1) onSelect(chapterIndex + 1);
+    else onBack();
+  };
+  const handleScreenClick = (event) => {
+    if (event.target.closest?.("a, button, input, textarea, select, video, audio")) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (event.clientX - bounds.left < bounds.width * 0.3 && chapterIndex > 0) onSelect(chapterIndex - 1);
+    else nextChapter();
+  };
   return (
-    <article className="world-chapter-reader">
-      <header className="world-chapter-reader-head">
-        <button aria-label="Back to World" onClick={onBack} type="button"><FiArrowLeft /></button>
-        <div><small>Chapter {chapterIndex + 1} of {chapters.length}</small><h1>{chapter.title || `Chapter ${chapterIndex + 1}`}</h1></div>
+    <article className="experience-chapter-preview experience-public-chapter">
+      <header>
+        <button aria-label="Back to Experience overview" onClick={onBack} type="button"><FiX /></button>
+        <div><small>CHAPTER {chapterIndex + 1} OF {chapters.length} {"\u00b7"} {experienceTitle}</small><h1>{chapter.title || `Chapter ${chapterIndex + 1}`}</h1></div>
+        <span>EXPERIENCE</span>
       </header>
-      <nav aria-label="Chapter progress" className="world-chapter-reader-progress">
-        {chapters.map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index === chapterIndex ? "is-current" : ""} key={item.stableChapterId || index} onClick={() => onSelect(index)} type="button" />)}
-      </nav>
-      <section className="world-chapter-reader-content">
-        {blocks.length ? blocks.map((block, index) => <ChapterBlock block={block} key={block.id || index} />) : <p className="world-chapter-reader-empty">This chapter has no published content yet.</p>}
-      </section>
+      <div className="experience-chapter-preview-progress">{chapters.map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index <= chapterIndex ? "is-active" : ""} key={item.stableChapterId || item.id || index} onClick={() => onSelect(index)} type="button" />)}</div>
+      <main onClick={handleScreenClick}>
+        <section className="experience-chapter-preview-content">{blocks.length ? blocks.map((block, index) => <ChapterBlock block={block} key={block.id || index} />) : <p>This chapter has no published content yet.</p>}</section>
+        <div className="experience-chapter-preview-adjacent"><button disabled={chapterIndex === 0} onClick={() => chapterIndex > 0 && onSelect(chapterIndex - 1)} type="button">{chapterIndex > 0 ? `‹ ${chapters[chapterIndex - 1]?.title}` : ""}</button><button disabled={chapterIndex === chapters.length - 1} onClick={() => chapterIndex < chapters.length - 1 && onSelect(chapterIndex + 1)} type="button">{chapterIndex < chapters.length - 1 ? `${chapters[chapterIndex + 1]?.title} ›` : "Experience complete"}</button></div>
+        <div className="experience-chapter-preview-actions"><button aria-label="Back to Experience overview" onClick={onBack} type="button">←</button><button onClick={nextChapter} type="button">{chapterIndex < chapters.length - 1 ? "Next →" : "Back to overview"}</button></div>
+      </main>
     </article>
   );
+}
+
+function ExperienceVisitorOverview({ canView, chapters, onBack, onOpenChapter, onShare, onUnlock, publication }) {
+  const cover = publication.coverMedia?.secureUrl || publication.coverMedia?.thumbnailUrl;
+  const creatorName = publication.creator?.name || publication.creator?.username || "Creator";
+  const chapterWord = chapters.length === 1 ? "chapter" : "chapters";
+  return <article className="experience-viewer-page experience-public-viewer">
+    <header className="experience-viewer-head">
+      <button aria-label="Back to profile" onClick={onBack} type="button"><FiX /></button>
+      <button aria-label="Share Experience" className="experience-public-share" onClick={onShare} type="button"><FiArrowUpRight /></button>
+    </header>
+    <main>
+      <button aria-label={canView ? `Start ${publication.title}` : `Unlock ${publication.title}`} className="experience-viewer-media" onClick={() => canView ? onOpenChapter(0) : onUnlock()} type="button">{cover ? <img alt={`${publication.title} cover`} src={cover} /> : <span aria-hidden="true">{PLANET}</span>}</button>
+      <h1>{publication.title}</h1>
+      {publication.description || publication.summary ? <p>{publication.description || publication.summary}</p> : null}
+      <span className="experience-viewer-category">{publication.category || "Experience"}</span>
+      <p className="experience-public-creator">By {creatorName} {publication.creator?.verified ? <FiCheck aria-label="Verified creator" /> : null} {"\u00b7"} {chapters.length} {chapterWord}</p>
+      <div className="experience-viewer-chapters">
+        {chapters.map((chapter, index) => <button aria-label={canView ? `Open ${chapter.title}` : `${chapter.title} is locked`} key={chapter.stableChapterId || chapter.id || index} onClick={() => canView ? onOpenChapter(index) : onUnlock()} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{canView ? null : <FiLock aria-hidden="true" />}<b>›</b></button>)}
+      </div>
+      {!chapters.length ? <p>No chapters yet.</p> : null}
+      {!canView ? <section className="experience-unlock-panel"><span>ONE-TIME PURCHASE</span><p>Unlock every chapter permanently, including future updates.</p><button onClick={onUnlock} type="button">Unlock Experience {"\u00b7"} {STAR}{publication.pricing?.starsAmount}</button></section> : <footer className="seen-detail-engagement"><div className="seen-detail-start-meta"><span>{chapters.length} {chapterWord} {"\u00b7"} ~{Math.max(1, chapters.length)} min</span><span>Tap a chapter to start {"\u203a"}</span></div></footer>}
+    </main>
+  </article>;
 }
 
 export default function WorldReaderPage() {
@@ -959,7 +997,35 @@ export default function WorldReaderPage() {
   }
 
   if (activeChapterIndex !== null && experienceChapters[activeChapterIndex]) {
-    return <ChapterExperience chapter={experienceChapters[activeChapterIndex]} chapterIndex={activeChapterIndex} chapters={experienceChapters} onBack={() => setActiveChapterIndex(null)} onSelect={setActiveChapterIndex} />;
+    return <ChapterExperience
+      chapter={experienceChapters[activeChapterIndex]}
+      chapterIndex={activeChapterIndex}
+      chapters={experienceChapters}
+      experienceTitle={managedPublication.title}
+      onBack={() => setActiveChapterIndex(null)}
+      onSelect={setActiveChapterIndex}
+    />;
+  }
+
+  if (experience && !owner) {
+    return <>
+      <ExperienceVisitorOverview
+        canView={canViewMemberContent}
+        chapters={experienceChapters}
+        onBack={() => navigate(creator.username ? `/profile/${creator.username}` : -1)}
+        onOpenChapter={setActiveChapterIndex}
+        onShare={() => setSheet("share")}
+        onUnlock={() => user ? setShowExperienceUnlock(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })}
+        publication={managedPublication}
+      />
+      {sheet === "share" ? <ShareSheet onClose={() => setSheet("")} publication={managedPublication} viewerId={viewerId} /> : null}
+      <PurchaseWorldModal
+        onClose={() => setShowExperienceUnlock(false)}
+        onSuccess={() => query.refetch()}
+        open={showExperienceUnlock}
+        publication={publication}
+      />
+    </>;
   }
 
   const stories = storyItems(managedPublication, chapters);

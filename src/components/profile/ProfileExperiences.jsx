@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { FiArrowUpRight, FiCheck, FiLock, FiPlus } from "react-icons/fi";
 
-export default function ProfileExperiences({ experiences = [], owner = false, creatorName = "Creator" }) {
+export default function ProfileExperiences({ experiences = [], onCreate, owner = false, creatorName = "Creator" }) {
   if (!owner && !experiences.length) return null;
   return (
     <section className="profile-experiences">
       <header>
-        <div>{!owner ? <small>STRUCTURED JOURNEYS</small> : null}<h2>Experiences {!owner ? <span className="profile-coming-soon-badge">Coming soon</span> : null}</h2>{!owner ? <p>Guided creator journeys, chapter by chapter.</p> : null}</div>
-        {owner ? <span className="profile-experience-head-actions">{experiences.length > 1 ? <span>See all</span> : null}{experiences.length < 3 ? <Link aria-label="Create Premium Experience" to="/create/experience"><FiPlus /></Link> : null}</span> : null}
+        <div><h2>Experiences</h2></div>
+        {owner ? <span className="profile-experience-head-actions">{experiences.length > 1 ? <span>See all</span> : null}<button aria-label="Create" onClick={onCreate} type="button"><FiPlus /></button></span> : null}
       </header>
       <div className="profile-experience-grid">
         {experiences.map((item) => {

@@ -243,6 +243,13 @@ function GiftSettingsSheet({ isOpen, onClose }) {
     mutation.mutate(enabledGiftIds);
   };
 
+  const setAll = (enabled) => {
+    const gifts = query.data?.gifts || [];
+    const enabledGiftIds = enabled ? gifts.map((gift) => gift.id) : [];
+    queryClient.setQueryData(["settings", "gifts"], { gifts: gifts.map((gift) => ({ ...gift, enabled })) });
+    mutation.mutate(enabledGiftIds);
+  };
+
   return (
     <div aria-labelledby="gift-settings-title" aria-modal="true" className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-0 pt-10 sm:px-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !mutation.isPending) onClose(); }} role="dialog">
       <section className="max-h-[78vh] w-full max-w-[548px] overflow-y-auto rounded-t-[24px] border border-b-0 border-white/[0.09] bg-[#1d2430] px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]" onMouseDown={(event) => event.stopPropagation()}>
@@ -251,6 +258,10 @@ function GiftSettingsSheet({ isOpen, onClose }) {
           <div><h2 className="text-xl font-black text-white" id="gift-settings-title">Gifts</h2><p className="mt-1 text-xs text-atseen-muted">Choose which gifts people can send you.</p></div>
           <button aria-label="Close gift settings" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={onClose} type="button"><FiX /></button>
         </div>
+        {!query.isLoading && !query.isError ? <div className="mt-4 flex gap-2">
+          <button className="rounded-full border border-atseen-blue/40 bg-atseen-blue/10 px-4 py-2 text-xs font-black text-atseen-blue disabled:opacity-50" disabled={mutation.isPending || !(query.data?.gifts || []).some((gift) => !gift.enabled)} onClick={() => setAll(true)} type="button">Turn all on</button>
+          <button className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-black text-white/70 disabled:opacity-50" disabled={mutation.isPending || !(query.data?.gifts || []).some((gift) => gift.enabled)} onClick={() => setAll(false)} type="button">Turn all off</button>
+        </div> : null}
         {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">Unable to load gift settings.</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-left disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted">✦{Number(gift.stars).toLocaleString()}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
         {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{error}</p> : null}
       </section>

@@ -8,6 +8,7 @@ export const profileService = {
   getOwnViewers: (params = {}) => axiosInstance.get("/profiles/me/viewers", { params }),
   getOwnMedia: () => axiosInstance.get("/profiles/me/media"),
   getOwnReceivedGifts: () => axiosInstance.get("/profiles/me/gifts"),
+  getReceivedGifts: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/gifts`),
   getProfileMedia: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/media`),
   addProfileMedia: (file, caption = "") => {
     const formData = new FormData();
