@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { walletService } from "../../services/walletService";
+import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
 const STAR = "✦";
 const PACKS = [{ usd: 4.99, bonus: 0 }, { usd: 9.99, bonus: 5 }, { usd: 29.99, bonus: 20 }, { usd: 49.99, bonus: 50, badge: "Popular" }, { usd: 99.99, bonus: 150, badge: "Best value" }, { usd: 249.99, bonus: 500 }];
@@ -12,7 +13,7 @@ const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", cur
 function activityTitle(item) {
   const person = item.counterparty?.name;
   const publication = item.publication?.title;
-  if (item.event === "CREDIT_ADMIN") return "Coin pack";
+  if (["CREDIT_ADMIN", "WALLET_TOPUP_CREDIT"].includes(item.event)) return "Coin pack";
   if (item.event.includes("DA_")) return person ? `${person} unlocked your question` : "Direct Access unlocked";
   if (item.event.includes("CALL_")) return person ? `${person} booked a call` : "Paid call";
   if (item.event.includes("GIFT")) return person ? `${person} sent a gift` : "Gift received";
@@ -30,7 +31,10 @@ function ActivityRow({ item, rate, income = false }) {
 
 export default function WalletPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState("coins");
+  const [topUpBusy, setTopUpBusy] = useState(null);
+  const [topUpMessage, setTopUpMessage] = useState("");
   const walletQuery = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet), retry: false });
   const ledgerQuery = useQuery({ queryKey: ["wallet-ledger", 1], queryFn: () => walletService.getLedger({ page: 1, limit: 100 }).then((response) => response.data.data.items), retry: false });
   const wallet = walletQuery.data;
@@ -38,14 +42,31 @@ export default function WalletPage() {
   const incomeItems = useMemo(() => (ledgerQuery.data || []).filter((item) => creatorEvents.has(item.event)), [ledgerQuery.data]);
   const packs = useMemo(() => PACKS.map((pack) => ({ ...pack, base: Math.round(pack.usd * rate), total: Math.round(pack.usd * rate) + pack.bonus })), [rate]);
 
+  const topUp = async (pack) => {
+    const bonusCopy = pack.bonus ? `, including ${STAR}${pack.bonus} bonus` : "";
+    if (!window.confirm(`Add ${STAR}${pack.total.toLocaleString()} to your Wallet${bonusCopy}?`)) return;
+    setTopUpBusy(pack.usd);
+    setTopUpMessage("");
+    try {
+      await walletService.topUp(pack.usd, createIdempotencyKey("wallet-topup"));
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ["wallet"] }), queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] })]);
+      setTopUpMessage(`${STAR}${pack.total.toLocaleString()} added to your Wallet.`);
+    } catch (error) {
+      setTopUpMessage(error.response?.data?.message || "Could not top up your Wallet. Please try again.");
+    } finally {
+      setTopUpBusy(null);
+    }
+  };
+
   return <section className="wallet-prototype-page">
     <header className="wallet-prototype-header"><button aria-label="Go back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><h1>Wallet</h1></header>
     <div className="wallet-prototype-tabs" role="tablist"><button className={tab === "coins" ? "is-active" : ""} onClick={() => setTab("coins")} role="tab" type="button">Coins</button><button className={tab === "income" ? "is-active" : ""} onClick={() => setTab("income")} role="tab" type="button">Income</button></div>
     {walletQuery.isLoading ? <p className="wallet-prototype-state">Loading Wallet…</p> : walletQuery.isError ? <p className="wallet-prototype-state is-error">Wallet is unavailable.</p> : tab === "coins" ? <>
-      <section className="wallet-prototype-balance"><small>Your balance</small><strong>{STAR}{Number(wallet.balance || 0).toLocaleString()}</strong><span>≈ {money(wallet.balanceUsd)}</span><div><span>Your bonus&nbsp; {STAR}0</span><span>spent first · not withdrawable</span></div></section>
+      <section className="wallet-prototype-balance"><small>Your balance</small><strong>{STAR}{Number(wallet.balance || 0).toLocaleString()}</strong><span>≈ {money(wallet.balanceUsd)}</span><div><span>Your bonus&nbsp; {STAR}{Number(wallet.bonusBalance || 0).toLocaleString()}</span><span>spent first · not withdrawable</span></div></section>
       <h2 className="wallet-prototype-label">Top up</h2>
-      <div className="wallet-prototype-packs">{packs.map((pack) => <button aria-label={`Buy ${pack.total} Stars for ${money(pack.usd)}`} disabled key={pack.usd} title="Secure checkout is not connected yet" type="button">{pack.badge ? <em>{pack.badge}</em> : null}<strong>{STAR}{pack.total.toLocaleString()} {pack.bonus ? <small>+ {STAR}{pack.bonus} bonus</small> : null}</strong><span>{money(pack.usd)}</span></button>)}</div>
-      <p className="wallet-prototype-rate">{STAR}{rate.toLocaleString()} = $1 · Secure checkout · Coins never convert back to money</p>
+      <div className="wallet-prototype-packs">{packs.map((pack) => <button aria-label={`Add ${pack.total} Stars`} disabled={topUpBusy !== null} key={pack.usd} onClick={() => topUp(pack)} type="button">{pack.badge ? <em>{pack.badge}</em> : null}<strong>{STAR}{pack.total.toLocaleString()} {pack.bonus ? <small>+ {STAR}{pack.bonus} bonus</small> : null}</strong><span>{topUpBusy === pack.usd ? "Adding…" : money(pack.usd)}</span></button>)}</div>
+      {topUpMessage ? <p className="wallet-prototype-state" role="status">{topUpMessage}</p> : null}
+      <p className="wallet-prototype-rate">{STAR}{rate.toLocaleString()} = $1 · Direct top-up preview · Coins never convert back to money</p>
       <h2 className="wallet-prototype-label">Activity</h2>
       <div className="wallet-prototype-activity">{ledgerQuery.isLoading ? <p className="wallet-prototype-state">Loading activity…</p> : (ledgerQuery.data || []).length ? ledgerQuery.data.slice(0, 12).map((item) => <ActivityRow item={item} key={item.id} rate={rate} />) : <p className="wallet-prototype-state">No Stars activity yet.</p>}</div>
     </> : <>
