@@ -7,13 +7,15 @@ import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
 const STAR = "✦";
 const PACKS = [{ usd: 4.99, bonus: 0 }, { usd: 9.99, bonus: 5 }, { usd: 29.99, bonus: 20 }, { usd: 49.99, bonus: 50, badge: "Popular" }, { usd: 99.99, bonus: 150, badge: "Best value" }, { usd: 249.99, bonus: 500 }];
-const creatorEvents = new Set(["WORLD_CREATOR_EARNING", "PREMIUM_CREATOR_EARNING", "DREAM_CREATOR_EARNING", "CHAT_GIFT_EARNING", "DA_CREATOR_EARNING", "CALL_CREATOR_EARNING", "CREATOR_EARNING_REVERSAL"]);
+const creatorEvents = new Set(["WORLD_CREATOR_EARNING", "PREMIUM_CREATOR_EARNING", "DREAM_CREATOR_EARNING", "CHAT_GIFT_EARNING", "DA_CREATOR_EARNING", "CALL_CREATOR_EARNING"]);
 const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(Number(value || 0));
 
 function activityTitle(item) {
   const person = item.counterparty?.name;
   const publication = item.publication?.title;
   if (["CREDIT_ADMIN", "WALLET_TOPUP_CREDIT"].includes(item.event)) return "Coin pack";
+  if (item.event === "INCOME_CONVERSION_DEBIT") return "Creator income converted";
+  if (item.event === "INCOME_CONVERSION_CREDIT") return "Coins from creator income";
   if (item.event.includes("DA_")) return person ? `${person} unlocked your question` : "Direct Access unlocked";
   if (item.event.includes("CALL_")) return person ? `${person} booked a call` : "Paid call";
   if (item.event.includes("GIFT")) return person ? `${person} sent a gift` : "Gift received";
@@ -27,6 +29,14 @@ function ActivityRow({ item, rate, income = false }) {
   const positive = Number(item.starsChange) >= 0;
   const initials = (item.counterparty?.name || item.counterparty?.username || "S").split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
   return <article className="wallet-prototype-activity-row"><div className="wallet-prototype-activity-copy">{income ? <span className="wallet-prototype-avatar">{item.counterparty?.avatar ? <img alt="" src={item.counterparty.avatar} /> : <b>{initials}</b>}</span> : null}<span><strong>{activityTitle(item)}</strong><small>{item.counterparty?.username ? `@${item.counterparty.username} · ` : ""}{new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small></span></div><b className={positive ? "is-credit" : "is-debit"}>{positive ? "+" : "−"} {income ? money(Math.abs(item.starsChange) / rate) : <>{STAR}{Math.abs(item.starsChange).toLocaleString()}</>}</b></article>;
+}
+
+function AutomaticIncome({ data, rate }) {
+  const items = data?.items || [];
+  return <section className="mt-3 border-t border-white/10">
+    {items.length ? items.map((item) => { const name = item.subscriber?.name || item.subscriber?.username || "Subscriber"; return <article className="flex items-center justify-between gap-4 border-b border-white/10 px-2 py-4" key={item.id}><span className="min-w-0"><b className="block truncate text-sm">{item.world?.title || "World"} · {name}</b><small className="mt-1 block text-[11px] font-semibold text-emerald-400">{Number(item.stars || 0).toLocaleString()} → $ auto</small></span><strong className="flex-none text-sm text-emerald-400">+{money(item.usd)}</strong></article>; }) : <p className="border-b border-white/10 px-2 py-5 text-xs text-white/40">No automatic World renewals yet.</p>}
+    {items.length ? <p className="px-2 pt-3 text-[10px] text-white/30">Estimated at {STAR}{rate.toLocaleString()} = $1 · paid when renewal succeeds</p> : null}
+  </section>;
 }
 
 export default function WalletPage() {
@@ -70,10 +80,11 @@ export default function WalletPage() {
       <h2 className="wallet-prototype-label">Activity</h2>
       <div className="wallet-prototype-activity">{ledgerQuery.isLoading ? <p className="wallet-prototype-state">Loading activity…</p> : (ledgerQuery.data || []).length ? ledgerQuery.data.slice(0, 12).map((item) => <ActivityRow item={item} key={item.id} rate={rate} />) : <p className="wallet-prototype-state">No Stars activity yet.</p>}</div>
     </> : <>
-      <section className="wallet-prototype-income"><small>Creator income · real money</small><strong>{money(wallet.incomeUsd)}</strong><span>Paid out to your account · minimum $20</span><div><button disabled title="Payout processing is not connected yet" type="button">Withdraw</button><button disabled title="Income conversion is not connected yet" type="button">To coins →</button></div></section>
+      <section className="wallet-prototype-income"><small>Creator income · real money</small><strong>{money(wallet.incomeUsd)}</strong><span>Available for payout after a 24-hour hold · minimum $20</span><div><button onClick={() => navigate("/wallet/withdraw")} type="button">Withdraw</button><button onClick={() => navigate("/wallet/to-coins")} type="button">To coins →</button></div></section>
       <h2 className="wallet-prototype-label">Who supported you</h2>
       <div className="wallet-prototype-activity">{incomeItems.length ? incomeItems.map((item) => <ActivityRow income item={item} key={item.id} rate={rate} />) : <p className="wallet-prototype-state">Your creator income will appear here.</p>}</div>
-      <h2 className="wallet-prototype-label wallet-prototype-payout-label">Payouts &amp; auto</h2><p className="wallet-prototype-rate">Income uses the platform rate of {STAR}{rate.toLocaleString()} = $1.</p>
+      <h2 className="wallet-prototype-label wallet-prototype-payout-label">Payouts &amp; auto</h2>
+      <AutomaticIncome data={wallet.automaticIncome} rate={rate} />
     </>}
   </section>;
 }
