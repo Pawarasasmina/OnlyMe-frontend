@@ -237,6 +237,18 @@ function MarkedText({ text, highlight, tone = "blue" }) {
   </>;
 }
 
+function imageOverlayText(block = {}) {
+  return String(block.metadata?.overlayText || block.metadata?.caption || "").trim();
+}
+
+function imageOverlayColor(block = {}) {
+  return block.metadata?.overlayColor || "#ffffff";
+}
+
+function imageOverlayFillColor(block = {}) {
+  return block.metadata?.overlayFillColor || "";
+}
+
 function InlineMedia({ block, title }) {
   const [failed, setFailed] = useState(false);
   const url = mediaUrl(block.media);
@@ -245,12 +257,63 @@ function InlineMedia({ block, title }) {
     return <video className="seen-reader-media" controls preload="metadata" src={url} title={`${title} video`} />;
   }
   if (["AUDIO", "VOICE"].includes(block.type) || ["AUDIO", "VOICE"].includes(block.media?.mediaType)) {
-    return <audio className="seen-reader-audio" controls src={url} />;
+    const transcript = String(block.metadata?.transcript || "").trim();
+    return <div className="seen-reader-voice-block">
+      <audio className="seen-reader-audio" controls src={url} />
+      {transcript ? <p className="seen-reader-voice-transcript">{transcript}</p> : null}
+    </div>;
   }
-  return <img alt={`${title} chapter media`} className="seen-reader-media" loading="lazy" onError={() => setFailed(true)} src={url} />;
+  const overlayText = imageOverlayText(block);
+  return <figure className={overlayText ? "seen-reader-image-frame has-overlay" : "seen-reader-image-frame"}>
+    <img alt={`${title} chapter media`} className="seen-reader-media" loading="lazy" onError={() => setFailed(true)} src={url} />
+    {overlayText ? <figcaption style={{ "--overlay-fill-color": imageOverlayFillColor(block), "--overlay-text-color": imageOverlayColor(block) }}>{overlayText}</figcaption> : null}
+  </figure>;
 }
 
-function ReaderBlock({ block, title }) {
+function PollBlock({ accessToken = "", block, chapterId, publicationId }) {
+  const options = Array.isArray(block.metadata?.options) ? block.metadata.options : [];
+  const queryClient = useQueryClient();
+  const pollQuery = useQuery({
+    queryKey: ["publication-poll", publicationId, chapterId, block.id, accessToken],
+    queryFn: () => publicationService.getPoll(publicationId, chapterId, block.id, accessToken ? { access: accessToken } : undefined).then((response) => response.data.data),
+    enabled: Boolean(publicationId && chapterId && block.id && options.length),
+    retry: false,
+  });
+  const voteMutation = useMutation({
+    mutationFn: (optionIndex) => publicationService.votePoll(publicationId, chapterId, block.id, optionIndex, accessToken ? { access: accessToken } : undefined).then((response) => response.data.data),
+    onSuccess: (data) => queryClient.setQueryData(["publication-poll", publicationId, chapterId, block.id, accessToken], data),
+  });
+  const data = pollQuery.data || {};
+  const counts = Array.isArray(data.counts) ? data.counts : [];
+  const total = Number(data.totalVotes || 0);
+  const selected = data.viewerChoice ?? null;
+  const error = pollQuery.error || voteMutation.error;
+
+  return <section className="world-chapter-reader-poll">
+    <h3>{block.metadata?.question || "Poll"}</h3>
+    <div>
+      {options.map((option, index) => {
+        const count = Number(counts[index] || 0);
+        const percent = total ? Math.round((count / total) * 100) : 0;
+        return <button className={selected === index ? "is-selected" : ""} disabled={voteMutation.isPending} key={`${block.id}-${option}-${index}`} onClick={() => voteMutation.mutate(index)} type="button">
+          {data.resultsVisible ? <span className="world-poll-fill" style={{ width: `${percent}%` }} /> : null}
+          <span>{option}</span>
+          {data.resultsVisible ? <b>{percent}%</b> : selected === index ? <b>Chosen</b> : null}
+        </button>;
+      })}
+    </div>
+    <p>{error ? actionError(error) : data.resultsVisible ? `${total.toLocaleString()} vote${total === 1 ? "" : "s"}` : selected == null ? "Choose one answer" : "Your answer is saved"}</p>
+  </section>;
+}
+
+function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
+  if (block.type === "LIST" || block.type === "KEY_POINT") {
+    const listItems = Array.isArray(block.metadata?.listItems) ? block.metadata.listItems.filter(Boolean) : [];
+    if (block.type === "LIST" || listItems.length) return <section className="seen-reader-keypoint seen-reader-list-block">
+      <span>List</span>
+      {(listItems.length ? listItems : String(block.text || "").split("\n").filter(Boolean)).map((item, index) => <p key={`${block.id}-${index}`}><b>{index + 1}</b>{item}</p>)}
+    </section>;
+  }
   if (block.type === "KEY_POINT") {
     return <section className="seen-reader-keypoint">
       <span>Key point</span>
@@ -262,6 +325,9 @@ function ReaderBlock({ block, title }) {
   }
   if (block.type === "LINK") {
     return <a className="seen-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || block.url}<FiExternalLink /></a>;
+  }
+  if (block.type === "POLL") {
+    return <PollBlock accessToken={accessToken} block={block} chapterId={chapterId} publicationId={publicationId} />;
   }
   if (["IMAGE", "VIDEO", "AUDIO", "VOICE"].includes(block.type)) {
     return <InlineMedia block={block} title={title} />;
@@ -648,7 +714,7 @@ export default function SeenReaderPage() {
   const checklistPoints = explicitChecklistPoints.length >= 2 ? explicitChecklistPoints : pointBlocks.length >= 3 ? pointBlocks.slice(1, 5) : [];
   const checklistIds = new Set(checklistPoints.map(blockKey));
   const hasInlineMedia = visibleBlocks.some(isMediaBlock);
-  const hasChapterContent = visibleBlocks.some((block) => block.text?.trim() || block.url || block.media?.secureUrl);
+  const hasChapterContent = visibleBlocks.some((block) => block.text?.trim() || block.url || block.media?.secureUrl || block.type === "POLL");
   const shareUrl = useMemo(() => (typeof window === "undefined" ? "" : `${window.location.origin}/seen/${id}`), [id]);
   const sharePayload = useMemo(() => ({
     author: {
@@ -926,7 +992,7 @@ export default function SeenReaderPage() {
       renderedChecklist = true;
       return [<ChapterChecklist key="chapter-checklist" points={checklistPoints} />];
     }
-    return [<ReaderBlock block={block} key={blockKey(block)} title={publication.title} />];
+    return [<ReaderBlock accessToken={accessToken} block={block} chapterId={chapter?.stableChapterId} key={blockKey(block)} publicationId={id} title={publication.title} />];
   });
 
   return <section className="seen-reader-page" ref={readerTopRef}>

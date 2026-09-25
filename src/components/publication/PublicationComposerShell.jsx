@@ -283,6 +283,10 @@ function FanWorldPreview({ publication, onClose }) {
   const locked = chapter && !chapter.isPreview;
 
   const previewBlock = (block) => {
+    if (block.type === "LIST") {
+      const items = Array.isArray(block.metadata?.listItems) ? block.metadata.listItems : String(block.text || "").split("\n").filter(Boolean);
+      return <div className="rounded-2xl border border-atseen-blue/20 bg-atseen-blue/5 p-4"><div className="grid gap-2">{items.map((item, index) => <span className="rounded-xl border border-atseen-line px-3 py-2 text-sm" key={`${block.id}-${index}`}>{index + 1}. {item}</span>)}</div></div>;
+    }
     if (["TEXT", "KEY_POINT", "HIGHLIGHT"].includes(block.type))
       return (
         <p className="whitespace-pre-wrap text-sm leading-6 text-white/85">
@@ -1092,7 +1096,7 @@ export default function PublicationComposerShell({ kind }) {
                   Delete block
                 </button>
               </div>
-              {["TEXT", "KEY_POINT", "HIGHLIGHT"].includes(block.type) ? (
+              {["TEXT", "KEY_POINT", "HIGHLIGHT", "LIST"].includes(block.type) ? (
                 <><textarea
                   className="mt-3 min-h-28 w-full border p-3"
                   onChange={(event) =>
