@@ -80,10 +80,10 @@ function storyItems(publication, chapters) {
   return [publication?.coverMedia, ...chapters.flatMap((chapter) => (chapter.blocks || []).map((block) => block.media).filter(Boolean))].filter(Boolean).slice(0, 3);
 }
 
-function BottomSheet({ children, labelledBy, onClose }) {
+function BottomSheet({ children, labelledBy, onClose, sheetClassName = "" }) {
   return (
     <div aria-labelledby={labelledBy} aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
-      <section className="world-bottom-sheet" onMouseDown={(event) => event.stopPropagation()}>
+      <section className={`world-bottom-sheet ${sheetClassName}`.trim()} onMouseDown={(event) => event.stopPropagation()}>
         <span className="world-sheet-grab" />
         {children}
       </section>
@@ -123,11 +123,6 @@ function formatMoney(payout) {
   return new Intl.NumberFormat("en-US", { currency: payout.currency || "USD", style: "currency" }).format(Number(payout.amount || 0));
 }
 
-function formatDate(value) {
-  if (!value) return "";
-  return new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-}
-
 function PriceSheet({ busy, currentPriceFallback, error, loading, onClose, onSave, pricing }) {
   const tiers = pricing?.tiers || [];
   const currentPrice = Number(pricing?.currentPrice || currentPriceFallback || 0);
@@ -135,10 +130,11 @@ function PriceSheet({ busy, currentPriceFallback, error, loading, onClose, onSav
   useEffect(() => setPrice(currentPrice), [currentPrice]);
   const selectedTier = tiers.find((tier) => Number(tier.coins) === Number(price));
   const canSave = Boolean(selectedTier?.available && pricing?.canChangePrice && price && Number(price) !== currentPrice);
+  const currentSelection = Boolean(selectedTier?.available && Number(price) === currentPrice);
   const description = pricing?.copy?.description || "Monthly subscription. Everyone already inside keeps their price forever - the new price is for new residents only.";
   const helper = pricing?.copy?.helper || "Top tier opens at 100+ residents with steady renewals. Change once every 30 days.";
   return (
-    <BottomSheet labelledBy="world-price-title" onClose={onClose}>
+    <BottomSheet labelledBy="world-price-title" onClose={onClose} sheetClassName="is-price-sheet">
       <h2 id="world-price-title">World price</h2>
       <p className="world-sheet-copy">{description}</p>
       {loading ? <div className="world-price-loading" aria-live="polite">Loading pricing...</div> : null}
@@ -161,7 +157,7 @@ function PriceSheet({ busy, currentPriceFallback, error, loading, onClose, onSav
                 title={locked ? tier.reason : undefined}
                 type="button"
               >
-                {locked ? <FiLock aria-hidden="true" /> : null}<span>{STAR}</span> {tierPrice.toLocaleString()}
+                {locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString()}
               </button>
             );
           })}
@@ -169,9 +165,7 @@ function PriceSheet({ busy, currentPriceFallback, error, loading, onClose, onSav
       ) : null}
       {selectedTier?.payout ? <p className="world-price-payout"><b>{formatMoney(selectedTier.payout)}</b> <span>to you · per resident · monthly</span></p> : null}
       <p className="world-price-helper">{helper}</p>
-      {!pricing?.canChangePrice && pricing?.nextPriceChangeAt ? <p className="world-sheet-error">You can change your World price again on {formatDate(pricing.nextPriceChangeAt)}.</p> : null}
-      <button className="world-sheet-primary" disabled={busy || loading || !canSave} onClick={() => onSave(price)} type="button">{busy ? "Saving..." : "Save"}</button>
-      <button className="world-price-keep" disabled={busy} onClick={onClose} type="button">Keep {currentPrice.toLocaleString()}</button>
+      <button className="world-sheet-primary" disabled={busy || loading || (!canSave && !currentSelection)} onClick={() => currentSelection ? onClose() : onSave(price)} type="button">{busy ? "Saving..." : "Save"}</button>
     </BottomSheet>
   );
 }
@@ -484,6 +478,35 @@ function shareUrlFor(publication) {
   return `${window.location.origin}/${route}/${publication?.id || publication?._id}`;
 }
 
+function ExperienceAccessSheet({ data, loading, onClose, onCopy, onDecide, pendingId }) {
+  const requests = data?.requests || [];
+  return <BottomSheet labelledBy="experience-access-title" onClose={onClose}>
+    <section className="experience-access-sheet">
+      <h2 id="experience-access-title">Access by link</h2>
+      <p>Send this link to a friend. When they open it, you get a request — confirm, and the Experience is theirs forever. Free, from the author.</p>
+      <div><input aria-label="Experience access link" readOnly value={data?.url || "Loading…"} /><button disabled={loading || !data?.url} onClick={onCopy} type="button">Copy</button></div>
+      {loading ? <small>Loading requests…</small> : requests.length ? requests.map((item) => <article key={item.id}><FanAvatar name={item.requester?.name} size="h-9 w-9" src={item.requester?.avatar} /><span><b>{item.requester?.name || item.requester?.username || "User"}</b><small>{item.status.toLowerCase()}</small></span>{item.status === "PENDING" ? <><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, true)} type="button">Confirm</button><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, false)} type="button">Decline</button></> : null}</article>) : <small>No requests yet — they appear here.</small>}
+    </section>
+  </BottomSheet>;
+}
+
+async function copyToClipboard(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement("textarea");
+  input.value = value;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("Clipboard unavailable");
+}
+
 const SHARE_REACTIONS = ["💖", "😂", "🔥", "😍", "👏", "😮", "🙏", "🤝"];
 
 function WorldSharePerson({ onToggle, person, selected }) {
@@ -568,7 +591,7 @@ function ShareSheet({ onClose, publication, viewerId }) {
   const copy = async () => {
     setError("");
     try {
-      await navigator.clipboard.writeText(url);
+      await copyToClipboard(url);
       setCopied(true);
       showToast(`${shareNoun} link copied.`);
       window.setTimeout(() => setCopied(false), 1400);
@@ -862,6 +885,7 @@ export default function WorldReaderPage() {
   const viewerId = user?.id || user?._id || "";
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const owner = sameIdentity(viewerId, creatorId) || sameIdentity(user?.username, creator.username);
+  const accessToken = new URLSearchParams(location.search).get("access") || "";
   const managementQuery = useQuery({
     queryKey: ["world-management", publicationId],
     queryFn: () => api.getWorldManagement(publicationId).then((response) => response.data.data),
@@ -892,9 +916,14 @@ export default function WorldReaderPage() {
     enabled: Boolean(owner && publicationId && sheet === "price" && premium),
     retry: false,
   });
+  const accessLinkQuery = useQuery({ queryKey: ["experience-access-link", publicationId], queryFn: () => api.getExperienceAccessLink(publicationId).then((response) => response.data.data), enabled: Boolean(owner && experience && sheet === "access"), retry: false });
+  const accessRequest = useMutation({ mutationFn: () => api.requestExperienceAccess(publicationId, accessToken), onSuccess: async (response) => { showToast(response.data.message); if (response.data.data?.request?.status === "APPROVED") await query.refetch(); }, onError: (error) => showToast(error?.response?.data?.message || "Access request could not be sent.") });
+  const accessDecision = useMutation({ mutationFn: ({ requestId, approved }) => api.decideExperienceAccess(publicationId, requestId, approved), onSuccess: async (response) => { await accessLinkQuery.refetch(); showToast(response.data.message); } });
+  useEffect(() => { if (experience && accessToken && user && !owner && !accessRequest.isPending && !accessRequest.isSuccess && !accessRequest.isError) accessRequest.mutate(); }, [accessToken, experience, owner, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const management = managementQuery.data?.management || {};
   const managedPublication = managementQuery.data?.publication || publication;
+  const experienceArchived = managedPublication?.status === "ARCHIVED";
   const experienceChapters = managedPublication?.chapters?.length ? managedPublication.chapters : chapters;
   const updateWorld = useMutation({
     mutationFn: (payload) => api.updateWorldManagement(publicationId, payload),
@@ -948,13 +977,19 @@ export default function WorldReaderPage() {
     onError: (error) => showToast(error?.response?.data?.message || "World price could not be updated."),
   });
   const archiveExperience = useMutation({
-    mutationFn: () => api.archivePublication(publicationId, managedPublication.statusVersion),
+    mutationFn: () => experienceArchived
+      ? api.restorePublication(publicationId, managedPublication.statusVersion)
+      : api.archivePublication(publicationId, managedPublication.statusVersion),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      showToast("Experience removed from sale.");
-      navigate(creator.username ? `/profile/${creator.username}` : "/profile", { replace: true });
+      await Promise.all([
+        query.refetch(),
+        managementQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["profile-experiences"] }),
+      ]);
+      showToast(experienceArchived ? "Experience is back on sale." : "Experience removed from sale.");
     },
-    onError: (error) => showToast(error?.response?.data?.message || "Experience could not be removed from sale."),
+    onError: (error) => showToast(error?.response?.data?.message || (experienceArchived ? "Experience could not be put back on sale." : "Experience could not be removed from sale.")),
   });
   const coverUpload = useMutation({
     mutationFn: (file) => api.uploadWorldCover(publicationId, file, setCoverProgress),
@@ -1249,12 +1284,12 @@ export default function WorldReaderPage() {
       </header>
       <nav aria-label="Experience actions">
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
-        <button onClick={async () => { await navigator.clipboard.writeText(window.location.href); showToast("Experience link copied."); }} type="button"><FiLink /><span><b>Access by link</b><small>send a link — you confirm who enters</small></span></button>
+        <button onClick={() => setSheet("access")} type="button"><FiLink /><span><b>Access by link</b><small>send a link — you confirm who enters</small></span></button>
         <button onClick={() => navigate(`/studio/experiences/${publicationId}/edit`)} type="button"><FiEdit3 /><span><b>Edit</b><small>title, path, price, chapters</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
         <button disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product’s own cleanup team</small></span></button>
-        <button className="is-remove" disabled={archiveExperience.isPending} onClick={() => window.confirm("Remove this Experience from sale? Buyers keep their permanent access.") && archiveExperience.mutate()} type="button"><FiTrash2 /><span><b>{archiveExperience.isPending ? "Removing…" : "Remove from sale"}</b><small>buyers keep it forever</small></span></button>
+        <button className={experienceArchived ? "" : "is-remove"} disabled={archiveExperience.isPending} onClick={() => window.confirm(experienceArchived ? "Put this Experience back on sale? Other users will be able to see and purchase it again." : "Remove this Experience from sale? Buyers keep their permanent access.") && archiveExperience.mutate()} type="button"><FiTrash2 /><span><b>{archiveExperience.isPending ? (experienceArchived ? "Restoring…" : "Removing…") : (experienceArchived ? "Back on sale" : "Remove from sale")}</b><small>{experienceArchived ? "archived" : "buyers keep it forever"}</small></span></button>
       </nav>
     </article>
   );
@@ -1325,7 +1360,7 @@ export default function WorldReaderPage() {
                     return <button className={selected ? "is-selected" : ""} disabled={updateWorld.isPending} key={personId} onClick={() => updateWorld.mutate({ taggedPeople: selected ? managedPublication.taggedPeople.filter((taggedId) => String(taggedId) !== personId) : [...(managedPublication.taggedPeople || []), personId] })} type="button"><FanAvatar user={person} /><span><b>{person.name || person.username}</b><small>@{person.username}</small></span><i>{selected ? "✓" : "+"}</i></button>;
                   })}
                 </div> : null}
-                <button className="is-danger-muted" disabled={archiveExperience.isPending} onClick={() => window.confirm("Remove this Experience from sale?") && archiveExperience.mutate()} type="button"><FiArchive /><span>{archiveExperience.isPending ? "Removing…" : "Remove from sale"}</span></button>
+                <button className={experienceArchived ? "" : "is-danger-muted"} disabled={archiveExperience.isPending} onClick={() => window.confirm(experienceArchived ? "Put this Experience back on sale?" : "Remove this Experience from sale?") && archiveExperience.mutate()} type="button"><FiArchive /><span>{archiveExperience.isPending ? (experienceArchived ? "Restoring…" : "Removing…") : (experienceArchived ? "Back on sale" : "Remove from sale")}</span></button>
                 <button className="experience-premium-world-setting" disabled={updateWorld.isPending} onClick={() => updateWorld.mutate({ includedInWorld: !managedPublication.includedInWorld })} type="button">
                   <i>{PLANET}</i>
                   <span><strong>Include in my Premium World</strong><small>World members get it with their subscription</small></span>
@@ -1377,7 +1412,7 @@ export default function WorldReaderPage() {
           <section className="world-prototype-owner-settings">
             <button className="world-prototype-direct-access" onClick={() => navigate("/messages?tab=direct")} type="button">
               <span><FiZap /></span>
-              <b>Direct Access</b>
+              <b>Direct Access{management.directAccess?.waiting ? ` · ${management.directAccess.waiting} waiting` : ""}</b>
               <small>members first · {management.directAccess?.includedReplies || 0} free reply included</small>
               <i><FiChevronRight /></i>
             </button>
@@ -1396,14 +1431,15 @@ export default function WorldReaderPage() {
               <div className="world-settings-list" id="world-settings-list">
                 <p>INSIDE YOUR WORLD</p>
                 {introPriceToast ? <div className="world-settings-toast" role="status">{introPriceToast}</div> : null}
-                <Link className="world-settings-item is-complete" to={`/studio/worlds/${publicationId}/edit`}>
-                  <span className="world-settings-status"><FiCheck /></span>
-                  <span className="world-settings-copy"><b>Private stories</b><small>1 · 15s — fans see them blurred outside</small></span>
+                <Link className={`world-settings-item ${stories.length ? "is-complete" : "is-add"}`} to={`/studio/worlds/${publicationId}/edit`}>
+                  <span className="world-settings-status">{stories.length ? <FiCheck /> : <FiPlus />}</span>
+                  <span className="world-settings-copy"><b>Private stories</b><small>{stories.length ? `${stories.length} · 15s — fans see them blurred outside` : "add the first — blurred teasers pull people in"}</small></span>
+                  {!stories.length ? <FiChevronRight className="world-settings-row-chevron" /> : null}
                 </Link>
-                <button className="world-settings-item is-add" onClick={() => setSheet("include")} type="button">
-                  <span className="world-settings-status"><FiPlus /></span>
-                  <span className="world-settings-copy"><b>Experiences included</b><small>add one — “included” sells the World</small></span>
-                  <FiChevronRight className="world-settings-row-chevron" />
+                <button className={`world-settings-item ${includedExperiences.length ? "is-complete" : "is-add"}`} onClick={() => setSheet("include")} type="button">
+                  <span className="world-settings-status">{includedExperiences.length ? <FiCheck /> : <FiPlus />}</span>
+                  <span className="world-settings-copy"><b>Experiences included</b><small>{includedExperiences.length ? `${includedExperiences.length} · included for members` : "add one — “included” sells the World"}</small></span>
+                  {!includedExperiences.length ? <FiChevronRight className="world-settings-row-chevron" /> : null}
                 </button>
                 <span className="world-settings-item is-complete">
                   <span className="world-settings-status"><FiCheck /></span>
@@ -1422,6 +1458,8 @@ export default function WorldReaderPage() {
             ) : null}
           </section>
         ) : null}
+
+        {!experience ? <p className="world-prototype-summary">{managedPublication.description || managedPublication.summary}</p> : null}
 
         {!experience ? (
           <section className="world-prototype-inside">
@@ -1521,6 +1559,7 @@ export default function WorldReaderPage() {
       {sheet === "seats" ? <SeatsSheet busy={waveMutation.isPending} management={management} onClose={() => setSheet("")} onOpenWave={() => waveMutation.mutate()} /> : null}
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
+      {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} loading={accessLinkQuery.isLoading} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
       {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate("/create/experience")} onToggle={toggleExperience} /> : null}
       {sheet === "moderators" ? (
         <ModeratorsSheet

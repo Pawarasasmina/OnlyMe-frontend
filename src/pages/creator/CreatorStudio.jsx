@@ -36,6 +36,7 @@ const SOURCE_LABELS = {
   gifts: "Gifts",
   unlocks: "Unlocks",
   worldSubscriptions: "World subscriptions",
+  other: "Other earnings",
 };
 
 function compact(value) {
