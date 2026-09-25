@@ -719,16 +719,62 @@ function WorldStoryViewer({ creator, onClose, story, title }) {
   );
 }
 
-function ChapterBlock({ block }) {
+function PollBlock({ block, chapterId, publicationId }) {
+  const options = Array.isArray(block.metadata?.options) ? block.metadata.options : [];
+  const queryClient = useQueryClient();
+  const pollQuery = useQuery({
+    queryKey: ["publication-poll", publicationId, chapterId, block.id],
+    queryFn: () => api.getPoll(publicationId, chapterId, block.id).then((response) => response.data.data),
+    enabled: Boolean(publicationId && chapterId && block.id && options.length),
+    retry: false,
+  });
+  const voteMutation = useMutation({
+    mutationFn: (optionIndex) => api.votePoll(publicationId, chapterId, block.id, optionIndex).then((response) => response.data.data),
+    onSuccess: (data) => queryClient.setQueryData(["publication-poll", publicationId, chapterId, block.id], data),
+  });
+  const data = pollQuery.data || {};
+  const counts = Array.isArray(data.counts) ? data.counts : [];
+  const total = Number(data.totalVotes || 0);
+  const selected = data.viewerChoice ?? null;
+  const error = pollQuery.error || voteMutation.error;
+
+  return <section className="world-chapter-reader-poll">
+    <h3>{block.metadata?.question || "Poll"}</h3>
+    <div>
+      {options.map((option, index) => {
+        const count = Number(counts[index] || 0);
+        const percent = total ? Math.round((count / total) * 100) : 0;
+        return <button className={selected === index ? "is-selected" : ""} disabled={voteMutation.isPending} key={`${block.id}-${option}-${index}`} onClick={() => voteMutation.mutate(index)} type="button">
+          {data.resultsVisible ? <span className="world-poll-fill" style={{ width: `${percent}%` }} /> : null}
+          <span>{option}</span>
+          {data.resultsVisible ? <b>{percent}%</b> : selected === index ? <b>Chosen</b> : null}
+        </button>;
+      })}
+    </div>
+    <p>{error ? (error.response?.data?.message || "Unable to save your vote.") : data.resultsVisible ? `${total.toLocaleString()} vote${total === 1 ? "" : "s"}` : selected == null ? "Choose one answer" : "Your answer is saved"}</p>
+  </section>;
+}
+
+function ChapterBlock({ block, chapterId, publicationId }) {
+  const listItems = Array.isArray(block.metadata?.listItems) ? block.metadata.listItems.filter(Boolean) : [];
+  const overlayText = String(block.metadata?.overlayText || block.metadata?.caption || "").trim();
+  if (block.type === "LIST" || (block.type === "KEY_POINT" && listItems.length)) return <section className="world-chapter-reader-list">{(listItems.length ? listItems : String(block.text || "").split("\n").filter(Boolean)).map((item, index) => <p key={`${block.id}-${index}`}><b>{index + 1}</b>{item}</p>)}</section>;
   if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type)) return <p className={`world-chapter-reader-text ${block.type === "HIGHLIGHT" ? "is-highlight" : ""}`}>{block.text}</p>;
-  if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt="Chapter attachment" className="world-chapter-reader-image" src={block.media.secureUrl} />;
+  if (block.type === "IMAGE" && block.media?.secureUrl) return <figure className={overlayText ? "world-chapter-reader-image-frame has-overlay" : "world-chapter-reader-image-frame"}>
+    <img alt="Chapter attachment" className="world-chapter-reader-image" src={block.media.secureUrl} />
+    {overlayText ? <figcaption style={{ "--overlay-fill-color": block.metadata?.overlayFillColor || "", "--overlay-text-color": block.metadata?.overlayColor || "#ffffff" }}>{overlayText}</figcaption> : null}
+  </figure>;
   if (block.type === "VIDEO" && block.media?.secureUrl) return <video className="world-chapter-reader-video" controls playsInline preload="metadata" src={block.media.secureUrl} />;
-  if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio className="world-chapter-reader-audio" controls preload="metadata" src={block.media.secureUrl} />;
+  if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) {
+    const transcript = String(block.metadata?.transcript || "").trim();
+    return <div className="world-chapter-reader-voice"><audio className="world-chapter-reader-audio" controls preload="metadata" src={block.media.secureUrl} />{transcript ? <p>{transcript}</p> : null}</div>;
+  }
+  if (block.type === "POLL") return <PollBlock block={block} chapterId={chapterId} publicationId={publicationId} />;
   if (block.type === "LINK" && block.url) return <a className="world-chapter-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || "Open link"}</a>;
   return null;
 }
 
-function ChapterExperience({ chapter, chapterIndex, chapters, onBack, onSelect }) {
+function ChapterExperience({ chapter, chapterIndex, chapters, onBack, onSelect, publicationId }) {
   const blocks = [...(chapter.blocks || [])].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
   return (
     <article className="world-chapter-reader">
@@ -740,7 +786,7 @@ function ChapterExperience({ chapter, chapterIndex, chapters, onBack, onSelect }
         {chapters.map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index === chapterIndex ? "is-current" : ""} key={item.stableChapterId || index} onClick={() => onSelect(index)} type="button" />)}
       </nav>
       <section className="world-chapter-reader-content">
-        {blocks.length ? blocks.map((block, index) => <ChapterBlock block={block} key={block.id || index} />) : <p className="world-chapter-reader-empty">This chapter has no published content yet.</p>}
+        {blocks.length ? blocks.map((block, index) => <ChapterBlock block={block} chapterId={chapter.stableChapterId} key={block.id || index} publicationId={publicationId} />) : <p className="world-chapter-reader-empty">This chapter has no published content yet.</p>}
       </section>
     </article>
   );
@@ -969,7 +1015,7 @@ export default function WorldReaderPage() {
   }
 
   if (activeChapterIndex !== null && experienceChapters[activeChapterIndex]) {
-    return <ChapterExperience chapter={experienceChapters[activeChapterIndex]} chapterIndex={activeChapterIndex} chapters={experienceChapters} onBack={() => setActiveChapterIndex(null)} onSelect={setActiveChapterIndex} />;
+    return <ChapterExperience chapter={experienceChapters[activeChapterIndex]} chapterIndex={activeChapterIndex} chapters={experienceChapters} onBack={() => setActiveChapterIndex(null)} onSelect={setActiveChapterIndex} publicationId={publicationId} />;
   }
 
   const stories = storyItems(managedPublication, chapters);

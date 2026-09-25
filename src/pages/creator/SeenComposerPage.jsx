@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   FiArrowRight,
@@ -18,6 +18,8 @@ import {
   FiList,
   FiMapPin,
   FiMic,
+  FiPause,
+  FiPlay,
   FiPlus,
   FiSave,
   FiScissors,
@@ -30,6 +32,7 @@ import {
   FiZap,
 } from "react-icons/fi";
 import { publicationService as api } from "../../services/publicationService";
+import { voiceService } from "../../services/voiceService";
 import { searchService } from "../../services/searchService";
 import EntityAttachmentPicker from "../../components/contentEntities/EntityAttachmentPicker";
 import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
@@ -50,6 +53,40 @@ const VIDEO_RECORDER_TYPES = [
 const VIDEO_RECORDING_PAD_MS = 350;
 const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm";
+const RICH_TEXT_COLORS = [
+  "#ffffff",
+  "#f6e85f",
+  "#c7ff5f",
+  "#6ecf97",
+  "#9ccbff",
+  "#b8a7ff",
+  "#ff78b6",
+  "#ff8a55",
+  "#111820",
+];
+const MUTED_TEXT_COLORS = [
+  "#9aa3ad",
+  "#9b8f3a",
+  "#6f8d44",
+  "#4b8662",
+  "#5d7896",
+  "#675a9a",
+  "#914870",
+  "#9a5b3e",
+  "#242b35",
+];
+
+function normalizeColorValue(value = "") {
+  const color = String(value || "").trim().toLowerCase();
+  if (!color || ["transparent", "initial", "inherit", "currentcolor"].includes(color)) return "";
+  if (color.startsWith("#")) {
+    if (color.length === 4) return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+    return color;
+  }
+  const rgb = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (!rgb) return color;
+  return `#${rgb.slice(1, 4).map((part) => Number(part).toString(16).padStart(2, "0")).join("")}`;
+}
 
 function statusLabel(status, uploading) {
   if (uploading) return "Uploading media...";
@@ -125,6 +162,147 @@ function formatDuration(seconds = 0) {
   const minutes = Math.floor(rounded / 60);
   const rest = String(rounded % 60).padStart(2, "0");
   return `${minutes}:${rest}`;
+}
+
+function safeUrlMeta(value = "") {
+  try {
+    const url = new URL(value);
+    return {
+      domain: url.hostname.replace(/^www\./i, ""),
+      href: url.href,
+    };
+  } catch {
+    return { domain: "", href: "" };
+  }
+}
+
+function keyPointItems(block = {}) {
+  const metadataItems = Array.isArray(block.metadata?.listItems)
+    ? block.metadata.listItems
+    : [];
+  return (metadataItems.length ? metadataItems : String(block.text || "").split("\n"))
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+}
+
+function listBlockItems(block = {}) {
+  const metadataItems = Array.isArray(block.metadata?.listItems)
+    ? block.metadata.listItems
+    : Array.isArray(block.metadata?.items)
+      ? block.metadata.items
+      : [];
+  return (metadataItems.length ? metadataItems : String(block.text || "").split("\n"))
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+}
+
+function voiceTranscript(block = {}) {
+  return String(block.metadata?.transcript || block.media?.transcript || block.metadata?.caption || block.metadata?.label || "").trim();
+}
+
+function imageOverlayText(block = {}) {
+  return String(block.metadata?.overlayText || block.metadata?.caption || "").trim();
+}
+
+function imageOverlayColor(block = {}) {
+  return block.metadata?.overlayColor || "#ffffff";
+}
+
+function imageOverlayFillColor(block = {}) {
+  return block.metadata?.overlayFillColor || "";
+}
+
+function imageOverlayStyle(block = {}) {
+  return {
+    bold: block.metadata?.overlayBold !== false,
+    italic: Boolean(block.metadata?.overlayItalic),
+    size: block.metadata?.overlaySize || "",
+    strike: Boolean(block.metadata?.overlayStrike),
+  };
+}
+
+function ChapterVoiceBlock({ block, busy = false, onUpdateBlock }) {
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [playError, setPlayError] = useState(false);
+  const [editingTranscript, setEditingTranscript] = useState(false);
+  const [transcriptDraft, setTranscriptDraft] = useState("");
+  const transcript = voiceTranscript(block);
+
+  useEffect(() => {
+    setTranscriptDraft(transcript);
+    setEditingTranscript(false);
+  }, [block.id, transcript]);
+
+  const saveTranscript = async () => {
+    const nextTranscript = transcriptDraft.trim().slice(0, 2000);
+    if (!nextTranscript || nextTranscript === transcript) {
+      setEditingTranscript(false);
+      return;
+    }
+    const saved = await Promise.resolve(onUpdateBlock?.(block.id, {
+      metadata: {
+        ...(block.metadata || {}),
+        transcript: nextTranscript,
+      },
+    })).catch(() => false);
+    if (saved !== false) setEditingTranscript(false);
+  };
+
+  const togglePlayback = async (event) => {
+    event.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      setPlayError(false);
+      await audio.play().catch(() => setPlayError(true));
+    } else {
+      audio.pause();
+    }
+  };
+
+  return (
+    <div className="seen-chapter-voice-wrap">
+      <div className="seen-chapter-voice-block">
+        <audio
+          onEnded={() => setPlaying(false)}
+          onPause={() => setPlaying(false)}
+          onPlay={() => setPlaying(true)}
+          preload="metadata"
+          ref={audioRef}
+          src={block.media.secureUrl}
+        />
+        <button aria-label={playing ? "Pause voice" : "Play voice"} className="seen-chapter-voice-play" onClick={togglePlayback} type="button">
+          {playing ? <FiPause /> : <FiPlay />}
+        </button>
+        <div aria-hidden="true" className="seen-chapter-waveform">
+          {Array.from({ length: 24 }, (_, index) => (
+            <i key={index} style={{ height: `${10 + ((index * 7) % 26)}px` }} />
+          ))}
+        </div>
+        <b>{formatDuration(block.media?.duration || 28)}</b>
+        {editingTranscript ? (
+          <div className="seen-chapter-voice-transcript-edit">
+            <textarea
+              autoFocus
+              maxLength={2000}
+              onChange={(event) => setTranscriptDraft(event.target.value)}
+              placeholder="Write the transcript..."
+              value={transcriptDraft}
+            />
+            <button disabled={busy || !transcriptDraft.trim()} onClick={saveTranscript} type="button">Save transcript</button>
+          </div>
+        ) : transcript ? (
+          <p className="seen-chapter-voice-transcript" onDoubleClick={() => setEditingTranscript(true)}>{transcript}</p>
+        ) : (
+          <p className="seen-chapter-voice-transcript is-muted">
+            {playError ? "Audio could not be played. Try reloading the page." : "Transcript unavailable for this voice."}
+            <button disabled={busy} onClick={() => setEditingTranscript(true)} type="button">Add transcript</button>
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function supportedRecorderType() {
@@ -559,7 +737,10 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
   const photoInput = useRef(null);
   const voiceInput = useRef(null);
   const textareaRef = useRef(null);
+  const imageTextRefs = useRef({});
   const structuredFormRef = useRef(null);
+  const textToolsRef = useRef(null);
+  const addMenuRef = useRef(null);
   const voiceRecorder = useRef(null);
   const voiceStream = useRef(null);
   const voiceTimer = useRef(null);
@@ -576,11 +757,25 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
   const [placeSuggestions, setPlaceSuggestions] = useState([]);
   const [placeLoading, setPlaceLoading] = useState(false);
   const [draggingBlockId, setDraggingBlockId] = useState("");
+  const [editorHintVisible, setEditorHintVisible] = useState(true);
   const [textToolsOpen, setTextToolsOpen] = useState(false);
+  const [activeTextFormats, setActiveTextFormats] = useState({
+    bold: false,
+    fontSize: "",
+    foreColor: "",
+    hiliteColor: "",
+    italic: false,
+  });
+  const [activeImageTextBlockId, setActiveImageTextBlockId] = useState("");
+  const [imageOverlayDrafts, setImageOverlayDrafts] = useState({});
+  const [imageOverlayColorDrafts, setImageOverlayColorDrafts] = useState({});
+  const [imageOverlayFillColorDrafts, setImageOverlayFillColorDrafts] = useState({});
+  const [imageOverlayStyleDrafts, setImageOverlayStyleDrafts] = useState({});
   const [textToolPosition, setTextToolPosition] = useState({
     left: 32,
     top: 120,
   });
+  const [pendingPhoto, setPendingPhoto] = useState(null);
   const [structuredEditor, setStructuredEditor] = useState(null);
   const [structuredDraft, setStructuredDraft] = useState({
     label: "",
@@ -606,12 +801,12 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
   ].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
   const attachmentBlocks = editorBlocks.filter(
     (block) =>
-      !["TEXT", "KEY_POINT", "LINK", "POLL"].includes(block.type) &&
+      !["TEXT", "KEY_POINT", "LINK", "LIST", "POLL"].includes(block.type) &&
       !block.metadata?.location,
   );
   const structuredBlocks = editorBlocks.filter(
     (block) =>
-      ["KEY_POINT", "LINK", "POLL"].includes(block.type) &&
+      ["KEY_POINT", "LINK", "LIST", "POLL"].includes(block.type) &&
       !block.metadata?.location,
   );
   const locationBlocks = editorBlocks.filter(
@@ -627,6 +822,11 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
 
   useEffect(() => {
     if (textareaRef.current) textareaRef.current.innerText = story || "";
+    setEditorHintVisible(true);
+    setImageOverlayDrafts({});
+    setImageOverlayColorDrafts({});
+    setImageOverlayFillColorDrafts({});
+    setImageOverlayStyleDrafts({});
   }, [chapter?.stableChapterId]);
 
   useEffect(
@@ -639,6 +839,84 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
     },
     [recordedVoice?.url],
   );
+
+  useEffect(
+    () => () => {
+      if (pendingPhoto?.url) URL.revokeObjectURL(pendingPhoto.url);
+    },
+    [pendingPhoto?.url],
+  );
+
+  useEffect(() => {
+    if (!textToolsOpen && !actionsOpen && !pendingPhoto && !activeImageTextBlockId) return undefined;
+    const closeFloatingTools = (event) => {
+      const target = event.target;
+      if (
+        textToolsOpen &&
+        textToolsRef.current &&
+        !textToolsRef.current.contains(target) &&
+        !textareaRef.current?.contains(target)
+      ) {
+        setTextToolsOpen(false);
+      }
+      if (
+        actionsOpen &&
+        addMenuRef.current &&
+        !addMenuRef.current.contains(target) &&
+        !target.closest?.(".seen-chapter-editor-add")
+      ) {
+        setActionsOpen(false);
+      }
+      if (
+        activeImageTextBlockId &&
+        !target.closest?.(".seen-chapter-image-stage") &&
+        !target.closest?.(".seen-chapter-image-color-panel")
+      ) {
+        setActiveImageTextBlockId("");
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setTextToolsOpen(false);
+      setActionsOpen(false);
+      setActiveImageTextBlockId("");
+      setPendingPhoto((current) => {
+        if (current?.url) URL.revokeObjectURL(current.url);
+        return null;
+      });
+    };
+    document.addEventListener("mousedown", closeFloatingTools);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", closeFloatingTools);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [actionsOpen, activeImageTextBlockId, pendingPhoto, textToolsOpen]);
+
+  useLayoutEffect(() => {
+    if (!textToolsOpen || !textToolsRef.current) return undefined;
+    const margin = 12;
+    const keepTextToolsInViewport = () => {
+      const box = textToolsRef.current?.getBoundingClientRect();
+      if (!box) return;
+      setTextToolPosition((current) => {
+        const nextLeft = Math.max(
+          margin,
+          Math.min(current.left, window.innerWidth - box.width - margin),
+        );
+        const nextTop = Math.max(
+          margin,
+          Math.min(current.top, window.innerHeight - box.height - margin),
+        );
+        if (Math.abs(nextLeft - current.left) < 1 && Math.abs(nextTop - current.top) < 1)
+          return current;
+        return { left: nextLeft, top: nextTop };
+      });
+    };
+    keepTextToolsInViewport();
+    window.addEventListener("resize", keepTextToolsInViewport);
+    return () => window.removeEventListener("resize", keepTextToolsInViewport);
+  }, [textToolsOpen, textToolPosition.left, textToolPosition.top]);
 
   useEffect(() => {
     if (!placeOpen || placeQuery.trim().length < 2) {
@@ -718,6 +996,27 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
       voiceRecorder.current.stop();
   };
 
+  const transcribeVoiceFile = async (file) => {
+    if (!file) return {};
+    setVoiceError("");
+    try {
+      const result = await voiceService.transcribeWallVoice(file);
+      const transcript = String(result.transcript || "").trim();
+      return {
+        transcript,
+        transcriptConfidence: result.confidence ?? null,
+        transcriptLanguage: result.detectedLanguage || result.language || "",
+        transcriptProvider: result.provider || "",
+      };
+    } catch (requestError) {
+      const message = requestError?.response?.data?.message || "";
+      if (message && !/not configured|no speech/i.test(message)) {
+        setVoiceError(`${message} You can still use the voice.`);
+      }
+      return {};
+    }
+  };
+
   const rememberSelection = () => {
     const selection = window.getSelection();
     if (
@@ -729,11 +1028,45 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
     const range = selection.getRangeAt(0).cloneRange();
     const box = range.getBoundingClientRect();
     selectedRange.current = range;
+    setActiveTextFormats({
+      bold: document.queryCommandState("bold"),
+      fontSize: String(document.queryCommandValue("fontSize") || ""),
+      foreColor: normalizeColorValue(document.queryCommandValue("foreColor")),
+      hiliteColor: normalizeColorValue(document.queryCommandValue("hiliteColor") || document.queryCommandValue("backColor")),
+      italic: document.queryCommandState("italic"),
+    });
     setTextToolPosition({
-      left: Math.max(12, Math.min(window.innerWidth - 300, box.left)),
+      left: Math.max(12, box.left),
       top: Math.max(76, box.bottom + 10),
     });
     setTextToolsOpen(true);
+  };
+
+  const rememberImageTextSelection = (blockId, element) => {
+    const selection = window.getSelection();
+    if (
+      !selection?.rangeCount ||
+      !element?.contains(selection.anchorNode) ||
+      !element.contains(selection.focusNode)
+    ) {
+      setActiveImageTextBlockId("");
+      return;
+    }
+    setActiveImageTextBlockId(blockId);
+  };
+
+  const closePendingPhoto = () => {
+    setPendingPhoto((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return null;
+    });
+  };
+
+  const addPendingPhoto = () => {
+    if (!pendingPhoto?.file) return;
+    const file = pendingPhoto.file;
+    closePendingPhoto();
+    onMediaUpload("IMAGE", file);
   };
 
   const applyTextFormat = (command, value = null) => {
@@ -746,6 +1079,92 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
     selectedRange.current = selection.rangeCount
       ? selection.getRangeAt(0).cloneRange()
       : null;
+    setActiveTextFormats({
+      bold: document.queryCommandState("bold"),
+      fontSize: String(document.queryCommandValue("fontSize") || ""),
+      foreColor: normalizeColorValue(document.queryCommandValue("foreColor")),
+      hiliteColor: normalizeColorValue(document.queryCommandValue("hiliteColor") || document.queryCommandValue("backColor")),
+      italic: document.queryCommandState("italic"),
+    });
+  };
+  const toggleTextFormat = (command, value = null) => {
+    const active =
+      command === "fontSize"
+        ? activeTextFormats.fontSize === String(value)
+        : Boolean(activeTextFormats[command]);
+    applyTextFormat(active ? "removeFormat" : command, active ? null : value);
+  };
+  const toggleTextColor = (command, color) => {
+    const formatKey = command === "hiliteColor" ? "hiliteColor" : "foreColor";
+    const activeColor = normalizeColorValue(activeTextFormats[formatKey]);
+    const nextColor = normalizeColorValue(color);
+    applyTextFormat(activeColor === nextColor ? "removeFormat" : command, color);
+  };
+  const textPaletteRows = [
+    { command: "foreColor", colors: RICH_TEXT_COLORS, label: "Aa", shape: "round" },
+    { command: "hiliteColor", colors: RICH_TEXT_COLORS, label: "Fill", shape: "soft" },
+    { command: "foreColor", colors: MUTED_TEXT_COLORS, label: "Tone", shape: "muted" },
+  ];
+  const saveImageOverlayText = (block, rawText) => {
+    const overlayText = String(rawText || "")
+      .trim()
+      .slice(0, 180);
+    const overlayColor = imageOverlayColorDrafts[block.id] || block.metadata?.overlayColor || "";
+    const overlayFillColor = imageOverlayFillColorDrafts[block.id] || block.metadata?.overlayFillColor || "";
+    const overlayStyle = imageOverlayStyleDrafts[block.id] || imageOverlayStyle(block);
+    if (
+      overlayText === imageOverlayText(block) &&
+      normalizeColorValue(overlayColor) === normalizeColorValue(block.metadata?.overlayColor || "") &&
+      normalizeColorValue(overlayFillColor) === normalizeColorValue(block.metadata?.overlayFillColor || "")
+    ) return Promise.resolve(true);
+    return Promise.resolve(
+      onUpdateBlock(block.id, {
+        metadata: {
+          ...(block.metadata || {}),
+          overlayText,
+          ...(overlayColor ? { overlayColor } : {}),
+          ...(overlayFillColor ? { overlayFillColor } : {}),
+          overlayBold: overlayStyle.bold,
+          overlayItalic: overlayStyle.italic,
+          overlaySize: overlayStyle.size,
+          overlayStrike: overlayStyle.strike,
+        },
+      }),
+    ).catch(() => false);
+  };
+  const updateImageOverlayStyle = (block, patch = {}) => {
+    const currentStyle = imageOverlayStyleDrafts[block.id] || imageOverlayStyle(block);
+    const nextStyle = { ...currentStyle, ...patch };
+    const overlayText = imageTextRefs.current[block.id]?.textContent || imageOverlayDrafts[block.id] || imageOverlayText(block);
+    const overlayColor = imageOverlayColorDrafts[block.id] || block.metadata?.overlayColor || "";
+    const overlayFillColor = imageOverlayFillColorDrafts[block.id] || block.metadata?.overlayFillColor || "";
+    const nextMetadata = {
+      ...(block.metadata || {}),
+      overlayBold: nextStyle.bold,
+      overlayItalic: nextStyle.italic,
+      overlaySize: nextStyle.size,
+      overlayStrike: nextStyle.strike,
+    };
+    if (overlayText.trim()) nextMetadata.overlayText = overlayText.trim().slice(0, 180);
+    if (overlayColor) nextMetadata.overlayColor = overlayColor;
+    if (overlayFillColor) nextMetadata.overlayFillColor = overlayFillColor;
+    setImageOverlayStyleDrafts((current) => ({ ...current, [block.id]: nextStyle }));
+    return Promise.resolve(onUpdateBlock(block.id, { metadata: nextMetadata })).catch(() => false);
+  };
+  const currentImageOverlayStyle = (block) =>
+    imageOverlayStyleDrafts[block.id] || imageOverlayStyle(block);
+  const flushImageOverlayText = async () => {
+    const saves = attachmentBlocks
+      .filter((block) => block.type === "IMAGE")
+      .map((block) => {
+        const element = imageTextRefs.current[block.id];
+        return element ? saveImageOverlayText(block, element.textContent) : true;
+      });
+    await Promise.all(saves);
+  };
+  const finishChapterEditing = async () => {
+    await flushImageOverlayText();
+    onDone();
   };
   const openStructuredEditor = (type, block = null) => {
     setStructuredEditor({ type, blockId: block?.id || null });
@@ -758,11 +1177,11 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             question: "",
             options: ["", ""],
           }
-        : type === "KEY_POINT"
+        : type === "LIST"
           ? {
               label: "",
               url: "",
-              items: block ? [block.text || ""] : ["", ""],
+              items: block ? listBlockItems(block) : ["", ""],
               question: "",
               options: ["", ""],
             }
@@ -780,36 +1199,43 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
   };
   const saveStructuredBlock = async () => {
     if (structuredEditor.type === "LINK") {
+      const urlMeta = safeUrlMeta(structuredDraft.url.trim());
       const block = {
         id: structuredEditor.blockId || newBlockId(),
         type: "LINK",
-        label: structuredDraft.label.trim(),
-        url: structuredDraft.url.trim(),
+        label: structuredDraft.label.trim() || urlMeta.domain,
+        url: urlMeta.href,
       };
-      if (!block.label || !/^https?:\/\//i.test(block.url))
-        return setVoiceError("Add a label and a full http or https link.");
+      if (!urlMeta.href)
+        return setVoiceError("Add a full http or https link.");
       const saved = await (structuredEditor.blockId
         ? onUpdateBlock(block.id, block)
         : onAddBlocks([block]));
       if (saved === false) return;
-    } else if (structuredEditor.type === "KEY_POINT") {
+    } else if (structuredEditor.type === "LIST") {
       const renderedItems = structuredFormRef.current
         ? [...structuredFormRef.current.querySelectorAll('input[name="keyPoint"]')].map((input) => input.value)
         : structuredDraft.items;
       const items = renderedItems
         .map((item) => item.trim())
         .filter(Boolean);
-      if (!items.length) return setVoiceError("Add at least one key point.");
+      if (!items.length) return setVoiceError("Add at least one list item.");
       let saved;
       if (structuredEditor.blockId)
         saved = await onUpdateBlock(structuredEditor.blockId, {
-          text: items[0],
-          type: "KEY_POINT",
+          metadata: { listItems: items },
+          text: items.join("\n"),
+          type: "LIST",
         });
       else
-        saved = await onAddBlocks(
-          items.map((text) => ({ id: newBlockId(), text, type: "KEY_POINT" })),
-        );
+        saved = await onAddBlocks([
+          {
+            id: newBlockId(),
+            metadata: { listItems: items },
+            text: items.join("\n"),
+            type: "LIST",
+          },
+        ]);
       if (saved === false) return;
     } else {
       const options = structuredDraft.options
@@ -841,10 +1267,10 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
         <div>
           <h1>{chapter?.title?.trim() || "Chapter name"}</h1>
           <p>
-            drag a block {"\u2014"} move {"\u00b7"} double-tap {"\u2014"} edit
+            drag a block - move - double-tap - edit
           </p>
         </div>
-        <button disabled={busy} onClick={onDone} type="button">
+        <button disabled={busy} onClick={finishChapterEditing} type="button">
           {busy ? "Saving" : "Done"}
         </button>
       </header>
@@ -854,11 +1280,14 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
           className="seen-chapter-text-tools"
           role="toolbar"
           aria-label="Text formatting"
+          ref={textToolsRef}
+          onMouseDown={(event) => event.preventDefault()}
           style={{ left: textToolPosition.left, top: textToolPosition.top }}
         >
-          <div>
+          <div className="seen-chapter-text-format-row">
             <button
               aria-label="Bold"
+              className={activeTextFormats.bold ? "is-selected" : ""}
               onClick={() => applyTextFormat("bold")}
               type="button"
             >
@@ -866,6 +1295,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             </button>
             <button
               aria-label="Italic"
+              className={activeTextFormats.italic ? "is-selected" : ""}
               onClick={() => applyTextFormat("italic")}
               type="button"
             >
@@ -873,32 +1303,48 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             </button>
             <button
               aria-label="Small text"
-              onClick={() => applyTextFormat("fontSize", "3")}
+              className={activeTextFormats.fontSize === "3" ? "is-selected" : ""}
+              onClick={() => toggleTextFormat("fontSize", "3")}
               type="button"
             >
               S
             </button>
             <button
               aria-label="Large text"
-              onClick={() => applyTextFormat("fontSize", "6")}
+              className={activeTextFormats.fontSize === "6" ? "is-selected" : ""}
+              onClick={() => toggleTextFormat("fontSize", "6")}
               type="button"
             >
               L
             </button>
+            <button
+              aria-label="Clear text formatting"
+              onClick={() => applyTextFormat("removeFormat")}
+              type="button"
+            >
+              Tx
+            </button>
           </div>
-          <div>
-            {["#ffffff", "#9CCBFF", "#F6C85F", "#F17878", "#6ECF97"].map(
-              (color) => (
-                <button
-                  aria-label={`Use ${color} text`}
-                  className="is-color"
-                  key={color}
-                  onClick={() => applyTextFormat("foreColor", color)}
-                  style={{ "--text-color": color }}
-                  type="button"
-                />
-              ),
-            )}
+          <div className="seen-chapter-color-rows">
+            {textPaletteRows.map((row) => (
+              <div className="seen-chapter-color-row" key={`${row.command}-${row.label}`}>
+                <b>{row.label}</b>
+                {row.colors.map((color) => (
+                  <button
+                    aria-label={`${row.command === "hiliteColor" ? "Highlight" : "Use"} ${color}`}
+                    className={`is-color is-${row.shape} ${
+                      normalizeColorValue(activeTextFormats[row.command === "hiliteColor" ? "hiliteColor" : "foreColor"]) === normalizeColorValue(color)
+                        ? "is-selected"
+                        : ""
+                    }`}
+                    key={color}
+                    onClick={() => toggleTextColor(row.command, color)}
+                    style={{ "--text-color": color }}
+                    type="button"
+                  />
+                ))}
+              </div>
+            ))}
           </div>
           <button
             aria-label="Close text tools"
@@ -930,7 +1376,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
         <div
           autoFocus
           contentEditable
-          data-placeholder={"Just write.\n\nSelect text — color appears."}
+          data-placeholder={"Just write.\n\nSelect text - color appears."}
           onBlur={(event) => onStoryChange(event.currentTarget.innerText)}
           onInput={(event) => onStoryChange(event.currentTarget.innerText)}
           onKeyUp={rememberSelection}
@@ -945,11 +1391,17 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
           {attachmentBlocks.map((block) => (
             <figure
               className={`seen-chapter-attachment seen-chapter-sortable-block is-${String(block.type || "media").toLowerCase()}`}
-              draggable
+              draggable={activeImageTextBlockId !== block.id}
               key={block.id}
               onDragEnd={() => setDraggingBlockId("")}
               onDragOver={(event) => event.preventDefault()}
-              onDragStart={() => setDraggingBlockId(block.id)}
+              onDragStart={(event) => {
+                if (activeImageTextBlockId === block.id) {
+                  event.preventDefault();
+                  return;
+                }
+                setDraggingBlockId(block.id);
+              }}
               onDrop={() => dropBlock(block.id)}
               style={{ order: visualOrder(block.id) }}
             >
@@ -963,7 +1415,181 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                 <FiX />
               </button>
               {block.type === "IMAGE" && block.media?.secureUrl ? (
-                <img alt="Chapter attachment" src={block.media.secureUrl} />
+                <div className="seen-chapter-image-stage">
+                  <img alt="Chapter attachment" src={block.media.secureUrl} />
+                  {!imageOverlayText(block) && !imageOverlayDrafts[block.id]?.trim() && activeImageTextBlockId !== block.id ? (
+                    <button
+                      className="seen-chapter-image-write-prompt"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const stage = event.currentTarget.parentElement;
+                        setActiveImageTextBlockId(block.id);
+                        window.requestAnimationFrame(() => {
+                          stage?.querySelector(".seen-chapter-image-text")?.focus();
+                        });
+                      }}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      type="button"
+                    >
+                      Write on it...
+                    </button>
+                  ) : null}
+                  <div
+                    className={`seen-chapter-image-text ${imageOverlayText(block) ? "" : "is-empty"}`}
+                    contentEditable
+                    data-placeholder="Write on it..."
+                    draggable={false}
+                    aria-label="Write on photo"
+                    onBlur={(event) => {
+                      const nextText = event.currentTarget.textContent || "";
+                      setImageOverlayDrafts((current) => ({ ...current, [block.id]: nextText }));
+                      saveImageOverlayText(block, nextText);
+                      if (!nextText.trim()) {
+                        setActiveImageTextBlockId("");
+                      }
+                    }}
+                    onClick={() => setActiveImageTextBlockId(block.id)}
+                    onDragStart={(event) => event.stopPropagation()}
+                    onFocus={() => setActiveImageTextBlockId(block.id)}
+                    onInput={(event) => {
+                      const nextText = event.currentTarget.textContent || "";
+                      setActiveImageTextBlockId(block.id);
+                      setImageOverlayDrafts((current) => ({ ...current, [block.id]: nextText }));
+                    }}
+                    onKeyUp={(event) =>
+                      rememberImageTextSelection(block.id, event.currentTarget)
+                    }
+                    onMouseUp={(event) =>
+                      rememberImageTextSelection(block.id, event.currentTarget)
+                    }
+                    onPointerDown={(event) => event.stopPropagation()}
+                    ref={(node) => {
+                      if (node) imageTextRefs.current[block.id] = node;
+                      else delete imageTextRefs.current[block.id];
+                    }}
+                    role="textbox"
+                    style={{
+                      "--overlay-text-color": imageOverlayColorDrafts[block.id] || imageOverlayColor(block),
+                      backgroundColor: imageOverlayFillColorDrafts[block.id] || imageOverlayFillColor(block) || undefined,
+                      fontSize:
+                        currentImageOverlayStyle(block).size === "small"
+                          ? "13px"
+                          : currentImageOverlayStyle(block).size === "large"
+                            ? "20px"
+                            : undefined,
+                      fontStyle: currentImageOverlayStyle(block).italic ? "italic" : undefined,
+                      fontWeight: currentImageOverlayStyle(block).bold ? 900 : 650,
+                      textDecoration: currentImageOverlayStyle(block).strike ? "line-through" : undefined,
+                    }}
+                    suppressContentEditableWarning
+                  >
+                    {imageOverlayText(block)}
+                  </div>
+                  {activeImageTextBlockId === block.id ? (
+                    <div
+                      aria-label="Image text colors"
+                      className="seen-chapter-text-tools seen-chapter-image-color-panel"
+                      role="toolbar"
+                      onMouseDown={(event) => event.preventDefault()}
+                    >
+                      <div className="seen-chapter-text-format-row">
+                        <button
+                          aria-label="Bold image text"
+                          className={currentImageOverlayStyle(block).bold ? "is-selected" : ""}
+                          onClick={() => updateImageOverlayStyle(block, { bold: !currentImageOverlayStyle(block).bold })}
+                          type="button"
+                        >
+                          <b>B</b>
+                        </button>
+                        <button
+                          aria-label="Italic image text"
+                          className={currentImageOverlayStyle(block).italic ? "is-selected" : ""}
+                          onClick={() => updateImageOverlayStyle(block, { italic: !currentImageOverlayStyle(block).italic })}
+                          type="button"
+                        >
+                          <i>I</i>
+                        </button>
+                        <button
+                          aria-label="Small image text"
+                          className={currentImageOverlayStyle(block).size === "small" ? "is-selected" : ""}
+                          onClick={() => updateImageOverlayStyle(block, { size: currentImageOverlayStyle(block).size === "small" ? "" : "small" })}
+                          type="button"
+                        >
+                          S
+                        </button>
+                        <button
+                          aria-label="Large image text"
+                          className={currentImageOverlayStyle(block).size === "large" ? "is-selected" : ""}
+                          onClick={() => updateImageOverlayStyle(block, { size: currentImageOverlayStyle(block).size === "large" ? "" : "large" })}
+                          type="button"
+                        >
+                          L
+                        </button>
+                        <button
+                          aria-label="Clear image text formatting"
+                          onClick={() => updateImageOverlayStyle(block, { bold: true, italic: false, size: "", strike: false })}
+                          type="button"
+                        >
+                          Tx
+                        </button>
+                      </div>
+                      <div className="seen-chapter-color-rows">
+                        {textPaletteRows.map((row) => (
+                          <div className="seen-chapter-color-row" key={`image-${row.command}-${row.label}`}>
+                            <b>{row.label}</b>
+                            {row.colors.map((color) => (
+                              <button
+                                aria-label={`Use ${color} image text`}
+                                className={`is-color is-${row.shape} ${
+                                  normalizeColorValue(
+                                    row.command === "hiliteColor"
+                                      ? imageOverlayFillColorDrafts[block.id] || imageOverlayFillColor(block)
+                                      : imageOverlayColorDrafts[block.id] || imageOverlayColor(block),
+                                  ) === normalizeColorValue(color) ? "is-selected" : ""
+                                }`}
+                                key={`${row.label}-${color}`}
+                                onClick={() => {
+                                  const isFillColor = row.command === "hiliteColor";
+                                  const currentColor = isFillColor
+                                    ? imageOverlayFillColorDrafts[block.id] || imageOverlayFillColor(block)
+                                    : imageOverlayColorDrafts[block.id] || imageOverlayColor(block);
+                                  const sameColor = normalizeColorValue(currentColor) === normalizeColorValue(color);
+                                  const overlayText = imageTextRefs.current[block.id]?.textContent || imageOverlayDrafts[block.id] || imageOverlayText(block);
+                                  const nextMetadata = { ...(block.metadata || {}) };
+                                  if (overlayText.trim()) nextMetadata.overlayText = overlayText.trim().slice(0, 180);
+                                  if (isFillColor) {
+                                    if (sameColor) delete nextMetadata.overlayFillColor;
+                                    else nextMetadata.overlayFillColor = color;
+                                    setImageOverlayFillColorDrafts((current) => ({ ...current, [block.id]: sameColor ? "" : color }));
+                                  } else {
+                                    if (sameColor) delete nextMetadata.overlayColor;
+                                    else nextMetadata.overlayColor = color;
+                                    setImageOverlayColorDrafts((current) => ({ ...current, [block.id]: sameColor ? "#ffffff" : color }));
+                                  }
+                                  Promise.resolve(
+                                    onUpdateBlock(block.id, {
+                                      metadata: nextMetadata,
+                                    }),
+                                  ).catch(() => {});
+                                }}
+                                style={{ "--text-color": color }}
+                                type="button"
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        aria-label="Close image text colors"
+                        className="seen-chapter-text-tools-close"
+                        onClick={() => setActiveImageTextBlockId("")}
+                        type="button"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               ) : null}
               {block.type === "VIDEO" && block.media?.secureUrl ? (
                 <video
@@ -975,11 +1601,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
               ) : null}
               {["VOICE", "AUDIO"].includes(block.type) &&
               block.media?.secureUrl ? (
-                <audio
-                  controls
-                  preload="metadata"
-                  src={block.media.secureUrl}
-                />
+                <ChapterVoiceBlock block={block} busy={busy} onUpdateBlock={onUpdateBlock} />
               ) : null}
               {!block.media?.secureUrl ? (
                 <div className="seen-chapter-attachment-fallback">
@@ -1014,11 +1636,11 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
               <button
                 aria-label={`Edit ${mediaLabel(block)}`}
                 className="seen-chapter-structured-main"
-                onClick={() => openStructuredEditor(block.type, block)}
+                onClick={() => openStructuredEditor(block.type === "KEY_POINT" ? "LIST" : block.type, block)}
                 type="button"
               >
-                {block.type === "KEY_POINT" ? <><span className="seen-key-point-number">{structuredBlocks.filter((item) => item.type === "KEY_POINT").findIndex((item) => item.id === block.id) + 1}</span><span><small>KEY POINT</small><b>{block.text}</b></span></> : null}
-                {block.type === "LINK" ? <><span><FiLink /></span><span><small>USEFUL LINK</small><b>{block.label}</b><em>{block.url}</em><i>Open link <FiArrowRight /></i></span></> : null}
+                {block.type === "LIST" || (block.type === "KEY_POINT" && keyPointItems(block).length) ? <><span><FiList /></span><span className="seen-list-preview"><small>LIST</small><b>{(listBlockItems(block).length || keyPointItems(block).length)} item{(listBlockItems(block).length || keyPointItems(block).length) === 1 ? "" : "s"}</b><span>{(listBlockItems(block).length ? listBlockItems(block) : keyPointItems(block)).map((item, itemIndex) => <i key={`${block.id}-${itemIndex}`}><u>{itemIndex + 1}</u>{item}</i>)}</span><em>Tap to edit list</em></span></> : null}
+                {block.type === "LINK" ? <><span><FiLink /></span><span><small>LINK</small><b>{block.label || safeUrlMeta(block.url).domain || "Open link"}</b><em>{safeUrlMeta(block.url).domain || block.url}</em><i>Open link <FiArrowRight /></i></span></> : null}
                 {block.type === "POLL" ? <><span><FiBarChart2 /></span><span className="seen-poll-preview"><small>POLL · {block.metadata?.resultsVisibility === "CREATOR" ? "results private" : "results visible"}</small><b>{block.metadata?.question}</b><span>{(block.metadata?.options || []).map((option) => <i key={option}><u />{option}</i>)}</span><em>Tap to edit · subscribers can choose one answer</em></span></> : null}
               </button>
               <button
@@ -1069,7 +1691,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
         </p>
       ) : null}
       {status ? (
-        <p className="seen-chapter-editor-status" role="status">
+        <p className="seen-chapter-editor-status" key={status} role="status">
           {status}
         </p>
       ) : null}
@@ -1134,8 +1756,9 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
               <button
                 className="is-primary"
                 onClick={() => {
-                  onMediaUpload("VOICE", recordedVoice.file);
+                  const file = recordedVoice.file;
                   setVoiceOpen(false);
+                  transcribeVoiceFile(file).then((metadata) => onMediaUpload("VOICE", file, metadata));
                   discardVoice();
                 }}
                 type="button"
@@ -1162,10 +1785,29 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             <input
               autoFocus
               onChange={(event) => setPlaceQuery(event.target.value)}
-              placeholder="Search city, place, or country"
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && placeQuery.trim()) {
+                  onAddPlace(placeQuery.trim());
+                  setPlaceOpen(false);
+                  setPlaceQuery("");
+                }
+              }}
+              placeholder="Place — e.g. Lisbon, Alfama"
               value={placeQuery}
             />
           </label>
+          <button
+            className="seen-chapter-place-add"
+            disabled={!placeQuery.trim()}
+            onClick={() => {
+              onAddPlace(placeQuery.trim());
+              setPlaceOpen(false);
+              setPlaceQuery("");
+            }}
+            type="button"
+          >
+            Add
+          </button>
           <div className="seen-chapter-place-results">
             {placeLoading ? <p>Searching locations...</p> : null}
             {placeSuggestions.map((item) => (
@@ -1206,11 +1848,11 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
       ) : null}
       {structuredEditor ? (
         <section
-          className="seen-chapter-structured-editor"
+          className={`seen-chapter-structured-editor ${structuredEditor.type === "POLL" ? "is-poll-editor" : ""}`}
           aria-label={`Add ${structuredEditor.type.toLowerCase()}`}
           ref={structuredFormRef}
         >
-          <header>
+          {structuredEditor.type === "POLL" ? null : <header>
             <span>
               {structuredEditor.type === "LINK" ? (
                 <FiLink />
@@ -1223,8 +1865,8 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             <div>
               <strong>
                 {structuredEditor.blockId ? "Edit" : "Add"}{" "}
-                {structuredEditor.type === "KEY_POINT"
-                  ? "key points"
+                {structuredEditor.type === "LIST"
+                  ? "list"
                   : structuredEditor.type.toLowerCase()}
               </strong>
               <small>
@@ -1232,7 +1874,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                   ? "Share a useful destination"
                   : structuredEditor.type === "POLL"
                     ? "Let members choose one answer"
-                    : "Turn ideas into a clear checklist"}
+                  : "Turn ideas into a clear list"}
               </small>
             </div>
             <button
@@ -1242,7 +1884,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             >
               <FiX />
             </button>
-          </header>
+          </header>}
           {structuredEditor.type === "LINK" ? (
             <div className="seen-chapter-structured-fields">
               <label>
@@ -1276,9 +1918,9 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                 />
               </label>
             </div>
-          ) : structuredEditor.type === "KEY_POINT" ? (
+          ) : structuredEditor.type === "LIST" ? (
             <div className="seen-chapter-structured-fields">
-              <p>Key points</p>
+              <p>List</p>
               {structuredDraft.items.map((item, index) => (
                 <label className="is-row" key={index}>
                   <span>{index + 1}</span>
@@ -1296,7 +1938,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                         ),
                       }));
                     }}
-                    placeholder={`Point ${index + 1}`}
+                    placeholder={`Option ${index + 1}`}
                     value={item}
                   />
                   {structuredDraft.items.length > 1 ? (
@@ -1328,16 +1970,17 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                   }
                   type="button"
                 >
-                  <FiPlus /> Add another point
+                  <FiPlus /> Option
                 </button>
               ) : null}
             </div>
           ) : (
-            <div className="seen-chapter-structured-fields">
-              <label>
-                Question
+            <div className="seen-poll-prototype-editor">
+              <div className="seen-poll-prototype-question">
+                <FiBarChart2 aria-hidden="true" />
                 <input
                   autoFocus
+                  aria-label="Poll question"
                   maxLength={180}
                   onChange={(event) =>
                     setStructuredDraft((draft) => ({
@@ -1345,15 +1988,21 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                       question: event.target.value,
                     }))
                   }
-                  placeholder="What should we explore next?"
+                  placeholder="Ask something..."
                   value={structuredDraft.question}
                 />
-              </label>
-              <p>Choices</p>
+                <button
+                  aria-label="Close poll editor"
+                  onClick={() => setStructuredEditor(null)}
+                  type="button"
+                >
+                  <FiX />
+                </button>
+              </div>
               {structuredDraft.options.map((option, index) => (
-                <label className="is-row" key={index}>
-                  <span>{index + 1}</span>
+                <label className="seen-poll-prototype-option" key={index}>
                   <input
+                    aria-label={`Poll option ${index + 1}`}
                     maxLength={80}
                     onChange={(event) =>
                       setStructuredDraft((draft) => ({
@@ -1363,7 +2012,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                         ),
                       }))
                     }
-                    placeholder={`Choice ${index + 1}`}
+                    placeholder={`Option ${index + 1}`}
                     value={option}
                   />
                   {structuredDraft.options.length > 2 ? (
@@ -1386,7 +2035,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
               ))}
               {structuredDraft.options.length < 4 ? (
                 <button
-                  className="seen-chapter-add-choice"
+                  className="seen-poll-prototype-add"
                   onClick={() =>
                     setStructuredDraft((draft) => ({
                       ...draft,
@@ -1395,26 +2044,15 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
                   }
                   type="button"
                 >
-                  <FiPlus /> Add choice
+                  + Option
                 </button>
               ) : null}
-              <fieldset className="seen-poll-visibility">
-                <legend>Who can see results?</legend>
-                <label className={structuredDraft.resultsVisibility === "SUBSCRIBERS" ? "is-selected" : ""}>
-                  <input checked={structuredDraft.resultsVisibility === "SUBSCRIBERS"} name="poll-results-visibility" onChange={() => setStructuredDraft((draft) => ({ ...draft, resultsVisibility: "SUBSCRIBERS" }))} type="radio" />
-                  <span><b>Subscribers</b><small>Members can see totals and percentages</small></span>
-                </label>
-                <label className={structuredDraft.resultsVisibility === "CREATOR" ? "is-selected" : ""}>
-                  <input checked={structuredDraft.resultsVisibility === "CREATOR"} name="poll-results-visibility" onChange={() => setStructuredDraft((draft) => ({ ...draft, resultsVisibility: "CREATOR" }))} type="radio" />
-                  <span><b>Only me</b><small>Members can vote, but results stay private</small></span>
-                </label>
-              </fieldset>
             </div>
           )}
           {voiceError ? (
             <p className="seen-chapter-structured-error">{voiceError}</p>
           ) : null}
-          <footer>
+          <footer className={structuredEditor.type === "POLL" ? "is-poll-footer" : ""}>
             <button onClick={() => setStructuredEditor(null)} type="button">
               Cancel
             </button>
@@ -1437,6 +2075,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
         <div
           aria-label="Story block types"
           className="seen-chapter-add-menu"
+          ref={addMenuRef}
           role="menu"
         >
           <button
@@ -1479,11 +2118,11 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
             Link
           </button>
           <button
-            onClick={() => openStructuredEditor("KEY_POINT")}
+            onClick={() => openStructuredEditor("LIST")}
             type="button"
           >
             <FiList />
-            Key points
+            List
           </button>
           <button onClick={() => openStructuredEditor("POLL")} type="button">
             <FiBarChart2 />
@@ -1491,6 +2130,40 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
           </button>
         </div>
       ) : null}
+      {pendingPhoto ? (
+        <section
+          aria-label="Add photo preview"
+          className="seen-chapter-photo-modal"
+          role="dialog"
+        >
+          <div className="seen-chapter-photo-card">
+            <button
+              aria-label="Close photo preview"
+              className="seen-chapter-photo-close"
+              onClick={closePendingPhoto}
+              type="button"
+            >
+              <FiX />
+            </button>
+            <img alt="Selected chapter attachment" src={pendingPhoto.url} />
+            <footer>
+              <button onClick={closePendingPhoto} type="button">
+                Cancel
+              </button>
+              <button disabled={busy} onClick={addPendingPhoto} type="button">
+                <FiCheck />
+                Add photo
+              </button>
+            </footer>
+          </div>
+        </section>
+      ) : null}
+      {editorHintVisible ? <div className="seen-chapter-editor-tools" role="note">
+        <span>select - color - drag a block - + adds the rest</span>
+        <button aria-label="Hide editor hint" onClick={() => setEditorHintVisible(false)} type="button">
+          <FiX />
+        </button>
+      </div> : null}
       <button
         aria-expanded={actionsOpen}
         aria-label={actionsOpen ? "Close block menu" : "Add story block"}
@@ -1509,7 +2182,10 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
           event.target.value = "";
           if (file) {
             setActionsOpen(false);
-            onMediaUpload("IMAGE", file);
+            setPendingPhoto((current) => {
+              if (current?.url) URL.revokeObjectURL(current.url);
+              return { file, url: URL.createObjectURL(file) };
+            });
           }
         }}
         ref={photoInput}
@@ -1524,7 +2200,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
           if (file) {
             setActionsOpen(false);
             setVoiceOpen(false);
-            onMediaUpload("VOICE", file);
+            transcribeVoiceFile(file).then((metadata) => onMediaUpload("VOICE", file, metadata));
           }
         }}
         ref={voiceInput}
@@ -1939,7 +2615,7 @@ export default function SeenComposerPage() {
     }
   };
 
-  const uploadChapterMedia = async (mediaType, file) => {
+  const uploadChapterMedia = async (mediaType, file, metadata = {}) => {
     if (!activeChapter || !p.id || chapterSaving) return;
     const blockId = newBlockId();
     setChapterSaving(true);
@@ -1962,6 +2638,7 @@ export default function SeenComposerPage() {
         {
           id: blockId,
           media: uploaded,
+          ...(Object.keys(metadata || {}).length ? { metadata } : {}),
           order: storyBlocks.length,
           type: mediaType,
         },
@@ -1997,8 +2674,8 @@ export default function SeenComposerPage() {
     else await uploadChapterMedia("IMAGE", file);
   };
 
-  const requestChapterMedia = (mediaType, file) => {
-    if (mediaType !== "IMAGE") return uploadChapterMedia(mediaType, file);
+  const requestChapterMedia = (mediaType, file, metadata = {}) => {
+    if (mediaType !== "IMAGE") return uploadChapterMedia(mediaType, file, metadata);
     setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
   };
 

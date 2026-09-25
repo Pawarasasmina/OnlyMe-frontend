@@ -99,6 +99,18 @@ function blockPayload(block = {}, order) {
     return payload;
   }
 
+  if (type === "LIST") {
+    const items = Array.isArray(block.metadata?.listItems)
+      ? block.metadata.listItems
+      : Array.isArray(block.metadata?.items)
+        ? block.metadata.items
+        : String(block.text || "").split("\n");
+    const cleanItems = items.map((item) => String(item || "").trim()).filter(Boolean);
+    payload.text = cleanItems.join("\n");
+    payload.metadata = { listItems: cleanItems };
+    return payload;
+  }
+
   return { ...payload, text: block.text || "" };
 }
 
@@ -124,6 +136,10 @@ function statusLabel(world, experience = false) {
 
 function isStoryPreviewBlock(block = {}) {
   return Boolean(block.metadata?.storyPreview && ["IMAGE", "VIDEO", "AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl);
+}
+
+function isPublicationConflict(error) {
+  return error?.response?.status === 409 || /publication changed/i.test(error?.response?.data?.message || error?.message || "");
 }
 
 function storyPreviewsFromWorld(publication = {}) {
@@ -279,6 +295,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [aiBusy, setAiBusy] = useState(false);
   const [experienceStep, setExperienceStep] = useState(1);
   const [newChapterTitle, setNewChapterTitle] = useState("");
+  const [chapterCreateOpen, setChapterCreateOpen] = useState(false);
+  const [chapterCreateError, setChapterCreateError] = useState("");
   const [videoTrimFile, setVideoTrimFile] = useState(null);
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
   const [faceSheetOpen, setFaceSheetOpen] = useState(false);
@@ -291,6 +309,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const activeStory = useMemo(() => storyPreviews.find((story) => story.id === activeStoryId), [activeStoryId, storyPreviews]);
   const freeStories = useMemo(() => storyPreviews.filter((story) => story.audience !== "SUBSCRIBER"), [storyPreviews]);
   const subscriberStories = useMemo(() => storyPreviews.filter((story) => story.audience === "SUBSCRIBER"), [storyPreviews]);
+
+  useEffect(() => {
+    if (!chapterStatus || !/(saved|added|removed)$/i.test(chapterStatus)) return undefined;
+    const timer = window.setTimeout(() => setChapterStatus(""), 2100);
+    return () => window.clearTimeout(timer);
+  }, [chapterStatus]);
 
   const loadWorld = useCallback(async () => {
     setLoading(true);
@@ -378,6 +402,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       category: current.category,
       chapters: current.chapters,
       description: current.description,
+      includedInWorld: current.includedInWorld,
+      allowDownload: current.allowDownload,
+      experiencePath: current.experiencePath,
+      experienceLocation: current.experienceLocation,
       planet: current.planet,
       pricing: current.pricing,
       summary: current.summary,
@@ -485,7 +513,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     return next;
   };
 
-  const saveDraft = async () => {
+  const saveDraft = async (retryingConflict = false, snapshotOverride = null) => {
     if (saving || uploading) {
       pendingDraftSaveRef.current = true;
       return null;
@@ -493,7 +521,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     setSaving(true);
     setError("");
     setNotice("Saving...");
-    const snapshot = world;
+    const snapshot = snapshotOverride || world;
     const requestEditVersion = worldEditVersionRef.current;
     try {
       let draft = await ensureDraft(snapshot, requestEditVersion);
@@ -542,6 +570,29 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       setNotice("Draft saved");
       return draft;
     } catch (requestError) {
+      if (!retryingConflict && snapshot.id && isPublicationConflict(requestError)) {
+        try {
+          setNotice("Refreshing latest draft...");
+          const latest = await refreshWorld(snapshot.id, requestEditVersion);
+          const retrySnapshot = {
+            ...latest,
+            ...snapshot,
+            coverMedia: latest.coverMedia || snapshot.coverMedia || null,
+            chapters: snapshot.chapters?.length ? snapshot.chapters : latest.chapters || [],
+            statusVersion: latest.statusVersion,
+          };
+          setWorld((current) => preserveNewerLocalEdits(
+            current,
+            { ...current, ...retrySnapshot },
+            requestEditVersion,
+          ));
+          return await saveDraft(true, retrySnapshot);
+        } catch (retryError) {
+          setError(publicationError(retryError));
+          setNotice("Save paused");
+          return null;
+        }
+      }
       setError(publicationError(requestError));
       setNotice("Save paused");
       return null;
@@ -728,20 +779,30 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     return next;
   };
 
+  const latestChapterContext = async () => {
+    const response = await api.getMyPublication(world.id);
+    const publication = response.data.data.publication;
+    const chapter = publication.chapters?.[activeChapter];
+    if (!chapter?.stableChapterId) throw new Error("Chapter is no longer available.");
+    setWorld((current) => ({ ...current, ...publication }));
+    return { chapter, publication };
+  };
+
   const updateActiveChapterBlocks = async (blocks, status) => {
     if (!activePlanetChapter?.stableChapterId || chapterSaving) return;
     setChapterSaving(true);
     setChapterStatus(status);
     setError("");
     try {
-      const previewBlocks = (activePlanetChapter.blocks || []).filter((block) => block.metadata?.storyPreview);
+      const { chapter, publication } = await latestChapterContext();
+      const previewBlocks = (chapter.blocks || []).filter((block) => block.metadata?.storyPreview);
       const mergedBlocks = [...previewBlocks, ...blocks].map((block, order) => ({ ...block, order }));
-      await api.updateChapter(world.id, activePlanetChapter.stableChapterId, {
+      await api.updateChapter(publication.id, chapter.stableChapterId, {
         blocks: mergedBlocks,
-        isPreview: Boolean(activePlanetChapter.isPreview || activeChapter === 0),
-        releaseMode: activePlanetChapter.releaseMode || "IMMEDIATE",
-        statusVersion: world.statusVersion,
-        title: activePlanetChapter.title || `Chapter ${activeChapter + 1}`,
+        isPreview: Boolean(chapter.isPreview || activeChapter === 0),
+        releaseMode: chapter.releaseMode || "IMMEDIATE",
+        statusVersion: publication.statusVersion,
+        title: chapter.title || `Chapter ${activeChapter + 1}`,
       });
       await refreshChapterEditor();
       setChapterStatus("Chapter saved");
@@ -764,41 +825,44 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     }
   };
 
-  const uploadChapterMedia = async (mediaType, file) => {
+  const uploadChapterMedia = async (mediaType, file, metadata = {}) => {
     if (!activePlanetChapter?.stableChapterId || chapterSaving) return;
     const blockId = crypto.randomUUID();
     setChapterSaving(true);
     setChapterStatus(`Uploading ${mediaType.toLowerCase()}...`);
     setError("");
     try {
-      const uploaded = (await api.uploadMedia(world.id, file, {
+      const starting = await latestChapterContext();
+      const uploaded = (await api.uploadMedia(starting.publication.id, file, {
         blockId,
-        chapterId: activePlanetChapter.stableChapterId,
+        chapterId: starting.chapter.stableChapterId,
         mediaType,
         purpose: "BLOCK",
       })).data.data;
+      const { chapter, publication } = await latestChapterContext();
       const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
-      const previewBlocks = (activePlanetChapter.blocks || []).filter((block) => block.metadata?.storyPreview);
-      await api.updateChapter(world.id, activePlanetChapter.stableChapterId, {
-        blocks: [...previewBlocks, ...blocks, { id: blockId, media: uploaded, order: previewBlocks.length + blocks.length, type: mediaType }].map((block, order) => ({ ...block, order })),
-        isPreview: Boolean(activePlanetChapter.isPreview || activeChapter === 0),
-        releaseMode: activePlanetChapter.releaseMode || "IMMEDIATE",
-        statusVersion: world.statusVersion,
-        title: activePlanetChapter.title || `Chapter ${activeChapter + 1}`,
+      const previewBlocks = (chapter.blocks || []).filter((block) => block.metadata?.storyPreview);
+      await api.updateChapter(publication.id, chapter.stableChapterId, {
+        blocks: [...previewBlocks, ...blocks, { id: blockId, media: uploaded, ...(Object.keys(metadata || {}).length ? { metadata } : {}), order: previewBlocks.length + blocks.length, type: mediaType }].map((block, order) => ({ ...block, order })),
+        isPreview: Boolean(chapter.isPreview || activeChapter === 0),
+        releaseMode: chapter.releaseMode || "IMMEDIATE",
+        statusVersion: publication.statusVersion,
+        title: chapter.title || `Chapter ${activeChapter + 1}`,
       });
       await refreshChapterEditor();
       setChapterStatus(`${mediaType === "IMAGE" ? "Photo" : "Voice"} added`);
     } catch (requestError) {
-      setError(publicationError(requestError));
-      setChapterStatus("Media upload failed");
+      const message = publicationError(requestError, "Media upload failed");
+      setError(message);
+      setChapterStatus(message);
     } finally {
       setChapterSaving(false);
     }
   };
 
-  const requestChapterMedia = (mediaType, file) => {
+  const requestChapterMedia = (mediaType, file, metadata = {}) => {
     if (mediaType === "IMAGE") setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
-    else uploadChapterMedia(mediaType, file);
+    else uploadChapterMedia(mediaType, file, metadata);
   };
 
   const closeImageCrop = () => {
@@ -916,20 +980,44 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   };
 
   const addNamedExperienceChapter = () => {
+    setChapterCreateOpen(true);
+    setChapterCreateError("");
+    setError("");
+    setNotice("");
+  };
+
+  const createExperienceChapterAndWrite = async () => {
     const title = newChapterTitle.trim();
     if (!title) {
-      setError("Enter a chapter title first.");
+      setChapterCreateError("Name this chapter first.");
       return;
     }
-    updateWorld({ chapters: [...chapters, {
-      blocks: [],
-        isPreview: world.pricing?.mode === "FREE",
-      localId: crypto.randomUUID(),
-      title,
-    }] });
-    setNewChapterTitle("");
+    if (saving || chapterSaving) return;
+    setSaving(true);
+    setChapterCreateError("");
     setError("");
-    setNotice("Chapter added. Tap it to write your story.");
+    try {
+      const draft = await ensureDraft(world);
+      const response = await api.addChapter(draft.id, {
+        blocks: [],
+        isPreview: world.pricing?.mode === "FREE",
+        releaseMode: "IMMEDIATE",
+        statusVersion: draft.statusVersion,
+        title,
+      });
+      const createdId = response.data.data.chapter?.stableChapterId;
+      const next = await refreshWorld(draft.id);
+      const nextIndex = Math.max(0, next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId));
+      setNewChapterTitle("");
+      setChapterCreateOpen(false);
+      setActiveChapter(nextIndex);
+      setChapterStory("");
+      setChapterStatus("");
+    } catch (requestError) {
+      setChapterCreateError(publicationError(requestError));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const removeChapter = async (index) => {
@@ -1091,6 +1179,32 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
         <button className="experience-chapters-continue" disabled={chapters.length < 2 || saving} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(3); }} type="button">{saving ? "Saving…" : `Continue (${chapters.length})`}</button>
       </main>
+      {chapterCreateOpen ? (
+        <div className="experience-chapter-create-layer" role="presentation">
+          <button aria-label="Close chapter creator" className="experience-chapter-create-dim" onClick={() => setChapterCreateOpen(false)} type="button" />
+          <section aria-labelledby="experience-chapter-create-title" aria-modal="true" className="experience-chapter-create-sheet" role="dialog">
+            <span />
+            <h2 id="experience-chapter-create-title">Chapter {chapters.length + 1}</h2>
+            <p>Name it — then write the page. Up to 2,000 characters each.</p>
+            <input
+              autoFocus
+              maxLength={120}
+              onChange={(event) => {
+                setNewChapterTitle(event.target.value);
+                setChapterCreateError("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setChapterCreateOpen(false);
+                if (event.key === "Enter") createExperienceChapterAndWrite();
+              }}
+              placeholder="Chapter title"
+              value={newChapterTitle}
+            />
+            {chapterCreateError ? <p className="experience-chapter-create-error" role="alert">{chapterCreateError}</p> : null}
+            <button disabled={saving || !newChapterTitle.trim()} onClick={createExperienceChapterAndWrite} type="button">{saving ? "Creating..." : "Create & write ✍"}</button>
+          </section>
+        </div>
+      ) : null}
     </article>
   );
 
@@ -1334,7 +1448,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             );
           })}
         </div>
-        <button className="world-prototype-add-chapter" onClick={addChapter} type="button"><FiPlus /> Add a chapter</button>
+        <button className="world-prototype-add-chapter" onClick={experience ? addNamedExperienceChapter : addChapter} type="button"><FiPlus /> Add a chapter</button>
       </section>
 
       {!experience ? <section className="world-prototype-comments">
