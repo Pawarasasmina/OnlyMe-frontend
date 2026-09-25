@@ -867,7 +867,7 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
-      <ProfileExperiences creatorName={profile.displayName} experiences={data.experiences || []} onCreate={() => setExperienceCreateOpen(true)} owner={isOwner} />
+      <ProfileExperiences creatorUsername={profile.username} experiences={data.experiences || []} onCreate={() => setExperienceCreateOpen(true)} owner={isOwner} />
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel">
         {tab === "seens" ? (

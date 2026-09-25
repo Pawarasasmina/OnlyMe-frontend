@@ -22499,6 +22499,92 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 .world-bottom-sheet::-webkit-scrollbar {
   display: none;
 }
+
+/* Financial confirmations opened from the social reader use the same
+   center-rail bottom-sheet geometry as the surrounding World sheets. */
+.financial-center-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.financial-center-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(4,6,10,.72);
+  cursor: default;
+}
+.financial-center-sheet {
+  position: relative;
+  width: min(100vw, 550px);
+  max-height: min(88dvh, 630px);
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,.07);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  background: #0c0f14;
+  padding: 0 24px max(28px, env(safe-area-inset-bottom));
+  color: var(--color-atseen-text, #f6f7fb);
+  box-shadow: 0 -24px 80px rgba(0,0,0,.55);
+  scrollbar-width: none;
+}
+.financial-center-sheet::-webkit-scrollbar { display: none; }
+.financial-center-sheet-handle {
+  display: block;
+  width: 38px;
+  height: 4px;
+  margin: 10px auto 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.28);
+}
+.financial-center-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.financial-center-sheet-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.financial-center-sheet-header button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: rgba(255,255,255,.68);
+  font-size: 22px;
+  line-height: 1;
+}
+.financial-center-sheet-header button:hover { background: rgba(255,255,255,.07); color: #fff; }
+.financial-center-sheet-content { margin-top: 16px; }
+.financial-center-sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+@media (max-width: 639px) {
+  .financial-center-sheet { padding-inline: 20px; }
+  .financial-center-sheet-actions { flex-direction: column-reverse; }
+  .financial-center-sheet-actions > button { width: 100%; }
+}
+@media (min-width: 1020px) {
+  .financial-center-sheet-layer {
+    inset: 0 auto 0 calc((100vw - (var(--social-left-width) + var(--social-center-width) + var(--social-right-width))) / 2 + var(--social-left-width));
+    width: var(--social-center-width);
+  }
+}
 .world-prototype-walkers-trigger {
   display: inline-block;
   border: 0;
@@ -23905,6 +23991,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
 .profile-prototype.is-owner-profile .profile-experience-copy small { font-size:8px; }
 .profile-prototype.is-owner-profile .profile-experience-copy strong { margin-top:5px;font-size:13px; }
 .profile-prototype.is-owner-profile .profile-experience-copy em { margin-top:6px;border:0;padding:0;color:rgba(255,255,255,.55);font-size:9px; }
+.profile-experiences-reference>header{align-items:center!important;margin-bottom:10px!important}.profile-experiences-reference>header h2{margin:0!important;font-size:14px!important;font-weight:900!important}.profile-experiences-reference .profile-experience-head-actions>a{width:auto!important;height:auto!important;border:0!important;background:transparent!important;color:rgba(255,255,255,.48)!important;font-size:9px;text-decoration:none}.profile-experience-reference-row{display:grid;grid-template-columns:118px minmax(0,1fr);align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);padding:0 0 8px;color:#fff}.profile-experience-reference-cover{display:block;height:67px;overflow:hidden;border-radius:9px;background:#111923}.profile-experience-reference-cover img{width:100%;height:100%;object-fit:cover}.profile-experience-reference-cover>i{display:grid;height:100%;place-items:center;color:#9ccbff;font-size:24px;font-style:normal}.profile-experience-reference-copy{display:grid;min-width:0}.profile-experience-reference-copy>strong{overflow:hidden;font-size:13px;font-weight:900;text-overflow:ellipsis;white-space:nowrap}.profile-experience-reference-copy>small{margin-top:4px;color:rgba(255,255,255,.42);font-size:8px}.profile-experience-reference-copy>span{display:flex;align-items:center;gap:8px;margin-top:7px}.profile-experience-reference-copy>span>b{border:1px solid rgba(156,203,255,.28);border-radius:999px;background:rgba(156,203,255,.06);padding:3px 8px;color:#9ccbff;font-size:9px}.profile-experience-reference-copy>span>em{display:flex}.profile-experience-reference-copy>span>em i{display:block;width:15px;height:15px;border:1px solid #080b0f;border-radius:50%;background:#161c24}.profile-experience-reference-copy>span>em i+i{margin-left:-5px}.profile-experience-reference-copy>span>small{color:rgba(255,255,255,.38);font-size:8px}
 .profile-prototype.is-owner-profile .profile-icon-tabs { margin-top:0; }
 .profile-prototype.is-owner-profile .profile-icon-tabs {
   width:calc(100% - 40px);

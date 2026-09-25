@@ -325,6 +325,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
   const [, setNotice] = useState("");
   const [error, setError] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
@@ -338,7 +339,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || "Max";
-  const coverUrl = world.coverMedia?.secureUrl;
+  const coverUrl = coverPreviewUrl || world.coverMedia?.secureUrl;
   const validation = useMemo(() => worldCompletenessBySection(world), [world]);
   const validationMessages = Object.values(validation).flat();
   const readyToSubmit = world.id && !validationMessages.length && !saving && !uploading && !storyAutoSaving;
@@ -434,6 +435,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     storyPreviewsRef.current.forEach(revokePreviewUrl);
     window.clearTimeout(draftAutoSaveTimer.current);
   }, []);
+
+  useEffect(() => () => {
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+  }, [coverPreviewUrl]);
 
   const scheduleDraftSave = () => {
     window.clearTimeout(draftAutoSaveTimer.current);
@@ -698,12 +703,18 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const uploadCover = async (file) => {
     if (!file) return;
     const requestEditVersion = worldEditVersionRef.current;
+    const localPreview = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
+    if (localPreview) setCoverPreviewUrl(localPreview);
     setUploading(true);
     setError("");
     setNotice("Uploading cover...");
     try {
       const draft = await ensureDraft(world, requestEditVersion);
-      await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion });
+      const response = await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion });
+      const uploadedPublication = response.data.data.publication;
+      if (uploadedPublication?.coverMedia?.secureUrl) {
+        setWorld((current) => ({ ...current, id: current.id || draft.id, coverMedia: uploadedPublication.coverMedia, statusVersion: uploadedPublication.statusVersion, draftVersion: uploadedPublication.draftVersion }));
+      }
       await refreshWorld(draft.id, requestEditVersion);
       setNotice("Cover saved");
     } catch (requestError) {
@@ -711,6 +722,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       setNotice("Cover upload failed");
     } finally {
       setUploading(false);
+      setCoverPreviewUrl("");
       if (pendingDraftSaveRef.current) {
         pendingDraftSaveRef.current = false;
         scheduleDraftSave();

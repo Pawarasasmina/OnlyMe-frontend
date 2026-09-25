@@ -754,13 +754,13 @@ function ExperienceVisitorOverview({ canView, chapters, onBack, onOpenChapter, o
       <button aria-label="Share Experience" className="experience-public-share" onClick={onShare} type="button"><FiArrowUpRight /></button>
     </header>
     <main>
-      <button aria-label={canView ? `Start ${publication.title}` : `Unlock ${publication.title}`} className="experience-viewer-media" onClick={() => canView ? onOpenChapter(0) : onUnlock()} type="button">{cover ? <img alt={`${publication.title} cover`} src={cover} /> : <span aria-hidden="true">{PLANET}</span>}</button>
+      <button aria-label={!chapters[0]?.locked ? `Preview ${publication.title}` : `Unlock ${publication.title}`} className="experience-viewer-media" onClick={() => !chapters[0]?.locked ? onOpenChapter(0) : onUnlock()} type="button">{cover ? <img alt={`${publication.title} cover`} src={cover} /> : <span aria-hidden="true">{PLANET}</span>}</button>
       <h1>{publication.title}</h1>
       {publication.description || publication.summary ? <p>{publication.description || publication.summary}</p> : null}
       <span className="experience-viewer-category">{publication.category || "Experience"}</span>
       <p className="experience-public-creator">By {creatorName} {publication.creator?.verified ? <FiCheck aria-label="Verified creator" /> : null} {"\u00b7"} {chapters.length} {chapterWord}</p>
       <div className="experience-viewer-chapters">
-        {chapters.map((chapter, index) => <button aria-label={canView ? `Open ${chapter.title}` : `${chapter.title} is locked`} key={chapter.stableChapterId || chapter.id || index} onClick={() => canView ? onOpenChapter(index) : onUnlock()} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{canView ? null : <FiLock aria-hidden="true" />}<b>›</b></button>)}
+        {chapters.map((chapter, index) => { const locked = Boolean(chapter.locked && !canView); return <button aria-label={locked ? `${chapter.title} is locked` : `Open ${chapter.title}`} key={chapter.stableChapterId || chapter.id || index} onClick={() => locked ? onUnlock() : onOpenChapter(index)} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{locked ? <FiLock aria-hidden="true" /> : index === 0 && !canView ? <small>FREE</small> : null}<b>›</b></button>; })}
       </div>
       {!chapters.length ? <p>No chapters yet.</p> : null}
       {!canView ? <section className="experience-unlock-panel"><span>ONE-TIME PURCHASE</span><p>Unlock every chapter permanently, including future updates.</p><button onClick={onUnlock} type="button">Unlock Experience {"\u00b7"} {STAR}{publication.pricing?.starsAmount}</button></section> : <footer className="seen-detail-engagement"><div className="seen-detail-start-meta"><span>{chapters.length} {chapterWord} {"\u00b7"} ~{Math.max(1, chapters.length)} min</span><span>Tap a chapter to start {"\u203a"}</span></div></footer>}
@@ -997,13 +997,21 @@ export default function WorldReaderPage() {
   }
 
   if (activeChapterIndex !== null && experienceChapters[activeChapterIndex]) {
+    const selectExperienceChapter = (index) => {
+      if (experienceChapters[index]?.locked && !canViewMemberContent) {
+        setActiveChapterIndex(null);
+        setShowExperienceUnlock(true);
+        return;
+      }
+      setActiveChapterIndex(index);
+    };
     return <ChapterExperience
       chapter={experienceChapters[activeChapterIndex]}
       chapterIndex={activeChapterIndex}
       chapters={experienceChapters}
       experienceTitle={managedPublication.title}
       onBack={() => setActiveChapterIndex(null)}
-      onSelect={setActiveChapterIndex}
+      onSelect={selectExperienceChapter}
     />;
   }
 

@@ -1,29 +1,20 @@
 import { Link } from "react-router-dom";
-import { FiArrowUpRight, FiCheck, FiLock, FiPlus } from "react-icons/fi";
+import { FiPlus } from "react-icons/fi";
 
-export default function ProfileExperiences({ experiences = [], onCreate, owner = false, creatorName = "Creator" }) {
+const STAR = "✦";
+function updatedLabel(value) {
+  const days = Math.max(0, Math.floor((Date.now() - new Date(value || Date.now()).getTime()) / 86400000));
+  return days < 1 ? "upd today" : `upd ${days}d`;
+}
+
+export default function ProfileExperiences({ creatorUsername = "", experiences = [], onCreate, owner = false }) {
   if (!owner && !experiences.length) return null;
-  return (
-    <section className="profile-experiences">
-      <header>
-        <div><h2>Experiences</h2></div>
-        {owner ? <span className="profile-experience-head-actions">{experiences.length > 1 ? <span>See all</span> : null}<button aria-label="Create" onClick={onCreate} type="button"><FiPlus /></button></span> : null}
-      </header>
-      <div className="profile-experience-grid">
-        {experiences.map((item) => {
-          const free = item.pricing?.mode === "FREE";
-          const accessible = owner || free || ["PUBLIC_FULL", "ENTITLED_EXPERIENCE", "ACTIVE_PREMIUM_MEMBER"].includes(item.access);
-          const purchased = !owner && !free && accessible;
-          const ownerCount = Number(item.ownerCount) || 0;
-          const ownerLabel = `${ownerCount} ${ownerCount === 1 ? "owner" : "owners"}`;
-          return <Link className="profile-experience-card" key={item.id} to={`/experience/${item.id}`}>
-            <span className="profile-experience-cover">{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i>✦</i>}{!owner ? <b>{free ? <><FiCheck /> Free</> : purchased ? <><FiCheck /> Yours</> : <><FiLock /> ✦{item.pricing?.starsAmount} once</>}</b> : null}</span>
-            <span className="profile-experience-copy"><small>{item.category || "EXPERIENCE"} · {(item.chapters || []).length} chapters</small><strong>{item.title || "Untitled Experience"}</strong><em>{owner ? free ? `Free · ${ownerLabel}` : `✦${Number(item.pricing?.starsAmount || 0).toLocaleString()} · one-time   ${ownerLabel}` : free ? `Free · view every chapter · ${ownerLabel}` : purchased ? `Purchased · permanent access · ${ownerLabel}` : `Premium · one-time unlock by ${creatorName} · ${ownerLabel}`}</em></span>
-            <FiArrowUpRight />
-          </Link>;
-        })}
-      </div>
-      {owner && !experiences.length ? <Link className="profile-experience-empty" to="/create/experience"><FiPlus /> Create your first Premium Experience</Link> : null}
-    </section>
-  );
+  return <section className="profile-experiences profile-experiences-reference">
+    <header><h2>Experiences</h2><span className="profile-experience-head-actions"><Link to={owner ? "/experiences" : `/profile/${encodeURIComponent(creatorUsername)}/experiences`}>See all ›</Link>{owner ? <button aria-label="Create Experience" onClick={onCreate} type="button"><FiPlus /></button> : null}</span></header>
+    {experiences.slice(0, 3).map((item) => <Link className="profile-experience-reference-row" key={item.id} to={`/experience/${item.id}`}>
+      <span className="profile-experience-reference-cover">{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i>{STAR}</i>}</span>
+      <span className="profile-experience-reference-copy"><strong>{item.title || "Untitled Experience"}</strong><small>{(item.chapters || []).length} chapters · {item.category || "Lifestyle"} · {updatedLabel(item.updatedAt)}</small><span><b>{item.pricing?.mode === "FREE" ? "Free" : <>{STAR}{Number(item.pricing?.starsAmount || 0).toLocaleString()} · one-time</>}</b><em aria-hidden="true"><i /><i /></em><small>{Number(item.ownerCount || 0).toLocaleString()} own it</small></span></span>
+    </Link>)}
+    {!experiences.length && owner ? <Link className="profile-experience-empty" to="/create/experience"><FiPlus /> Create your first Experience</Link> : null}
+  </section>;
 }

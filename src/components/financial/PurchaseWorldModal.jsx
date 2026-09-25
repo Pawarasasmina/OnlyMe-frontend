@@ -37,7 +37,7 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
   };
 
   const remaining = wallet.data ? wallet.data.balance - Number(publication?.pricing?.starsAmount || 0) : null;
-  return <FinancialConfirmDialog open={open} onClose={() => !busy && onClose()} title={`Unlock this ${noun}`} actions={<><button className="rounded-full border border-atseen-line px-5 py-3" disabled={busy} onClick={onClose}>Cancel</button><button className="rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy || !accepted || wallet.isError} onClick={confirmPurchase}>{busy ? "Processing…" : `Unlock · ✦${publication?.pricing?.starsAmount}`}</button></>}>
+  return <FinancialConfirmDialog presentation="center-sheet" open={open} onClose={() => !busy && onClose()} title={`Unlock this ${noun}`} actions={<><button className="rounded-full border border-atseen-line px-5 py-3" disabled={busy} onClick={onClose}>Cancel</button><button className="rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy || !accepted || wallet.isError} onClick={confirmPurchase}>{busy ? "Processing…" : `Unlock · ✦${publication?.pricing?.starsAmount}`}</button></>}>
     <p className="font-bold">{publication?.title}</p>
     <p className="mt-1 text-sm text-atseen-muted">Permanent access to this {noun}. One payment, including future chapter updates.</p>
     {experience && publication?.includedInWorld ? <p className="mt-3 rounded-xl border border-atseen-blue/20 bg-atseen-blue/5 p-3 text-xs text-atseen-muted">This Experience is also included while your World membership is active. Buying separately keeps it yours independently.</p> : null}
