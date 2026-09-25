@@ -478,14 +478,14 @@ function shareUrlFor(publication) {
   return `${window.location.origin}/${route}/${publication?.id || publication?._id}`;
 }
 
-function ExperienceAccessSheet({ data, loading, onClose, onCopy, onDecide, pendingId }) {
+function ExperienceAccessSheet({ data, error, loading, onClose, onCopy, onDecide, onRetry, pendingId }) {
   const requests = data?.requests || [];
   return <BottomSheet labelledBy="experience-access-title" onClose={onClose}>
     <section className="experience-access-sheet">
       <h2 id="experience-access-title">Access by link</h2>
       <p>Send this link to a friend. When they open it, you get a request — confirm, and the Experience is theirs forever. Free, from the author.</p>
-      <div><input aria-label="Experience access link" readOnly value={data?.url || "Loading…"} /><button disabled={loading || !data?.url} onClick={onCopy} type="button">Copy</button></div>
-      {loading ? <small>Loading requests…</small> : requests.length ? requests.map((item) => <article key={item.id}><FanAvatar name={item.requester?.name} size="h-9 w-9" src={item.requester?.avatar} /><span><b>{item.requester?.name || item.requester?.username || "User"}</b><small>{item.status.toLowerCase()}</small></span>{item.status === "PENDING" ? <><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, true)} type="button">Confirm</button><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, false)} type="button">Decline</button></> : null}</article>) : <small>No requests yet — they appear here.</small>}
+      <div><input aria-label="Experience access link" readOnly value={loading ? "Loading…" : error ? "Access link unavailable" : data?.url || ""} /><button disabled={loading || !data?.url} onClick={onCopy} type="button">Copy</button></div>
+      {error ? <p className="world-sheet-error">{error} <button onClick={onRetry} type="button">Retry</button></p> : loading ? <small>Loading requests…</small> : requests.length ? requests.map((item) => <article key={item.id}><FanAvatar name={item.requester?.name} size="h-9 w-9" src={item.requester?.avatar} /><span><b>{item.requester?.name || item.requester?.username || "User"}</b><small>{item.status.toLowerCase()}</small></span>{item.status === "PENDING" ? <><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, true)} type="button">Confirm</button><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, false)} type="button">Decline</button></> : null}</article>) : <small>No requests yet — they appear here.</small>}
     </section>
   </BottomSheet>;
 }
@@ -1559,7 +1559,7 @@ export default function WorldReaderPage() {
       {sheet === "seats" ? <SeatsSheet busy={waveMutation.isPending} management={management} onClose={() => setSheet("")} onOpenWave={() => waveMutation.mutate()} /> : null}
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
-      {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} loading={accessLinkQuery.isLoading} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
+      {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} error={accessLinkQuery.error?.response?.data?.message || (accessLinkQuery.isError ? "The access-link service could not be reached." : "")} loading={accessLinkQuery.isLoading || accessLinkQuery.isFetching} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} onRetry={() => accessLinkQuery.refetch()} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
       {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate("/create/experience")} onToggle={toggleExperience} /> : null}
       {sheet === "moderators" ? (
         <ModeratorsSheet
