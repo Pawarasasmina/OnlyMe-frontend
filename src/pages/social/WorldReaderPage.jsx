@@ -307,8 +307,6 @@ function IncludeExperienceSheet({ busyId, experiences = [], included = [], onClo
               <span className="world-include-copy">
                 <b>{item.title || "Untitled experience"}</b>
                 <small className="world-include-meta-clean">{item.chapterCount || item.chapters?.length || 0} chapters{item.pricing?.starsAmount ? <>{" \u00b7 "}{STAR}{item.pricing.starsAmount}</> : ""}</small>
-                <small className="world-include-meta">{item.chapterCount || item.chapters?.length || 0} chapters{item.pricing?.starsAmount ? ` · ${STAR}${item.pricing.starsAmount}` : ""}</small>
-              <small>{item.chapterCount || item.chapters?.length || 0} chapters{item.pricing?.starsAmount ? ` · ${STAR}${item.pricing.starsAmount}` : ""}</small>
               </span>
               {selected ? <i aria-label="Included"><FiCheck /></i> : null}
             </button>
@@ -1328,8 +1326,6 @@ export default function WorldReaderPage() {
                 <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : PLANET}</span>
                 <b>{item.title}</b>
                 <small className="world-prototype-inside-meta-clean">{item.chapterCount || 0} chapters{" \u00b7 "}included for members</small>
-                <small className="world-prototype-inside-meta">{item.chapterCount || 0} chapters · included for members</small>
-                <small>{item.chapterCount || 0} chapters · included for members</small>
                 <FiChevronRight aria-hidden="true" />
               </Link>
             )) : <p>Attach an experience — members get it with the subscription.</p>}
