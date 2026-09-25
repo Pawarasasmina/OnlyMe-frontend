@@ -123,11 +123,11 @@ function Card({ children, className = "" }) {
   return <section className={`creator-studio-card ${className}`}>{children}</section>;
 }
 
-function MetricCard({ label, sub, trend, value }) {
+function MetricCard({ label, sub, trend, value, valueClassName = "" }) {
   return (
     <Card className="creator-studio-kpi">
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong className={valueClassName}>{value}</strong>
       <small className={trendClass(trend)}>{sub}</small>
     </Card>
   );
@@ -154,12 +154,13 @@ function CreatorPath({ data = {} }) {
 }
 
 function ReachCard({ metric = {} }) {
+  const change = metric.changePercent == null ? 0 : Number(metric.changePercent);
   return (
     <Card className="creator-studio-reach">
       <span>Reach this month</span>
       <div>
         <strong>{compact(metric.value)}</strong>
-        <small className={trendClass(metric.changePercent)}>{trendText(metric.changePercent)}</small>
+        <small className={change < 0 ? "is-down" : "is-up"}>{change < 0 ? `▼ ${Math.abs(change)}%` : `▲ ${change}%`}</small>
       </div>
     </Card>
   );
@@ -186,7 +187,7 @@ function BestPerformers({ data = {} }) {
     <section className="creator-studio-section">
       <SectionTitle>Best performers</SectionTitle>
       <PerformerRow detail={seen ? `Best Seen ${DOT} ${seen.metricLabel}` : "Best Seen · Publish a Seen to unlock this"} icon={<FiEye />} title={seen?.title || "No Seen yet"} to={seen?.id ? `/studio/seens/${seen.id}` : "/create/seen"} />
-      <PerformerRow detail={wallPost ? `Best wall post ${DOT} ${wallPost.metricLabel}` : "Best wall post · Write a wall post to unlock this"} icon={<FiMonitor />} title={wallPost?.title || "No wall posts yet"} to={wallPost?.id ? `/wall?post=${wallPost.id}` : "/wall?compose=note"} />
+      <PerformerRow detail={wallPost ? `Best status ${DOT} ${wallPost.metricLabel}` : "Best status · Write a wall post to unlock this"} icon={<FiMonitor />} title={wallPost?.title || "No wall posts yet"} to={wallPost?.id ? `/wall?post=${wallPost.id}` : "/wall?compose=note"} />
       <PerformerRow detail={location ? `Most used location ${DOT} ${location.metricLabel}` : "Most used location · Add a location to a wall post"} icon={<FiMapPin />} title={location?.title || "No locations yet"} to={location ? "/wall" : "/wall?compose=note"} />
     </section>
   );
@@ -235,10 +236,10 @@ function Overview({ data, onEarnings }) {
       <CreatorPath data={data.creatorPath} />
       <ReachCard metric={overview.reach} />
       <section className="creator-studio-kpi-grid">
-        <MetricCard label="SEEN VIEWS" sub={trendText(overview.seenViews?.changePercent, "Views pending")} trend={overview.seenViews?.changePercent} value={overview.seenViews?.value ? compact(overview.seenViews.value) : "--"} />
-        <MetricCard label="PROFILE VISITS" sub={trendText(overview.profileVisits?.changePercent, "No visits yet")} trend={overview.profileVisits?.changePercent} value={overview.profileVisits?.value ? compact(overview.profileVisits.value) : "--"} />
+        <MetricCard label="SEEN VIEWS" sub={trendText(overview.seenViews?.changePercent, "Views pending")} trend={overview.seenViews?.changePercent} value={compact(overview.seenViews?.value ?? 0)} />
+        <MetricCard label="PROFILE VISITS" sub={trendText(overview.profileVisits?.changePercent, "No visits yet")} trend={overview.profileVisits?.changePercent} value={compact(overview.profileVisits?.value ?? 0)} />
         <MetricCard label="NEW FOLLOWERS" sub={overview.newFollowers?.periodLabel || "this week"} value={`+${compact(overview.newFollowers?.value || 0)}`} />
-        <MetricCard label="RESPONSE RATE" sub={medianLabel(overview.responseRate?.medianResponseMinutes)} value={overview.responseRate?.value == null ? "--" : `${overview.responseRate.value}%`} />
+        <MetricCard label="RESPONSE RATE" sub={medianLabel(overview.responseRate?.medianResponseMinutes)} value={overview.responseRate?.value == null ? "--" : `${overview.responseRate.value}%`} valueClassName={overview.responseRate?.value == null ? "" : "is-success"} />
       </section>
       <button className="creator-studio-nav-row" onClick={onEarnings} type="button">
         <span>Earnings this month</span>
@@ -258,11 +259,12 @@ function Overview({ data, onEarnings }) {
 
 function Audience({ data = {} }) {
   const audience = data.audience || {};
+  const cityColors = ["#9CCBFF", "#6ECF97", "#B092FF"];
   return (
     <div className="creator-studio-panel">
       <Card className="creator-studio-followers">
         <span>Followers</span>
-        <div><strong>{compact(audience.followers || 0)}</strong><small>+{compact(audience.newFollowersThisWeek || 0)} this week</small></div>
+        <div><strong>{compact(audience.followers || 0)}</strong><small className={Number(audience.newFollowersThisMonth) > 0 ? "is-up" : "is-flat"}>+{compact(audience.newFollowersThisMonth || 0)} this month</small></div>
       </Card>
       <section className="creator-studio-section">
         <SectionTitle>New vs returning</SectionTitle>
@@ -275,7 +277,7 @@ function Audience({ data = {} }) {
       </section>
       <section className="creator-studio-section">
         <SectionTitle>Top cities</SectionTitle>
-        <Bars empty="Not enough location data yet" rows={(audience.topCities || []).map((row) => ({ ...row, color: "#9CCBFF" }))} />
+        <Bars empty="Not enough location data yet" rows={(audience.topCities || []).map((row, index) => ({ ...row, color: cityColors[index] || cityColors[0] }))} />
       </section>
       <section className="creator-studio-section">
         <SectionTitle>Audience interests</SectionTitle>
@@ -372,7 +374,7 @@ function PayoutsSheet({ onClose }) {
           <article><span><FiDollarSign /></span><div><b>Payouts in 3-5 business days</b><small>To your bank, from $50. Transfer fees on us.</small></div></article>
           <article><span><FiZap /></span><div><b>No subscription, no listing fees</b><small>Creating and publishing on @seen is free - forever.</small></div></article>
         </div>
-        <Link className="creator-payouts-terms" to="/settings">Full terms in Settings {"->"} Payouts.</Link>
+        <span className="creator-payouts-terms">Full terms in Settings {"->"} Payouts.</span>
       </section>
     </div>
   );

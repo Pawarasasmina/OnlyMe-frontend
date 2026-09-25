@@ -52,6 +52,9 @@ import WorldReaderPage from "../pages/social/WorldReaderPage";
 import OrbitPage from "../pages/social/OrbitPage";
 import WalletPage from "../pages/social/WalletPage";
 import WalletLedgerPage from "../pages/social/WalletLedgerPage";
+import WithdrawPage from "../pages/social/WithdrawPage";
+import IncomeToCoinsPage from "../pages/social/IncomeToCoinsPage";
+import MyExperiencesPage from "../pages/social/MyExperiencesPage";
 import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
@@ -149,9 +152,13 @@ function AppRoutes() {
           <Route path="/creator/verified" element={<VerifiedCreatorPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/wallet/withdraw" element={<WithdrawPage />} />
+          <Route path="/wallet/to-coins" element={<IncomeToCoinsPage />} />
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
+          <Route path="/experiences" element={<MyExperiencesPage />} />
+          <Route path="/profile/:username/experiences" element={<MyExperiencesPage />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
           </Route>

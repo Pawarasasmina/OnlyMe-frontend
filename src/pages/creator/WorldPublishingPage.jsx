@@ -56,7 +56,7 @@ function freshWorld(experience = false) {
     experienceLocation: "",
     kind: experience ? "EXPERIENCE" : "PREMIUM_WORLD",
     ...(experience ? {} : { planet: { accent: "ice-white", emoji: PLANET, faceEmoji: FLEX } }),
-    pricing: experience ? { mode: "FREE", presetId: null, starsAmount: null } : { mode: "MONTHLY", presetId: "MONTHLY_190", starsAmount: 190 },
+    pricing: experience ? { mode: "ONE_TIME", presetId: "ONE_TIME_190", starsAmount: 190 } : { mode: "MONTHLY", presetId: "MONTHLY_190", starsAmount: 190 },
     status: "DRAFT",
     summary: "",
     tags: [],
@@ -237,6 +237,57 @@ function ExperienceProgress({ step }) {
   </div>;
 }
 
+function ExperienceDraftPreview({ chapters, coverUrl, onClose, storyPreviews, world }) {
+  const [chapterIndex, setChapterIndex] = useState(null);
+  const video = storyPreviews.find((item) => item.file?.type?.startsWith("video/") || item.media?.mediaType === "VIDEO");
+  if (chapterIndex !== null && chapters[chapterIndex]) {
+    const chapter = chapters[chapterIndex];
+    const blocks = [...(chapter.blocks || [])].sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
+    const previous = chapters[chapterIndex - 1];
+    const next = chapters[chapterIndex + 1];
+    return <article className="experience-chapter-preview">
+      <header>
+        <button aria-label="Close chapter preview" onClick={onClose} type="button"><FiX /></button>
+        <div><small>CHAPTER {chapterIndex + 1} OF {chapters.length} {"\u00b7"} {world.title}</small><h1>{chapter.title || `Chapter ${chapterIndex + 1}`}</h1></div>
+        <span>PREVIEW</span>
+      </header>
+      <div className="experience-chapter-preview-progress">{chapters.map((item, index) => <i className={index <= chapterIndex ? "is-active" : ""} key={item.stableChapterId || item.localId || index} />)}</div>
+      <main>
+        <section className="experience-chapter-preview-content">
+          {blocks.map((block, index) => {
+            if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt="Chapter preview" key={block.id || index} src={block.media.secureUrl} />;
+            if (block.type === "VIDEO" && block.media?.secureUrl) return <video controls key={block.id || index} src={block.media.secureUrl} />;
+            if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio controls key={block.id || index} src={block.media.secureUrl} />;
+            if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type) && block.text) return <p className={block.type === "HIGHLIGHT" ? "is-highlight" : ""} key={block.id || index}>{block.text}</p>;
+            return null;
+          })}
+        </section>
+        <div className="experience-chapter-preview-adjacent">
+          <button disabled={!previous} onClick={() => previous && setChapterIndex(chapterIndex - 1)} type="button">{previous ? `‹ ${previous.title}` : ""}</button>
+          <button disabled={!next} onClick={() => next && setChapterIndex(chapterIndex + 1)} type="button">{next ? `${next.title} ›` : "Experience complete"}</button>
+        </div>
+        <div className="experience-chapter-preview-engagement"><span>🤝 Useful&nbsp; 0</span><span>◯&nbsp; 0</span><span>↗</span></div>
+        <div className="experience-chapter-preview-actions"><button aria-label="Back to Experience preview" onClick={() => setChapterIndex(null)} type="button">←</button><button onClick={() => next ? setChapterIndex(chapterIndex + 1) : setChapterIndex(null)} type="button">{next ? "Next →" : "Back to overview"}</button></div>
+      </main>
+    </article>;
+  }
+  return <article className="experience-viewer-page">
+    <header className="experience-viewer-head"><button aria-label="Close preview" onClick={onClose} type="button"><FiX /></button><span>PREVIEW</span></header>
+    <main>
+      <div className="experience-viewer-media">
+        {video?.url ? <video autoPlay muted playsInline loop src={video.url} /> : coverUrl ? <img alt="Experience cover preview" src={coverUrl} /> : <span aria-hidden="true">✦</span>}
+        {video?.url ? <small>▶ 0:30</small> : null}
+      </div>
+      <h1>{world.title || "Untitled Experience"}</h1>
+      <p>{world.experiencePath || world.description || "Add a short description for this Experience."}</p>
+      <span className="experience-viewer-category">{world.category || "Category"}</span>
+      <div className="experience-viewer-chapters">
+        {chapters.length ? chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => setChapterIndex(index)} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{index === 0 ? <em>PREVIEW</em> : <FiLock />}<b>›</b></button>) : <p>No chapters added yet.</p>}
+      </div>
+    </main>
+  </article>;
+}
+
 export default function WorldPublishingPage({ experience = false, publicationId = "" }) {
   const nav = useNavigate();
   const location = useLocation();
@@ -252,9 +303,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const autoSaveAttemptedStoryIds = useRef(new Set());
   const draftAutoSaveTimer = useRef(null);
   const pendingDraftSaveRef = useRef(false);
+  const pendingExperienceContinueRef = useRef(false);
   const saveDraftRef = useRef(null);
   const worldEditVersionRef = useRef(0);
   const storySaveResolvers = useRef(new Map());
+  const deepLinkedChapterOpenedRef = useRef(false);
   const [world, setWorld] = useState(() => freshWorld(experience));
   const [storyPreviews, setStoryPreviews] = useState([]);
   const [activeStoryId, setActiveStoryId] = useState("");
@@ -272,6 +325,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
   const [, setNotice] = useState("");
   const [error, setError] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
@@ -281,10 +335,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [newChapterTitle, setNewChapterTitle] = useState("");
   const [videoTrimFile, setVideoTrimFile] = useState(null);
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
+  const [experiencePreviewOpen, setExperiencePreviewOpen] = useState(false);
   const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || "Max";
-  const coverUrl = world.coverMedia?.secureUrl;
+  const coverUrl = coverPreviewUrl || world.coverMedia?.secureUrl;
   const validation = useMemo(() => worldCompletenessBySection(world), [world]);
   const validationMessages = Object.values(validation).flat();
   const readyToSubmit = world.id && !validationMessages.length && !saving && !uploading && !storyAutoSaving;
@@ -299,6 +354,15 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       let existing;
       if (publicationId) {
         existing = (await api.getMyPublication(publicationId)).data.data.publication;
+      } else if (experience) {
+        setWorld(freshWorld(true));
+        setStoryPreviews((current) => {
+          current.forEach(revokePreviewUrl);
+          return [];
+        });
+        setNotice("Start creating your Premium Experience.");
+        setCreationStarted(true);
+        return;
       } else {
         const response = await api.listMyPublications({ kind: experience ? "EXPERIENCE" : "PREMIUM_WORLD", limit: 50 });
         existing = (response.data.data.items || []).find((item) => ["DRAFT", "CHANGES_REQUESTED", "PENDING_REVIEW", "PUBLISHED"].includes(item.status));
@@ -316,6 +380,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       let publication = publicationId ? existing : (await api.getMyPublication(existing.id)).data.data.publication;
       if (publication.status === "PUBLISHED") publication = (await api.startPublishedRevision(publication.id, publication.statusVersion)).data.data.publication;
       publication = { ...freshWorld(experience), ...publication };
+      if (experience && publication.pricing?.mode !== "ONE_TIME") publication.pricing = { mode: "ONE_TIME", presetId: "ONE_TIME_190", starsAmount: 190 };
       setWorld(publication);
       setCreationStarted(true);
       setStoryPreviews((current) => {
@@ -333,6 +398,19 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   useEffect(() => {
     loadWorld();
   }, [loadWorld]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const chapterId = params.get("chapter");
+    if (!experience || loading || !chapterId || deepLinkedChapterOpenedRef.current) return;
+    const index = (world.chapters || []).findIndex((chapter) => chapter.stableChapterId === chapterId);
+    if (index < 0) return;
+    deepLinkedChapterOpenedRef.current = true;
+    setExperienceStep(2);
+    setActiveChapter(index);
+    setChapterStory(chapterStoryText(world.chapters[index]));
+    setChapterStatus("");
+  }, [experience, loading, location.search, world.chapters]);
 
   useEffect(() => {
     storyPreviewsRef.current = storyPreviews;
@@ -358,6 +436,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     window.clearTimeout(draftAutoSaveTimer.current);
   }, []);
 
+  useEffect(() => () => {
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+  }, [coverPreviewUrl]);
+
   const scheduleDraftSave = () => {
     window.clearTimeout(draftAutoSaveTimer.current);
     draftAutoSaveTimer.current = window.setTimeout(() => saveDraftRef.current?.(), 700);
@@ -375,9 +457,14 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (worldEditVersionRef.current <= requestEditVersion) return next;
     return {
       ...next,
+      allowDownload: current.allowDownload,
       category: current.category,
       chapters: current.chapters,
+      coverMedia: current.coverMedia,
       description: current.description,
+      experienceLocation: current.experienceLocation,
+      experiencePath: current.experiencePath,
+      includedInWorld: current.includedInWorld,
       planet: current.planet,
       pricing: current.pricing,
       summary: current.summary,
@@ -402,9 +489,23 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       tags: normalizeTags(snapshot.tags),
       title: snapshot.title,
     });
-    const draft = { ...snapshot, ...response.data.data.publication, chapters: snapshot.chapters };
+    const draft = {
+      ...snapshot,
+      ...response.data.data.publication,
+      allowDownload: snapshot.allowDownload,
+      category: snapshot.category,
+      chapters: snapshot.chapters,
+      description: snapshot.description,
+      experienceLocation: snapshot.experienceLocation,
+      experiencePath: snapshot.experiencePath,
+      includedInWorld: snapshot.includedInWorld,
+      pricing: snapshot.pricing,
+      summary: snapshot.summary,
+      tags: snapshot.tags,
+      title: snapshot.title,
+    };
     setWorld((current) => preserveNewerLocalEdits(current, draft, requestEditVersion));
-    history.replaceState({}, "", experience ? "/create/experience" : "/create/premium-world");
+    history.replaceState({}, "", experience ? `/studio/experiences/${draft.id}/edit` : "/create/premium-world");
     return draft;
   };
 
@@ -540,8 +641,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       draft = await attachStoryPreviews(draft, storyPreviews, requestEditVersion);
       setNotice("Draft saved");
+      if (pendingExperienceContinueRef.current) {
+        pendingExperienceContinueRef.current = false;
+        setExperienceStep(2);
+      }
       return draft;
     } catch (requestError) {
+      pendingExperienceContinueRef.current = false;
       setError(publicationError(requestError));
       setNotice("Save paused");
       return null;
@@ -555,6 +661,21 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   };
 
   saveDraftRef.current = saveDraft;
+
+  const continueExperienceDetails = async () => {
+    if (world.id) {
+      pendingExperienceContinueRef.current = false;
+      setExperienceStep(2);
+      void saveDraft();
+      return;
+    }
+    pendingExperienceContinueRef.current = true;
+    const saved = await saveDraft();
+    if (saved) {
+      pendingExperienceContinueRef.current = false;
+      setExperienceStep(2);
+    }
+  };
 
   useEffect(() => {
     if (!creationStarted) return undefined;
@@ -582,12 +703,18 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const uploadCover = async (file) => {
     if (!file) return;
     const requestEditVersion = worldEditVersionRef.current;
+    const localPreview = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
+    if (localPreview) setCoverPreviewUrl(localPreview);
     setUploading(true);
     setError("");
     setNotice("Uploading cover...");
     try {
       const draft = await ensureDraft(world, requestEditVersion);
-      await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion });
+      const response = await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion });
+      const uploadedPublication = response.data.data.publication;
+      if (uploadedPublication?.coverMedia?.secureUrl) {
+        setWorld((current) => ({ ...current, id: current.id || draft.id, coverMedia: uploadedPublication.coverMedia, statusVersion: uploadedPublication.statusVersion, draftVersion: uploadedPublication.draftVersion }));
+      }
       await refreshWorld(draft.id, requestEditVersion);
       setNotice("Cover saved");
     } catch (requestError) {
@@ -595,6 +722,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       setNotice("Cover upload failed");
     } finally {
       setUploading(false);
+      setCoverPreviewUrl("");
       if (pendingDraftSaveRef.current) {
         pendingDraftSaveRef.current = false;
         scheduleDraftSave();
@@ -759,8 +887,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (!activePlanetEditorChapter) return;
     const saved = await updateActiveChapterBlocks(chapterBlocksWithStory(activePlanetEditorChapter, chapterStory), "Saving chapter...");
     if (saved) {
+      const openedDirectly = new URLSearchParams(location.search).has("chapter");
       setActiveChapter(null);
       setChapterStatus("");
+      if (openedDirectly && world.id) nav(`/experience/${world.id}`, { replace: true });
     }
   };
 
@@ -910,9 +1040,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     setNotice("New chapter added. Open it to start writing.");
   };
 
-  const previewExperience = async () => {
-    const saved = await saveDraft();
-    if (saved?.id) nav(`/experience/${saved.id}?preview=visitor`);
+  const previewExperience = () => {
+    setExperiencePreviewOpen(true);
   };
 
   const addNamedExperienceChapter = () => {
@@ -997,6 +1126,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   if (loading) return <div className="world-prototype-state">Opening {experience ? "experience" : "world"}...</div>;
 
+  if (experience && experiencePreviewOpen) return <ExperienceDraftPreview chapters={chapters} coverUrl={coverUrl} onClose={() => setExperiencePreviewOpen(false)} storyPreviews={storyPreviews} world={world} />;
+
   if (activePlanetEditorChapter) return (
     <>
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} source={cropTarget.url} /> : null}
@@ -1029,13 +1160,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <input className="experience-step-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={'Title — e.g. “Moving to Dubai”'} value={world.title} />
         <input className="experience-step-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, experiencePath: event.target.value, summary: event.target.value })} placeholder={'The path: from → to — “From office to my own business”'} value={world.experiencePath || ""} />
 
-        <p className="experience-field-label">ACCESS</p>
-        <div className="experience-access-pills"><button className={world.pricing?.mode === "FREE" ? "is-selected" : ""} onClick={() => updateWorld({ pricing: { mode: "FREE", presetId: null, starsAmount: null } })} type="button">Free</button><button className={world.pricing?.mode !== "FREE" ? "is-selected" : ""} onClick={() => updateWorld({ pricing: { mode: "ONE_TIME", presetId: "ONE_TIME_190", starsAmount: 190 } })} type="button">Premium · one-time</button></div>
-        {world.pricing?.mode === "ONE_TIME" ? <div className="experience-premium-price">
+        <p className="experience-field-label">PREMIUM PRICE</p>
+        <div className="experience-premium-price">
           <div className="experience-premium-price-entry"><span>✦</span><input aria-label="One-time Experience price" min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /><small>one-time unlock · all chapters included after purchase</small></div>
           <div className="experience-premium-presets">{[150, 300, 500, 900].map((amount) => <button className={Number(world.pricing?.starsAmount) === amount ? "is-selected" : ""} key={amount} onClick={() => updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } })} type="button">🪙{amount}</button>)}</div>
           <p>≈ ${(Number(world.pricing?.starsAmount || 190) * .068).toFixed(2)} to you</p>
-        </div> : null}
+        </div>
         <button className={`experience-download-row ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span>↥</span><span><strong>Allow download</strong><small>Watermarked PDF · text and photos only</small></span><em>{world.allowDownload ? "On" : "Off"}</em></button>
 
         <p className="experience-field-label">CATEGORY</p>
@@ -1057,7 +1187,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <StoryCreator isOpen={storyComposerOpen} mode="compose" onClose={() => setStoryComposerOpen(false)} onSave={addStoryPreview} />
         {storyAutoSaving ? <p className="experience-media-status"><FiLoader className="world-story-upload-spinner" /> Saving preview media…</p> : storyPreviews.length ? <p className="experience-media-status is-saved"><FiCheck /> {storyPreviews.length} preview {storyPreviews.length === 1 ? "item" : "items"} saved</p> : null}
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
-        <button className="experience-first-continue" disabled={!world.title.trim() || !world.experiencePath?.trim() || !world.category || !coverUrl || uploading} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(2); }} type="button">Continue</button>
+        <button className="experience-first-continue" disabled={!world.title.trim() || !world.experiencePath?.trim() || !world.category || !coverUrl || uploading} onClick={continueExperienceDetails} type="button">Continue</button>
       </main>
     </article>
   );
@@ -1096,15 +1226,15 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   if (experience && creationStarted && experienceStep === 3) return (
     <article className="experience-final-preview experience-final-review">
-      <header><button aria-label="Back to chapters" onClick={() => setExperienceStep(2)} type="button"><FiArrowLeft /></button><div><h1>One last look</h1><p>Exactly what people will see</p></div><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
+      <header><button aria-label="Back to chapters" onClick={() => setExperienceStep(2)} type="button"><FiArrowLeft /></button><div><h1>One last look</h1><p>Exactly what people will see</p></div><aside><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> Preview</button><button className="experience-final-save-later" disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></aside></header>
       <ExperienceProgress step={3} />
       <main>
         <section className="experience-review-card">
           <div className="experience-review-cover">{coverUrl ? <img alt={`${world.title} cover`} src={coverUrl} /> : null}<FiEye /></div>
-          <div className="experience-review-summary"><h2>{world.title}</h2><p>{world.category || "Experience"} · {chapters.length} chapters · {world.pricing?.mode === "FREE" ? `${chapters.length} free · Free world` : `1 free · ${STAR}${world.pricing?.starsAmount} one-time`}</p></div>
+          <div className="experience-review-summary"><h2>{world.title}</h2><p>{world.category || "Experience"} · {chapters.length} chapters · {STAR}{world.pricing?.starsAmount} one-time</p></div>
           <div className="experience-review-creator">{user?.avatar ? <img alt="" src={user.avatar} /> : <span>{(user?.name || user?.username || "C").slice(0, 1).toUpperCase()}</span>}<strong>{user?.name || user?.username || "Creator"}</strong><FiCheck /></div>
           <div className="experience-review-chapters">
-            {chapters.map((chapter, index) => { const free = world.pricing?.mode === "FREE" || index === 0; return <div key={chapter.stableChapterId || chapter.localId || index}><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong><em>{free ? "✓ free" : <FiLock />}</em></div>; })}
+            {chapters.map((chapter, index) => <div key={chapter.stableChapterId || chapter.localId || index}><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong><em><FiLock /></em></div>)}
           </div>
         </section>
         <button className="experience-review-location" onClick={() => setExperienceStep(1)} type="button"><FiMapPin /><strong>{world.experienceLocation || "Location"}</strong><span>{world.experienceLocation ? "Edit" : "Add"}</span><b>›</b></button>
@@ -1153,9 +1283,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           <button onClick={() => coverInputRef.current?.click()} type="button"><strong>Video</strong><small>{world.coverMedia?.mediaType === "VIDEO" ? "1 / 1 · 60s" : "0 / 1 · 60s"}</small></button>
         </div>
         <div className="experience-chapter-list">
-          {chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button"><span>{index + 1}</span><strong>{chapter.title || `Chapter ${index + 1}`}</strong><small>{world.pricing?.mode === "FREE" ? "FREE" : "LOCKED UNTIL PURCHASE"}</small><i>›</i></button>)}
+          {chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button"><span>{index + 1}</span><strong>{chapter.title || `Chapter ${index + 1}`}</strong><small>LOCKED UNTIL PURCHASE</small><i>›</i></button>)}
         </div>
-        <p className="experience-preview-note">{world.pricing?.mode === "FREE" ? "Every chapter is available to everyone." : "Every chapter unlocks after the one-time purchase."}</p>
+        <p className="experience-preview-note">Every chapter unlocks after the one-time purchase.</p>
 
         <p className="experience-field-label">PRICE</p>
         <div className="experience-price-input"><span>✦</span><input min="10" onChange={(event) => { const price = Math.max(10, Number(event.target.value) || 10); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${price}`, starsAmount: price } }); }} placeholder="Price in coins" type="number" value={world.pricing?.starsAmount || 190} /></div>
@@ -1170,13 +1300,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (!creationStarted) return (
     <article className="planet-create-entry">
       <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><span>{experience ? "Experience creation" : "World creation"}</span><h1>Create {experience ? "an experience" : "a world"}</h1></div></header>
-      <p className="planet-create-intro">{experience ? "Experiences are structured journeys made of chapters. Publish directly as free for everyone, or premium with one-time permanent access." : "A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside."}</p>
+      <p className="planet-create-intro">{experience ? "Experiences are premium structured journeys made of chapters, unlocked with one permanent one-time purchase." : "A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside."}</p>
       <button className="planet-choice-card is-selected" onClick={() => setCreationStarted(true)} type="button">
         <span className="planet-choice-orbit"><i>{FLEX}</i><b>{experience ? STAR : PLANET}</b></span>
-        <span><strong>{experience ? "Experience" : "Your World"}</strong><small>{experience ? "Up to 3 premium Experiences · free or one-time unlock" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused journey that publishes immediately. Free Experiences open fully; premium Experiences unlock permanently after purchase." : "Premium chapters, private stories and closer access—all together."}</em></span>
+        <span><strong>{experience ? "Experience" : "Your World"}</strong><small>{experience ? "Up to 3 premium Experiences · one-time unlock" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused premium journey that unlocks permanently after purchase." : "Premium chapters, private stories and closer access—all together."}</em></span>
         <FiArrowUpRight />
       </button>
-      <div className="planet-create-principles"><span><FiCheck /> {experience ? "Publishes immediately" : "One clear monthly price"}</span><span><FiCheck /> {experience ? "Free or one-time unlock" : "1 free preview chapter"}</span><span><FiCheck /> {experience ? "No approval required" : "Up to 3 preview stories"}</span></div>
+      <div className="planet-create-principles"><span><FiCheck /> {experience ? "Publishes immediately" : "One clear monthly price"}</span><span><FiCheck /> {experience ? "One-time premium unlock" : "1 free preview chapter"}</span><span><FiCheck /> {experience ? "You choose the price" : "Up to 3 preview stories"}</span></div>
       <button className="planet-create-continue" onClick={() => setCreationStarted(true)} type="button">Build my {experience ? "Experience" : "World"} <FiArrowUpRight /></button>
       <small className="planet-create-footnote">{experience ? "Experiences live in their own profile section. World inclusion is optional access, never ownership or placement." : "Worlds live on your profile only—they never appear as ordinary feed posts."}</small>
     </article>

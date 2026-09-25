@@ -8,6 +8,7 @@ export const profileService = {
   getOwnViewers: (params = {}) => axiosInstance.get("/profiles/me/viewers", { params }),
   getOwnMedia: () => axiosInstance.get("/profiles/me/media"),
   getOwnReceivedGifts: () => axiosInstance.get("/profiles/me/gifts"),
+  getReceivedGifts: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/gifts`),
   getProfileMedia: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/media`),
   addProfileMedia: (file, caption = "") => {
     const formData = new FormData();
@@ -23,6 +24,7 @@ export const profileService = {
   toggleProfileMediaLike: (username, mediaId) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/like`),
   reportProfileMedia: (username, mediaId, payload) => axiosInstance.post(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/report`, payload),
   getUnifiedProfile: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}`),
+  getExperiences: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/experiences`),
   getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),
   toggleFollow: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/follow`),
   toggleSeeSignal: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/see-signal`),
