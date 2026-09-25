@@ -28749,3 +28749,37 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   text-align: center !important;
 }
 .world-face-custom button:disabled{opacity:.55}
+
+.experience-access-sheet h2{margin:0;color:#fff;font-size:22px;font-weight:900}.experience-access-sheet>p{margin:10px 0 14px;color:rgba(255,255,255,.65);font-size:14px;line-height:1.6}.experience-access-sheet>div{display:grid;grid-template-columns:minmax(0,1fr) 68px;gap:8px}.experience-access-sheet input{min-width:0;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:#181d25;padding:12px;color:rgba(255,255,255,.65)}.experience-access-sheet>div button,.experience-access-sheet article button{border-radius:13px;background:#9ccbff;padding:10px;color:#07101a;font-weight:900}.experience-access-sheet>small{display:block;margin-top:14px;color:rgba(255,255,255,.4)}.experience-access-sheet article{display:grid;grid-template-columns:36px minmax(0,1fr) auto auto;align-items:center;gap:8px;margin-top:12px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px}.experience-access-sheet article span{min-width:0}.experience-access-sheet article b,.experience-access-sheet article small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.experience-access-sheet article small{color:rgba(255,255,255,.4);font-size:10px}.experience-access-sheet article button:last-child{border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.7)}
+
+/* Stable three-column palette from the Profile, Messages and Activity shell.
+   Route-specific visuals belong inside the center page, not on either rail. */
+.social-app-shell,
+.social-app-shell:has(.seen-shell-main),
+.social-app-shell:has(.seen-chapter-editor-page) {
+  background: var(--feed-outer-bg, #050608);
+}
+
+.social-app-shell:has(.seen-shell-main) .social-app-frame,
+.social-app-shell:has(.seen-chapter-editor-page) .social-app-frame {
+  background: transparent;
+}
+
+@media (min-width: 768px) {
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.seen-chapter-editor-page) .social-center-scroll {
+    border-right: 1px solid var(--feed-border-soft, rgba(255,255,255,.05));
+    border-left: 1px solid var(--feed-border-soft, rgba(255,255,255,.05));
+    background: var(--feed-page-bg, #0A0C0F) !important;
+  }
+
+  .social-app-shell .social-app-frame > .fan-web-sidebar,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .fan-web-sidebar,
+  .social-app-shell:has(.seen-chapter-editor-page) .social-app-frame > .fan-web-sidebar,
+  .social-app-shell .social-app-frame > .social-shared-right-rail,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-shared-right-rail,
+  .social-app-shell:has(.seen-chapter-editor-page) .social-app-frame > .social-shared-right-rail {
+    background: var(--feed-outer-bg, #050608) !important;
+  }
+}

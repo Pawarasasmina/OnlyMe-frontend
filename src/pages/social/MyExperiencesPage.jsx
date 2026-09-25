@@ -12,7 +12,8 @@ function updatedLabel(value) {
 }
 
 function ownerDestination(item) {
-  return item.status === "PUBLISHED" ? `/experience/${item.id}` : `/studio/experiences/${item.id}/edit`;
+  const hasPublishedView = Boolean(item.publishedAt) || ["PUBLISHED", "CHANGES_REQUESTED"].includes(item.status);
+  return hasPublishedView ? `/experience/${item.id}` : `/studio/experiences/${item.id}/edit`;
 }
 
 export default function MyExperiencesPage() {

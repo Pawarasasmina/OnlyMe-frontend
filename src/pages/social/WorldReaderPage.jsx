@@ -478,6 +478,35 @@ function shareUrlFor(publication) {
   return `${window.location.origin}/${route}/${publication?.id || publication?._id}`;
 }
 
+function ExperienceAccessSheet({ data, loading, onClose, onCopy, onDecide, pendingId }) {
+  const requests = data?.requests || [];
+  return <BottomSheet labelledBy="experience-access-title" onClose={onClose}>
+    <section className="experience-access-sheet">
+      <h2 id="experience-access-title">Access by link</h2>
+      <p>Send this link to a friend. When they open it, you get a request — confirm, and the Experience is theirs forever. Free, from the author.</p>
+      <div><input aria-label="Experience access link" readOnly value={data?.url || "Loading…"} /><button disabled={loading || !data?.url} onClick={onCopy} type="button">Copy</button></div>
+      {loading ? <small>Loading requests…</small> : requests.length ? requests.map((item) => <article key={item.id}><FanAvatar name={item.requester?.name} size="h-9 w-9" src={item.requester?.avatar} /><span><b>{item.requester?.name || item.requester?.username || "User"}</b><small>{item.status.toLowerCase()}</small></span>{item.status === "PENDING" ? <><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, true)} type="button">Confirm</button><button disabled={pendingId === item.id} onClick={() => onDecide(item.id, false)} type="button">Decline</button></> : null}</article>) : <small>No requests yet — they appear here.</small>}
+    </section>
+  </BottomSheet>;
+}
+
+async function copyToClipboard(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement("textarea");
+  input.value = value;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("Clipboard unavailable");
+}
+
 const SHARE_REACTIONS = ["💖", "😂", "🔥", "😍", "👏", "😮", "🙏", "🤝"];
 
 function WorldSharePerson({ onToggle, person, selected }) {
@@ -562,7 +591,7 @@ function ShareSheet({ onClose, publication, viewerId }) {
   const copy = async () => {
     setError("");
     try {
-      await navigator.clipboard.writeText(url);
+      await copyToClipboard(url);
       setCopied(true);
       showToast(`${shareNoun} link copied.`);
       window.setTimeout(() => setCopied(false), 1400);
@@ -856,6 +885,7 @@ export default function WorldReaderPage() {
   const viewerId = user?.id || user?._id || "";
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const owner = sameIdentity(viewerId, creatorId) || sameIdentity(user?.username, creator.username);
+  const accessToken = new URLSearchParams(location.search).get("access") || "";
   const managementQuery = useQuery({
     queryKey: ["world-management", publicationId],
     queryFn: () => api.getWorldManagement(publicationId).then((response) => response.data.data),
@@ -886,9 +916,14 @@ export default function WorldReaderPage() {
     enabled: Boolean(owner && publicationId && sheet === "price" && premium),
     retry: false,
   });
+  const accessLinkQuery = useQuery({ queryKey: ["experience-access-link", publicationId], queryFn: () => api.getExperienceAccessLink(publicationId).then((response) => response.data.data), enabled: Boolean(owner && experience && sheet === "access"), retry: false });
+  const accessRequest = useMutation({ mutationFn: () => api.requestExperienceAccess(publicationId, accessToken), onSuccess: async (response) => { showToast(response.data.message); if (response.data.data?.request?.status === "APPROVED") await query.refetch(); }, onError: (error) => showToast(error?.response?.data?.message || "Access request could not be sent.") });
+  const accessDecision = useMutation({ mutationFn: ({ requestId, approved }) => api.decideExperienceAccess(publicationId, requestId, approved), onSuccess: async (response) => { await accessLinkQuery.refetch(); showToast(response.data.message); } });
+  useEffect(() => { if (experience && accessToken && user && !owner && !accessRequest.isPending && !accessRequest.isSuccess && !accessRequest.isError) accessRequest.mutate(); }, [accessToken, experience, owner, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const management = managementQuery.data?.management || {};
   const managedPublication = managementQuery.data?.publication || publication;
+  const experienceArchived = managedPublication?.status === "ARCHIVED";
   const experienceChapters = managedPublication?.chapters?.length ? managedPublication.chapters : chapters;
   const updateWorld = useMutation({
     mutationFn: (payload) => api.updateWorldManagement(publicationId, payload),
@@ -942,13 +977,19 @@ export default function WorldReaderPage() {
     onError: (error) => showToast(error?.response?.data?.message || "World price could not be updated."),
   });
   const archiveExperience = useMutation({
-    mutationFn: () => api.archivePublication(publicationId, managedPublication.statusVersion),
+    mutationFn: () => experienceArchived
+      ? api.restorePublication(publicationId, managedPublication.statusVersion)
+      : api.archivePublication(publicationId, managedPublication.statusVersion),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      showToast("Experience removed from sale.");
-      navigate(creator.username ? `/profile/${creator.username}` : "/profile", { replace: true });
+      await Promise.all([
+        query.refetch(),
+        managementQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["profile-experiences"] }),
+      ]);
+      showToast(experienceArchived ? "Experience is back on sale." : "Experience removed from sale.");
     },
-    onError: (error) => showToast(error?.response?.data?.message || "Experience could not be removed from sale."),
+    onError: (error) => showToast(error?.response?.data?.message || (experienceArchived ? "Experience could not be put back on sale." : "Experience could not be removed from sale.")),
   });
   const coverUpload = useMutation({
     mutationFn: (file) => api.uploadWorldCover(publicationId, file, setCoverProgress),
@@ -1243,12 +1284,12 @@ export default function WorldReaderPage() {
       </header>
       <nav aria-label="Experience actions">
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
-        <button onClick={async () => { await navigator.clipboard.writeText(window.location.href); showToast("Experience link copied."); }} type="button"><FiLink /><span><b>Access by link</b><small>send a link — you confirm who enters</small></span></button>
+        <button onClick={() => setSheet("access")} type="button"><FiLink /><span><b>Access by link</b><small>send a link — you confirm who enters</small></span></button>
         <button onClick={() => navigate(`/studio/experiences/${publicationId}/edit`)} type="button"><FiEdit3 /><span><b>Edit</b><small>title, path, price, chapters</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
         <button disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product’s own cleanup team</small></span></button>
-        <button className="is-remove" disabled={archiveExperience.isPending} onClick={() => window.confirm("Remove this Experience from sale? Buyers keep their permanent access.") && archiveExperience.mutate()} type="button"><FiTrash2 /><span><b>{archiveExperience.isPending ? "Removing…" : "Remove from sale"}</b><small>buyers keep it forever</small></span></button>
+        <button className={experienceArchived ? "" : "is-remove"} disabled={archiveExperience.isPending} onClick={() => window.confirm(experienceArchived ? "Put this Experience back on sale? Other users will be able to see and purchase it again." : "Remove this Experience from sale? Buyers keep their permanent access.") && archiveExperience.mutate()} type="button"><FiTrash2 /><span><b>{archiveExperience.isPending ? (experienceArchived ? "Restoring…" : "Removing…") : (experienceArchived ? "Back on sale" : "Remove from sale")}</b><small>{experienceArchived ? "archived" : "buyers keep it forever"}</small></span></button>
       </nav>
     </article>
   );
@@ -1319,7 +1360,7 @@ export default function WorldReaderPage() {
                     return <button className={selected ? "is-selected" : ""} disabled={updateWorld.isPending} key={personId} onClick={() => updateWorld.mutate({ taggedPeople: selected ? managedPublication.taggedPeople.filter((taggedId) => String(taggedId) !== personId) : [...(managedPublication.taggedPeople || []), personId] })} type="button"><FanAvatar user={person} /><span><b>{person.name || person.username}</b><small>@{person.username}</small></span><i>{selected ? "✓" : "+"}</i></button>;
                   })}
                 </div> : null}
-                <button className="is-danger-muted" disabled={archiveExperience.isPending} onClick={() => window.confirm("Remove this Experience from sale?") && archiveExperience.mutate()} type="button"><FiArchive /><span>{archiveExperience.isPending ? "Removing…" : "Remove from sale"}</span></button>
+                <button className={experienceArchived ? "" : "is-danger-muted"} disabled={archiveExperience.isPending} onClick={() => window.confirm(experienceArchived ? "Put this Experience back on sale?" : "Remove this Experience from sale?") && archiveExperience.mutate()} type="button"><FiArchive /><span>{archiveExperience.isPending ? (experienceArchived ? "Restoring…" : "Removing…") : (experienceArchived ? "Back on sale" : "Remove from sale")}</span></button>
                 <button className="experience-premium-world-setting" disabled={updateWorld.isPending} onClick={() => updateWorld.mutate({ includedInWorld: !managedPublication.includedInWorld })} type="button">
                   <i>{PLANET}</i>
                   <span><strong>Include in my Premium World</strong><small>World members get it with their subscription</small></span>
@@ -1518,6 +1559,7 @@ export default function WorldReaderPage() {
       {sheet === "seats" ? <SeatsSheet busy={waveMutation.isPending} management={management} onClose={() => setSheet("")} onOpenWave={() => waveMutation.mutate()} /> : null}
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
+      {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} loading={accessLinkQuery.isLoading} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
       {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate("/create/experience")} onToggle={toggleExperience} /> : null}
       {sheet === "moderators" ? (
         <ModeratorsSheet
