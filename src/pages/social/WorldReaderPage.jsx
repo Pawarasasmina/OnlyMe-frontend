@@ -13,11 +13,15 @@ import {
   FiChevronRight,
   FiCopy,
   FiEdit3,
+  FiGift,
   FiImage,
   FiLink,
   FiLock,
+  FiMic,
   FiMessageCircle,
+  FiMessageSquare,
   FiMoreHorizontal,
+  FiPlay,
   FiPlus,
   FiPlusCircle,
   FiSettings,
@@ -30,17 +34,19 @@ import {
   FiX,
   FiZap,
 } from "react-icons/fi";
-import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
-import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
 import { useSendSharedContent } from "../../hooks/share/useSendSharedContent";
+import { membershipService } from "../../services/membershipService";
 import { publicationService as api } from "../../services/publicationService";
 import { savedService } from "../../services/savedService";
 import { walletService } from "../../services/walletService";
+import { financialErrorCode, financialErrorMessage } from "../../utils/financialErrorMessages";
+import { createIdempotencyKey } from "../../utils/idempotencyKey";
 
 const PLANET = String.fromCodePoint(0x1FA90);
 const FLEX = String.fromCodePoint(0x1F4AA);
@@ -80,6 +86,103 @@ function storyItems(publication, chapters) {
   return [publication?.coverMedia, ...chapters.flatMap((chapter) => (chapter.blocks || []).map((block) => block.media).filter(Boolean))].filter(Boolean).slice(0, 3);
 }
 
+function firstWorldMedia(publication, chapters) {
+  return publication?.introMedia || publication?.coverMedia || chapters
+    .flatMap((chapter) => chapter.blocks || [])
+    .map((block) => block.media)
+    .find((media) => media?.secureUrl) || null;
+}
+
+function chapterDescription(chapter = {}) {
+  const textBlock = (chapter.blocks || []).find((block) => String(block.text || "").trim());
+  return String(textBlock?.text || "").trim().replace(/\s+/g, " ").slice(0, 92);
+}
+
+function chapterPreviewBlocks(chapter = {}) {
+  return [...(chapter.blocks || [])]
+    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
+    .filter((block) => String(block.text || "").trim() || block.media?.secureUrl || block.url)
+    .slice(0, 5);
+}
+
+function creatorFirstName(creator = {}) {
+  return (creator.name || creator.username || "this creator").trim().split(/\s+/)[0] || "this creator";
+}
+
+function canReadChapter(chapter = {}, canViewMemberContent = false) {
+  return Boolean(canViewMemberContent || chapter.isPreview || !chapter.locked);
+}
+
+function isActivePremiumMembership(membership = {}) {
+  const status = membership.storedStatus || membership.status;
+  const periodEnd = membership.currentPeriodEnd ? new Date(membership.currentPeriodEnd).getTime() : 0;
+  return ["ACTIVE", "CANCEL_AT_PERIOD_END"].includes(status) && (!periodEnd || periodEnd > Date.now());
+}
+
+function formatMediaTime(value) {
+  const total = Math.max(0, Math.floor(Number(value) || 0));
+  const minutes = Math.floor(total / 60);
+  const seconds = String(total % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function worldMediaItems(publication, chapters) {
+  const seen = new Set();
+  const add = (media, title = "") => {
+    const key = media?.assetId || media?.secureUrl;
+    if (!media?.secureUrl || seen.has(key)) return null;
+    seen.add(key);
+    return { ...media, title: title || media.title || "" };
+  };
+  return [
+    add(publication?.introMedia, "Intro"),
+    add(publication?.coverMedia, "Cover"),
+    ...chapters.flatMap((chapter) => (chapter.blocks || []).map((block) => add(block.media, block.metadata?.label || chapter.title)).filter(Boolean)),
+  ].filter(Boolean);
+}
+
+function includedWorldExperiences(publication = {}) {
+  const candidates = [
+    publication.includedExperiences,
+    publication.experiences,
+    publication.worldExperiences,
+    publication.includedExperienceIds,
+  ].find((items) => Array.isArray(items) && items.some((item) => item && typeof item === "object"));
+  const hydrated = (candidates || []).filter((item) => item && typeof item === "object");
+  if (hydrated.length) return hydrated;
+  return (publication.includedExperienceIds || [])
+    .filter((item) => item && typeof item !== "object")
+    .map((id, index) => ({ id: String(id), title: `Included Experience ${index + 1}`, included: true }));
+}
+
+function privateStoryItems(chapters) {
+  return chapters
+    .flatMap((chapter) => (chapter.blocks || [])
+      .filter((block) => block.metadata?.storyPreview && block.media?.secureUrl)
+      .map((block) => ({ ...block.media, title: block.metadata?.label || chapter.title || "Story" })));
+}
+
+function joinPriceText(offer = {}) {
+  const regular = Number(offer.regularPrice || offer.pricing?.starsAmount || 0);
+  const firstMonthEnabled = Boolean(offer.firstMonthOfferEnabled);
+  const intro = Number(offer.introPrice || (regular ? Math.max(1, Math.ceil(regular / 2)) : 0));
+  if ((firstMonthEnabled || !offer.introPrice) && intro && regular) {
+    return (
+      <span className="world-join-price">
+        <span className="world-join-price-icon" aria-hidden="true" />
+        <span>{intro.toLocaleString()} first month</span>
+        <span className="world-join-old-price"><s>{regular.toLocaleString()}</s><b>/mo</b></span>
+      </span>
+    );
+  }
+  return regular ? (
+    <span className="world-join-price">
+      <span className="world-join-price-icon" aria-hidden="true" />
+      <span>{regular.toLocaleString()}/mo</span>
+    </span>
+  ) : <span className="world-join-price">Free</span>;
+}
+
 function BottomSheet({ children, labelledBy, onClose }) {
   return (
     <div aria-labelledby={labelledBy} aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
@@ -88,6 +191,270 @@ function BottomSheet({ children, labelledBy, onClose }) {
         {children}
       </section>
     </div>
+  );
+}
+
+function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapters, creator, joinPending, memberPreview, onBack, onJoin, onOpenChapter, onShare, owner, publication }) {
+  const [expandedPreviewChapter, setExpandedPreviewChapter] = useState(null);
+  const media = firstWorldMedia(publication, chapters);
+  const stories = storyItems(publication, chapters);
+  const displayName = creator.name || creator.username || "Creator";
+  const firstName = creatorFirstName(creator);
+  const offer = { ...(publication || {}), ...(publication?.membershipOffer || {}) };
+  const lockedCount = chapters.filter((chapter) => chapter.locked || !chapter.isPreview).length;
+  const hasIncludedExperiences = (publication?.includedExperienceIds || []).length > 0;
+  const memberCount = Math.max(Number(publication?.members?.count || 0), Number(memberPreview?.pagination?.total || 0), 0);
+  const memberAvatars = (publication?.members?.previewAvatars?.length ? publication.members.previewAvatars : (memberPreview?.items || []).map((item) => item.user))
+    .filter(Boolean)
+    .slice(0, 4);
+  const foundingCapacity = Number(publication?.worldFoundingCapacity || 0);
+  const nextMemberNumber = Number(publication?.viewer?.memberNumber || offer.nextMemberNumber || memberCount + 1);
+  const memberState = canViewMemberContent || activeMembership || publication?.viewer?.isMember;
+  const storiesUnlocked = owner || memberState;
+  const benefits = [
+    { icon: <FiZap />, text: `The whole of ${firstName}'s world opens to you - every corner`, show: lockedCount > 0 },
+    { icon: <span>✦</span>, text: "Private experiences and chapters for members", show: hasIncludedExperiences || lockedCount > 0 },
+    { icon: <FiCheck />, text: `Stories ${firstName} does not post publicly`, show: stories.length > 0 },
+    { icon: <span className="world-preview-ring-icon" />, text: `One personal reply a month${publication?.directAccessIncluded ? " - included; more, first in line" : ""}`, show: publication?.directAccessIncluded },
+  ].filter((item) => item.show);
+  const valueRows = [
+    { title: "Your price is locked", detail: "while your membership remains active", show: publication?.memberPriceLocked !== false },
+    { title: "Everything future lands inside", detail: "new chapters are included with your active membership", show: true },
+    { title: `You become #${nextMemberNumber.toLocaleString()}`, detail: `first ${foundingCapacity.toLocaleString()} are the founding circle`, show: Boolean(foundingCapacity && nextMemberNumber <= foundingCapacity) },
+  ].filter((item) => item.show);
+
+  return (
+    <article className="world-preview-page world-page">
+      <header className="world-preview-media world-hero">
+        {media?.secureUrl ? (
+          media.resourceType === "video" || media.mediaType === "VIDEO"
+            ? <video controls playsInline preload="metadata" src={media.secureUrl} />
+            : <img alt={`${publication.title} preview`} src={media.secureUrl} />
+        ) : <div className="world-preview-media-empty"><span>{PLANET}</span></div>}
+        {(media?.resourceType === "video" || media?.mediaType === "VIDEO") && media?.duration ? <span className="world-preview-duration">▶ {Math.round(Number(media.duration || 0))}s</span> : null}
+        <button aria-label="Back to profile" className="world-preview-close" onClick={onBack} type="button"><FiX /></button>
+      </header>
+
+      <section className="world-preview-intro world-header">
+        <p>{`${displayName}'s World`}</p>
+        <h1>{publication.title}</h1>
+        <span>{`The ${firstName} only a few people get to see.`}</span>
+      </section>
+
+      {stories.length ? (
+        <section aria-label="Private story previews" className="world-preview-stories world-private-previews">
+          {stories.slice(0, 3).map((story, index) => (
+            <button
+              aria-disabled={!storiesUnlocked}
+              className="world-private-item"
+              disabled={!storiesUnlocked}
+              key={`${story.assetId || story.secureUrl || index}-${index}`}
+              onClick={() => storiesUnlocked && onShare(story)}
+              type="button"
+            >
+              <span className="world-private-ring">
+                {story.resourceType === "video" ? <video muted playsInline preload="metadata" src={story.secureUrl} /> : <img alt={story.title || "World preview"} src={story.secureUrl} />}
+                <i className="world-private-lock"><FiLock /></i>
+              </span>
+              <span>private</span>
+            </button>
+          ))}
+        </section>
+      ) : null}
+
+      <section className="world-preview-inside">
+        <h2>What&apos;s inside</h2>
+        <div className="world-chapter-list">
+        {chapters.length ? chapters.map((chapter, index) => {
+          const readable = canReadChapter(chapter, memberState);
+          const locked = !readable;
+          const previewTeaser = readable && chapter.isPreview && !memberState;
+          const expanded = previewTeaser && expandedPreviewChapter === index;
+          const previewBlocks = expanded ? chapterPreviewBlocks(chapter) : [];
+          const description = locked ? chapterDescription(chapter) : "";
+          const openChapter = () => {
+            if (locked) {
+              onJoin();
+              return;
+            }
+            if (previewTeaser) {
+              setExpandedPreviewChapter((current) => current === index ? null : index);
+              return;
+            }
+            onOpenChapter(index);
+          };
+          return (
+            <button className={`world-chapter-card ${readable ? "world-chapter-card--free is-free" : "world-chapter-card--locked is-locked"} ${expanded ? "is-expanded" : ""}`} key={chapter.stableChapterId || index} onClick={openChapter} type="button">
+              <b className="world-chapter-number">{index + 1}</b>
+              <span className="world-chapter-copy">
+                <strong>{chapter.title || `Chapter ${index + 1}`}</strong>
+                {description ? <small>{description}...</small> : null}
+              </span>
+              {readable ? <em className="world-chapter-action">{chapter.isPreview && !memberState ? "Read free \u203a" : "Open \u203a"}</em> : <FiLock className="world-chapter-lock" />}
+              {expanded ? (
+                <span className="world-chapter-preview-panel">
+                  <span className="world-chapter-preview-copy">You unlock everything about {firstName} - and this chapter is open right now. The rest of the world is one tap away.</span>
+                  {previewBlocks.length ? (
+                    <span className="world-chapter-preview-content">
+                      {previewBlocks.map((block, blockIndex) => {
+                        const key = block.id || `${chapter.stableChapterId || index}-${blockIndex}`;
+                        if (block.media?.secureUrl && block.type === "IMAGE") return <img alt="" key={key} src={block.media.secureUrl} />;
+                        if (block.media?.secureUrl && block.type === "VIDEO") return <video key={key} muted playsInline preload="metadata" src={block.media.secureUrl} />;
+                        if (block.media?.secureUrl && ["VOICE", "AUDIO"].includes(block.type)) return <span className="world-chapter-preview-media-label" key={key}>Audio note</span>;
+                        if (block.type === "LINK" && block.url) return <span className="world-chapter-preview-media-label" key={key}>{block.label || block.url}</span>;
+                        return <span className="world-chapter-preview-text" key={key}>{String(block.text || "").trim()}</span>;
+                      })}
+                    </span>
+                  ) : null}
+                </span>
+              ) : null}
+            </button>
+          );
+        }) : <p>No chapters have been published yet.</p>}
+        </div>
+      </section>
+
+      {benefits.length ? (
+        <section className="world-preview-benefits world-benefits">
+          {benefits.map((benefit, index) => (
+            <div className="world-benefit-row" key={`${benefit.text}-${index}`}>
+              <span>{benefit.icon}</span>
+              <b>{benefit.text}</b>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
+      {valueRows.length ? (
+        <section className="world-preview-value world-membership-card">
+          {valueRows.map((row) => <p className="world-membership-row" key={row.title}><FiCheck /><span className="world-membership-copy"><b>{row.title}</b><small>{row.detail}</small></span></p>)}
+        </section>
+      ) : null}
+
+      <section className="world-preview-social-proof world-members-social-proof">
+        {memberAvatars.length ? (
+          <span className="world-member-avatars">
+            {memberAvatars.map((member, index) => <FanAvatar key={`${member.id || member.username || index}-${index}`} name={member.displayName || member.name || member.username} size="h-6 w-6" src={member.avatarUrl || member.avatar} />)}
+          </span>
+        ) : null}
+        <b>{memberCount ? `${memberCount.toLocaleString()} ${memberCount === 1 ? "person is" : "people are"} already closer` : "Be the first to step closer"}</b>
+      </section>
+
+      {owner ? (
+        <Link className="world-preview-cta world-join-button" to={`/studio/worlds/${publication.id}/edit`}>Manage World</Link>
+      ) : memberState ? (
+        <button className="world-preview-cta world-join-button" onClick={() => chapters[0] && onOpenChapter(chapters.findIndex((chapter) => !chapter.locked))} type="button">{`You're inside - open ${firstName}'s World`}</button>
+      ) : (
+        <button className="world-preview-cta world-join-button" disabled={joinPending || !publication?.id || offer.enabled === false} onClick={onJoin} type="button">
+          {joinPending ? <span className="world-join-label">Confirming...</span> : <><span className="world-join-label">Join {firstName}&rsquo;s World</span>
+          <span className="world-join-dot" aria-hidden="true">·</span>
+          {joinPriceText(offer)}</>}
+        </button>
+      )}
+      {!owner ? <p className="world-preview-terms world-join-footer">Cancel anytime · {firstName} sees every new member</p> : null}
+    </article>
+  );
+}
+
+function WorldMemberInsidePage({ activeMembership, chapters, creator, onOpenChapter, onOpenMessages, publication }) {
+  const [worldDoorOpen, setWorldDoorOpen] = useState(false);
+  const firstName = creatorFirstName(creator);
+  const creatorId = creator.id || creator._id || publication?.creatorId || "";
+  const chapterCount = chapters.length;
+  const memberNumber = publication?.viewer?.memberNumber || activeMembership?.memberNumber;
+  const worldIcon = PLANET;
+  const renewalCopy = activeMembership?.cancelAtPeriodEnd
+    ? "Cancels at period end"
+    : activeMembership?.autoRenew === false
+      ? "Active until period end"
+      : "Renews monthly · cancel anytime";
+  const directReplies = Number(publication?.directAccessIncludedReplies || 1);
+  const openMessages = () => onOpenMessages(creatorId);
+  const firstUnlockedChapterIndex = Math.max(0, chapters.findIndex((chapter) => !chapter.locked));
+  const openWorld = () => setWorldDoorOpen(true);
+  const stepInsideWorld = () => onOpenChapter(firstUnlockedChapterIndex);
+
+  if (worldDoorOpen) {
+    return (
+      <WorldMemberDoorPage
+        chapters={chapters}
+        creator={creator}
+        onBack={() => setWorldDoorOpen(false)}
+        onStepInside={stepInsideWorld}
+        publication={publication}
+      />
+    );
+  }
+
+  return (
+    <article className="world-member-inside-page">
+      <section className="world-member-inside-content">
+        <span className="world-member-sheet-handle" aria-hidden="true" />
+        <header className="world-member-welcome">
+          <span className="world-member-planet" aria-hidden="true">{worldIcon}</span>
+          <h1>You&apos;re inside</h1>
+          {memberNumber ? <span className="world-member-badge">Member #{Number(memberNumber).toLocaleString()}</span> : null}
+          <p>Welcome to {firstName}&apos;s World</p>
+        </header>
+
+        <div className="world-member-access-list">
+          <button className="world-member-access-row" onClick={openMessages} type="button">
+            <span className="world-member-access-icon is-chat"><FiMessageSquare /></span>
+            <span className="world-member-access-copy">
+              <b>Direct Access to {firstName}</b>
+              <small>A private window is ready · {directReplies} message{directReplies === 1 ? "" : "s"} / 48h — included every month</small>
+            </span>
+            <span className="world-member-open">OPEN &gt;</span>
+          </button>
+
+          <button className="world-member-access-row" onClick={openWorld} type="button">
+            <span className="world-member-access-icon is-planet">{worldIcon}</span>
+            <span className="world-member-access-copy">
+              <b>&ldquo;{publication.title}&rdquo;</b>
+              <small>All {chapterCount.toLocaleString()} chapter{chapterCount === 1 ? "" : "s"} unlocked — and every new one lands first</small>
+            </span>
+            <span className="world-member-open">OPEN &gt;</span>
+          </button>
+
+          <button className="world-member-access-row" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} type="button">
+            <span className="world-member-access-icon is-ring" aria-hidden="true" />
+            <span className="world-member-access-copy">
+              <b>Private stories &amp; highlights</b>
+              <small>Members only — fans never see these</small>
+            </span>
+            <span className="world-member-open">OPEN &gt;</span>
+          </button>
+        </div>
+
+        <button className="world-member-primary" onClick={openMessages} type="button">Say hi to {firstName} <FiMessageCircle /></button>
+        <p className="world-member-renewal">{renewalCopy}</p>
+      </section>
+    </article>
+  );
+}
+
+function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publication }) {
+  const firstName = creatorFirstName(creator);
+  const media = firstWorldMedia(publication, chapters);
+
+  return (
+    <article className="world-member-door-page">
+      {media?.secureUrl ? (
+        media.resourceType === "video" || media.mediaType === "VIDEO"
+          ? <video aria-hidden="true" autoPlay loop muted playsInline preload="metadata" src={media.secureUrl} />
+          : <img alt="" aria-hidden="true" src={media.secureUrl} />
+      ) : null}
+      <span className="world-member-door-fallback" aria-hidden="true" />
+      <span className="world-member-door-shade" aria-hidden="true" />
+      <button aria-label="Back to member access" className="world-member-door-control is-back" onClick={onBack} type="button"><FiArrowLeft /></button>
+      <button aria-label="More world options" className="world-member-door-control is-more" type="button"><FiMoreHorizontal /></button>
+      <section className="world-member-door-copy">
+        <span className="world-member-door-planet" aria-hidden="true">{PLANET}</span>
+        <h1>{publication.title}</h1>
+        <p>a world by {firstName}</p>
+        <button className="world-member-door-cta" onClick={onStepInside} type="button">Step inside</button>
+      </section>
+    </article>
   );
 }
 
@@ -788,6 +1155,257 @@ function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, o
   );
 }
 
+function WorldPrimaryMedia({ media, title }) {
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(Number(media?.duration || 0));
+  if (!media?.secureUrl) return null;
+  const playable = ["VIDEO", "AUDIO", "VOICE"].includes(media.mediaType) || ["video", "audio"].includes(media.resourceType);
+  const syncTime = (event) => {
+    setCurrentTime(event.currentTarget.currentTime || 0);
+    setDuration(event.currentTarget.duration || duration || 0);
+  };
+  if (media.mediaType === "VIDEO" || media.resourceType === "video") {
+    return <section className="world-inside-detail__primary">
+      <video controls onLoadedMetadata={syncTime} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={syncTime} playsInline preload="metadata" src={media.secureUrl} />
+      <p className="world-inside-detail__playback"><FiPlay /> {duration ? `${formatMediaTime(currentTime || duration)} ${playing ? "● playing" : "ready"}` : playing ? "playing" : "ready"}</p>
+    </section>;
+  }
+  if (["AUDIO", "VOICE"].includes(media.mediaType)) {
+    return <section className="world-inside-detail__primary is-audio">
+      <audio controls onLoadedMetadata={syncTime} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={syncTime} preload="metadata" src={media.secureUrl} />
+      <p className="world-inside-detail__playback"><FiPlay /> {duration ? `${formatMediaTime(currentTime || duration)} ${playing ? "● playing" : "ready"}` : playing ? "playing" : "ready"}</p>
+    </section>;
+  }
+  return <section className="world-inside-detail__primary">
+    <img alt={`${title} media`} loading="lazy" src={media.secureUrl} />
+    {playable ? <p className="world-inside-detail__playback"><FiPlay /> ready</p> : null}
+  </section>;
+}
+
+function WorldInsideMoreSheet({ onClose, onCopy, onShare }) {
+  return <BottomSheet labelledBy="world-inside-more-title" onClose={onClose}>
+    <header className="world-inside-detail__sheet-head">
+      <h2 id="world-inside-more-title">World actions</h2>
+      <button aria-label="Close World actions" onClick={onClose} type="button"><FiX /></button>
+    </header>
+    <div className="world-inside-detail__sheet-actions">
+      <button onClick={onShare} type="button"><FiShare2 /><span>Share</span></button>
+      <button onClick={onCopy} type="button"><FiCopy /><span>Copy link</span></button>
+    </div>
+  </BottomSheet>;
+}
+
+function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onReply, replyTarget }) {
+  const comments = engagement?.comments || [];
+  if (!comments.length) return <p className="world-inside-detail__comments-empty">No comments yet. Be the first to leave a note.</p>;
+  const renderComment = (item, isReply = false) => {
+    const active = Boolean(item.viewerReaction);
+    return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""}`} key={item.id}>
+      <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
+      <div>
+        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || "User"}</Link> {item.text}</p>
+        <div>
+          <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => onCommentReact(item)} type="button">🤝 <span>{Number(item.reactionCount || 0).toLocaleString()}</span></button>
+          {!isReply ? <button className={replyTarget?.id === item.id ? "is-active" : ""} onClick={() => onReply(item)} type="button">Reply</button> : null}
+        </div>
+        {(item.replies || []).map((reply) => renderComment(reply, true))}
+      </div>
+    </article>;
+  };
+  return <div className="world-inside-detail__comment-list">{comments.map((item) => renderComment(item))}</div>;
+}
+
+function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engagementQuery, experiences = [], onBack, onGift, onOpenChapter, onOpenStory, publication }) {
+  const { user } = useAuth();
+  const { showToast } = useFanToast();
+  const queryClient = useQueryClient();
+  const [commentText, setCommentText] = useState("");
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [commentBusy, setCommentBusy] = useState("");
+  const [posting, setPosting] = useState(false);
+  const mediaItems = useMemo(() => worldMediaItems(publication, chapters), [publication, chapters]);
+  const primaryMedia = mediaItems[0] || null;
+  const storyPreviews = useMemo(() => privateStoryItems(chapters), [chapters]);
+  const includedExperiences = useMemo(() => {
+    const supplied = experiences.filter((item) => item && typeof item === "object");
+    return supplied.length ? supplied : includedWorldExperiences(publication);
+  }, [experiences, publication]);
+  const gallery = mediaItems.filter((item) => item.secureUrl !== primaryMedia?.secureUrl).slice(0, 8);
+  const engagement = engagementQuery.data || {};
+  const memberCount = Number(publication?.members?.count || 0);
+  const steppedInside = Math.max(memberCount, Number(engagement.viewCount || 0));
+  const shownChapters = [];
+  const hiddenChapterCount = 0;
+  const expanded = false;
+  const setExpanded = () => undefined;
+  const creatorName = creator.name || creator.username || "Creator";
+  const firstName = creatorFirstName(creator);
+  const chapterWord = chapters.length === 1 ? "chapter" : "chapters";
+  const saved = Boolean(engagement.viewerSaved);
+  const worldUrl = typeof window === "undefined" ? "" : `${window.location.origin}/world/${publication.id || publication._id}/inside?view=detail`;
+  const canPostComment = commentText.trim() && !posting && publication.commentsEnabled !== false;
+
+  useEffect(() => {
+    if (canViewMemberContent && publication?.id) api.markWorldWalked(publication.id).then(() => engagementQuery.refetch()).catch(() => null);
+  }, [canViewMemberContent, engagementQuery, publication?.id]);
+
+  const toggleSave = async () => {
+    try {
+      const response = await api.toggleSeenSave(publication.id);
+      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
+      showToast(response.data.message || (saved ? "Removed from Saved." : "Saved."));
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Could not update Saved.");
+    }
+  };
+
+  const submitComment = async (event) => {
+    event.preventDefault();
+    if (!canPostComment) return;
+    setPosting(true);
+    try {
+      const response = await api.commentOnSeen(publication.id, commentText.trim(), "", replyTarget?.id || "");
+      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
+      setCommentText("");
+      setReplyTarget(null);
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be posted.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const toggleCommentReaction = async (comment) => {
+    setCommentBusy(comment.id);
+    try {
+      const request = comment.viewerReaction
+        ? api.removeSeenCommentReaction(publication.id, comment.id)
+        : api.reactToSeenComment(publication.id, comment.id, "LIKE");
+      const response = await request;
+      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Reaction could not be saved.");
+    } finally {
+      setCommentBusy("");
+    }
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(worldUrl);
+    setMoreOpen(false);
+    showToast("World link copied.");
+  };
+
+  const shareWorld = async () => {
+    setMoreOpen(false);
+    if (navigator.share) {
+      await navigator.share({ title: publication.title || "World", url: worldUrl }).catch(() => null);
+      return;
+    }
+    await copyLink();
+  };
+
+  return <article className="world-inside-detail">
+    <header className="world-inside-detail__header">
+      <button aria-label="Back to member access" className="world-inside-detail__round" onClick={onBack} type="button"><FiArrowLeft /></button>
+      <div className="world-inside-detail__title">
+        <h1>{publication.title || "World"}</h1>
+        <p>{creatorName} {publication.creator?.verified || creator.verified ? "✓" : ""} · {chapters.length} {chapterWord} · {steppedInside.toLocaleString()} stepped inside</p>
+      </div>
+      <div className="world-inside-detail__actions">
+        <button aria-label={`Send ${firstName} a gift`} className="world-inside-detail__round" onClick={onGift} type="button"><FiGift /></button>
+        <button aria-label={saved ? "Remove World from Saved" : "Save World"} aria-pressed={saved} className={`world-inside-detail__round ${saved ? "is-active" : ""}`} onClick={toggleSave} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
+        <button aria-label="More World actions" className="world-inside-detail__round" onClick={() => setMoreOpen(true)} type="button"><FiMoreHorizontal /></button>
+      </div>
+    </header>
+
+    <section className="world-inside-detail__hero">
+      {publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} src={publication.coverMedia.secureUrl} /> : <span aria-hidden="true">{planetFaceEmoji(publication.planet)}</span>}
+      <p>{chapters.length} {chapterWord} · {publication.category || "World"}</p>
+    </section>
+
+    <WorldPrimaryMedia media={primaryMedia} title={publication.title || "World"} />
+
+    <section className="world-inside-detail__creator">
+      <FanAvatar name={creatorName} size="h-8 w-8" src={creator.avatar} />
+      <div>
+        <Link to={creator.username ? `/profile/${creator.username}` : "#"}>{creatorName} {creator.verified ? "✓" : ""}</Link>
+        <small>{primaryMedia?.duration ? `${formatMediaTime(primaryMedia.duration)} — ` : ""}why this world exists</small>
+      </div>
+    </section>
+
+    {publication.description || publication.summary ? <p className="world-inside-detail__description">{publication.description || publication.summary}</p> : null}
+
+    {storyPreviews.length ? <section className="world-inside-detail__stories" aria-label="Private stories">
+      <h2>PRIVATE STORIES <span>you&apos;re in</span></h2>
+      <div>
+        {storyPreviews.map((story, index) => <button aria-label={`Open ${story.title || "private story"}`} key={`${story.assetId || story.secureUrl}-${index}`} onClick={() => onOpenStory(story)} type="button">
+          <span>{story.mediaType === "VIDEO" || story.resourceType === "video" ? <video muted playsInline preload="metadata" src={story.secureUrl} /> : <img alt="" src={story.secureUrl} />}</span>
+          <small>{story.title || "Story"}</small>
+        </button>)}
+      </div>
+    </section> : null}
+
+    {gallery.length ? <section className="world-inside-detail__gallery" aria-label="World media gallery">
+      {gallery.map((item, index) => <button aria-label={item.title || `World media ${index + 1}`} key={`${item.assetId || item.secureUrl}-${index}`} onClick={() => onOpenChapter(Math.max(0, chapters.findIndex((chapter) => (chapter.blocks || []).some((block) => block.media?.secureUrl === item.secureUrl))))} type="button">
+        {item.mediaType === "VIDEO" || item.resourceType === "video" ? <video muted playsInline preload="metadata" src={item.secureUrl} /> : <img alt="" loading="lazy" src={item.secureUrl} />}
+      </button>)}
+    </section> : null}
+
+    <section className="world-inside-detail__journey">
+      <h2>THE JOURNEY</h2>
+      {includedExperiences.length ? <div>
+        {shownChapters.map((chapter, index) => <button className="world-inside-detail__chapter" key={chapter.stableChapterId || chapter.id || index} onClick={() => onOpenChapter(chapters.indexOf(chapter))} type="button">
+          <span>{chapters.indexOf(chapter) + 1}</span>
+          <b>{chapter.title || `Chapter ${chapters.indexOf(chapter) + 1}`}</b>
+          <i>›</i>
+        </button>)}
+        {includedExperiences.map((item) => {
+          const experienceId = item.id || item._id;
+          const chapterCount = Number(item.chapterCount ?? item.chapters?.length ?? 0);
+          const price = Number(item.pricing?.starsAmount || 0);
+          const meta = [
+            `${chapterCount} ${chapterCount === 1 ? "chapter" : "chapters"}`,
+            item.pricing?.mode === "FREE" ? "free" : price ? `${STAR}${price} included` : "included",
+          ].filter(Boolean).join(" · ");
+          return (
+            <Link className="world-inside-detail__experience" key={experienceId || item.title} to={experienceId ? `/experience/${experienceId}` : "#"}>
+              <span className="world-inside-detail__experience-cover">
+                {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i aria-hidden="true">{STAR}</i>}
+              </span>
+              <span className="world-inside-detail__experience-copy">
+                <small>{item.category || "Experience"}</small>
+                <b>{item.title || "Untitled Experience"}</b>
+                <em>{meta}</em>
+              </span>
+              <i aria-hidden="true">{"\u203a"}</i>
+            </Link>
+          );
+        })}
+      </div> : <p className="world-inside-detail__empty">No experiences have been included yet.</p>}
+      {hiddenChapterCount ? <button className="world-inside-detail__expand" onClick={() => setExpanded(true)} type="button">+{hiddenChapterCount} {hiddenChapterCount === 1 ? "chapter" : "chapters"} ▼</button> : expanded && chapters.length > 3 ? <button className="world-inside-detail__expand" onClick={() => setExpanded(false)} type="button">Show less ↑</button> : null}
+    </section>
+
+    <section className="world-inside-detail__comments">
+      <h2>Comments · {Number(engagement.commentCount || 0).toLocaleString()}</h2>
+      <WorldInsideComments engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onReply={setReplyTarget} replyTarget={replyTarget} />
+      {publication.commentsEnabled === false ? <p className="world-inside-detail__comments-empty">Comments are turned off for this World.</p> : <form onSubmit={submitComment}>
+        <FanAvatar name={user?.name || user?.username || "You"} size="h-7 w-7" src={user?.avatar} />
+        <div>
+          {replyTarget ? <span>Replying to {replyTarget.author?.name || "comment"} <button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
+          <input aria-label="Add a comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
+        </div>
+        <button aria-label="Voice comments are not available here" disabled type="button"><FiMic /></button>
+        <button disabled={!canPostComment} type="submit">{posting ? "Posting..." : "Post"}</button>
+      </form>}
+    </section>
+
+    {moreOpen ? <WorldInsideMoreSheet onClose={() => setMoreOpen(false)} onCopy={copyLink} onShare={shareWorld} /> : null}
+  </article>;
+}
+
 function ExperienceVisitorOverview({ canView, chapters, onBack, onOpenChapter, onShare, onUnlock, publication }) {
   const cover = publication.coverMedia?.secureUrl || publication.coverMedia?.thumbnailUrl;
   const creatorName = publication.creator?.name || publication.creator?.username || "Creator";
@@ -826,7 +1444,7 @@ export default function WorldReaderPage() {
   const [experienceSettingsOpen, setExperienceSettingsOpen] = useState(false);
   const [tagPeopleOpen, setTagPeopleOpen] = useState(false);
   const [sheet, setSheet] = useState(new URLSearchParams(location.search).get("worldPanel") || "");
-  const [showPremiumWelcome, setShowPremiumWelcome] = useState(false);
+  const [joinKey, setJoinKey] = useState("");
   const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
   const [coverProgress, setCoverProgress] = useState(0);
   const [commentSavePending, setCommentSavePending] = useState("");
@@ -841,6 +1459,7 @@ export default function WorldReaderPage() {
   const [storyUploadError, setStoryUploadError] = useState("");
   const [storyUploadSheetOpen, setStoryUploadSheetOpen] = useState(false);
   const [activeStory, setActiveStory] = useState(null);
+  const [giftOpen, setGiftOpen] = useState(false);
   const [quickChapterStep, setQuickChapterStep] = useState("");
   const [quickChapterTitle, setQuickChapterTitle] = useState("");
   const [quickChapterSaving, setQuickChapterSaving] = useState(false);
@@ -862,10 +1481,17 @@ export default function WorldReaderPage() {
   const viewerId = user?.id || user?._id || "";
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const owner = sameIdentity(viewerId, creatorId) || sameIdentity(user?.username, creator.username);
+  const canFetchMemberWorld = Boolean(user && publicationId && premium && (owner || publication?.access === "ACTIVE_PREMIUM_MEMBER"));
   const managementQuery = useQuery({
     queryKey: ["world-management", publicationId],
     queryFn: () => api.getWorldManagement(publicationId).then((response) => response.data.data),
     enabled: Boolean(owner && publicationId),
+    retry: false,
+  });
+  const memberWorldQuery = useQuery({
+    queryKey: ["member-world", publicationId],
+    queryFn: () => api.getMemberWorld(publicationId).then((response) => response.data.data),
+    enabled: canFetchMemberWorld,
     retry: false,
   });
   const ownerExperiences = useQuery({
@@ -877,7 +1503,7 @@ export default function WorldReaderPage() {
   const walkersQuery = useQuery({
     queryKey: ["world-walkers", publicationId],
     queryFn: () => api.listWorldWalkers(publicationId, { limit: 20 }).then((response) => response.data.data),
-    enabled: Boolean(owner && publicationId && walkersOpen && !experience),
+    enabled: Boolean(user && publicationId && !experience && (walkersOpen || (premium && !owner))),
     retry: false,
   });
   const moderatorCandidates = useQuery({
@@ -892,9 +1518,58 @@ export default function WorldReaderPage() {
     enabled: Boolean(owner && publicationId && sheet === "price" && premium),
     retry: false,
   });
+  const joinPremium = useMutation({
+    mutationFn: () => {
+      const key = joinKey || createIdempotencyKey("premium-join");
+      setJoinKey(key);
+      return membershipService.joinPremiumWorld(publicationId, key);
+    },
+    onSuccess: async (response) => {
+      const payload = response?.data?.data || {};
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallet"] }),
+        queryClient.invalidateQueries({ queryKey: ["memberships"] }),
+        queryClient.invalidateQueries({ queryKey: ["world", id] }),
+        queryClient.invalidateQueries({ queryKey: ["member-world", publicationId] }),
+        queryClient.invalidateQueries({ queryKey: ["world-walkers", publicationId] }),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+      ]);
+      if (payload?.membership) {
+        queryClient.setQueryData(["memberships"], (current = []) => {
+          const next = {
+            ...payload.membership,
+            premiumPublication: { id: publicationId, _id: publicationId, title: publication?.title, planet: publication?.planet },
+          };
+          return [next, ...current.filter((item) => String(item.id || item._id) !== String(next.id))];
+        });
+      }
+      await Promise.all([query.refetch(), memberships.refetch(), walkersQuery.refetch()]);
+      setJoinKey("");
+      navigate(`/world/${publicationId}/inside`, { replace: true });
+    },
+    onError: async (error) => {
+      if (financialErrorCode(error) === "MEMBERSHIP_ALREADY_ACTIVE") {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["memberships"] }),
+          queryClient.invalidateQueries({ queryKey: ["world", id] }),
+          queryClient.invalidateQueries({ queryKey: ["member-world", publicationId] }),
+        ]);
+        await Promise.all([query.refetch(), memberships.refetch()]);
+        setJoinKey("");
+        navigate(`/world/${publicationId}/inside`, { replace: true });
+        return;
+      }
+      setJoinKey("");
+      showToast(financialErrorMessage(error, "Could not join this World. Please try again."));
+    },
+  });
 
   const management = managementQuery.data?.management || {};
   const managedPublication = managementQuery.data?.publication || publication;
+  const memberWorldPublication = memberWorldQuery.data?.world || null;
+  const memberWorldExperiences = includedWorldExperiences(memberWorldPublication || {}).length
+    ? includedWorldExperiences(memberWorldPublication || {})
+    : management.includedExperiences || [];
   const experienceChapters = managedPublication?.chapters?.length ? managedPublication.chapters : chapters;
   const updateWorld = useMutation({
     mutationFn: (payload) => api.updateWorldManagement(publicationId, payload),
@@ -1024,27 +1699,128 @@ export default function WorldReaderPage() {
   if (authLoading || query.isLoading) return <div className="world-prototype-state">Opening World...</div>;
   if (query.isError || !publication) return <div className="world-prototype-state"><h1>World unavailable</h1><p>It may be unpublished, archived, or missing.</p></div>;
 
+  const insideRequested = location.pathname.endsWith("/inside");
+  const insideDetailRequested = insideRequested && new URLSearchParams(location.search).get("view") === "detail";
   const canViewMemberContent = owner || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_EXPERIENCE"].includes(publication?.access);
-  if (premium && !owner && !canViewMemberContent) {
+  const activeMembership = memberships.data?.find((item) => String(item.premiumPublication?._id || item.premiumPublication?.id) === String(publicationId) && isActivePremiumMembership(item));
+  const openPremiumJoin = () => {
+    if (joinPremium.isPending) return;
+    if (owner || canViewMemberContent) {
+      navigate(`/world/${publicationId}/inside`);
+      return;
+    }
+    if (!user) {
+      navigate("/login", { state: { from: { pathname: location.pathname } } });
+      return;
+    }
+    joinPremium.mutate();
+  };
+  const openCreatorMessages = (creatorUserId = creatorId) => {
+    if (!creatorUserId) return;
+    navigate(`/messages?with=${encodeURIComponent(creatorUserId)}&directAccess=1`);
+  };
+  if (insideRequested && premium && !owner && !canViewMemberContent) {
     return (
-      <article className="premium-locked-page">
-        <JoinPremiumModal
-          authenticated={Boolean(user)}
-          onClose={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
-          onRequireAuth={() => navigate("/login", { state: { from: { pathname: location.pathname } } })}
-          onSuccess={async () => { await Promise.all([query.refetch(), memberships.refetch()]); setShowPremiumWelcome(true); }}
-          open
+      <div className="world-member-inside-page">
+        <section className="world-member-inside-content world-member-denied">
+          <span className="world-member-planet" aria-hidden="true">{planetFaceEmoji(publication?.planet)}</span>
+          <h1>Members only</h1>
+          <p>Join {creatorFirstName(creator)}&apos;s World to enter this space.</p>
+          <button className="world-member-primary" disabled={joinPremium.isPending} onClick={openPremiumJoin} type="button">
+            {joinPremium.isPending ? "Confirming..." : `Join ${creatorFirstName(creator)}'s World`}
+          </button>
+        </section>
+      </div>
+    );
+  }
+  if (insideDetailRequested && premium && canViewMemberContent) {
+    if (activeChapterIndex !== null && experienceChapters[activeChapterIndex]) {
+      return <ChapterExperience
+        chapter={experienceChapters[activeChapterIndex]}
+        chapterIndex={activeChapterIndex}
+        chapters={experienceChapters}
+        experienceTitle={managedPublication.title}
+        onBack={() => setActiveChapterIndex(null)}
+        onSelect={setActiveChapterIndex}
+        publicationId={publicationId}
+      />;
+    }
+    return <>
+      <WorldInsideDetailPage
+        canViewMemberContent={canViewMemberContent}
+        chapters={memberWorldPublication?.chapters || chapters}
+        creator={creator}
+        engagementQuery={engagement}
+        experiences={memberWorldExperiences}
+        onBack={() => navigate(`/world/${publicationId}/inside`)}
+        onGift={() => setGiftOpen(true)}
+        onOpenChapter={(index) => setActiveChapterIndex(index)}
+        onOpenStory={setActiveStory}
+        publication={memberWorldPublication || publication}
+      />
+      {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
+      {giftOpen ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => showToast("Gift sent in Messages.")} recipient={{ id: creatorId, name: creator.name || creator.username }} sourceType="DIRECT" /> : null}
+    </>;
+  }
+  if (insideRequested && premium && canViewMemberContent) {
+    return (
+      <WorldMemberInsidePage
+        activeMembership={activeMembership}
+        chapters={chapters}
+        creator={creator}
+        onOpenChapter={() => navigate(`/world/${publicationId}/inside?view=detail`)}
+        onOpenMessages={openCreatorMessages}
+        publication={publication}
+      />
+    );
+  }
+  if (!insideRequested && premium && canViewMemberContent && !owner && activeChapterIndex === null) {
+    return <>
+      <WorldInsideDetailPage
+        canViewMemberContent={canViewMemberContent}
+        chapters={memberWorldPublication?.chapters || chapters}
+        creator={creator}
+        engagementQuery={engagement}
+        experiences={memberWorldExperiences}
+        onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
+        onGift={() => setGiftOpen(true)}
+        onOpenChapter={(index) => setActiveChapterIndex(index)}
+        onOpenStory={setActiveStory}
+        publication={memberWorldPublication || publication}
+      />
+      {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
+      {giftOpen ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => showToast("Gift sent in Messages.")} recipient={{ id: creatorId, name: creator.name || creator.username }} sourceType="DIRECT" /> : null}
+    </>;
+  }
+  const selectedPreviewChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
+  if (premium && !owner && !(selectedPreviewChapter && canReadChapter(selectedPreviewChapter, canViewMemberContent))) {
+    return (
+      <>
+        <PremiumWorldPreviewPage
+          activeMembership={activeMembership}
+          canViewMemberContent={canViewMemberContent}
+          chapters={chapters}
+          creator={creator}
+          joinPending={joinPremium.isPending}
+          memberPreview={walkersQuery.data}
+          onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
+          onJoin={openPremiumJoin}
+          onOpenChapter={setActiveChapterIndex}
+          onShare={setActiveStory}
+          owner={owner}
           publication={publication}
         />
-      </article>
+        {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
+      </>
     );
   }
 
   if (activeChapterIndex !== null && experienceChapters[activeChapterIndex]) {
     const selectExperienceChapter = (index) => {
-      if (experienceChapters[index]?.locked && !canViewMemberContent) {
+      if (!canReadChapter(experienceChapters[index], canViewMemberContent)) {
         setActiveChapterIndex(null);
-        setShowExperienceUnlock(true);
+        if (premium) openPremiumJoin();
+        else setShowExperienceUnlock(true);
         return;
       }
       setActiveChapterIndex(index);
@@ -1090,7 +1866,6 @@ export default function WorldReaderPage() {
   const priceStars = Number(managedPublication?.pricing?.starsAmount || management.subscription?.priceStars || 0);
   const faceEmoji = optimisticPlanetFaceEmoji || planetFaceEmoji(managedPublication.planet);
   const includedExperiences = management.includedExperiences || [];
-  const activeMembership = memberships.data?.find((item) => String(item.premiumPublication?._id || item.premiumPublication?.id) === String(publicationId));
   const commentsEnabled = optimisticCommentsEnabled ?? (managedPublication?.commentsEnabled !== false && management.comments?.enabled !== false);
   const firstMonthOfferEnabled = optimisticFirstMonthOfferEnabled ?? Boolean(management.subscription?.firstMonthOfferEnabled);
 
@@ -1148,6 +1923,7 @@ export default function WorldReaderPage() {
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["world", id] }),
+        queryClient.invalidateQueries({ queryKey: ["member-world", publicationId] }),
         queryClient.invalidateQueries({ queryKey: ["world-management", publicationId] }),
         queryClient.invalidateQueries({ queryKey: ["world-owner-experiences", publicationId] }),
       ]);
@@ -1590,7 +2366,6 @@ export default function WorldReaderPage() {
           </section>
         </BottomSheet>
       ) : null}
-      {showPremiumWelcome ? <PremiumWelcomeSheet onClose={() => setShowPremiumWelcome(false)} publication={publication} /> : null}
       <PurchaseWorldModal onClose={() => setShowExperienceUnlock(false)} onSuccess={() => query.refetch()} open={showExperienceUnlock} publication={publication} />
     </>
   );

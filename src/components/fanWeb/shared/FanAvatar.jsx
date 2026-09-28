@@ -17,7 +17,7 @@ function FanAvatar({ alt, brand = false, className = "", name = "Atseen", src, s
   const imageUrl = src ? resolveMediaUrl(src) : "";
 
   return (
-    <span className={`${size} inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-atseen-surface-2 text-atseen-blue ${className}`}>
+    <span className={`fan-avatar ${size} inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-atseen-surface-2 text-atseen-blue ${className}`}>
       {brand ? <AtseenLogo iconOnly size={24} /> : null}
       {!brand && imageUrl && !failed ? (
         <img

@@ -240,6 +240,7 @@ function AppRoutes() {
     </Route>
 
     <Route path="/profile/:username" element={<ProfileRoute />} />
+    <Route path="/world/:id/inside" element={<WorldRoute />} />
     <Route path="/world/:id" element={<WorldRoute />} />
     <Route path="/experience/:id" element={<WorldRoute />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
