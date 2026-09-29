@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMessageCircle, FiMoreHorizontal, FiPlay, FiPlus, FiRepeat, FiSend, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMoreHorizontal, FiPlay, FiPlus, FiRepeat, FiSend, FiX } from "react-icons/fi";
+import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
@@ -258,10 +259,7 @@ function InlineMedia({ block, title }) {
   }
   if (["AUDIO", "VOICE"].includes(block.type) || ["AUDIO", "VOICE"].includes(block.media?.mediaType)) {
     const transcript = String(block.metadata?.transcript || "").trim();
-    return <div className="seen-reader-voice-block">
-      <audio className="seen-reader-audio" controls src={url} />
-      {transcript ? <p className="seen-reader-voice-transcript">{transcript}</p> : null}
-    </div>;
+    return <ChapterVoicePlayer duration={block.media?.duration} transcript={transcript} url={url} />;
   }
   const overlayText = imageOverlayText(block);
   return <figure className={overlayText ? "seen-reader-image-frame has-overlay" : "seen-reader-image-frame"}>
@@ -307,12 +305,12 @@ function PollBlock({ accessToken = "", block, chapterId, publicationId }) {
 }
 
 function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
+  if (block.metadata?.location?.label) return <span className="chapter-location-prototype"><FiMapPin />{block.metadata.location.label}</span>;
   if (block.type === "LIST" || block.type === "KEY_POINT") {
     const listItems = Array.isArray(block.metadata?.listItems) ? block.metadata.listItems.filter(Boolean) : [];
-    if (block.type === "LIST" || listItems.length) return <section className="seen-reader-keypoint seen-reader-list-block">
-      <span>List</span>
-      {(listItems.length ? listItems : String(block.text || "").split("\n").filter(Boolean)).map((item, index) => <p key={`${block.id}-${index}`}><b>{index + 1}</b>{item}</p>)}
-    </section>;
+    if (block.type === "LIST" || listItems.length) return <ul className="seen-reader-list-block">
+      {(listItems.length ? listItems : String(block.text || "").split("\n").filter(Boolean)).map((item, index) => <li key={`${block.id}-${index}`}>{item}</li>)}
+    </ul>;
   }
   if (block.type === "KEY_POINT") {
     return <section className="seen-reader-keypoint">
@@ -324,7 +322,7 @@ function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
     return <p className="seen-reader-paragraph"><mark>{block.text}</mark></p>;
   }
   if (block.type === "LINK") {
-    return <a className="seen-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || block.url}<FiExternalLink /></a>;
+    return <a className="chapter-link-prototype" href={block.url} rel="noreferrer" target="_blank"><FiExternalLink /><span><b>{block.label || block.url}</b><small>{block.url}</small></span></a>;
   }
   if (block.type === "POLL") {
     return <PollBlock accessToken={accessToken} block={block} chapterId={chapterId} publicationId={publicationId} />;

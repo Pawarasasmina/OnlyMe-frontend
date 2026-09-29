@@ -853,9 +853,14 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
 
   const isOwn = isSeenOwner(currentUser, rawItem) || isSeenOwner(currentUser, item);
   const ownerStoryContent = useMemo(() => ({
-    caption: `${item.title}\n${shareUrl}`,
-    imageUrl: item.media.url,
-  }), [item.media.url, item.title, shareUrl]);
+    sharedCard: {
+      destinationRoute: target,
+      imageUrl: item.media.url,
+      kind: "Seen",
+      subtitle: `${item.creator.displayName} · Tap to open`,
+      title: item.title,
+    },
+  }), [item.creator.displayName, item.media.url, item.title, target]);
   const openChangeCover = () => {
     setMenuOpen(false);
     navigate(`/studio/seens/${item.id}/edit?from=seen&focus=cover`);

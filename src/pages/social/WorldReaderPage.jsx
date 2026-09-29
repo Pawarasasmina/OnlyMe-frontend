@@ -16,6 +16,7 @@ import {
   FiImage,
   FiLink,
   FiLock,
+  FiMapPin,
   FiMessageCircle,
   FiMoreHorizontal,
   FiPlus,
@@ -30,6 +31,7 @@ import {
   FiX,
   FiZap,
 } from "react-icons/fi";
+import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
 import PremiumWelcomeSheet from "../../components/financial/PremiumWelcomeSheet";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
@@ -766,7 +768,8 @@ function PollBlock({ block, chapterId, publicationId }) {
 function ChapterBlock({ block, chapterId, publicationId }) {
   const listItems = Array.isArray(block.metadata?.listItems) ? block.metadata.listItems.filter(Boolean) : [];
   const overlayText = String(block.metadata?.overlayText || block.metadata?.caption || "").trim();
-  if (block.type === "LIST" || (block.type === "KEY_POINT" && listItems.length)) return <section className="world-chapter-reader-list">{(listItems.length ? listItems : String(block.text || "").split("\n").filter(Boolean)).map((item, index) => <p key={`${block.id}-${index}`}><b>{index + 1}</b>{item}</p>)}</section>;
+  if (block.metadata?.location?.label) return <span className="chapter-location-prototype"><FiMapPin />{block.metadata.location.label}</span>;
+  if (block.type === "LIST" || (block.type === "KEY_POINT" && listItems.length)) return <ul className="world-chapter-reader-list">{(listItems.length ? listItems : String(block.text || "").split("\n").filter(Boolean)).map((item, index) => <li key={`${block.id}-${index}`}>{item}</li>)}</ul>;
   if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type)) return <p className={`world-chapter-reader-text ${block.type === "HIGHLIGHT" ? "is-highlight" : ""}`}>{block.text}</p>;
   if (block.type === "IMAGE" && block.media?.secureUrl) return <figure className={overlayText ? "world-chapter-reader-image-frame has-overlay" : "world-chapter-reader-image-frame"}>
     <img alt="Chapter attachment" className="world-chapter-reader-image" src={block.media.secureUrl} />
@@ -775,10 +778,10 @@ function ChapterBlock({ block, chapterId, publicationId }) {
   if (block.type === "VIDEO" && block.media?.secureUrl) return <video className="world-chapter-reader-video" controls playsInline preload="metadata" src={block.media.secureUrl} />;
   if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) {
     const transcript = String(block.metadata?.transcript || "").trim();
-    return <div className="world-chapter-reader-voice"><audio className="world-chapter-reader-audio" controls preload="metadata" src={block.media.secureUrl} />{transcript ? <p>{transcript}</p> : null}</div>;
+    return <ChapterVoicePlayer duration={block.media?.duration} transcript={transcript} url={block.media.secureUrl} />;
   }
   if (block.type === "POLL") return <PollBlock block={block} chapterId={chapterId} publicationId={publicationId} />;
-  if (block.type === "LINK" && block.url) return <a className="world-chapter-reader-link" href={block.url} rel="noreferrer" target="_blank">{block.label || "Open link"}</a>;
+  if (block.type === "LINK" && block.url) return <a className="chapter-link-prototype" href={block.url} rel="noreferrer" target="_blank"><FiLink /><span><b>{block.label || "Open link"}</b><small>{block.url}</small></span></a>;
   return null;
 }
 
