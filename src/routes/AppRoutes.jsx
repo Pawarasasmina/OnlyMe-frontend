@@ -40,7 +40,6 @@ import DreamEditorPage from "../pages/social/DreamEditorPage";
 import { useAuth } from "../hooks/useAuth";
 import CreateHubPage from "../pages/create/CreateHubPage";
 import SeenComposerPage from "../pages/creator/SeenComposerPage";
-import SeenManagerPage from "../pages/creator/SeenManagerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
@@ -164,7 +163,7 @@ function AppRoutes() {
           </Route>
           <Route path="/create" element={<CreateHubPage />} />
           <Route path="/create/seen" element={<SeenComposerPage />} />
-          <Route path="/studio/seens" element={<SeenManagerPage />} />
+          <Route path="/studio/seens" element={<Navigate replace to="/profile" />} />
           <Route path="/studio/seens/:id" element={<SeenOwnerDetailPage />} />
           <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
           <Route element={<ApprovedCreatorRoute />}>

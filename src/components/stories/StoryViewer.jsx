@@ -66,6 +66,13 @@ function StoryMedia({ muted, onDurationChange, onEnded, onPlay, story, videoRef 
     transform: `translate(${transform.translateX || 0}%, ${transform.translateY || 0}%) scale(${transform.scale || 1}) rotate(${transform.rotation || 0}deg)`,
   };
 
+  // Shared-card stories are rendered into the uploaded image for thumbnails.
+  // During playback the live HTML card is used instead, so the baked card and
+  // text must not be displayed underneath it a second time.
+  if (story.editorMetadata?.sharedCard) {
+    return <div className="story-viewer-shared-background" />;
+  }
+
   if (story.mediaType === "video") {
     return (
       <video
@@ -167,11 +174,13 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || giftOpen || shareOpen;
 
   const activeStory = stories[index] || null;
+  const sharedCard = activeStory?.editorMetadata?.sharedCard || null;
   const canReply = canReplyToStory(user, activeStory);
   const canDelete = canDeleteStory(user, activeStory);
   const canViewInsights = canViewStoryInsights(user, activeStory);
   const canAdd = canCreateStory(user);
   const canAddToProfileMedia = canDelete && ["image", "video"].includes(activeStory?.mediaType);
+
   const replyMutation = useMutation({
     mutationFn: ({ body, storyId }) => storyService.replyToStory(storyId, body),
     onSuccess: () => {
@@ -520,6 +529,24 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
           />
           <div className="absolute inset-0 bg-gradient-to-b from-atseen-bg/80 via-transparent to-atseen-bg/95" />
           <StoryOverlays story={activeStory} />
+          {sharedCard ? (
+            <div
+              className="story-viewer-shared-card-wrap"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              style={{ "--story-shared-card-x": `${sharedCard.x ?? 50}%`, "--story-shared-card-y": `${sharedCard.y ?? 50}%` }}
+            >
+              <a
+                aria-label={`Open ${sharedCard.title || "Seen"}`}
+                className="story-viewer-shared-card"
+                href={sharedCard.destinationRoute || "/seen"}
+              >
+                {sharedCard.imageUrl ? <img alt="" src={sharedCard.imageUrl} /> : sharedCard.kind === "post" ? null : <span className="story-shared-card-fallback" />}
+                <span>{sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}<strong>{sharedCard.title}</strong><small>{sharedCard.subtitle || "Tap to open"}</small></span>
+              </a>
+            </div>
+          ) : null}
           <div className="absolute left-4 right-4 top-4 z-30 flex gap-1" role="group" aria-label="Story progress">
             {stories.map((story, storyIndex) => (
               <span aria-hidden="true" className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/30" key={story.id}>

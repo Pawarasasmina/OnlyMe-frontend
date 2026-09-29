@@ -19,11 +19,13 @@ function newTextOverlay(text = "") {
 }
 
 function freshStory(initialContent = null) {
-  const initialText = String(initialContent?.caption || "").slice(0, 300);
-  const imageUrl = initialContent?.imageUrl || "";
+  const sharedCard = initialContent?.sharedCard ? { x: 50, y: 50, ...initialContent.sharedCard } : null;
+  const initialText = sharedCard ? "" : String(initialContent?.caption || "").slice(0, 300);
+  const imageUrl = sharedCard ? "" : initialContent?.imageUrl || "";
   return {
     gradient: 0,
     photo: Boolean(imageUrl),
+    sharedCard,
     texts: [newTextOverlay(initialText)],
     uploadedUrl: imageUrl,
   };
@@ -91,6 +93,50 @@ async function renderStoryFile(story) {
   context.fillStyle = shade;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
+  if (story.sharedCard) {
+    const card = story.sharedCard;
+    const cardWidth = 650;
+    const cardHeight = 560;
+    const cardX = (finiteCardPosition(card.x, 50, 16, 84) / 100) * canvas.width - cardWidth / 2;
+    const cardY = (finiteCardPosition(card.y, 50, 20, 78) / 100) * canvas.height - cardHeight / 2;
+    context.fillStyle = "#0d1015";
+    roundRect(context, cardX, cardY, cardWidth, cardHeight, 54);
+    context.fill();
+    context.save();
+    roundRect(context, cardX, cardY, cardWidth, cardHeight, 54);
+    context.clip();
+    if (card.imageUrl) {
+      try {
+        const image = await loadStoryImage(card.imageUrl);
+        context.save();
+        context.beginPath();
+        context.rect(cardX, cardY, cardWidth, 390);
+        context.clip();
+        const scale = Math.max(cardWidth / image.naturalWidth, 390 / image.naturalHeight);
+        const width = image.naturalWidth * scale;
+        const height = image.naturalHeight * scale;
+        context.drawImage(image, cardX + (cardWidth - width) / 2, cardY + (390 - height) / 2, width, height);
+        context.restore();
+      } catch {
+        context.fillStyle = "#18202b";
+        context.fillRect(cardX, cardY, cardWidth, 390);
+      }
+    }
+    context.restore();
+    context.strokeStyle = "rgba(255,255,255,.18)";
+    context.lineWidth = 3;
+    roundRect(context, cardX, cardY, cardWidth, cardHeight, 54);
+    context.stroke();
+    context.fillStyle = "#fff";
+    context.font = "800 34px system-ui";
+    context.textAlign = "left";
+    context.textBaseline = "top";
+    context.fillText(String(card.title || "Shared post").slice(0, 42), cardX + 34, cardY + 425, cardWidth - 68);
+    context.fillStyle = "rgba(255,255,255,.58)";
+    context.font = "500 23px system-ui";
+    context.fillText(String(card.subtitle || "Tap to open").slice(0, 60), cardX + 34, cardY + 480, cardWidth - 68);
+  }
+
   story.texts.filter((item) => item.text.trim()).forEach((overlay) => {
     const text = overlay.text.trim();
     const fontSize = overlay.size * 3.1;
@@ -128,6 +174,11 @@ function roundRect(context, x, y, width, height, radius) {
   context.closePath();
 }
 
+function finiteCardPosition(value, fallback, min, max) {
+  const number = Number(value);
+  return Math.max(min, Math.min(max, Number.isFinite(number) ? number : fallback));
+}
+
 function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose, onPublished, onSave }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -140,6 +191,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const cameraRequestRef = useRef(0);
   const dragRef = useRef(null);
   const draggingTextIdRef = useRef("");
+  const draggingCardRef = useRef(false);
   const deleteTargetRef = useRef(null);
   const deleteArmedRef = useRef(false);
   const uploadedUrlRef = useRef("");
@@ -236,7 +288,12 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     const next = freshStory(initialContent);
     setStory(next);
     setActiveTextId(next.texts[0].id);
-    startCamera("environment");
+    if (next.sharedCard) {
+      stopCamera();
+      setCameraStatus("captured");
+    } else {
+      startCamera("environment");
+    }
     return stopCamera;
   }, [initialContent, isOpen, startCamera, stopCamera]);
 
@@ -345,7 +402,22 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     setTextDragging(true);
   };
 
+  const beginCardDrag = (event) => {
+    if (!story.sharedCard || !stageRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    draggingCardRef.current = true;
+  };
+
   const moveDrag = (event) => {
+    if (draggingCardRef.current && stageRef.current) {
+      const rect = stageRef.current.getBoundingClientRect();
+      const x = finiteCardPosition(((event.clientX - rect.left) / rect.width) * 100, 50, 16, 84);
+      const y = finiteCardPosition(((event.clientY - rect.top) / rect.height) * 100, 50, 20, 78);
+      setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, x, y } }));
+      return;
+    }
     if (!dragRef.current || !stageRef.current) return;
     const rect = stageRef.current.getBoundingClientRect();
     const x = Math.min(0.95, Math.max(0.05, (event.clientX - rect.left) / rect.width));
@@ -362,6 +434,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   };
 
   const endDrag = () => {
+    draggingCardRef.current = false;
     if (deleteArmedRef.current) {
       const deletedId = draggingTextIdRef.current;
       const remaining = story.texts.filter((item) => item.id !== deletedId);
@@ -383,7 +456,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     }
     const storyTexts = story.texts.filter((item) => item.text.trim());
     const caption = storyTexts.map((item) => item.text.trim()).join(" ");
-    if (!storyTexts.length && !story.photo) {
+    if (!storyTexts.length && !story.photo && !story.sharedCard) {
       showToast("Write something first.");
       return;
     }
@@ -392,6 +465,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       const file = await renderStoryFile(story);
       const editorMetadata = {
         prototypeComposer: true,
+        ...(story.sharedCard ? { sharedCard: story.sharedCard } : {}),
         textOverlays: storyTexts.map((item) => ({ color: item.color, fontSize: item.size, style: item.style, text: item.text.trim(), x: item.x * 100, y: item.y * 100 })),
       };
       if (mode === "compose") {
@@ -490,7 +564,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         </header>
         <input accept="image/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
 
-        {hintOpen ? (
+        {hintOpen && !story.sharedCard ? (
           <div className="story-composer-hint">
             Tap to write {"\u00b7"} drag the text
             <button
@@ -506,7 +580,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           </div>
         ) : null}
 
-        {!story.photo && !story.texts.some((item) => item.text.trim()) && !["starting", "live", "text"].includes(cameraStatus) ? (
+        {!story.sharedCard && !story.photo && !story.texts.some((item) => item.text.trim()) && !["starting", "live", "text"].includes(cameraStatus) ? (
           <div className="story-composer-empty">
             <button onClick={() => uploadInputRef.current?.click()} type="button">
               <span><FiImage /></span>
@@ -516,9 +590,21 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           </div>
         ) : null}
 
-        {cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) ? <button className="story-composer-text-prompt" onClick={() => inputRef.current?.focus()} type="button">Type your story</button> : null}
+        {!story.sharedCard && cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) ? <button className="story-composer-text-prompt" onClick={() => inputRef.current?.focus()} type="button">Type your story</button> : null}
 
         {cameraStatus === "starting" ? <div className="story-composer-camera-loading"><FiRefreshCw /> Opening camera…</div> : null}
+
+        {story.sharedCard ? (
+          <article
+            className="story-shared-card-preview"
+            aria-label={`Shared ${story.sharedCard.kind || "post"}: ${story.sharedCard.title}`}
+            onPointerDown={beginCardDrag}
+            style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%` }}
+          >
+            {story.sharedCard.imageUrl ? <img alt="" src={story.sharedCard.imageUrl} /> : story.sharedCard.kind === "post" ? null : <div className="story-shared-card-fallback" />}
+            <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<strong>{story.sharedCard.title}</strong><small>{story.sharedCard.subtitle || "Tap to open"}</small></div>
+          </article>
+        ) : null}
 
         {story.texts.filter((item) => item.text).map((item) => (
           <button

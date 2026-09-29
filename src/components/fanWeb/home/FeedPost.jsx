@@ -607,7 +607,11 @@ function FeedPost({ post }) {
   };
 
   const moreAction = (action) => {
-    if (action === "save") {
+    if (action === "story") {
+      if (!requireDatabasePost()) return;
+      setMoreOpen(false);
+      setStoryCreatorOpen(true);
+    } else if (action === "save") {
       toggleSave();
       setMoreOpen(false);
     } else if (action === "share") {
@@ -642,9 +646,6 @@ function FeedPost({ post }) {
     } else if (action === "report-spam") {
       reportPost("SPAM");
       setMoreOpen(false);
-    } else if (action === "add-story") {
-      setMoreOpen(false);
-      setStoryCreatorOpen(true);
     } else if (action === "repost") {
       setMoreOpen(false);
       toggleShare();
@@ -1004,7 +1005,7 @@ function FeedPost({ post }) {
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              { key: "add-story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
+              { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
               { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
               { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
@@ -1034,7 +1035,16 @@ function FeedPost({ post }) {
       </FanModal>
 
       <StoryCreator
-        initialContent={{ caption: normalized.text, imageUrl: normalized.media?.find((item) => String(item.type || "").toLowerCase() === "image")?.url || "" }}
+        initialContent={{
+          sharedCard: {
+            destinationRoute: `/posts/${actionPostId}`,
+            eyebrow: [creator.name, normalized.context, normalized.location].filter(Boolean).join(" · "),
+            imageUrl: "",
+            kind: "post",
+            subtitle: "from the Wall · tap ›",
+            title: normalized.text.slice(0, 96) || "View post",
+          },
+        }}
         isOpen={storyCreatorOpen}
         onClose={() => setStoryCreatorOpen(false)}
         onPublished={() => {
