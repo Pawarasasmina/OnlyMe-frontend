@@ -54,7 +54,7 @@ export default function SeenOwnerDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const fromDrafts = searchParams.get("from") === "drafts";
-  const managerTarget = fromDrafts ? "/studio/seens?status=drafts" : "/studio/seens";
+  const managerTarget = "/profile";
   const editTarget = `/studio/seens/${id}/edit${fromDrafts ? "?from=drafts" : ""}`;
   const [p, setP] = useState();
   const [error, setError] = useState("");

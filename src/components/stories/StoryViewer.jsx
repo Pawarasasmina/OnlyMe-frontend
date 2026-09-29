@@ -542,8 +542,8 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
                 className="story-viewer-shared-card"
                 href={sharedCard.destinationRoute || "/seen"}
               >
-                {sharedCard.imageUrl ? <img alt="" src={sharedCard.imageUrl} /> : <span className="story-shared-card-fallback" />}
-                <span><strong>{sharedCard.title}</strong><small>{sharedCard.subtitle || "Tap to open"}</small></span>
+                {sharedCard.imageUrl ? <img alt="" src={sharedCard.imageUrl} /> : sharedCard.kind === "post" ? null : <span className="story-shared-card-fallback" />}
+                <span>{sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}<strong>{sharedCard.title}</strong><small>{sharedCard.subtitle || "Tap to open"}</small></span>
               </a>
             </div>
           ) : null}

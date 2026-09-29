@@ -372,25 +372,40 @@ function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
 
   if (!isOpen) return null;
   const insights = insightsQuery.data?.data?.data?.insights || insightsQuery.data?.data?.insights || {};
-  const rows = [
-    ["Views", insights.views],
-    ["Unique viewers", insights.uniqueViewers],
-    ["Saves", insights.saves],
-    ["Shares", insights.shares],
-    ["Reactions", insights.reactions],
-    ["Comments", insights.comments],
-    ["Impressions", insights.impressions],
-    ["Opens", insights.opens],
-  ];
+  const dailyByDate = new Map((insights.dailyViews || []).map((row) => [row._id || row.date, Number(row.value ?? row.views ?? 0)]));
+  const dailyViews = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    return dailyByDate.get(date.toISOString().slice(0, 10)) || 0;
+  });
+  const maxDailyViews = Math.max(1, ...dailyViews);
+  const totalViews = Number(insights.totalViews ?? insights.opens ?? insights.views ?? 0);
+  const todayViews = Number(insights.todayViews ?? dailyViews[6] ?? 0);
+  const readToEnd = Math.max(0, Math.min(100, Number(insights.readToEndPercent || 0)));
+  const weekChange = Number.isFinite(Number(insights.weekChangePercent)) ? Number(insights.weekChangePercent) : null;
+  const metrics = [["Reactions", insights.reactions], ["Saved", insights.saves], ["Reposts", insights.shares], ["Comments", insights.comments]];
+  const sourceLabels = { feed: "Feed", profile: "Profile", reposts: "Reposts" };
+  const trafficSources = insights.trafficSources?.length ? insights.trafficSources : Object.keys(sourceLabels).map((source) => ({ source, percent: 0 }));
   return (
     <div className="seen-feed-options-layer" style={sheetPosition}>
       <button aria-label="Close Seen insights" className="seen-feed-options-scrim" onClick={onClose} type="button" />
       <section aria-label={`Insights for ${title}`} aria-modal="true" className="seen-owner-actions-sheet seen-insights-sheet" role="dialog">
         <span className="seen-feed-options-handle" aria-hidden="true" />
-        <header className="seen-owner-actions-header"><h2>Insights</h2><p>{title}</p></header>
         {insightsQuery.isLoading ? <p className="seen-insights-state">Loading insights...</p> : null}
         {insightsQuery.isError ? <button className="seen-insights-state" onClick={() => insightsQuery.refetch()} type="button">Unable to load insights. Retry</button> : null}
-        {!insightsQuery.isLoading && !insightsQuery.isError ? <div className="seen-insights-grid">{rows.map(([label, value]) => <span key={label}><b>{Number(value || 0).toLocaleString()}</b><small>{label}</small></span>)}</div> : null}
+        {!insightsQuery.isLoading && !insightsQuery.isError ? <div className="seen-insights-content">
+          <p className="seen-insights-title">{title}</p>
+          <div className="seen-insights-total"><strong>{totalViews.toLocaleString()}</strong><span>views</span>{weekChange === null ? null : <em className={weekChange < 0 ? "is-down" : ""}>{weekChange < 0 ? "↓" : "↑"} {Math.abs(weekChange)}% · week</em>}</div>
+          <p className="seen-insights-today"><b>Today</b> · {todayViews.toLocaleString()} {todayViews === 1 ? "view" : "views"}</p>
+          <div aria-label="Views over the last 7 days" className="seen-insights-chart">{dailyViews.map((value, index) => <i className={index === 6 ? "is-today" : ""} key={index} style={{ "--bar-height": `${Math.max(value ? 18 : 4, (value / maxDailyViews) * 100)}%` }}><span>{value}</span></i>)}</div>
+          <div className="seen-insights-chart-labels"><span>7 days ago</span><span>today</span></div>
+          <div className="seen-insights-completion"><span>Read to the end</span><b>{readToEnd}%</b><i><span style={{ width: `${readToEnd}%` }} /></i></div>
+          <div className="seen-insights-metrics">{metrics.map(([label, value]) => <span key={label}><b>{Number(value || 0).toLocaleString()}</b><small>{label}</small></span>)}</div>
+          <h3>Where they came from</h3>
+          <div className="seen-insights-sources">{trafficSources.map(({ source, percent }) => <div className={`is-${source}`} key={source}><span>{sourceLabels[source] || source}</span><b>{Number(percent || 0)}%</b><i><span style={{ width: `${Math.max(0, Math.min(100, Number(percent || 0)))}%` }} /></i></div>)}</div>
+          <p className="seen-insights-private">Only you see this</p>
+        </div> : null}
       </section>
     </div>
   );

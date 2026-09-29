@@ -564,7 +564,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         </header>
         <input accept="image/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
 
-        {hintOpen ? (
+        {hintOpen && !story.sharedCard ? (
           <div className="story-composer-hint">
             Tap to write {"\u00b7"} drag the text
             <button
@@ -580,7 +580,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           </div>
         ) : null}
 
-        {!story.photo && !story.texts.some((item) => item.text.trim()) && !["starting", "live", "text"].includes(cameraStatus) ? (
+        {!story.sharedCard && !story.photo && !story.texts.some((item) => item.text.trim()) && !["starting", "live", "text"].includes(cameraStatus) ? (
           <div className="story-composer-empty">
             <button onClick={() => uploadInputRef.current?.click()} type="button">
               <span><FiImage /></span>
@@ -590,7 +590,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           </div>
         ) : null}
 
-        {cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) ? <button className="story-composer-text-prompt" onClick={() => inputRef.current?.focus()} type="button">Type your story</button> : null}
+        {!story.sharedCard && cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) ? <button className="story-composer-text-prompt" onClick={() => inputRef.current?.focus()} type="button">Type your story</button> : null}
 
         {cameraStatus === "starting" ? <div className="story-composer-camera-loading"><FiRefreshCw /> Opening camera…</div> : null}
 
@@ -601,8 +601,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             onPointerDown={beginCardDrag}
             style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%` }}
           >
-            {story.sharedCard.imageUrl ? <img alt="" src={story.sharedCard.imageUrl} /> : <div className="story-shared-card-fallback" />}
-            <div><strong>{story.sharedCard.title}</strong><small>{story.sharedCard.subtitle || "Tap to open"}</small></div>
+            {story.sharedCard.imageUrl ? <img alt="" src={story.sharedCard.imageUrl} /> : story.sharedCard.kind === "post" ? null : <div className="story-shared-card-fallback" />}
+            <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<strong>{story.sharedCard.title}</strong><small>{story.sharedCard.subtitle || "Tap to open"}</small></div>
           </article>
         ) : null}
 

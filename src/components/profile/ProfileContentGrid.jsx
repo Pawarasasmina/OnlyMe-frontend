@@ -283,7 +283,7 @@ function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
 
 function SeenListDetailView({ focusSeenId = "", items, onBack, onMore, owner }) {
   useEffect(() => {
-    if (!focusSeenId) return undefined;
+    if (!focusSeenId || focusSeenId === "all") return undefined;
     const frame = window.requestAnimationFrame(() => {
       const selector = `[data-profile-seen-row="${CSS.escape(String(focusSeenId))}"]`;
       document.querySelector(selector)?.scrollIntoView({ block: "start" });
@@ -499,8 +499,9 @@ function ProfileContentGrid({
 }) {
   const [activeSeen, setActiveSeen] = useState(null);
   const [actionSeen, setActionSeen] = useState(null);
+  const [draftsOpen, setDraftsOpen] = useState(false);
   const [localActiveSeriesId, setLocalActiveSeriesId] = useState("");
-  const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt) : content || [], [content, kind]);
+  const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt || (owner && item.status === "DRAFT")) : content || [], [content, kind, owner]);
   const [localContent, setLocalContent] = useState(null);
   const effectiveContent = localContent || visibleContent;
   useEffect(() => {
@@ -509,8 +510,10 @@ function ProfileContentGrid({
 
   if (kind === "seens") {
     if (!effectiveContent.length && !series.length) return <div className="profile-empty-state">{emptyText || "No published Seens yet."}</div>;
+    const drafts = owner ? effectiveContent.filter((item) => item.status === "DRAFT") : [];
+    const publishedContent = effectiveContent.filter((item) => item.status !== "DRAFT");
     const seriesGroups = new Map(series.map((item) => [String(item.id), { ...item, seens: [] }]));
-    effectiveContent.forEach((item) => {
+    publishedContent.forEach((item) => {
       const id = seriesIdFor(item);
       if (!id) return;
       if (!seriesGroups.has(String(id))) seriesGroups.set(String(id), { id: String(id), name: seriesFor(item), title: seriesFor(item), seens: [] });
@@ -519,7 +522,9 @@ function ProfileContentGrid({
     const seriesTiles = [...seriesGroups.values()].filter((item) => owner || item.seenCount || item.seens.length);
     const selectedSeriesId = activeSeriesId || localActiveSeriesId;
     const activeSeries = selectedSeriesId ? seriesGroups.get(String(selectedSeriesId)) : null;
-    const items = activeSeries ? (seriesGroups.get(String(activeSeries.id))?.seens || []) : effectiveContent.filter((item) => !seriesIdFor(item));
+    const items = activeSeries ? (seriesGroups.get(String(activeSeries.id))?.seens || []) : publishedContent.filter((item) => !seriesIdFor(item));
+    const pinnedSeens = publishedContent.filter((item) => item.isPinned);
+    const featuredSeens = reposted ? publishedContent : pinnedSeens;
     const openSeries = (seriesItem) => {
       const nextId = String(seriesItem.id);
       setLocalActiveSeriesId(nextId);
@@ -537,7 +542,7 @@ function ProfileContentGrid({
         <>
           <SeenListDetailView
             focusSeenId={activeSeenListId}
-            items={effectiveContent}
+            items={publishedContent}
             onBack={closeSeenList}
             onMore={setActionSeen}
             owner={owner}
@@ -568,9 +573,30 @@ function ProfileContentGrid({
         </>
       );
     }
+    if (draftsOpen) {
+      return (
+        <section className="profile-seen-drafts is-open">
+          <header><button onClick={() => setDraftsOpen(false)} type="button">‹ My Seens</button><i>·</i><b>Drafts {drafts.length}</b></header>
+          <div className="profile-seens-grid">
+            {drafts.map((item) => <Link className="profile-seen-tile is-draft" key={item.id} to={`/studio/seens/${item.id}/edit?from=drafts`}>
+              {item.coverMedia?.secureUrl ? <img alt={`${item.title || "Untitled Seen"} draft cover`} loading="lazy" src={item.coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+              <span className="profile-seen-shade" />
+              <span className="profile-seen-badge">DRAFT</span>
+              <span className="profile-seen-copy"><strong>{item.title || "Untitled Seen"}</strong></span>
+            </Link>)}
+          </div>
+        </section>
+      );
+    }
     return (
       <>
         <div className="profile-seens-grid">
+          {drafts.length ? <button className="profile-seen-tile profile-drafts-tile" onClick={() => setDraftsOpen(true)} type="button">
+            {drafts[0]?.coverMedia?.secureUrl ? <img alt="Seen drafts" loading="lazy" src={drafts[0].coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+            <span className="profile-seen-shade" />
+            <span className="profile-draft-count">{drafts.length}</span>
+            <span className="profile-seen-copy"><strong>Drafts</strong></span>
+          </button> : null}
           {seriesTiles.map((seriesItem) => {
             const media = seriesItem.coverMedia || findMedia(seriesItem.seens?.[0]) || seriesItem.previewSeens?.find((item) => item.coverMedia)?.coverMedia;
             const count = seriesItem.seenCount ?? seriesItem.seens?.length ?? 0;
@@ -582,13 +608,13 @@ function ProfileContentGrid({
               <span className="profile-seen-copy"><strong>{name}</strong><small>{count} {count === 1 ? "Seen" : "Seens"}</small></span>
             </button>;
           })}
-          {items.map((item) => {
+          {featuredSeens.map((item) => {
             const chapters = item.chapters?.length || 0;
             const tile = (
               <>
                 {item.coverMedia?.secureUrl ? <img alt={`${item.title} cover`} loading="lazy" src={item.coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
-                {reposted ? <span className="profile-seen-badge"><FiRepeat /> REPOST</span> : null}
+                <span className="profile-seen-badge">{reposted ? <><FiRepeat /> REPOST</> : "PINNED"}</span>
                 <span className="profile-seen-copy">
                   <strong>{item.title}</strong>
                   <small>{chapters} {chapters === 1 ? "chapter" : "chapters"}</small>
@@ -602,6 +628,12 @@ function ProfileContentGrid({
               </button>
             );
           })}
+          {!reposted && publishedContent.length ? <button className="profile-seen-tile profile-all-seens-tile" onClick={() => onActiveSeenListChange?.("all")} type="button">
+            {publishedContent[0]?.coverMedia?.secureUrl ? <img alt="All Seens" loading="lazy" src={publishedContent[0].coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiGrid /></span>}
+            <span className="profile-seen-shade" />
+            <span className="profile-draft-count">{publishedContent.length}</span>
+            <span className="profile-seen-copy"><strong>All Seens</strong><small>Open every Seen</small></span>
+          </button> : null}
         </div>
         {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} onSeriesChanged={(updated) => {
           setLocalContent((current) => (current || effectiveContent).map((item) => item.id === updated.id ? updated : item));

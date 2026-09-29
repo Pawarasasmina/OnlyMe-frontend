@@ -796,6 +796,7 @@ function ProfileBody({ data, setConnectionsType }) {
   const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
   const [experienceNoteOpen, setExperienceNoteOpen] = useState(false);
+  const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
@@ -808,6 +809,16 @@ function ProfileBody({ data, setConnectionsType }) {
   useEffect(() => {
     setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   }, [requestedTab]);
+  useEffect(() => {
+    if (!draftSavedCount) return undefined;
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current);
+      nextParams.delete("draftSaved");
+      return nextParams;
+    }, { replace: true });
+    const timer = window.setTimeout(() => setDraftSavedCount(0), 3200);
+    return () => window.clearTimeout(timer);
+  }, [draftSavedCount, setSearchParams]);
   useEffect(() => {
     if (tab !== "seens") {
       setActiveSeriesId("");
@@ -860,6 +871,7 @@ function ProfileBody({ data, setConnectionsType }) {
   }
   return (
     <div className={`profile-prototype is-owner-profile ${isOwner ? "" : "is-public-profile"}`}>
+      {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">Saved for later · {draftSavedCount}/3 ✍️</p> : null}
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}

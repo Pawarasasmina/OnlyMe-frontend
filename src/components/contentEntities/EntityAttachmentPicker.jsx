@@ -11,8 +11,9 @@ const typeOptions = [
   { icon: FiLock, label: "Experience", type: CONTENT_ENTITY_TYPES.EXPERIENCE },
 ];
 
-export default function EntityAttachmentPicker({ context = "", disabled = false, onChange, value = [] }) {
+export default function EntityAttachmentPicker({ context = "", disabled = false, fixedType = "", onChange, value = [] }) {
   const [type, setType] = useState(() => {
+    if (fixedType) return fixedType;
     const normalized = String(context).toLowerCase();
     if (normalized.includes("book")) return CONTENT_ENTITY_TYPES.BOOK;
     if (normalized.includes("travel")) return CONTENT_ENTITY_TYPES.PLACE;
@@ -25,8 +26,9 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
   const selectedKeys = useMemo(() => new Set(selected.map((item) => `${item.type}:${item.id}`)), [selected]);
 
   useEffect(() => {
+    if (fixedType) { setType(fixedType); return; }
     if (String(context).toLowerCase().includes("book")) setType(CONTENT_ENTITY_TYPES.BOOK);
-  }, [context]);
+  }, [context, fixedType]);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -59,13 +61,13 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
     <section className="entity-attachment-picker">
       <div className="entity-attachment-head">
         <span><FiBookmark aria-hidden="true" /> Attach</span>
-        <div role="group" aria-label="Attachment type">
+        {!fixedType ? <div role="group" aria-label="Attachment type">
           {typeOptions.map(({ icon: Icon, label, type: optionType }) => (
             <button aria-pressed={type === optionType} className={type === optionType ? "is-selected" : ""} disabled={disabled} key={optionType} onClick={() => setType(optionType)} type="button">
               <Icon aria-hidden="true" /> {label}
             </button>
           ))}
-        </div>
+        </div> : null}
       </div>
       <label className="entity-attachment-search">
         <FiSearch aria-hidden="true" />

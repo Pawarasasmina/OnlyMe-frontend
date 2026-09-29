@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiRepeat, FiSend, FiShare2, FiSlash, FiSmile, FiTrash2, FiUserMinus } from "react-icons/fi";
+import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiSmile, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
@@ -607,7 +607,11 @@ function FeedPost({ post }) {
   };
 
   const moreAction = (action) => {
-    if (action === "save") {
+    if (action === "story") {
+      if (!requireDatabasePost()) return;
+      setMoreOpen(false);
+      setStoryCreatorOpen(true);
+    } else if (action === "save") {
       toggleSave();
       setMoreOpen(false);
     } else if (action === "share") {
@@ -1001,6 +1005,7 @@ function FeedPost({ post }) {
         <div className="home-post-more-list">
           {(ownsPost
             ? [
+              { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
               { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
               { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
@@ -1033,9 +1038,10 @@ function FeedPost({ post }) {
         initialContent={{
           sharedCard: {
             destinationRoute: `/posts/${actionPostId}`,
-            imageUrl: normalized.media?.find((item) => String(item.type || "").toLowerCase() === "image")?.url || "",
+            eyebrow: [creator.name, normalized.context, normalized.location].filter(Boolean).join(" · "),
+            imageUrl: "",
             kind: "post",
-            subtitle: `${creator.name} · Tap to open`,
+            subtitle: "from the Wall · tap ›",
             title: normalized.text.slice(0, 96) || "View post",
           },
         }}
