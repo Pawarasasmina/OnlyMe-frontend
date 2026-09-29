@@ -4,6 +4,7 @@ export const publicationService = {
   listMyPublications: (params) => axiosInstance.get("/publications/mine", { params }),
   getMyPublication: (id) => axiosInstance.get(`/publications/mine/${id}`),
   getWorldManagement: (id) => axiosInstance.get(`/publications/mine/${id}/world-management`),
+  getMemberWorld: (id) => axiosInstance.get(`/publications/${id}/member-world`),
   updateWorldManagement: (id, payload) => axiosInstance.patch(`/publications/mine/${id}/world-management`, payload),
   getWorldPricing: (id) => axiosInstance.get(`/publications/mine/${id}/world-pricing`),
   updateWorldPricing: (id, monthlyStars) => axiosInstance.patch(`/publications/mine/${id}/world-pricing`, { monthlyStars }),
