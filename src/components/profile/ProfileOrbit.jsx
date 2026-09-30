@@ -33,11 +33,30 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   );
   const faceEmoji = planetFaceEmoji(primaryPlanet?.planet);
   const cover = primaryPlanet?.coverMedia?.secureUrl || "";
+  const isInside = !owner && Boolean(primaryPlanet?.viewer?.isMember || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_WORLD"].includes(primaryPlanet?.access));
   const billing = primaryPlanet
     ? `${numberLabel(residents)} residents${price ? ` ${STAR}${numberLabel(price)}/mo` : ""}`
     : "Stories, experiences, and members live here";
-  const actionLabel = owner ? "Manage \u203a" : primaryPlanet?.viewer?.isMember ? "Open \u203a" : "Join \u203a";
-  const cardClass = `profile-orbit-sky profile-world-prototype-card ${owner ? "is-owner-world" : "is-visitor-world"}`;
+  const actionLabel = owner ? "Manage \u203a" : isInside ? "inside \u2713" : "Join \u203a";
+  const cardClass = `profile-orbit-sky profile-world-prototype-card ${owner ? "is-owner-world" : "is-visitor-world"} ${isInside ? "is-inside-world" : ""}`;
+
+  if (isInside) {
+    return (
+      <section className="profile-planet-orbit profile-world-member-section">
+        <div className="profile-orbit-heading">
+          <p className="profile-orbit-overline">{creatorName}'s World</p>
+        </div>
+        <Link aria-label={`Open ${title}`} className="profile-world-member-card" to={worldTarget}>
+          <span className="profile-world-member-planet" aria-hidden="true"><i>{faceEmoji}</i><b>{PLANET}</b></span>
+          <span className="profile-world-member-copy">
+            <strong>{title}</strong>
+            <small>One world &mdash; where you step closer</small>
+          </span>
+          <span className="profile-world-member-status">inside &#10003;</span>
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="profile-planet-orbit">
