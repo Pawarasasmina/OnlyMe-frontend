@@ -22,10 +22,13 @@ export default function PostReportPreview({ report }) {
   const owner = report.reportedUser || {};
   const publication = report.publication || {};
   const isSeen = report.scope === "SEEN";
-  const title = snapshot.title || publication.title || "Seen";
-  const body = isSeen ? (snapshot.summary || publication.summary) : snapshot.text;
-  const media = isSeen ? (snapshot.media || snapshot.coverMedia || publication.coverMedia) : snapshot.media;
+  const isPublication = ["SEEN", "WORLD"].includes(report.scope);
+  const title = snapshot.title || publication.title || (isSeen ? "Seen" : "World");
+  const body = isPublication ? (snapshot.summary || publication.summary) : snapshot.text;
+  const media = isPublication ? (snapshot.media || snapshot.coverMedia || publication.coverMedia) : snapshot.media;
   const publishedAt = snapshot.publishedAt || snapshot.createdAt || publication.publishedAt;
+  const requestedSafetyActions = Array.isArray(snapshot.requestedSafetyActions) ? snapshot.requestedSafetyActions : [];
+  const appliedSafetyActions = Array.isArray(snapshot.appliedSafetyActions) ? snapshot.appliedSafetyActions : [];
 
   return <article className="mx-auto w-full max-w-xl overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
     <header className="flex items-center gap-3 p-4">
@@ -36,10 +39,17 @@ export default function PostReportPreview({ report }) {
       <FiMoreHorizontal className="text-xl text-slate-400" />
     </header>
     <div className="px-4 pb-4">
-      <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-orange-600">{isSeen ? "Seen" : snapshot.context || "Home feed post"}</span>
-      {isSeen && <h5 className="mt-3 text-xl font-black tracking-tight">{title}</h5>}
+      <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-orange-600">{isSeen ? "Seen" : report.scope === "WORLD" ? "World" : snapshot.context || "Home feed post"}</span>
+      {isPublication && <h5 className="mt-3 text-xl font-black tracking-tight">{title}</h5>}
       {body ? <p className="mt-3 whitespace-pre-wrap break-words text-[15px] leading-6 text-slate-800">{body}</p> : <p className="mt-3 text-sm italic text-slate-400">No written caption</p>}
       <MediaPreview media={media} />
+      {isPublication && requestedSafetyActions.length ? <section className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4">
+        <p className="text-[11px] font-black uppercase tracking-wider text-red-500">Reporter selected actions</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {requestedSafetyActions.map((action) => <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-100" key={action.key || action.label}>{action.label || action.key}</span>)}
+        </div>
+        {appliedSafetyActions.length ? <p className="mt-3 text-xs font-semibold text-red-700">Applied now: {appliedSafetyActions.map((action) => action.status === "queued_for_review" ? `${action.label} (queued)` : action.label).join(" · ")}</p> : null}
+      </section> : null}
       <div className="mt-4 flex items-center justify-between border-t pt-4 text-slate-500">
         <span className="flex items-center gap-1.5"><FiHeart /> React</span><span className="flex items-center gap-1.5"><FiMessageCircle /> Comment</span><span className="flex items-center gap-1.5"><FiShare2 /> Share</span><span className="flex items-center gap-1.5"><FiEye /> Preview</span>
       </div>
