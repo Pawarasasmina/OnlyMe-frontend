@@ -26,7 +26,7 @@ function CreateHubPage() {
   const cards = [
     ...(capabilities.isApprovedCreator ? [{ title: "Premium Experience", text: `Multi-chapter journey · first chapter free · one-time unlock · ${experiences}/3 active`, to: "/create/experience", disabled: experiences >= 3 }] : []),
     { title: "Seen", text: "Free public publication with 1–3 chapters", to: "/create/seen" },
-    ...(capabilities.isApprovedCreator ? [{ title: "Premium World", text: `Monthly private ecosystem · 1–2 previews · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
+    ...(capabilities.isApprovedCreator ? [{ title: "World", text: `Monthly subscription · private ecosystem · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 
   return (

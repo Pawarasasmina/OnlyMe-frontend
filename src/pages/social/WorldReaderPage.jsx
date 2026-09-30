@@ -1375,7 +1375,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     </section> : null}
 
     {gallery.length ? <section className="world-inside-detail__gallery" aria-label="World media gallery">
-      {gallery.map((item, index) => <button aria-label={item.title || `World media ${index + 1}`} key={`${item.assetId || item.secureUrl}-${index}`} onClick={() => onOpenChapter(Math.max(0, chapters.findIndex((chapter) => (chapter.blocks || []).some((block) => block.media?.secureUrl === item.secureUrl))))} type="button">
+      {gallery.map((item, index) => <button aria-label={`Open ${item.title || `World image ${index + 1}`} as a story`} key={`${item.assetId || item.secureUrl}-${index}`} onClick={() => onOpenStory(item)} type="button">
         {item.mediaType === "VIDEO" || item.resourceType === "video" ? <video muted playsInline preload="metadata" src={item.secureUrl} /> : <img alt="" loading="lazy" src={item.secureUrl} />}
       </button>)}
     </section> : null}

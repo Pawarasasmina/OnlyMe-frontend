@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiClock } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { walletService } from "../../services/walletService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
@@ -69,7 +69,7 @@ export default function WalletPage() {
   };
 
   return <section className="wallet-prototype-page">
-    <header className="wallet-prototype-header"><button aria-label="Go back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><h1>Wallet</h1></header>
+    <header className="wallet-prototype-header"><button aria-label="Go back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><button aria-label="Open purchases and subscriptions" className="wallet-prototype-history" onClick={() => navigate("/memberships")} title="Purchases and subscriptions" type="button"><FiClock /></button><h1>Wallet</h1></header>
     <div className="wallet-prototype-tabs" role="tablist"><button className={tab === "coins" ? "is-active" : ""} onClick={() => setTab("coins")} role="tab" type="button">Coins</button><button className={tab === "income" ? "is-active" : ""} onClick={() => setTab("income")} role="tab" type="button">Income</button></div>
     {walletQuery.isLoading ? <p className="wallet-prototype-state">Loading Wallet…</p> : walletQuery.isError ? <p className="wallet-prototype-state is-error">Wallet is unavailable.</p> : tab === "coins" ? <>
       <section className="wallet-prototype-balance"><small>Your balance</small><strong>{STAR}{Number(wallet.balance || 0).toLocaleString()}</strong><span>≈ {money(wallet.balanceUsd)}</span><div><span>Your bonus&nbsp; {STAR}{Number(wallet.bonusBalance || 0).toLocaleString()}</span><span>spent first · not withdrawable</span></div></section>

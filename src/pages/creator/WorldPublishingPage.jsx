@@ -1104,11 +1104,36 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     setExperiencePreviewOpen(true);
   };
 
-  const addNamedExperienceChapter = () => {
-    setChapterCreateOpen(true);
-    setChapterCreateError("");
+  const addNamedExperienceChapter = async () => {
+    const title = newChapterTitle.trim();
+    if (!title) {
+      setChapterCreateOpen(true);
+      setChapterCreateError("");
+      setError("");
+      setNotice("");
+      return;
+    }
+    if (saving || chapterSaving) return;
+    setSaving(true);
     setError("");
     setNotice("");
+    try {
+      const draft = await ensureDraft(world);
+      await api.addChapter(draft.id, {
+        blocks: [],
+        isPreview: world.pricing?.mode === "FREE",
+        releaseMode: "IMMEDIATE",
+        statusVersion: draft.statusVersion,
+        title,
+      });
+      await refreshWorld(draft.id);
+      setNewChapterTitle("");
+      setNotice("Chapter added. Tap it to start writing.");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const createExperienceChapterAndWrite = async () => {
@@ -1300,7 +1325,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             </div>;
           })}
         </div>
-        <div className="experience-new-chapter"><input maxLength={120} onChange={(event) => setNewChapterTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addNamedExperienceChapter(); }} placeholder="Next chapter…" value={newChapterTitle} /><button disabled={!newChapterTitle.trim()} onClick={addNamedExperienceChapter} type="button">Add</button></div>
+        <div className="experience-new-chapter"><input maxLength={120} onChange={(event) => setNewChapterTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addNamedExperienceChapter(); } }} placeholder="Next chapter…" value={newChapterTitle} /><button disabled={saving || !newChapterTitle.trim()} onClick={addNamedExperienceChapter} type="button">{saving ? "Adding…" : "Add"}</button></div>
         <p className={`experience-chapter-minimum ${chapters.length >= 2 ? "is-ready" : ""}`}>{chapters.length >= 2 ? `✓ ${chapters.length} chapters ready · add as many as you need` : `${2 - chapters.length} more chapter${2 - chapters.length === 1 ? "" : "s"} required`}</p>
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
         <button className="experience-chapters-continue" disabled={chapters.length < 2 || saving} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(3); }} type="button">{saving ? "Saving…" : `Continue (${chapters.length})`}</button>
