@@ -44,6 +44,7 @@ import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
+import StoryCreator from "../../components/stories/StoryCreator";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
@@ -102,14 +103,13 @@ function shortRelativeTime(value) {
   return `${days}d`;
 }
 
-function storyItems(publication, chapters) {
-  const storyPreviewMedia = chapters
+function storyItems(chapters) {
+  return chapters
     .filter((chapter) => chapter.isPreview)
     .flatMap((chapter) => (chapter.blocks || [])
       .filter((block) => block.metadata?.storyPreview && ["IMAGE", "VIDEO"].includes(block.type) && block.media?.secureUrl)
-      .map((block) => ({ ...block.media, blockId: block.id, chapterId: chapter.stableChapterId, title: block.metadata?.label || chapter.title })));
-  if (storyPreviewMedia.length) return storyPreviewMedia.slice(0, 3);
-  return [publication?.coverMedia, ...chapters.flatMap((chapter) => (chapter.blocks || []).map((block) => block.media).filter(Boolean))].filter(Boolean).slice(0, 3);
+      .map((block) => ({ ...block.media, blockId: block.id, chapterId: chapter.stableChapterId, title: block.metadata?.label || chapter.title })))
+    .slice(0, 3);
 }
 
 function firstWorldMedia(publication, chapters) {
@@ -223,7 +223,7 @@ function BottomSheet({ children, labelledBy, onClose, sheetClassName = "" }) {
 function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapters, creator, joinPending, memberPreview, onBack, onJoin, onOpenChapter, onShare, owner, publication }) {
   const [expandedPreviewChapter, setExpandedPreviewChapter] = useState(null);
   const media = firstWorldMedia(publication, chapters);
-  const stories = storyItems(publication, chapters);
+  const stories = storyItems(chapters);
   const displayName = creator.name || creator.username || "Creator";
   const firstName = creatorFirstName(creator);
   const offer = { ...(publication || {}), ...(publication?.membershipOffer || {}) };
@@ -603,12 +603,12 @@ function CoverSheet({ busy, error, onClose, onUpload, publication, progress }) {
         <h2 id="world-cover-title">Cover</h2>
         <p>16:9 · 1280px+ · shown on the card and inside</p>
         <div className="world-cover-preview">
-          {publication?.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} src={publication.coverMedia.secureUrl} /> : <span>{PLANET}</span>}
+          {publication?.coverMedia?.secureUrl ? (publication.coverMedia.mediaType === "VIDEO" || publication.coverMedia.resourceType === "video" ? <video controls playsInline src={publication.coverMedia.secureUrl} /> : <img alt={`${publication.title} cover`} src={publication.coverMedia.secureUrl} />) : <span>{PLANET}</span>}
         </div>
       </section>
-      <input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])} ref={inputRef} type="file" />
+      <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="hidden" onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])} ref={inputRef} type="file" />
       {error ? <p className="world-sheet-error">{error}</p> : null}
-      <button className="world-cover-upload" disabled={busy} onClick={() => inputRef.current?.click()} type="button"><FiUpload /> {busy ? `Uploading ${progress || 0}%` : "Upload new"}</button>
+      <button className="world-cover-upload" disabled={busy} onClick={() => inputRef.current?.click()} type="button"><FiUpload /> {busy ? `Uploading ${progress || 0}%` : "Upload image or video"}</button>
     </BottomSheet>
   );
 }
@@ -1066,40 +1066,6 @@ function ShareSheet({ onClose, publication, viewerId }) {
         {error ? <p className="world-sheet-error">{error}</p> : null}
       </section>
     </BottomSheet>
-  );
-}
-
-function StoryUploadSheet({ error, onClose, onPick }) {
-  const inputRef = useRef(null);
-  return (
-    <BottomSheet labelledBy="world-story-upload-title" onClose={onClose}>
-      <section className="world-story-upload-sheet">
-        <h2 id="world-story-upload-title">New story</h2>
-        <p>15 sec · seen before purchase, blurred</p>
-        <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) onPick(file); }} ref={inputRef} type="file" />
-        <button className="world-story-upload-choice" onClick={() => inputRef.current?.click()} type="button">
-          <FiUpload />
-          <span><b>Upload</b><small>photo · 15 sec</small></span>
-        </button>
-        {error ? <p className="world-sheet-error">{error}</p> : null}
-      </section>
-    </BottomSheet>
-  );
-}
-
-function WorldStorySharePreview({ busy, error, onClose, onShare, progress, url }) {
-  return (
-    <div aria-label="Preview World story" aria-modal="true" className="world-story-share-preview" role="dialog">
-      <img alt="Selected story preview" src={url} />
-      <button aria-label="Close story preview" className="world-story-preview-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
-      <span className="world-story-preview-duration">15s</span>
-      <button aria-label="Edit story" className="world-story-preview-tool" disabled type="button"><FiEdit3 /></button>
-      <button aria-label="Story help" className="world-story-preview-help" disabled type="button">?</button>
-      <div className="world-story-preview-gallery"><FiImage /></div>
-      <button className="world-story-preview-audience" disabled type="button">Everyone</button>
-      <button className="world-story-preview-share" disabled={busy} onClick={onShare} type="button">{busy ? `Sharing ${progress || 0}%` : "Share"}</button>
-      {error ? <p className="world-story-preview-error">{error}</p> : null}
-    </div>
   );
 }
 
@@ -1638,7 +1604,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
             item.pricing?.mode === "FREE" ? "free" : price ? `${STAR}${price} included` : "included",
           ].filter(Boolean).join(" · ");
           return (
-            <Link className="world-inside-detail__experience" key={experienceId || item.title} to={experienceId ? `/experience/${experienceId}` : "#"}>
+            <Link className="world-inside-detail__experience" key={experienceId || item.title} to={experienceId ? `/experience/${experienceId}?returnTo=${encodeURIComponent(`/world/${publication.id || publication._id}/inside?view=detail`)}` : "#"}>
               <span className="world-inside-detail__experience-cover">
                 {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i aria-hidden="true">{STAR}</i>}
               </span>
@@ -1757,9 +1723,6 @@ export default function WorldReaderPage() {
   const [optimisticCommentsEnabled, setOptimisticCommentsEnabled] = useState(null);
   const [introPriceToast, setIntroPriceToast] = useState("");
   const [commentStatusToast, setCommentStatusToast] = useState("");
-  const [storyDraft, setStoryDraft] = useState(null);
-  const [storyProgress, setStoryProgress] = useState(0);
-  const [storyUploadError, setStoryUploadError] = useState("");
   const [storyUploadSheetOpen, setStoryUploadSheetOpen] = useState(false);
   const [activeStory, setActiveStory] = useState(null);
   const [giftOpen, setGiftOpen] = useState(false);
@@ -1785,6 +1748,10 @@ export default function WorldReaderPage() {
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const owner = sameIdentity(viewerId, creatorId) || sameIdentity(user?.username, creator.username);
   const accessToken = new URLSearchParams(location.search).get("access") || "";
+  const returnTo = new URLSearchParams(location.search).get("returnTo") || "";
+  const returnFromExperience = () => returnTo
+    ? navigate(returnTo, { replace: true })
+    : navigate(creator.username ? `/profile/${creator.username}` : -1);
   const canFetchMemberWorld = Boolean(user && publicationId && premium && (owner || publication?.access === "ACTIVE_PREMIUM_MEMBER"));
   const managementQuery = useQuery({
     queryKey: ["world-management", publicationId],
@@ -1954,6 +1921,14 @@ export default function WorldReaderPage() {
       setCoverProgress(0);
     },
   });
+  const coverRemove = useMutation({
+    mutationFn: () => api.removeWorldCover(publicationId),
+    onSuccess: async () => {
+      await Promise.all([query.refetch(), managementQuery.refetch()]);
+      showToast("World cover removed.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "World cover could not be removed."),
+  });
   const waveMutation = useMutation({ mutationFn: () => api.openWorldWave(publicationId), onSuccess: () => managementQuery.refetch() });
   const moderatorAdd = useMutation({
     mutationFn: (userId) => api.addWorldModerator(publicationId, userId),
@@ -1979,20 +1954,23 @@ export default function WorldReaderPage() {
     onError: (error) => showToast(error?.response?.data?.message || "Moderator could not be removed."),
   });
   const storyUpload = useMutation({
-    mutationFn: ({ file }) => api.uploadWorldStory(publicationId, file, { label: "Story" }, setStoryProgress),
-    onSuccess: async () => {
+    mutationFn: ({ caption = "", editorMetadata = null, file }) => api.uploadWorldStory(publicationId, file, {
+      caption,
+      editorMetadata: JSON.stringify(editorMetadata || {}),
+      label: caption || "Story",
+    }),
+    onSuccess: async (response) => {
+      const payload = response?.data?.data;
+      if (payload?.publication || payload?.management) {
+        queryClient.setQueryData(["world-management", publicationId], {
+          publication: payload.publication,
+          management: payload.management,
+        });
+      }
       await Promise.all([query.refetch(), managementQuery.refetch()]);
-      setStoryDraft((current) => {
-        if (current?.url) URL.revokeObjectURL(current.url);
-        return null;
-      });
-      setStoryProgress(0);
-      setStoryUploadError("");
+      showToast("Story added to this World.");
     },
-    onError: (error) => {
-      setStoryUploadError(error?.response?.data?.message || error?.message || "Could not upload this story.");
-      setStoryProgress(0);
-    },
+    onError: (error) => showToast(error?.response?.data?.message || error?.message || "Could not upload this story."),
   });
   const storyRemove = useMutation({
     mutationFn: ({ blockId, chapterId }) => api.removeWorldStory(publicationId, chapterId, blockId),
@@ -2002,10 +1980,6 @@ export default function WorldReaderPage() {
     },
     onError: (error) => showToast(error?.response?.data?.message || "Story could not be removed."),
   });
-
-  useEffect(() => () => {
-    if (storyDraft?.url) URL.revokeObjectURL(storyDraft.url);
-  }, [storyDraft?.url]);
 
   useEffect(() => {
     if (!introPriceToast) return undefined;
@@ -2164,7 +2138,7 @@ export default function WorldReaderPage() {
       <ExperienceVisitorOverview
         canView={canViewMemberContent}
         chapters={experienceChapters}
-        onBack={() => navigate(creator.username ? `/profile/${creator.username}` : -1)}
+        onBack={returnFromExperience}
         onOpenChapter={setActiveChapterIndex}
         onShare={() => setSheet("share")}
         onUnlock={() => user ? setShowExperienceUnlock(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })}
@@ -2180,7 +2154,8 @@ export default function WorldReaderPage() {
     </>;
   }
 
-  const stories = storyItems(managedPublication, chapters);
+  const storyChapters = managedPublication?.chapters || chapters;
+  const stories = storyItems(storyChapters);
   const seat = management.seatStatus || {};
   const residents = Number(seat.occupiedSeats ?? management.analytics?.residents ?? 0);
   const capacity = Number(seat.capacity || 0);
@@ -2294,25 +2269,6 @@ export default function WorldReaderPage() {
     }
   };
 
-  const pickStoryFile = (file) => {
-    setStoryUploadError("");
-    setStoryUploadSheetOpen(false);
-    setStoryDraft((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return { file, url: URL.createObjectURL(file) };
-    });
-  };
-
-  const closeStoryDraft = () => {
-    if (storyUpload.isPending) return;
-    setStoryDraft((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return null;
-    });
-    setStoryUploadError("");
-    setStoryProgress(0);
-  };
-
   const resetQuickChapterFlow = () => {
     setQuickChapterStep("");
     setQuickChapterTitle("");
@@ -2414,7 +2370,7 @@ export default function WorldReaderPage() {
     <>
       <article className={`world-prototype-page ${experience ? "is-experience-detail" : ""}`}>
         <header className="world-prototype-top">
-          <button aria-label="Back to profile" onClick={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
+          <button aria-label={experience && returnTo ? "Back to World" : "Back to profile"} onClick={() => experience && returnTo ? returnFromExperience() : navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
           <div>
             {owner ? <button aria-label="Open world analytics" onClick={() => setSheet("analytics")} type="button"><FiBarChart2 /></button> : null}
             <button aria-label="Share world" onClick={() => setSheet("share")} type="button"><FiArrowUpRight /></button>
@@ -2429,6 +2385,18 @@ export default function WorldReaderPage() {
               <span>{faceEmoji}</span>
               <span>{PLANET}</span>
             </button>
+          </section>
+        ) : null}
+
+        {!experience && (owner || managedPublication.coverMedia?.secureUrl) ? (
+          <section className={`world-top-cover-preview ${managedPublication.coverMedia?.secureUrl ? "has-cover" : ""}`}>
+            {managedPublication.coverMedia?.secureUrl
+              ? (managedPublication.coverMedia.mediaType === "VIDEO" || managedPublication.coverMedia.resourceType === "video" ? <video controls playsInline preload="metadata" src={managedPublication.coverMedia.secureUrl} /> : <img alt={`${managedPublication.title || "World"} cover preview`} src={managedPublication.coverMedia.secureUrl} />)
+              : <div><FiImage /><strong>Add a cover image</strong><small>Preview how your World will appear</small></div>}
+            {owner ? <span className="world-top-cover-actions">
+              <button disabled={coverUpload.isPending || coverRemove.isPending} onClick={() => setSheet("cover")} type="button"><FiEdit3 /> {managedPublication.coverMedia?.secureUrl ? "Change" : "Add cover"}</button>
+              {managedPublication.coverMedia?.secureUrl ? <button className="is-remove" disabled={coverRemove.isPending || coverUpload.isPending} onClick={() => coverRemove.mutate()} type="button"><FiTrash2 /> {coverRemove.isPending ? "Removing…" : "Remove"}</button> : null}
+            </span> : null}
           </section>
         ) : null}
 
@@ -2588,7 +2556,7 @@ export default function WorldReaderPage() {
           <section className="world-prototype-inside">
             <h2>Experiences inside {includedExperiences.length ? <span>{includedExperiences.length}</span> : null}</h2>
             {includedExperiences.length ? includedExperiences.map((item) => (
-              <Link className="world-prototype-inside-row" key={item.id} to={`/experience/${item.id}`}>
+              <Link className="world-prototype-inside-row" key={item.id} to={`/experience/${item.id}?returnTo=${encodeURIComponent(`/world/${publicationId}`)}`}>
                 <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : PLANET}</span>
                 <b>{item.title}</b>
                 <small className="world-prototype-inside-meta-clean">{item.chapterCount || 0} chapters{" \u00b7 "}included for members</small>
@@ -2692,7 +2660,7 @@ export default function WorldReaderPage() {
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
       {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} error={accessLinkQuery.error?.response?.data?.message || (accessLinkQuery.isError ? "The access-link service could not be reached." : "")} loading={accessLinkQuery.isLoading || accessLinkQuery.isFetching} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} onRetry={() => accessLinkQuery.refetch()} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
-      {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate("/create/experience")} onToggle={toggleExperience} /> : null}
+      {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate(`/create/experience?returnTo=${encodeURIComponent(`/world/${publicationId}?worldPanel=include`)}`)} onToggle={toggleExperience} /> : null}
       {sheet === "moderators" ? (
         <ModeratorsSheet
           addError={moderatorAdd.error?.response?.data?.message}
@@ -2730,8 +2698,12 @@ export default function WorldReaderPage() {
       {sheet === "share" ? <ShareSheet onClose={() => setSheet("")} publication={managedPublication} viewerId={viewerId} /> : null}
       {walkersOpen ? <WorldWalkersSheet loading={walkersQuery.isLoading} onClose={() => setWalkersOpen(false)} onMessage={() => { setWalkersOpen(false); navigate("/messages?tab=direct"); }} publication={managedPublication} total={walkersQuery.data?.pagination?.total || steppedInside} walkers={walkersQuery.data?.items || []} /> : null}
       {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={managedPublication.title} /> : null}
-      {storyUploadSheetOpen ? <StoryUploadSheet error={storyUploadError} onClose={() => setStoryUploadSheetOpen(false)} onPick={pickStoryFile} /> : null}
-      {storyDraft ? <WorldStorySharePreview busy={storyUpload.isPending} error={storyUploadError} onClose={closeStoryDraft} onShare={() => storyUpload.mutate({ file: storyDraft.file })} progress={storyProgress} url={storyDraft.url} /> : null}
+      <StoryCreator
+        isOpen={storyUploadSheetOpen}
+        mode="compose"
+        onClose={() => setStoryUploadSheetOpen(false)}
+        onSave={(payload) => storyUpload.mutateAsync(payload)}
+      />
       {voiceCommentOpen ? <VoiceCommentRecorder busy={commentPostPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={addVoiceComment} /> : null}
       {quickChapterStep === "name" ? (
         <QuickChapterNameSheet

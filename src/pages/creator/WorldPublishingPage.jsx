@@ -308,6 +308,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const nav = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const returnTo = new URLSearchParams(location.search).get("returnTo") || "";
+  const leaveComposer = () => returnTo ? nav(returnTo, { replace: true }) : nav(-1);
   const { user } = useAuth();
   const coverInputRef = useRef(null);
   const previewInputRef = useRef(null);
@@ -337,7 +339,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [storyComposerOpen, setStoryComposerOpen] = useState(false);
   const [storyAutoSaving, setStoryAutoSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [creationStarted, setCreationStarted] = useState(experience);
+  const [creationStarted, setCreationStarted] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -398,7 +400,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           return [];
         });
         setNotice("Start creating your premium world.");
-        setCreationStarted(experience);
+        setCreationStarted(true);
+        return;
+      }
+      if (!experience && !publicationId) {
+        nav(`/world/${existing.id}`, { replace: true });
         return;
       }
       let publication = publicationId ? existing : (await api.getMyPublication(existing.id)).data.data.publication;
@@ -417,7 +423,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     } finally {
       setLoading(false);
     }
-  }, [experience, publicationId]);
+  }, [experience, nav, publicationId]);
 
   useEffect(() => {
     loadWorld();
@@ -529,7 +535,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       title: snapshot.title,
     };
     setWorld((current) => preserveNewerLocalEdits(current, draft, requestEditVersion));
-    history.replaceState({}, "", experience ? `/studio/experiences/${draft.id}/edit` : "/create/premium-world");
+    history.replaceState({}, "", experience
+      ? `/studio/experiences/${draft.id}/edit${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
+      : "/create/premium-world");
     return draft;
   };
 
@@ -709,6 +717,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   saveDraftRef.current = saveDraft;
 
+  const openWorldManagement = async (panel = "") => {
+    const saved = await saveDraft();
+    if (!saved) return;
+    nav(`/world/${saved.id}${panel ? `?worldPanel=${panel}` : ""}`);
+  };
+
   const continueExperienceDetails = async () => {
     if (world.id) {
       pendingExperienceContinueRef.current = false;
@@ -757,8 +771,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     setNotice("Uploading cover...");
     try {
       const draft = await ensureDraft(world, requestEditVersion);
-      const response = await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion });
-      const uploadedPublication = response.data.data.publication;
+      const response = experience
+        ? await api.uploadMedia(draft.id, file, { purpose: "COVER", statusVersion: draft.statusVersion })
+        : await api.uploadWorldCover(draft.id, file);
+      const uploadedPublication = experience ? response.data.data.publication : response.data.data;
       if (uploadedPublication?.coverMedia?.secureUrl) {
         setWorld((current) => ({ ...current, id: current.id || draft.id, coverMedia: uploadedPublication.coverMedia, statusVersion: uploadedPublication.statusVersion, draftVersion: uploadedPublication.draftVersion }));
       }
@@ -1071,7 +1087,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       setWorld((current) => ({ ...current, ...submitted }));
       setNotice(experience ? "Experience published" : "Submitted for review");
       await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      nav(experience ? `/experience/${submitted.id}` : "/profile", { replace: true });
+      nav(experience && returnTo ? returnTo : experience ? `/experience/${submitted.id}` : `/world/${submitted.id}`, { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError));
       setNotice(experience ? "Publish failed" : "Submit failed");
@@ -1263,7 +1279,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
       {videoTrimFile ? <VideoTrimSheet enableCrop file={videoTrimFile} limitSeconds={30} onCancel={() => { URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} onUpload={async (file) => { await addStoryPreview({ file, caption: "Preview video", replaceId: videoTrimFile.replaceId }); URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} /> : null}
       {voiceSheetOpen ? <ExperienceVoiceSheet onClose={() => setVoiceSheetOpen(false)} onSave={(file) => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return addStoryPreview({ file, caption: "Voice hello", replaceId: voice?.id || "" }); }} onUploadFile={() => voiceInputRef.current?.click()} /> : null}
-      <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><h1>Name your Experience</h1><p>A stage of life — with a beginning and a result</p></div><button className="experience-first-preview" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
+      <header><button aria-label="Back" onClick={leaveComposer} type="button"><FiArrowLeft /></button><div><h1>Name your Experience</h1><p>A stage of life — with a beginning and a result</p></div><button className="experience-first-preview" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
       <ExperienceProgress step={1} />
       <main>
         <input className="experience-step-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={'Title — e.g. “Moving to Dubai”'} value={world.title} />
@@ -1382,7 +1398,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (experience && creationStarted) return (
     <article className="experience-create-page">
       <header className="experience-create-head">
-        <button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button>
+        <button aria-label="Back" onClick={leaveComposer} type="button"><FiArrowLeft /></button>
         <h1>New Experience</h1>
         {world.id ? <button className="experience-save-later" disabled={saving} onClick={saveDraft} type="button">Save for later</button> : <span />}
       </header>
@@ -1451,9 +1467,6 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     <>
     {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
     <article className="world-prototype-page world-publish-page">
-      <nav className="planet-create-progress" aria-label={`${experience ? "Experience" : "World"} creation progress`}>
-        {(experience ? ["Identity", "Chapters", "Access"] : ["Identity", "Stories", "Chapters", "Access"]).map((label, index) => <span className={index === 0 ? "is-current" : ""} key={label}><b>{index + 1}</b>{label}</span>)}
-      </nav>
       <header className="world-prototype-top">
         <button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button>
         <div>
@@ -1462,19 +1475,35 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         </div>
       </header>
 
-      {!experience ? <><section className="world-prototype-planet world-publish-planet">
-        <button aria-label="Change planet face" onClick={() => setFaceSheetOpen(true)} type="button">
-          <span>{planetFaceEmoji(world.planet)}</span>
-          <span>{PLANET}</span>
-        </button>
-        <p>tap the planet to change its face</p>
-      </section>
+      {!experience ? (
+        <section className="world-prototype-planet world-publish-planet world-create-brand">
+          <button aria-label="Change planet face" onClick={() => setFaceSheetOpen(true)} type="button">
+            <span>{planetFaceEmoji(world.planet)}</span>
+            <span>{PLANET}</span>
+          </button>
+          <p>Your World</p>
+        </section>
+      ) : null}
+
+      {!experience ? (
+        <section className={`world-top-cover-preview ${coverUrl ? "has-cover" : ""}`}>
+          {coverUrl
+            ? (world.coverMedia?.mediaType === "VIDEO" || world.coverMedia?.resourceType === "video" ? <video controls playsInline preload="metadata" src={coverUrl} /> : <img alt={`${world.title || "World"} cover preview`} src={coverUrl} />)
+            : <div><FiPlus /><strong>Add a cover image</strong><small>Preview how your World will appear</small></div>}
+          <span className="world-top-cover-actions">
+            <button disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button"><FiEdit3 /> {coverUrl ? "Change" : "Add cover"}</button>
+            {coverUrl ? <button className="is-remove" disabled={uploading} onClick={removeCover} type="button"><FiTrash2 /> Remove</button> : null}
+          </span>
+        </section>
+      ) : null}
+
+      {!experience ? <>
       {faceSheetOpen ? <PlanetFaceSheet busy={saving} onClose={() => setFaceSheetOpen(false)} onSave={(emoji) => { updateWorld({ planet: { ...world.planet, emoji: world.planet?.emoji || PLANET, faceEmoji: emoji } }); setFaceSheetOpen(false); }} planet={world.planet} /> : null}
 
       <section className="world-prototype-story-previews" id="world-preview-stories">
         <div className="world-prototype-section-head is-compact">
-          <h2>Free preview stories</h2>
-          <span>up to 3 - visible before subscription</span>
+          <h2>Stories</h2>
+          <span>up to 3 · seen before purchase</span>
         </div>
         <div>
           {freeStories.map((story) => (
@@ -1495,7 +1524,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         </div>
       </section>
 
-      <section className="world-prototype-story-rings">
+      <section className="world-prototype-story-rings world-create-legacy-stories" hidden>
         <h2><FiLock /> Subscriber stories</h2>
         <p className="world-prototype-story-access-note">Only active subscribers can open these stories.</p>
         <div>
@@ -1523,7 +1552,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <span>{ownerName.split(" ")[0]} <b>✓</b> - <strong>{Number(world.steppedInside || world.viewCount || 0).toLocaleString()}</strong> stepped inside</span>
       </section>
 
-      <div className="world-prototype-premium-pill">{experience ? `Premium Experience - all chapters unlock for ${STAR}${world.pricing?.starsAmount || 190} once` : `${PLANET} Premium World - 1 free chapter - ${STAR}${world.pricing?.starsAmount || 190}/mo`}</div>
+      <div className="world-prototype-premium-pill">{experience ? `Premium Experience - all chapters unlock for ${STAR}${world.pricing?.starsAmount || 190} once` : `${PLANET} Premium World · up to 3 preview stories · ${STAR}${world.pricing?.starsAmount || 190}/mo`}</div>
 
       <input
         aria-label={experience ? "Experience title" : "World title"}
@@ -1534,12 +1563,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         value={world.title}
       />
 
-      <div className="world-prototype-media world-publish-cover">
-        {coverUrl ? <img alt={`${world.title || "Premium world"} cover`} src={coverUrl} /> : <div className="world-prototype-media-empty">Add a cover</div>}
-        <button aria-label={uploading ? "Uploading cover" : "Upload cover media"} className="world-prototype-media-edit" disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">{uploading ? <FiLoader className="world-story-upload-spinner" /> : <FiEdit3 />}</button>
-        {coverUrl ? <button aria-label="Remove cover image" className="world-publish-cover-remove" disabled={uploading} onClick={removeCover} type="button"><FiTrash2 /></button> : null}
-        <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
-      </div>
+      <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
 
       <textarea
         aria-label={experience ? "Experience description" : "World description"}
@@ -1563,12 +1587,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {experience ? <label className="experience-world-toggle"><span><strong>Include in my World</strong><small>World members can access this while subscribed. Separate buyers keep it permanently.</small></span><input checked={Boolean(world.includedInWorld)} onChange={(event) => updateWorld({ includedInWorld: event.target.checked })} type="checkbox" /></label> : null}
 
-      <section className="world-prototype-experience">
+      <section className="world-prototype-experience world-create-experiences">
         <div className="world-prototype-section-head">
-          <h2>Experience</h2>
-          <span>{experience ? `${chapters.length} chapters · unlimited` : `${chapters.length} / 5 chapters · ${PLANET} Premium`}</span>
+          <h2>Experiences inside</h2>
+          <span>members get included Experiences</span>
         </div>
-        <div className="world-prototype-chapters">
+        <div className="world-prototype-chapters world-create-legacy-chapters" hidden>
           {chapters.map((chapter, index) => {
             const locked = index > 0;
             return (
@@ -1599,15 +1623,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             );
           })}
         </div>
-        <button className="world-prototype-add-chapter" onClick={experience ? addNamedExperienceChapter : addChapter} type="button"><FiPlus /> Add a chapter</button>
+        <p>Attach an Experience — members get it with the subscription.</p>
+        <button className="world-prototype-add-chapter" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> Include an experience</button>
       </section>
 
-      {!experience ? <section className="world-prototype-comments">
-        <h2>Comments</h2>
-        <form onSubmit={(event) => event.preventDefault()}>
-          <input placeholder="Add a comment..." readOnly />
-          <button aria-label="Post comment" type="button"><FiArrowUpRight /></button>
-        </form>
+      {!experience ? <section className="world-prototype-experience world-create-settings">
+        <div className="world-prototype-section-head"><h2>World settings</h2><span>access, comments and moderation</span></div>
+        <button className="world-prototype-add-chapter" disabled={saving || uploading} onClick={() => openWorldManagement()} type="button">Open all World settings <FiArrowUpRight /></button>
       </section> : null}
 
       <div className="world-publish-actionbar">

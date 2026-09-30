@@ -10,9 +10,9 @@ export const WORLD_CONFIG = {
   },
   PREMIUM_WORLD: {
     label: "Premium World",
-    min: 2,
-    max: 5,
-    previewMin: 1,
+    min: 0,
+    max: 1,
+    previewMin: 0,
     previewMax: 1,
     pricingMode: "MONTHLY",
     defaultPrice: 190,
@@ -60,7 +60,7 @@ export function worldCompletenessBySection(publication) {
     errors.preview.push(
       `${config.label} requires ${config.previewMin === config.previewMax ? config.previewMin : `${config.previewMin}-${config.previewMax}`} preview chapters`,
     );
-  if (["PREMIUM_WORLD", "EXPERIENCE"].includes(publication.kind) && publication.pricing?.mode !== "FREE" && chapters.length > 0 && previews === chapters.length)
+  if (publication.kind === "EXPERIENCE" && publication.pricing?.mode !== "FREE" && chapters.length > 0 && previews === chapters.length)
     errors.preview.push("At least one chapter must remain locked");
   if (publication.pricing?.mode !== config.pricingMode && !(publication.kind === "EXPERIENCE" && publication.pricing?.mode === "FREE"))
     errors.pricing.push("Invalid pricing mode");
@@ -71,8 +71,8 @@ export function worldCompletenessBySection(publication) {
     errors.pricing.push("Free Worlds cannot charge Stars");
   if (publication.kind === "WORLD" && previews !== chapters.length)
     errors.preview.push("Every free World chapter must be open");
-  if (publication.kind === "PREMIUM_WORLD" && publication.pricing?.mode !== "FREE" && chapters.length && (!chapters[0]?.isPreview || previews !== 1))
-    errors.preview.push("Chapter 1 must be the only free Premium Planet chapter");
+  if (publication.kind === "PREMIUM_WORLD" && chapters.length && (!chapters[0]?.isPreview || previews !== chapters.length))
+    errors.preview.push("World story previews must remain visible before subscription");
   if (publication.kind === "EXPERIENCE" && publication.pricing?.mode !== "FREE" && previews !== 0)
     errors.preview.push("Premium Experience chapters unlock only after purchase");
   if (
