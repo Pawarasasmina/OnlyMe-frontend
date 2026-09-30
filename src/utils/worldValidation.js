@@ -45,8 +45,8 @@ export function worldCompletenessBySection(publication) {
     return errors;
   }
   if (!publication.title?.trim()) errors.details.push("Title is required");
-  if (!publication.summary?.trim()) errors.details.push("Summary is required");
-  if (!publication.category?.trim())
+  if (!(publication.summary || publication.description)?.trim()) errors.details.push("Description is required");
+  if (publication.kind === "EXPERIENCE" && !publication.category?.trim())
     errors.details.push("Category is required");
   if (!publication.coverMedia?.secureUrl)
     errors.cover.push("A verified cover is required");

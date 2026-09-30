@@ -273,6 +273,7 @@ export default function MessagesPage() {
   const { startCall } = useCalls();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const returnToRef = useRef(searchParams.get("returnTo") || "");
   const queryClient = useQueryClient();
   const myId = String(user?.id || user?._id || "");
   const [selected, setSelected] = useState(() => {
@@ -594,6 +595,7 @@ export default function MessagesPage() {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
         next.delete("directAccess");
+        next.delete("autoIncluded");
         return next;
       }, { replace: true });
       return;
@@ -601,9 +603,18 @@ export default function MessagesPage() {
     setDirectAccessBusy(true);
     setError("");
     messageService.getDirectAccessOffer(selected.id)
-      .then((response) => {
-        if (!response.data.data.enabled) throw new Error("This creator is not accepting Direct Access.");
-        setDirectAccessOffer(response.data.data);
+      .then(async (response) => {
+        const offer = response.data.data;
+        if (!offer.enabled) throw new Error("This creator is not accepting Direct Access.");
+        if (searchParams.get("autoIncluded") === "1" && offer.premiumAllowance?.available) {
+          const opened = await messageService.openDirectAccessWindow(selected.id, `da-open:${newClientMessageId()}`, "PREMIUM_INCLUDED");
+          const openedWindow = opened.data.data.window;
+          chooseConversation({ ...selected, directAccessWindowId: openedWindow.id });
+          await queryClient.invalidateQueries({ queryKey: ["messages", "direct-access"] });
+          await queryClient.invalidateQueries({ queryKey: ["memberships"] });
+          return;
+        }
+        setDirectAccessOffer(offer);
       })
       .catch((requestError) => setError(requestError.response?.data?.message || requestError.message || "Could not load Direct Access."))
       .finally(() => {
@@ -611,10 +622,11 @@ export default function MessagesPage() {
         setSearchParams((current) => {
           const next = new URLSearchParams(current);
           next.delete("directAccess");
+          next.delete("autoIncluded");
           return next;
         }, { replace: true });
       });
-  }, [hasActiveDirectAccessWindow, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]);
+  }, [hasActiveDirectAccessWindow, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
   const lastReadOutgoingMessageId = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
@@ -886,7 +898,7 @@ export default function MessagesPage() {
   const chooseConversation = (conversation) => {
     if (conversation.type === "group") {
       setSelected(conversation);
-      setSearchParams({ group: conversation.id }, { replace: true });
+      setSearchParams({ group: conversation.id, ...(returnToRef.current ? { returnTo: returnToRef.current } : {}) }, { replace: true });
       return;
     }
     queryClient.setQueryData(["messages", "conversations"], (current = []) => current.map((item) => (
@@ -894,9 +906,16 @@ export default function MessagesPage() {
     )));
     queryClient.removeQueries({ queryKey: ["messages", conversation.id], exact: true });
     setSelected({ ...conversation, type: "direct" });
-    setSearchParams({ with: conversation.id, ...(conversation.directAccessWindowId ? { window: conversation.directAccessWindowId } : {}) }, { replace: true });
+    setSearchParams({ with: conversation.id, ...(conversation.directAccessWindowId ? { window: conversation.directAccessWindowId } : {}), ...(returnToRef.current ? { returnTo: returnToRef.current } : {}) }, { replace: true });
   };
-  const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
+  const closeConversation = () => {
+    if (returnToRef.current) {
+      navigate(returnToRef.current);
+      return;
+    }
+    setSelected(null);
+    setSearchParams({}, { replace: true });
+  };
   const openPerson = (person) => { chooseConversation({ id: person.id, type: "direct", participant: person }); setNewChat(false); setNewDirectChat(false); setSearch(""); };
   const chooseShareTarget = (target) => {
     setSharePickerOpen(false);

@@ -19,7 +19,6 @@ import {
   FiLink,
   FiLock,
   FiMapPin,
-  FiMic,
   FiMessageCircle,
   FiMessageSquare,
   FiMoreHorizontal,
@@ -39,7 +38,6 @@ import {
   FiZap,
 } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
-import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -119,18 +117,6 @@ function firstWorldMedia(publication, chapters) {
     .find((media) => media?.secureUrl) || null;
 }
 
-function chapterDescription(chapter = {}) {
-  const textBlock = (chapter.blocks || []).find((block) => String(block.text || "").trim());
-  return String(textBlock?.text || "").trim().replace(/\s+/g, " ").slice(0, 92);
-}
-
-function chapterPreviewBlocks(chapter = {}) {
-  return [...(chapter.blocks || [])]
-    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
-    .filter((block) => String(block.text || "").trim() || block.media?.secureUrl || block.url)
-    .slice(0, 5);
-}
-
 function creatorFirstName(creator = {}) {
   return (creator.name || creator.username || "this creator").trim().split(/\s+/)[0] || "this creator";
 }
@@ -153,7 +139,10 @@ function formatMediaTime(value) {
 }
 
 function worldMediaItems(publication, chapters) {
-  const seen = new Set();
+  // The cover already renders in the World hero. Seed it as seen so it is not
+  // repeated as the primary content media or again in the gallery.
+  const coverKey = publication?.coverMedia?.assetId || publication?.coverMedia?.secureUrl;
+  const seen = new Set(coverKey ? [coverKey] : []);
   const add = (media, title = "") => {
     const key = media?.assetId || media?.secureUrl;
     if (!media?.secureUrl || seen.has(key)) return null;
@@ -162,7 +151,6 @@ function worldMediaItems(publication, chapters) {
   };
   return [
     add(publication?.introMedia, "Intro"),
-    add(publication?.coverMedia, "Cover"),
     ...chapters.flatMap((chapter) => (chapter.blocks || []).map((block) => add(block.media, block.metadata?.label || chapter.title)).filter(Boolean)),
   ].filter(Boolean);
 }
@@ -192,7 +180,7 @@ function joinPriceText(offer = {}) {
   const regular = Number(offer.regularPrice || offer.pricing?.starsAmount || 0);
   const firstMonthEnabled = Boolean(offer.firstMonthOfferEnabled);
   const intro = Number(offer.introPrice || (regular ? Math.max(1, Math.ceil(regular / 2)) : 0));
-  if ((firstMonthEnabled || !offer.introPrice) && intro && regular) {
+  if (firstMonthEnabled && intro && regular) {
     return (
       <span className="world-join-price">
         <span className="world-join-price-icon" aria-hidden="true" />
@@ -220,15 +208,14 @@ function BottomSheet({ children, labelledBy, onClose, sheetClassName = "" }) {
   );
 }
 
-function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapters, creator, joinPending, memberPreview, onBack, onJoin, onOpenChapter, onShare, owner, publication }) {
-  const [expandedPreviewChapter, setExpandedPreviewChapter] = useState(null);
+function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapters, creator, joinPending, memberPreview, onBack, onJoin, onOpenWorld, onShare, owner, publication }) {
   const media = firstWorldMedia(publication, chapters);
   const stories = storyItems(chapters);
   const displayName = creator.name || creator.username || "Creator";
   const firstName = creatorFirstName(creator);
   const offer = { ...(publication || {}), ...(publication?.membershipOffer || {}) };
-  const lockedCount = chapters.filter((chapter) => chapter.locked || !chapter.isPreview).length;
-  const hasIncludedExperiences = (publication?.includedExperienceIds || []).length > 0;
+  const includedExperiences = includedWorldExperiences(publication);
+  const hasIncludedExperiences = includedExperiences.length > 0;
   const memberCount = Math.max(Number(publication?.members?.count || 0), Number(memberPreview?.pagination?.total || 0), 0);
   const memberAvatars = (publication?.members?.previewAvatars?.length ? publication.members.previewAvatars : (memberPreview?.items || []).map((item) => item.user))
     .filter(Boolean)
@@ -238,14 +225,14 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
   const memberState = canViewMemberContent || activeMembership || publication?.viewer?.isMember;
   const storiesUnlocked = owner || memberState;
   const benefits = [
-    { icon: <FiZap />, text: `The whole of ${firstName}'s world opens to you - every corner`, show: lockedCount > 0 },
-    { icon: <span>✦</span>, text: "Private experiences and chapters for members", show: hasIncludedExperiences || lockedCount > 0 },
+    { icon: <FiZap />, text: `The whole of ${firstName}'s world opens to you - every corner`, show: hasIncludedExperiences },
+    { icon: <span>✦</span>, text: "Private experiences money can't buy - members only", show: hasIncludedExperiences },
     { icon: <FiCheck />, text: `Stories ${firstName} does not post publicly`, show: stories.length > 0 },
     { icon: <span className="world-preview-ring-icon" />, text: `One personal reply a month${publication?.directAccessIncluded ? " - included; more, first in line" : ""}`, show: publication?.directAccessIncluded },
   ].filter((item) => item.show);
   const valueRows = [
     { title: "Your price is locked", detail: "while your membership remains active", show: publication?.memberPriceLocked !== false },
-    { title: "Everything future lands inside", detail: "new chapters are included with your active membership", show: true },
+    { title: "Everything future - already yours", detail: "new experiences added to this World are included automatically", show: true },
     { title: `You become #${nextMemberNumber.toLocaleString()}`, detail: `first ${foundingCapacity.toLocaleString()} are the founding circle`, show: Boolean(foundingCapacity && nextMemberNumber <= foundingCapacity) },
   ].filter((item) => item.show);
 
@@ -290,53 +277,17 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
 
       <section className="world-preview-inside">
         <h2>What&apos;s inside</h2>
-        <div className="world-chapter-list">
-        {chapters.length ? chapters.map((chapter, index) => {
-          const readable = canReadChapter(chapter, memberState);
-          const locked = !readable;
-          const previewTeaser = readable && chapter.isPreview && !memberState;
-          const expanded = previewTeaser && expandedPreviewChapter === index;
-          const previewBlocks = expanded ? chapterPreviewBlocks(chapter) : [];
-          const description = locked ? chapterDescription(chapter) : "";
-          const openChapter = () => {
-            if (locked) {
-              onJoin();
-              return;
-            }
-            if (previewTeaser) {
-              setExpandedPreviewChapter((current) => current === index ? null : index);
-              return;
-            }
-            onOpenChapter(index);
-          };
-          return (
-            <button className={`world-chapter-card ${readable ? "world-chapter-card--free is-free" : "world-chapter-card--locked is-locked"} ${expanded ? "is-expanded" : ""}`} key={chapter.stableChapterId || index} onClick={openChapter} type="button">
+        <div className="world-experience-preview-list">
+          {includedExperiences.length ? includedExperiences.map((item, index) => (
+            <button className="world-experience-preview-card" key={item.id || item._id || `${item.title}-${index}`} onClick={memberState ? onOpenWorld : onJoin} type="button">
               <b className="world-chapter-number">{index + 1}</b>
               <span className="world-chapter-copy">
-                <strong>{chapter.title || `Chapter ${index + 1}`}</strong>
-                {description ? <small>{description}...</small> : null}
+                <strong>{item.title || `Experience ${index + 1}`}</strong>
+                {item.summary ? <small>{item.summary}</small> : null}
               </span>
-              {readable ? <em className="world-chapter-action">{chapter.isPreview && !memberState ? "Read free \u203a" : "Open \u203a"}</em> : <FiLock className="world-chapter-lock" />}
-              {expanded ? (
-                <span className="world-chapter-preview-panel">
-                  <span className="world-chapter-preview-copy">You unlock everything about {firstName} - and this chapter is open right now. The rest of the world is one tap away.</span>
-                  {previewBlocks.length ? (
-                    <span className="world-chapter-preview-content">
-                      {previewBlocks.map((block, blockIndex) => {
-                        const key = block.id || `${chapter.stableChapterId || index}-${blockIndex}`;
-                        if (block.media?.secureUrl && block.type === "IMAGE") return <img alt="" key={key} src={block.media.secureUrl} />;
-                        if (block.media?.secureUrl && block.type === "VIDEO") return <video key={key} muted playsInline preload="metadata" src={block.media.secureUrl} />;
-                        if (block.media?.secureUrl && ["VOICE", "AUDIO"].includes(block.type)) return <span className="world-chapter-preview-media-label" key={key}>Audio note</span>;
-                        if (block.type === "LINK" && block.url) return <span className="world-chapter-preview-media-label" key={key}>{block.label || block.url}</span>;
-                        return <span className="world-chapter-preview-text" key={key}>{String(block.text || "").trim()}</span>;
-                      })}
-                    </span>
-                  ) : null}
-                </span>
-              ) : null}
+              {memberState ? <em className="world-chapter-action">Open ›</em> : <FiLock className="world-chapter-lock" />}
             </button>
-          );
-        }) : <p>No chapters have been published yet.</p>}
+          )) : <p className="world-preview-inside-empty">No experiences have been added yet.</p>}
         </div>
       </section>
 
@@ -369,7 +320,7 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
       {owner ? (
         <Link className="world-preview-cta world-join-button" to={`/studio/worlds/${publication.id}/edit`}>Manage World</Link>
       ) : memberState ? (
-        <button className="world-preview-cta world-join-button" onClick={() => chapters[0] && onOpenChapter(chapters.findIndex((chapter) => !chapter.locked))} type="button">{`You're inside - open ${firstName}'s World`}</button>
+        <button className="world-preview-cta world-join-button" onClick={onOpenWorld} type="button">{`You're inside - open ${firstName}'s World`}</button>
       ) : (
         <button className="world-preview-cta world-join-button" disabled={joinPending || !publication?.id || offer.enabled === false} onClick={onJoin} type="button">
           {joinPending ? <span className="world-join-label">Confirming...</span> : <><span className="world-join-label">Join {firstName}&rsquo;s World</span>
@@ -382,11 +333,11 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
   );
 }
 
-function WorldMemberInsidePage({ activeMembership, chapters, creator, onOpenChapter, onOpenMessages, publication }) {
+function WorldMemberInsidePage({ activeMembership, chapters, creator, experiences = [], modal = false, onClose, onOpenChapter, onOpenMessages, onOpenStories, publication }) {
   const [worldDoorOpen, setWorldDoorOpen] = useState(false);
   const firstName = creatorFirstName(creator);
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
-  const chapterCount = chapters.length;
+  const experienceCount = experiences.length;
   const memberNumber = publication?.viewer?.memberNumber || activeMembership?.memberNumber;
   const worldIcon = PLANET;
   const renewalCopy = activeMembership?.cancelAtPeriodEnd
@@ -397,7 +348,7 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, onOpenChap
   const directReplies = Number(publication?.directAccessIncludedReplies || 1);
   const openMessages = () => onOpenMessages(creatorId);
   const firstUnlockedChapterIndex = Math.max(0, chapters.findIndex((chapter) => !chapter.locked));
-  const openWorld = () => setWorldDoorOpen(true);
+  const openWorld = () => modal ? onOpenChapter(firstUnlockedChapterIndex) : setWorldDoorOpen(true);
   const stepInsideWorld = () => onOpenChapter(firstUnlockedChapterIndex);
 
   if (worldDoorOpen) {
@@ -413,8 +364,8 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, onOpenChap
   }
 
   return (
-    <article className="world-member-inside-page">
-      <section className="world-member-inside-content">
+    <article aria-modal={modal || undefined} className={`world-member-inside-page ${modal ? "is-membership-popup" : ""}`} onMouseDown={modal ? onClose : undefined} role={modal ? "dialog" : undefined}>
+      <section className="world-member-inside-content" onMouseDown={modal ? (event) => event.stopPropagation() : undefined}>
         <span className="world-member-sheet-handle" aria-hidden="true" />
         <header className="world-member-welcome">
           <span className="world-member-planet" aria-hidden="true">{worldIcon}</span>
@@ -437,12 +388,12 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, onOpenChap
             <span className="world-member-access-icon is-planet">{worldIcon}</span>
             <span className="world-member-access-copy">
               <b>&ldquo;{publication.title}&rdquo;</b>
-              <small>All {chapterCount.toLocaleString()} chapter{chapterCount === 1 ? "" : "s"} unlocked — and every new one lands first</small>
+              <small>All {experienceCount.toLocaleString()} Experience{experienceCount === 1 ? "" : "s"} unlocked — and every new one lands first</small>
             </span>
             <span className="world-member-open">OPEN &gt;</span>
           </button>
 
-          <button className="world-member-access-row" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} type="button">
+          <button className="world-member-access-row" onClick={onOpenStories || (() => window.scrollTo({ top: 0, behavior: "smooth" }))} type="button">
             <span className="world-member-access-icon is-ring" aria-hidden="true" />
             <span className="world-member-access-copy">
               <b>Private stories &amp; highlights</b>
@@ -460,10 +411,53 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, onOpenChap
 }
 
 function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publication }) {
+  const { showToast } = useFanToast();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+  const [reportError, setReportError] = useState("");
+  const [spamOpen, setSpamOpen] = useState(false);
   const firstName = creatorFirstName(creator);
   const media = firstWorldMedia(publication, chapters);
+  const publicationId = publication?.id || publication?._id;
+  const reportMutation = useMutation({
+    mutationFn: (payload) => api.reportWorld(publicationId, payload),
+    onError: (error) => setReportError(error?.response?.data?.message || "Unable to send report."),
+    onSuccess: () => setReportDone(true),
+  });
+  const closeReport = () => {
+    setReportOpen(false);
+    setSpamOpen(false);
+    setReportDone(false);
+    setReportError("");
+  };
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/world/${publicationId}`);
+      setMoreOpen(false);
+      showToast("World link copied.");
+    } catch {
+      showToast("Could not copy the World link.");
+    }
+  };
+  const submitSpamReport = (selectedActions) => {
+    setReportError("");
+    reportMutation.mutate({
+      reason: "SPAM",
+      label: "Spam",
+      reportMode: "SPAM_ACTIONS",
+      safetyActions: selectedActions.map(({ key, label, description }) => ({ key, label, description })),
+    }, {
+      onSuccess: () => {
+        setSpamOpen(false);
+        setReportOpen(true);
+        setReportDone(true);
+      },
+    });
+  };
 
   return (
+    <>
     <article className="world-member-door-page">
       {media?.secureUrl ? (
         media.resourceType === "video" || media.mediaType === "VIDEO"
@@ -473,7 +467,7 @@ function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publicat
       <span className="world-member-door-fallback" aria-hidden="true" />
       <span className="world-member-door-shade" aria-hidden="true" />
       <button aria-label="Back to member access" className="world-member-door-control is-back" onClick={onBack} type="button"><FiArrowLeft /></button>
-      <button aria-label="More world options" className="world-member-door-control is-more" type="button"><FiMoreHorizontal /></button>
+      <button aria-label="More world options" className="world-member-door-control is-more" onClick={() => setMoreOpen(true)} type="button"><FiMoreHorizontal /></button>
       <section className="world-member-door-copy">
         <span className="world-member-door-planet" aria-hidden="true">{PLANET}</span>
         <h1>{publication.title}</h1>
@@ -481,6 +475,10 @@ function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publicat
         <button className="world-member-door-cta" onClick={onStepInside} type="button">Step inside</button>
       </section>
     </article>
+    {moreOpen ? <WorldInsideMoreSheet creator={creator} onClose={() => setMoreOpen(false)} onReport={() => { setMoreOpen(false); setReportOpen(true); }} onReportSpam={() => { setMoreOpen(false); setSpamOpen(true); }} onShare={copyLink} publication={publication} /> : null}
+    {spamOpen ? <WorldSpamActionSheet creator={creator} error={reportError} isSubmitting={reportMutation.isPending} onClose={closeReport} onDone={submitSpamReport} /> : null}
+    {reportOpen ? <WorldReportSheet error={reportError} isDone={reportDone} isSubmitting={reportMutation.isPending} onClose={closeReport} onDone={closeReport} onSelectReason={(reason) => { setReportError(""); reportMutation.mutate({ reason: reason.value, label: reason.label }); }} /> : null}
+    </>
   );
 }
 
@@ -1395,7 +1393,6 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const [spamOpen, setSpamOpen] = useState(false);
   const [commentBusy, setCommentBusy] = useState("");
   const [posting, setPosting] = useState(false);
-  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const mediaItems = useMemo(() => worldMediaItems(publication, chapters), [publication, chapters]);
   const primaryMedia = mediaItems[0] || null;
   const storyPreviews = useMemo(() => privateStoryItems(chapters), [chapters]);
@@ -1448,21 +1445,6 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       setReplyTarget(null);
     } catch (error) {
       showToast(error?.response?.data?.message || "Comment could not be posted.");
-    } finally {
-      setPosting(false);
-    }
-  };
-
-  const submitVoiceComment = async ({ audioBlob, text, waveform }) => {
-    if (!audioBlob || posting) return;
-    setPosting(true);
-    try {
-      const response = await api.voiceCommentOnSeen(publication.id, { audioBlob, text, waveform, parentCommentId: replyTarget?.id || "" });
-      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
-      setReplyTarget(null);
-      setVoiceCommentOpen(false);
-    } catch (error) {
-      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
     } finally {
       setPosting(false);
     }
@@ -1555,7 +1537,11 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     </header>
 
     <section className="world-inside-detail__hero">
-      {publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} src={publication.coverMedia.secureUrl} /> : <span aria-hidden="true">{planetFaceEmoji(publication.planet)}</span>}
+      {publication.coverMedia?.secureUrl
+        ? (publication.coverMedia.mediaType === "VIDEO" || publication.coverMedia.resourceType === "video"
+          ? <video controls playsInline preload="metadata" src={publication.coverMedia.secureUrl} />
+          : <img alt={`${publication.title} cover`} src={publication.coverMedia.secureUrl} />)
+        : <span aria-hidden="true">{planetFaceEmoji(publication.planet)}</span>}
       <p>{chapters.length} {chapterWord} · {publication.category || "World"}</p>
     </section>
 
@@ -1630,7 +1616,6 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
           {replyTarget ? <span>Replying to {replyTarget.author?.name || "comment"} <button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
           <input aria-label="Add a comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
         </div>
-        <button aria-label="Record a voice comment" disabled={posting} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
         <button disabled={!canPostComment} type="submit">{posting ? "Posting..." : "Post"}</button>
       </form>}
     </section>
@@ -1668,7 +1653,6 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       onDone={closeReport}
       onSelectReason={submitReport}
     /> : null}
-    {voiceCommentOpen ? <VoiceCommentRecorder busy={posting} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
   </article>;
 }
 
@@ -1705,7 +1689,6 @@ export default function WorldReaderPage() {
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [commentPostPending, setCommentPostPending] = useState(false);
-  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [visibleVoiceCommentTexts, setVisibleVoiceCommentTexts] = useState({});
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
   const [experienceChaptersOpen, setExperienceChaptersOpen] = useState(true);
@@ -1713,6 +1696,7 @@ export default function WorldReaderPage() {
   const [tagPeopleOpen, setTagPeopleOpen] = useState(false);
   const [sheet, setSheet] = useState(new URLSearchParams(location.search).get("worldPanel") || "");
   const [joinKey, setJoinKey] = useState("");
+  const [showJoinSuccess, setShowJoinSuccess] = useState(false);
   const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
   const [coverProgress, setCoverProgress] = useState(0);
   const [commentSavePending, setCommentSavePending] = useState("");
@@ -1747,6 +1731,7 @@ export default function WorldReaderPage() {
   const viewerId = user?.id || user?._id || "";
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const owner = sameIdentity(viewerId, creatorId) || sameIdentity(user?.username, creator.username);
+  const editingWorld = Boolean(owner && !experience && new URLSearchParams(location.search).get("edit") === "1");
   const accessToken = new URLSearchParams(location.search).get("access") || "";
   const returnTo = new URLSearchParams(location.search).get("returnTo") || "";
   const returnFromExperience = () => returnTo
@@ -1820,7 +1805,7 @@ export default function WorldReaderPage() {
       }
       await Promise.all([query.refetch(), memberships.refetch(), walkersQuery.refetch()]);
       setJoinKey("");
-      navigate(`/world/${publicationId}/inside`, { replace: true });
+      setShowJoinSuccess(true);
     },
     onError: async (error) => {
       if (financialErrorCode(error) === "MEMBERSHIP_ALREADY_ACTIVE") {
@@ -1831,7 +1816,7 @@ export default function WorldReaderPage() {
         ]);
         await Promise.all([query.refetch(), memberships.refetch()]);
         setJoinKey("");
-        navigate(`/world/${publicationId}/inside`, { replace: true });
+        setShowJoinSuccess(true);
         return;
       }
       setJoinKey("");
@@ -1980,6 +1965,21 @@ export default function WorldReaderPage() {
     },
     onError: (error) => showToast(error?.response?.data?.message || "Story could not be removed."),
   });
+  const worldPublish = useMutation({
+    mutationFn: () => (managedPublication.status === "CHANGES_REQUESTED"
+      ? api.resubmitPublication(publicationId, managedPublication.statusVersion)
+      : api.submitPublication(publicationId, managedPublication.statusVersion)),
+    onSuccess: async () => {
+      await Promise.all([
+        query.refetch(),
+        managementQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+      ]);
+      showToast("World published.");
+      navigate(`/world/${publicationId}`, { replace: true });
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "World could not be published."),
+  });
 
   useEffect(() => {
     if (!introPriceToast) return undefined;
@@ -2016,6 +2016,42 @@ export default function WorldReaderPage() {
     if (!creatorUserId) return;
     navigate(`/messages?with=${encodeURIComponent(creatorUserId)}&directAccess=1`);
   };
+  if (showJoinSuccess && premium && !owner) {
+    const privateStories = storyItems(chapters);
+    return <>
+      <PremiumWorldPreviewPage
+        activeMembership={activeMembership}
+        canViewMemberContent
+        chapters={chapters}
+        creator={creator}
+        joinPending={false}
+        memberPreview={walkersQuery.data}
+        onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
+        onJoin={() => undefined}
+        onOpenWorld={() => navigate(`/world/${publicationId}/inside`)}
+        onShare={setActiveStory}
+        owner={false}
+        publication={publication}
+      />
+      <WorldMemberInsidePage
+        activeMembership={activeMembership}
+        chapters={chapters}
+        creator={creator}
+        experiences={memberWorldExperiences}
+        modal
+        onClose={() => setShowJoinSuccess(false)}
+        onOpenChapter={() => navigate(`/world/${publicationId}/inside?view=detail`)}
+        onOpenMessages={openCreatorMessages}
+        onOpenStories={() => {
+          setShowJoinSuccess(false);
+          if (privateStories.length) setActiveStory({ index: 0, stories: privateStories });
+          else navigate(`/world/${publicationId}/inside?view=detail`);
+        }}
+        publication={memberWorldPublication || publication}
+      />
+      {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
+    </>;
+  }
   if (insideRequested && premium && !owner && !canViewMemberContent) {
     return (
       <div className="world-member-inside-page">
@@ -2059,35 +2095,25 @@ export default function WorldReaderPage() {
       {giftOpen ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => showToast("Gift sent in Messages.")} recipient={{ id: creatorId, name: creator.name || creator.username }} sourceType="DIRECT" /> : null}
     </>;
   }
-  if (insideRequested && premium && canViewMemberContent) {
+  if (insideRequested && premium && canViewMemberContent && !owner) {
     return (
-      <WorldMemberInsidePage
-        activeMembership={activeMembership}
-        chapters={chapters}
+      <WorldMemberDoorPage
+        chapters={memberWorldPublication?.chapters || chapters}
         creator={creator}
-        onOpenChapter={() => navigate(`/world/${publicationId}/inside?view=detail`)}
-        onOpenMessages={openCreatorMessages}
-        publication={publication}
+        onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
+        onStepInside={() => navigate(`/world/${publicationId}/inside?view=detail`)}
+        publication={memberWorldPublication || publication}
       />
     );
   }
   if (!insideRequested && premium && canViewMemberContent && !owner && activeChapterIndex === null) {
-    return <>
-      <WorldInsideDetailPage
-        canViewMemberContent={canViewMemberContent}
+    return <WorldMemberDoorPage
         chapters={memberWorldPublication?.chapters || chapters}
         creator={creator}
-        engagementQuery={engagement}
-        experiences={memberWorldExperiences}
         onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
-        onGift={() => setGiftOpen(true)}
-        onOpenChapter={(index) => setActiveChapterIndex(index)}
-        onOpenStory={setActiveStory}
+        onStepInside={() => navigate(`/world/${publicationId}/inside?view=detail`)}
         publication={memberWorldPublication || publication}
-      />
-      {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
-      {giftOpen ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => showToast("Gift sent in Messages.")} recipient={{ id: creatorId, name: creator.name || creator.username }} sourceType="DIRECT" /> : null}
-    </>;
+      />;
   }
   const selectedPreviewChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
   if (premium && !owner && !(selectedPreviewChapter && canReadChapter(selectedPreviewChapter, canViewMemberContent))) {
@@ -2102,7 +2128,7 @@ export default function WorldReaderPage() {
           memberPreview={walkersQuery.data}
           onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
           onJoin={openPremiumJoin}
-          onOpenChapter={setActiveChapterIndex}
+          onOpenWorld={() => navigate(`/world/${publicationId}/inside`)}
           onShare={setActiveStory}
           owner={owner}
           publication={publication}
@@ -2185,27 +2211,6 @@ export default function WorldReaderPage() {
         ]);
       }
       showToast(error?.response?.data?.message || "Comment could not be posted.");
-    } finally {
-      setCommentPostPending(false);
-    }
-  };
-
-  const addVoiceComment = async ({ audioBlob, text, waveform }) => {
-    if (!audioBlob || commentPostPending) return;
-    setCommentPostPending(true);
-    try {
-      await api.voiceCommentOnSeen(publicationId, { audioBlob, text, waveform });
-      setVoiceCommentOpen(false);
-      engagement.refetch();
-    } catch (error) {
-      if (error?.response?.data?.code === "WORLD_COMMENTS_DISABLED") {
-        setOptimisticCommentsEnabled(null);
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["world", id] }),
-          queryClient.invalidateQueries({ queryKey: ["world-management", publicationId] }),
-        ]);
-      }
-      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
     } finally {
       setCommentPostPending(false);
     }
@@ -2322,10 +2327,6 @@ export default function WorldReaderPage() {
     updateWorld.mutate({ commentsEnabled: nextEnabled });
   };
 
-  const completeWorld = async () => {
-    if (user && publicationId) await api.markWorldWalked(publicationId).catch(() => null);
-    navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : "/seen");
-  };
   const experiencePriceLabel = managedPublication.pricing?.mode === "FREE"
     ? "Free Experience · every chapter is open"
     : `Premium Experience · ${STAR}${priceStars || managedPublication.pricing?.starsAmount || 0} · one-time`;
@@ -2358,7 +2359,7 @@ export default function WorldReaderPage() {
       </header>
       <nav aria-label="World actions">
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
-        <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
+        <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}?edit=1`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, stories, access</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
         <button aria-label={commentsEnabled ? "Turn comments off" : "Turn comments on"} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product&rsquo;s own cleanup team</small></span></button>
@@ -2381,19 +2382,19 @@ export default function WorldReaderPage() {
         {!experience ? (
           <section className="world-prototype-planet">
             {commentStatusToast ? <div className="world-comment-status-pill" role="status">{commentStatusToast}</div> : null}
-            <button aria-label={owner ? "Change planet face" : "World icon"} onClick={() => owner && setSheet("face")} type="button">
+            <button aria-label={editingWorld ? "Change planet face" : "World icon"} onClick={() => editingWorld && setSheet("face")} type="button">
               <span>{faceEmoji}</span>
               <span>{PLANET}</span>
             </button>
           </section>
         ) : null}
 
-        {!experience && (owner || managedPublication.coverMedia?.secureUrl) ? (
+        {!experience && (editingWorld || managedPublication.coverMedia?.secureUrl) ? (
           <section className={`world-top-cover-preview ${managedPublication.coverMedia?.secureUrl ? "has-cover" : ""}`}>
             {managedPublication.coverMedia?.secureUrl
               ? (managedPublication.coverMedia.mediaType === "VIDEO" || managedPublication.coverMedia.resourceType === "video" ? <video controls playsInline preload="metadata" src={managedPublication.coverMedia.secureUrl} /> : <img alt={`${managedPublication.title || "World"} cover preview`} src={managedPublication.coverMedia.secureUrl} />)
               : <div><FiImage /><strong>Add a cover image</strong><small>Preview how your World will appear</small></div>}
-            {owner ? <span className="world-top-cover-actions">
+            {editingWorld ? <span className="world-top-cover-actions">
               <button disabled={coverUpload.isPending || coverRemove.isPending} onClick={() => setSheet("cover")} type="button"><FiEdit3 /> {managedPublication.coverMedia?.secureUrl ? "Change" : "Add cover"}</button>
               {managedPublication.coverMedia?.secureUrl ? <button className="is-remove" disabled={coverRemove.isPending || coverUpload.isPending} onClick={() => coverRemove.mutate()} type="button"><FiTrash2 /> {coverRemove.isPending ? "Removing…" : "Remove"}</button> : null}
             </span> : null}
@@ -2421,10 +2422,10 @@ export default function WorldReaderPage() {
                   <button className="world-prototype-owner-story-thumb" onClick={() => setActiveStory({ index, stories })} type="button">
                     {story.resourceType === "video" ? <video muted playsInline src={story.secureUrl} /> : <img alt={story.title || "World story"} src={story.secureUrl} />}
                   </button>
-                  {owner && story.chapterId && story.blockId ? <button aria-label="Remove story" className="world-prototype-owner-story-remove" disabled={storyRemove.isPending} onClick={() => storyRemove.mutate({ blockId: story.blockId, chapterId: story.chapterId })} type="button"><FiX /></button> : null}
+                  {editingWorld && story.chapterId && story.blockId ? <button aria-label="Remove story" className="world-prototype-owner-story-remove" disabled={storyRemove.isPending} onClick={() => storyRemove.mutate({ blockId: story.blockId, chapterId: story.chapterId })} type="button"><FiX /></button> : null}
                 </span>
               ))}
-              {owner && stories.length < 3 ? <button aria-label="Add a free preview story" className="world-prototype-owner-story-add" onClick={() => setStoryUploadSheetOpen(true)} type="button"><FiPlus /><span>add</span></button> : null}
+              {editingWorld && stories.length < 3 ? <button aria-label="Add a free preview story" className="world-prototype-owner-story-add" onClick={() => setStoryUploadSheetOpen(true)} type="button"><FiPlus /><span>add</span></button> : null}
             </div>
           </section>
         ) : null}
@@ -2478,14 +2479,14 @@ export default function WorldReaderPage() {
         {experience ? <button className="world-prototype-premium-pill is-experience" type="button">{experiencePriceLabel}</button> : null}
 
         {!experience ? (
-          <button className="world-prototype-premium-pill" onClick={() => owner && setSheet("price")} type="button">
+          <button className="world-prototype-premium-pill" onClick={() => editingWorld && setSheet("price")} type="button">
           {experience ? (managedPublication.pricing?.mode === "FREE" ? "Free Experience · every chapter is open" : `Premium Experience · all chapters unlock for ${STAR}${priceStars} once`) : `${PLANET} ${premium ? "Premium World" : "Free World"} · ${management.stories?.freePreviewCount || 1} free chapter${priceStars ? ` · ${STAR}${priceStars}/mo` : ""}`}
-          {owner && !experience ? <FiEdit3 /> : null}
+          {editingWorld ? <FiEdit3 /> : null}
         </button>
         ) : null}
 
         <div className="world-prototype-title-row">
-          {owner && !experience ? (
+          {editingWorld ? (
             <button aria-label="Edit world name" className="world-prototype-title-button" onClick={() => setSheet("name")} type="button">
               <span className="world-prototype-title">{managedPublication.title}</span>
               <FiEdit3 />
@@ -2503,18 +2504,18 @@ export default function WorldReaderPage() {
               <small>members first · {management.directAccess?.includedReplies || 0} free reply included</small>
               <i><FiChevronRight /></i>
             </button>
-            <button
+            {editingWorld ? <button
               aria-controls="world-settings-list"
               aria-expanded={worldSettingsOpen}
               className={`world-prototype-settings-row ${worldSettingsOpen ? "is-expanded" : ""}`}
-              onClick={() => owner && setWorldSettingsOpen((open) => !open)}
+              onClick={() => editingWorld && setWorldSettingsOpen((open) => !open)}
               type="button"
             >
               <FiSettings />
               <b>World settings</b>
               <FiChevronRight className="world-settings-chevron" />
-            </button>
-            {owner && worldSettingsOpen ? (
+            </button> : null}
+            {editingWorld && worldSettingsOpen ? (
               <div className="world-settings-list" id="world-settings-list">
                 <p>INSIDE YOUR WORLD</p>
                 {introPriceToast ? <div className="world-settings-toast" role="status">{introPriceToast}</div> : null}
@@ -2546,7 +2547,7 @@ export default function WorldReaderPage() {
           </section>
         ) : null}
 
-        {!experience ? (owner ? (
+        {!experience ? (editingWorld ? (
           <button aria-label="Edit World description" className="world-prototype-summary is-editable" onClick={() => setSheet("description")} type="button">
             <span>{managedPublication.description || managedPublication.summary || "Add a description for your World."}</span><FiEdit3 />
           </button>
@@ -2563,7 +2564,7 @@ export default function WorldReaderPage() {
                 <FiChevronRight aria-hidden="true" />
               </Link>
             )) : <p>Attach an experience — members get it with the subscription.</p>}
-            {owner ? <button className="world-prototype-include-experience" onClick={() => setSheet("include")} type="button"><FiPlus /> Include an experience</button> : null}
+            {editingWorld ? <button className="world-prototype-include-experience" onClick={() => setSheet("include")} type="button"><FiPlus /> Include an experience</button> : null}
           </section>
         ) : null}
 
@@ -2615,7 +2616,6 @@ export default function WorldReaderPage() {
           {commentsEnabled ? (
             <form onSubmit={addComment}>
               <input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment..." value={comment} />
-              <button aria-label="Record a voice comment" disabled={commentPostPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
               <button aria-label="Post comment" disabled={!comment.trim() || commentPostPending} type="submit"><FiArrowUp /></button>
             </form>
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}
@@ -2639,7 +2639,16 @@ export default function WorldReaderPage() {
           ) : commentsEnabled ? <p className="world-prototype-empty-comments"><FiMessageCircle /> No comments yet.</p> : null}
         </section>
 
-        {!experience && chapters.length ? <button className="world-prototype-complete" onClick={completeWorld} type="button"><FiCheck /> Continue</button> : null}
+        {editingWorld ? (
+          <div className="world-owner-save-actions">
+            <button onClick={() => navigate(`/world/${publicationId}`, { replace: true })} type="button">Cancel</button>
+            {["DRAFT", "CHANGES_REQUESTED"].includes(managedPublication.status) ? (
+              <button disabled={worldPublish.isPending} onClick={() => worldPublish.mutate()} type="button"><FiCheck /> {worldPublish.isPending ? "Publishing…" : "Publish World"}</button>
+            ) : (
+              <button onClick={async () => { await Promise.all([query.refetch(), managementQuery.refetch()]); showToast("World changes saved."); navigate(`/world/${publicationId}`, { replace: true }); }} type="button"><FiCheck /> Save changes</button>
+            )}
+          </div>
+        ) : null}
         {activeMembership ? <p className="world-prototype-membership">Member · window renews {new Date(activeMembership.currentPeriodEnd).toLocaleDateString()} · <Link to="/memberships">Manage</Link></p> : null}
       </article>
 
@@ -2660,7 +2669,7 @@ export default function WorldReaderPage() {
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
       {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} error={accessLinkQuery.error?.response?.data?.message || (accessLinkQuery.isError ? "The access-link service could not be reached." : "")} loading={accessLinkQuery.isLoading || accessLinkQuery.isFetching} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} onRetry={() => accessLinkQuery.refetch()} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
-      {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate(`/create/experience?returnTo=${encodeURIComponent(`/world/${publicationId}?worldPanel=include`)}`)} onToggle={toggleExperience} /> : null}
+      {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate(`/create/experience?returnTo=${encodeURIComponent(`/world/${publicationId}?edit=1&worldPanel=include`)}`)} onToggle={toggleExperience} /> : null}
       {sheet === "moderators" ? (
         <ModeratorsSheet
           addError={moderatorAdd.error?.response?.data?.message}
@@ -2704,7 +2713,6 @@ export default function WorldReaderPage() {
         onClose={() => setStoryUploadSheetOpen(false)}
         onSave={(payload) => storyUpload.mutateAsync(payload)}
       />
-      {voiceCommentOpen ? <VoiceCommentRecorder busy={commentPostPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={addVoiceComment} /> : null}
       {quickChapterStep === "name" ? (
         <QuickChapterNameSheet
           busy={quickChapterSaving}
@@ -2727,7 +2735,7 @@ export default function WorldReaderPage() {
           <header className="world-actions-head"><button aria-label="Back to world" onClick={() => setSheet("")} type="button"><FiArrowLeft /></button><div><h1 id="world-actions-title">{managedPublication.title}</h1><p>Your World · subscription</p></div></header>
           <section className="world-actions-list">
             <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
-            <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
+            <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}?edit=1`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, stories, access</small></span></button>
             <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
             <button aria-label={commentsEnabled ? "Turn comments off" : "Turn comments on"} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
             <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>{(management.moderators || []).length} &middot; for this experience only</small></span></button>
