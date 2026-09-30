@@ -107,7 +107,7 @@ function storyItems(publication, chapters) {
     .filter((chapter) => chapter.isPreview)
     .flatMap((chapter) => (chapter.blocks || [])
       .filter((block) => block.metadata?.storyPreview && ["IMAGE", "VIDEO"].includes(block.type) && block.media?.secureUrl)
-      .map((block) => ({ ...block.media, title: block.metadata?.label || chapter.title })));
+      .map((block) => ({ ...block.media, blockId: block.id, chapterId: chapter.stableChapterId, title: block.metadata?.label || chapter.title })));
   if (storyPreviewMedia.length) return storyPreviewMedia.slice(0, 3);
   return [publication?.coverMedia, ...chapters.flatMap((chapter) => (chapter.blocks || []).map((block) => block.media).filter(Boolean))].filter(Boolean).slice(0, 3);
 }
@@ -507,6 +507,20 @@ function NameSheet({ busy, error, onClose, onSave, publication }) {
       <small className="world-sheet-counter">{trimmed.length}/30</small>
       {error ? <p className="world-sheet-error">{error}</p> : null}
       <button className="world-sheet-primary" disabled={busy || !trimmed || trimmed.length > 30} onClick={() => onSave({ title: trimmed })} type="button">{busy ? "Saving..." : "Save"}</button>
+    </BottomSheet>
+  );
+}
+
+function DescriptionSheet({ busy, error, onClose, onSave, publication }) {
+  const [description, setDescription] = useState(publication?.description || publication?.summary || "");
+  const trimmed = description.trim();
+  return (
+    <BottomSheet labelledBy="world-description-title" onClose={onClose} sheetClassName="is-description-sheet">
+      <h2 id="world-description-title">Description</h2>
+      <p className="world-sheet-copy">One honest paragraph. The feed shows it right under your preview.</p>
+      <textarea aria-label="World description" maxLength={1000} onChange={(event) => setDescription(event.target.value)} rows={4} value={description} />
+      {error ? <p className="world-sheet-error">{error}</p> : null}
+      <button className="world-sheet-primary" disabled={busy || !trimmed} onClick={() => onSave({ description: trimmed })} type="button">{busy ? "Saving..." : "Save"}</button>
     </BottomSheet>
   );
 }
@@ -1373,7 +1387,7 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
   </BottomSheet>;
 }
 
-function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onReply, replyTarget }) {
+function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
   const [visibleTexts, setVisibleTexts] = useState({});
   const comments = engagement?.comments || [];
   if (!comments.length) return <p className="world-inside-detail__comments-empty">No comments yet. Be the first to leave a note.</p>;
@@ -1393,6 +1407,7 @@ function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onReply
         <div>
           <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => onCommentReact(item)} type="button">🤝 <span>{Number(item.reactionCount || 0).toLocaleString()}</span></button>
           {!isReply ? <button className={replyTarget?.id === item.id ? "is-active" : ""} onClick={() => onReply(item)} type="button">Reply</button> : null}
+          {engagement.viewerCanModerate ? <button aria-label="Remove comment" className="is-remove-comment" disabled={mutationBusy === item.id} onClick={() => onRemove(item)} type="button"><FiTrash2 /> Remove</button> : null}
         </div>
         {(item.replies || []).map((reply) => renderComment(reply, true))}
       </div>
@@ -1497,6 +1512,20 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
     } catch (error) {
       showToast(error?.response?.data?.message || "Reaction could not be saved.");
+    } finally {
+      setCommentBusy("");
+    }
+  };
+
+  const removeComment = async (comment) => {
+    if (!comment?.id || commentBusy) return;
+    setCommentBusy(comment.id);
+    try {
+      const response = await api.removeSeenComment(publication.id, comment.id);
+      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
+      showToast("Comment removed.");
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be removed.");
     } finally {
       setCommentBusy("");
     }
@@ -1628,7 +1657,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
 
     <section className="world-inside-detail__comments">
       <h2>Comments · {Number(engagement.commentCount || 0).toLocaleString()}</h2>
-      <WorldInsideComments engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onReply={setReplyTarget} replyTarget={replyTarget} />
+      <WorldInsideComments engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onRemove={removeComment} onReply={setReplyTarget} replyTarget={replyTarget} />
       {publication.commentsEnabled === false ? <p className="world-inside-detail__comments-empty">Comments are turned off for this World.</p> : <form onSubmit={submitComment}>
         <FanAvatar name={user?.name || user?.username || "You"} size="h-7 w-7" src={user?.avatar} />
         <div>
@@ -1721,6 +1750,7 @@ export default function WorldReaderPage() {
   const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
   const [coverProgress, setCoverProgress] = useState(0);
   const [commentSavePending, setCommentSavePending] = useState("");
+  const [commentRemovePending, setCommentRemovePending] = useState("");
   const [experienceBusyId, setExperienceBusyId] = useState("");
   const [optimisticPlanetFaceEmoji, setOptimisticPlanetFaceEmoji] = useState("");
   const [optimisticFirstMonthOfferEnabled, setOptimisticFirstMonthOfferEnabled] = useState(null);
@@ -1963,6 +1993,14 @@ export default function WorldReaderPage() {
       setStoryUploadError(error?.response?.data?.message || error?.message || "Could not upload this story.");
       setStoryProgress(0);
     },
+  });
+  const storyRemove = useMutation({
+    mutationFn: ({ blockId, chapterId }) => api.removeWorldStory(publicationId, chapterId, blockId),
+    onSuccess: async () => {
+      await Promise.all([query.refetch(), managementQuery.refetch()]);
+      showToast("Story removed.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Story could not be removed."),
   });
 
   useEffect(() => () => {
@@ -2214,6 +2252,20 @@ export default function WorldReaderPage() {
     }
   };
 
+  const removeModeratedComment = async (targetComment) => {
+    if (!targetComment?.id || commentRemovePending) return;
+    setCommentRemovePending(targetComment.id);
+    try {
+      const response = await api.removeSeenComment(publicationId, targetComment.id);
+      queryClient.setQueryData(["world-engagement", id], response.data.data.engagement);
+      showToast("Comment removed.");
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be removed.");
+    } finally {
+      setCommentRemovePending("");
+    }
+  };
+
   const toggleExperience = async (experienceId, included) => {
     setExperienceBusyId(experienceId);
     try {
@@ -2350,7 +2402,7 @@ export default function WorldReaderPage() {
       </header>
       <nav aria-label="World actions">
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
-        <button onClick={() => setSheet("name")} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
+        <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
         <button aria-label={commentsEnabled ? "Turn comments off" : "Turn comments on"} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product&rsquo;s own cleanup team</small></span></button>
@@ -2397,9 +2449,12 @@ export default function WorldReaderPage() {
             <div className="world-prototype-owner-story-head"><h2>Stories</h2><span>up to 3 · seen before purchase</span></div>
             <div className="world-prototype-owner-story-row">
               {stories.map((story, index) => (
-                <button className="world-prototype-owner-story-thumb" key={`${story.assetId || story.secureUrl}-${index}`} onClick={() => setActiveStory({ index, stories })} type="button">
-                  {story.resourceType === "video" ? <video muted playsInline src={story.secureUrl} /> : <img alt={story.title || "World story"} src={story.secureUrl} />}
-                </button>
+                <span className="world-prototype-owner-story-item" key={`${story.assetId || story.secureUrl}-${index}`}>
+                  <button className="world-prototype-owner-story-thumb" onClick={() => setActiveStory({ index, stories })} type="button">
+                    {story.resourceType === "video" ? <video muted playsInline src={story.secureUrl} /> : <img alt={story.title || "World story"} src={story.secureUrl} />}
+                  </button>
+                  {owner && story.chapterId && story.blockId ? <button aria-label="Remove story" className="world-prototype-owner-story-remove" disabled={storyRemove.isPending} onClick={() => storyRemove.mutate({ blockId: story.blockId, chapterId: story.chapterId })} type="button"><FiX /></button> : null}
+                </span>
               ))}
               {owner && stories.length < 3 ? <button aria-label="Add a free preview story" className="world-prototype-owner-story-add" onClick={() => setStoryUploadSheetOpen(true)} type="button"><FiPlus /><span>add</span></button> : null}
             </div>
@@ -2523,7 +2578,11 @@ export default function WorldReaderPage() {
           </section>
         ) : null}
 
-        {!experience ? <p className="world-prototype-summary">{managedPublication.description || managedPublication.summary}</p> : null}
+        {!experience ? (owner ? (
+          <button aria-label="Edit World description" className="world-prototype-summary is-editable" onClick={() => setSheet("description")} type="button">
+            <span>{managedPublication.description || managedPublication.summary || "Add a description for your World."}</span><FiEdit3 />
+          </button>
+        ) : <p className="world-prototype-summary">{managedPublication.description || managedPublication.summary}</p>) : null}
 
         {!experience ? (
           <section className="world-prototype-inside">
@@ -2605,6 +2664,7 @@ export default function WorldReaderPage() {
                   ) : null}
                   {item.text && (!item.audio || visibleVoiceCommentTexts[item.id]) ? <p>{item.text}</p> : null}
                   <button aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"} disabled={commentSavePending === item.id} onClick={() => toggleCommentSave(item)} type="button"><FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} /></button>
+                  {engagement.data?.viewerCanModerate ? <button aria-label="Remove comment" className="world-comment-remove" disabled={commentRemovePending === item.id} onClick={() => removeModeratedComment(item)} type="button"><FiTrash2 /></button> : null}
                 </article>
               ))}
             </div>
@@ -2616,6 +2676,7 @@ export default function WorldReaderPage() {
       </article>
 
       {sheet === "name" ? <NameSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={managedPublication} /> : null}
+      {sheet === "description" ? <DescriptionSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={managedPublication} /> : null}
       {sheet === "price" ? (
         <PriceSheet
           busy={updateWorldPrice.isPending}
@@ -2694,7 +2755,7 @@ export default function WorldReaderPage() {
           <header className="world-actions-head"><button aria-label="Back to world" onClick={() => setSheet("")} type="button"><FiArrowLeft /></button><div><h1 id="world-actions-title">{managedPublication.title}</h1><p>Your World · subscription</p></div></header>
           <section className="world-actions-list">
             <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
-            <button onClick={() => setSheet("name")} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
+            <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
             <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
             <button aria-label={commentsEnabled ? "Turn comments off" : "Turn comments on"} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
             <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>{(management.moderators || []).length} &middot; for this experience only</small></span></button>
