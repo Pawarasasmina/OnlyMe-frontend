@@ -31,7 +31,11 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
 
   if (!open || !publication) return null;
 
-  const price = Number(publication.pricing?.starsAmount || 0);
+  const offer = publication.membershipOffer || {};
+  const price = Number(offer.regularPrice || publication.pricing?.starsAmount || 0);
+  const introPrice = Number(offer.introPrice || 0);
+  const chargePrice = introPrice && introPrice < price ? introPrice : price;
+  const priceLabel = introPrice && introPrice < price ? `✦${introPrice} first month · ✦${price}/mo after` : `✦${price}/mo`;
   const creatorFirstName = publication.creator?.name?.trim().split(/\s+/)[0] || "this creator";
   const freeStories = (publication.chapters || [])
     .filter((chapter, index) => chapter.isPreview || index === 0)
@@ -62,7 +66,7 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
       if (code === "MEMBERSHIP_ALREADY_ACTIVE") {
         await onSuccess?.();
       } else if (code === "INSUFFICIENT_STARS") {
-        const short = Math.max(0, price - Number(wallet.data?.balance || 0));
+        const short = Math.max(0, chargePrice - Number(wallet.data?.balance || 0));
         setError(`You need ✦${short} more Stars. Add Stars to your wallet before subscribing.`);
       } else {
         setError(financialErrorMessage(requestError));
@@ -94,7 +98,7 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
           {authenticated ? <div className="premium-join-balance"><span>Your balance</span><WalletBalance /></div> : null}
           {error ? <p aria-live="assertive" className="premium-join-error">{error}</p> : null}
           <button className="premium-join-confirm" disabled={busy || (authenticated && (wallet.isError || wallet.isLoading))} onClick={confirm} type="button">
-            {!authenticated ? "Sign in to unlock" : busy ? "Confirming…" : `Unlock everything · ✦${price}/mo`}
+            {!authenticated ? "Sign in to unlock" : busy ? "Confirming…" : `Unlock everything · ${priceLabel}`}
           </button>
           <p className="premium-join-terms">Renews automatically every 30 days using Stars · Cancel anytime</p>
         </div>
