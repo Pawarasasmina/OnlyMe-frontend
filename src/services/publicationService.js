@@ -58,6 +58,15 @@ export const publicationService = {
   reactToSeen: (id, reaction, accessToken = "") => axiosInstance.put(`/publications/${id}/reaction`, { reaction, accessToken }),
   removeSeenReaction: (id, accessToken = "") => axiosInstance.delete(`/publications/${id}/reaction`, { data: { accessToken } }),
   commentOnSeen: (id, text, accessToken = "", parentCommentId = "") => axiosInstance.post(`/publications/${id}/comments`, { text, accessToken, parentCommentId: parentCommentId || undefined }),
+  voiceCommentOnSeen: (id, { audioBlob, accessToken = "", parentCommentId = "", text = "", waveform = [] } = {}) => {
+    const body = new FormData();
+    body.append("voice", audioBlob, "voice-comment.webm");
+    if (text) body.append("text", text);
+    if (accessToken) body.append("accessToken", accessToken);
+    if (parentCommentId) body.append("parentCommentId", parentCommentId);
+    if (waveform?.length) body.append("waveform", JSON.stringify(waveform));
+    return axiosInstance.post(`/publications/${id}/comments`, body);
+  },
   removeSeenComment: (id, commentId) => axiosInstance.delete(`/publications/${id}/comments/${encodeURIComponent(commentId)}`),
   reactToSeenComment: (id, commentId, reaction, accessToken = "") => axiosInstance.put(`/publications/${id}/comments/${commentId}/reaction`, { reaction, accessToken }),
   removeSeenCommentReaction: (id, commentId, accessToken = "") => axiosInstance.delete(`/publications/${id}/comments/${commentId}/reaction`, { data: { accessToken } }),
@@ -68,4 +77,5 @@ export const publicationService = {
   muteSeenCreator: (id, reason = "MUTED_FROM_SEEN") => axiosInstance.post(`/publications/${id}/mute-creator`, { reason }),
   blockSeenCreator: (id) => axiosInstance.put(`/publications/${id}/block-creator`),
   reportSeen: (id, payload) => axiosInstance.post(`/publications/${id}/report`, payload),
+  reportWorld: (id, payload) => axiosInstance.post(`/publications/${id}/report`, payload),
 };

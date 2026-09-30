@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
@@ -13,6 +13,7 @@ import {
   FiChevronRight,
   FiCopy,
   FiEdit3,
+  FiFlag,
   FiGift,
   FiImage,
   FiLink,
@@ -28,7 +29,9 @@ import {
   FiSettings,
   FiShare2,
   FiShield,
+  FiSlash,
   FiSearch,
+  FiSquare,
   FiUpload,
   FiUserPlus,
   FiTrash2,
@@ -36,8 +39,10 @@ import {
   FiZap,
 } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
+import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -54,6 +59,25 @@ const PLANET = String.fromCodePoint(0x1FA90);
 const FLEX = String.fromCodePoint(0x1F4AA);
 const STAR = String.fromCharCode(10022);
 const PLANET_FACE_OPTIONS = ["💪", "📚", "💅", "✈️", "☕", "🎾", "🧘", "🎨", "🍳", "📷", "🏄", "🎧", "💼", "🌱", "🍷", "👶"];
+
+const WORLD_REPORT_REASONS = [
+  { label: "Spam", value: "SPAM" },
+  { label: "False information", value: "FALSE_INFORMATION" },
+  { label: "Harassment", value: "HARASSMENT" },
+  { label: "Hate", value: "HATE" },
+  { label: "Nudity", value: "NUDITY" },
+  { label: "Illegal content", value: "ILLEGAL_CONTENT" },
+  { label: "Copyright", value: "COPYRIGHT" },
+  { label: "Other", value: "OTHER" },
+];
+
+const WORLD_SPAM_ACTIONS = [
+  { description: "", key: "reportSpam", label: "Report spam" },
+  { description: "every post and comment by this creator", key: "deleteMessages", label: "Delete all messages" },
+  { defaultChecked: false, description: "", key: "deleteReactions", label: "Delete all reactions" },
+  { defaultChecked: false, description: "they won't see you or write to you", key: "banCreator", label: "Ban creator" },
+  { defaultChecked: false, description: "access ends now · no refund for violations", key: "removeFromWorld", label: "Remove from your World" },
+];
 
 function planetFaceEmoji(planet = {}) {
   return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
@@ -1066,32 +1090,94 @@ function WorldStorySharePreview({ busy, error, onClose, onShare, progress, url }
 }
 
 function WorldStoryViewer({ creator, onClose, story, title }) {
-  useEffect(() => {
-    if (!story?.secureUrl) return undefined;
-    const timer = window.setTimeout(onClose, 15000);
-    return () => window.clearTimeout(timer);
-  }, [onClose, story?.secureUrl]);
-
-  if (!story?.secureUrl) return null;
-  const isVideo = story.resourceType === "video" || story.type === "VIDEO";
+  const stories = useMemo(() => {
+    const items = Array.isArray(story?.stories) ? story.stories : [story].filter(Boolean);
+    return items.filter((item) => item?.secureUrl);
+  }, [story]);
+  const initialIndex = Math.max(0, Math.min(stories.length - 1, Number(story?.index || 0)));
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [progress, setProgress] = useState(0);
+  const activeStory = stories[activeIndex] || null;
+  const isVideo = activeStory?.resourceType === "video" || activeStory?.type === "VIDEO" || activeStory?.mediaType === "VIDEO";
   const creatorName = creator?.name || creator?.username || "Creator";
   const avatar = creator?.avatar || creator?.avatarUrl || creator?.profileImage || creator?.photoUrl || "";
+  const firstName = creatorName.split(/\s+/).filter(Boolean)[0] || "Creator";
+
+  useEffect(() => {
+    setActiveIndex(initialIndex);
+    setProgress(0);
+  }, [initialIndex, story]);
+
+  const goStory = useCallback((direction) => {
+    setActiveIndex((current) => {
+      const next = current + direction;
+      if (next < 0) return 0;
+      if (next >= stories.length) {
+        onClose();
+        return current;
+      }
+      setProgress(0);
+      return next;
+    });
+  }, [onClose, stories.length]);
+
+  useEffect(() => {
+    if (!activeStory?.secureUrl) return undefined;
+    setProgress(0);
+    if (isVideo) return undefined;
+    const started = Date.now();
+    const duration = 15000;
+    const timer = window.setInterval(() => {
+      const next = Math.min(100, ((Date.now() - started) / duration) * 100);
+      setProgress(next);
+      if (next >= 100) {
+        window.clearInterval(timer);
+        goStory(1);
+      }
+    }, 120);
+    return () => window.clearInterval(timer);
+  }, [activeStory?.secureUrl, goStory, isVideo]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft") goStory(-1);
+      if (event.key === "ArrowRight") goStory(1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [goStory, onClose]);
+
+  if (!activeStory?.secureUrl) return null;
   return (
-    <div aria-label="World story" aria-modal="true" className="world-story-share-preview is-viewing" role="dialog">
+    <div aria-label="World story" aria-modal="true" className="world-story-viewer" role="dialog">
       {isVideo
-        ? <video autoPlay muted playsInline src={story.secureUrl} />
-        : <img alt={story.title || "World story"} src={story.secureUrl} />}
-      <div aria-hidden="true" className="world-story-viewer-progress"><span /></div>
+        ? <video autoPlay muted playsInline onEnded={() => goStory(1)} onTimeUpdate={(event) => setProgress(event.currentTarget.duration ? Math.min(100, (event.currentTarget.currentTime / event.currentTarget.duration) * 100) : 0)} src={activeStory.secureUrl} />
+        : <img alt={activeStory.title || "World story"} src={activeStory.secureUrl} />}
+      <div aria-hidden="true" className="world-story-viewer-progress">
+        {stories.map((item, index) => <span key={item.assetId || item.secureUrl || index}><i style={{ width: `${index < activeIndex ? 100 : index === activeIndex ? progress : 0}%` }} /></span>)}
+      </div>
       <header className="world-story-viewer-head">
         <span className="world-story-viewer-avatar">
           {avatar ? <img alt="" src={avatar} /> : <FiImage />}
         </span>
         <span>
           <b>{creatorName}</b>
-          <small>{story.title || title || "Story"}</small>
+          <small>{activeStory.title || title || "Private story"}</small>
         </span>
+        <em>{PLANET_FACE_OPTIONS[0]} members only</em>
       </header>
       <button aria-label="Close story" className="world-story-preview-close" onClick={onClose} type="button"><FiX /></button>
+      {activeStory.title ? <p className="world-story-viewer-caption">{activeStory.title}</p> : null}
+      <div className="world-story-viewer-reactions" aria-label="Story reactions">
+        {["❤️", "🔥", "😂", "🙏", "👁"].map((reaction) => <button key={reaction} type="button">{reaction}</button>)}
+      </div>
+      <form className="world-story-viewer-reply" onSubmit={(event) => event.preventDefault()}>
+        <input aria-label="Reply to story" placeholder={`Reply to ${firstName}...`} />
+        <button aria-label="Send story reply" type="submit"><FiArrowUpRight /></button>
+      </form>
+      <button aria-label="Previous story" className="world-story-viewer-prev" disabled={activeIndex === 0} onClick={() => goStory(-1)} type="button" />
+      <button aria-label="Next story" className="world-story-viewer-next" onClick={() => goStory(1)} type="button" />
     </div>
   );
 }
@@ -1209,28 +1295,101 @@ function WorldPrimaryMedia({ media, title }) {
   </section>;
 }
 
-function WorldInsideMoreSheet({ onClose, onCopy, onShare }) {
+function WorldInsideMoreSheet({ creator, onClose, onReport, onReportSpam, onShare, publication }) {
   return <BottomSheet labelledBy="world-inside-more-title" onClose={onClose}>
     <header className="world-inside-detail__sheet-head">
-      <h2 id="world-inside-more-title">World actions</h2>
+      <div>
+        <h2 id="world-inside-more-title">{publication?.title || "World"}</h2>
+        <p>Experience · {creatorFirstName(creator)}</p>
+      </div>
       <button aria-label="Close World actions" onClick={onClose} type="button"><FiX /></button>
     </header>
     <div className="world-inside-detail__sheet-actions">
       <button onClick={onShare} type="button"><FiShare2 /><span>Share</span></button>
-      <button onClick={onCopy} type="button"><FiCopy /><span>Copy link</span></button>
+      <button className="is-danger" onClick={onReportSpam} type="button"><FiSlash /><span><b>Report spam</b><small>delete messages · reactions · ban</small></span></button>
+      <button className="is-danger" onClick={onReport} type="button"><FiFlag /><span>Report</span></button>
     </div>
   </BottomSheet>;
 }
 
+function WorldReportSheet({ error, isDone, isSubmitting, onClose, onDone, onSelectReason }) {
+  return <BottomSheet labelledBy="world-report-title" onClose={onClose}>
+    <section className={isDone ? "world-report-sheet is-done" : "world-report-sheet"}>
+      {isDone ? (
+        <div className="world-report-done">
+          <FiShield aria-hidden="true" />
+          <h2 id="world-report-title">Thank you</h2>
+          <p>Our team will review this shortly.</p>
+          <button onClick={onDone} type="button">Done</button>
+        </div>
+      ) : (
+        <>
+          <h2 id="world-report-title">Report Experience</h2>
+          <p>Why are you reporting this?</p>
+          <div className="world-report-reasons">
+            {WORLD_REPORT_REASONS.map((reason) => (
+              <button disabled={isSubmitting} key={reason.value} onClick={() => onSelectReason(reason)} type="button">
+                <span>{reason.label}</span>
+                <FiChevronRight aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+          {error ? <p className="world-report-error" role="alert">{error}</p> : null}
+        </>
+      )}
+    </section>
+  </BottomSheet>;
+}
+
+function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone }) {
+  const [selected, setSelected] = useState([]);
+  const actionName = creatorFirstName(creator);
+  const toggle = (action) => {
+    if (isSubmitting) return;
+    setSelected((current) => current.includes(action.key) ? current.filter((key) => key !== action.key) : [...current, action.key]);
+  };
+  const selectedActions = WORLD_SPAM_ACTIONS.filter((action) => selected.includes(action.key));
+
+  return <BottomSheet labelledBy="world-spam-title" onClose={onClose}>
+    <section className="world-spam-sheet">
+      <h2 id="world-spam-title">Looks like spam?</h2>
+      <p>Choose what to do about {actionName}</p>
+      <div className="world-spam-options">
+        {WORLD_SPAM_ACTIONS.map((action) => {
+          const checked = selected.includes(action.key);
+          const label = action.key === "banCreator" ? `Ban ${actionName}` : action.key === "removeFromWorld" ? "Remove from your World" : action.label;
+          return <button aria-pressed={checked} disabled={isSubmitting} key={action.key} onClick={() => toggle(action)} type="button">
+            <span className={checked ? "is-checked" : ""}>{checked ? <FiCheck /> : <FiSquare />}</span>
+            <b>{label}</b>
+            {action.description ? <small>{action.description}</small> : null}
+          </button>;
+        })}
+      </div>
+      {error ? <p className="world-report-error" role="alert">{error}</p> : null}
+      <button className="world-spam-submit" disabled={isSubmitting || !selectedActions.length} onClick={() => onDone(selectedActions)} type="button">
+        {isSubmitting ? "Sending..." : `Done · ${selectedActions.length}`}
+      </button>
+    </section>
+  </BottomSheet>;
+}
+
 function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onReply, replyTarget }) {
+  const [visibleTexts, setVisibleTexts] = useState({});
   const comments = engagement?.comments || [];
   if (!comments.length) return <p className="world-inside-detail__comments-empty">No comments yet. Be the first to leave a note.</p>;
   const renderComment = (item, isReply = false) => {
     const active = Boolean(item.viewerReaction);
+    const showText = !item.audio || visibleTexts[item.id];
     return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
       <div>
-        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || "User"}</Link> {item.text}</p>
+        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || "User"}</Link> {showText ? item.text : null}</p>
+        {item.audio ? (
+          <div className="voice-comment-bubble-row">
+            <VoiceMessageBubble audio={item.audio} label="Voice comment" />
+            {item.text ? <button onClick={() => setVisibleTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{showText ? "hide text" : "show text"}</button> : null}
+          </div>
+        ) : null}
         <div>
           <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => onCommentReact(item)} type="button">🤝 <span>{Number(item.reactionCount || 0).toLocaleString()}</span></button>
           {!isReply ? <button className={replyTarget?.id === item.id ? "is-active" : ""} onClick={() => onReply(item)} type="button">Reply</button> : null}
@@ -1249,8 +1408,13 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const [commentText, setCommentText] = useState("");
   const [replyTarget, setReplyTarget] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+  const [reportError, setReportError] = useState("");
+  const [spamOpen, setSpamOpen] = useState(false);
   const [commentBusy, setCommentBusy] = useState("");
   const [posting, setPosting] = useState(false);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const mediaItems = useMemo(() => worldMediaItems(publication, chapters), [publication, chapters]);
   const primaryMedia = mediaItems[0] || null;
   const storyPreviews = useMemo(() => privateStoryItems(chapters), [chapters]);
@@ -1272,6 +1436,11 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const saved = Boolean(engagement.viewerSaved);
   const worldUrl = typeof window === "undefined" ? "" : `${window.location.origin}/world/${publication.id || publication._id}/inside?view=detail`;
   const canPostComment = commentText.trim() && !posting && publication.commentsEnabled !== false;
+  const reportMutation = useMutation({
+    mutationFn: (payload) => api.reportWorld(publication.id || publication._id, payload),
+    onError: (error) => setReportError(error?.response?.data?.message || "Unable to send report."),
+    onSuccess: () => setReportDone(true),
+  });
 
   useEffect(() => {
     if (canViewMemberContent && publication?.id) api.markWorldWalked(publication.id).then(() => engagementQuery.refetch()).catch(() => null);
@@ -1303,6 +1472,21 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     }
   };
 
+  const submitVoiceComment = async ({ audioBlob, text, waveform }) => {
+    if (!audioBlob || posting) return;
+    setPosting(true);
+    try {
+      const response = await api.voiceCommentOnSeen(publication.id, { audioBlob, text, waveform, parentCommentId: replyTarget?.id || "" });
+      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
+      setReplyTarget(null);
+      setVoiceCommentOpen(false);
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
   const toggleCommentReaction = async (comment) => {
     setCommentBusy(comment.id);
     try {
@@ -1319,18 +1503,46 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   };
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(worldUrl);
-    setMoreOpen(false);
-    showToast("World link copied.");
+    try {
+      await navigator.clipboard.writeText(worldUrl);
+      setMoreOpen(false);
+      showToast("World link copied.");
+    } catch {
+      showToast("Could not copy the World link.");
+    }
   };
 
-  const shareWorld = async () => {
-    setMoreOpen(false);
-    if (navigator.share) {
-      await navigator.share({ title: publication.title || "World", url: worldUrl }).catch(() => null);
-      return;
-    }
-    await copyLink();
+  const closeReport = () => {
+    setReportOpen(false);
+    setSpamOpen(false);
+    setReportDone(false);
+    setReportError("");
+  };
+
+  const submitReport = (reason) => {
+    setReportError("");
+    reportMutation.mutate({ reason: reason.value, label: reason.label });
+  };
+
+  const submitSpamReport = (selectedActions) => {
+    setReportError("");
+    reportMutation.mutate(
+      {
+        reason: "SPAM",
+        label: "Spam",
+        reportMode: "SPAM_ACTIONS",
+        safetyActions: selectedActions.map(({ key, label, description }) => ({ key, label, description })),
+      },
+      {
+        onSuccess: () => {
+          setSpamOpen(false);
+          setReportOpen(true);
+          setReportDone(true);
+          const actionText = selectedActions.some((action) => action.key === "deleteMessages") ? "messages deleted · " : "";
+          showToast(`${creatorFirstName(creator)} — ${actionText}report sent ✓`);
+        },
+      },
+    );
   };
 
   return <article className="world-inside-detail">
@@ -1367,7 +1579,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     {storyPreviews.length ? <section className="world-inside-detail__stories" aria-label="Private stories">
       <h2>PRIVATE STORIES <span>you&apos;re in</span></h2>
       <div>
-        {storyPreviews.map((story, index) => <button aria-label={`Open ${story.title || "private story"}`} key={`${story.assetId || story.secureUrl}-${index}`} onClick={() => onOpenStory(story)} type="button">
+        {storyPreviews.map((story, index) => <button aria-label={`Open ${story.title || "private story"}`} key={`${story.assetId || story.secureUrl}-${index}`} onClick={() => onOpenStory({ index, stories: storyPreviews })} type="button">
           <span>{story.mediaType === "VIDEO" || story.resourceType === "video" ? <video muted playsInline preload="metadata" src={story.secureUrl} /> : <img alt="" src={story.secureUrl} />}</span>
           <small>{story.title || "Story"}</small>
         </button>)}
@@ -1423,12 +1635,45 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
           {replyTarget ? <span>Replying to {replyTarget.author?.name || "comment"} <button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
           <input aria-label="Add a comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
         </div>
-        <button aria-label="Voice comments are not available here" disabled type="button"><FiMic /></button>
+        <button aria-label="Record a voice comment" disabled={posting} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
         <button disabled={!canPostComment} type="submit">{posting ? "Posting..." : "Post"}</button>
       </form>}
     </section>
 
-    {moreOpen ? <WorldInsideMoreSheet onClose={() => setMoreOpen(false)} onCopy={copyLink} onShare={shareWorld} /> : null}
+    {moreOpen ? <WorldInsideMoreSheet
+      creator={creator}
+      onClose={() => setMoreOpen(false)}
+      onReport={() => {
+        setMoreOpen(false);
+        setReportOpen(true);
+        setReportDone(false);
+        setReportError("");
+      }}
+      onReportSpam={() => {
+        setMoreOpen(false);
+        setSpamOpen(true);
+        setReportDone(false);
+        setReportError("");
+      }}
+      onShare={copyLink}
+      publication={publication}
+    /> : null}
+    {spamOpen ? <WorldSpamActionSheet
+      creator={creator}
+      error={reportError}
+      isSubmitting={reportMutation.isPending}
+      onClose={closeReport}
+      onDone={submitSpamReport}
+    /> : null}
+    {reportOpen ? <WorldReportSheet
+      error={reportError}
+      isDone={reportDone}
+      isSubmitting={reportMutation.isPending}
+      onClose={closeReport}
+      onDone={closeReport}
+      onSelectReason={submitReport}
+    /> : null}
+    {voiceCommentOpen ? <VoiceCommentRecorder busy={posting} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
   </article>;
 }
 
@@ -1465,6 +1710,8 @@ export default function WorldReaderPage() {
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [commentPostPending, setCommentPostPending] = useState(false);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  const [visibleVoiceCommentTexts, setVisibleVoiceCommentTexts] = useState({});
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
   const [experienceChaptersOpen, setExperienceChaptersOpen] = useState(true);
   const [experienceSettingsOpen, setExperienceSettingsOpen] = useState(false);
@@ -1930,6 +2177,27 @@ export default function WorldReaderPage() {
     }
   };
 
+  const addVoiceComment = async ({ audioBlob, text, waveform }) => {
+    if (!audioBlob || commentPostPending) return;
+    setCommentPostPending(true);
+    try {
+      await api.voiceCommentOnSeen(publicationId, { audioBlob, text, waveform });
+      setVoiceCommentOpen(false);
+      engagement.refetch();
+    } catch (error) {
+      if (error?.response?.data?.code === "WORLD_COMMENTS_DISABLED") {
+        setOptimisticCommentsEnabled(null);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["world", id] }),
+          queryClient.invalidateQueries({ queryKey: ["world-management", publicationId] }),
+        ]);
+      }
+      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
+    } finally {
+      setCommentPostPending(false);
+    }
+  };
+
   const toggleCommentSave = async (targetComment) => {
     if (!targetComment?.id || commentSavePending) return;
     setCommentSavePending(targetComment.id);
@@ -2129,7 +2397,7 @@ export default function WorldReaderPage() {
             <div className="world-prototype-owner-story-head"><h2>Stories</h2><span>up to 3 · seen before purchase</span></div>
             <div className="world-prototype-owner-story-row">
               {stories.map((story, index) => (
-                <button className="world-prototype-owner-story-thumb" key={`${story.assetId || story.secureUrl}-${index}`} onClick={() => setActiveStory(story)} type="button">
+                <button className="world-prototype-owner-story-thumb" key={`${story.assetId || story.secureUrl}-${index}`} onClick={() => setActiveStory({ index, stories })} type="button">
                   {story.resourceType === "video" ? <video muted playsInline src={story.secureUrl} /> : <img alt={story.title || "World story"} src={story.secureUrl} />}
                 </button>
               ))}
@@ -2320,6 +2588,7 @@ export default function WorldReaderPage() {
           {commentsEnabled ? (
             <form onSubmit={addComment}>
               <input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment..." value={comment} />
+              <button aria-label="Record a voice comment" disabled={commentPostPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
               <button aria-label="Post comment" disabled={!comment.trim() || commentPostPending} type="submit"><FiArrowUp /></button>
             </form>
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}
@@ -2328,7 +2597,13 @@ export default function WorldReaderPage() {
               {engagement.data.comments.slice(0, 3).map((item) => (
                 <article key={item.id}>
                   <b>{item.author?.name || "Fan"}</b>
-                  <p>{item.text}</p>
+                  {item.audio ? (
+                    <div className="voice-comment-bubble-row">
+                      <VoiceMessageBubble audio={item.audio} label="Voice comment" />
+                      {item.text ? <button onClick={() => setVisibleVoiceCommentTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{visibleVoiceCommentTexts[item.id] ? "hide text" : "show text"}</button> : null}
+                    </div>
+                  ) : null}
+                  {item.text && (!item.audio || visibleVoiceCommentTexts[item.id]) ? <p>{item.text}</p> : null}
                   <button aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"} disabled={commentSavePending === item.id} onClick={() => toggleCommentSave(item)} type="button"><FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} /></button>
                 </article>
               ))}
@@ -2396,6 +2671,7 @@ export default function WorldReaderPage() {
       {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={managedPublication.title} /> : null}
       {storyUploadSheetOpen ? <StoryUploadSheet error={storyUploadError} onClose={() => setStoryUploadSheetOpen(false)} onPick={pickStoryFile} /> : null}
       {storyDraft ? <WorldStorySharePreview busy={storyUpload.isPending} error={storyUploadError} onClose={closeStoryDraft} onShare={() => storyUpload.mutate({ file: storyDraft.file })} progress={storyProgress} url={storyDraft.url} /> : null}
+      {voiceCommentOpen ? <VoiceCommentRecorder busy={commentPostPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={addVoiceComment} /> : null}
       {quickChapterStep === "name" ? (
         <QuickChapterNameSheet
           busy={quickChapterSaving}

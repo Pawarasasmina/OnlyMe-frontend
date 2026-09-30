@@ -44,7 +44,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     return (
       <section className="profile-planet-orbit profile-world-member-section">
         <div className="profile-orbit-heading">
-          <p className="profile-orbit-overline">{creatorName}'s World</p>
+          <p className="profile-orbit-overline">{creatorName}&apos;s World</p>
         </div>
         <Link aria-label={`Open ${title}`} className="profile-world-member-card" to={worldTarget}>
           <span className="profile-world-member-planet" aria-hidden="true"><i>{faceEmoji}</i><b>{PLANET}</b></span>
