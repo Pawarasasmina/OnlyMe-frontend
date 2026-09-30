@@ -2073,6 +2073,23 @@ export default function WorldReaderPage() {
     </article>
   );
 
+  if (!experience && owner && sheet === "actions") return (
+    <article className="world-actions-page">
+      <header>
+        <button aria-label="Back to World" onClick={() => setSheet("")} type="button"><FiArrowLeft /></button>
+        <h1 id="world-actions-title">{managedPublication.title}</h1>
+        <p>Your World &middot; subscription</p>
+      </header>
+      <nav aria-label="World actions">
+        <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
+        <button onClick={() => setSheet("name")} type="button"><FiEdit3 /><span><b>Edit</b><small>title, chapters, access</small></span></button>
+        <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
+        <button aria-label={commentsEnabled ? "Turn comments off" : "Turn comments on"} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
+        <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product&rsquo;s own cleanup team</small></span></button>
+      </nav>
+    </article>
+  );
+
   return (
     <>
       <article className={`world-prototype-page ${experience ? "is-experience-detail" : ""}`}>

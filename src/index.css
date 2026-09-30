@@ -26540,6 +26540,62 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   white-space: nowrap !important;
 }
 
+/* Purchased/member World shown on another creator's profile. */
+.profile-planet-orbit:has(.profile-world-prototype-card.is-inside-world) .profile-orbit-heading {
+  padding-bottom: 11px !important;
+}
+.profile-world-prototype-card.profile-orbit-sky.is-inside-world {
+  height: 60px !important;
+  border-radius: 16px !important;
+  background: #0d1116 !important;
+}
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-cover,
+.profile-world-prototype-card.is-inside-world .profile-orbit-stars,
+.profile-world-prototype-card.is-inside-world .profile-orbit-ring { display: none !important; }
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-planet {
+  left: 18px !important;
+  top: 50% !important;
+  width: 38px !important;
+  height: 38px !important;
+  transform: translateY(-50%) !important;
+}
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-planet i {
+  left: 2px !important;
+  top: -7px !important;
+  font-size: 17px !important;
+}
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-planet b { font-size: 34px !important; }
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-copy {
+  top: 50% !important;
+  right: 13px !important;
+  bottom: auto !important;
+  left: 68px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  justify-items: start !important;
+  transform: translateY(-50%) !important;
+  text-align: left !important;
+}
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-copy strong {
+  max-width: 100% !important;
+  font-size: 13px !important;
+  text-shadow: none !important;
+}
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-copy em {
+  grid-column: 1 !important;
+  margin-top: 2px !important;
+  color: rgba(255,255,255,.48) !important;
+  font-size: 9px !important;
+}
+.profile-world-prototype-card.is-inside-world .profile-world-prototype-copy small {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  align-self: center !important;
+  margin: 0 !important;
+  color: #45e879 !important;
+  font-size: 11px !important;
+}
+
 @media (max-width: 640px) {
   .world-preview-page { max-width: none; }
   .world-preview-intro { padding: 52px 18px 0; }
@@ -31092,3 +31148,160 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
     grid-template-columns: 30px minmax(0, 1fr) 30px auto;
   }
 }
+
+/* Final member World profile-card geometry (matches the compact reference). */
+.profile-prototype.is-public-profile .profile-planet-orbit:has(.profile-world-prototype-card.is-inside-world) {
+  width: calc(100% - 40px) !important;
+  margin: 24px 18px 0 22px !important;
+}
+.profile-prototype.is-public-profile .profile-planet-orbit:has(.profile-world-prototype-card.is-inside-world) .profile-orbit-heading {
+  padding: 0 0 11px !important;
+}
+.profile-prototype.is-public-profile .profile-planet-orbit:has(.profile-world-prototype-card.is-inside-world) .profile-orbit-overline {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 16px !important;
+  letter-spacing: -.02em !important;
+}
+.profile-prototype.is-public-profile .profile-world-prototype-card.profile-orbit-sky.is-inside-world {
+  height: 60px !important;
+  border: 1px solid #27303a !important;
+  border-radius: 16px !important;
+  background: #0d1116 !important;
+}
+.profile-prototype.is-public-profile .profile-world-prototype-card.is-inside-world .profile-world-prototype-planet {
+  left: 18px !important;
+  top: 50% !important;
+  width: 38px !important;
+  height: 38px !important;
+  transform: translateY(-50%) !important;
+}
+.profile-prototype.is-public-profile .profile-world-prototype-card.is-inside-world .profile-world-prototype-copy {
+  top: 50% !important;
+  right: 13px !important;
+  bottom: auto !important;
+  left: 68px !important;
+  transform: translateY(-50%) !important;
+}
+.profile-prototype.is-public-profile .profile-world-prototype-card.is-inside-world .profile-world-prototype-copy strong {
+  font-size: 13px !important;
+  line-height: 16px !important;
+}
+.profile-prototype.is-public-profile .profile-world-prototype-card.is-inside-world .profile-world-prototype-copy em {
+  margin-top: 1px !important;
+  font-size: 9px !important;
+  line-height: 12px !important;
+}
+.profile-prototype.is-public-profile .profile-world-prototype-card.is-inside-world .profile-world-prototype-copy small {
+  font-size: 11px !important;
+  line-height: 16px !important;
+}
+
+/* Purchased World: deliberately separate from the promotional orbit artwork. */
+.profile-prototype.is-public-profile .profile-world-member-section {
+  width: calc(100% - 40px) !important;
+  margin: 24px 18px 0 22px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.profile-prototype.is-public-profile .profile-world-member-section .profile-orbit-heading {
+  display: block !important;
+  padding: 0 0 11px !important;
+}
+.profile-prototype.is-public-profile .profile-world-member-section .profile-orbit-overline {
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 16px !important;
+  letter-spacing: -.02em !important;
+}
+.profile-world-member-card {
+  display: grid;
+  width: 100%;
+  height: 60px;
+  grid-template-columns: 45px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #27303a;
+  border-radius: 16px;
+  background: #0d1116;
+  padding: 0 13px 0 18px;
+  color: #fff;
+  text-decoration: none;
+}
+.profile-world-member-planet {
+  position: relative;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+}
+.profile-world-member-planet i {
+  position: absolute;
+  left: 2px;
+  top: -7px;
+  z-index: 1;
+  font-size: 17px;
+  font-style: normal;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.72));
+}
+.profile-world-member-planet b {
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 7px rgba(0,0,0,.8));
+}
+.profile-world-member-copy {
+  display: grid;
+  min-width: 0;
+  justify-items: start;
+  text-align: left;
+}
+.profile-world-member-copy strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-world-member-copy small {
+  overflow: hidden;
+  margin-top: 1px;
+  color: rgba(255,255,255,.48);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-world-member-status {
+  margin-left: 12px;
+  color: #45e879;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.profile-prototype.is-public-profile:has(.profile-world-member-card) .profile-joined { display: none; }
+
+/* Creator World overflow menu: full-page reference layout. */
+.social-app-shell .social-center-scroll > main:has(> .world-actions-page) { min-height:100dvh!important;padding:0!important;background:#080b0e!important; }
+.world-actions-page { box-sizing:border-box!important;width:100%!important;max-width:none!important;min-height:100dvh!important;margin:0!important;padding:22px 20px 80px!important;background:#080b0e!important;color:#fff!important;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif!important; }
+.world-actions-page>header { display:grid!important;grid-template-columns:38px minmax(0,1fr)!important;align-items:start!important;gap:13px!important;margin:0!important; }
+.world-actions-page>header>button { display:grid!important;width:38px!important;height:38px!important;place-items:center!important;border-radius:50%!important;background:#171b20!important;color:rgba(255,255,255,.8)!important; }
+.world-actions-page>header>button svg { width:14px!important;height:14px!important; }
+.world-actions-page>header h1 { margin:5px 0 0!important;overflow:hidden!important;color:#fff!important;font-size:18px!important;font-weight:900!important;line-height:21px!important;letter-spacing:-.25px!important;text-overflow:ellipsis!important;white-space:nowrap!important; }
+.world-actions-page>header p { grid-column:1/-1!important;margin:0!important;color:rgba(255,255,255,.4)!important;font-size:10px!important;font-weight:650!important;line-height:14px!important; }
+.world-actions-page>nav { display:grid!important;gap:0!important;margin-top:8px!important; }
+.world-actions-page>nav>button { display:grid!important;width:100%!important;min-height:52px!important;grid-template-columns:25px minmax(0,1fr)!important;align-items:center!important;gap:14px!important;border-radius:12px!important;padding:6px 7px!important;color:rgba(255,255,255,.78)!important;text-align:left!important; }
+.world-actions-page>nav>button:hover,.world-actions-page>nav>button:focus-visible { background:rgba(255,255,255,.04)!important;outline:0!important; }
+.world-actions-page>nav>button:disabled { opacity:.55!important; }
+.world-actions-page>nav>button>svg { width:15px!important;height:15px!important;justify-self:center!important;color:rgba(255,255,255,.62)!important;stroke-width:1.65!important; }
+.world-actions-page>nav span,.world-actions-page>nav b,.world-actions-page>nav small { display:block!important; }
+.world-actions-page>nav b { color:rgba(255,255,255,.94)!important;font-size:13px!important;font-weight:850!important; }
+.world-actions-page>nav small { margin-top:3px!important;color:rgba(255,255,255,.4)!important;font-size:10px!important;font-weight:600!important; }
