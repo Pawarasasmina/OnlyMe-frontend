@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMoreHorizontal, FiPlay, FiPlus, FiRepeat, FiSend, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMoreHorizontal, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -363,7 +363,19 @@ function ReaderSkeleton() {
   </div>;
 }
 
-function SeenDetailMoreMenu({ canAddToMedia, onAddToMedia, onClose, onReport, onShare }) {
+const SPAM_ACTIONS = [
+  { defaultChecked: true, description: "", key: "reportSpam", label: "Report spam", required: true },
+  { defaultChecked: true, description: "every post and comment by this creator", key: "deleteMessages", label: "Delete all messages" },
+  { defaultChecked: false, description: "", key: "deleteReactions", label: "Delete all reactions" },
+  { defaultChecked: false, description: "they won't see you or write to you", key: "banCreator", label: "Ban creator" },
+  { defaultChecked: false, description: "access ends now · no refund for violations", key: "removeFromWorld", label: "Remove from your World" },
+];
+
+function creatorActionName(creator = {}) {
+  return creatorFirstName(creator) === "Creator" ? "creator" : creatorFirstName(creator);
+}
+
+function SeenDetailMoreMenu({ canAddToMedia, creator, title, onAddToMedia, onClose, onReport, onReportSpam, onShare }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -376,7 +388,10 @@ function SeenDetailMoreMenu({ canAddToMedia, onAddToMedia, onClose, onReport, on
     <button aria-label="Close More menu" className="seen-detail-sheet-scrim" onClick={onClose} type="button" />
     <section aria-label="More Seen actions" aria-modal="true" className="seen-detail-more-sheet" role="dialog">
       <span className="seen-detail-sheet-handle" aria-hidden="true" />
-      <h2>More</h2>
+      <div className="seen-detail-more-heading">
+        <h2>{title}</h2>
+        <p>Experience · {creatorFirstName(creator)}</p>
+      </div>
       <button onClick={onShare} type="button">
         <FiSend aria-hidden="true" />
         <span>Share</span>
@@ -387,9 +402,13 @@ function SeenDetailMoreMenu({ canAddToMedia, onAddToMedia, onClose, onReport, on
           <span>Add to Profile Media</span>
         </button>
       ) : null}
-      <button onClick={onReport} type="button">
+      <button className="is-danger" onClick={onReportSpam} type="button">
+        <FiSlash aria-hidden="true" />
+        <span><strong>Report spam</strong><small>delete messages · reactions · ban</small></span>
+      </button>
+      <button className="is-danger" onClick={onReport} type="button">
         <FiFlag aria-hidden="true" />
-        <span>Report Experience</span>
+        <span>Report</span>
       </button>
     </section>
   </div>;
@@ -446,6 +465,57 @@ function SeenToMediaPicker({ addedKeys, candidates, isOpen, isSubmitting, onClos
       <button className="seen-profile-media-submit" disabled={!selected.length || isSubmitting} onClick={() => onSubmit(selected)} type="button">
         {isSubmitting ? "Adding..." : "Add selected"}
       </button>
+    </section>
+  </div>;
+}
+
+function SeenSpamActionSheet({ creator, error, isOpen, isSubmitting, onBack, onClose, onDone }) {
+  const [selected, setSelected] = useState(() => SPAM_ACTIONS.filter((action) => action.defaultChecked).map((action) => action.key));
+
+  useEffect(() => {
+    if (isOpen) setSelected(SPAM_ACTIONS.filter((action) => action.defaultChecked).map((action) => action.key));
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const toggle = (action) => {
+    if (action.required || isSubmitting) return;
+    setSelected((current) => current.includes(action.key) ? current.filter((key) => key !== action.key) : [...current, action.key]);
+  };
+  const selectedActions = SPAM_ACTIONS.filter((action) => selected.includes(action.key));
+  const actionName = creatorActionName(creator);
+
+  return <div className="seen-detail-sheet-layer">
+    <button aria-label="Close spam report options" className="seen-detail-sheet-scrim" disabled={isSubmitting} onClick={onClose} type="button" />
+    <section aria-label="Spam report options" aria-modal="true" className="seen-detail-spam-sheet" role="dialog">
+      <span className="seen-detail-sheet-handle" aria-hidden="true" />
+      <h2>Looks like spam?</h2>
+      <p>Choose what to do about {actionName}</p>
+      <div className="seen-detail-spam-options">
+        {SPAM_ACTIONS.map((action) => {
+          const checked = selected.includes(action.key);
+          const label = action.key === "banCreator" ? `Ban ${actionName}` : action.key === "removeFromWorld" ? "Remove from your World" : action.label;
+          return <button aria-pressed={checked} disabled={isSubmitting || action.required} key={action.key} onClick={() => toggle(action)} type="button">
+            <span className={checked ? "is-checked" : ""}>{checked ? <FiCheck /> : <FiSquare />}</span>
+            <b>{label}</b>
+            {action.description ? <small>{action.description}</small> : null}
+          </button>;
+        })}
+      </div>
+      {error ? <p className="seen-detail-report-error" role="alert">{error}</p> : null}
+      <button className="seen-detail-spam-submit" disabled={isSubmitting || !selectedActions.length} onClick={() => onDone(selectedActions)} type="button">
+        {isSubmitting ? "Sending..." : `Done · ${selectedActions.length}`}
+      </button>
+      <button className="seen-detail-spam-back" disabled={isSubmitting} onClick={onBack} type="button">Report options</button>
     </section>
   </div>;
 }
@@ -516,6 +586,7 @@ function SeenOverview({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [spamOpen, setSpamOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState("");
   const creator = detail.creator;
@@ -529,8 +600,16 @@ function SeenOverview({
   };
   const report = () => {
     setMoreOpen(false);
+    setSpamOpen(false);
     setReportDone(false);
     setReportOpen(true);
+    setReportError("");
+  };
+  const reportSpam = () => {
+    setMoreOpen(false);
+    setReportOpen(false);
+    setReportDone(false);
+    setSpamOpen(true);
     setReportError("");
   };
   const addToMedia = () => {
@@ -539,6 +618,7 @@ function SeenOverview({
   };
   const closeReport = () => {
     setReportOpen(false);
+    setSpamOpen(false);
     setReportDone(false);
     setReportError("");
   };
@@ -550,6 +630,29 @@ function SeenOverview({
       {
         onError: (error) => setReportError(actionError(error)),
         onSuccess: () => setReportDone(true),
+      },
+    );
+  };
+  const submitSpamReport = (selectedActions) => {
+    if (mutations.report.isPending) return;
+    setReportError("");
+    mutations.report.mutate(
+      {
+        reason: "SPAM",
+        label: "Spam",
+        reportMode: "SPAM_ACTIONS",
+        safetyActions: selectedActions.map(({ key, label, description }) => ({ key, label, description })),
+      },
+      {
+        onError: (error) => setReportError(actionError(error)),
+        onSuccess: () => {
+          setSpamOpen(false);
+          setReportOpen(true);
+          setReportDone(true);
+          const creatorLabel = creatorFirstName(creator);
+          const actionText = selectedActions.some((action) => action.key === "deleteMessages") ? "messages deleted · " : "";
+          onNotice(`${creatorLabel} — ${actionText}report sent ✓`);
+        },
       },
     );
   };
@@ -569,8 +672,8 @@ function SeenOverview({
       </div>
       <button aria-label="Close Seen" className="seen-detail-close" onClick={onBack} type="button"><FiX /></button>
       <div className="seen-detail-more-wrap">
-        <button aria-expanded={moreOpen} aria-label="More Seen actions" className="sr-only" onClick={() => setMoreOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
-        {moreOpen ? <SeenDetailMoreMenu canAddToMedia={canAddToMedia} onAddToMedia={addToMedia} onClose={() => setMoreOpen(false)} onReport={report} onShare={share} /> : null}
+        <button aria-expanded={moreOpen} aria-label="More Seen actions" className="seen-detail-more-button" onClick={() => setMoreOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
+        {moreOpen ? <SeenDetailMoreMenu canAddToMedia={canAddToMedia} creator={creator} title={detail.title} onAddToMedia={addToMedia} onClose={() => setMoreOpen(false)} onReport={report} onReportSpam={reportSpam} onShare={share} /> : null}
       </div>
     </header>
 
@@ -623,6 +726,19 @@ function SeenOverview({
       </footer>
     </div>
   </section>
+  <SeenSpamActionSheet
+    creator={creator}
+    error={reportError}
+    isOpen={spamOpen}
+    isSubmitting={mutations.report.isPending}
+    onBack={() => {
+      setSpamOpen(false);
+      setReportOpen(true);
+      setReportError("");
+    }}
+    onClose={closeReport}
+    onDone={submitSpamReport}
+  />
   <SeenReportSheet
     error={reportError}
     isDone={reportDone}
