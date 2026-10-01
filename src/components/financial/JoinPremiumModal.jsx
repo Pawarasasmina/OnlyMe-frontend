@@ -60,7 +60,13 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
         client.invalidateQueries({ queryKey: ["world", publication.id] }),
         client.invalidateQueries({ queryKey: ["unified-profile"] }),
       ]);
-      await onSuccess?.(response.data.data.membership);
+      const result = response.data.data;
+      if (result.queued) {
+        setError(`You’re #${result.waitingList?.position || 1} on the waiting list. ✦${result.waitingList?.heldStars || chargePrice} is reserved and will be returned if you cancel.`);
+        setKey("");
+      } else {
+        await onSuccess?.(result.membership);
+      }
     } catch (requestError) {
       const code = financialErrorCode(requestError);
       if (code === "MEMBERSHIP_ALREADY_ACTIVE") {

@@ -3,12 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
+  FiArchive,
   FiBarChart2,
-  FiBell,
   FiBookmark,
   FiCalendar,
-  FiCamera,
-  FiCheck,
   FiChevronRight,
   FiEdit3,
   FiEye,
@@ -16,8 +14,6 @@ import {
   FiFlag,
   FiGift,
   FiGrid,
-  FiLink,
-  FiMessageSquare,
   FiMoreHorizontal,
   FiPlus,
   FiRefreshCw,
@@ -30,6 +26,7 @@ import {
   FiZap,
 } from "react-icons/fi";
 import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferModal";
+import AppShareSheet from "../../components/share/ShareSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanCard from "../../components/fanWeb/shared/FanCard";
@@ -51,6 +48,7 @@ import { analyticsService } from "../../services/analyticsService";
 import { dreamService } from "../../services/dreamService";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
+import { walletService } from "../../services/walletService";
 import { resolveMediaUrl } from "../../utils/media";
 import { followInvalidationKeys } from "../../utils/savedPeople";
 import { canCreateFeedPost } from "../../utils/postPermissions";
@@ -182,73 +180,24 @@ function ProfileViewersSheet({ isOpen, onClose }) {
   );
 }
 
-function ProfileShareSheet({ isOpen, onClose, profile, shareUrl, viewerCapabilities = {} }) {
-  const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState("");
-  const avatar = resolveMediaUrl(profile.avatar);
-  const shortUrl = shareUrl.replace(/^https?:\/\//, "").replace(/^www\./, "");
+function ProfileShareSheet({ isOpen, onClose, profile, shareUrl }) {
   const firstName = String(profile.displayName || profile.username || "Profile").trim().split(/\s+/)[0] || "Profile";
 
   if (!isOpen) return null;
-
-  const copy = async () => {
-    setError("");
-    try {
-      const ok = await copyText(shareUrl);
-      if (!ok) throw new Error("Copy failed");
-    } catch {
-      setError("Could not copy link.");
-      return false;
-    }
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-    return true;
-  };
-
-  const shareStory = async () => {
-    await copy();
-    onClose();
-    navigate(viewerCapabilities.canCreate ? "/create" : "/wall");
-  };
-
-  const shareWhatsApp = () => {
-    const text = `${profile.displayName} on @seen - ${shareUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-  };
-
-  return (
-    <div aria-modal="true" className="profile-share-backdrop" onClick={onClose} role="dialog">
-      <section className="profile-share-sheet" onClick={(event) => event.stopPropagation()}>
-        <span className="profile-share-handle" />
-        <h2>Share</h2>
-        <div className="profile-share-preview">
-          <FanAvatar name={profile.displayName} size="h-[58px] w-[58px]" src={avatar} />
-          <strong>{firstName}</strong>
-          <small>@{profile.username} - step into my worlds</small>
-          <span>{shortUrl}</span>
-        </div>
-        <div className="profile-share-actions">
-          <button onClick={copy} type="button">
-            <i>{copied ? <FiCheck /> : <FiLink />}</i>
-            <span>{copied ? "Copied" : "Copy link"}</span>
-          </button>
-          <button onClick={shareStory} type="button">
-            <i><FiCamera /></i>
-            <span>Your story</span>
-          </button>
-          <button onClick={shareWhatsApp} type="button">
-            <i><FiMessageSquare /></i>
-            <span>WhatsApp</span>
-          </button>
-        </div>
-        {error ? <p className="profile-share-error">{error}</p> : null}
-        <Link className="profile-share-preview-link" onClick={onClose} to={`/profile/${encodeURIComponent(profile.username)}`}>
-          <FiEye /> What your friend will see <FiChevronRight />
-        </Link>
-      </section>
-    </div>
-  );
+  return <AppShareSheet
+    isOpen
+    onClose={onClose}
+    payload={{
+      canonicalUrl: shareUrl,
+      contentId: String(profile.ownerUserId || profile.id || profile._id || ""),
+      contentType: "profile",
+      destinationRoute: `/profile/${encodeURIComponent(profile.username)}`,
+      imageUrl: resolveMediaUrl(profile.avatar),
+      textPreview: firstName,
+      title: `${profile.displayName || firstName} on @seen`,
+    }}
+    variant="seen"
+  />;
 }
 
 function ProfileSkeleton() {
@@ -332,33 +281,46 @@ function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities =
   );
 }
 
-function OwnerQuickActionsSheet({ isOpen, onClose, profile, viewerCapabilities = {} }) {
+function OwnerQuickActionsSheet({ isOpen, onClose }) {
+  const [view, setView] = useState("menu");
+  const experiencesQuery = useQuery({
+    queryKey: ["profile-owner-experiences"],
+    queryFn: () => savedService.category("experiences", { page: 1, limit: 50 }).then((response) => response.data.data.items || []),
+    enabled: isOpen && view === "experiences",
+    retry: false,
+  });
+  const walletQuery = useQuery({
+    queryKey: ["wallet"],
+    queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet),
+    enabled: isOpen,
+    retry: false,
+  });
+  useEffect(() => {
+    if (!isOpen) setView("menu");
+  }, [isOpen]);
   if (!isOpen) return null;
-  const isCreator = profile.isCreator;
+  const wallet = walletQuery.data;
+  const walletSummary = wallet
+    ? `${Number(wallet.balance || 0).toLocaleString()} · $${Number(wallet.balanceUsd || 0).toFixed(2)}`
+    : "Coins & earnings";
   const actions = [
-    isCreator && viewerCapabilities.canAccessStudio ? {
-      icon: FiBarChart2,
-      label: "Creator Studio",
-      sub: "Analytics & payouts",
-      to: "/studio",
-    } : null,
     {
-      icon: FiBell,
-      label: "Activity",
-      sub: "Notification history",
-      to: "/activity",
+      icon: FiBookmark,
+      label: "Unlocked",
+      sub: "Experiences you own — forever",
+      onClick: () => setView("experiences"),
+    },
+    {
+      icon: FiArchive,
+      label: "Archive",
+      sub: "hidden from your profile",
+      to: "/archive",
     },
     {
       icon: FiZap,
       label: "Wallet",
-      sub: "Stars & payments",
+      sub: walletSummary,
       to: "/wallet",
-    },
-    {
-      icon: FiBookmark,
-      label: "Saved",
-      sub: "Your library",
-      to: "/saved",
     },
     {
       icon: FiSettings,
@@ -370,21 +332,34 @@ function OwnerQuickActionsSheet({ isOpen, onClose, profile, viewerCapabilities =
 
   return (
     <div aria-modal="true" className="profile-quick-actions-backdrop" onClick={onClose} role="dialog">
-      <section className="profile-quick-actions-sheet" onClick={(event) => event.stopPropagation()}>
+      <section className={`profile-quick-actions-sheet ${view === "experiences" ? "is-experiences" : "is-your-things"}`} onClick={(event) => event.stopPropagation()}>
         <span className="profile-quick-actions-handle" />
-        <h2>Quick actions</h2>
-        <div className="profile-quick-actions-list">
-          {actions.map(({ icon: Icon, label, sub, to }) => (
-            <Link className="profile-quick-action-row" key={label} onClick={onClose} to={to}>
-              <span className="profile-quick-action-icon"><Icon /></span>
-              <span className="profile-quick-action-copy">
-                <b>{label}</b>
-                <small>{sub}</small>
-              </span>
-              <FiChevronRight />
-            </Link>
-          ))}
-        </div>
+        {view === "experiences" ? <>
+          <h2>Premium Experiences</h2>
+          <div className="profile-owner-experience-list">
+            {experiencesQuery.isLoading ? <p className="profile-owner-experience-state">Loading Experiences…</p> : null}
+            {experiencesQuery.isError ? <p className="profile-owner-experience-state is-error">Experiences could not be loaded.</p> : null}
+            {(experiencesQuery.data || []).map((item) => {
+              const destination = item.kind === "EXPERIENCE" ? `/experience/${item.id}` : `/world/${item.id}`;
+              return <Link key={item.id} onClick={onClose} to={destination}>
+                <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <b>✦</b>}</span>
+                <i><strong>{item.title || "Untitled Experience"}</strong><small>{item.creator?.name || "Experience"}</small></i>
+                <FiChevronRight />
+              </Link>;
+            })}
+            {!experiencesQuery.isLoading && !experiencesQuery.isError && !(experiencesQuery.data || []).length ? <p className="profile-owner-experience-state">No Experiences yet.</p> : null}
+          </div>
+        </> : <>
+          <h2>Your things</h2>
+          <div className="profile-quick-actions-list">
+            {actions.map(({ icon: Icon, label, onClick, sub, to }) => {
+              const content = <><span className="profile-quick-action-icon"><Icon /></span><span className="profile-quick-action-copy"><b>{label}</b><small>{sub}</small></span><FiChevronRight /></>;
+              return to
+                ? <Link className="profile-quick-action-row" key={label} onClick={onClose} to={to}>{content}</Link>
+                : <button className="profile-quick-action-row" key={label} onClick={onClick} type="button">{content}</button>;
+            })}
+          </div>
+        </>}
       </section>
     </div>
   );
@@ -454,13 +429,13 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
   );
 }
 
-function MoreMenu({ isOwner, profile, relationship = {}, viewerCapabilities = {} }) {
+function MoreMenu({ isOwner, profile, relationship = {} }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="profile-more-wrap">
       <button aria-expanded={open} aria-label="More profile actions" className="profile-action-chip is-icon" onClick={() => setOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
       {isOwner ? (
-        <OwnerQuickActionsSheet isOpen={open} onClose={() => setOpen(false)} profile={profile} viewerCapabilities={viewerCapabilities} />
+        <OwnerQuickActionsSheet isOpen={open} onClose={() => setOpen(false)} />
       ) : (
         <VisitorMoreSheet isOpen={open} onClose={() => setOpen(false)} profile={profile} relationship={relationship} />
       )}
@@ -570,7 +545,7 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
         {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
       </div>
       <ProfileViewersSheet isOpen={viewersOpen} onClose={() => setViewersOpen(false)} />
-      <ProfileShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} shareUrl={shareUrl} viewerCapabilities={viewerCapabilities} />
+      <ProfileShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} shareUrl={shareUrl} />
       {directGiftOpen ? <StoryGiftPicker onClose={() => setDirectGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName }} sourceType="DIRECT" /> : null}
     </section>
   );
@@ -746,13 +721,13 @@ function ProfileTabs({ tab, setTab }) {
 function ProfileMixedContentPanel({ emptyText, reposted = false, seens = [], wallPosts = [] }) {
   if (!seens.length && !wallPosts.length) return <div className="profile-empty-state">{emptyText}</div>;
   return <div className="profile-mixed-content">
-    {wallPosts.length ? <section className="profile-mixed-section">
-      <header><h2>Wall notes</h2><span>{wallPosts.length}</span></header>
-      <div className="profile-notes-list">{wallPosts.map((post) => <FeedPost key={post.feedId || post.shareId || post.id} post={post} />)}</div>
-    </section> : null}
     {seens.length ? <section className="profile-mixed-section is-seens">
       <header><h2>Seens</h2><span>{seens.length}</span></header>
       <ProfileContentGrid content={seens} kind="seens" reposted={reposted} />
+    </section> : null}
+    {wallPosts.length ? <section className="profile-mixed-section is-wall-notes">
+      <header><h2>Wall notes</h2><span>{wallPosts.length}</span></header>
+      <div className="profile-notes-list">{wallPosts.map((post) => <FeedPost key={post.feedId || post.shareId || post.id} post={post} />)}</div>
     </section> : null}
   </div>;
 }

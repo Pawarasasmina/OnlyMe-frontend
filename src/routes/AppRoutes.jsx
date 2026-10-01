@@ -58,6 +58,7 @@ import PurchasesPage from "../pages/social/PurchasesPage";
 import MembershipsPage from "../pages/social/MembershipsPage";
 import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
 import SavedPage from "../pages/social/SavedPage";
+import ArchivePage from "../pages/social/ArchivePage";
 import AdminReportListPage from "../pages/admin/AdminReportListPage";
 import AdminReportDetailPage from "../pages/admin/AdminReportDetailPage";
 import EntityDetailPage from "../pages/social/EntityDetailPage";
@@ -136,6 +137,7 @@ function AppRoutes() {
           <Route path="/activity" element={<ActivityPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/saved/:category" element={<SavedPage />} />
+          <Route path="/archive" element={<ArchivePage />} />
           <Route path="/places/:id" element={<EntityDetailPage />} />
           <Route path="/books/:id" element={<EntityDetailPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />

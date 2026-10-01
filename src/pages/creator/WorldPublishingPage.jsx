@@ -304,7 +304,10 @@ function ExperienceProgress({ step }) {
 
 function ExperienceDraftPreview({ chapters, coverUrl, onClose, storyPreviews, world }) {
   const [chapterIndex, setChapterIndex] = useState(null);
+  const [activePhoto, setActivePhoto] = useState(null);
   const video = storyPreviews.find((item) => item.file?.type?.startsWith("video/") || item.media?.mediaType === "VIDEO");
+  const photos = storyPreviews.filter((item) => item.file?.type?.startsWith("image/") || item.media?.mediaType === "IMAGE").slice(0, 3);
+  const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType));
   if (chapterIndex !== null && chapters[chapterIndex]) {
     const chapter = chapters[chapterIndex];
     const blocks = [...(chapter.blocks || [])].sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
@@ -340,8 +343,7 @@ function ExperienceDraftPreview({ chapters, coverUrl, onClose, storyPreviews, wo
     <header className="experience-viewer-head"><button aria-label="Close preview" onClick={onClose} type="button"><FiX /></button><span>PREVIEW</span></header>
     <main>
       <div className="experience-viewer-media">
-        {video?.url ? <video autoPlay muted playsInline loop src={video.url} /> : coverUrl ? <img alt="Experience cover preview" src={coverUrl} /> : <span aria-hidden="true">✦</span>}
-        {video?.url ? <small>▶ 0:30</small> : null}
+        {coverUrl ? <img alt="Experience cover preview" src={coverUrl} /> : <span aria-hidden="true">✦</span>}
       </div>
       <h1>{world.title || "Untitled Experience"}</h1>
       <p>{world.experiencePath || world.description || "Add a short description for this Experience."}</p>
@@ -349,7 +351,14 @@ function ExperienceDraftPreview({ chapters, coverUrl, onClose, storyPreviews, wo
       <div className="experience-viewer-chapters">
         {chapters.length ? chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => setChapterIndex(index)} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{index === 0 ? <em>PREVIEW</em> : <FiLock />}<b>›</b></button>) : <p>No chapters added yet.</p>}
       </div>
+      {storyPreviews.length ? <section className="experience-public-previews">
+        <header><span>PREVIEW</span><h2>Meet the Experience</h2><p>This is what people see before purchasing.</p></header>
+        {video?.url ? <div className="experience-public-preview-video"><video controls playsInline preload="metadata" src={video.url} /><span>{video.label || "Preview video"}</span></div> : null}
+        {photos.length ? <div className="experience-public-preview-photos">{photos.map((photo, index) => <button aria-label={`Open preview photo ${index + 1}`} key={photo.id} onClick={() => setActivePhoto(photo)} type="button"><img alt={photo.label || `Preview photo ${index + 1}`} src={photo.url} /></button>)}</div> : null}
+        {voice?.url ? <div className="experience-public-preview-voice"><span><FiPlay /></span><div><b>{voice.label || "Voice hello"}</b><small>A voice introduction</small></div><audio controls preload="metadata" src={voice.url} /></div> : null}
+      </section> : null}
     </main>
+    {activePhoto ? <div aria-label="Experience photo preview" aria-modal="true" className="experience-public-preview-lightbox" onClick={() => setActivePhoto(null)} role="dialog"><button aria-label="Close preview" onClick={() => setActivePhoto(null)} type="button"><FiX /></button><img alt={activePhoto.label || "Experience preview"} src={activePhoto.url} /></div> : null}
   </article>;
 }
 
@@ -372,6 +381,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const pendingDraftSaveRef = useRef(false);
   const pendingExperienceContinueRef = useRef(false);
   const saveDraftRef = useRef(null);
+  const savingRef = useRef(false);
   const worldEditVersionRef = useRef(0);
   const storySaveResolvers = useRef(new Map());
   const deepLinkedChapterOpenedRef = useRef(false);
@@ -675,10 +685,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   };
 
   const saveDraft = async (retryingConflict = false, snapshotOverride = null) => {
-    if (saving || uploading) {
+    if (savingRef.current || uploading) {
       pendingDraftSaveRef.current = true;
       return null;
     }
+    savingRef.current = true;
     setSaving(true);
     setError("");
     setNotice("Saving...");
@@ -754,6 +765,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             { ...current, ...retrySnapshot },
             requestEditVersion,
           ));
+          savingRef.current = false;
           return await saveDraft(true, retrySnapshot);
         } catch (retryError) {
           setError(publicationError(retryError));
@@ -765,6 +777,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       setNotice("Save paused");
       return null;
     } finally {
+      savingRef.current = false;
       setSaving(false);
       if (pendingDraftSaveRef.current) {
         pendingDraftSaveRef.current = false;
@@ -800,6 +813,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   useEffect(() => {
     if (!creationStarted) return undefined;
+    // A title/details autosave may still be finishing when a cropped preview is
+    // handed back. Wait for it instead of rejecting the media upload as failed.
+    if (saving || uploading || savingRef.current) return undefined;
     const pendingIds = storyPreviews
       .filter((preview) => preview.file && !preview.saved && !autoSaveAttemptedStoryIds.current.has(preview.id))
       .map((preview) => preview.id);
@@ -807,19 +823,21 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
     pendingIds.forEach((storyId) => autoSaveAttemptedStoryIds.current.add(storyId));
     const timer = window.setTimeout(async () => {
-      try {
-        const saved = await saveDraftRef.current?.();
-        for (const resolver of storySaveResolvers.current.values()) {
-          if (saved) resolver.resolve(saved);
-          else resolver.reject(new Error("Story upload could not be saved."));
-        }
-      } finally {
-        storySaveResolvers.current.clear();
-        setStoryAutoSaving(false);
+      const saved = await saveDraftRef.current?.();
+      if (!saved && (savingRef.current || uploading)) {
+        pendingIds.forEach((storyId) => autoSaveAttemptedStoryIds.current.delete(storyId));
+        return;
       }
+      pendingIds.forEach((storyId) => {
+        const resolver = storySaveResolvers.current.get(storyId);
+        if (saved) resolver?.resolve(saved);
+        else resolver?.reject(new Error("Preview media could not be saved. Check the Experience details and try again."));
+        storySaveResolvers.current.delete(storyId);
+      });
+      setStoryAutoSaving(false);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [creationStarted, storyPreviews]);
+  }, [creationStarted, saving, storyPreviews, uploading]);
 
   const uploadCover = async (file) => {
     if (!file) return;
@@ -1514,7 +1532,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       <p className="planet-create-intro">{experience ? "Experiences are premium structured journeys made of chapters, unlocked with one permanent one-time purchase." : "A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside."}</p>
       <button className="planet-choice-card is-selected" onClick={() => setCreationStarted(true)} type="button">
         <span className="planet-choice-orbit"><i>{FLEX}</i><b>{experience ? STAR : PLANET}</b></span>
-        <span><strong>{experience ? "Experience" : "Your World"}</strong><small>{experience ? "Up to 3 premium Experiences · one-time unlock" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused premium journey that unlocks permanently after purchase." : "Premium chapters, private stories and closer access—all together."}</em></span>
+        <span><strong>{experience ? "Experience" : "Your World"}</strong><small>{experience ? "Unlimited premium Experiences · one-time unlock" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused premium journey that unlocks permanently after purchase." : "Premium chapters, private stories and closer access—all together."}</em></span>
         <FiArrowUpRight />
       </button>
       <div className="planet-create-principles"><span><FiCheck /> {experience ? "Publishes immediately" : "One clear monthly price"}</span><span><FiCheck /> {experience ? "One-time premium unlock" : "1 free preview chapter"}</span><span><FiCheck /> {experience ? "You choose the price" : "Up to 3 preview stories"}</span></div>

@@ -43,13 +43,13 @@ import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
+import AppShareSheet from "../../components/share/ShareSheet";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
 import { useSendSharedContent } from "../../hooks/share/useSendSharedContent";
 import { membershipService } from "../../services/membershipService";
 import { publicationService as api } from "../../services/publicationService";
-import { savedService } from "../../services/savedService";
 import { walletService } from "../../services/walletService";
 import { financialErrorCode, financialErrorMessage } from "../../utils/financialErrorMessages";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
@@ -71,8 +71,8 @@ const WORLD_REPORT_REASONS = [
 ];
 
 const WORLD_SPAM_ACTIONS = [
-  { description: "", key: "reportSpam", label: "Report spam" },
-  { description: "every post and comment by this creator", key: "deleteMessages", label: "Delete all messages" },
+  { defaultChecked: true, description: "", key: "reportSpam", label: "Report spam" },
+  { defaultChecked: true, description: "every post and comment by this creator", key: "deleteMessages", label: "Delete all messages" },
   { defaultChecked: false, description: "", key: "deleteReactions", label: "Delete all reactions" },
   { defaultChecked: false, description: "they won't see you or write to you", key: "banCreator", label: "Ban creator" },
   { defaultChecked: false, description: "access ends now · no refund for violations", key: "removeFromWorld", label: "Remove from your World" },
@@ -172,8 +172,9 @@ function includedWorldExperiences(publication = {}) {
 function privateStoryItems(chapters) {
   return chapters
     .flatMap((chapter) => (chapter.blocks || [])
-      .filter((block) => block.metadata?.storyPreview && block.media?.secureUrl)
-      .map((block) => ({ ...block.media, title: block.metadata?.label || chapter.title || "Story" })));
+      .filter((block) => block.metadata?.storyPreview && ["IMAGE", "VIDEO"].includes(block.type) && block.media?.secureUrl)
+      .map((block) => ({ ...block.media, title: block.metadata?.label || chapter.title || "Story" })))
+    .slice(0, 3);
 }
 
 function joinPriceText(offer = {}) {
@@ -208,7 +209,7 @@ function BottomSheet({ children, labelledBy, onClose, sheetClassName = "" }) {
   );
 }
 
-function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapters, creator, joinPending, memberPreview, onBack, onJoin, onOpenWorld, onShare, owner, publication }) {
+function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapters, creator, joinPending, memberPreview, onBack, onCancelWaitlist, onJoin, onOpenWorld, onShare, owner, publication, waitingList, waitlistPending }) {
   const media = firstWorldMedia(publication, chapters);
   const stories = storyItems(chapters);
   const displayName = creator.name || creator.username || "Creator";
@@ -321,6 +322,10 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
         <Link className="world-preview-cta world-join-button" to={`/studio/worlds/${publication.id}/edit`}>Manage World</Link>
       ) : memberState ? (
         <button className="world-preview-cta world-join-button" onClick={onOpenWorld} type="button">{`You're inside - open ${firstName}'s World`}</button>
+      ) : waitingList ? (
+        <button className="world-preview-cta world-join-button is-waiting" disabled={waitlistPending} onClick={onCancelWaitlist} type="button">
+          <span className="world-join-label">{waitlistPending ? "Returning Stars..." : `Waiting list #${Number(waitingList.position || 1).toLocaleString()} · Cancel`}</span>
+        </button>
       ) : (
         <button className="world-preview-cta world-join-button" disabled={joinPending || !publication?.id || offer.enabled === false} onClick={onJoin} type="button">
           {joinPending ? <span className="world-join-label">Confirming...</span> : <><span className="world-join-label">Join {firstName}&rsquo;s World</span>
@@ -411,8 +416,8 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
 }
 
 function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publication }) {
-  const { showToast } = useFanToast();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState("");
@@ -430,15 +435,6 @@ function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publicat
     setSpamOpen(false);
     setReportDone(false);
     setReportError("");
-  };
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/world/${publicationId}`);
-      setMoreOpen(false);
-      showToast("World link copied.");
-    } catch {
-      showToast("Could not copy the World link.");
-    }
   };
   const submitSpamReport = (selectedActions) => {
     setReportError("");
@@ -475,11 +471,25 @@ function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publicat
         <button className="world-member-door-cta" onClick={onStepInside} type="button">Step inside</button>
       </section>
     </article>
-    {moreOpen ? <WorldInsideMoreSheet creator={creator} onClose={() => setMoreOpen(false)} onReport={() => { setMoreOpen(false); setReportOpen(true); }} onReportSpam={() => { setMoreOpen(false); setSpamOpen(true); }} onShare={copyLink} publication={publication} /> : null}
+    {moreOpen ? <WorldInsideMoreSheet creator={creator} onClose={() => setMoreOpen(false)} onReport={() => { setMoreOpen(false); setReportOpen(true); }} onReportSpam={() => { setMoreOpen(false); setSpamOpen(true); }} onShare={() => { setMoreOpen(false); setShareOpen(true); }} publication={publication} /> : null}
+    {shareOpen ? <ShareSheet onClose={() => setShareOpen(false)} publication={publication} /> : null}
     {spamOpen ? <WorldSpamActionSheet creator={creator} error={reportError} isSubmitting={reportMutation.isPending} onClose={closeReport} onDone={submitSpamReport} /> : null}
     {reportOpen ? <WorldReportSheet error={reportError} isDone={reportDone} isSubmitting={reportMutation.isPending} onClose={closeReport} onDone={closeReport} onSelectReason={(reason) => { setReportError(""); reportMutation.mutate({ reason: reason.value, label: reason.label }); }} /> : null}
     </>
   );
+}
+
+function experiencePreviewMedia(chapters = []) {
+  const seen = new Set();
+  return chapters.flatMap((chapter) => (chapter.blocks || [])
+    .filter((block) => block.metadata?.storyPreview && block.media?.secureUrl && ["IMAGE", "VIDEO", "AUDIO", "VOICE"].includes(block.type))
+    .map((block) => ({ ...block.media, id: block.id, label: block.metadata?.label || block.metadata?.caption || "Experience preview", type: block.type })))
+    .filter((item) => {
+      const key = item.assetId || item.secureUrl;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 function AnalyticsBar({ label, tone = "blue", value, width }) {
@@ -575,20 +585,27 @@ function PriceSheet({ busy, currentPriceFallback, error, loading, onClose, onSav
   );
 }
 
-function SeatsSheet({ busy, management, onClose, onOpenWave }) {
+function SeatsSheet({ busy, management, onClose, onOpenPrice, onOpenWave }) {
   const seat = management?.seatStatus || {};
   const occupied = Number(seat.occupiedSeats || 0);
   const capacity = Number(seat.capacity || 0);
+  const foundingCapacity = Number(seat.foundingCapacity || capacity || 0);
+  const waiting = Number(seat.waitingListCount || 0);
+  const waveSize = Number(seat.waveSize || 0);
   const progress = capacity ? Math.min(100, (occupied / capacity) * 100) : 0;
   return (
-    <BottomSheet labelledBy="world-seats-title" onClose={onClose}>
-      <h2 id="world-seats-title">Seats & waves</h2>
-      <p className="world-sheet-copy">A World grows in waves. Existing members keep their subscription price.</p>
-      <p className="world-seat-big"><b>{occupied.toLocaleString()}</b> of {capacity ? capacity.toLocaleString() : "unlimited"} seats taken</p>
-      <div className="world-seat-progress"><i style={{ width: `${progress}%` }} /></div>
-      <p className="world-sheet-copy">Founding circle: first {Number(seat.foundingCapacity || 0).toLocaleString()} residents.</p>
-      {seat.waitingListAvailable ? <p className="world-sheet-copy">Waiting list: {Number(seat.waitingListCount || 0).toLocaleString()}</p> : <p className="world-sheet-copy">Waiting list is not available until queue records exist.</p>}
-      <button className="world-sheet-primary" disabled={busy || !capacity} onClick={onOpenWave} type="button">{busy ? "Opening..." : `Open a wave · +${Number(seat.waveSize || 0).toLocaleString()} seats`}</button>
+    <BottomSheet labelledBy="world-seats-title" onClose={onClose} sheetClassName="is-seats-sheet">
+      <h2 id="world-seats-title">Seats &amp; waves</h2>
+      <p className="world-sheet-copy">A world isn&rsquo;t stretched &mdash; it grows in waves. Scarcity is what makes a seat worth wanting.</p>
+      <p className="world-seat-big"><b>{occupied.toLocaleString()}</b> <span>of {capacity ? capacity.toLocaleString() : "unlimited"} seats taken</span></p>
+      <div aria-label={`${Math.round(progress)}% of seats taken`} aria-valuemax="100" aria-valuemin="0" aria-valuenow={Math.round(progress)} className="world-seat-progress" role="progressbar"><i style={{ width: `${progress}%` }} /></div>
+      <p className="world-seat-founding">The first {foundingCapacity.toLocaleString()} are the Founding circle &mdash; marked forever inside the world.</p>
+      <div className="world-seat-waiting">
+        <FiUserPlus aria-hidden="true" />
+        <span><b>Waiting list &middot; {waiting.toLocaleString()}</b><small>{seat.waitingListAvailable ? "their coins are frozen at your price — the money lands when you open a wave and they walk in" : "opens automatically when every current seat is taken"}</small></span>
+      </div>
+      <button className="world-sheet-primary" disabled={busy || !capacity || !waveSize} onClick={onOpenWave} type="button">{busy ? "Opening..." : `Open a wave · +${waveSize.toLocaleString()} seats`}</button>
+      <p className="world-seat-wave-note">New wave joins at the current price &mdash; everyone inside keeps theirs. Raising the price right before a wave is the move; <button onClick={onOpenPrice} type="button">set wave price &gt;</button></p>
     </BottomSheet>
   );
 }
@@ -709,45 +726,50 @@ function ModeratorsSheet({ addError, addPending, candidates = [], candidatesErro
   const moderators = management?.moderators || [];
   const limit = Number(management?.moderatorLimit || 2);
   const remaining = Math.max(0, limit - moderators.length);
+  const productName = publication?.kind === "EXPERIENCE" ? "experience" : "world";
   return (
-    <BottomSheet labelledBy="world-moderators-title" onClose={onClose}>
+    <BottomSheet labelledBy="world-moderators-title" onClose={onClose} sheetClassName="is-moderators-sheet">
       <section className="world-moderators-sheet">
         <h2 id="world-moderators-title">Moderators</h2>
-        <p className="world-moderators-copy">Each experience is its own product - with its own cleanup team. For <b>{publication?.title || "this experience"}</b>. Your voice, your money and your Direct Access can&apos;t be delegated - to anyone.</p>
+        <p className="world-moderators-copy">Each {productName} is its own product - with its own cleanup team. For <b>{publication?.title || `this ${productName}`}</b>. Your voice, your money and your Direct Access can&apos;t be delegated - to anyone.</p>
         <div className="world-moderator-permissions">
-          <p className="is-allowed"><FiCheck /> Remove spam & comments in this experience</p>
+          <p className="is-allowed"><FiCheck /> Remove spam &amp; comments in this {productName}</p>
           <p><FiX /> Speak or post as you</p>
           <p><FiX /> Answer your Direct Access</p>
           <p><FiX /> See your earnings</p>
         </div>
-        <h3>MODERATORS HERE</h3>
-        <div className="world-moderator-list">
-          {moderators.length ? moderators.map((item) => (
-            <article className="world-moderator-row" key={item.id}>
-              <FanAvatar name={item.displayName || item.name} size="h-10 w-10" src={item.avatar} />
-              <span><b>{item.displayName || item.name || item.username}</b><small>moderator</small></span>
-              <button aria-label={`Remove ${item.displayName || item.name || item.username}`} disabled={removePendingId === item.id} onClick={() => onRemove(item)} type="button"><FiX /></button>
-            </article>
-          )) : <p className="world-moderators-empty">No moderators yet. Add someone you trust to keep this experience clean.</p>}
-        </div>
-        {remaining > 0 ? (
-          <>
-            <h3>ADD (UP TO {limit})</h3>
-            {candidatesLoading ? <p className="world-moderators-empty">Loading eligible people...</p> : null}
-            {candidatesError ? <p className="world-sheet-error">{candidatesError}</p> : null}
-            {!candidatesLoading && !candidates.length ? <p className="world-moderators-empty">No eligible candidates right now.</p> : null}
-            <div className="world-moderator-candidates">
-              {candidates.map((item) => (
-                <button aria-label={`Select ${item.displayName || item.name || item.username}`} disabled={addPending} key={item.id} onClick={() => onAddSelect(item)} type="button">
-                  <FanAvatar name={item.displayName || item.name} size="h-12 w-12" src={item.avatar} />
-                  <b>{firstName(item)}</b>
-                </button>
+        <div className="world-moderator-scroll-region">
+          {moderators.length ? <>
+            <h3>MODERATORS HERE</h3>
+            <div className="world-moderator-list">
+              {moderators.map((item) => (
+                <article className="world-moderator-row" key={item.id}>
+                  <FanAvatar name={item.displayName || item.name} size="h-10 w-10" src={item.avatar} />
+                  <span><b>{item.displayName || item.name || item.username}</b><small>moderator</small></span>
+                  <button aria-label={`Remove ${item.displayName || item.name || item.username}`} disabled={removePendingId === item.id} onClick={() => onRemove(item)} type="button"><FiX /></button>
+                </article>
               ))}
             </div>
-            {addError ? <p className="world-sheet-error">{addError}</p> : null}
-          </>
-        ) : null}
-        <footer>Members never see who moderates. Cleanup is silent.</footer>
+          </> : null}
+          {remaining > 0 ? (
+            <>
+              <h3>ADD (UP TO {limit})</h3>
+              {candidatesLoading ? <p className="world-moderators-empty">Loading eligible people...</p> : null}
+              {candidatesError ? <p className="world-sheet-error">{candidatesError}</p> : null}
+              {!candidatesLoading && !candidates.length ? <p className="world-moderators-empty">No eligible candidates right now.</p> : null}
+              <div className="world-moderator-candidates">
+                {candidates.map((item) => (
+                  <button aria-label={`Select ${item.displayName || item.name || item.username}`} disabled={addPending} key={item.id} onClick={() => onAddSelect(item)} type="button">
+                    <FanAvatar name={item.displayName || item.name} size="h-12 w-12" src={item.avatar} />
+                    <b>{firstName(item)}</b>
+                  </button>
+                ))}
+              </div>
+              {addError ? <p className="world-sheet-error">{addError}</p> : null}
+            </>
+          ) : null}
+          <footer>Members never see who moderates. Cleanup is silent.</footer>
+        </div>
       </section>
     </BottomSheet>
   );
@@ -756,7 +778,7 @@ function ModeratorsSheet({ addError, addPending, candidates = [], candidatesErro
 function AddModeratorConfirmSheet({ busy, candidate, error, onCancel, onConfirm, publication }) {
   if (!candidate) return null;
   return (
-    <BottomSheet labelledBy="world-moderator-confirm-title" onClose={onCancel}>
+    <BottomSheet labelledBy="world-moderator-confirm-title" onClose={onCancel} sheetClassName="is-moderator-confirm-sheet">
       <section className="world-moderator-confirm">
         <FanAvatar name={candidate.displayName || candidate.name} size="h-16 w-16" src={candidate.avatar} />
         <h2 id="world-moderator-confirm-title">Make {firstName(candidate)} a moderator?</h2>
@@ -772,7 +794,7 @@ function AddModeratorConfirmSheet({ busy, candidate, error, onCancel, onConfirm,
 function RemoveModeratorConfirmSheet({ busy, moderator, onCancel, onConfirm }) {
   if (!moderator) return null;
   return (
-    <BottomSheet labelledBy="world-moderator-remove-title" onClose={onCancel}>
+    <BottomSheet labelledBy="world-moderator-remove-title" onClose={onCancel} sheetClassName="is-moderator-confirm-sheet">
       <section className="world-moderator-confirm">
         <FanAvatar name={moderator.displayName || moderator.name} size="h-14 w-14" src={moderator.avatar} />
         <h2 id="world-moderator-remove-title">Remove {moderator.displayName || moderator.name || moderator.username}?</h2>
@@ -784,21 +806,27 @@ function RemoveModeratorConfirmSheet({ busy, moderator, onCancel, onConfirm }) {
   );
 }
 
-function AnalyticsSheet({ analytics, loading, onClose, publication, seatStatus }) {
+function AnalyticsSheet({ analytics, loading, onClose, publication }) {
   const daily = analytics?.daily || [];
   const maxViews = Math.max(1, ...daily.map((item) => Number(item.views || 0)));
   const residents = Number(analytics?.residents || 0);
-  const capacity = Number(seatStatus?.capacity || 0);
-  const percent = capacity ? `${Math.min(100, (residents / capacity) * 100)}%` : "0%";
+  const owners = Number(analytics?.owners ?? residents);
+  const views = Number(analytics?.views || 0);
+  const ownershipPercent = views ? `${Math.min(100, Math.round((owners / views) * 100))}%` : "0%";
+  const readToEnd = Math.max(0, Math.min(100, Number(analytics?.readToEnd || 0)));
+  const weekViews = daily.reduce((sum, item) => sum + Number(item.views || 0), 0);
+  const weekChange = analytics?.weekChangePercent;
+  const earnings = Number(analytics?.creatorEarningsUsd30d ?? (Number(analytics?.creatorEarningsStars30d || 0) / 10));
+  const price = Number(publication?.pricing?.starsAmount || 0);
   return (
-    <BottomSheet labelledBy="world-analytics-title" onClose={onClose}>
+    <BottomSheet labelledBy="world-analytics-title" onClose={onClose} sheetClassName="is-analytics-sheet">
       <section className="world-analytics-sheet">
         <header>
           <p>{publication?.title || "Your World"}</p>
           <div>
-            <h2 id="world-analytics-title">{loading ? "Loading..." : `${STAR}${Number(analytics?.creatorEarningsStars30d || 0).toLocaleString()}`}</h2>
-            <small>creator earnings · last 30 days</small>
-            {analytics?.estimatedRecurringStars ? <strong>{STAR}{Number(analytics.estimatedRecurringStars).toLocaleString()} estimated monthly recurring</strong> : null}
+            <h2 id="world-analytics-title">{loading ? "Loading..." : new Intl.NumberFormat("en-US", { currency: "USD", style: "currency" }).format(earnings)}</h2>
+            <small>earned</small>
+            {weekChange != null ? <strong className={Number(weekChange) < 0 ? "is-down" : ""}>{Number(weekChange) >= 0 ? "↑" : "↓"} {Math.abs(Number(weekChange))}% · week</strong> : null}
           </div>
         </header>
         <p className="world-analytics-today"><b>Today</b> · {Number(analytics?.todayViews || 0).toLocaleString()} views</p>
@@ -808,20 +836,19 @@ function AnalyticsSheet({ analytics, loading, onClose, publication, seatStatus }
         <div className="world-analytics-axis"><span>7 days ago</span><span>today</span></div>
         <section>
           <h3>Funnel</h3>
-          <AnalyticsBar label="Views" value={Number(analytics?.views || 0).toLocaleString()} width="100%" />
-          <AnalyticsBar label="Residents" value={residents.toLocaleString()} width={percent} />
-          <AnalyticsBar label="Seats taken" tone="gold" value={capacity ? `${residents} / ${capacity}` : `${residents}`} width={percent} />
+          <AnalyticsBar label="Views" value={views.toLocaleString()} width={views ? "100%" : "0%"} />
+          <AnalyticsBar label="Own it" value={owners.toLocaleString()} width={ownershipPercent} />
         </section>
         <section>
           <h3>Inside</h3>
-          {analytics?.readToEnd == null ? <p className="world-analytics-unavailable">Read completion is unavailable until chapter completion events are recorded.</p> : <AnalyticsBar label="Read to the end" value={`${analytics.readToEnd}%`} width={`${analytics.readToEnd}%`} />}
+          <AnalyticsBar label="Read to the end" value={`${readToEnd}%`} width={`${readToEnd}%`} />
         </section>
         <div className="world-analytics-stat-grid">
           {[
             [Number(analytics?.comments || 0).toLocaleString(), "comments"],
             [Number(analytics?.shares || 0).toLocaleString(), "shared"],
-            [daily.reduce((sum, item) => sum + Number(item.views || 0), 0).toLocaleString(), "this week"],
-            [analytics?.stayOnRate == null ? "n/a" : `${analytics.stayOnRate}%`, "stay on"],
+            [`${weekViews > 0 ? "+" : ""}${weekViews.toLocaleString()}`, "this week"],
+            [price.toLocaleString(), "price"],
           ].map(([value, label]) => <span key={label}><b>{value}</b><small>{label}</small></span>)}
         </div>
         <footer>Only you see this</footer>
@@ -938,7 +965,7 @@ function WorldShareAction({ children, label, onClick }) {
   );
 }
 
-function ShareSheet({ onClose, publication, viewerId }) {
+function LegacyWorldShareSheet({ onClose, publication, viewerId }) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -1320,7 +1347,7 @@ function WorldReportSheet({ error, isDone, isSubmitting, onClose, onDone, onSele
 }
 
 function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone }) {
-  const [selected, setSelected] = useState([]);
+  const [selected, setSelected] = useState(() => WORLD_SPAM_ACTIONS.filter((action) => action.defaultChecked).map((action) => action.key));
   const actionName = creatorFirstName(creator);
   const toggle = (action) => {
     if (isSubmitting) return;
@@ -1328,7 +1355,7 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
   };
   const selectedActions = WORLD_SPAM_ACTIONS.filter((action) => selected.includes(action.key));
 
-  return <BottomSheet labelledBy="world-spam-title" onClose={onClose}>
+  return <BottomSheet labelledBy="world-spam-title" onClose={onClose} sheetClassName="is-spam-actions-sheet">
     <section className="world-spam-sheet">
       <h2 id="world-spam-title">Looks like spam?</h2>
       <p>Choose what to do about {actionName}</p>
@@ -1336,10 +1363,11 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
         {WORLD_SPAM_ACTIONS.map((action) => {
           const checked = selected.includes(action.key);
           const label = action.key === "banCreator" ? `Ban ${actionName}` : action.key === "removeFromWorld" ? "Remove from your World" : action.label;
+          const description = action.key === "deleteMessages" ? `every post and comment by ${actionName}` : action.description;
           return <button aria-pressed={checked} disabled={isSubmitting} key={action.key} onClick={() => toggle(action)} type="button">
             <span className={checked ? "is-checked" : ""}>{checked ? <FiCheck /> : <FiSquare />}</span>
             <b>{label}</b>
-            {action.description ? <small>{action.description}</small> : null}
+            {description ? <small>{description}</small> : null}
           </button>;
         })}
       </div>
@@ -1358,9 +1386,9 @@ function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemov
   const renderComment = (item, isReply = false) => {
     const active = Boolean(item.viewerReaction);
     const showText = !item.audio || visibleTexts[item.id];
-    return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""}`} key={item.id}>
+    return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${engagement.viewerCanModerate ? "can-moderate" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
-      <div>
+      <div className="world-inside-detail__comment-body">
         <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || "User"}</Link> {showText ? item.text : null}</p>
         {item.audio ? (
           <div className="voice-comment-bubble-row">
@@ -1368,13 +1396,13 @@ function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemov
             {item.text ? <button onClick={() => setVisibleTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{showText ? "hide text" : "show text"}</button> : null}
           </div>
         ) : null}
-        <div>
+        <div className="world-inside-detail__comment-meta">
           <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => onCommentReact(item)} type="button">🤝 <span>{Number(item.reactionCount || 0).toLocaleString()}</span></button>
           {!isReply ? <button className={replyTarget?.id === item.id ? "is-active" : ""} onClick={() => onReply(item)} type="button">Reply</button> : null}
-          {engagement.viewerCanModerate ? <button aria-label="Remove comment" className="is-remove-comment" disabled={mutationBusy === item.id} onClick={() => onRemove(item)} type="button"><FiTrash2 /> Remove</button> : null}
         </div>
         {(item.replies || []).map((reply) => renderComment(reply, true))}
       </div>
+      {engagement.viewerCanModerate ? <button aria-label="Delete comment" className="is-remove-comment" disabled={mutationBusy === item.id} onClick={() => onRemove(item)} title="Delete comment" type="button"><FiTrash2 /></button> : null}
     </article>;
   };
   return <div className="world-inside-detail__comment-list">{comments.map((item) => renderComment(item))}</div>;
@@ -1387,10 +1415,12 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const [commentText, setCommentText] = useState("");
   const [replyTarget, setReplyTarget] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState("");
   const [spamOpen, setSpamOpen] = useState(false);
+  const [leaveAfterReport, setLeaveAfterReport] = useState(false);
   const [commentBusy, setCommentBusy] = useState("");
   const [posting, setPosting] = useState(false);
   const mediaItems = useMemo(() => worldMediaItems(publication, chapters), [publication, chapters]);
@@ -1412,7 +1442,6 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const firstName = creatorFirstName(creator);
   const chapterWord = chapters.length === 1 ? "chapter" : "chapters";
   const saved = Boolean(engagement.viewerSaved);
-  const worldUrl = typeof window === "undefined" ? "" : `${window.location.origin}/world/${publication.id || publication._id}/inside?view=detail`;
   const canPostComment = commentText.trim() && !posting && publication.commentsEnabled !== false;
   const reportMutation = useMutation({
     mutationFn: (payload) => api.reportWorld(publication.id || publication._id, payload),
@@ -1479,21 +1508,14 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     }
   };
 
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(worldUrl);
-      setMoreOpen(false);
-      showToast("World link copied.");
-    } catch {
-      showToast("Could not copy the World link.");
-    }
-  };
-
   const closeReport = () => {
+    const shouldLeave = leaveAfterReport;
     setReportOpen(false);
     setSpamOpen(false);
     setReportDone(false);
     setReportError("");
+    setLeaveAfterReport(false);
+    if (shouldLeave) onBack();
   };
 
   const submitReport = (reason) => {
@@ -1512,9 +1534,14 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       },
       {
         onSuccess: () => {
+          const exitsWorld = selectedActions.some((action) => ["banCreator", "removeFromWorld"].includes(action.key));
+          setLeaveAfterReport(exitsWorld);
           setSpamOpen(false);
           setReportOpen(true);
           setReportDone(true);
+          queryClient.invalidateQueries({ queryKey: ["memberships"] });
+          queryClient.invalidateQueries({ queryKey: ["messages"] });
+          queryClient.invalidateQueries({ queryKey: ["world", publication.id || publication._id] });
           const actionText = selectedActions.some((action) => action.key === "deleteMessages") ? "messages deleted · " : "";
           showToast(`${creatorFirstName(creator)} — ${actionText}report sent ✓`);
         },
@@ -1635,9 +1662,13 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
         setReportDone(false);
         setReportError("");
       }}
-      onShare={copyLink}
+      onShare={() => {
+        setMoreOpen(false);
+        setShareOpen(true);
+      }}
       publication={publication}
     /> : null}
+    {shareOpen ? <ShareSheet onClose={() => setShareOpen(false)} publication={publication} /> : null}
     {spamOpen ? <WorldSpamActionSheet
       creator={creator}
       error={reportError}
@@ -1656,10 +1687,82 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   </article>;
 }
 
-function ExperienceVisitorOverview({ canView, chapters, onBack, onOpenChapter, onShare, onUnlock, publication }) {
+function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack, onOpenChapter, onRequireLogin, onShare, onUnlock, publication }) {
+  const { user } = useAuth();
+  const { showToast } = useFanToast();
+  const [activePreview, setActivePreview] = useState(null);
+  const [commentText, setCommentText] = useState("");
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [commentBusy, setCommentBusy] = useState("");
+  const [posting, setPosting] = useState(false);
   const cover = publication.coverMedia?.secureUrl || publication.coverMedia?.thumbnailUrl;
+  const publicationId = publication.id || publication._id;
   const creatorName = publication.creator?.name || publication.creator?.username || "Creator";
   const chapterWord = chapters.length === 1 ? "chapter" : "chapters";
+  const engagement = engagementQuery?.data || {};
+  const commentsEnabled = publication.commentsEnabled !== false;
+  const previewMedia = experiencePreviewMedia(chapters);
+  const previewVideo = previewMedia.find((item) => item.type === "VIDEO" || item.mediaType === "VIDEO");
+  const previewPhotos = previewMedia.filter((item) => item.type === "IMAGE" || item.mediaType === "IMAGE").slice(0, 3);
+  const previewVoice = previewMedia.find((item) => ["AUDIO", "VOICE"].includes(item.type) || ["AUDIO", "VOICE"].includes(item.mediaType));
+
+  const requireAccount = () => {
+    if (user) return true;
+    onRequireLogin?.();
+    return false;
+  };
+
+  const submitComment = async (event) => {
+    event.preventDefault();
+    const text = commentText.trim();
+    if (!text || posting || !commentsEnabled || !requireAccount()) return;
+    setPosting(true);
+    try {
+      await api.commentOnSeen(publicationId, text, "", replyTarget?.id || "");
+      setCommentText("");
+      setReplyTarget(null);
+      await engagementQuery.refetch();
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be posted.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const toggleCommentReaction = async (comment) => {
+    if (!comment?.id || commentBusy || !requireAccount()) return;
+    setCommentBusy(comment.id);
+    try {
+      if (comment.viewerReaction) await api.removeSeenCommentReaction(publicationId, comment.id);
+      else await api.reactToSeenComment(publicationId, comment.id, "LIKE");
+      await engagementQuery.refetch();
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Reaction could not be updated.");
+    } finally {
+      setCommentBusy("");
+    }
+  };
+
+  const removeComment = async (comment) => {
+    if (!comment?.id || commentBusy || !engagement.viewerCanModerate) return;
+    setCommentBusy(comment.id);
+    try {
+      await api.removeSeenComment(publicationId, comment.id);
+      if (replyTarget?.id === comment.id) setReplyTarget(null);
+      await engagementQuery.refetch();
+      showToast("Comment deleted.");
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be deleted.");
+    } finally {
+      setCommentBusy("");
+    }
+  };
+
+  const startReply = (comment) => {
+    if (!requireAccount()) return;
+    setReplyTarget(comment);
+  };
+
   return <article className="experience-viewer-page experience-public-viewer">
     <header className="experience-viewer-head">
       <button aria-label="Back to profile" onClick={onBack} type="button"><FiX /></button>
@@ -1675,9 +1778,66 @@ function ExperienceVisitorOverview({ canView, chapters, onBack, onOpenChapter, o
         {chapters.map((chapter, index) => { const locked = Boolean(chapter.locked && !canView); return <button aria-label={locked ? `${chapter.title} is locked` : `Open ${chapter.title}`} key={chapter.stableChapterId || chapter.id || index} onClick={() => locked ? onUnlock() : onOpenChapter(index)} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{locked ? <FiLock aria-hidden="true" /> : index === 0 && !canView ? <small>FREE</small> : null}<b>›</b></button>; })}
       </div>
       {!chapters.length ? <p>No chapters yet.</p> : null}
+      {previewMedia.length ? <section className="experience-public-previews">
+        <header><span>PREVIEW</span><h2>Meet the Experience</h2><p>A glimpse inside before you unlock it.</p></header>
+        {previewVideo ? <div className="experience-public-preview-video"><video controls playsInline preload="metadata" src={previewVideo.secureUrl} /><span>{previewVideo.label}</span></div> : null}
+        {previewPhotos.length ? <div className="experience-public-preview-photos">{previewPhotos.map((photo, index) => <button aria-label={`Open preview photo ${index + 1}`} key={photo.assetId || photo.id || photo.secureUrl} onClick={() => setActivePreview(photo)} type="button"><img alt={photo.label || `Experience preview ${index + 1}`} loading="lazy" src={photo.secureUrl} /></button>)}</div> : null}
+        {previewVoice ? <div className="experience-public-preview-voice"><span><FiPlay /></span><div><b>{previewVoice.label || "Voice hello"}</b><small>A note from {creatorName}</small></div><audio controls preload="metadata" src={previewVoice.secureUrl} /></div> : null}
+      </section> : null}
       {!canView ? <section className="experience-unlock-panel"><span>ONE-TIME PURCHASE</span><p>Unlock every chapter permanently, including future updates.</p><button onClick={onUnlock} type="button">Unlock Experience {"\u00b7"} {STAR}{publication.pricing?.starsAmount}</button></section> : <footer className="seen-detail-engagement"><div className="seen-detail-start-meta"><span>{chapters.length} {chapterWord} {"\u00b7"} ~{Math.max(1, chapters.length)} min</span><span>Tap a chapter to start {"\u203a"}</span></div></footer>}
+      <section className="experience-public-comments world-inside-detail__comments">
+        <header className="experience-public-comments__head">
+          <div><span>CONVERSATION</span><h2>Comments</h2></div>
+          <strong>{Number(engagement.commentCount || 0).toLocaleString()}</strong>
+        </header>
+        {engagementQuery?.isLoading ? <p className="world-inside-detail__comments-empty">Loading comments...</p> : (
+          <WorldInsideComments
+            engagement={engagement}
+            mutationBusy={commentBusy}
+            onCommentReact={toggleCommentReaction}
+            onRemove={removeComment}
+            onReply={startReply}
+            replyTarget={replyTarget}
+          />
+        )}
+        {commentsEnabled ? (
+          <form className="experience-public-comments__form" onSubmit={submitComment}>
+            <FanAvatar name={user?.name || user?.username || "You"} size="h-8 w-8" src={user?.avatar} />
+            <div>
+              {replyTarget ? <span>Replying to <b>{replyTarget.author?.name || "comment"}</b><button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
+              <input aria-label={replyTarget ? "Write a reply" : "Add a comment"} maxLength={500} onChange={(event) => setCommentText(event.target.value)} onFocus={() => { if (!user) onRequireLogin?.(); }} placeholder={user ? (replyTarget ? "Write a reply..." : "Join the conversation...") : "Sign in to comment..."} value={commentText} />
+            </div>
+            <button aria-label={replyTarget ? "Post reply" : "Post comment"} disabled={!commentText.trim() || posting} type="submit"><FiArrowUp /></button>
+          </form>
+        ) : <div className="experience-public-comments__disabled"><FiMessageCircle /><span><b>Comments are off</b><small>The creator has paused this conversation.</small></span></div>}
+      </section>
     </main>
+    {activePreview ? <div aria-label="Experience photo preview" aria-modal="true" className="experience-public-preview-lightbox" onClick={() => setActivePreview(null)} role="dialog"><button aria-label="Close preview" onClick={() => setActivePreview(null)} type="button"><FiX /></button><img alt={activePreview.label || "Experience preview"} src={activePreview.secureUrl} /></div> : null}
   </article>;
+}
+
+void LegacyWorldShareSheet;
+
+function ShareSheet({ onClose, publication }) {
+  const publicationId = String(publication?.id || publication?._id || "");
+  const contentType = publication?.kind === "EXPERIENCE" ? "experience" : "world";
+  const cover = publication?.coverMedia || publication?.cover || publication?.coverImage || {};
+  return (
+    <AppShareSheet
+      isOpen
+      onClose={onClose}
+      payload={{
+        canonicalUrl: shareUrlFor(publication),
+        contentId: publicationId,
+        contentType,
+        destinationRoute: `/${contentType}/${publicationId}`,
+        imageUrl: cover.secureUrl || cover.url || publication?.coverUrl || "",
+        textPreview: publication?.title || (contentType === "experience" ? "Experience" : "World"),
+        title: publication?.title || (contentType === "experience" ? "Experience" : "World"),
+      }}
+      variant="seen"
+    />
+  );
 }
 
 export default function WorldReaderPage() {
@@ -1688,6 +1848,7 @@ export default function WorldReaderPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
+  const [commentReplyTarget, setCommentReplyTarget] = useState(null);
   const [commentPostPending, setCommentPostPending] = useState(false);
   const [visibleVoiceCommentTexts, setVisibleVoiceCommentTexts] = useState({});
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
@@ -1699,7 +1860,6 @@ export default function WorldReaderPage() {
   const [showJoinSuccess, setShowJoinSuccess] = useState(false);
   const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
   const [coverProgress, setCoverProgress] = useState(0);
-  const [commentSavePending, setCommentSavePending] = useState("");
   const [commentRemovePending, setCommentRemovePending] = useState("");
   const [experienceBusyId, setExperienceBusyId] = useState("");
   const [optimisticPlanetFaceEmoji, setOptimisticPlanetFaceEmoji] = useState("");
@@ -1731,6 +1891,12 @@ export default function WorldReaderPage() {
   const viewerId = user?.id || user?._id || "";
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const owner = sameIdentity(viewerId, creatorId) || sameIdentity(user?.username, creator.username);
+  const waitingListQuery = useQuery({
+    queryKey: ["world-waiting-list", publicationId],
+    queryFn: () => membershipService.getWorldWaitingList(publicationId).then((response) => response.data.data.waitingList),
+    enabled: Boolean(user && publicationId && premium && !owner),
+    retry: false,
+  });
   const editingWorld = Boolean(owner && !experience && new URLSearchParams(location.search).get("edit") === "1");
   const accessToken = new URLSearchParams(location.search).get("access") || "";
   const returnTo = new URLSearchParams(location.search).get("returnTo") || "";
@@ -1786,6 +1952,13 @@ export default function WorldReaderPage() {
     },
     onSuccess: async (response) => {
       const payload = response?.data?.data || {};
+      if (payload.queued) {
+        queryClient.setQueryData(["world-waiting-list", publicationId], payload.waitingList);
+        await queryClient.invalidateQueries({ queryKey: ["wallet"] });
+        setJoinKey("");
+        showToast(`You’re #${payload.waitingList?.position || 1} on the waiting list. Your Stars are reserved.`);
+        return;
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["wallet"] }),
         queryClient.invalidateQueries({ queryKey: ["memberships"] }),
@@ -1906,6 +2079,18 @@ export default function WorldReaderPage() {
       setCoverProgress(0);
     },
   });
+  const cancelWaitingList = useMutation({
+    mutationFn: () => membershipService.cancelWorldWaitingList(publicationId, createIdempotencyKey("premium-waitlist-cancel")),
+    onSuccess: async () => {
+      queryClient.setQueryData(["world-waiting-list", publicationId], null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallet"] }),
+        queryClient.invalidateQueries({ queryKey: ["world-waiting-list", publicationId] }),
+      ]);
+      showToast("Waiting-list reservation cancelled. Your Stars were returned.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Waiting-list reservation could not be cancelled."),
+  });
   const coverRemove = useMutation({
     mutationFn: () => api.removeWorldCover(publicationId),
     onSuccess: async () => {
@@ -1914,7 +2099,14 @@ export default function WorldReaderPage() {
     },
     onError: (error) => showToast(error?.response?.data?.message || "World cover could not be removed."),
   });
-  const waveMutation = useMutation({ mutationFn: () => api.openWorldWave(publicationId), onSuccess: () => managementQuery.refetch() });
+  const waveMutation = useMutation({
+    mutationFn: () => api.openWorldWave(publicationId),
+    onSuccess: async () => {
+      await managementQuery.refetch();
+      showToast("A new World wave is open.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "The new wave could not be opened."),
+  });
   const moderatorAdd = useMutation({
     mutationFn: (userId) => api.addWorldModerator(publicationId, userId),
     onSuccess: async (_response, userId) => {
@@ -2016,6 +2208,7 @@ export default function WorldReaderPage() {
     if (!creatorUserId) return;
     navigate(`/messages?with=${encodeURIComponent(creatorUserId)}&directAccess=1`);
   };
+  const leaveWorld = () => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : "/profile", { replace: true });
   if (showJoinSuccess && premium && !owner) {
     const privateStories = storyItems(chapters);
     return <>
@@ -2059,8 +2252,8 @@ export default function WorldReaderPage() {
           <span className="world-member-planet" aria-hidden="true">{planetFaceEmoji(publication?.planet)}</span>
           <h1>Members only</h1>
           <p>Join {creatorFirstName(creator)}&apos;s World to enter this space.</p>
-          <button className="world-member-primary" disabled={joinPremium.isPending} onClick={openPremiumJoin} type="button">
-            {joinPremium.isPending ? "Confirming..." : `Join ${creatorFirstName(creator)}'s World`}
+          <button className="world-member-primary" disabled={joinPremium.isPending || cancelWaitingList.isPending} onClick={waitingListQuery.data ? () => cancelWaitingList.mutate() : openPremiumJoin} type="button">
+            {cancelWaitingList.isPending ? "Returning Stars..." : waitingListQuery.data ? `Waiting list #${waitingListQuery.data.position || 1} · Cancel` : joinPremium.isPending ? "Confirming..." : `Join ${creatorFirstName(creator)}'s World`}
           </button>
         </section>
       </div>
@@ -2085,7 +2278,7 @@ export default function WorldReaderPage() {
         creator={creator}
         engagementQuery={engagement}
         experiences={memberWorldExperiences}
-        onBack={() => navigate(`/world/${publicationId}/inside`)}
+        onBack={leaveWorld}
         onGift={() => setGiftOpen(true)}
         onOpenChapter={(index) => setActiveChapterIndex(index)}
         onOpenStory={setActiveStory}
@@ -2101,7 +2294,7 @@ export default function WorldReaderPage() {
         chapters={memberWorldPublication?.chapters || chapters}
         creator={creator}
         onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
-        onStepInside={() => navigate(`/world/${publicationId}/inside?view=detail`)}
+        onStepInside={() => navigate(`/world/${publicationId}/inside?view=detail`, { replace: true })}
         publication={memberWorldPublication || publication}
       />
     );
@@ -2111,7 +2304,7 @@ export default function WorldReaderPage() {
         chapters={memberWorldPublication?.chapters || chapters}
         creator={creator}
         onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
-        onStepInside={() => navigate(`/world/${publicationId}/inside?view=detail`)}
+        onStepInside={() => navigate(`/world/${publicationId}/inside?view=detail`, { replace: true })}
         publication={memberWorldPublication || publication}
       />;
   }
@@ -2127,11 +2320,14 @@ export default function WorldReaderPage() {
           joinPending={joinPremium.isPending}
           memberPreview={walkersQuery.data}
           onBack={() => navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)}
+          onCancelWaitlist={() => cancelWaitingList.mutate()}
           onJoin={openPremiumJoin}
           onOpenWorld={() => navigate(`/world/${publicationId}/inside`)}
           onShare={setActiveStory}
           owner={owner}
           publication={publication}
+          waitingList={waitingListQuery.data}
+          waitlistPending={cancelWaitingList.isPending}
         />
         {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
       </>
@@ -2164,8 +2360,10 @@ export default function WorldReaderPage() {
       <ExperienceVisitorOverview
         canView={canViewMemberContent}
         chapters={experienceChapters}
+        engagementQuery={engagement}
         onBack={returnFromExperience}
         onOpenChapter={setActiveChapterIndex}
+        onRequireLogin={() => navigate("/login", { state: { from: { pathname: location.pathname } } })}
         onShare={() => setSheet("share")}
         onUnlock={() => user ? setShowExperienceUnlock(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })}
         publication={managedPublication}
@@ -2199,9 +2397,13 @@ export default function WorldReaderPage() {
     if (!value || commentPostPending) return;
     setCommentPostPending(true);
     try {
-      await api.commentOnSeen(publicationId, value);
+      const response = await api.commentOnSeen(publicationId, value, "", commentReplyTarget?.id || "");
+      if (response?.data?.data?.engagement) {
+        queryClient.setQueryData(["world-engagement", id], response.data.data.engagement);
+      }
       setComment("");
-      engagement.refetch();
+      setCommentReplyTarget(null);
+      await engagement.refetch();
     } catch (error) {
       if (error?.response?.data?.code === "WORLD_COMMENTS_DISABLED") {
         setOptimisticCommentsEnabled(null);
@@ -2213,22 +2415,6 @@ export default function WorldReaderPage() {
       showToast(error?.response?.data?.message || "Comment could not be posted.");
     } finally {
       setCommentPostPending(false);
-    }
-  };
-
-  const toggleCommentSave = async (targetComment) => {
-    if (!targetComment?.id || commentSavePending) return;
-    setCommentSavePending(targetComment.id);
-    try {
-      const action = targetComment.viewerSaved ? savedService.unsaveComment : savedService.saveComment;
-      const response = await action(targetComment.id);
-      const nextSaved = Boolean(response.data?.data?.saved);
-      queryClient.setQueryData(["world-engagement", id], (current) => current ? {
-        ...current,
-        comments: (current.comments || []).map((item) => item.id === targetComment.id ? { ...item, viewerSaved: nextSaved } : item),
-      } : current);
-    } finally {
-      setCommentSavePending("");
     }
   };
 
@@ -2464,10 +2650,9 @@ export default function WorldReaderPage() {
             <button className="world-prototype-walkers-trigger" disabled={!owner} onClick={() => owner && setWalkersOpen(true)} type="button">
               {creator.name || creator.username || "Creator"} <b>✓</b> · <strong>{steppedInside.toLocaleString()}</strong> stepped inside
             </button>
-            <span>{creator.name || creator.username || "Creator"} <b>✓</b> · <strong>{residents.toLocaleString()}</strong> residents</span>
             <button className="world-prototype-seat-row" onClick={() => owner && setSheet("seats")} type="button">
               <i><u style={{ width: `${seatProgress}%` }} /></i>
-              <small>{capacity ? `${residents.toLocaleString()} / ${capacity.toLocaleString()} seats` : `${residents.toLocaleString()} seats`} {priceStars ? `· ${STAR}${priceStars}/mo` : ""}{seat.waitingListAvailable && seat.waitingListCount ? ` · queue ${seat.waitingListCount}` : ""}</small>
+              <small>{capacity ? `${residents.toLocaleString()} / ${capacity.toLocaleString()} seats` : `${residents.toLocaleString()} seats`} {priceStars ? `· ${STAR}${priceStars}/mo` : ""} <em>· queue {Number(seat.waitingListCount || 0).toLocaleString()} ›</em></small>
             </button>
           </section>
         ) : null}
@@ -2614,26 +2799,49 @@ export default function WorldReaderPage() {
         <section className="world-prototype-comments">
           <h2>Comments</h2>
           {commentsEnabled ? (
-            <form onSubmit={addComment}>
-              <input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment..." value={comment} />
-              <button aria-label="Post comment" disabled={!comment.trim() || commentPostPending} type="submit"><FiArrowUp /></button>
-            </form>
+            <>
+              {commentReplyTarget ? (
+                <div className="world-comment-replying">
+                  <span>Replying to <b>{commentReplyTarget.author?.name || "Fan"}</b></span>
+                  <button onClick={() => setCommentReplyTarget(null)} type="button">Cancel</button>
+                </div>
+              ) : null}
+              <form onSubmit={addComment}>
+                <input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder={commentReplyTarget ? "Write a reply..." : "Add a comment..."} value={comment} />
+                <button aria-label={commentReplyTarget ? "Post reply" : "Post comment"} disabled={!comment.trim() || commentPostPending} type="submit"><FiArrowUp /></button>
+              </form>
+            </>
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}
           {engagement.data?.comments?.length ? (
             <div className="world-prototype-comment-list">
               {engagement.data.comments.slice(0, 3).map((item) => (
-                <article key={item.id}>
-                  <b>{item.author?.name || "Fan"}</b>
-                  {item.audio ? (
-                    <div className="voice-comment-bubble-row">
-                      <VoiceMessageBubble audio={item.audio} label="Voice comment" />
-                      {item.text ? <button onClick={() => setVisibleVoiceCommentTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{visibleVoiceCommentTexts[item.id] ? "hide text" : "show text"}</button> : null}
+                <div className="world-comment-thread" key={item.id}>
+                  <article>
+                    <div className="world-comment-copy">
+                      <b>{item.author?.name || "Fan"}</b>
+                      {item.audio ? (
+                        <div className="voice-comment-bubble-row">
+                          <VoiceMessageBubble audio={item.audio} label="Voice comment" />
+                          {item.text ? <button onClick={() => setVisibleVoiceCommentTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{visibleVoiceCommentTexts[item.id] ? "hide text" : "show text"}</button> : null}
+                        </div>
+                      ) : null}
+                      {item.text && (!item.audio || visibleVoiceCommentTexts[item.id]) ? <p>{item.text}</p> : null}
                     </div>
-                  ) : null}
-                  {item.text && (!item.audio || visibleVoiceCommentTexts[item.id]) ? <p>{item.text}</p> : null}
-                  <button aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"} disabled={commentSavePending === item.id} onClick={() => toggleCommentSave(item)} type="button"><FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} /></button>
-                  {engagement.data?.viewerCanModerate ? <button aria-label="Remove comment" className="world-comment-remove" disabled={commentRemovePending === item.id} onClick={() => removeModeratedComment(item)} type="button"><FiTrash2 /></button> : null}
-                </article>
+                    <div className="world-comment-actions">
+                      {(owner || engagement.data?.viewerIsCreator) ? <button className="world-comment-reply" onClick={() => setCommentReplyTarget(item)} type="button">Reply</button> : null}
+                      {engagement.data?.viewerCanModerate ? <button aria-label="Remove comment" className="world-comment-remove" disabled={commentRemovePending === item.id} onClick={() => removeModeratedComment(item)} type="button"><FiTrash2 /></button> : null}
+                    </div>
+                  </article>
+                  {(item.replies || []).map((reply) => (
+                    <article className="world-comment-child" key={reply.id}>
+                      <div className="world-comment-copy">
+                        <b>{reply.author?.name || "Creator"}</b>
+                        {reply.text ? <p>{reply.text}</p> : null}
+                      </div>
+                      {engagement.data?.viewerCanModerate ? <button aria-label="Remove reply" className="world-comment-remove" disabled={commentRemovePending === reply.id} onClick={() => removeModeratedComment(reply)} type="button"><FiTrash2 /></button> : null}
+                    </article>
+                  ))}
+                </div>
               ))}
             </div>
           ) : commentsEnabled ? <p className="world-prototype-empty-comments"><FiMessageCircle /> No comments yet.</p> : null}
@@ -2665,7 +2873,7 @@ export default function WorldReaderPage() {
           pricing={pricingQuery.data}
         />
       ) : null}
-      {sheet === "seats" ? <SeatsSheet busy={waveMutation.isPending} management={management} onClose={() => setSheet("")} onOpenWave={() => waveMutation.mutate()} /> : null}
+      {sheet === "seats" ? <SeatsSheet busy={waveMutation.isPending} management={management} onClose={() => setSheet("")} onOpenPrice={() => setSheet("price")} onOpenWave={() => waveMutation.mutate()} /> : null}
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
       {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} error={accessLinkQuery.error?.response?.data?.message || (accessLinkQuery.isError ? "The access-link service could not be reached." : "")} loading={accessLinkQuery.isLoading || accessLinkQuery.isFetching} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} onRetry={() => accessLinkQuery.refetch()} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
@@ -2703,7 +2911,7 @@ export default function WorldReaderPage() {
           onConfirm={() => moderatorRemove.mutate(removeModerator.id)}
         />
       ) : null}
-      {sheet === "analytics" ? <AnalyticsSheet analytics={management.analytics} loading={managementQuery.isLoading} onClose={() => setSheet("")} publication={managedPublication} seatStatus={management.seatStatus} /> : null}
+      {sheet === "analytics" ? <AnalyticsSheet analytics={management.analytics} loading={managementQuery.isLoading} onClose={() => setSheet("")} publication={managedPublication} /> : null}
       {sheet === "share" ? <ShareSheet onClose={() => setSheet("")} publication={managedPublication} viewerId={viewerId} /> : null}
       {walkersOpen ? <WorldWalkersSheet loading={walkersQuery.isLoading} onClose={() => setWalkersOpen(false)} onMessage={() => { setWalkersOpen(false); navigate("/messages?tab=direct"); }} publication={managedPublication} total={walkersQuery.data?.pagination?.total || steppedInside} walkers={walkersQuery.data?.items || []} /> : null}
       {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={managedPublication.title} /> : null}

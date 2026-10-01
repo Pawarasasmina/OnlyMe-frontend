@@ -22,9 +22,8 @@ function CreateHubPage() {
   const active = (publicationsQuery.data || []).filter((item) =>
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
-  const experiences = active.filter((item) => item.kind === "EXPERIENCE").length;
   const cards = [
-    ...(capabilities.isApprovedCreator ? [{ title: "Premium Experience", text: `Multi-chapter journey · first chapter free · one-time unlock · ${experiences}/3 active`, to: "/create/experience", disabled: experiences >= 3 }] : []),
+    ...(capabilities.isApprovedCreator ? [{ title: "Premium Experience", text: "Multi-chapter journey · first chapter free · one-time unlock · create as many as you need", to: "/create/experience" }] : []),
     { title: "Seen", text: "Free public publication with 1–3 chapters", to: "/create/seen" },
     ...(capabilities.isApprovedCreator ? [{ title: "World", text: `Monthly subscription · private ecosystem · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
