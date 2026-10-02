@@ -259,7 +259,7 @@ function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities =
             <Link aria-label="Wall" to={createTarget}><FiPlus /></Link>
           )}
           <Link aria-label="Activity" className="is-activity" to="/activity">
-            <FiZap />
+            <span aria-hidden="true" className="profile-spark-glyph">✦</span>
             {unread ? <i>{unread > 9 ? "9+" : unread}</i> : null}
           </Link>
         </div>

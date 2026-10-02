@@ -3677,6 +3677,7 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 .home-spark-button { display: grid; width: 46px; height: 46px; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; background: rgba(255,255,255,.045); color: #8ab8ff; font-size: 18px; transition: border-color .18s ease,background .18s ease,transform .18s ease; }
 .home-spark-button:hover:not(:disabled) { border-color: rgba(138,184,255,.4); background: rgba(138,184,255,.12); transform: translateY(-1px); }
 .home-spark-button:disabled svg { animation: atseen-spin 1s linear infinite; }
+.home-spark-glyph { display: block; color: #8ab8ff; font-size: 22px; font-weight: 900; line-height: 1; text-shadow: 0 0 14px rgba(138,184,255,.34); transform: translateY(-1px); }
 .home-story-strip { display: flex; max-width: 100%; gap: 18px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 8px 0 14px; scroll-snap-type: x proximity; }
 .story-status-item { width: 78px; scroll-snap-align: start; }
 .story-status-button { width: 78px; }
@@ -4319,7 +4320,7 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 .home-location-quick button[aria-pressed="true"] { border-color: #fff; background: #fff; color: #07090d; }
 .home-location-no-results { grid-column: 1 / -1; border: 1px dashed rgba(255,255,255,.1); border-radius: 14px; padding: 14px; color: rgba(255,255,255,.54); font-size: 12px; }
 .home-spark-button { position: relative; width: 52px; height: 52px; }
-.home-spark-button span { position: absolute; top: -4px; right: -2px; display: grid; min-width: 17px; height: 17px; place-items: center; border: 2px solid #0a0c0f; border-radius: 999px; background: #8ab8ff; color: #071018; padding: 0 4px; font-size: 10px; font-weight: 950; line-height: 1; }
+.home-spark-badge { position: absolute; top: -4px; right: -2px; display: grid; min-width: 17px; height: 17px; place-items: center; border: 2px solid #0a0c0f; border-radius: 999px; background: #8ab8ff; color: #071018; padding: 0 4px; font-size: 10px; font-weight: 950; line-height: 1; }
 .home-story-strip { gap: 12px; padding: 4px 0 14px; }
 .story-status-item,.story-status-button { width: 74px; }
 .story-status-avatar { width: 62px; height: 62px; }
@@ -5719,6 +5720,7 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   cursor: pointer;
 }
 .profile-prototype-topbar .is-activity { width: 38px; height: 38px; color: var(--profile-blue); }
+.profile-spark-glyph { display: block; color: var(--profile-blue); font-size: 20px; font-weight: 900; line-height: 1; text-shadow: 0 0 14px rgba(156,203,255,.34); transform: translateY(-1px); }
 .profile-prototype-topbar i {
   position: absolute;
   right: -1px;
@@ -10001,7 +10003,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-size: 16px;
 }
 
-.home-spark-button span {
+.home-spark-badge {
   top: -4px;
   right: -2px;
   min-width: 15px;
