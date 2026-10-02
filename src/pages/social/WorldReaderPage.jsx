@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
@@ -43,6 +43,7 @@ import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
+import StoryViewer from "../../components/stories/StoryViewer";
 import AppShareSheet from "../../components/share/ShareSheet";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -129,13 +130,6 @@ function isActivePremiumMembership(membership = {}) {
   const status = membership.storedStatus || membership.status;
   const periodEnd = membership.currentPeriodEnd ? new Date(membership.currentPeriodEnd).getTime() : 0;
   return ["ACTIVE", "CANCEL_AT_PERIOD_END"].includes(status) && (!periodEnd || periodEnd > Date.now());
-}
-
-function formatMediaTime(value) {
-  const total = Math.max(0, Math.floor(Number(value) || 0));
-  const minutes = Math.floor(total / 60);
-  const seconds = String(total % 60).padStart(2, "0");
-  return `${minutes}:${seconds}`;
 }
 
 function worldMediaItems(publication, chapters) {
@@ -1097,94 +1091,26 @@ function LegacyWorldShareSheet({ onClose, publication, viewerId }) {
 function WorldStoryViewer({ creator, onClose, story, title }) {
   const stories = useMemo(() => {
     const items = Array.isArray(story?.stories) ? story.stories : [story].filter(Boolean);
-    return items.filter((item) => item?.secureUrl);
-  }, [story]);
-  const initialIndex = Math.max(0, Math.min(stories.length - 1, Number(story?.index || 0)));
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
-  const [progress, setProgress] = useState(0);
-  const activeStory = stories[activeIndex] || null;
-  const isVideo = activeStory?.resourceType === "video" || activeStory?.type === "VIDEO" || activeStory?.mediaType === "VIDEO";
-  const creatorName = creator?.name || creator?.username || "Creator";
-  const avatar = creator?.avatar || creator?.avatarUrl || creator?.profileImage || creator?.photoUrl || "";
-  const firstName = creatorName.split(/\s+/).filter(Boolean)[0] || "Creator";
-
-  useEffect(() => {
-    setActiveIndex(initialIndex);
-    setProgress(0);
-  }, [initialIndex, story]);
-
-  const goStory = useCallback((direction) => {
-    setActiveIndex((current) => {
-      const next = current + direction;
-      if (next < 0) return 0;
-      if (next >= stories.length) {
-        onClose();
-        return current;
-      }
-      setProgress(0);
-      return next;
-    });
-  }, [onClose, stories.length]);
-
-  useEffect(() => {
-    if (!activeStory?.secureUrl) return undefined;
-    setProgress(0);
-    if (isVideo) return undefined;
-    const started = Date.now();
-    const duration = 15000;
-    const timer = window.setInterval(() => {
-      const next = Math.min(100, ((Date.now() - started) / duration) * 100);
-      setProgress(next);
-      if (next >= 100) {
-        window.clearInterval(timer);
-        goStory(1);
-      }
-    }, 120);
-    return () => window.clearInterval(timer);
-  }, [activeStory?.secureUrl, goStory, isVideo]);
-
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") onClose();
-      if (event.key === "ArrowLeft") goStory(-1);
-      if (event.key === "ArrowRight") goStory(1);
+    const owner = {
+      avatar: creator?.avatar || creator?.avatarUrl || creator?.profileImage || creator?.photoUrl || "",
+      id: creator?.id || creator?._id || "",
+      name: creator?.name || creator?.username || "Creator",
+      username: creator?.username || "",
+      verified: Boolean(creator?.verified || creator?.isVerified),
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [goStory, onClose]);
-
-  if (!activeStory?.secureUrl) return null;
-  return (
-    <div aria-label="World story" aria-modal="true" className="world-story-viewer" role="dialog">
-      {isVideo
-        ? <video autoPlay muted playsInline onEnded={() => goStory(1)} onTimeUpdate={(event) => setProgress(event.currentTarget.duration ? Math.min(100, (event.currentTarget.currentTime / event.currentTarget.duration) * 100) : 0)} src={activeStory.secureUrl} />
-        : <img alt={activeStory.title || "World story"} src={activeStory.secureUrl} />}
-      <div aria-hidden="true" className="world-story-viewer-progress">
-        {stories.map((item, index) => <span key={item.assetId || item.secureUrl || index}><i style={{ width: `${index < activeIndex ? 100 : index === activeIndex ? progress : 0}%` }} /></span>)}
-      </div>
-      <header className="world-story-viewer-head">
-        <span className="world-story-viewer-avatar">
-          {avatar ? <img alt="" src={avatar} /> : <FiImage />}
-        </span>
-        <span>
-          <b>{creatorName}</b>
-          <small>{activeStory.title || title || "Private story"}</small>
-        </span>
-        <em>{PLANET_FACE_OPTIONS[0]} members only</em>
-      </header>
-      <button aria-label="Close story" className="world-story-preview-close" onClick={onClose} type="button"><FiX /></button>
-      {activeStory.title ? <p className="world-story-viewer-caption">{activeStory.title}</p> : null}
-      <div className="world-story-viewer-reactions" aria-label="Story reactions">
-        {["❤️", "🔥", "😂", "🙏", "👁"].map((reaction) => <button key={reaction} type="button">{reaction}</button>)}
-      </div>
-      <form className="world-story-viewer-reply" onSubmit={(event) => event.preventDefault()}>
-        <input aria-label="Reply to story" placeholder={`Reply to ${firstName}...`} />
-        <button aria-label="Send story reply" type="submit"><FiArrowUpRight /></button>
-      </form>
-      <button aria-label="Previous story" className="world-story-viewer-prev" disabled={activeIndex === 0} onClick={() => goStory(-1)} type="button" />
-      <button aria-label="Next story" className="world-story-viewer-next" onClick={() => goStory(1)} type="button" />
-    </div>
-  );
+    return items.filter((item) => item?.secureUrl).map((item, index) => ({
+      ...item,
+      caption: item.title || title || "Private story",
+      createdAt: item.createdAt || new Date().toISOString(),
+      id: item.assetId || item.blockId || item.secureUrl || `world-story-${index}`,
+      mediaType: item.resourceType === "video" || item.mediaType === "VIDEO" || item.type === "VIDEO" ? "video" : "image",
+      mediaUrl: item.secureUrl,
+      owner,
+      ownerId: owner.id,
+    }));
+  }, [creator, story, title]);
+  const initialIndex = Math.max(0, Math.min(stories.length - 1, Number(story?.index || 0)));
+  return <StoryViewer initialIndex={initialIndex} isOpen={Boolean(stories.length)} onClose={onClose} previewOnly stories={stories} />;
 }
 
 function PollBlock({ block, chapterId, publicationId }) {
@@ -1270,34 +1196,6 @@ function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, o
       </main>
     </article>
   );
-}
-
-function WorldPrimaryMedia({ media, title }) {
-  const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(Number(media?.duration || 0));
-  if (!media?.secureUrl) return null;
-  const playable = ["VIDEO", "AUDIO", "VOICE"].includes(media.mediaType) || ["video", "audio"].includes(media.resourceType);
-  const syncTime = (event) => {
-    setCurrentTime(event.currentTarget.currentTime || 0);
-    setDuration(event.currentTarget.duration || duration || 0);
-  };
-  if (media.mediaType === "VIDEO" || media.resourceType === "video") {
-    return <section className="world-inside-detail__primary">
-      <video controls onLoadedMetadata={syncTime} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={syncTime} playsInline preload="metadata" src={media.secureUrl} />
-      <p className="world-inside-detail__playback"><FiPlay /> {duration ? `${formatMediaTime(currentTime || duration)} ${playing ? "● playing" : "ready"}` : playing ? "playing" : "ready"}</p>
-    </section>;
-  }
-  if (["AUDIO", "VOICE"].includes(media.mediaType)) {
-    return <section className="world-inside-detail__primary is-audio">
-      <audio controls onLoadedMetadata={syncTime} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={syncTime} preload="metadata" src={media.secureUrl} />
-      <p className="world-inside-detail__playback"><FiPlay /> {duration ? `${formatMediaTime(currentTime || duration)} ${playing ? "● playing" : "ready"}` : playing ? "playing" : "ready"}</p>
-    </section>;
-  }
-  return <section className="world-inside-detail__primary">
-    <img alt={`${title} media`} loading="lazy" src={media.secureUrl} />
-    {playable ? <p className="world-inside-detail__playback"><FiPlay /> ready</p> : null}
-  </section>;
 }
 
 function WorldInsideMoreSheet({ creator, onClose, onReport, onReportSpam, onShare, publication }) {
@@ -1424,13 +1322,12 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const [commentBusy, setCommentBusy] = useState("");
   const [posting, setPosting] = useState(false);
   const mediaItems = useMemo(() => worldMediaItems(publication, chapters), [publication, chapters]);
-  const primaryMedia = mediaItems[0] || null;
   const storyPreviews = useMemo(() => privateStoryItems(chapters), [chapters]);
   const includedExperiences = useMemo(() => {
     const supplied = experiences.filter((item) => item && typeof item === "object");
     return supplied.length ? supplied : includedWorldExperiences(publication);
   }, [experiences, publication]);
-  const gallery = mediaItems.filter((item) => item.secureUrl !== primaryMedia?.secureUrl).slice(0, 8);
+  const gallery = mediaItems.slice(0, 8);
   const engagement = engagementQuery.data || {};
   const memberCount = Number(publication?.members?.count || 0);
   const steppedInside = Math.max(memberCount, Number(engagement.viewCount || 0));
@@ -1572,13 +1469,11 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       <p>{chapters.length} {chapterWord} · {publication.category || "World"}</p>
     </section>
 
-    <WorldPrimaryMedia media={primaryMedia} title={publication.title || "World"} />
-
     <section className="world-inside-detail__creator">
       <FanAvatar name={creatorName} size="h-8 w-8" src={creator.avatar} />
       <div>
         <Link to={creator.username ? `/profile/${creator.username}` : "#"}>{creatorName} {creator.verified ? "✓" : ""}</Link>
-        <small>{primaryMedia?.duration ? `${formatMediaTime(primaryMedia.duration)} — ` : ""}why this world exists</small>
+        <small>why this world exists</small>
       </div>
     </section>
 

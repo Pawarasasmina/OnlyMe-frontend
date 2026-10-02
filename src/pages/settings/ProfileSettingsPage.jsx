@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
@@ -25,7 +25,8 @@ const emptyForm = {
   phoneNumber: "",
   whatsapp: "",
   profileVisibility: "private",
-  orbitVisible: true,
+  savedPlacesVisibility: "everyone",
+  showMemberBadgeOnComments: true,
   preferredLanguage: "en",
   timezone: "UTC",
   notificationPreferences: {
@@ -66,7 +67,8 @@ function profileToForm(data, privacyData) {
     phoneNumber: profile.phoneNumber || "",
     whatsapp: profile.whatsapp || "",
     profileVisibility: privacyData?.profileVisibility || profile.profileVisibility || (account.role === "creator" ? "public" : "private"),
-    orbitVisible: privacyData?.privacySettings?.allowDiscovery !== false,
+    savedPlacesVisibility: privacyData?.privacySettings?.savedPlacesVisibility || "everyone",
+    showMemberBadgeOnComments: privacyData?.privacySettings?.showMemberBadgeOnComments !== false,
     preferredLanguage: languageSource,
     timezone: profile.timezone || "UTC",
     notificationPreferences: {
@@ -80,14 +82,6 @@ function displayNameFrom(form) {
   return [form.firstName, form.lastName].map((part) => part.trim()).filter(Boolean).join(" ");
 }
 
-function segmentedFromVisibility(value) {
-  return value === "public" ? "everyone" : "only_me";
-}
-
-function visibilityFromSegment(value) {
-  return value === "everyone" ? "public" : "private";
-}
-
 function Field({ className = "", disabled = false, label, name, onChange, placeholder = "", value }) {
   return (
     <label className={`edit-profile-field ${className}`}>
@@ -97,16 +91,14 @@ function Field({ className = "", disabled = false, label, name, onChange, placeh
   );
 }
 
-function PhotoRow({ cover = false, disabled, fileRef, label, onChange, src, subtitle }) {
+function BioField({ onChange, value }) {
+  return <label className="edit-profile-field edit-profile-field-wide"><span>Bio</span><textarea maxLength={120} name="bio" onChange={onChange} value={value || ""} /><small className="edit-profile-help">Max 120 — shown right under your name</small></label>;
+}
+
+function PhotoRow({ disabled, fileRef, label, onChange, src, subtitle }) {
   return (
     <div className="edit-profile-photo-row">
-      {cover ? (
-        <span className="edit-profile-cover-thumb">
-          {src ? <img alt="" src={resolveMediaUrl(src)} /> : null}
-        </span>
-      ) : (
-        <FanAvatar name={label} size="h-[70px] w-[70px]" src={resolveMediaUrl(src)} />
-      )}
+      <FanAvatar name={label} size="h-[56px] w-[56px]" src={resolveMediaUrl(src)} />
       <span className="min-w-0 flex-1">
         <b>{label}</b>
         {subtitle ? <small>{subtitle}</small> : null}
@@ -129,16 +121,15 @@ function SettingsRow({ subtitle, title, to }) {
   );
 }
 
-function Segmented({ label, onChange, value }) {
-  const options = [
+function Segmented({ label, onChange, options = [
     ["everyone", "Everyone"],
     ["followers", "Followers"],
     ["only_me", "Only me"],
-  ];
+  ], value }) {
   return (
     <div className="edit-profile-privacy-control">
       <p>{label}</p>
-      <div>
+      <div style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
         {options.map(([option, text]) => (
           <button className={value === option ? "is-active" : ""} key={option} onClick={() => onChange(option)} type="button">{text}</button>
         ))}
@@ -285,7 +276,6 @@ function ProfileSettingsPage() {
   const queryClient = useQueryClient();
   const { setUser, user } = useAuth();
   const avatarInput = useRef(null);
-  const coverInput = useRef(null);
   const [form, setForm] = useState(emptyForm);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
@@ -344,7 +334,6 @@ function ProfileSettingsPage() {
   const role = account.role;
   const activeStatus = account.activeStatus || null;
   const profilePhoto = account.profilePhoto;
-  const coverPhoto = profile.coverPhoto;
 
   const directSummary = useMemo(() => {
     if (role !== "creator") return "Available in Messages";
@@ -377,12 +366,12 @@ function ProfileSettingsPage() {
 
   const setSavedVisibility = (value) => {
     setDirty(true);
-    setForm((current) => ({ ...current, profileVisibility: visibilityFromSegment(value) }));
+    setForm((current) => ({ ...current, savedPlacesVisibility: value }));
   };
 
-  const setOrbitVisibility = (value) => {
+  const setMemberBadgeVisibility = (value) => {
     setDirty(true);
-    setForm((current) => ({ ...current, orbitVisible: value !== "only_me" }));
+    setForm((current) => ({ ...current, showMemberBadgeOnComments: value === "everyone" }));
   };
 
 
@@ -428,7 +417,8 @@ function ProfileSettingsPage() {
           profileVisibility: form.profileVisibility,
           privacySettings: {
             ...(privacyQuery.data?.privacySettings || {}),
-            allowDiscovery: form.orbitVisible,
+            savedPlacesVisibility: form.savedPlacesVisibility,
+            showMemberBadgeOnComments: form.showMemberBadgeOnComments,
           },
         }),
       ]);
@@ -494,12 +484,7 @@ function ProfileSettingsPage() {
     onSuccess: handleProfileMutationSuccess("Profile photo updated."),
     onError: handleProfileMutationError,
   });
-  const coverMutation = useMutation({
-    mutationFn: profileService.uploadCover,
-    onSuccess: handleProfileMutationSuccess("Cover photo updated."),
-    onError: handleProfileMutationError,
-  });
-  const uploading = avatarMutation.isPending || coverMutation.isPending;
+  const uploading = avatarMutation.isPending;
 
   const chooseImage = (kind, event) => {
     const file = event.target.files?.[0];
@@ -514,8 +499,7 @@ function ProfileSettingsPage() {
   };
 
   const uploadCroppedImage = (file) => {
-    if (cropImage?.kind === "cover") coverMutation.mutate(file, { onSettled: closeCropper });
-    else avatarMutation.mutate(file, { onSettled: closeCropper });
+    avatarMutation.mutate(file, { onSettled: closeCropper });
   };
 
   const submit = (event) => {
@@ -557,15 +541,6 @@ function ProfileSettingsPage() {
         src={profilePhoto}
         subtitle="Square works best"
       />
-      <PhotoRow
-          cover
-          disabled={uploading}
-          fileRef={coverInput}
-          label="Cover photo"
-          onChange={(event) => chooseImage("cover", event)}
-          src={coverPhoto}
-      />
-
       {cropImage ? <ProfileImageCropper kind={cropImage.kind} onCancel={closeCropper} onSave={uploadCroppedImage} saving={uploading} source={cropImage.url} /> : null}
 
       {message ? <p className="edit-profile-success">{message}</p> : null}
@@ -576,6 +551,7 @@ function ProfileSettingsPage() {
         <Field label="Last name" name="lastName" onChange={updateField} value={form.lastName} />
         <Field className="edit-profile-field-wide" disabled label="Username" name="username" onChange={updateField} value={`@${form.username}`} />
         <p className="edit-profile-help edit-profile-field-wide">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
+        <BioField onChange={updateField} value={form.bio} />
         <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
         <Field label="Languages" name="languagesText" onChange={updateField} value={form.languagesText} />
         <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} />
@@ -590,7 +566,6 @@ function ProfileSettingsPage() {
 
       <section className="edit-profile-settings-list">
         <h2>Settings</h2>
-        {role === "creator" ? <SettingsRow subtitle={account.isVerified ? "Blue tick active · manage monthly renewal" : "Apply for the blue tick · monthly plan"} title="Verified Creator" to="/creator/verified" /> : null}
         <button className="edit-profile-settings-row" onClick={() => setStatusOpen(true)} type="button">
           <span>
             <b>Status</b>
@@ -607,12 +582,17 @@ function ProfileSettingsPage() {
         </button>
       </section>
 
-      {role === "creator" ? <section className="edit-profile-privacy">
+      <section className="edit-profile-privacy">
         <h2>Privacy</h2>
-        <Segmented label="Who can see your saved places?" onChange={setSavedVisibility} value={segmentedFromVisibility(form.profileVisibility)} />
-        <Segmented label="Who can see your orbit?" onChange={setOrbitVisibility} value={form.orbitVisible ? "everyone" : "only_me"} />
-        <p>Your orbit only ever shows public ties - follows and open dream support. Messages and private signals never appear to others.</p>
-      </section> : null}
+        <Segmented label="Who can see your saved places?" onChange={setSavedVisibility} value={form.savedPlacesVisibility} />
+        <Segmented label="Show your 🍂 member badge on comments?" onChange={setMemberBadgeVisibility} options={[["everyone", "Everyone"], ["only_me", "Only me"]]} value={form.showMemberBadgeOnComments ? "everyone" : "only_me"} />
+        <p>Your member number is always private — only you see it</p>
+      </section>
+
+      <section className="edit-profile-verification">
+        <h2>Verification</h2>
+        <Link to={role === "creator" ? "/creator/verified" : "/settings"}><FiCheckCircle /><span><b>{account.isVerified ? "Verified ✓" : "Get verified"}</b><small>{account.isVerified ? "the badge shows next to your name" : "Learn about profile verification"}</small></span><FiChevronRight /></Link>
+      </section>
 
       <button className="edit-profile-save" disabled={saveMutation.isPending || uploading} type="submit">
         {saveMutation.isPending ? "Saving..." : "Save"}

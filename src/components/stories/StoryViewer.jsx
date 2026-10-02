@@ -146,7 +146,7 @@ function StoryOverlays({ story }) {
   );
 }
 
-function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentation = "modal", stories = [] }) {
+function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentation = "modal", previewOnly = false, stories = [] }) {
   const viewerPosition = useStoryViewerPosition(isOpen);
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -175,10 +175,10 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
 
   const activeStory = stories[index] || null;
   const sharedCard = activeStory?.editorMetadata?.sharedCard || null;
-  const canReply = canReplyToStory(user, activeStory);
-  const canDelete = canDeleteStory(user, activeStory);
-  const canViewInsights = canViewStoryInsights(user, activeStory);
-  const canAdd = canCreateStory(user);
+  const canReply = !previewOnly && canReplyToStory(user, activeStory);
+  const canDelete = !previewOnly && canDeleteStory(user, activeStory);
+  const canViewInsights = !previewOnly && canViewStoryInsights(user, activeStory);
+  const canAdd = !previewOnly && canCreateStory(user);
   const canAddToProfileMedia = canDelete && ["image", "video"].includes(activeStory?.mediaType);
 
   const replyMutation = useMutation({
@@ -263,7 +263,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   }, [onClose, stories.length]);
 
   useEffect(() => {
-    if (!isOpen || !activeStory) {
+    if (!isOpen || !activeStory || previewOnly) {
       return undefined;
     }
 
@@ -275,7 +275,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
     }, VIEW_THRESHOLD_MS);
 
     return () => window.clearTimeout(timer);
-  }, [activeStory, isOpen, markViewedMutation]);
+  }, [activeStory, isOpen, markViewedMutation, previewOnly]);
 
   useEffect(() => {
     if (!activeStory) {

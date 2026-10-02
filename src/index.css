@@ -5409,6 +5409,29 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] {
   padding-bottom: 24px !important;
   box-shadow: 0 -18px 55px rgba(0,0,0,.58), 0 0 0 100vmax rgba(0,0,0,.7) !important;
 }
+
+/* Edit Profile prototype dimensions and controls */
+.edit-profile-page { width: min(100%, 474px); padding: 22px 20px 48px; }
+.edit-profile-page textarea { font: inherit; }
+.edit-profile-header { margin-bottom: 18px; }
+.edit-profile-back { width: 38px; height: 38px; font-size: 22px; }
+.edit-profile-header h1 { font-size: 18px; }
+.edit-profile-photo-row { gap: 14px; margin-top: 12px; }
+.edit-profile-photo-row b { font-size: 14px; }
+.edit-profile-pill-button { min-width: 78px; min-height: 36px; }
+.edit-profile-fields { grid-template-columns: minmax(0, 1fr); gap: 17px; }
+.edit-profile-field-wide { grid-column: auto; }
+.edit-profile-field textarea { width: 100%; min-height: 68px; resize: vertical; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: #12151B; color: #fff; outline: none; padding: 14px 15px; font-size: 14px; line-height: 1.5; }
+.edit-profile-field textarea:focus { border-color: rgba(156,203,255,.42); }
+.edit-profile-field > .edit-profile-help { display: block; margin: 2px 0 0; letter-spacing: 0; text-transform: none; }
+.edit-profile-verification { margin-top: 28px; }
+.edit-profile-verification h2 { margin: 0 0 12px; color: rgba(255,255,255,.44); font-size: 11px; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
+.edit-profile-verification a { display: flex; min-height: 58px; align-items: center; gap: 16px; color: #fff; }
+.edit-profile-verification a > svg:first-child { color: #8fc4ff; font-size: 17px; }
+.edit-profile-verification a > svg:last-child { margin-left: auto; color: rgba(255,255,255,.38); }
+.edit-profile-verification span { display: grid; gap: 4px; }
+.edit-profile-verification b { font-size: 13px; }
+.edit-profile-verification small { color: rgba(255,255,255,.48); font-size: 12px; }
 section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > span:first-child {
   margin-bottom: 16px !important;
 }
