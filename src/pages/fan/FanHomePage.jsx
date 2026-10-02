@@ -11,6 +11,7 @@ import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
 import { useAuth } from "../../hooks/useAuth";
 import { useDiscoverQuery } from "../../hooks/useDiscoverQuery";
 import { useFeedPosts, useMyFeedPosts } from "../../hooks/useFeedPosts";
+import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 
@@ -78,10 +79,13 @@ function HomeEmptyState({ activeFilter }) {
 function FanHomePage() {
   const { status, setStatus } = useOutletContext();
   const { user, loading: authLoading } = useAuth();
+  const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const [searchParams, setSearchParams] = useSearchParams();
   const display = getUserDisplay(user, status);
   const requestedFilter = searchParams.get("filter") || "all";
-  const composeSignal = searchParams.get("compose") === "note" ? "note" : "";
+  const composeSignal = searchParams.get("compose") === "note"
+    ? searchParams.get("composeRequest") || "note"
+    : "";
   const activeFilter = HOME_FILTERS.some((filter) => filter.key === requestedFilter) ? requestedFilter : "all";
   const requestedCity = searchParams.get("city") || "";
   const [selectedLocation, setSelectedLocation] = useState(requestedCity);
@@ -175,19 +179,11 @@ function FanHomePage() {
     }, { replace: true });
   }, [setSearchParams]);
 
-  const clearComposeSignal = useCallback(() => {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      next.delete("compose");
-      return next;
-    }, { replace: true });
-  }, [setSearchParams]);
-
   return (
     <div className="home-prototype-page">
       <section className="home-prototype-main" aria-label="Home feed">
         <HomeHeader
-          activityCount={Number(discoverQuery.data?.activity?.count || 0)}
+          activityCount={unreadActivityCount}
           location={feedLocation}
           locationOptions={locationOptions}
           onLocationChange={changeLocation}
@@ -195,7 +191,7 @@ function FanHomePage() {
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
         <HomeFeedFilters activeFilter={activeFilter} onChange={changeFilter} />
         <WallSeenTodayNotice />
-        {canPost ? <PostComposer currentUser={display} onComposeOpened={clearComposeSignal} openSignal={composeSignal} /> : null}
+        {canPost ? <PostComposer currentUser={display} openSignal={composeSignal} /> : null}
 
         {loading ? <LoadingSkeleton className="h-20" count={4} /> : null}
         {feedQuery.isError ? (

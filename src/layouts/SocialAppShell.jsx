@@ -109,6 +109,7 @@ function SocialAppShell({ children = null }) {
   const openNoteComposer = () => {
     const params = location.pathname === "/wall" ? new URLSearchParams(location.search) : new URLSearchParams();
     params.set("compose", "note");
+    params.set("composeRequest", String(Date.now()));
     setCreateOpen(false);
     navigate({ pathname: "/wall", search: `?${params.toString()}` });
   };

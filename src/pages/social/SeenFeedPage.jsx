@@ -9,6 +9,7 @@ import SeriesPickerSheet from "../../components/publication/SeriesPickerSheet";
 import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
+import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
@@ -187,21 +188,6 @@ function SeenTabEyeMark({ className = "" } = {}) {
   </svg>;
 }
 
-function SeenActivitySparkMark() {
-  return <svg aria-hidden="true" className="seen-activity-spark-mark" viewBox="0 0 64 64">
-    <defs>
-      <radialGradient id="seenActivitySparkGradient" fx="38%" fy="30%">
-        <stop offset="0%" stopColor="#FFFFFF" />
-        <stop offset="50%" stopColor="#CFE7FF" />
-        <stop offset="100%" stopColor="#5E8FCC" />
-      </radialGradient>
-    </defs>
-    <path d="M32 5l5.5 19.5L57 30l-19.5 5.5L32 55l-5.5-19.5L7 30l19.5-5.5z" fill="url(#seenActivitySparkGradient)" />
-    <path d="M32 5l5.5 19.5L57 30l-25-2z" fill="#FFFFFF" opacity=".5" />
-    <path d="M32 55l-5.5-19.5L7 30l25 2z" fill="#3E639C" opacity=".45" />
-  </svg>;
-}
-
 function SeenThinEyeMark({ className = "" }) {
   return <svg aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <path d="M2.5 12C5.4 6.9 18.6 6.9 21.5 12C18.6 17.1 5.4 17.1 2.5 12Z" />
@@ -220,7 +206,7 @@ function SeenHeader({ activeTab, activityCount = 0, onTabChange, onActivity, onC
       <button aria-label="Create" onClick={onCreate} type="button"><FiPlus /></button>
       <button aria-label="Search" onClick={onSearch} type="button"><FiSearch /></button>
       <button aria-label="Open activity" className="seen-activity-button" onClick={onActivity} type="button">
-        <SeenActivitySparkMark />
+        <ActivitySparkMark className="seen-activity-spark-mark" />
         {activityCount > 0 ? <span>{activityLabel}</span> : null}
       </button>
     </div>
@@ -1115,7 +1101,7 @@ export default function SeenFeedPage() {
       onClose={() => setCreateOpen(false)}
       onNote={() => {
         setCreateOpen(false);
-        navigate("/wall?compose=note");
+        navigate(`/wall?compose=note&composeRequest=${Date.now()}`);
       }}
       onStory={() => {
         setCreateOpen(false);

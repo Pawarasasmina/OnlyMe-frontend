@@ -10,7 +10,6 @@ import {
   FiChevronRight,
   FiEdit3,
   FiEye,
-  FiEyeOff,
   FiFlag,
   FiGift,
   FiGrid,
@@ -18,10 +17,10 @@ import {
   FiPlus,
   FiRefreshCw,
   FiRepeat,
+  FiSend,
   FiSettings,
   FiShare2,
   FiSlash,
-  FiUserCheck,
   FiX,
   FiZap,
 } from "react-icons/fi";
@@ -30,7 +29,6 @@ import AppShareSheet from "../../components/share/ShareSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanCard from "../../components/fanWeb/shared/FanCard";
-import FeedPostComposer from "../../components/posts/FeedPostComposer";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileConnectionsModal from "../../components/profile/ProfileConnectionsModal";
@@ -41,8 +39,10 @@ import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
+import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useAuth } from "../../hooks/useAuth";
+import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { messageService } from "../../services/messageService";
 import { analyticsService } from "../../services/analyticsService";
 import { dreamService } from "../../services/dreamService";
@@ -218,21 +218,16 @@ function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, 
   return <FanCreateSheet canCreateSeen={canCreateSeen} canCreateStoryNow={canCreateStoryNow} canCreateWorld={canCreateWorld} canPostNote={canPostNote} isOpen={isOpen} onClose={onClose} onNote={onNote} onStory={onStory} worldTarget={worldTarget} />;
 }
 
-function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities = {} }) {
+function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const unread = useUnreadActivityCount(Boolean(user));
   const [createOpen, setCreateOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
-  const [noteOpen, setNoteOpen] = useState(false);
   const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
   const worldTarget = worldCreateTarget(planets);
-  const currentUser = {
-    ...user,
-    avatar: profile.avatar || user?.avatar,
-    name: profile.displayName || user?.name || user?.username || "Creator",
-  };
-
   const openCreate = () => {
     if (!viewerCapabilities.canCreate) return;
     setCreateOpen(true);
@@ -245,7 +240,7 @@ function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities =
 
   const openNote = () => {
     setCreateOpen(false);
-    setNoteOpen(true);
+    navigate(`/wall?compose=note&composeRequest=${Date.now()}`);
   };
 
   return (
@@ -259,8 +254,8 @@ function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities =
             <Link aria-label="Wall" to={createTarget}><FiPlus /></Link>
           )}
           <Link aria-label="Activity" className="is-activity" to="/activity">
-            <FiZap />
-            {unread ? <i>{unread > 9 ? "9+" : unread}</i> : null}
+            <ActivitySparkMark className="h-5 w-5" />
+            {unread ? <i>{unread > 99 ? "99+" : unread}</i> : null}
           </Link>
         </div>
       </header>
@@ -276,7 +271,6 @@ function TopProfileBar({ planets = [], profile, unread = 0, viewerCapabilities =
         worldTarget={worldTarget}
       />
       <StoryCreator isOpen={storyOpen} onClose={() => setStoryOpen(false)} />
-      <FeedPostComposer currentUser={currentUser} isOpen={noteOpen} onClose={() => setNoteOpen(false)} />
     </>
   );
 }
@@ -365,14 +359,34 @@ function OwnerQuickActionsSheet({ isOpen, onClose }) {
   );
 }
 
-function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
+function VisitorMoreSheet({ isOpen, onClose, profile }) {
   const client = useQueryClient();
   const [busy, setBusy] = useState("");
-  const [muted, setMuted] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState("");
   const [reporting, setReporting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+  const [sheetPosition, setSheetPosition] = useState(undefined);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    const updatePosition = () => {
+      if (!centerColumn) return;
+      const bounds = centerColumn.getBoundingClientRect();
+      setSheetPosition({ "--visitor-menu-center-x": `${bounds.left + (bounds.width / 2)}px` });
+    };
+    const closeOnEscape = (event) => event.key === "Escape" && onClose();
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("keydown", closeOnEscape);
+    const observer = typeof ResizeObserver === "undefined" || !centerColumn ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("keydown", closeOnEscape);
+      observer?.disconnect();
+    };
+  }, [isOpen, onClose]);
   if (!isOpen) return null;
   const publicPath = `/profile/${encodeURIComponent(profile.username)}`;
   const shareTarget = `${window.location.origin}${publicPath}`;
@@ -387,15 +401,6 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
     if (navigator.share) await navigator.share({ title: `${profile.displayName} on @seen`, url: shareTarget });
     else await copyText(shareTarget);
     onClose();
-  });
-  const follow = () => run(relationship.following ? "Unfollow" : "Follow", async () => {
-    await profileService.toggleFollow(profile.username);
-    await invalidateFollowSurfaces(client);
-    onClose();
-  });
-  const mute = () => run(muted ? "Unmute" : "Mute", async () => {
-    await messageService.muteConversation(profile.ownerUserId, !muted);
-    setMuted((value) => !value);
   });
   const report = (reason) => run("Report", async () => {
     await profileService.reportProfile(profile.username, { reason });
@@ -412,16 +417,14 @@ function VisitorMoreSheet({ isOpen, onClose, profile, relationship = {} }) {
     });
   };
   return (
-    <div aria-modal="true" className="profile-quick-actions-backdrop" onClick={() => { setReporting(false); setReportDone(false); onClose(); }} role="dialog">
-      <section className="profile-quick-actions-sheet is-visitor" onClick={(event) => event.stopPropagation()}>
+    <div aria-modal="true" className="profile-quick-actions-backdrop is-visitor-menu" onClick={() => { setReporting(false); setReportDone(false); onClose(); }} role="dialog" style={sheetPosition}>
+      <section className={`profile-quick-actions-sheet is-visitor ${!reporting && !reportDone ? "is-main" : ""}`} onClick={(event) => event.stopPropagation()}>
         <span className="profile-quick-actions-handle" />
         <h2>{reportDone ? "Report received" : reporting ? `Report ${firstName}` : firstName}</h2>
         {reportDone ? <div className="profile-quick-actions-list px-4 pb-4"><p className="py-3 text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={() => { setReportDone(false); onClose(); }} type="button">Done</button></div> : reporting ? <div className="profile-quick-actions-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this profile?</p>{atseenReportReasons.map((reason) => <button className="profile-quick-action-row" disabled={Boolean(busy)} key={reason} onClick={() => report(reason)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{reason}</b></span></button>)}<button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(false)} type="button"><span className="profile-quick-action-copy"><b>Back</b></span></button></div> : <div className="profile-quick-actions-list">
-          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiShare2 /></span><span className="profile-quick-action-copy"><b>Share profile</b></span></button>
-          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={follow} type="button"><span className="profile-quick-action-icon"><FiUserCheck /></span><span className="profile-quick-action-copy"><b>{relationship.following ? "Unfollow" : "Follow"}</b></span></button>
-          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={mute} type="button"><span className="profile-quick-action-icon"><FiEyeOff /></span><span className="profile-quick-action-copy"><b>{muted ? `Unmute ${firstName}` : `Mute ${firstName}`}</b><small>{muted ? "Show their updates again" : "Stay following, stop seeing their posts and stories"}</small></span></button>
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiSend /></span><span className="profile-quick-action-copy"><b>Share profile</b></span></button>
           <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(true)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>Report</b></span></button>
-          <button className="profile-quick-action-row is-danger" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? `Unblock ${firstName}` : `Block ${firstName}`}</b></span></button>
+          <button className="profile-quick-action-row is-danger" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? `Unblock ${firstName}` : `Block ${firstName}`}</b><small>{blocked ? "allow them to find and message you" : "they won’t find you or message you"}</small></span></button>
         </div>}
         {error ? <p className="profile-visitor-action-error" role="alert">{error}</p> : null}
       </section>
@@ -472,13 +475,6 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
   const shareUrl = `${window.location.origin}/profile/${profile.username}`;
   const editStatus = () => isOwner && navigate("/profile/status");
   const statusText = activeStatus?.label || "";
-  const viewersSummary = useQuery({
-    queryKey: ["profile", "me", "viewers", "summary"],
-    queryFn: () => profileService.getOwnViewers({ limit: 2 }).then((response) => response.data.data),
-    enabled: isOwner,
-    retry: false,
-    staleTime: 30000,
-  });
   const showSeenConfirmation = () => setSeenConfirmation(true);
   const seeSignal = useMutation({
     mutationFn: () => profileService.toggleSeeSignal(profile.username),
@@ -500,11 +496,11 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
   const markProfileSeen = () => {
     if (!seeSignal.isPending) seeSignal.mutate();
   };
-  const seenByCount = viewersSummary.data?.seenTodayCount ?? metricValue(metrics, "seenBy", metricValue(metrics, "profileView", metrics.publishedContentCount));
+  const seenByCount = metricValue(metrics, "seenBy", 0);
   const identityMetrics = [
     ["followers", "Followers", metrics.followerCount, () => onConnectionsOpen?.("followers")],
     ["following", "Following", metrics.followingCount, () => onConnectionsOpen?.("following")],
-    ["seen-by", "Seen by", seenByCount, () => (isOwner ? setViewersOpen(true) : null)],
+    ["seen-by", "Seen by", seenByCount, () => onConnectionsOpen?.("seen-by")],
   ];
 
   return (
@@ -747,22 +743,21 @@ function ContentTabsPanel({ data, isOwner, tab }) {
   return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
 }
 
-function WallPreview({ isOwner, posts = [] }) {
-  const visible = posts.slice(0, 2);
+function ProfileNotes({ isOwner, posts = [] }) {
   return (
     <section className="profile-section profile-wall-section">
       <header className="profile-section-head">
-        <h2>Wall</h2>
-        <Link to="/wall">{compact(posts.length)} notes <FiChevronRight /></Link>
+        <h2>Notes</h2>
+        <span>{compact(posts.length)} {posts.length === 1 ? "note" : "notes"}</span>
       </header>
-      {visible.length ? <div className="profile-notes-list">{visible.map((post) => <FeedPost key={post.feedId || post.id} post={post} />)}</div> : <p className="profile-empty-state">{isOwner ? "Your notes will appear here." : "No Wall notes yet."}</p>}
-      {posts.length ? <Link className="profile-open-wall" to="/wall">Open the Wall <FiChevronRight /></Link> : null}
+      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <p className="profile-empty-state">{isOwner ? "Your notes will appear here." : "No notes yet."}</p>}
     </section>
   );
 }
 
 function ProfileBody({ data, setConnectionsType }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
@@ -770,17 +765,11 @@ function ProfileBody({ data, setConnectionsType }) {
   const [activeSeenListId, setActiveSeenListId] = useState("");
   const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
-  const [experienceNoteOpen, setExperienceNoteOpen] = useState(false);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
-  const currentUser = {
-    ...user,
-    avatar: profile.avatar || user?.avatar,
-    name: profile.displayName || user?.name || user?.username || "Creator",
-  };
   useEffect(() => {
     setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   }, [requestedTab]);
@@ -845,7 +834,7 @@ function ProfileBody({ data, setConnectionsType }) {
     );
   }
   return (
-    <div className={`profile-prototype is-owner-profile ${isOwner ? "" : "is-public-profile"}`}>
+    <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-public-profile"}`}>
       {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">Saved for later · {draftSavedCount}/3 ✍️</p> : null}
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
@@ -870,7 +859,7 @@ function ProfileBody({ data, setConnectionsType }) {
         ) : <ContentTabsPanel data={data} isOwner={isOwner} tab={tab} />}
       </section>
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
-      <WallPreview isOwner={isOwner} posts={data.wallPosts || []} />
+      <ProfileNotes isOwner={isOwner} posts={data.wallPosts || []} />
       <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
       {isOwner ? <FanCreateSheet
@@ -880,12 +869,14 @@ function ProfileBody({ data, setConnectionsType }) {
         canPostNote={canPostNote}
         isOpen={experienceCreateOpen}
         onClose={() => setExperienceCreateOpen(false)}
-        onNote={() => { setExperienceCreateOpen(false); setExperienceNoteOpen(true); }}
+        onNote={() => {
+          setExperienceCreateOpen(false);
+          navigate(`/wall?compose=note&composeRequest=${Date.now()}`);
+        }}
         onStory={() => { setExperienceCreateOpen(false); setExperienceStoryOpen(true); }}
         worldTarget={worldCreateTarget(data.planets || [])}
       /> : null}
       <StoryCreator isOpen={experienceStoryOpen} onClose={() => setExperienceStoryOpen(false)} />
-      <FeedPostComposer currentUser={currentUser} isOpen={experienceNoteOpen} onClose={() => setExperienceNoteOpen(false)} />
     </div>
   );
 }
@@ -914,7 +905,17 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
   } else {
     body = (
       <>
-        <ProfileConnectionsModal onClose={() => setConnectionsType("")} type={connectionsType} username={profileQuery.data.profile.username} />
+        <ProfileConnectionsModal
+          counts={{
+            followers: profileQuery.data.publicMetrics?.followerCount,
+            following: profileQuery.data.publicMetrics?.followingCount,
+            "seen-by": profileQuery.data.publicMetrics?.seenByCount ?? 0,
+          }}
+          displayName={profileQuery.data.profile.displayName}
+          onClose={() => setConnectionsType("")}
+          type={connectionsType}
+          username={profileQuery.data.profile.username}
+        />
         <ProfileBody data={profileQuery.data} setConnectionsType={setConnectionsType} />
       </>
     );

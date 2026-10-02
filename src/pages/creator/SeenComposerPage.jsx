@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   FiArrowRight,
   FiBarChart2,
@@ -2368,6 +2368,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
 export default function SeenComposerPage() {
   const { id } = useParams();
   const nav = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const fromDrafts = searchParams.get("from") === "drafts";
   const fromSeen = searchParams.get("from") === "seen";
@@ -2387,6 +2388,7 @@ export default function SeenComposerPage() {
   const dirty = useRef(false);
   const pendingCoverKind = useRef("IMAGE");
   const pendingVideoLimit = useRef(15);
+  const chapterTitleInputs = useRef(new Map());
   const [p, setP] = useState(() => ({
     ...empty,
     replyToSeen: replyToSeenId || null,
@@ -2413,6 +2415,8 @@ export default function SeenComposerPage() {
   const [activeChapterId, setActiveChapterId] = useState("");
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
+  const [chapterAdding, setChapterAdding] = useState(false);
+  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => location.state?.focusChapterId || "");
   const [chapterStatus, setChapterStatus] = useState("");
   const [cropTarget, setCropTarget] = useState(null);
   const [loadingPublication, setLoadingPublication] = useState(Boolean(id));
@@ -2423,7 +2427,25 @@ export default function SeenComposerPage() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const refresh = async (publicationId = id) => {
+  useEffect(() => {
+    if (!error) return undefined;
+    const visibleError = error;
+    const timer = window.setTimeout(() => {
+      setError((current) => current === visibleError ? "" : current);
+    }, 4200);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+
+  useEffect(() => {
+    if (!status || status === "Saved" || status.endsWith("...")) return undefined;
+    const visibleStatus = status;
+    const timer = window.setTimeout(() => {
+      setStatus((current) => current === visibleStatus ? "Saved" : current);
+    }, 2800);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+
+  const refresh = async (publicationId = id, { preserveLocalChanges = false } = {}) => {
     const response = await api.getMyPublication(publicationId);
     let publication = response.data.data.publication;
     if (publication.status === "PUBLISHED") {
@@ -2437,15 +2459,42 @@ export default function SeenComposerPage() {
       ...empty,
       ...publication,
       chapters: Array.isArray(publication?.chapters)
-        ? publication.chapters
+        ? publication.chapters.map((chapter) => chapter.title === "Chapter name" ? { ...chapter, title: "" } : chapter)
         : [],
       tags: Array.isArray(publication?.tags) ? publication.tags : [],
       series: publication?.series || null,
       seriesId: publication?.seriesId || publication?.series?.id || null,
       visibility: publication?.visibility || "PUBLIC",
     };
-    setP(normalizedPublication);
-    dirty.current = false;
+    if (preserveLocalChanges) {
+      setP((current) => {
+        const localChapters = new Map((current.chapters || []).map((chapter) => [chapter.stableChapterId, chapter]));
+        return {
+          ...normalizedPublication,
+          title: current.title,
+          summary: current.summary,
+          description: current.description,
+          category: current.category,
+          series: current.series,
+          seriesId: current.seriesId,
+          visibility: current.visibility,
+          allowDownload: current.allowDownload,
+          experienceLocation: current.experienceLocation,
+          taggedPeople: current.taggedPeople,
+          attachedEntities: current.attachedEntities,
+          entityRefs: current.entityRefs,
+          tags: current.tags,
+          replyToSeen: current.replyToSeen,
+          chapters: normalizedPublication.chapters.map((chapter) => {
+            const local = localChapters.get(chapter.stableChapterId);
+            return local ? { ...chapter, title: local.title, blocks: local.blocks } : chapter;
+          }),
+        };
+      });
+    } else {
+      setP(normalizedPublication);
+      dirty.current = false;
+    }
     return normalizedPublication;
   };
 
@@ -2499,6 +2548,26 @@ export default function SeenComposerPage() {
     };
   }, [replyToSeenId]);
 
+  useEffect(() => {
+    if (!chapterTitleFocusId || !(p.chapters || []).some((chapter) => chapter.stableChapterId === chapterTitleFocusId)) return undefined;
+    dirty.current = true;
+    setP((current) => {
+      const target = current.chapters.find((chapter) => chapter.stableChapterId === chapterTitleFocusId);
+      if (!target?.title) return current;
+      return {
+        ...current,
+        chapters: current.chapters.map((chapter) => chapter.stableChapterId === chapterTitleFocusId
+          ? { ...chapter, title: "" }
+          : chapter),
+      };
+    });
+    const timer = window.setTimeout(() => {
+      chapterTitleInputs.current.get(chapterTitleFocusId)?.focus();
+      setChapterTitleFocusId("");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [chapterTitleFocusId, p.chapters]);
+
   const change = (values) => {
     dirty.current = true;
     setStatus("Unsaved changes - click Save for later");
@@ -2507,7 +2576,7 @@ export default function SeenComposerPage() {
     setP((current) => ({ ...current, ...values }));
   };
 
-  const ensure = async () => {
+  const ensure = async ({ navigateToDraft = true } = {}) => {
     if (p.id) return p;
     const response = await api.createPublicationDraft({
       kind: "SEEN",
@@ -2527,9 +2596,11 @@ export default function SeenComposerPage() {
     const publication = response.data.data.publication;
     sessionStorage.setItem("atseen_new_seen_draft", publication.id);
     setP(publication);
-    nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
-      replace: true,
-    });
+    if (navigateToDraft) {
+      nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
+        replace: true,
+      });
+    }
     return publication;
   };
 
@@ -2647,9 +2718,7 @@ export default function SeenComposerPage() {
   const uploadCoverFile = async (file, kind = pendingCoverKind.current) => {
     if (!file) return;
     try {
-      const publication = dirty.current
-        ? await save({ allowEmpty: true })
-        : await ensure();
+      const publication = await ensure();
       if (!publication) return;
       setUploading(kind);
       setStatus("Uploading media...");
@@ -2657,7 +2726,7 @@ export default function SeenComposerPage() {
         purpose: "COVER",
         statusVersion: publication.statusVersion,
       });
-      await refresh(publication.id);
+      await refresh(publication.id, { preserveLocalChanges: dirty.current });
       setStatus("Media saved");
       setCoverPreview((current) => {
         if (current?.url) URL.revokeObjectURL(current.url);
@@ -2720,29 +2789,41 @@ export default function SeenComposerPage() {
   };
 
   const addChapter = async () => {
+    if (chapterAdding) return;
     if (p.chapters.length >= 5) {
       setError("Maximum five chapters.");
       return;
     }
-    const publication = dirty.current
-      ? await save({ allowEmpty: true })
-      : await ensure();
-    if (!publication) return;
+    const creatingDraft = !p.id;
+    setChapterAdding(true);
+    setError("");
     try {
+      const publication = await ensure({ navigateToDraft: false });
+      if (!publication) return;
       const title = p.chapters.length
         ? `Chapter ${p.chapters.length + 1}`
         : "Chapter name";
-      await api.addChapter(publication.id, {
+      const response = await api.addChapter(publication.id, {
         title,
         blocks: [],
         isPreview: true,
         releaseMode: "IMMEDIATE",
         statusVersion: publication.statusVersion,
       });
-      await refresh(publication.id);
+      const addedChapterId = response.data?.data?.chapter?.stableChapterId || "";
+      await refresh(publication.id, { preserveLocalChanges: dirty.current });
+      if (addedChapterId) setChapterTitleFocusId(addedChapterId);
       setStatus("Chapter added");
+      if (creatingDraft) {
+        nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
+          replace: true,
+          state: { focusChapterId: addedChapterId },
+        });
+      }
     } catch (requestError) {
       setError(publicationError(requestError));
+    } finally {
+      setChapterAdding(false);
     }
   };
 
@@ -3158,6 +3239,12 @@ export default function SeenComposerPage() {
   return (
     <section className="seen-compose-page">
       {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
+      {error || statusText ? (
+        <div className="seen-compose-feedback-stack" aria-live="polite">
+          {error ? <p className="seen-compose-feedback is-error" role="alert">{error}</p> : null}
+          {statusText ? <p className="seen-compose-feedback is-status" role="status">{statusText}</p> : null}
+        </div>
+      ) : null}
       {cropTarget ? (
         <ProfileImageCropper
           kind="seen"
@@ -3333,7 +3420,10 @@ export default function SeenComposerPage() {
                             event.currentTarget.blur();
                           }
                         }}
-                        placeholder="Chapter name"
+                        ref={(node) => {
+                          if (node) chapterTitleInputs.current.set(chapter.stableChapterId, node);
+                          else chapterTitleInputs.current.delete(chapter.stableChapterId);
+                        }}
                         value={chapter.title || ""}
                       />
                       {storyPreview ? <p>{storyPreview}</p> : null}
@@ -3361,11 +3451,14 @@ export default function SeenComposerPage() {
           {p.chapters.length < 5 ? (
             <button
               className="seen-compose-add-chapter"
+              disabled={chapterAdding}
               onClick={addChapter}
               type="button"
             >
               <FiPlus aria-hidden="true" />{" "}
-              {p.chapters.length
+              {chapterAdding
+                ? "Adding chapter..."
+                : p.chapters.length
                 ? "Add chapter"
                 : "Chapter 1 - where it starts"}
             </button>
@@ -3382,8 +3475,6 @@ export default function SeenComposerPage() {
           <SettingsRow Icon={FiUpload} label="Allow download" onClick={() => change({ allowDownload: !p.allowDownload })} toggle value={p.allowDownload ? "On" : "Off"} />
           <SettingsRow Icon={FiFilm} label="Part of an Experience" onClick={() => setSettingsSheet("experience")} value={(p.attachedEntities || []).find((item) => item.type === "experience")?.title || "None"} />
         </div>
-        {error ? <p className="seen-compose-error" role="alert">{error}</p> : null}
-        {statusText ? <p className="seen-compose-status" role="status">{statusText}</p> : null}
         {linkOnlyShare?.url ? (
           <div className="seen-compose-share-link">
             <span>{linkOnlyShare.url}</span>

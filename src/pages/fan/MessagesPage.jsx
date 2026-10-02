@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiX, FiZap } from "react-icons/fi";
 import { FiExternalLink } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
@@ -12,7 +12,9 @@ import VideoNoteBubble from "../../components/messaging/VideoNoteBubble";
 import DirectAccessSettingsSheet from "../../components/messages/DirectAccessSettingsSheet";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryViewer from "../../components/stories/StoryViewer";
+import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import { useAuth } from "../../hooks/useAuth";
+import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { useCalls } from "../../context/callContextBase";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
@@ -289,8 +291,10 @@ function SharedContentMessageCard({ content, mine, onOpen }) {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const creatorMode = user?.creatorApprovalStatus === "approved";
   const { startCall } = useCalls();
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const returnToRef = useRef(searchParams.get("returnTo") || "");
@@ -363,11 +367,21 @@ export default function MessagesPage() {
   const [directAccessBusy, setDirectAccessBusy] = useState(false);
   const [directAccessSettings, setDirectAccessSettings] = useState({ enabled: false, priceStars: 100, callEnabled: false, callPriceStars: 500, callDurationMinutes: 5, callAutoDeclineAway: false });
   const [directAccessSetupOpen, setDirectAccessSetupOpen] = useState(false);
-  const [directAccessOffer, setDirectAccessOffer] = useState(null);
+  const [directAccessOffer, setDirectAccessOfferState] = useState(() => location.state?.directAccessOffer || null);
+  const setDirectAccessOffer = (nextOffer) => {
+    setDirectAccessOfferState(nextOffer);
+    if (nextOffer !== null) return;
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("directAccess");
+      next.delete("autoIncluded");
+      return next;
+    }, { replace: true, state: null });
+  };
   const [creatorAskMode, setCreatorAskMode] = useState(false);
   const [directAccessNotice, setDirectAccessNotice] = useState("");
   const [clock, setClock] = useState(Date.now());
-  const directAccessAutoOpenedRef = useRef(false);
+  const directAccessAutoOpenedRef = useRef(Boolean(location.state?.directAccessOffer));
   const directAccessSettlementRef = useRef(null);
   const bottomRef = useRef(null);
   const threadRef = useRef(null);
@@ -611,15 +625,12 @@ export default function MessagesPage() {
     || (fanCanAskAfterWindowEnded && !fanCanAffordFollowup),
   );
   useEffect(() => {
-    if (searchParams.get("directAccess") !== "1" || !selected?.id || directAccessAutoOpenedRef.current || messagesQuery.isLoading) return;
+    const navigationTarget = String(location.state?.openDirectAccessOfferFor || "");
+    const shouldOpenDirectAccess = searchParams.get("directAccess") === "1"
+      || (navigationTarget && navigationTarget === String(selected?.id || ""));
+    if (!shouldOpenDirectAccess || !selected?.id || directAccessAutoOpenedRef.current || messagesQuery.isLoading) return;
     directAccessAutoOpenedRef.current = true;
     if (hasActiveDirectAccessWindow) {
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.delete("directAccess");
-        next.delete("autoIncluded");
-        return next;
-      }, { replace: true });
       return;
     }
     setDirectAccessBusy(true);
@@ -641,14 +652,8 @@ export default function MessagesPage() {
       .catch((requestError) => setError(requestError.response?.data?.message || requestError.message || "Could not load Direct Access."))
       .finally(() => {
         setDirectAccessBusy(false);
-        setSearchParams((current) => {
-          const next = new URLSearchParams(current);
-          next.delete("directAccess");
-          next.delete("autoIncluded");
-          return next;
-        }, { replace: true });
       });
-  }, [hasActiveDirectAccessWindow, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasActiveDirectAccessWindow, location.state, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
   const lastReadOutgoingMessageId = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
@@ -1706,7 +1711,7 @@ export default function MessagesPage() {
         <header className="flex items-center justify-end gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
           <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
-          <button aria-label="Open activity" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><FiZap /><span className="absolute -right-0.5 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black text-atseen-bg">{[...conversations, ...(groupsQuery.data || [])].reduce((total, item) => total + (Number(item.unreadCount) || 0), 0)}</span></button>
+          <button aria-label="Open activity" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><ActivitySparkMark className="h-6 w-6" />{unreadActivityCount > 0 ? <span className="absolute -right-0.5 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black text-atseen-bg">{unreadActivityCount > 99 ? "99+" : unreadActivityCount}</span> : null}</button>
         </header>
         <div className="mx-3 flex items-center gap-3 sm:mx-5">
           <nav aria-label="Message inbox tabs" className="grid min-w-0 flex-1 grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1">
