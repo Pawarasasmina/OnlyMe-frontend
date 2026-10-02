@@ -631,12 +631,6 @@ export default function MessagesPage() {
     if (!shouldOpenDirectAccess || !selected?.id || directAccessAutoOpenedRef.current || messagesQuery.isLoading) return;
     directAccessAutoOpenedRef.current = true;
     if (hasActiveDirectAccessWindow) {
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.delete("directAccess");
-        next.delete("autoIncluded");
-        return next;
-      }, { replace: true, state: null });
       return;
     }
     setDirectAccessBusy(true);
