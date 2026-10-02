@@ -175,7 +175,7 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
 
       <Link aria-label="Open activity" className="home-spark-button" to="/activity">
         <ActivitySparkMark className="h-5 w-5" />
-        {activityCount > 0 ? <span>{activityCount > 99 ? "99+" : activityCount}</span> : null}
+        {activityCount > 0 ? <span className="activity-count-badge">{activityCount > 99 ? "99+" : activityCount}</span> : null}
       </Link>
     </div>
   );
