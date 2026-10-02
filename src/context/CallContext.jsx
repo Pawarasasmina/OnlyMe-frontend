@@ -12,6 +12,7 @@ export function CallProvider({ children, user }) {
   const [cameraOff, setCameraOff] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
+  const [offerPosition, setOfferPosition] = useState({});
   const callRef = useRef(null);
   const peerRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -232,14 +233,35 @@ export function CallProvider({ children, user }) {
   const shownSeconds = call?.paid && call?.durationLimitSeconds ? Math.max(0, call.durationLimitSeconds - elapsed) : elapsed;
   const time = `${String(Math.floor(shownSeconds / 60)).padStart(2, "0")}:${String(shownSeconds % 60).padStart(2, "0")}`;
 
+  useEffect(() => {
+    if (call?.state !== "OFFER") {
+      setOfferPosition({});
+      return undefined;
+    }
+    const centerColumn = document.querySelector(".social-center-scroll");
+    const updatePosition = () => {
+      if (!centerColumn) return setOfferPosition({});
+      const bounds = centerColumn.getBoundingClientRect();
+      setOfferPosition({ "--call-offer-center-x": `${bounds.left + (bounds.width / 2)}px` });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" || !centerColumn ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [call?.state]);
+
   return <CallContext.Provider value={{ activeCall: call, startCall }}>
     {children}
-    {call && !(call.direction === "OUTGOING" && call.state === "REQUESTED") && createPortal(<div className={`fixed inset-0 z-[9999] flex text-white ${call.state === "OFFER" ? "items-end justify-center bg-black/70 backdrop-blur-[2px]" : "items-center justify-center bg-[#06080c]"}`}>
+    {call && !(call.direction === "OUTGOING" && call.state === "REQUESTED") && createPortal(<div className={`fixed inset-0 z-[9999] flex text-white ${call.state === "OFFER" ? "call-offer-backdrop items-end justify-center bg-black/70 backdrop-blur-[2px]" : "items-center justify-center bg-[#06080c]"}`} style={call.state === "OFFER" ? offerPosition : undefined}>
       {call.type === "VIDEO" && !final ? <video autoPlay className="absolute inset-0 h-full w-full object-cover" playsInline ref={remoteVideoRef} /> : null}
       <audio autoPlay ref={remoteAudioRef} />
       {call.state !== "OFFER" ? <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-black/75" /> : null}
       {call.type === "VIDEO" && localStreamRef.current ? <video autoPlay className="absolute right-4 top-4 z-10 h-36 w-24 rounded-2xl border border-white/20 bg-black object-cover shadow-2xl" muted playsInline ref={localVideoRef} /> : null}
-      <div className={`relative z-10 flex w-full flex-col items-center text-center ${call.state === "OFFER" ? "max-h-[88vh] max-w-[640px] justify-start rounded-t-[24px] border border-b-0 border-[#26374a] bg-[#080b0f] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl" : "h-full max-w-md justify-between px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-16"}`}>
+      <div className={`relative z-10 flex w-full flex-col items-center text-center ${call.state === "OFFER" ? "call-offer-sheet max-h-[88vh] max-w-[440px] justify-start rounded-t-[24px] border border-b-0 border-[#26374a] bg-[#080b0f] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl" : "h-full max-w-md justify-between px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-16"}`}>
         {call.state === "OFFER" ? <div className="mb-4 h-1 w-8 rounded-full bg-white/30" /> : null}
         {call.state === "OFFER" ? <div className="flex w-full items-center gap-3 pb-4 text-left"><FanAvatar name={call.person?.displayName || "Call"} size="h-10 w-10" src={call.person?.avatarUrl} /><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black">Call with {call.person?.displayName || "creator"}</h2><p className="mt-1 text-[11px] text-white/60">{call.durationMinutes} min · guaranteed or refunded</p></div><button aria-label="Close call offer" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/60 hover:bg-white/5 hover:text-white" onClick={() => closeCall()} type="button"><FiX /></button></div> : <div><FanAvatar name={call.person?.displayName || "Call"} size="h-24 w-24" src={call.person?.avatarUrl} /><h2 className="mt-5 text-2xl font-black">{call.person?.displayName || "Call"}</h2><p className="mt-2 text-sm text-white/65">{final ? call.state === "DECLINED" ? "Call declined" : call.state === "MISSED" ? "No answer · Stars refunded" : call.state === "FAILED" ? "Call failed" : "Call ended" : call.state === "ACTIVE" ? time : call.state === "REQUESTED" ? call.direction === "INCOMING" ? `Paid call request · ✦${call.priceStars}` : "Call requested · waiting for creator" : call.state === "JOIN_READY" ? `${call.person?.displayName?.split(" ")[0] || "Creator"} accepted your call` : call.state === "WAITING_FOR_JOIN" ? "Accepted · waiting for fan to join" : call.direction === "INCOMING" && call.state === "RINGING" ? `Incoming ${call.paid ? `paid call · ✦${call.priceStars}` : call.type.toLowerCase() + " call"}` : call.state === "CONNECTING" ? "Connecting…" : "Ringing…"}</p>{call.paid ? <p className="mt-2 text-[11px] font-bold text-[#9CCBFF]">✦{call.priceStars} · {call.settlementStatus === "HELD" ? "held until connected" : call.settlementStatus === "CAPTURED" ? "call delivered" : call.settlementStatus === "REFUNDED" ? "refunded" : ""}</p> : null}{error ? <p className="mt-3 text-xs text-red-300">{error}</p> : null}</div>}
         {!final ? call.state === "OFFER" ? <div className="w-full border-t border-white/10 pt-4"><div className="mb-3 rounded-2xl bg-white/[0.055] p-4 text-left"><div className="flex justify-between text-sm"><span className="text-white/60">Price</span><b>✦{call.priceStars}</b></div><div className="mt-2 flex justify-between text-sm"><span className="text-white/60">Your balance</span><b>✦{call.walletBalance}</b></div><p className="mt-4 text-[10px] leading-4 text-white/50">Stars are held when you request. The creator earns after both sides connect; otherwise you are refunded.</p></div><button className="w-full rounded-2xl bg-[#84b6fb] py-3.5 text-sm font-black text-[#080b0f] disabled:opacity-40" disabled={Number(call.walletBalance) < Number(call.priceStars)} onClick={confirmPaidCall} type="button">Request call · ✦{call.priceStars}</button></div> : call.state === "JOIN_READY" ? <div className="w-full"><p className="mb-4 text-sm text-white/65">{Math.round((call.durationLimitSeconds || 0) / 60)} min · guaranteed or refunded</p><button className="w-full rounded-full bg-[#9CCBFF] py-3 text-sm font-black text-[#0A0C0F]" onClick={joinPaidCall} type="button">Join the call</button></div> : <div className="flex items-center gap-5">{call.direction === "INCOMING" && ["REQUESTED", "RINGING"].includes(call.state) ? <><button aria-label="Decline call" className="grid h-16 w-16 place-items-center rounded-full bg-red-500 text-2xl shadow-xl" onClick={declineCall} type="button"><FiPhone className="rotate-[135deg]" /></button><button aria-label="Accept call" className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500 text-2xl shadow-xl" onClick={acceptCall} type="button"><FiPhone /></button></> : call.state === "REQUESTED" ? <button className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white/65" onClick={declineCall} type="button">Cancel request</button> : <><button aria-label={muted ? "Unmute" : "Mute"} className={`grid h-[52px] w-[52px] place-items-center rounded-full text-xl ${muted ? "bg-white text-black" : "bg-white/15"}`} onClick={toggleMute} type="button">{muted ? <FiMicOff /> : <FiMic />}</button>{call.type === "VIDEO" ? <button aria-label={cameraOff ? "Turn camera on" : "Turn camera off"} className={`grid h-[52px] w-[52px] place-items-center rounded-full text-xl ${cameraOff ? "bg-white text-black" : "bg-white/15"}`} onClick={toggleCamera} type="button">{cameraOff ? <FiVideoOff /> : <FiVideo />}</button> : null}<button aria-label="End call" className="grid h-16 w-16 place-items-center rounded-full bg-red-500 text-2xl shadow-xl" onClick={endCall} type="button"><FiPhone className="rotate-[135deg]" /></button></>}</div> : <div />}

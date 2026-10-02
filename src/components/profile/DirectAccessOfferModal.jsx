@@ -1,20 +1,23 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FiClock, FiInbox, FiMessageCircle, FiPhone, FiRefreshCw, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiInbox, FiLock, FiMessageCircle, FiPhone, FiRefreshCw } from "react-icons/fi";
 import { useCalls } from "../../context/callContextBase";
 import { callService } from "../../services/callService";
 import { messageService } from "../../services/messageService";
 
 const benefitRows = [
-  [FiMessageCircle, "A 48-hour private window", "Send up to 3 messages. This is a real back-and-forth, not a support ticket."],
+  [FiMessageCircle, "A 48-hour private window", "Up to 3 messages from you — a real back-and-forth, not a ticket."],
   [FiInbox, "Top of the priority inbox", "Your message appears above standard conversations so it cannot get lost."],
-  [FiClock, "First reply within 48 hours", "The creator guarantees a personal reply during your private window."],
-  [FiRefreshCw, "Refunded if unanswered", "If the creator does not reply in time, your held Stars return automatically."],
+  [FiClock, "First reply within 48 hours", "A personal reply, usually much faster — within the guarantee."],
+  [FiRefreshCw, "Refunded if unanswered", "No reply in 48 hours? Your coins come back automatically. Every time."],
 ];
+const STAR = String.fromCharCode(10022);
 
 export default function DirectAccessOfferModal({ onClose, profile }) {
   const navigate = useNavigate();
   const { startCall } = useCalls();
+  const [pagePosition, setPagePosition] = useState(undefined);
   const creatorId = profile.ownerUserId;
   const firstName = profile.displayName?.split(" ")[0] || profile.username;
   const messageOffer = useQuery({
@@ -29,52 +32,86 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
   });
   const offer = messageOffer.data;
   const paidCall = callOffer.data;
+
+  useEffect(() => {
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setPagePosition({ "--direct-access-center-x": `${bounds.left + (bounds.width / 2)}px` });
+    };
+    const closeOnEscape = (event) => event.key === "Escape" && onClose();
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("keydown", closeOnEscape);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("keydown", closeOnEscape);
+      observer?.disconnect();
+    };
+  }, [onClose]);
+
   const openMessages = () => {
     onClose();
-    navigate(`/messages?with=${encodeURIComponent(creatorId)}&directAccess=1`);
+    navigate(`/messages?with=${encodeURIComponent(creatorId)}&directAccess=1`, {
+      state: {
+        directAccessOffer: offer,
+        openDirectAccessOfferFor: String(creatorId),
+      },
+    });
   };
   const requestCall = (type = "AUDIO") => {
     onClose();
     startCall({ id: creatorId, displayName: profile.displayName, username: profile.username, avatarUrl: profile.avatar, role: "creator" }, type);
   };
+  const replyHours = Math.max(1, Number(offer?.typicalReplyHours || 6));
 
-  return <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/80" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section aria-labelledby="direct-access-offer-title" aria-modal="true" className="relative flex max-h-[88dvh] w-full max-w-[640px] flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-atseen-line bg-atseen-bg shadow-2xl" role="dialog">
-      <div className="flex h-5 shrink-0 items-center justify-center bg-atseen-bg-2">
-        <span aria-hidden="true" className="h-1 w-8 rounded-full bg-white/30" />
-      </div>
-      <header className="flex shrink-0 items-center gap-3 border-b border-atseen-line bg-atseen-bg-2 px-5 py-4">
-        <img alt="" className="h-10 w-10 rounded-full border border-atseen-line object-cover" src={profile.avatar || "/default-avatar.png"} />
-        <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black" id="direct-access-offer-title">{profile.displayName}</h2><p className="text-[11px] text-atseen-muted">Direct Access</p></div>
-        <button aria-label="Close Direct Access" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={onClose} type="button"><FiX /></button>
+  return <div className="direct-access-page-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} style={pagePosition}>
+    <section aria-labelledby="direct-access-offer-title" aria-modal="true" className="direct-access-page" role="dialog">
+      <header className="direct-access-page-header">
+        <button aria-label="Close Direct Access" onClick={onClose} type="button"><FiArrowLeft /></button>
+        <img alt="" src={profile.avatar || "/default-avatar.png"} />
+        <span><h2 id="direct-access-offer-title">{profile.displayName} <i>✓</i></h2><small>Direct Access</small></span>
       </header>
 
-      <div className="overflow-y-auto px-5 pb-28 pt-4">
-        {callOffer.isLoading ? <div className="h-20 animate-pulse rounded-2xl bg-atseen-surface-2" /> : paidCall?.enabled ? <div className="flex items-center gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.05] p-4">
-          <FiPhone className="shrink-0 text-lg text-emerald-300" />
-          <div className="min-w-0 flex-1"><h3 className="text-sm font-bold">Call with {firstName}</h3><p className="mt-1 text-[10px] text-atseen-muted">✦{paidCall.priceStars} · {paidCall.durationMinutes} min · guaranteed or refunded</p></div>
-          <button className="shrink-0 rounded-full bg-atseen-blue px-4 py-2 text-xs font-black text-atseen-bg" onClick={() => requestCall("AUDIO")} type="button">Request</button>
-        </div> : null}
+      <main>
+        <p className="direct-access-priority">🪶 World members get priority replies</p>
+        <section className="direct-access-quote"><img alt="" src={profile.avatar || "/default-avatar.png"} /><span><strong>“Write as you are — I read everything myself.”</strong><small>{firstName} · Direct Access</small></span></section>
 
-        <div className="py-7 text-center">
-          <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-atseen-blue/40 bg-atseen-blue/10 text-3xl text-atseen-blue shadow-[0_0_34px_-8px_rgba(156,203,255,0.55)]">✦</div>
-          <h3 className="mt-4 text-2xl font-black tracking-tight">A real conversation.</h3>
-          <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-atseen-muted">Not one reply into the void—a private 48-hour window with {firstName}, with a promise attached.</p>
-        </div>
+        <section className="direct-access-private-preview" aria-label="Recent private replies preview">
+          <h3>Recent private replies</h3>
+          <div><span className="is-right">You did you feel after you tried...</span><span>I honestly felt lost until I saw another...</span><i><FiLock /></i><span className="is-right">What would you tell someone who...</span><span>Stop waiting for the perfect moment and...</span><i><FiLock /></i></div>
+          <p>Private stays private — yours will look like this to everyone else</p>
+          <footer><span>⚡ replies within {replyHours}h</span><span>🪙 98% warm calls</span><span>↪ 48h or refund</span></footer>
+        </section>
 
-        <div>{benefitRows.map(([Icon, title, copy]) => <div className="flex gap-3 border-b border-white/[0.06] py-3.5 last:border-0" key={title}><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-atseen-blue/25 bg-atseen-blue/[0.09] text-atseen-blue"><Icon /></span><div><h4 className="text-sm font-bold">{title}</h4><p className="mt-1 text-xs leading-5 text-atseen-muted">{copy}</p></div></div>)}</div>
+        {callOffer.isLoading ? <div className="direct-access-call is-loading" /> : paidCall?.enabled ? <section className="direct-access-call">
+          <FiPhone />
+          <span><strong>Call with {firstName}</strong><small>A real voice — just you and {firstName}</small><em>{STAR}{paidCall.priceStars} · {paidCall.durationMinutes} min · guaranteed or refunded</em></span>
+          <button onClick={() => requestCall("AUDIO")} type="button">Request</button>
+        </section> : null}
 
-        {messageOffer.isError ? <p className="mt-4 rounded-xl border border-atseen-danger/25 bg-atseen-danger/10 p-3 text-center text-xs text-atseen-danger">{messageOffer.error?.response?.data?.message || "Direct Access is unavailable right now."}</p> : offer ? <div className="mt-4 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4">
-          <div className="flex justify-between border-b border-atseen-line py-3 text-sm"><span className="text-atseen-muted">Price</span><b>{offer.premiumAllowance?.available ? "Premium window included" : `✦${offer.priceStars}`}</b></div>
-          <div className="flex justify-between border-b border-atseen-line py-3 text-sm"><span className="text-atseen-muted">Your balance</span><b>✦{Number(offer.walletBalance || 0)}</b></div>
-          <div className="flex justify-between py-3 text-sm"><span className="text-atseen-muted">Guarantee</span><b className="text-emerald-300">48h or refunded</b></div>
-        </div> : null}
-        <p className="mt-4 text-center text-[11px] text-atseen-muted">Stars are held securely and only captured after {firstName} replies.</p>
-      </div>
+        <section className="direct-access-story">
+          <div className="direct-access-spark">✦</div>
+          <h3>A real conversation.</h3>
+          <p>Not one reply into the void — a private 48-hour window with {firstName}, with a promise attached.</p>
+        </section>
 
-      <footer className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-atseen-bg via-atseen-bg to-transparent px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-10">
-        <button className="w-full rounded-2xl bg-atseen-blue py-3.5 text-sm font-black text-atseen-bg disabled:opacity-40" disabled={messageOffer.isLoading || !offer?.enabled} onClick={openMessages} type="button">{offer?.premiumAllowance?.available ? "Open your included window" : offer ? `Unlock Direct Access · ✦${offer.priceStars}` : "Loading offer…"}</button>
-        {offer && !offer.premiumAllowance?.available && Number(offer.walletBalance || 0) < Number(offer.priceStars) ? <button className="mt-2 w-full text-xs font-bold text-atseen-warning" onClick={() => { onClose(); navigate("/fan/wallet"); }} type="button">Not enough Stars · Open Wallet</button> : null}
+        <section className="direct-access-benefits">{benefitRows.map(([Icon, title, copy]) => <article key={title}><span><Icon /></span><div><h4>{title}</h4><p>{copy}</p></div></article>)}</section>
+
+        {messageOffer.isError ? <p className="direct-access-error">{messageOffer.error?.response?.data?.message || "Direct Access is unavailable right now."}</p> : offer ? <section className="direct-access-price-card">
+          <div><span>Price</span><b>{offer.premiumAllowance?.available ? "Included" : `${STAR}${offer.priceStars}`}</b></div>
+          <div><span>Usually replies</span><b>within {replyHours}h</b></div>
+          <div><span>Guarantee</span><b>48h or refunded</b></div>
+        </section> : null}
+        <p className="direct-access-charge-note">You’re only charged when {firstName} replies.</p>
+      </main>
+
+      <footer className="direct-access-unlock">
+        <button disabled={messageOffer.isLoading || !offer?.enabled} onClick={openMessages} type="button">{offer?.premiumAllowance?.available ? "Open Direct Access" : "Unlock Direct Access"}</button>
+        {offer && !offer.premiumAllowance?.available && Number(offer.walletBalance || 0) < Number(offer.priceStars) ? <button className="is-wallet" onClick={() => { onClose(); navigate("/fan/wallet"); }} type="button">Not enough Stars · Open Wallet</button> : null}
       </footer>
     </section>
   </div>;

@@ -239,7 +239,7 @@ function filterForContext(context = "", location = "") {
   return "";
 }
 
-function FeedPost({ post }) {
+function FeedPost({ post, profileMenu = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
@@ -720,7 +720,7 @@ function FeedPost({ post }) {
           <button
             aria-label={`More actions for ${creator.name}'s post`}
             className="rounded-full p-1.5 text-atseen-dim transition hover:bg-atseen-surface-2 hover:text-white"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => setMoreOpen((current) => profileMenu ? !current : true)}
             type="button"
           >
             <FiMoreHorizontal aria-hidden="true" />
@@ -998,6 +998,7 @@ function FeedPost({ post }) {
         onClose={() => setMoreOpen(false)}
         overlayClassName="home-post-more-overlay"
         overlayStyle={wallSheetPosition}
+        portal
         title={ownsPost ? "Your note" : "This note"}
       >
         <span className="home-post-more-handle" aria-hidden="true" />

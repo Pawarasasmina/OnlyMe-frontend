@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiChevronDown, FiGlobe, FiMapPin, FiNavigation, FiSearch, FiStar } from "react-icons/fi";
+import { FiChevronDown, FiGlobe, FiMapPin, FiNavigation, FiSearch } from "react-icons/fi";
+import ActivitySparkMark from "../../activity/ActivitySparkMark";
 import { searchService } from "../../../services/searchService";
 
 function cityName(value = "") {
@@ -173,8 +174,8 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
       </div>
 
       <Link aria-label="Open activity" className="home-spark-button" to="/activity">
-        <FiStar aria-hidden="true" />
-        {activityCount > 0 ? <span>{activityCount > 9 ? "9+" : activityCount}</span> : null}
+        <ActivitySparkMark className="h-5 w-5" />
+        {activityCount > 0 ? <span>{activityCount > 99 ? "99+" : activityCount}</span> : null}
       </Link>
     </div>
   );
