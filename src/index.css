@@ -17357,6 +17357,21 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   cursor: text;
 }
 
+.story-composer-drawing {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.story-composer-drawing.is-active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
 .story-composer-camera-loading {
   position: absolute;
   z-index: 7;

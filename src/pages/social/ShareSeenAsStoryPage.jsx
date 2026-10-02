@@ -51,6 +51,8 @@ function ShareSeenAsStoryPage() {
   const [cardVariant, setCardVariant] = useState("long");
   const [cardColorIndex, setCardColorIndex] = useState(1);
   const [editMode, setEditMode] = useState(false);
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [drawing, setDrawing] = useState([]);
   const [notice, setNotice] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [questionSticker, setQuestionSticker] = useState(null);
@@ -69,7 +71,7 @@ function ShareSeenAsStoryPage() {
   const seen = seenQuery.data;
   const selectedCardColor = EDIT_COLORS[cardColorIndex] || EDIT_COLORS[1];
   const selectedTextColor = EDIT_COLORS[selectedTextColorIndex] || EDIT_COLORS[0];
-  const activeEditorColorIndex = selectedTextId ? selectedTextColorIndex : cardColorIndex;
+  const activeEditorColorIndex = drawingMode || selectedTextId ? selectedTextColorIndex : cardColorIndex;
   const activeEditorColor = selectedTextId ? selectedTextColor : selectedCardColor;
   const sharedCard = useMemo(() => {
     if (!seen) return null;
@@ -105,6 +107,8 @@ function ShareSeenAsStoryPage() {
     setCardVariant("long");
     setCardColorIndex(1);
     setEditMode(false);
+    setDrawingMode(false);
+    setDrawing([]);
     setPaletteOpen(false);
     setQuestionSticker(null);
     setSelectedTextColorIndex(0);
@@ -138,7 +142,7 @@ function ShareSeenAsStoryPage() {
   };
 
   const selectEditorColor = (index) => {
-    if (selectedTextId) {
+    if (drawingMode || selectedTextId) {
       const color = EDIT_COLORS[index] || EDIT_COLORS[0];
       setSelectedTextColorIndex(index);
       setTextOverlays((current) => current.map((item) => item.id === selectedTextId ? { ...item, color } : item));
@@ -151,9 +155,11 @@ function ShareSeenAsStoryPage() {
   };
 
   const toggleEditMode = () => {
-    setEditMode((current) => !current);
+    setDrawingMode((current) => !current);
+    setEditMode(false);
+    setSelectedTextId("");
     setPaletteOpen(false);
-    setNotice(editMode ? "Editing off" : "Tap anywhere to write");
+    setNotice(drawingMode ? "Drawing off" : "Draw with your finger or pointer");
     window.setTimeout(() => setNotice(""), 1400);
   };
 
@@ -197,6 +203,11 @@ function ShareSeenAsStoryPage() {
     if (!point) return;
     drag.moved = true;
     event.preventDefault();
+    if (drag.type === "drawing") {
+      const drawingPoint = { x: point.x, y: point.y * 1.77777 };
+      setDrawing((current) => current.map((stroke) => stroke.id === drag.id ? { ...stroke, points: [...stroke.points, drawingPoint] } : stroke));
+      return;
+    }
     if (drag.type === "card") {
       setCardPosition(point);
       return;
@@ -296,6 +307,18 @@ function ShareSeenAsStoryPage() {
     startDragTracking(event.currentTarget.ownerDocument);
   };
 
+  const beginDrawing = (event) => {
+    if (!drawingMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const point = boundedCanvasPoint(event);
+    if (!point) return;
+    const id = `stroke-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setDrawing((current) => [...current, { color: selectedTextColor, id, points: [{ x: point.x, y: point.y * 1.77777 }], size: 1.5 }]);
+    dragRef.current = { id, moved: false, ownerDocument: event.currentTarget.ownerDocument, startX: event.clientX, startY: event.clientY, type: "drawing" };
+    startDragTracking(event.currentTarget.ownerDocument);
+  };
+
   const addTextOverlay = (event) => {
     if (!editMode) return;
     if (event.target.closest("button,a,input,.shared-seen-story-card,.share-seen-story-text,.share-seen-story-question")) return;
@@ -354,6 +377,7 @@ function ShareSeenAsStoryPage() {
       editorMetadata: {
           sharedCard: { ...sharedCard, x: cardPosition.x, y: cardPosition.y },
           ...(questionSticker ? { questionSticker } : {}),
+          ...(drawing.length ? { drawing } : {}),
           textOverlays: textOverlays
             .filter((overlay) => overlay.text.trim())
             .map((overlay) => ({ ...overlay, styleName: TEXT_STYLES.find((style) => style.value === overlay.style)?.label || "Classic" })),
@@ -378,7 +402,7 @@ function ShareSeenAsStoryPage() {
           <span className="share-seen-story-lifetime">24h</span>
         </div>
         <div>
-          <button aria-label="Edit story card" className={editMode ? "is-active" : ""} onClick={toggleEditMode} type="button"><FiEdit3 aria-hidden="true" /></button>
+          <button aria-label={drawingMode ? "Stop drawing" : "Draw on story"} className={drawingMode ? "is-active" : ""} onClick={toggleEditMode} type="button"><FiEdit3 aria-hidden="true" /></button>
           <button aria-label="Add question sticker" className={questionSticker ? "is-active" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle aria-hidden="true" /></button>
           <button aria-label="Reset Story customizations" onClick={reset} type="button"><FiRefreshCw aria-hidden="true" /></button>
         </div>
@@ -393,6 +417,9 @@ function ShareSeenAsStoryPage() {
         ref={canvasRef}
       >
         {backgroundPreview ? <img alt="" className="share-seen-story-background-preview" src={backgroundPreview} /> : null}
+        {drawing.length || drawingMode ? <svg aria-label="Story drawing canvas" className={`story-composer-drawing ${drawingMode ? "is-active" : ""}`} onPointerDown={beginDrawing} viewBox="0 0 100 177.777">
+          {drawing.map((stroke) => <polyline fill="none" key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(" ")} stroke={stroke.color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke.size || 1.5} />)}
+        </svg> : null}
         {seenQuery.isLoading ? <div className="share-seen-story-state">Loading Seen...</div> : null}
         {seenQuery.isError ? <div className="share-seen-story-state is-error">This Seen could not be loaded.</div> : null}
         {seen ? (
@@ -466,7 +493,7 @@ function ShareSeenAsStoryPage() {
         <input accept="image/*" className="sr-only" onChange={chooseMedia} ref={mediaInputRef} type="file" />
       </div>
 
-      {editMode ? (
+      {editMode || drawingMode ? (
         <div className="share-seen-story-color-control">
           {paletteOpen ? (
             <div aria-label="Story color options" className="share-seen-story-color-palette" role="group">
