@@ -21,6 +21,7 @@ import {
   FiMapPin,
   FiMessageCircle,
   FiMessageSquare,
+  FiMic,
   FiMoreHorizontal,
   FiPlay,
   FiPlus,
@@ -41,6 +42,7 @@ import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer"
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
+import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryViewer from "../../components/stories/StoryViewer";
@@ -1321,6 +1323,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   const [leaveAfterReport, setLeaveAfterReport] = useState(false);
   const [commentBusy, setCommentBusy] = useState("");
   const [posting, setPosting] = useState(false);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const mediaItems = useMemo(() => worldMediaItems(publication, chapters), [publication, chapters]);
   const storyPreviews = useMemo(() => privateStoryItems(chapters), [chapters]);
   const includedExperiences = useMemo(() => {
@@ -1371,6 +1374,22 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       setReplyTarget(null);
     } catch (error) {
       showToast(error?.response?.data?.message || "Comment could not be posted.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const submitVoiceComment = async (payload) => {
+    if (posting) return;
+    setPosting(true);
+    try {
+      const response = await api.voiceCommentOnSeen(publication.id, { ...payload, parentCommentId: replyTarget?.id || "" });
+      queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
+      setCommentText("");
+      setReplyTarget(null);
+      setVoiceCommentOpen(false);
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
     } finally {
       setPosting(false);
     }
@@ -1538,9 +1557,12 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
           {replyTarget ? <span>Replying to {replyTarget.author?.name || "comment"} <button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
           <input aria-label="Add a comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
         </div>
+        <button aria-label="Record a voice comment" disabled={posting} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
         <button disabled={!canPostComment} type="submit">{posting ? "Posting..." : "Post"}</button>
       </form>}
     </section>
+
+    {voiceCommentOpen ? <VoiceCommentRecorder busy={posting} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
 
     {moreOpen ? <WorldInsideMoreSheet
       creator={creator}
@@ -1590,6 +1612,7 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
   const [replyTarget, setReplyTarget] = useState(null);
   const [commentBusy, setCommentBusy] = useState("");
   const [posting, setPosting] = useState(false);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const cover = publication.coverMedia?.secureUrl || publication.coverMedia?.thumbnailUrl;
   const publicationId = publication.id || publication._id;
   const creatorName = publication.creator?.name || publication.creator?.username || "Creator";
@@ -1619,6 +1642,22 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
       await engagementQuery.refetch();
     } catch (error) {
       showToast(error?.response?.data?.message || "Comment could not be posted.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const submitVoiceComment = async (payload) => {
+    if (posting || !commentsEnabled || !requireAccount()) return;
+    setPosting(true);
+    try {
+      await api.voiceCommentOnSeen(publicationId, { ...payload, parentCommentId: replyTarget?.id || "" });
+      setCommentText("");
+      setReplyTarget(null);
+      setVoiceCommentOpen(false);
+      await engagementQuery.refetch();
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
     } finally {
       setPosting(false);
     }
@@ -1702,11 +1741,13 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
               {replyTarget ? <span>Replying to <b>{replyTarget.author?.name || "comment"}</b><button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
               <input aria-label={replyTarget ? "Write a reply" : "Add a comment"} maxLength={500} onChange={(event) => setCommentText(event.target.value)} onFocus={() => { if (!user) onRequireLogin?.(); }} placeholder={user ? (replyTarget ? "Write a reply..." : "Join the conversation...") : "Sign in to comment..."} value={commentText} />
             </div>
+            <button aria-label="Record a voice comment" disabled={posting} onClick={() => { if (requireAccount()) setVoiceCommentOpen(true); }} type="button"><FiMic /></button>
             <button aria-label={replyTarget ? "Post reply" : "Post comment"} disabled={!commentText.trim() || posting} type="submit"><FiArrowUp /></button>
           </form>
         ) : <div className="experience-public-comments__disabled"><FiMessageCircle /><span><b>Comments are off</b><small>The creator has paused this conversation.</small></span></div>}
       </section>
     </main>
+    {voiceCommentOpen ? <VoiceCommentRecorder busy={posting} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
     {activePreview ? <div aria-label="Experience photo preview" aria-modal="true" className="experience-public-preview-lightbox" onClick={() => setActivePreview(null)} role="dialog"><button aria-label="Close preview" onClick={() => setActivePreview(null)} type="button"><FiX /></button><img alt={activePreview.label || "Experience preview"} src={activePreview.secureUrl} /></div> : null}
   </article>;
 }
@@ -1745,6 +1786,7 @@ export default function WorldReaderPage() {
   const [comment, setComment] = useState("");
   const [commentReplyTarget, setCommentReplyTarget] = useState(null);
   const [commentPostPending, setCommentPostPending] = useState(false);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [visibleVoiceCommentTexts, setVisibleVoiceCommentTexts] = useState({});
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
   const [experienceChaptersOpen, setExperienceChaptersOpen] = useState(true);
@@ -2313,6 +2355,23 @@ export default function WorldReaderPage() {
     }
   };
 
+  const addVoiceComment = async (payload) => {
+    if (commentPostPending || !user) return;
+    setCommentPostPending(true);
+    try {
+      const response = await api.voiceCommentOnSeen(publicationId, { ...payload, parentCommentId: commentReplyTarget?.id || "" });
+      if (response?.data?.data?.engagement) queryClient.setQueryData(["world-engagement", id], response.data.data.engagement);
+      setComment("");
+      setCommentReplyTarget(null);
+      setVoiceCommentOpen(false);
+      await engagement.refetch();
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Voice comment could not be posted.");
+    } finally {
+      setCommentPostPending(false);
+    }
+  };
+
   const removeModeratedComment = async (targetComment) => {
     if (!targetComment?.id || commentRemovePending) return;
     setCommentRemovePending(targetComment.id);
@@ -2703,6 +2762,7 @@ export default function WorldReaderPage() {
               ) : null}
               <form onSubmit={addComment}>
                 <input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder={commentReplyTarget ? "Write a reply..." : "Add a comment..."} value={comment} />
+                <button aria-label="Record a voice comment" disabled={commentPostPending} onClick={() => user ? setVoiceCommentOpen(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })} type="button"><FiMic /></button>
                 <button aria-label={commentReplyTarget ? "Post reply" : "Post comment"} disabled={!comment.trim() || commentPostPending} type="submit"><FiArrowUp /></button>
               </form>
             </>
@@ -2846,6 +2906,7 @@ export default function WorldReaderPage() {
         </BottomSheet>
       ) : null}
       <PurchaseWorldModal onClose={() => setShowExperienceUnlock(false)} onSuccess={() => query.refetch()} open={showExperienceUnlock} publication={publication} />
+      {voiceCommentOpen ? <VoiceCommentRecorder busy={commentPostPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={addVoiceComment} /> : null}
     </>
   );
 }

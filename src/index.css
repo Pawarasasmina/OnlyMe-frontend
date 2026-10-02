@@ -11917,6 +11917,23 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   height: 15px;
 }
 
+.home-feed-head-views {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 4px;
+  color: var(--feed-text-tertiary);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.home-feed-head-views > svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.7;
+}
+
 .home-feed-text {
   margin-top: 7px;
   color: rgba(255,255,255,.93);
@@ -35690,4 +35707,80 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   pointer-events: none;
   transform: none;
   z-index: 2;
+}
+
+/* World and Experience voice-comment composer. */
+.experience-public-comments form.experience-public-comments__form {
+  grid-template-columns: 32px minmax(0,1fr) 38px 42px;
+}
+
+.experience-public-comments form.experience-public-comments__form > button[aria-label="Record a voice comment"] {
+  width: 38px;
+  height: 42px;
+  border-radius: 50%;
+  background: transparent;
+  color: #8290a3;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.voice-comment-layer {
+  padding: 0;
+  place-items: end center;
+}
+
+.voice-comment-sheet {
+  position: fixed;
+  right: auto;
+  bottom: 0;
+  left: var(--voice-comment-center-x,50%);
+  width: min(100vw,var(--voice-comment-column-width,440px));
+  max-width: 440px;
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: #0d1116;
+  padding: 10px 20px max(18px,env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+
+.voice-comment-grab {
+  width: 34px;
+  height: 4px;
+  margin-bottom: 25px;
+}
+
+.voice-comment-close {
+  display: none;
+}
+
+.voice-comment-record {
+  width: 74px;
+  height: 74px;
+  margin-bottom: 16px;
+  background: rgba(117,48,48,.24);
+  color: #df817b;
+}
+
+.voice-comment-sheet h2 {
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.voice-comment-sheet p {
+  margin-top: 5px;
+  color: rgba(255,255,255,.58);
+  font-size: 14px;
+}
+
+.voice-comment-done {
+  min-height: 42px;
+  margin-top: 20px;
+  border-radius: 13px;
+  background: #8fc3ff;
+  font-size: 13px;
+}
+
+.voice-comment-cancel {
+  margin-top: 13px;
+  font-size: 12px;
 }

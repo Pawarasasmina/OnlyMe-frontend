@@ -748,6 +748,9 @@ function FeedPost({ post, profileMenu = false }) {
               {[`${normalized.contextEmoji} ${normalized.context}`.trim(), normalized.location].filter(Boolean).join(" - ")}
             </Link>
           ) : <span className="ml-auto" />}
+          <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
+            <FiEye aria-hidden="true" /> <span>{formatCount(viewCount)}</span>
+          </span>
           <button
             aria-label={`More actions for ${creator.name}'s post`}
             className="rounded-full p-1.5 text-atseen-dim transition hover:bg-atseen-surface-2 hover:text-white"
@@ -816,9 +819,6 @@ function FeedPost({ post, profileMenu = false }) {
           <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
           </button>
-          <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-action-button is-readonly" title="Views">
-            <FiEye aria-hidden="true" /> <span>{formatCount(viewCount)}</span>
-          </span>
           <button
             aria-label={saved ? "Remove saved post" : "Save post"}
             className={`home-feed-action-button ml-auto ${saved ? "is-selected" : ""}`}
