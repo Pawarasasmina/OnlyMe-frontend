@@ -71,7 +71,7 @@ function StoryMedia({ muted, onDurationChange, onEnded, onPlay, story, videoRef 
   // Keep shared-card stories image-forward: use the uploaded background when
   // one exists, otherwise fall back to the source card image behind the live card.
   if (story.editorMetadata?.sharedCard) {
-    if (story.editorMetadata.sharedCard.kind === "question_reply") return <div className="story-viewer-shared-background" />;
+    if (story.editorMetadata.sharedCard.kind === "question_reply" || isTextOnlySharedCard(story.editorMetadata.sharedCard)) return <div className="story-viewer-shared-background" />;
     const backgroundMedia = story.mediaUrl || story.image || story.editorMetadata.sharedCard.backgroundUrl || story.editorMetadata.sharedCard.imageUrl || "";
     if (backgroundMedia) return <img alt="" className="h-full w-full object-cover" src={backgroundMedia} style={style} />;
     return <div className="story-viewer-shared-background" />;
@@ -236,6 +236,10 @@ function finiteCardPosition(value, fallback, min, max) {
   return Math.max(min, Math.min(max, Number.isFinite(number) ? number : fallback));
 }
 
+function isTextOnlySharedCard(card = {}) {
+  return card.kind === "voice_note" || card.displayMode === "text_only";
+}
+
 function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines) {
   const words = String(text || "").split(/\s+/).filter(Boolean);
   const lines = [];
@@ -307,11 +311,27 @@ async function drawSharedStoryCard(context, story) {
   const sharedCard = story.editorMetadata?.sharedCard;
   if (!sharedCard) return;
 
-  const card = sharedSeenCardData(story.sourceSeen || {}, sharedCard);
   const isQuestionReply = sharedCard.kind === "question_reply";
+  const isTextOnly = isTextOnlySharedCard(sharedCard);
+  const originalTranscript = String(sharedCard.originalTranscript || sharedCard.title || "").trim();
+  const translationText = String(sharedCard.translationText || "").trim();
+  const translationLabel = String(sharedCard.translationLabel || "Translation").trim();
+  const card = (story.sourceType === "seen" || sharedCard.kind === "seen")
+    ? sharedSeenCardData(story.sourceSeen || {}, sharedCard)
+    : {
+      cardBackgroundColor: sharedCard.cardBackgroundColor || "",
+      cardTextColor: sharedCard.cardTextColor || "",
+      excerpt: sharedCard.excerpt || "",
+      imageUrl: sharedCard.imageUrl || "",
+      mediaType: sharedCard.mediaType || "image",
+      points: sharedCard.points || [],
+      subtitle: sharedCard.subtitle || "Tap to open",
+      title: sharedCard.title || "Shared on @seen",
+      variant: sharedCard.variant || "compact",
+    };
   const isLong = card.variant === "long";
   const cardWidth = isQuestionReply ? 700 : isLong ? 720 : 650;
-  const cardHeight = isQuestionReply ? 430 : isLong ? 650 : 470;
+  const cardHeight = isQuestionReply ? 430 : isTextOnly ? (translationText ? 500 : 360) : isLong ? 650 : 470;
   const cardX = (finiteCardPosition(sharedCard.x, 50, 16, 84) / 100) * STORY_EXPORT_WIDTH - cardWidth / 2;
   const cardY = (finiteCardPosition(sharedCard.y, 50, 18, 82) / 100) * STORY_EXPORT_HEIGHT - cardHeight / 2;
   const cardBackground = card.cardBackgroundColor || (isQuestionReply ? "rgba(17,22,31,.94)" : "#0d1015");
@@ -340,6 +360,26 @@ async function drawSharedStoryCard(context, story) {
     context.fillStyle = "#fff";
     context.font = "850 45px system-ui";
     drawWrappedText(context, String(sharedCard.title || "").slice(0, 180), cardX + 42, cardY + 190, cardWidth - 84, 58, 3);
+  } else if (isTextOnly) {
+    context.fillStyle = "#9CCBFF";
+    context.font = "800 27px system-ui";
+    context.textAlign = "left";
+    context.textBaseline = "top";
+    context.fillText(String(sharedCard.eyebrow || "NOTE").slice(0, 42), cardX + 42, cardY + 42, cardWidth - 84);
+    context.fillStyle = cardText;
+    context.font = "850 40px system-ui";
+    drawWrappedText(context, originalTranscript.slice(0, 190), cardX + 42, cardY + 96, cardWidth - 84, 54, translationText ? 2 : 3);
+    if (translationText) {
+      context.fillStyle = "rgba(255,255,255,.45)";
+      context.font = "800 22px system-ui";
+      context.fillText(`TRANSLATED${translationLabel ? ` TO ${translationLabel.toUpperCase()}` : ""}`.slice(0, 46), cardX + 42, cardY + 236, cardWidth - 84);
+      context.fillStyle = cardText;
+      context.font = "750 34px system-ui";
+      drawWrappedText(context, translationText.slice(0, 150), cardX + 42, cardY + 276, cardWidth - 84, 46, 2);
+    }
+    context.fillStyle = card.cardTextColor ? cardText : "rgba(156,203,255,.9)";
+    context.font = "650 23px system-ui";
+    context.fillText(String(card.subtitle || "from my Wall - tap >").slice(0, 64), cardX + 42, cardY + cardHeight - 72, cardWidth - 84);
   } else {
     context.save();
     roundRect(context, cardX, cardY, cardWidth, cardHeight, 44);
@@ -1092,6 +1132,24 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
                 <article className="story-viewer-shared-card is-question-response" aria-label="Shared question answer">
                   <span>{sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}<small>{sharedCard.subtitle || "Question"}</small><strong>{sharedCard.title}</strong></span>
                 </article>
+              ) : isTextOnlySharedCard(sharedCard) ? (
+                <a
+                  aria-label={`Open ${sharedCard.title || "voice note"}`}
+                  className="story-viewer-shared-card is-text-only"
+                  href={sharedCard.destinationRoute || "/wall"}
+                >
+                  <span>
+                    {sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}
+                    <strong>{sharedCard.originalTranscript || sharedCard.title}</strong>
+                    {sharedCard.translationText ? (
+                      <span className="story-shared-card-translation">
+                        <b>{sharedCard.translationLabel ? `Translated to ${sharedCard.translationLabel}` : "Translation"}</b>
+                        <i>{sharedCard.translationText}</i>
+                      </span>
+                    ) : null}
+                    <small>{sharedCard.subtitle || "Tap to open"}</small>
+                  </span>
+                </a>
               ) : (
                 <a
                   aria-label={`Open ${sharedCard.title || "Seen"}`}
