@@ -1,26 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
-import { FiCheck, FiExternalLink, FiLink, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
+import { FiCheck, FiLink, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
+import StoryCreator from "../stories/StoryCreator";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
 import { useSendSharedContent } from "../../hooks/share/useSendSharedContent";
 import { canonicalShareUrl } from "../../services/shareService";
-import { resolveMediaUrl } from "../../utils/media";
 
 const quickEmojis = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDD25", "\uD83D\uDE0D", "\uD83D\uDC4F", "\uD83D\uDE2E", "\uD83D\uDE4F", "\uD83E\uDD1D"];
 const MAX_VISIBLE_DIRECT_CHATS = 8;
 
 function contentTypeLabel(type = "content") {
-  if (type === "feed_post") return "POST";
-  if (type === "seen") return "SEEN";
   if (type === "world") return "WORLD";
   if (type === "experience") return "EXPERIENCE";
+  if (type === "seen") return "SEEN";
+  if (type === "feed_post") return "POST";
   if (type === "profile") return "PROFILE";
   if (type === "story") return "STORY";
-  return "CONTENT";
+  return "SHARED ON @SEEN";
 }
 
 function firstName(name = "") {
@@ -42,20 +41,6 @@ async function copyText(value) {
   const copied = document.execCommand("copy");
   document.body.removeChild(textarea);
   if (!copied) throw new Error("Copy failed");
-}
-
-function ShareContentPreview({ payload }) {
-  const image = resolveMediaUrl(payload?.imageUrl);
-  return (
-    <div className="share-content-preview">
-      {image ? <img alt={`${contentTypeLabel(payload.contentType)} preview`} src={image} /> : <span className="share-preview-icon"><FiExternalLink /></span>}
-      <div className="min-w-0">
-        <p>{contentTypeLabel(payload.contentType)}</p>
-        <strong>{payload?.title || payload?.author?.name || "Shared content"}</strong>
-        <span>{payload?.textPreview || payload?.previewText || "Open on @seen"}</span>
-      </div>
-    </div>
-  );
 }
 
 function RecipientItem({ person, selected, onToggle }) {
@@ -127,7 +112,6 @@ function useShareSheetPosition(isOpen) {
 function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
-  const navigate = useNavigate();
   const inputRef = useRef(null);
   const panelRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -136,6 +120,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const [selected, setSelected] = useState(() => new Map());
   const [message, setMessage] = useState("");
   const [externalBusy, setExternalBusy] = useState("");
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const recipientsQuery = useShareRecipients({ enabled: isOpen, query, viewerId: user?.id || user?._id || "" });
   const sendMutation = useSendSharedContent();
   const canonicalUrl = useMemo(() => canonicalShareUrl(payload || {}), [payload]);
@@ -153,6 +138,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (event) => {
+      if (storyCreatorOpen) return;
       if (event.key === "Escape" && canClose) {
         if (query) setQuery("");
         else onClose();
@@ -179,7 +165,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
       window.removeEventListener("keydown", onKeyDown);
       if (previousFocusRef.current instanceof HTMLElement) previousFocusRef.current.focus();
     };
-  }, [canClose, isOpen, onClose, query]);
+  }, [canClose, isOpen, onClose, query, storyCreatorOpen]);
 
   useEffect(() => {
     if (isOpen) return;
@@ -187,6 +173,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     setSelected(new Map());
     setMessage("");
     setExternalBusy("");
+    setStoryCreatorOpen(false);
   }, [isOpen]);
 
   const close = () => {
@@ -229,11 +216,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     }
   };
 
-  const shareToStory = async () => {
-    await copyLink("Link copied - add it to your story");
-    close();
-    navigate("/create");
-  };
+  const shareToStory = () => setStoryCreatorOpen(true);
 
   const shareWhatsApp = () => {
     const title = payload?.title || payload?.textPreview || "this";
@@ -307,8 +290,6 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
           </button>
         </header>
 
-        {isSeenVariant ? null : <ShareContentPreview payload={payload} />}
-
         <label className="share-search">
           <span className="sr-only">Search recipients</span>
           <FiSearch aria-hidden="true" />
@@ -368,6 +349,25 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
           </section>
         )}
       </div>
+      <StoryCreator
+        initialContent={{
+          sharedCard: {
+            destinationRoute: payload.destinationRoute || payload.route || canonicalUrl,
+            eyebrow: contentTypeLabel(payload.contentType),
+            imageUrl: payload.imageUrl || "",
+            kind: payload.contentType || "content",
+            subtitle: payload.previewText || payload.textPreview || "Tap to open",
+            title: payload.title || payload.author?.name || "Shared content",
+          },
+        }}
+        isOpen={storyCreatorOpen}
+        key={`${payload.contentType || "content"}-${payload.contentId || canonicalUrl}`}
+        onClose={() => setStoryCreatorOpen(false)}
+        onPublished={() => {
+          setStoryCreatorOpen(false);
+          close();
+        }}
+      />
     </div>
   );
 }

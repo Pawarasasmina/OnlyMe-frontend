@@ -273,6 +273,7 @@ export default function MessagesPage() {
   const { startCall } = useCalls();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const returnToRef = useRef(searchParams.get("returnTo") || "");
   const queryClient = useQueryClient();
   const myId = String(user?.id || user?._id || "");
   const [selected, setSelected] = useState(() => {
@@ -594,6 +595,7 @@ export default function MessagesPage() {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
         next.delete("directAccess");
+        next.delete("autoIncluded");
         return next;
       }, { replace: true });
       return;
@@ -601,9 +603,18 @@ export default function MessagesPage() {
     setDirectAccessBusy(true);
     setError("");
     messageService.getDirectAccessOffer(selected.id)
-      .then((response) => {
-        if (!response.data.data.enabled) throw new Error("This creator is not accepting Direct Access.");
-        setDirectAccessOffer(response.data.data);
+      .then(async (response) => {
+        const offer = response.data.data;
+        if (!offer.enabled) throw new Error("This creator is not accepting Direct Access.");
+        if (searchParams.get("autoIncluded") === "1" && offer.premiumAllowance?.available) {
+          const opened = await messageService.openDirectAccessWindow(selected.id, `da-open:${newClientMessageId()}`, "PREMIUM_INCLUDED");
+          const openedWindow = opened.data.data.window;
+          chooseConversation({ ...selected, directAccessWindowId: openedWindow.id });
+          await queryClient.invalidateQueries({ queryKey: ["messages", "direct-access"] });
+          await queryClient.invalidateQueries({ queryKey: ["memberships"] });
+          return;
+        }
+        setDirectAccessOffer(offer);
       })
       .catch((requestError) => setError(requestError.response?.data?.message || requestError.message || "Could not load Direct Access."))
       .finally(() => {
@@ -611,10 +622,11 @@ export default function MessagesPage() {
         setSearchParams((current) => {
           const next = new URLSearchParams(current);
           next.delete("directAccess");
+          next.delete("autoIncluded");
           return next;
         }, { replace: true });
       });
-  }, [hasActiveDirectAccessWindow, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]);
+  }, [hasActiveDirectAccessWindow, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
   const lastReadOutgoingMessageId = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
@@ -886,7 +898,7 @@ export default function MessagesPage() {
   const chooseConversation = (conversation) => {
     if (conversation.type === "group") {
       setSelected(conversation);
-      setSearchParams({ group: conversation.id }, { replace: true });
+      setSearchParams({ group: conversation.id, ...(returnToRef.current ? { returnTo: returnToRef.current } : {}) }, { replace: true });
       return;
     }
     queryClient.setQueryData(["messages", "conversations"], (current = []) => current.map((item) => (
@@ -894,9 +906,16 @@ export default function MessagesPage() {
     )));
     queryClient.removeQueries({ queryKey: ["messages", conversation.id], exact: true });
     setSelected({ ...conversation, type: "direct" });
-    setSearchParams({ with: conversation.id, ...(conversation.directAccessWindowId ? { window: conversation.directAccessWindowId } : {}) }, { replace: true });
+    setSearchParams({ with: conversation.id, ...(conversation.directAccessWindowId ? { window: conversation.directAccessWindowId } : {}), ...(returnToRef.current ? { returnTo: returnToRef.current } : {}) }, { replace: true });
   };
-  const closeConversation = () => { setSelected(null); setSearchParams({}, { replace: true }); };
+  const closeConversation = () => {
+    if (returnToRef.current) {
+      navigate(returnToRef.current);
+      return;
+    }
+    setSelected(null);
+    setSearchParams({}, { replace: true });
+  };
   const openPerson = (person) => { chooseConversation({ id: person.id, type: "direct", participant: person }); setNewChat(false); setNewDirectChat(false); setSearch(""); };
   const chooseShareTarget = (target) => {
     setSharePickerOpen(false);
@@ -1721,7 +1740,7 @@ export default function MessagesPage() {
           </section>
         </div> : null}
         <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {inboxTab === "direct" && user?.role === "creator" ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border border-dashed border-atseen-blue/45 bg-atseen-blue/[0.025] p-4 text-left transition hover:bg-atseen-blue/[0.06]" onClick={() => { setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-atseen-blue"><FiPlus /></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-atseen-blue">Set up Direct Access</span><span className="mt-0.5 block text-[11px] text-atseen-muted">Your prices for priority messages and calls</span></span></button> : null}
+          {inboxTab === "direct" && user?.role === "creator" ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border border-dashed border-atseen-blue/45 bg-atseen-blue/[0.025] p-4 text-left transition hover:bg-atseen-blue/[0.06]" onClick={() => { setError(""); setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-atseen-blue"><FiPlus /></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-atseen-blue">Set up Direct Access</span><span className="mt-0.5 block text-[11px] text-atseen-muted">Your prices for priority messages and calls</span></span></button> : null}
           {inboxTab === "direct" && directWindowsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading Direct Access…</p> : null}
           {inboxTab !== "direct" && conversationsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading conversations…</p> : null}
           {conversationsQuery.isError ? <div className="p-6 text-sm text-atseen-danger"><p>Conversations are unavailable.</p><button className="mt-3 rounded-full border border-atseen-danger/30 px-4 py-2 text-xs font-bold" onClick={() => conversationsQuery.refetch()} type="button">Retry</button></div> : null}
