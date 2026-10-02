@@ -35784,3 +35784,138 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   margin-top: 13px;
   font-size: 12px;
 }
+
+/* Shared phone layout: the center column becomes the viewport and both desktop
+   rails stay out of the layout. Keep this last so page-specific desktop rules
+   cannot reintroduce fixed rail or canvas widths on smaller screens. */
+@media (max-width: 767px) {
+  .social-app-shell {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  .social-app-shell .social-app-frame {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    margin: 0;
+  }
+
+  .social-app-shell .social-app-frame > .fan-web-sidebar,
+  .social-app-shell .social-app-frame > .social-shared-right-rail {
+    display: none !important;
+  }
+
+  .social-app-shell .social-center-scroll {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    flex: 1 1 auto !important;
+    margin: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .social-app-shell .social-center-scroll > main {
+    width: 100%;
+    min-width: 0;
+    max-width: 100% !important;
+  }
+
+  .social-app-shell .social-center-scroll > main:has(> .discover-orb-page),
+  .social-app-shell .social-center-scroll > main:has(> .profile-prototype) {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .social-app-shell .discover-orb-page,
+  .social-app-shell .discover-orb-main,
+  .social-app-shell .profile-prototype {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .social-app-shell .discover-orb-page {
+    display: block;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .social-app-shell .discover-orb-main {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .social-app-shell .discover-friends-strip,
+  .social-app-shell .discover-orb-filters {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+  }
+
+  .social-app-shell .discover-orb-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .social-app-shell .profile-prototype {
+    overflow-x: clip;
+  }
+
+  .social-app-shell .profile-prototype :where(
+    .profile-identity-row,
+    .profile-copy,
+    .profile-identity-metrics,
+    .profile-action-row,
+    .profile-section,
+    .profile-grid-panel,
+    .profile-experiences,
+    .profile-wall-section,
+    .profile-notes-list
+  ) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .social-app-shell .profile-action-row {
+    flex-wrap: wrap;
+  }
+
+  .social-app-shell .profile-photo-row {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+  }
+
+  .social-app-shell .profile-grid-panel .profile-seens-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .social-app-shell .profile-notes-list .home-feed-post,
+  .social-app-shell .profile-experiences .profile-experience-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .social-app-shell .discover-recommendation-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .social-app-shell .discover-recommendation-heading .discover-orb-filters {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .profile-prototype.is-owner-profile .profile-identity-metrics {
+    gap: 10px;
+  }
+
+  .profile-prototype.is-owner-profile .profile-identity.is-owner {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}
