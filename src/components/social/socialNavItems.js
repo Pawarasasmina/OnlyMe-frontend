@@ -1,5 +1,12 @@
 import { createElement } from "react";
-import { FiCheckCircle, FiEye, FiHeart, FiMessageCircle, FiUser } from "react-icons/fi";
+import { FiCheckCircle, FiHeart, FiMessageCircle, FiUser } from "react-icons/fi";
+
+export function SeenNavIcon(props) {
+  return createElement("svg", { fill: "none", stroke: "currentColor", strokeWidth: "1.8", viewBox: "0 0 24 24", ...props },
+    createElement("path", { d: "M2.5 12C5.4 6.4 18.6 6.4 21.5 12C18.6 17.6 5.4 17.6 2.5 12Z", key: "eye" }),
+    createElement("circle", { cx: "12", cy: "12", key: "pupil", r: "3" })
+  );
+}
 
 export function DiscoverNavIcon(props) {
   return createElement("svg", { fill: "none", viewBox: "0 0 24 24", ...props },
@@ -16,7 +23,7 @@ export function WallNavIcon(props) {
 }
 
 export const socialPrimaryNavItems = [
-  { label: "Seen", to: "/seen", icon: FiEye },
+  { label: "Seen", to: "/seen", icon: SeenNavIcon },
   { label: "Discover", to: "/discover", icon: DiscoverNavIcon },
   { label: "Wall", to: "/wall", icon: WallNavIcon },
   { label: "Messages", to: "/messages", icon: FiMessageCircle },

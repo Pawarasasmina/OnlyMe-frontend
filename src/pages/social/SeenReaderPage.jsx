@@ -6,6 +6,7 @@ import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer"
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
+import { analyticsService } from "../../services/analyticsService";
 import { publicationService } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
@@ -782,6 +783,15 @@ export default function SeenReaderPage() {
   });
 
   const publication = publicationQuery.data;
+  useEffect(() => {
+    if (!publication?.id && !publication?._id) return;
+    void analyticsService.trackContentView({
+      entityId: String(publication.id || publication._id),
+      entityType: "seen",
+      source: "seen",
+    });
+  }, [publication?.id, publication?._id]);
+
   const creatorId = String(publication?.creator?.id || publication?.creator?._id || "");
   const creatorSeensQuery = useQuery({
     queryKey: ["seen-creator-sequence", creatorId],

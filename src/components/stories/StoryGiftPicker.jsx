@@ -50,6 +50,7 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
     queryKey: ["messages", "gifts", recipientId],
     queryFn: () => messageService.getGifts(recipientId).then((response) => response.data.data.gifts),
     enabled: Boolean(recipientId),
+    retry: false,
     staleTime: 60000,
   });
   const walletQuery = useQuery({
@@ -108,7 +109,7 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
           <button aria-label="Close gift picker" disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button>
         </div>
         <p className="dream-gift-progress-copy">Your balance: <strong>{STAR}{walletQuery.isLoading ? "…" : balance.toLocaleString()}</strong></p>
-        {giftsQuery.isLoading ? <p className="dream-gift-empty">Loading gifts…</p> : giftsQuery.isError ? <p className="dream-gift-empty">Gifts could not be loaded.</p> : (
+        {giftsQuery.isLoading ? <p className="dream-gift-empty">Loading gifts…</p> : giftsQuery.isError ? <p className="dream-gift-empty">{giftsQuery.error?.response?.data?.message || "Gifts could not be loaded."}</p> : (
           <div className="dream-gift-sections">
             {mostGifted.length ? <section className="dream-gift-category"><h3>Most gifted</h3><div className="dream-gift-grid is-most-gifted">{mostGifted.map(giftTile)}</div></section> : null}
             {sections.map((section) => <section className="dream-gift-category" key={section.id}><h3>{section.name}</h3><div className="dream-gift-grid">{section.gifts.map(giftTile)}</div></section>)}

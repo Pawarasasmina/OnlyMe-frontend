@@ -43,6 +43,7 @@ import SeenComposerPage from "../pages/creator/SeenComposerPage";
 import SeenOwnerDetailPage from "../pages/creator/SeenOwnerDetailPage";
 import SeenFeedPage from "../pages/social/SeenFeedPage";
 import SeenReaderPage from "../pages/social/SeenReaderPage";
+import ShareSeenAsStoryPage from "../pages/social/ShareSeenAsStoryPage";
 import PublicationModeration from "../pages/admin/PublicationModeration";
 import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
 import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
@@ -130,6 +131,7 @@ function AppRoutes() {
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
+          <Route path="/seen/:id/share/story" element={<ShareSeenAsStoryPage />} />
           <Route path="/seen/:id" element={<SeenReaderPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />

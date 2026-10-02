@@ -22,10 +22,11 @@ export default function PostReportPreview({ report }) {
   const owner = report.reportedUser || {};
   const publication = report.publication || {};
   const isSeen = report.scope === "SEEN";
+  const isStory = report.scope === "STORY";
   const isPublication = ["SEEN", "WORLD"].includes(report.scope);
   const title = snapshot.title || publication.title || (isSeen ? "Seen" : "World");
-  const body = isPublication ? (snapshot.summary || publication.summary) : snapshot.text;
-  const media = isPublication ? (snapshot.media || snapshot.coverMedia || publication.coverMedia) : snapshot.media;
+  const body = isStory ? snapshot.caption : isPublication ? (snapshot.summary || publication.summary) : snapshot.text;
+  const media = isStory ? { url: snapshot.mediaUrl, type: snapshot.mediaType } : isPublication ? (snapshot.media || snapshot.coverMedia || publication.coverMedia) : snapshot.media;
   const publishedAt = snapshot.publishedAt || snapshot.createdAt || publication.publishedAt;
   const requestedSafetyActions = Array.isArray(snapshot.requestedSafetyActions) ? snapshot.requestedSafetyActions : [];
   const appliedSafetyActions = Array.isArray(snapshot.appliedSafetyActions) ? snapshot.appliedSafetyActions : [];
@@ -39,7 +40,7 @@ export default function PostReportPreview({ report }) {
       <FiMoreHorizontal className="text-xl text-slate-400" />
     </header>
     <div className="px-4 pb-4">
-      <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-orange-600">{isSeen ? "Seen" : report.scope === "WORLD" ? "World" : snapshot.context || "Home feed post"}</span>
+      <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-orange-600">{isStory ? "Story" : isSeen ? "Seen" : report.scope === "WORLD" ? "World" : snapshot.context || "Home feed post"}</span>
       {isPublication && <h5 className="mt-3 text-xl font-black tracking-tight">{title}</h5>}
       {body ? <p className="mt-3 whitespace-pre-wrap break-words text-[15px] leading-6 text-slate-800">{body}</p> : <p className="mt-3 text-sm italic text-slate-400">No written caption</p>}
       <MediaPreview media={media} />

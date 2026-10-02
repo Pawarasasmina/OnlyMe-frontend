@@ -10,12 +10,14 @@ import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
+import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useAuth } from "../../hooks/useAuth";
 import { useSocialCapabilities } from "../../hooks/useSocialCapabilities";
+import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { atseenReportReasons } from "../../data/atseenMockData";
 import { relativeTime } from "../../utils/relativeTime";
 import { isSeenOwner, normalizeId } from "../../utils/seenOwnership";
@@ -178,21 +180,54 @@ function SeenSkeleton() {
   </div>;
 }
 
-function SeenHeader({ activeTab, onTabChange, onActivity, onCreate, onSearch }) {
+function SeenTabEyeMark({ className = "" } = {}) {
+  return <svg aria-hidden="true" className={`seen-tab-eye-mark ${className}`.trim()} viewBox="0 0 64 40">
+    <path d="M2 20C14 3 50 3 62 20C50 37 14 37 2 20Z" fill="currentColor" />
+    <circle cx="32" cy="20" r="8.5" fill="#0A0C0F" />
+  </svg>;
+}
+
+function SeenActivitySparkMark() {
+  return <svg aria-hidden="true" className="seen-activity-spark-mark" viewBox="0 0 64 64">
+    <defs>
+      <radialGradient id="seenActivitySparkGradient" fx="38%" fy="30%">
+        <stop offset="0%" stopColor="#FFFFFF" />
+        <stop offset="50%" stopColor="#CFE7FF" />
+        <stop offset="100%" stopColor="#5E8FCC" />
+      </radialGradient>
+    </defs>
+    <path d="M32 5l5.5 19.5L57 30l-19.5 5.5L32 55l-5.5-19.5L7 30l19.5-5.5z" fill="url(#seenActivitySparkGradient)" />
+    <path d="M32 5l5.5 19.5L57 30l-25-2z" fill="#FFFFFF" opacity=".5" />
+    <path d="M32 55l-5.5-19.5L7 30l25 2z" fill="#3E639C" opacity=".45" />
+  </svg>;
+}
+
+function SeenThinEyeMark({ className = "" }) {
+  return <svg aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M2.5 12C5.4 6.9 18.6 6.9 21.5 12C18.6 17.1 5.4 17.1 2.5 12Z" />
+    <circle cx="12" cy="12" r="2.6" />
+  </svg>;
+}
+
+function SeenHeader({ activeTab, activityCount = 0, onTabChange, onActivity, onCreate, onSearch }) {
+  const activityLabel = activityCount > 99 ? "99+" : String(activityCount);
   return <header className="seen-proto-header">
     <nav aria-label="Seen feed tabs" className="seen-proto-tabs">
-      <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><FiEye aria-hidden="true" />Seen</button>
+      <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><SeenTabEyeMark />Seen</button>
       <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">Friends</button>
     </nav>
     <div className="seen-proto-header-actions">
       <button aria-label="Create" onClick={onCreate} type="button"><FiPlus /></button>
       <button aria-label="Search" onClick={onSearch} type="button"><FiSearch /></button>
-      <button aria-label="Open activity" onClick={onActivity} type="button"><FiZap /></button>
+      <button aria-label="Open activity" className="seen-activity-button" onClick={onActivity} type="button">
+        <SeenActivitySparkMark />
+        {activityCount > 0 ? <span>{activityLabel}</span> : null}
+      </button>
     </div>
   </header>;
 }
 
-function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, menuOpen, views }) {
+function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, onViewsClick, menuOpen, views }) {
   const profileTo = creator.username ? `/profile/${encodeURIComponent(creator.username)}` : "/profile";
   const meta = [creator.location || creator.status || (creator.username ? `@${creator.username}` : "At seen"), relativeTime(createdAt, "")].filter(Boolean).join(" - ");
   return <div className="seen-item-creator">
@@ -203,7 +238,17 @@ function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, menuOpen, view
       <strong>{creator.displayName}{isOwn ? <em> - you</em> : null}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
       <span>{meta}</span>
     </Link>
-    <span className="seen-creator-views"><FiEye aria-hidden="true" />{formatCount(views)}</span>
+    {isOwn ? (
+      <button aria-label="Open Seen insights" className="seen-creator-views is-clickable" onClick={onViewsClick} type="button">
+        <SeenThinEyeMark />
+        {formatCount(views)}
+      </button>
+    ) : (
+      <span className="seen-creator-views">
+        <SeenThinEyeMark />
+        {formatCount(views)}
+      </span>
+    )}
     <button aria-expanded={menuOpen} aria-label="Open Seen options" className="seen-more-button" onClick={onMenuToggle} type="button"><FiMoreHorizontal /></button>
   </div>;
 }
@@ -358,7 +403,7 @@ function OwnerSeenActionsSheet({ busyAction = "", isOpen, item, onAddStory, onAr
   );
 }
 
-function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
+function SeenInsightsSheet({ fallbackViews = 0, insightsQuery, isOpen, onClose, title }) {
   const sheetPosition = useSeenSheetPosition(isOpen);
 
   useEffect(() => {
@@ -380,9 +425,11 @@ function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
     return dailyByDate.get(date.toISOString().slice(0, 10)) || 0;
   });
   const maxDailyViews = Math.max(1, ...dailyViews);
-  const totalViews = Number(insights.totalViews ?? insights.opens ?? insights.views ?? 0);
+  const totalViews = Number(insights.totalViews ?? insights.opens ?? insights.views ?? fallbackViews ?? 0);
   const todayViews = Number(insights.todayViews ?? dailyViews[6] ?? 0);
-  const readToEnd = Math.max(0, Math.min(100, Number(insights.readToEndPercent || 0)));
+  const readToEndValue = insights.readToEndPercent;
+  const hasReadToEnd = readToEndValue !== null && readToEndValue !== undefined && Number.isFinite(Number(readToEndValue));
+  const readToEnd = hasReadToEnd ? Math.max(0, Math.min(100, Number(readToEndValue))) : 0;
   const weekChange = Number.isFinite(Number(insights.weekChangePercent)) ? Number(insights.weekChangePercent) : null;
   const metrics = [["Reactions", insights.reactions], ["Saved", insights.saves], ["Reposts", insights.shares], ["Comments", insights.comments]];
   const sourceLabels = { feed: "Feed", profile: "Profile", reposts: "Reposts" };
@@ -400,7 +447,7 @@ function SeenInsightsSheet({ insightsQuery, isOpen, onClose, title }) {
           <p className="seen-insights-today"><b>Today</b> · {todayViews.toLocaleString()} {todayViews === 1 ? "view" : "views"}</p>
           <div aria-label="Views over the last 7 days" className="seen-insights-chart">{dailyViews.map((value, index) => <i className={index === 6 ? "is-today" : ""} key={index} style={{ "--bar-height": `${Math.max(value ? 18 : 4, (value / maxDailyViews) * 100)}%` }}><span>{value}</span></i>)}</div>
           <div className="seen-insights-chart-labels"><span>7 days ago</span><span>today</span></div>
-          <div className="seen-insights-completion"><span>Read to the end</span><b>{readToEnd}%</b><i><span style={{ width: `${readToEnd}%` }} /></i></div>
+          <div className="seen-insights-completion"><span>Read to the end</span><b>{hasReadToEnd ? `${readToEnd}%` : "Unavailable"}</b><i><span style={{ width: `${readToEnd}%` }} /></i></div>
           <div className="seen-insights-metrics">{metrics.map(([label, value]) => <span key={label}><b>{Number(value || 0).toLocaleString()}</b><small>{label}</small></span>)}</div>
           <h3>Where they came from</h3>
           <div className="seen-insights-sources">{trafficSources.map(({ source, percent }) => <div className={`is-${source}`} key={source}><span>{sourceLabels[source] || source}</span><b>{Number(percent || 0)}%</b><i><span style={{ width: `${Math.max(0, Math.min(100, Number(percent || 0)))}%` }} /></i></div>)}</div>
@@ -645,7 +692,6 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
-  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const [seriesOpen, setSeriesOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -867,18 +913,13 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
   const pending = reactionMutation.isPending || repostMutation.isPending || saveMutation.isPending || commentMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending || pinMutation.isPending || archiveMutation.isPending || deleteMutation.isPending;
 
   const isOwn = isSeenOwner(currentUser, rawItem) || isSeenOwner(currentUser, item);
-  const ownerStoryContent = useMemo(() => ({
-    sharedCard: {
-      destinationRoute: target,
-      imageUrl: item.media.url,
-      kind: "Seen",
-      subtitle: `${item.creator.displayName} · Tap to open`,
-      title: item.title,
-    },
-  }), [item.creator.displayName, item.media.url, item.title, target]);
   const openChangeCover = () => {
     setMenuOpen(false);
     navigate(`/studio/seens/${item.id}/edit?from=seen&focus=cover`);
+  };
+  const openAddToStory = () => {
+    setMenuOpen(false);
+    navigate(`/seen/${encodeURIComponent(item.id)}/share/story`, { state: { fromOwnerMenu: true } });
   };
   const confirmDelete = () => {
     if (!window.confirm("Delete this Seen?\n\nThis will permanently remove it for everyone.")) return;
@@ -887,13 +928,21 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
 
   return <article className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}>
     <div className="seen-item-menu-wrap">
-      <CreatorHeader createdAt={item.createdAt} creator={item.creator} isOwn={isOwn} menuOpen={menuOpen} onMenuToggle={() => setMenuOpen((value) => !value)} views={item.engagement.views} />
+      <CreatorHeader
+        createdAt={item.createdAt}
+        creator={item.creator}
+        isOwn={isOwn}
+        menuOpen={menuOpen}
+        onMenuToggle={() => setMenuOpen((value) => !value)}
+        onViewsClick={() => setInsightsOpen(true)}
+        views={item.engagement.views}
+      />
       {isOwn ? (
         <OwnerSeenActionsSheet
           busyAction={busyOwnerAction}
           isOpen={menuOpen}
           item={item}
-          onAddStory={() => { setMenuOpen(false); setStoryCreatorOpen(true); }}
+          onAddStory={openAddToStory}
           onArchive={() => archiveMutation.mutate()}
           onChangeCover={openChangeCover}
           onClose={() => setMenuOpen(false)}
@@ -934,8 +983,7 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
     </div>
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
-    <StoryCreator initialContent={ownerStoryContent} isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
-    <SeenInsightsSheet insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
+    <SeenInsightsSheet fallbackViews={item.engagement.views} insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
     <SeriesPickerSheet
       isOpen={seriesOpen}
       onClose={() => setSeriesOpen(false)}
@@ -976,9 +1024,9 @@ function EmptyState({ tab }) {
 
 function EndState({ onCreate }) {
   return <section className="seen-end-state">
-    <FiEye aria-hidden="true" />
+    <SeenTabEyeMark className="seen-end-eye-mark" />
     <h2>You’re all caught up ✦</h2>
-    <p>Now show them something.<br />Post what only you can show.</p>
+    <p>Now show them something. Post what only you can show.</p>
     <button onClick={onCreate} type="button">Create a Seen ✦</button>
   </section>;
 }
@@ -990,6 +1038,7 @@ export default function SeenFeedPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const capabilities = useSocialCapabilities();
+  const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["seen-feed", tab],
@@ -1014,7 +1063,20 @@ export default function SeenFeedPage() {
     : "";
   const canCreateStoryNow = capabilities.canCreate && canCreateStory(user);
   const canPostNote = capabilities.canCreate && canCreateFeedPost(user);
+  const acknowledgeActivityNotifications = useMutation({
+    mutationFn: fanService.acknowledgeAllActivity,
+    onMutate: () => {
+      queryClient.setQueryData(["fan", "activity", "unread-count"], 0);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+    },
+  });
   const openCreate = () => setCreateOpen(true);
+  const openActivity = () => {
+    if (unreadActivityCount > 0 && !acknowledgeActivityNotifications.isPending) acknowledgeActivityNotifications.mutate();
+    navigate("/activity");
+  };
   const updateFeedItem = (id, engagement) => {
     queryClient.setQueryData(["seen-feed", tab], (current = []) => current.map((entry) => String(entry.id) === String(id) ? {
       ...entry,
@@ -1044,7 +1106,7 @@ export default function SeenFeedPage() {
   };
 
   return <section className="seen-prototype-page">
-    <SeenHeader activeTab={tab} onActivity={() => navigate("/activity")} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onTabChange={setTab} />
+    <SeenHeader activeTab={tab} activityCount={unreadActivityCount} onActivity={openActivity} onCreate={openCreate} onSearch={() => navigate("/search?type=seens")} onTabChange={setTab} />
     <FanCreateSheet
       canCreateSeen={capabilities.canCreate}
       canCreateWorld={capabilities.isApprovedCreator}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -436,7 +436,7 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
             }}
             type="button"
           >
-            {acknowledged ? <><span>Seen</span><FiCheck aria-hidden="true" /></> : <FiEye aria-hidden="true" />}
+            {acknowledged ? <><span>Seen</span><FiCheck aria-hidden="true" /></> : <ActivityEyeMark />}
           </button>
         ) : item.direction === "sent" && acknowledged ? <span className="is-seen" aria-label="Seen"><span>Seen</span><FiCheck aria-hidden="true" /></span> : null}
       </div>
@@ -468,6 +468,13 @@ function ActivityEmptyState({ direction, filter, onOpenOrbit }) {
   );
 }
 
+function ActivityEyeMark() {
+  return <svg aria-hidden="true" className="activity-eye-mark" viewBox="0 0 64 40">
+    <path d="M2 20C14 3 50 3 62 20C50 37 14 37 2 20Z" fill="currentColor" />
+    <circle cx="32" cy="20" r="8.5" fill="#0A0C0F" />
+  </svg>;
+}
+
 function FilterChips({ filter, filters, onChange }) {
   return (
     <div className="activity-prototype-filters" aria-label="Activity filters">
@@ -479,7 +486,7 @@ function FilterChips({ filter, filters, onChange }) {
           onClick={() => onChange(value)}
           type="button"
         >
-          {value === "seen" ? <FiEye aria-hidden="true" /> : null}
+          {value === "seen" ? <ActivityEyeMark /> : null}
           {label}
         </button>
       ))}
@@ -495,6 +502,7 @@ export default function ActivityPage() {
   const queryFilter = searchParams.get("filter") || "all";
   const [acknowledged, setAcknowledged] = useState(readAcknowledged);
   const [page, setPage] = useState(1);
+  const acknowledgedOnOpenRef = useRef(false);
   const direction = queryDirection;
   const allowedFilters = direction === "received" ? RECEIVED_FILTERS : SENT_FILTERS;
   const allowedFilterValues = new Set(allowedFilters.map(([, value]) => value));
@@ -531,6 +539,21 @@ export default function ActivityPage() {
     const refreshActivity = () => queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
     socket.on("activity:updated", refreshActivity);
     return () => socket.off("activity:updated", refreshActivity);
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (acknowledgedOnOpenRef.current) return undefined;
+    acknowledgedOnOpenRef.current = true;
+    queryClient.setQueryData(["fan", "activity", "unread-count"], 0);
+    let active = true;
+    fanService.acknowledgeAllActivity()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+      });
+    return () => {
+      active = false;
+    };
   }, [queryClient]);
 
   const items = useMemo(() => {

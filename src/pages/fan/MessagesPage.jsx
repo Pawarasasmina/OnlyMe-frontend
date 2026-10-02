@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiX, FiZap } from "react-icons/fi";
 import { FiExternalLink } from "react-icons/fi";
@@ -9,6 +10,8 @@ import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceRecorder from "../../components/messaging/VoiceRecorder";
 import VideoNoteBubble from "../../components/messaging/VideoNoteBubble";
 import DirectAccessSettingsSheet from "../../components/messages/DirectAccessSettingsSheet";
+import StoryCreator from "../../components/stories/StoryCreator";
+import StoryViewer from "../../components/stories/StoryViewer";
 import { useAuth } from "../../hooks/useAuth";
 import { useCalls } from "../../context/callContextBase";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
@@ -64,7 +67,6 @@ const chatDateLabel = (value) => {
 const MESSAGE_EMOJIS = ["😀", "😂", "🥰", "😍", "😊", "😉", "😎", "🥳", "😭", "😮", "😅", "🤔", "🙌", "👏", "🙏", "👍", "👎", "💪", "❤️", "🔥", "✨", "🎉", "💯", "👀", "🌍", "🪐", "⭐", "💙"];
 const MESSAGE_REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
-const STORY_REACTIONS = ["❤️", "🔥", "😂", "👏", "👁️"];
 const REPORT_REASONS = [
   ["SPAM", "Spam"],
   ["HARASSMENT", "Harassment or bullying"],
@@ -137,7 +139,7 @@ function Identity({ person, presence, compact = false, subtitle = "" }) {
 
 function StoryReplyPreview({ forceExpired = false, mine, onOpen, reply }) {
   const expired = forceExpired || Boolean(reply.expiresAt && new Date(reply.expiresAt).getTime() <= Date.now());
-  return <button className={`mb-2 block w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/15 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`} onClick={() => onOpen(reply, expired)} type="button"><div className="flex items-center gap-2 p-2">{expired ? <span className={`grid h-12 w-10 shrink-0 place-items-center rounded-lg text-lg ${mine ? "bg-atseen-bg/10" : "bg-white/5"}`}>⌛</span> : <img alt="Story replied to" className="h-12 w-10 shrink-0 rounded-lg object-cover" src={resolveMediaUrl(reply.imageUrl)} />}<div className="min-w-0"><p className={`text-[10px] font-bold uppercase tracking-wide ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{expired ? "Story unavailable" : mine ? "You replied to their story" : "Replied to your story"}</p><p className={`truncate text-xs ${mine ? "text-atseen-bg/75" : "text-atseen-muted"}`}>{expired ? "This story has expired" : reply.caption || "Tap to view story"}</p></div></div></button>;
+  return <button className={`mb-2 block w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/15 bg-atseen-bg/10" : "border-white/10 bg-black/20"}`} onClick={() => onOpen(reply, expired)} type="button"><div className="flex items-center gap-2 p-2">{expired ? <span className={`grid h-12 w-10 shrink-0 place-items-center rounded-lg text-lg ${mine ? "bg-atseen-bg/10" : "bg-white/5"}`}>⌛</span> : <img alt="Story replied to" className="h-12 w-10 shrink-0 rounded-lg object-cover" src={resolveMediaUrl(reply.imageUrl)} />}<div className="min-w-0"><p className={`text-[10px] font-bold uppercase tracking-wide ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{expired ? "Story unavailable" : reply.questionPrompt ? "Answered your question" : mine ? "You replied to their story" : "Replied to your story"}</p><p className={`truncate text-xs ${mine ? "text-atseen-bg/75" : "text-atseen-muted"}`}>{expired ? "This story has expired" : reply.questionPrompt || reply.caption || "Tap to view story"}</p></div></div></button>;
 }
 
 function PostMessagePreview({ mine, postId, sharedUrl }) {
@@ -240,6 +242,24 @@ function defaultSharedBody(message) {
   return `Shared a ${sharedContentBodyLabel(message.sharedContent.contentType)}`;
 }
 
+function questionReplyStoryContent(message) {
+  const answer = String(message?.body || "").trim();
+  const prompt = String(message?.storyReply?.questionPrompt || "").trim();
+  if (!answer || !prompt) return null;
+  return {
+    caption: answer,
+    sharedCard: {
+      eyebrow: "Answered your question",
+      imageUrl: resolveMediaUrl(message.storyReply.imageUrl || ""),
+      kind: "question_reply",
+      subtitle: prompt,
+      title: answer,
+      x: 50,
+      y: 43,
+    },
+  };
+}
+
 function SharedContentMessageCard({ content, mine, onOpen }) {
   if (!content) return null;
   const author = content.author || {};
@@ -315,11 +335,14 @@ export default function MessagesPage() {
   const [forwardSelection, setForwardSelection] = useState(() => new Set());
   const [groupMessageInfo, setGroupMessageInfo] = useState(null);
   const [inboxTab, setInboxTab] = useState(() => searchParams.get("tab") === "direct" ? "direct" : "all");
-  const [inboxFilter, setInboxFilter] = useState("all");
+  const [inboxFilter, setInboxFilter] = useState(() => (
+    INBOX_FILTERS.some((item) => item.id === searchParams.get("filter")) ? searchParams.get("filter") : "all"
+  ));
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const filterSheetPosition = useMessageSheetPosition(filterSheetOpen);
   const [requestBusy, setRequestBusy] = useState(false);
   const [storyViewer, setStoryViewer] = useState(null);
+  const [storyShareContent, setStoryShareContent] = useState(null);
   const [expiredStoryIds, setExpiredStoryIds] = useState(() => new Set());
   const [search, setSearch] = useState("");
   const [presence, setPresence] = useState({});
@@ -328,6 +351,7 @@ export default function MessagesPage() {
   const [scrollDate, setScrollDate] = useState({ label: "", visible: false });
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
   const [messageMenu, setMessageMenu] = useState(null);
+  const [messageMenuPosition, setMessageMenuPosition] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState(null);
   const [bulkDeleteDialog, setBulkDeleteDialog] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
@@ -335,8 +359,6 @@ export default function MessagesPage() {
   const [reportDetails, setReportDetails] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
-  const [storyReplyDraft, setStoryReplyDraft] = useState("");
-  const [storyActionBusy, setStoryActionBusy] = useState(false);
   const [directAccessBusy, setDirectAccessBusy] = useState(false);
   const [directAccessSettings, setDirectAccessSettings] = useState({ enabled: false, priceStars: 100, callEnabled: false, callPriceStars: 500, callDurationMinutes: 5, callAutoDeclineAway: false });
   const [directAccessSetupOpen, setDirectAccessSetupOpen] = useState(false);
@@ -1585,6 +1607,16 @@ export default function MessagesPage() {
       setError("Could not copy this message.");
     }
   };
+  const shareQuestionReplyAsStory = (message) => {
+    const content = questionReplyStoryContent(message);
+    if (!content) {
+      setError("This answer cannot be shared as a story.");
+      return;
+    }
+    setMessageMenu(null);
+    setReactionFor(null);
+    setStoryShareContent(content);
+  };
   const submitReport = async (event) => {
     event.preventDefault();
     if (!reportTarget) return;
@@ -1628,39 +1660,6 @@ export default function MessagesPage() {
       setError(requestError.response?.data?.message || "Could not send this image.");
     } finally {
       setImageBusy(false);
-    }
-  };
-  const reactToOpenStory = async (reaction) => {
-    if (!storyViewer?.story?.id || storyActionBusy) return;
-    setStoryActionBusy(true);
-    try {
-      await storyService.reactToStory(storyViewer.story.id, reaction);
-      setStoryViewer((current) => ({ ...current, reactionSent: reaction }));
-    } catch (requestError) {
-      setStoryViewer((current) => ({ ...current, actionError: requestError.response?.data?.message || "Reaction failed." }));
-    } finally {
-      setStoryActionBusy(false);
-    }
-  };
-  const replyToOpenStory = async (event) => {
-    event.preventDefault();
-    const body = storyReplyDraft.trim();
-    if (!body || !storyViewer?.story?.id || storyActionBusy) return;
-    setStoryActionBusy(true);
-    try {
-      const response = await storyService.replyToStory(storyViewer.story.id, body);
-      const message = response.data.data.message;
-      queryClient.setQueryData(["messages", selected.id], (current) => current ? {
-        ...current,
-        messages: current.messages.some((item) => item.id === message.id) ? current.messages : [...current.messages, message],
-      } : current);
-      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
-      setStoryReplyDraft("");
-      setStoryViewer((current) => ({ ...current, replySent: true }));
-    } catch (requestError) {
-      setStoryViewer((current) => ({ ...current, actionError: requestError.response?.data?.message || "Reply failed." }));
-    } finally {
-      setStoryActionBusy(false);
     }
   };
   const openStoryReply = async (reply, knownExpired = false) => {
@@ -1803,6 +1802,7 @@ export default function MessagesPage() {
               const showReadAvatar = mine && message.id === lastReadOutgoingMessageId;
               const reactions = message.reactions || [];
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
+              const canShareQuestionReply = Boolean(!mine && message.storyReply?.questionPrompt && message.body && !message.id.startsWith("pending:"));
               return <Fragment key={message.id}>
                 {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
                 <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
@@ -1849,16 +1849,35 @@ export default function MessagesPage() {
                   {!message.deletedAt ? <div className={`relative mt-1 flex items-center gap-0.5 text-atseen-muted opacity-100 transition sm:absolute sm:top-1/2 sm:mt-0 sm:-translate-y-1/2 sm:opacity-45 sm:group-hover:opacity-100 ${mine ? "self-end flex-row-reverse sm:right-full sm:mr-1" : "self-start sm:left-full sm:ml-1"}`}>
                     <button aria-label="Reply to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" onClick={() => { setReplyTo(message); setReactionFor(null); }} title="Reply" type="button"><FiCornerUpLeft /></button>
                     <button aria-label="React to message" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setChatMenuOpen(false); setMessageMenu(null); setReactionFor((current) => current === message.id ? null : message.id); }} title="React" type="button"><FiSmile /></button>
-                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setChatMenuOpen(false); setReactionFor(null); setMessageMenu((current) => current === message.id ? null : message.id); }} title="More" type="button"><FiMoreVertical /></button>
+                    <button aria-label="Message options" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5 hover:text-white" data-chat-popover onClick={(event) => {
+                      setInboxRowMenu(null);
+                      setChatMenuOpen(false);
+                      setReactionFor(null);
+                      const buttonRect = event.currentTarget.getBoundingClientRect();
+                      const menuWidth = 176;
+                      const menuHeight = 260;
+                      const threadRect = threadRef.current?.getBoundingClientRect();
+                      const minLeft = (threadRect?.left || 0) + 8;
+                      const maxLeft = (threadRect?.right || window.innerWidth) - menuWidth - 8;
+                      const preferredLeft = mine ? buttonRect.right - menuWidth : buttonRect.left;
+                      const opensDown = buttonRect.top < menuHeight + 20;
+                      setMessageMenuPosition({
+                        left: Math.max(minLeft, Math.min(maxLeft, preferredLeft)),
+                        top: opensDown ? buttonRect.bottom + 8 : Math.max(8, buttonRect.top - menuHeight - 8),
+                      });
+                      setMessageMenu((current) => current === message.id ? null : message.id);
+                    }} title="More" type="button"><FiMoreVertical /></button>
                     {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
-                    {messageMenu === message.id ? <div className={`absolute bottom-8 z-30 w-40 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>
+                    {messageMenu === message.id ? createPortal(<div className="fixed z-[240] w-44 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl" data-chat-popover style={messageMenuPosition || undefined}>
+                      <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setReactionFor(null); setReplyTo(message); }} type="button"><FiCornerUpLeft /> Reply</button>
                       {message.body && !message.deletedAt ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => copyMessage(message)} type="button"><FiCopy /> Copy</button> : null}
+                      {canShareQuestionReply ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => shareQuestionReplyAsStory(message)} type="button"><FiCamera /> Share as Story</button> : null}
                       {selected.type === "group" && mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setGroupMessageInfo(message); }} type="button">Message info</button> : null}
                       {!message.id.startsWith("pending:") ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setForwardSelection(new Set([message.id])); }} type="button"><FiShare2 /> Select messages</button> : null}
                       {!message.id.startsWith("pending:") ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" disabled={actionBusy} onClick={() => { setMessageMenu(null); setForwardingMessage(message); }} type="button"><FiShare2 /> Forward</button> : null}
                       {!message.id.startsWith("pending:") ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-atseen-danger hover:bg-white/5" disabled={actionBusy} onClick={() => { setMessageMenu(null); setDeleteDialog({ message, scope: null }); }} type="button"><FiTrash2 /> Delete</button> : null}
                       {!mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-atseen-warning hover:bg-white/5" onClick={() => { setMessageMenu(null); setReportTarget({ type: "message", message }); }} type="button"><FiFlag /> Report</button> : null}
-                    </div> : null}
+                    </div>, document.body) : null}
                   </div> : null}
                   {selected.type !== "group" && showReadAvatar && participant ? <span aria-label={`Seen by ${participant.displayName}`} className="mt-1 block" title={`Seen by ${participant.displayName}`}><FanAvatar name={participant.displayName} size="h-4 w-4" src={participant.avatarUrl} /></span> : null}
                   {selected.type === "group" && mine ? (() => {
@@ -1898,6 +1917,16 @@ export default function MessagesPage() {
     </div>
 
     {directAccessSetupOpen && user?.role === "creator" ? <DirectAccessSettingsSheet busy={directAccessBusy} error={error} onClose={() => setDirectAccessSetupOpen(false)} onSave={saveDirectAccessSettings} settings={directAccessSettings} setSettings={setDirectAccessSettings} /> : null}
+    <StoryCreator
+      initialContent={storyShareContent}
+      isOpen={Boolean(storyShareContent)}
+      onClose={() => setStoryShareContent(null)}
+      onPublished={() => {
+        setStoryShareContent(null);
+        queryClient.invalidateQueries({ queryKey: ["stories"] });
+        queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
+      }}
+    />
 
     {directAccessOffer && !hasActiveDirectAccessWindow ? <div className="absolute inset-0 z-[80] flex items-end justify-center bg-black/75 p-3 sm:items-center"><div className="w-full max-w-sm rounded-3xl border border-atseen-blue/25 bg-atseen-bg-2 p-5 shadow-2xl"><div className="flex items-center justify-between"><div><h2 className="text-lg font-black">{directAccessOffer.reopenQuestionId ? "Answer with a new window" : "Open Direct Access"}</h2><p className="mt-1 text-xs text-atseen-muted">3 messages · expires after 48 hours</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={directAccessBusy} onClick={() => setDirectAccessOffer(null)} type="button"><FiX /></button></div><div className="mt-5 rounded-2xl bg-atseen-surface-2 p-4"><div className="flex justify-between text-sm"><span className="text-atseen-muted">Price</span><b>✦{directAccessOffer.priceStars}</b></div><div className="mt-2 flex justify-between text-sm"><span className="text-atseen-muted">Your balance</span><b>✦{Number(directAccessOffer.walletBalance || 0)}</b></div><p className="mt-3 text-[10px] leading-4 text-atseen-muted">Stars are held now. The creator receives {directAccessOffer.reopenQuestionId ? "80%" : "90%"} after their first reply; unanswered windows are refunded in full.</p></div>{!directAccessOffer.reopenQuestionId && directAccessOffer.premiumAllowance?.available ? <button className="mt-4 w-full rounded-full border border-atseen-blue/40 py-3 text-sm font-bold text-atseen-blue" disabled={directAccessBusy} onClick={() => confirmDirectAccess("PREMIUM_INCLUDED")} type="button">Use included Premium window</button> : null}<button className="mt-3 w-full rounded-full bg-atseen-blue py-3 text-sm font-black text-atseen-bg disabled:opacity-40" disabled={directAccessBusy || Number(directAccessOffer.walletBalance || 0) < directAccessOffer.priceStars} onClick={() => confirmDirectAccess("PAID")} type="button">{directAccessBusy ? "Opening…" : directAccessOffer.reopenQuestionId ? `Answer · New window ✦${directAccessOffer.priceStars}` : `Pay ✦${directAccessOffer.priceStars}`}</button>{Number(directAccessOffer.walletBalance || 0) < directAccessOffer.priceStars && !directAccessOffer.premiumAllowance?.available ? <button className="mt-3 w-full text-xs font-bold text-atseen-warning" onClick={() => navigate("/fan/wallet")} type="button">Not enough Stars · Open Wallet</button> : null}</div></div> : null}
 
@@ -1959,7 +1988,21 @@ export default function MessagesPage() {
     {deleteDialog ? <div className="absolute inset-0 z-[75] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div aria-labelledby="delete-message-title" aria-modal="true" className="w-full max-w-[300px] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-4 shadow-2xl" role="dialog"><div className="flex items-center justify-between"><h2 className="text-base font-bold" id="delete-message-title">{deleteDialog.scope ? "Confirm deletion" : "Delete message"}</h2><button aria-label="Close delete message" className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => setDeleteDialog(null)} type="button"><FiX /></button></div>{deleteDialog.scope ? <><p className="mt-2 text-xs leading-5 text-atseen-muted">This disappears only from your chat.</p><div className="mt-4 flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-2 text-xs font-bold" disabled={actionBusy} onClick={() => setDeleteDialog((current) => ({ ...current, scope: null }))} type="button">Back</button><button className="flex-[1.3] rounded-full bg-atseen-danger px-3 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={actionBusy} onClick={deleteSelectedMessage} type="button">{actionBusy ? "Deleting…" : "Delete"}</button></div></> : <><p className="mt-1 text-xs text-atseen-muted">Choose an option.</p><div className="mt-3 grid gap-1"><button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/5" onClick={() => setDeleteDialog((current) => ({ ...current, scope: "me" }))} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs">Delete for me</b><span className="mt-0.5 block text-[10px] text-atseen-muted">Only removes it from your chat.</span></span></button>{deleteDialog.message.senderId === myId ? <button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-atseen-danger/5 disabled:opacity-50" disabled={actionBusy} onClick={() => deleteSelectedMessage({ message: deleteDialog.message, scope: "everyone" })} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs text-atseen-danger">{actionBusy ? "Unsending…" : "Unsend for everyone"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">Replaces it for both people.</span></span></button> : null}</div></>}</div></div> : null}
     {bulkDeleteDialog ? <div className="absolute inset-0 z-[76] flex items-end bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget && !actionBusy) setBulkDeleteDialog(null); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-8 pt-2.5 shadow-2xl" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-center justify-between"><div><h2 className="text-base font-black">Delete {bulkDeleteDialog.messages.length} messages?</h2><p className="mt-1 text-[11px] text-atseen-muted">Choose where the selected messages should disappear.</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setBulkDeleteDialog(null)} type="button"><FiX /></button></div><button className="mt-4 flex w-full items-center gap-4 border-b border-white/[0.07] py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("me")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm">Delete for me</b><span className="mt-1 block text-[10px] text-atseen-muted">Only removes the selected messages from your chat.</span></span></button>{bulkDeleteDialog.messages.every((message) => message.senderId === myId && !message.deletedAt) ? <button className="flex w-full items-center gap-4 py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("everyone")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm text-atseen-danger">Delete for everyone</b><span className="mt-1 block text-[10px] text-atseen-muted">All selected messages were sent by you.</span></span></button> : null}{actionBusy ? <p className="pt-3 text-center text-xs font-bold text-atseen-muted">Deleting messages…</p> : null}</section></div> : null}
     {reportTarget ? <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/75 p-3 sm:items-center"><form className="w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-bg-2 p-5 shadow-2xl" onSubmit={submitReport}><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">Report {reportTarget.type === "message" ? "message" : "conversation"}</h2><p className="mt-1 text-xs text-atseen-muted">Your report is private and will be reviewed.</p></div><button aria-label="Close report" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setReportTarget(null)} type="button"><FiX /></button></div><label className="mt-5 block text-xs font-bold text-atseen-muted">Reason<select className="mt-2 w-full rounded-xl border border-atseen-line bg-atseen-surface-2 px-3 py-3 text-sm text-white [color-scheme:dark] outline-none" onChange={(event) => setReportReason(event.target.value)} value={reportReason}>{REPORT_REASONS.map(([value, label]) => <option className="bg-atseen-bg-2 text-white" key={value} value={value}>{label}</option>)}</select></label><label className="mt-4 block text-xs font-bold text-atseen-muted">Additional details <span className="font-normal">(optional)</span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface-2 p-3 text-sm text-white outline-none" maxLength={1000} onChange={(event) => setReportDetails(event.target.value)} value={reportDetails} /></label><button className="mt-5 w-full rounded-full bg-atseen-danger py-3 text-sm font-bold text-white disabled:opacity-50" disabled={actionBusy} type="submit">{actionBusy ? "Submitting…" : "Submit report"}</button></form></div> : null}
-    {storyViewer ? <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 p-4"><div className="relative flex h-[min(78vh,620px)] w-full max-w-sm items-center justify-center overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg shadow-2xl"><button aria-label="Close story" className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white" onClick={() => setStoryViewer(null)} type="button"><FiX /></button>{storyViewer.loading ? <p className="text-sm text-atseen-muted">Loading story…</p> : storyViewer.expired ? <div className="px-8 text-center"><div className="text-5xl">⌛</div><h2 className="mt-5 text-xl font-bold">Story unavailable</h2><p className="mt-2 text-sm leading-6 text-atseen-muted">This story expired after 24 hours or was deleted by its creator.</p></div> : storyViewer.error ? <div className="px-8 text-center"><h2 className="text-xl font-bold">Unable to open story</h2><p className="mt-2 text-sm text-atseen-muted">Please check your connection and try again.</p></div> : storyViewer.story ? <><img alt={storyViewer.story.caption || "Story"} className="h-full w-full object-cover" src={resolveMediaUrl(storyViewer.story.image)} /><div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" /><div className="absolute left-5 right-14 top-5 flex items-center gap-3"><FanAvatar name={storyViewer.story.name} size="h-10 w-10" src={storyViewer.story.avatar} /><div><p className="text-sm font-bold text-white">{storyViewer.story.name}</p><p className="text-[10px] text-white/65">Story</p></div></div>{storyViewer.story.caption ? <p className="absolute bottom-7 left-5 right-5 text-base font-bold leading-7 text-white">{storyViewer.story.caption}</p> : null}</> : null}</div></div> : null}
-    {storyViewer?.story && !storyViewer.story.isOwn ? <div className="absolute bottom-6 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-white/15 bg-black/70 p-3 shadow-2xl backdrop-blur"><div className="mb-2 flex items-center justify-center gap-3">{STORY_REACTIONS.map((reaction) => <button aria-label={`React ${reaction}`} className={`grid h-9 w-9 place-items-center rounded-full text-lg transition hover:scale-110 ${storyViewer.reactionSent === reaction ? "bg-atseen-blue/30 ring-1 ring-atseen-blue" : "bg-white/10"}`} disabled={storyActionBusy} key={reaction} onClick={() => reactToOpenStory(reaction)} type="button">{reaction}</button>)}</div><form className="flex gap-2" onSubmit={replyToOpenStory}><input className="min-w-0 flex-1 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/55" maxLength={1000} onChange={(event) => setStoryReplyDraft(event.target.value)} placeholder={`Reply to ${storyViewer.story.name}…`} value={storyReplyDraft} /><button aria-label="Send story reply" className="grid h-10 w-10 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!storyReplyDraft.trim() || storyActionBusy} type="submit"><FiSend /></button></form>{storyViewer.replySent ? <p className="mt-2 text-center text-[10px] text-atseen-success">Reply sent</p> : null}{storyViewer.actionError ? <p className="mt-2 text-center text-[10px] text-atseen-danger">{storyViewer.actionError}</p> : null}</div> : null}
+    {storyViewer?.story ? (
+      <StoryViewer
+        isOpen
+        onClose={() => setStoryViewer(null)}
+        stories={[storyViewer.story]}
+      />
+    ) : storyViewer ? (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+        <div className="relative flex h-[min(78vh,620px)] w-full max-w-sm items-center justify-center overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg shadow-2xl">
+          <button aria-label="Close story" className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white" onClick={() => setStoryViewer(null)} type="button"><FiX /></button>
+          {storyViewer.loading ? <p className="text-sm text-atseen-muted">Loading story...</p> : null}
+          {storyViewer.expired ? <div className="px-8 text-center"><div className="text-5xl">⌛</div><h2 className="mt-5 text-xl font-bold">Story unavailable</h2><p className="mt-2 text-sm leading-6 text-atseen-muted">This story expired after 24 hours or was deleted by its creator.</p></div> : null}
+          {storyViewer.error ? <div className="px-8 text-center"><h2 className="text-xl font-bold">Unable to open story</h2><p className="mt-2 text-sm text-atseen-muted">Please check your connection and try again.</p></div> : null}
+        </div>
+      </div>
+    ) : null}
   </div>;
 }
