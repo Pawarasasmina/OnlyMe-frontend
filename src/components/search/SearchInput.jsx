@@ -31,7 +31,7 @@ const SearchInput = forwardRef(function SearchInput({
             aria-autocomplete="list"
             aria-controls="search-suggestions"
             aria-expanded={suggestionsOpen}
-            className="h-[58px] w-full rounded-[15px] border border-atseen-blue/55 bg-[#11151b] px-5 pr-12 text-[17px] font-medium text-atseen-text outline-none placeholder:text-white/45 focus:border-atseen-blue"
+            className="h-[58px] w-full rounded-[15px] border border-atseen-blue/55 bg-[#11151b] px-5 pr-12 text-[15px] font-medium text-atseen-text outline-none placeholder:text-white/45 focus:border-atseen-blue"
             maxLength={100}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={onKeyDown}

@@ -94,12 +94,16 @@ function normalizeStoryGroup(raw = {}) {
 function normalizeSlide(raw = {}) {
   const creator = raw.creator || {};
   const offer = raw.featuredOffer || null;
+  const creatorUserId = creator.id || creator._id || raw.creatorId || raw.ownerUserId || raw.userId || "";
   const displayName = raw.displayName || creator.name || creator.username || "Creator";
   const city = raw.city || creator.location?.city || "";
   const country = raw.country || creator.location?.country || "";
   return {
     ...raw,
-    id: raw.id || creator.id || creator.username,
+    id: raw.id || creatorUserId || creator.username,
+    userId: creatorUserId,
+    creatorId: creatorUserId,
+    ownerUserId: raw.ownerUserId || creatorUserId,
     coverImage: raw.coverImage || raw.media?.url || creator.cover || "",
     avatar: raw.avatar || creator.avatar || "",
     displayName,
@@ -115,7 +119,8 @@ function normalizeSlide(raw = {}) {
     profileUrl: raw.profileUrl || creator.profileRoute || (creator.username ? `/profile/${encodeURIComponent(creator.username)}` : "/search"),
     creator: {
       ...creator,
-      id: creator.id || creator._id || "",
+      id: creatorUserId,
+      _id: creator._id || creatorUserId,
       name: creator.name || displayName,
       username: creator.username || "",
       avatar: creator.avatar || "",

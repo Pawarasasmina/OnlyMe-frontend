@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiAperture, FiDisc, FiEdit3, FiEye, FiImage } from "react-icons/fi";
+import { FiAperture, FiDisc, FiEdit3, FiImage } from "react-icons/fi";
+
+function ThinSeenEyeIcon() {
+  return (
+    <svg aria-hidden="true" className="seen-create-eye-mark" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 64 40">
+      <path d="M4 20C12.5 10.6 22.2 7 32 7s19.5 3.6 28 13c-8.5 9.4-18.2 13-28 13S12.5 29.4 4 20Z" />
+      <circle cx="32" cy="20" fill="currentColor" r="5.2" stroke="none" />
+    </svg>
+  );
+}
 
 function FanCreateSheet({
   canCreateSeen = true,
@@ -15,7 +24,7 @@ function FanCreateSheet({
 }) {
   const [position, setPosition] = useState(undefined);
   const options = [
-    { disabled: !canCreateSeen, icon: FiEye, label: "Seen", to: "/create/seen" },
+    { disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
     { disabled: !canCreateWorld, icon: FiImage, label: "Experience", to: "/create/experience" },
     { disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
     { disabled: !canPostNote, icon: FiEdit3, label: "Note", onClick: onNote },

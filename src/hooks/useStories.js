@@ -114,6 +114,15 @@ export function useCreateStory() {
   });
 }
 
+export function useShareSeenAsStory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ payload, seenId }) => storyService.shareSeenAsStory(seenId, payload),
+    retry: false,
+    onSuccess: () => invalidateStoryLists(queryClient),
+  });
+}
+
 export function useMarkStoryViewed() {
   const queryClient = useQueryClient();
   return useMutation({

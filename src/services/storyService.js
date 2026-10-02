@@ -169,13 +169,18 @@ function normalizeStory(story = {}) {
     viewed: Boolean(story.viewed || readStore(SEEN_KEY)[id]),
     viewCount: Number(story.viewCount) || 0,
     reactionCount: Number(story.reactionCount) || 0,
-    replyCount: Number(story.replyCount) || 0,
+    replyCount: Number(story.replyCount ?? story.insights?.replies) || 0,
+    questionReplyCount: Number(story.questionReplyCount ?? story.insights?.questionReplies) || 0,
     statusEmoji: story.statusEmoji || "",
     activeStatus: normalizeStatus(story.activeStatus) || legacyStatus,
     timeAgo: timeAgo(createdAt),
     isOwner: Boolean(story.isOwner || story.isOwn),
     isOwn: Boolean(story.isOwner || story.isOwn),
     isInProfileMedia: Boolean(story.isInProfileMedia),
+    sourceType: story.sourceType || "original",
+    sourceSeenId: story.sourceSeenId || story.sourceSeen?.id || story.sourceSeen?._id || "",
+    sourceSeen: story.sourceSeen || null,
+    sourceUnavailable: Boolean(story.sourceUnavailable),
   };
 }
 
@@ -381,6 +386,48 @@ export const storyService = {
     return story;
   },
 
+  shareSeenAsStory: async (seenId, payload = {}) => {
+    if (STORY_API_ENABLED) {
+      const body = payload.backgroundFile instanceof File ? new FormData() : payload;
+      if (body instanceof FormData) {
+        body.append("image", payload.backgroundFile);
+        body.append("mediaType", "image");
+        body.append("duration", String(payload.duration || 5));
+        body.append("audience", payload.audience || "everyone");
+        body.append("allowReactions", payload.allowReactions === false ? "false" : "true");
+        body.append("allowReplies", payload.allowReplies === false ? "false" : "true");
+        body.append("allowSharing", payload.allowSharing === false ? "false" : "true");
+        body.append("editorMetadata", JSON.stringify(payload.editorMetadata || {}));
+      }
+      return axiosInstance.post(`/stories/share/seen/${encodeURIComponent(seenId)}`, body)
+        .then((response) => normalizeStory(response.data?.data?.story || response.data?.data || response.data));
+    }
+
+    requireMocks();
+    const createdAt = new Date().toISOString();
+    const sharedCard = payload.editorMetadata?.sharedCard || {};
+    const id = `story-${Date.now()}`;
+    const story = normalizeStory({
+      id,
+      owner: payload.owner || {},
+      mediaType: "image",
+      mediaUrl: sharedCard.imageUrl || "",
+      thumbnailUrl: sharedCard.imageUrl || "",
+      audience: payload.audience,
+      allowReactions: payload.allowReactions !== false,
+      allowReplies: payload.allowReplies !== false,
+      allowSharing: payload.allowSharing !== false,
+      editorMetadata: payload.editorMetadata || { sharedCard },
+      createdAt,
+      expiresAt: addHours(new Date(createdAt), 24),
+      isOwner: true,
+      sourceSeenId: seenId,
+      sourceType: "seen",
+    });
+    writeMockStory(story);
+    return story;
+  },
+
   markStoryViewed: async (storyId) => {
     if (STORY_API_ENABLED) {
       return axiosInstance.post(`/stories/${storyId}/views`);
@@ -461,5 +508,37 @@ export const storyService = {
     }
 
     return { data: { data: { storyId, reason, reported: true } } };
+  },
+
+  unfollowStoryCreator: async (storyId) => {
+    if (STORY_API_ENABLED) {
+      return axiosInstance.delete(`/stories/${storyId}/creator-follow`);
+    }
+
+    return { data: { data: { storyId, active: false } } };
+  },
+
+  unfollowCreator: async (creatorId) => {
+    if (STORY_API_ENABLED) {
+      return axiosInstance.delete(`/stories/creators/${encodeURIComponent(creatorId)}/follow`);
+    }
+
+    return { data: { data: { creatorId, active: false } } };
+  },
+
+  hideCreatorStories: async (storyId) => {
+    if (STORY_API_ENABLED) {
+      return axiosInstance.post(`/stories/${storyId}/hide-creator`, { reason: "HIDDEN_FROM_STORY" });
+    }
+
+    return { data: { data: { storyId, hidden: true } } };
+  },
+
+  hideCreatorStoriesById: async (creatorId) => {
+    if (STORY_API_ENABLED) {
+      return axiosInstance.post(`/stories/creators/${encodeURIComponent(creatorId)}/hide`, { reason: "HIDDEN_FROM_RECOMMENDATION_STORY" });
+    }
+
+    return { data: { data: { creatorId, hidden: true } } };
   },
 };

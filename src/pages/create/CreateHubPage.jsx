@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiPlusCircle } from "react-icons/fi";
 import StoryCreator from "../../components/stories/StoryCreator";
 import { useAuth } from "../../hooks/useAuth";
@@ -10,7 +10,11 @@ import { socialCapabilitiesFor } from "../../utils/socialAccess";
 
 function CreateHubPage() {
   const { user } = useAuth();
-  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialStoryDraft = location.state?.storyDraft || null;
+  const returnTo = location.state?.returnTo || "";
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(Boolean(location.state?.openStoryComposer));
   const canCreate = canCreateStory(user);
   const capabilities = socialCapabilitiesFor(user);
   const publicationsQuery = useQuery({
@@ -58,7 +62,14 @@ function CreateHubPage() {
       </div>
       <p className="mt-4 text-xs text-atseen-muted">Capacity is loaded from the backend and remains authoritative.</p>
       <Link className="mt-6 inline-block underline" to="/creator/content/new">Legacy content</Link>
-      <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
+      <StoryCreator
+        initialContent={initialStoryDraft}
+        isOpen={storyCreatorOpen}
+        onClose={() => {
+          setStoryCreatorOpen(false);
+          if (location.state?.openStoryComposer) navigate(returnTo || "/discover", { replace: true });
+        }}
+      />
     </div>
   );
 }

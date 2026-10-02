@@ -7,4 +7,5 @@ export const fanService = {
   getPurchases: (params = {}) => axiosInstance.get("/fan/purchases", { params }),
   getActivity: (params = {}) => axiosInstance.get("/fan/activity", { params }),
   acknowledgeActivity: (activityId) => axiosInstance.post(`/fan/activity/${encodeURIComponent(activityId)}/acknowledge`),
+  acknowledgeAllActivity: () => axiosInstance.post("/fan/activity/acknowledge-all"),
 };
