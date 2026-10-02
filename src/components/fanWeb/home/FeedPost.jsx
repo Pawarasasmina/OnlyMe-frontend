@@ -239,6 +239,18 @@ function filterForContext(context = "", location = "") {
   return "";
 }
 
+function voiceStoryCopy(media = {}, fallback = "") {
+  const translations = Array.isArray(media.translations) ? media.translations : [];
+  const originalTranscript = String(media.transcript || fallback || "").trim();
+  const translation = translations.find((item) => String(item?.text || "").trim());
+  const translationText = String(translation?.text || "").trim();
+  return {
+    originalTranscript,
+    translationLabel: translation?.languageName || translation?.language || "",
+    translationText: translationText && translationText !== originalTranscript ? translationText : "",
+  };
+}
+
 function FeedPost({ post, profileMenu = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -313,6 +325,11 @@ function FeedPost({ post, profileMenu = false }) {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     return `${origin}/posts/${actionPostId}`;
   }, [actionPostId]);
+  const firstMedia = useMemo(() => normalized.media?.[0] || {}, [normalized.media]);
+  const firstMediaType = String(firstMedia.type || "").toLowerCase();
+  const isVoiceOnlyPost = normalized.media?.length === 1 && firstMediaType === "audio";
+  const voiceCopyForStory = useMemo(() => isVoiceOnlyPost ? voiceStoryCopy(firstMedia, normalized.text) : {}, [firstMedia, isVoiceOnlyPost, normalized.text]);
+  const voiceTextForStory = voiceCopyForStory.originalTranscript || voiceCopyForStory.translationText || "";
   const sharePayload = useMemo(() => ({
     author: {
       avatarUrl: creator.avatar,
@@ -324,18 +341,32 @@ function FeedPost({ post, profileMenu = false }) {
     contentId: actionPostId,
     contentType: "feed_post",
     destinationRoute: `/posts/${actionPostId}`,
-    imageUrl: normalized.media?.[0]?.url || "",
+    imageUrl: isVoiceOnlyPost ? "" : normalized.media?.[0]?.url || "",
+    storyDraft: isVoiceOnlyPost ? {
+      caption: voiceTextForStory,
+      imageUrl: "",
+      sharedCard: {
+        destinationRoute: `/posts/${actionPostId}`,
+        displayMode: "text_only",
+        eyebrow: "NOTE",
+        imageUrl: "",
+        kind: "voice_note",
+        originalTranscript: voiceCopyForStory.originalTranscript,
+        subtitle: "from my Wall - tap >",
+        translationLabel: voiceCopyForStory.translationLabel,
+        translationText: voiceCopyForStory.translationText,
+        title: voiceTextForStory || normalized.text || "Voice note",
+      },
+    } : undefined,
     textPreview: normalized.text,
     title: normalized.context
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
       : normalized.text.slice(0, 96) || "Home post",
-  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, normalized.context, normalized.location, normalized.media, normalized.text, postUrl]);
+  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
   const contextFilter = filterForContext(normalized.context, normalized.location);
   const contextHref = contextFilter
     ? `/wall?filter=${encodeURIComponent(contextFilter)}${normalized.location ? `&city=${encodeURIComponent(normalized.location)}` : ""}`
     : "/wall";
-  const firstMedia = normalized.media?.[0] || {};
-  const firstMediaType = String(firstMedia.type || "").toLowerCase();
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
@@ -1039,11 +1070,17 @@ function FeedPost({ post, profileMenu = false }) {
         initialContent={{
           sharedCard: {
             destinationRoute: `/posts/${actionPostId}`,
-            eyebrow: [creator.name, normalized.context, normalized.location].filter(Boolean).join(" · "),
+            ...(isVoiceOnlyPost ? { displayMode: "text_only" } : {}),
+            eyebrow: isVoiceOnlyPost ? "NOTE" : [creator.name, normalized.context, normalized.location].filter(Boolean).join(" · "),
             imageUrl: "",
-            kind: "post",
-            subtitle: "from the Wall · tap ›",
-            title: normalized.text.slice(0, 96) || "View post",
+            kind: isVoiceOnlyPost ? "voice_note" : "post",
+            ...(isVoiceOnlyPost ? {
+              originalTranscript: voiceCopyForStory.originalTranscript,
+              translationLabel: voiceCopyForStory.translationLabel,
+              translationText: voiceCopyForStory.translationText,
+            } : {}),
+            subtitle: isVoiceOnlyPost ? "from my Wall - tap >" : "from the Wall · tap ›",
+            title: isVoiceOnlyPost ? voiceTextForStory || normalized.text || "Voice note" : normalized.text.slice(0, 96) || "View post",
           },
         }}
         isOpen={storyCreatorOpen}

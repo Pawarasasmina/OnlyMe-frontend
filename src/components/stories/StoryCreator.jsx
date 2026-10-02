@@ -117,8 +117,12 @@ async function renderStoryFile(story) {
   if (story.sharedCard) {
     const card = story.sharedCard;
     const isQuestionReply = card.kind === "question_reply";
+    const isTextOnly = isTextOnlySharedCard(card);
+    const originalTranscript = String(card.originalTranscript || card.title || "").trim();
+    const translationText = String(card.translationText || "").trim();
+    const translationLabel = String(card.translationLabel || "Translation").trim();
     const cardWidth = isQuestionReply ? 700 : 650;
-    const cardHeight = isQuestionReply ? 430 : 560;
+    const cardHeight = isQuestionReply ? 430 : isTextOnly ? (translationText ? 500 : 360) : 560;
     const cardX = (finiteCardPosition(card.x, 50, 16, 84) / 100) * canvas.width - cardWidth / 2;
     const cardY = (finiteCardPosition(card.y, 50, 20, 78) / 100) * canvas.height - cardHeight / 2;
     context.fillStyle = isQuestionReply ? "rgba(17,22,31,.94)" : "#0d1015";
@@ -136,6 +140,26 @@ async function renderStoryFile(story) {
       context.fillStyle = "#FFFFFF";
       context.font = "850 45px system-ui";
       drawWrappedText(context, String(card.title || "").slice(0, 180), cardX + 42, cardY + 190, cardWidth - 84, 58, 3);
+    } else if (isTextOnly) {
+      context.fillStyle = "#9CCBFF";
+      context.font = "800 27px system-ui";
+      context.textAlign = "left";
+      context.textBaseline = "top";
+      context.fillText(String(card.eyebrow || "NOTE").slice(0, 42), cardX + 42, cardY + 42, cardWidth - 84);
+      context.fillStyle = "#FFFFFF";
+      context.font = "850 40px system-ui";
+      drawWrappedText(context, originalTranscript.slice(0, 190), cardX + 42, cardY + 96, cardWidth - 84, 54, translationText ? 2 : 3);
+      if (translationText) {
+        context.fillStyle = "rgba(255,255,255,.45)";
+        context.font = "800 22px system-ui";
+        context.fillText(`TRANSLATED${translationLabel ? ` TO ${translationLabel.toUpperCase()}` : ""}`.slice(0, 46), cardX + 42, cardY + 236, cardWidth - 84);
+        context.fillStyle = "#FFFFFF";
+        context.font = "750 34px system-ui";
+        drawWrappedText(context, translationText.slice(0, 150), cardX + 42, cardY + 276, cardWidth - 84, 46, 2);
+      }
+      context.fillStyle = "rgba(156,203,255,.9)";
+      context.font = "650 23px system-ui";
+      context.fillText(String(card.subtitle || "from my Wall - tap >").slice(0, 64), cardX + 42, cardY + cardHeight - 72, cardWidth - 84);
     } else {
       context.save();
       roundRect(context, cardX, cardY, cardWidth, cardHeight, 54);
@@ -280,6 +304,10 @@ function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines) {
 function finiteCardPosition(value, fallback, min, max) {
   const number = Number(value);
   return Math.max(min, Math.min(max, Number.isFinite(number) ? number : fallback));
+}
+
+function isTextOnlySharedCard(card = {}) {
+  return card.kind === "voice_note" || card.displayMode === "text_only";
 }
 
 function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose, onPublished, onSave }) {
@@ -814,13 +842,25 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
         {story.sharedCard ? (
           <article
-            className={`story-shared-card-preview ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""}`}
+            className={`story-shared-card-preview ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
             aria-label={`Shared ${story.sharedCard.kind || "post"}: ${story.sharedCard.title}`}
             onPointerDown={beginCardDrag}
             style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%` }}
           >
             {story.sharedCard.kind === "question_reply" ? (
               <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<small>{story.sharedCard.subtitle || "Question"}</small><strong>{story.sharedCard.title}</strong></div>
+            ) : isTextOnlySharedCard(story.sharedCard) ? (
+              <div>
+                {story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}
+                <strong>{story.sharedCard.originalTranscript || story.sharedCard.title}</strong>
+                {story.sharedCard.translationText ? (
+                  <span className="story-shared-card-translation">
+                    <b>{story.sharedCard.translationLabel ? `Translated to ${story.sharedCard.translationLabel}` : "Translation"}</b>
+                    <i>{story.sharedCard.translationText}</i>
+                  </span>
+                ) : null}
+                <small>{story.sharedCard.subtitle || "Tap to open"}</small>
+              </div>
             ) : (
               <>
                 {story.sharedCard.imageUrl ? <img alt="" src={story.sharedCard.imageUrl} /> : story.sharedCard.kind === "post" ? null : <div className="story-shared-card-fallback" />}
