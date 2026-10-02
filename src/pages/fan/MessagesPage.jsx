@@ -1711,7 +1711,7 @@ export default function MessagesPage() {
         <header className="flex items-center justify-end gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
           <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
-          <button aria-label="Open activity" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><ActivitySparkMark className="h-6 w-6" />{unreadActivityCount > 0 ? <span className="absolute -right-0.5 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black text-atseen-bg">{unreadActivityCount > 99 ? "99+" : unreadActivityCount}</span> : null}</button>
+          <button aria-label="Open activity" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><ActivitySparkMark className="h-6 w-6" />{unreadActivityCount > 0 ? <span className="activity-count-badge">{unreadActivityCount > 99 ? "99+" : unreadActivityCount}</span> : null}</button>
         </header>
         <div className="mx-3 flex items-center gap-3 sm:mx-5">
           <nav aria-label="Message inbox tabs" className="grid min-w-0 flex-1 grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1">

@@ -35663,3 +35663,31 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   min-height: 64px;
   border-bottom: 0;
 }
+
+/* Shared activity notification badge: pinned outside the icon at top-right. */
+.activity-count-badge,
+.profile-prototype-topbar i.activity-count-badge,
+.seen-activity-button span.activity-count-badge,
+.home-spark-button span.activity-count-badge {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  display: grid;
+  width: auto;
+  min-width: 15px;
+  height: 15px;
+  margin: 0;
+  place-items: center;
+  border: 2px solid #080b0f;
+  border-radius: 999px;
+  background: #8fc3ff;
+  color: #07101f;
+  padding: 0 3px;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  transform: none;
+  z-index: 2;
+}

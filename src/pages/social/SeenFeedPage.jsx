@@ -207,7 +207,7 @@ function SeenHeader({ activeTab, activityCount = 0, onTabChange, onActivity, onC
       <button aria-label="Search" onClick={onSearch} type="button"><FiSearch /></button>
       <button aria-label="Open activity" className="seen-activity-button" onClick={onActivity} type="button">
         <ActivitySparkMark className="seen-activity-spark-mark" />
-        {activityCount > 0 ? <span>{activityLabel}</span> : null}
+        {activityCount > 0 ? <span className="activity-count-badge">{activityLabel}</span> : null}
       </button>
     </div>
   </header>;

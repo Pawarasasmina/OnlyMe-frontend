@@ -255,7 +255,7 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
           )}
           <Link aria-label="Activity" className="is-activity" to="/activity">
             <ActivitySparkMark className="h-5 w-5" />
-            {unread ? <i>{unread > 99 ? "99+" : unread}</i> : null}
+            {unread ? <i className="activity-count-badge">{unread > 99 ? "99+" : unread}</i> : null}
           </Link>
         </div>
       </header>
