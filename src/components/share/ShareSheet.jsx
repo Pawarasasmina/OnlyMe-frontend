@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
 import { FiCheck, FiLink, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
-import StoryCreator from "../stories/StoryCreator";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
@@ -11,16 +11,6 @@ import { canonicalShareUrl } from "../../services/shareService";
 
 const quickEmojis = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDD25", "\uD83D\uDE0D", "\uD83D\uDC4F", "\uD83D\uDE2E", "\uD83D\uDE4F", "\uD83E\uDD1D"];
 const MAX_VISIBLE_DIRECT_CHATS = 8;
-
-function contentTypeLabel(type = "content") {
-  if (type === "world") return "WORLD";
-  if (type === "experience") return "EXPERIENCE";
-  if (type === "seen") return "SEEN";
-  if (type === "feed_post") return "POST";
-  if (type === "profile") return "PROFILE";
-  if (type === "story") return "STORY";
-  return "SHARED ON @SEEN";
-}
 
 function firstName(name = "") {
   return String(name || "").trim().split(/\s+/)[0] || "Atseen";
@@ -112,6 +102,8 @@ function useShareSheetPosition(isOpen) {
 function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   const inputRef = useRef(null);
   const panelRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -120,7 +112,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const [selected, setSelected] = useState(() => new Map());
   const [message, setMessage] = useState("");
   const [externalBusy, setExternalBusy] = useState("");
-  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
+  const [copyNotice, setCopyNotice] = useState("");
   const recipientsQuery = useShareRecipients({ enabled: isOpen, query, viewerId: user?.id || user?._id || "" });
   const sendMutation = useSendSharedContent();
   const canonicalUrl = useMemo(() => canonicalShareUrl(payload || {}), [payload]);
@@ -138,7 +130,6 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (event) => {
-      if (storyCreatorOpen) return;
       if (event.key === "Escape" && canClose) {
         if (query) setQuery("");
         else onClose();
@@ -165,7 +156,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
       window.removeEventListener("keydown", onKeyDown);
       if (previousFocusRef.current instanceof HTMLElement) previousFocusRef.current.focus();
     };
-  }, [canClose, isOpen, onClose, query, storyCreatorOpen]);
+  }, [canClose, isOpen, onClose, query]);
 
   useEffect(() => {
     if (isOpen) return;
@@ -173,8 +164,14 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     setSelected(new Map());
     setMessage("");
     setExternalBusy("");
-    setStoryCreatorOpen(false);
+    setCopyNotice("");
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!copyNotice) return undefined;
+    const timer = window.setTimeout(() => setCopyNotice(""), 2200);
+    return () => window.clearTimeout(timer);
+  }, [copyNotice]);
 
   const close = () => {
     if (canClose) onClose();
@@ -208,15 +205,41 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     setExternalBusy("copy");
     try {
       await copyText(canonicalUrl);
+      setCopyNotice("Link copied");
       showToast(toast);
     } catch {
+      setCopyNotice("Couldn't copy link");
       showToast("Couldn't copy the link");
     } finally {
       setExternalBusy("");
     }
   };
 
-  const shareToStory = () => setStoryCreatorOpen(true);
+  const shareToStory = async () => {
+    if (payload?.contentType === "seen" && payload?.contentId) {
+      close();
+      navigate(`/seen/${encodeURIComponent(payload.contentId)}/share/story`, { state: { fromShareSheet: true } });
+      return;
+    }
+    close();
+    navigate("/create", {
+      state: {
+        openStoryComposer: true,
+        returnTo: `${location.pathname}${location.search}${location.hash}`,
+        storyDraft: payload?.storyDraft || {
+          caption: payload?.previewText || payload?.textPreview || payload?.title || "",
+          imageUrl: payload?.imageUrl || "",
+          sharedCard: {
+            destinationRoute: payload?.route || canonicalUrl,
+            imageUrl: payload?.imageUrl || "",
+            kind: payload?.contentType || "content",
+            subtitle: payload?.previewText || payload?.textPreview || "Tap to open",
+            title: payload?.title || "Shared on @seen",
+          },
+        },
+      },
+    });
+  };
 
   const shareWhatsApp = () => {
     const title = payload?.title || payload?.textPreview || "this";
@@ -226,7 +249,9 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   };
 
   const shareSnapchat = () => {
-    copyLink("Link copied - paste it into Snapchat");
+    const shareUrl = `https://www.snapchat.com/share?link=${encodeURIComponent(canonicalUrl)}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+    showToast("Opening Snapchat...");
   };
 
   const nativeShare = async () => {
@@ -283,7 +308,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         <header className="share-sheet-header">
           <div className="min-w-0">
             <h2 id="share-sheet-title">Send to</h2>
-            <p>{payload.textPreview || payload.previewText || payload.title || "Share this on @seen"}</p>
+            <p>{isSeenVariant ? payload.title : payload.textPreview || payload.previewText || payload.title || "Share this on @seen"}</p>
           </div>
           <button aria-label="Close share sheet" className="share-sheet-close" disabled={!canClose} onClick={close} type="button">
             <FiX aria-hidden="true" />
@@ -341,6 +366,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
           </section>
         ) : (
           <section className="share-external-row" aria-label="External share actions">
+            {copyNotice ? <p className="share-copy-notice" role="status">{copyNotice}</p> : null}
             <ExternalAction Icon={FiPlusCircle} label="Story" onClick={shareToStory} />
             <ExternalAction Icon={externalBusy === "copy" ? FiCheck : FiLink} label="Copy link" onClick={() => copyLink()} />
             <ExternalAction Icon={FaWhatsapp} label="WhatsApp" onClick={shareWhatsApp} />
@@ -349,25 +375,6 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
           </section>
         )}
       </div>
-      <StoryCreator
-        initialContent={{
-          sharedCard: {
-            destinationRoute: payload.destinationRoute || payload.route || canonicalUrl,
-            eyebrow: contentTypeLabel(payload.contentType),
-            imageUrl: payload.imageUrl || "",
-            kind: payload.contentType || "content",
-            subtitle: payload.previewText || payload.textPreview || "Tap to open",
-            title: payload.title || payload.author?.name || "Shared content",
-          },
-        }}
-        isOpen={storyCreatorOpen}
-        key={`${payload.contentType || "content"}-${payload.contentId || canonicalUrl}`}
-        onClose={() => setStoryCreatorOpen(false)}
-        onPublished={() => {
-          setStoryCreatorOpen(false);
-          close();
-        }}
-      />
     </div>
   );
 }

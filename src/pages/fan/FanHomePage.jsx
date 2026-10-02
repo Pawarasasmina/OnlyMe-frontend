@@ -21,6 +21,13 @@ const HOME_FILTERS = [
   { key: "events", label: "Events" },
   { key: "things_to_do", label: "Things to do" },
   { key: "food", label: "Food" },
+  { key: "travel", label: "Travel" },
+  { key: "business", label: "Business" },
+  { key: "fitness", label: "Fitness" },
+  { key: "beauty", label: "Beauty" },
+  { key: "family", label: "Family" },
+  { key: "shopping", label: "Shopping" },
+  { key: "advice", label: "Advice" },
 ];
 
 function uniqueList(items = []) {
