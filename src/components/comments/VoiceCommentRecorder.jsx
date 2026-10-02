@@ -9,6 +9,7 @@ export default function VoiceCommentRecorder({ busy = false, onClose, onSubmit }
   const recorder = useVoiceRecorder({ maxDurationSeconds: MAX_SECONDS });
   const [transcript, setTranscript] = useState("");
   const [transcribing, setTranscribing] = useState(false);
+  const [sheetPosition, setSheetPosition] = useState({});
   const recording = recorder.status === "recording" || recorder.status === "requesting-permission";
   const canSubmit = Boolean(recorder.audioBlob) && !busy && !recording;
   const { startRecording } = recorder;
@@ -16,6 +17,26 @@ export default function VoiceCommentRecorder({ busy = false, onClose, onSubmit }
   useEffect(() => {
     startRecording();
   }, [startRecording]);
+
+  useEffect(() => {
+    const centerColumn = document.querySelector(".social-center-scroll");
+    const updatePosition = () => {
+      if (!centerColumn) return setSheetPosition({});
+      const bounds = centerColumn.getBoundingClientRect();
+      setSheetPosition({
+        "--voice-comment-center-x": `${bounds.left + (bounds.width / 2)}px`,
+        "--voice-comment-column-width": `${bounds.width}px`,
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" || !centerColumn ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (!recorder.audioBlob) return undefined;
@@ -48,7 +69,7 @@ export default function VoiceCommentRecorder({ busy = false, onClose, onSubmit }
   };
 
   return (
-    <div aria-modal="true" className="voice-comment-layer" role="dialog">
+    <div aria-modal="true" className="voice-comment-layer" role="dialog" style={sheetPosition}>
       <button aria-label="Cancel voice comment" className="voice-comment-dim" onClick={close} type="button" />
       <section className="voice-comment-sheet">
         <i aria-hidden="true" className="voice-comment-grab" />
