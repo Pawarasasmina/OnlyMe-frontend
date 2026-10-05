@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiBarChart2, FiBell, FiChevronRight, FiCreditCard, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiLogOut, FiMessageCircle, FiShield, FiTrash2, FiUserCheck, FiUserX, FiUsers, FiVolumeX } from "react-icons/fi";
@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const settingsMainRef = useRef(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [creatorApplyOpen, setCreatorApplyOpen] = useState(false);
@@ -78,7 +79,7 @@ export default function SettingsPage() {
     }
   };
 
-  return <main className="mx-auto w-full max-w-xl px-4 pb-12 pt-5">
+  return <main className="mx-auto w-full max-w-xl px-4 pb-12 pt-5" ref={settingsMainRef}>
     <header className="flex items-center gap-3"><button aria-label="Back to profile" className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.07] text-xl" onClick={() => navigate("/profile")} type="button"><FiArrowLeft /></button><div><h1 className="text-2xl font-black">Settings</h1><p className="mt-0.5 text-xs text-atseen-muted">Account, preferences and privacy</p></div></header>
 
     <SettingsGroup title="Account">
@@ -109,8 +110,8 @@ export default function SettingsPage() {
     <div className="mt-7 grid gap-2"><button className="flex w-full items-center justify-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 py-3.5 text-sm font-bold disabled:opacity-50" disabled={busy} onClick={signOut} type="button"><FiLogOut /> Log out</button><button className="flex w-full items-center justify-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 py-3.5 text-sm font-bold text-atseen-danger disabled:opacity-50" disabled={busy} onClick={() => setDeleteOpen(true)} type="button"><FiTrash2 /> Delete account</button><small className="mt-2 text-center text-[10px] text-atseen-dim">@seen by Atseen</small></div>
 
     {deleteOpen ? <div className="edit-profile-delete-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setDeleteOpen(false); }}><section aria-labelledby="settings-delete-title" aria-modal="true" className="edit-profile-delete-sheet" role="dialog"><span className="edit-profile-delete-handle" /><FiTrash2 className="edit-profile-delete-icon" /><h2 id="settings-delete-title">Delete account?</h2><p>Your profile and content will be disabled immediately. Your deletion request will be recorded for permanent removal.</p><button className="edit-profile-delete-confirm" disabled={busy} onClick={deleteAccount} type="button">{busy ? "Requesting deletion..." : "Delete my account"}</button><button className="edit-profile-delete-cancel" disabled={busy} onClick={() => setDeleteOpen(false)} type="button">Keep it</button></section></div> : null}
-    <NotificationSettingsSheet isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
-    <PrivacyQuickSettingsSheet isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
+    <NotificationSettingsSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+    <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
     {verifiedApplyOpen ? <><button aria-label="Close Verified Creator" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerifiedApplyOpen(false)} type="button" /><VerifiedCreatorPage embedded onClose={() => setVerifiedApplyOpen(false)} /></> : null}
     {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">Supporters {privacyQuery.data?.privacySettings?.showFollowers ? "shown" : "hidden"}</div> : null}

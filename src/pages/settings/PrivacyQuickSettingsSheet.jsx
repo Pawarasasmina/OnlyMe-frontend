@@ -24,9 +24,10 @@ function AccountAvatar({ account }) {
   return <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-black text-atseen-blue">{(account.displayName || account.username || "?").slice(0, 2).toUpperCase()}</span>;
 }
 
-export default function PrivacyQuickSettingsSheet({ isOpen, onClose, type }) {
+export default function PrivacyQuickSettingsSheet({ anchorRef, isOpen, onClose, type }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [anchorBounds, setAnchorBounds] = useState(null);
   const isAccounts = type === "blocked" || type === "muted";
   const queryKey = type === "blocked" ? ["settings", "blocked-accounts"] : ["settings", "muted-accounts"];
   const accountsQuery = useQuery({
@@ -47,6 +48,21 @@ export default function PrivacyQuickSettingsSheet({ isOpen, onClose, type }) {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [isOpen, onClose, type]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const syncBounds = () => {
+      const rect = anchorRef?.current?.getBoundingClientRect();
+      if (!rect) {
+        setAnchorBounds(null);
+        return;
+      }
+      setAnchorBounds({ left: rect.left, width: rect.width });
+    };
+    syncBounds();
+    window.addEventListener("resize", syncBounds);
+    return () => window.removeEventListener("resize", syncBounds);
+  }, [anchorRef, isOpen]);
 
   const accountMutation = useMutation({
     mutationFn: (account) => type === "blocked" ? profileService.unblockAccount(account.id) : profileService.unmuteAccount(account.id),
@@ -79,11 +95,20 @@ export default function PrivacyQuickSettingsSheet({ isOpen, onClose, type }) {
   const accounts = accountsQuery.data || [];
   const allowed = Boolean(privacyQuery.data?.privacySettings?.allowDirectMessages);
 
-  return <div aria-labelledby="privacy-quick-sheet-title" aria-modal="true" className="fixed inset-0 z-[195] flex items-end justify-center" role="dialog">
-    <button aria-label="Close privacy settings" className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" onClick={onClose} type="button" />
-    <section className="relative z-10 max-h-[calc(100dvh-48px)] w-[min(460px,calc(100vw-24px))] overflow-y-auto rounded-t-[24px] border border-b-0 border-white/10 bg-[#1C212B] px-5 pb-8 pt-2 shadow-[0_-24px_80px_rgba(0,0,0,.65)]">
-      <span aria-hidden="true" className="mx-auto mb-5 block h-1 w-9 rounded-full bg-white/30" />
-      <h2 className="text-[22px] font-black" id="privacy-quick-sheet-title">{type === "messages" ? "Who can message me" : copy.title}</h2>
+  return <div
+    aria-labelledby="privacy-quick-sheet-title"
+    aria-modal="true"
+    className="profile-notification-layer settings-notification-layer"
+    role="dialog"
+    style={anchorBounds ? {
+      "--settings-notification-left": `${anchorBounds.left}px`,
+      "--settings-notification-width": `${anchorBounds.width}px`,
+    } : undefined}
+  >
+    <button aria-label="Close privacy settings" className="profile-notification-dim" onClick={onClose} type="button" />
+    <section className="profile-notification-sheet settings-notification-sheet">
+      <span aria-hidden="true" className="profile-notification-grab" />
+      <h2 className="text-[26px] font-black tracking-[-0.02em]" id="privacy-quick-sheet-title">{type === "messages" ? "Who can message me" : copy.title}</h2>
       <p className="mt-2 text-xs leading-5 text-white/45">{type === "messages" ? "Choose whether other people can start a direct conversation with you." : copy.description}</p>
 
       {isAccounts && accountsQuery.isLoading ? <div className="mt-6 space-y-3">{Array.from({ length: 3 }, (_, index) => <div className="h-16 animate-pulse rounded-xl bg-white/5" key={index} />)}</div> : null}

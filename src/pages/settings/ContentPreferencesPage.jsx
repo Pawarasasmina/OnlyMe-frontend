@@ -72,10 +72,10 @@ export default function ContentPreferencesPage() {
     }
   };
 
-  if (onboarding.isLoading) return <div className="mx-auto max-w-xl"><Link className="inline-flex items-center gap-2 text-sm text-atseen-muted" to="/settings"><FiArrowLeft /> Settings</Link><div className="mt-6 h-96 animate-pulse rounded-3xl bg-white/5" /></div>;
-  if (onboarding.isError) return <div className="mx-auto max-w-xl"><Link className="inline-flex items-center gap-2 text-sm text-atseen-muted" to="/settings"><FiArrowLeft /> Settings</Link><p className="mt-6 rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load content preferences.</p></div>;
+  if (onboarding.isLoading) return <div className="mx-auto w-full max-w-xl px-6 min-[881px]:px-[26px]"><Link className="inline-flex items-center gap-2 text-sm text-atseen-muted" to="/settings"><FiArrowLeft /> Settings</Link><div className="mt-6 h-96 animate-pulse rounded-3xl bg-white/5" /></div>;
+  if (onboarding.isError) return <div className="mx-auto w-full max-w-xl px-6 min-[881px]:px-[26px]"><Link className="inline-flex items-center gap-2 text-sm text-atseen-muted" to="/settings"><FiArrowLeft /> Settings</Link><p className="mt-6 rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load content preferences.</p></div>;
 
-  return <main className="mx-auto w-full max-w-xl pb-16">
+  return <main className="mx-auto w-full max-w-xl px-6 pb-16 min-[881px]:px-[26px]">
     <header className="flex items-center gap-3"><Link aria-label="Back to settings" className="grid h-10 w-10 place-items-center rounded-full bg-white/[0.07]" to="/settings"><FiArrowLeft /></Link><h1 className="text-xl font-black">Content preferences</h1></header>
 
     <section className="mt-8"><h2 className="text-[10px] font-black uppercase tracking-[0.18em] text-atseen-dim">What is @seen for you</h2><p className="mt-2 text-sm leading-5 text-atseen-muted">Pick up to two — they decide what leads your Seen, Discover and Wall.</p><div className="mt-3 grid gap-2">{PURPOSES.map(([key, title, subtitle]) => { const active = purposes.includes(key); return <button className={`rounded-2xl border p-4 text-left transition ${active ? "border-atseen-blue/60 bg-atseen-blue/10" : "border-atseen-line bg-atseen-surface hover:border-atseen-blue/30"}`} key={key} onClick={() => togglePurpose(key)} type="button"><b className={active ? "text-atseen-blue" : "text-white"}>{title}</b><small className="mt-1 block text-[11px] text-atseen-dim">{subtitle}</small></button>; })}</div></section>

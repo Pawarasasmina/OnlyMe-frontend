@@ -510,7 +510,7 @@
 
 .profile-notification-layer { position: fixed; inset: 0; z-index: 190; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
 .profile-notification-dim { position: absolute; inset: 0; border: 0; background: rgba(3,5,9,.7); backdrop-filter: blur(2px); pointer-events: auto; }
-.profile-notification-sheet { position: relative; width: min(100%,520px); max-height: min(82dvh,680px); overflow-y: auto; border: 1px solid rgba(255,255,255,.09); border-bottom: 0; border-radius: 22px 22px 0 0; background: #1C212B; padding: 9px 20px 28px; box-shadow: 0 -24px 76px rgba(0,0,0,.62); pointer-events: auto; animation: seenCreateSheetIn .28s cubic-bezier(.2,.8,.2,1); }
+.profile-notification-sheet { position: relative; width: min(100%,520px); max-height: min(82dvh,680px); overflow-y: auto; border: 1px solid rgba(255,255,255,.09); border-bottom: 0; border-radius: 22px 22px 0 0; background: #0C0F14; padding: 9px 20px 28px; box-shadow: 0 -24px 76px rgba(0,0,0,.62); pointer-events: auto; animation: seenCreateSheetIn .28s cubic-bezier(.2,.8,.2,1); }
 .profile-notification-grab { display: block; width: 34px; height: 4px; margin: 1px auto 17px; border-radius: 999px; background: rgba(255,255,255,.28); }
 .profile-notification-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .profile-notification-heading h2 { color: #fff; font-size: 21px; font-weight: 900; }
@@ -530,8 +530,11 @@
 .profile-notification-note { margin-top: 14px; color: rgba(255,255,255,.34); font-size: 9.5px; text-align: center; }
 
 @media (min-width: 1020px) {
-  .profile-notification-layer { left: 50%; width: min(700px,calc(100vw - 540px)); transform: translateX(-50%); }
+  .profile-notification-layer { left: 50%; right: auto; width: min(548px,calc(100vw - 680px)); transform: translateX(-50%); }
+  .profile-notification-sheet { width: 100%; }
   .profile-notification-dim { width: 100%; }
+  .settings-notification-layer { left: var(--settings-notification-left, 50%) !important; right: auto !important; width: var(--settings-notification-width, min(520px,calc(100vw - 680px))) !important; transform: none !important; }
+  .settings-notification-sheet { width: 100% !important; max-width: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
