@@ -9,6 +9,11 @@ import SettingsNav from "./SettingsNav";
 const labels = {
   email: "Email notifications",
   inApp: "In-app notifications",
+  comments: "Comments",
+  reactions: "Reactions",
+  followers: "New followers",
+  saves: "Saves",
+  reposts: "Reposts",
   marketing: "Product announcements",
   security: "Security alerts",
   messages: "Messages",
@@ -50,7 +55,7 @@ function NotificationSettingsPage() {
   if (query.isError) return <div className="space-y-6"><SettingsNav /><p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load notification settings.</p></div>;
 
   const role = query.data?.role || "fan";
-  const keys = role === "admin" ? ["email", "inApp", "security"] : ["email", "inApp", "messages", "directAccess", "marketing"];
+  const keys = role === "admin" ? ["email", "comments", "reactions", "security"] : ["email", "comments", "reactions", "followers", "saves", "reposts", "messages", "directAccess", "marketing"];
 
   const update = ({ target }) => {
     setDirty(true);
@@ -61,10 +66,11 @@ function NotificationSettingsPage() {
   const submit = (event) => {
     event.preventDefault();
     mutation.mutate({
-      notificationPreferences: {
-        ...preferences,
-        ...(role === "admin" ? { security: true } : {}),
-      },
+        notificationPreferences: {
+          ...preferences,
+          inApp: ["comments", "reactions", "followers", "saves", "reposts"].some((key) => preferences[key] !== false),
+          ...(role === "admin" ? { security: true } : {}),
+        },
     });
   };
 
