@@ -136,7 +136,7 @@ export function useReactToFeedPost() {
 export function useCreateFeedPostComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ postId, text }) => postService.createComment(postId, text),
+    mutationFn: ({ postId, text, voice }) => postService.createComment(postId, text, voice),
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);

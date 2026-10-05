@@ -1708,8 +1708,8 @@ export default function MessagesPage() {
         </div>
       </section></div> : null}
       <aside className={`${selected ? "hidden" : "flex"} h-full min-h-0 w-full flex-col`}>
-        <header className="flex items-center justify-end gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
-          <p className="mr-1 max-w-[180px] truncate text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
+        <header className="flex items-center gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
+          <p className="mr-auto min-w-0 flex-1 truncate text-left text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label="New message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
           <button aria-label="Open activity" className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><ActivitySparkMark className="h-6 w-6" />{unreadActivityCount > 0 ? <span className="activity-count-badge">{unreadActivityCount > 99 ? "99+" : unreadActivityCount}</span> : null}</button>
         </header>

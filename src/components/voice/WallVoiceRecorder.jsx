@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FiGlobe, FiMic, FiPause, FiPlay, FiRefreshCw, FiSend, FiSquare, FiTrash2, FiX } from "react-icons/fi";
+import { FiGlobe, FiMic, FiRefreshCw, FiSend, FiSquare, FiTrash2, FiX } from "react-icons/fi";
 import FanModal from "../fanWeb/shared/FanModal";
 import VoiceMessageBubble from "../messaging/VoiceMessageBubble";
 import { formatVoiceTime, useVoiceRecorder } from "../../hooks/useVoiceRecorder";
@@ -271,14 +271,17 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
 
   return (
     <FanModal
-      className="max-w-md rounded-b-none sm:rounded-[22px]"
+      className="wall-voice-recorder-sheet max-w-md"
+      hideHeader
       isOpen={isOpen}
       onClose={close}
-      overlayClassName="wall-voice-recorder-overlay items-end p-0 sm:items-center sm:p-4"
+      overlayClassName="wall-voice-recorder-overlay"
+      portal
       title={title}
     >
+      <span aria-hidden="true" className="wall-voice-recorder-handle" />
       {recorder.status === "idle" || recorder.status === "error" ? (
-        <div className="text-center">
+        <div className="wall-voice-recorder-idle text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-atseen-blue/25 bg-atseen-blue/10 text-2xl text-atseen-blue">
             <FiMic aria-hidden="true" />
           </div>
@@ -297,45 +300,22 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
       ) : null}
 
       {showCapture ? (
-        <div>
-          <div className="flex items-center gap-3 rounded-2xl border border-atseen-line bg-white/[0.025] p-3">
-            <span className={`h-3 w-3 rounded-full ${recordingActive ? "animate-pulse bg-atseen-danger" : "bg-atseen-warning"}`} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-black text-atseen-text">{recordingPaused ? "Paused" : recordingBusy ? "Preparing" : "Recording"}</p>
-              <p aria-live="polite" className="font-mono text-xs tabular-nums text-atseen-muted">{formatVoiceTime(recorder.durationSeconds)}</p>
-            </div>
-            <button aria-label="Cancel recording" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={close} type="button">
-              <FiX aria-hidden="true" />
-            </button>
-          </div>
-          <div className="mt-4 flex items-center gap-3">
+        <div className="wall-voice-capture">
+          <button aria-label="Stop recording" className={`wall-voice-stop-orb ${recordingActive ? "is-recording" : ""}`} disabled={recordingBusy} onClick={recorder.stopRecording} type="button">
+            <FiSquare aria-hidden="true" />
+          </button>
+          <h2>Say what you see</h2>
+          <p aria-live="polite">{recordingBusy ? "Preparing your microphone..." : recordingPaused ? "Recording paused" : `${formatVoiceTime(recorder.durationSeconds)} of 00:30 — we'll turn it into text`}</p>
+          <div className="wall-voice-capture-wave">
             <WaveBars active={recordingActive} levels={recorder.levels} />
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <button
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-atseen-line text-sm font-bold text-atseen-text disabled:opacity-50"
-              disabled={recordingBusy}
-              onClick={recordingPaused ? recorder.resumeRecording : recorder.pauseRecording}
-              type="button"
-            >
-              {recordingPaused ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}
-              {recordingPaused ? "Resume" : "Pause"}
-            </button>
-            <button
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-atseen-blue text-sm font-black text-atseen-bg disabled:opacity-50"
-              disabled={recordingBusy}
-              onClick={recorder.stopRecording}
-              type="button"
-            >
-              <FiSquare aria-hidden="true" />
-              Stop
-            </button>
-          </div>
+          <button className="wall-voice-stop-action" disabled={recordingBusy} onClick={recorder.stopRecording} type="button">Stop</button>
         </div>
       ) : null}
 
       {recorder.status === "preview" ? (
         <div>
+          <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-lg font-bold text-atseen-text">{title}</h2><button aria-label="Close voice recorder" className="grid h-9 w-9 place-items-center rounded-full border border-atseen-line text-atseen-muted" onClick={close} type="button"><FiX /></button></div>
           <div className="rounded-2xl border border-atseen-line bg-white/[0.025] p-3">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-black text-atseen-text">Voice note - {formatVoiceTime(recorder.durationSeconds)}</p>

@@ -4207,6 +4207,104 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   background: rgba(0,0,0,.58) !important;
   -webkit-backdrop-filter: blur(1px) !important;
   backdrop-filter: blur(1px) !important;
+  align-items: flex-end !important;
+  padding: 0 !important;
+}
+
+.wall-voice-recorder-sheet {
+  width: min(100%,548px) !important;
+  max-width: 548px !important;
+  max-height: min(88dvh,720px) !important;
+  border-right: 1px solid rgba(255,255,255,.08) !important;
+  border-bottom: 0 !important;
+  border-left: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 18px 18px 0 0 !important;
+  background: #0c0f14 !important;
+  padding: 8px 16px max(32px,env(safe-area-inset-bottom)) !important;
+  box-shadow: 0 -26px 80px rgba(0,0,0,.58) !important;
+}
+
+.wall-voice-recorder-handle {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.3);
+}
+
+.wall-voice-recorder-idle {
+  padding: 4px 0 0;
+}
+
+.wall-voice-capture {
+  display: grid;
+  justify-items: center;
+  padding: 0 0 0;
+  text-align: center;
+}
+
+.wall-voice-stop-orb {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 1px solid rgba(224,104,98,.65);
+  border-radius: 50%;
+  background: rgba(126,52,52,.3);
+  color: #c66f68;
+  font-size: 13px;
+}
+
+.wall-voice-stop-orb.is-recording {
+  animation: voiceCommentPulse 1.1s ease-in-out infinite;
+}
+
+.wall-voice-capture h2 {
+  margin-top: 14px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.wall-voice-capture > p {
+  margin-top: 4px;
+  color: rgba(255,255,255,.58);
+  font-size: 11px;
+}
+
+.wall-voice-capture-wave {
+  width: 132px;
+  margin-top: 7px;
+}
+
+.wall-voice-capture-wave > div {
+  height: 34px;
+  background: transparent;
+  padding: 0;
+  gap: 2px;
+}
+
+.wall-voice-capture-wave > div span {
+  width: 2px;
+}
+
+.wall-voice-stop-action {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 8px;
+  border-radius: 11px;
+  background: #9ccbff;
+  color: #08101a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.wall-voice-stop-action:disabled,
+.wall-voice-stop-orb:disabled {
+  cursor: wait;
+  opacity: .55;
 }
 
 .home-post-more-sheet {
@@ -10101,6 +10199,10 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   margin-bottom: 22px;
 }
 
+.home-mobile-brand {
+  display: none;
+}
+
 .home-location-pill {
   min-height: 30px;
   gap: 6px;
@@ -12734,11 +12836,23 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
   .home-prototype-main {
     width: 100%;
-    padding: 14px 14px 24px;
+    padding: 8px 14px 24px;
   }
 
   .home-prototype-top {
-    margin-bottom: 18px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .home-header-primary {
+    display: grid;
+    gap: 5px;
+  }
+
+  .home-mobile-brand {
+    display: inline-flex;
+    width: max-content;
+    min-height: 20px;
   }
 
   .home-story-strip,
@@ -12951,6 +13065,11 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 }
 
 @media (max-width: 767px) {
+  .social-app-shell:has(.messages-page) .fan-mobile-nav {
+    border-top-color: rgba(255,255,255,.05);
+    background: #0a0c0f;
+  }
+
   .social-app-shell .social-center-scroll:has(.messages-page) {
     width: 100vw !important;
     min-width: 0 !important;
@@ -19885,6 +20004,80 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-weight: 750;
 }
 
+.wall-comments-panel {
+  margin-top: 0;
+  border-top: 0;
+  padding: 4px 0 8px;
+}
+
+.wall-comments-panel .seen-comments-list {
+  gap: 12px;
+  max-height: 220px;
+  margin: 0;
+  padding: 0 2px 12px;
+}
+
+.wall-comments-panel .seen-comment-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.wall-comments-panel .seen-comments-list p {
+  color: rgba(255,255,255,.84);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.wall-comments-panel form {
+  align-items: center;
+  gap: 7px;
+}
+
+.wall-comments-panel input {
+  width: 100%;
+  height: 36px;
+  padding: 8px 13px;
+  font-size: 11px;
+}
+
+.wall-comments-panel form .seen-comment-post {
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--seen-blue, #9ccbff);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.wall-comments-panel form .seen-comment-mic {
+  display: grid;
+  width: 28px;
+  height: 32px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  color: rgba(255,255,255,.42);
+}
+
+.wall-comments-panel form .seen-comment-mic svg {
+  width: 13px;
+  height: 13px;
+}
+
+.wall-comments-panel .seen-comment-copy > .voice-message-bubble,
+.seen-comments-panel .seen-comment-copy > .voice-message-bubble {
+  margin-top: 6px;
+  max-width: 260px;
+}
+
+.wall-comments-panel form .seen-comment-post:disabled {
+  color: rgba(156,203,255,.38);
+  opacity: 1;
+}
+
 .seen-empty-state,
 .seen-feed-error,
 .seen-end-state {
@@ -23792,7 +23985,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   height: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 881px) {
   .share-sheet-overlay .share-sheet-panel,
   .share-sheet-overlay.is-seen-share .share-sheet-panel {
     position: fixed;
@@ -34583,7 +34776,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-size: 10px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 881px) {
   .share-sheet-overlay .share-sheet-panel,
   .share-sheet-overlay.is-seen-share .share-sheet-panel {
     width: var(--share-sheet-column-width, 548px) !important;
@@ -35785,6 +35978,88 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-size: 12px;
 }
 
+@media (max-width: 880px) {
+  .share-sheet-overlay,
+  .share-sheet-overlay.is-seen-share {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .share-sheet-overlay .share-sheet-panel,
+  .share-sheet-overlay.is-seen-share .share-sheet-panel {
+    position: relative !important;
+    right: auto !important;
+    bottom: auto;
+    left: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: min(82dvh, 570px);
+    margin: 0 !important;
+    border-radius: 18px 18px 0 0;
+    padding: 14px 16px max(30px, env(safe-area-inset-bottom));
+    transform: none !important;
+  }
+
+  .share-sheet-overlay .share-sheet-handle,
+  .share-sheet-overlay.is-seen-share .share-sheet-handle {
+    margin-bottom: 16px;
+  }
+
+  .share-sheet-overlay .share-sheet-header h2,
+  .share-sheet-overlay.is-seen-share .share-sheet-header h2 {
+    font-size: 18px;
+  }
+
+  .share-sheet-overlay .share-sheet-header p,
+  .share-sheet-overlay.is-seen-share .share-sheet-header p {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .share-sheet-overlay .share-search,
+  .share-sheet-overlay.is-seen-share .share-search {
+    height: 42px;
+    margin-top: 12px;
+  }
+
+  .share-sheet-overlay .share-recipient-grid,
+  .share-sheet-overlay.is-seen-share .share-recipient-grid {
+    gap: 13px 8px;
+    margin-top: 14px;
+  }
+
+  .share-sheet-overlay .share-recipient-ring,
+  .share-sheet-overlay.is-seen-share .share-recipient-ring {
+    width: 54px;
+    height: 54px;
+  }
+
+  .share-sheet-overlay .share-recipient-ring > span:first-child,
+  .share-sheet-overlay.is-seen-share .share-recipient-ring > span:first-child {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .share-sheet-overlay .share-external-row,
+  .share-sheet-overlay.is-seen-share .share-external-row {
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .share-sheet-overlay .share-external-action,
+  .share-sheet-overlay.is-seen-share .share-external-action {
+    width: 52px;
+  }
+
+  .share-sheet-overlay .share-external-action > span,
+  .share-sheet-overlay.is-seen-share .share-external-action > span {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+}
+
 /* Shared phone layout: the center column becomes the viewport and both desktop
    rails stay out of the layout. Keep this last so page-specific desktop rules
    cannot reintroduce fixed rail or canvas widths on smaller screens. */
@@ -35975,5 +36250,92 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 @media (min-width: 1240px) {
   .social-app-shell .social-app-frame > .social-shared-right-rail {
     display: grid !important;
+  }
+}
+
+/* Share sheet prototype sizing at every viewport. Positioning remains responsive,
+   while the content proportions and compact action row stay consistent. */
+.share-sheet-overlay .share-sheet-header h2,
+.share-sheet-overlay.is-seen-share .share-sheet-header h2 {
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.share-sheet-overlay .share-sheet-header p,
+.share-sheet-overlay.is-seen-share .share-sheet-header p {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.share-sheet-overlay .share-search,
+.share-sheet-overlay.is-seen-share .share-search {
+  height: 42px;
+  margin-top: 12px;
+}
+
+.share-sheet-overlay .share-recipient-grid,
+.share-sheet-overlay.is-seen-share .share-recipient-grid {
+  gap: 13px 8px;
+  margin-top: 14px;
+}
+
+.share-sheet-overlay .share-recipient-ring,
+.share-sheet-overlay.is-seen-share .share-recipient-ring {
+  width: 54px;
+  height: 54px;
+}
+
+.share-sheet-overlay .share-recipient-ring > span:first-child,
+.share-sheet-overlay.is-seen-share .share-recipient-ring > span:first-child {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.share-sheet-overlay .share-external-row,
+.share-sheet-overlay.is-seen-share .share-external-row {
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.share-sheet-overlay .share-external-action,
+.share-sheet-overlay.is-seen-share .share-external-action {
+  width: 52px;
+}
+
+.share-sheet-overlay .share-external-action > span,
+.share-sheet-overlay.is-seen-share .share-external-action > span {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+
+.share-sheet-overlay .share-external-action small,
+.share-sheet-overlay.is-seen-share .share-external-action small {
+  margin-top: 7px;
+  font-size: 9px;
+}
+
+/* Expanded Discover cards are true edge-to-edge mobile stories. Keeping this
+   fixed avoids inheriting the Discover grid's normal page gutters. */
+@media (max-width: 880px) {
+  .social-app-shell .discover-rec-story {
+    position: fixed;
+    top: 0;
+    right: auto;
+    bottom: 0;
+    left: 50%;
+    z-index: 35;
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    min-height: 100dvh;
+    margin: 0;
+    transform: translateX(-50%);
+  }
+
+  .social-app-shell:has(.discover-rec-story) .fan-mobile-nav {
+    display: none;
   }
 }

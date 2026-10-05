@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -10,6 +10,8 @@ import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
+import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
+import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
@@ -499,6 +501,14 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
   const comments = engagementQuery.data?.comments || [];
   const [replyTo, setReplyTo] = useState(null);
   const [reactionTarget, setReactionTarget] = useState(null);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  const voiceCommentMutation = useMutation({
+    mutationFn: (recording) => publicationService.voiceCommentOnSeen(item.id, { audioBlob: recording.audioBlob, text: recording.text, waveform: recording.waveform }),
+    onSuccess: (response) => {
+      onEngagementChange(response.data.data.engagement);
+      setVoiceCommentOpen(false);
+    },
+  });
   const commentReactionMutation = useMutation({
     mutationFn: ({ comment, reaction }) => (reaction
       ? publicationService.reactToSeenComment(item.id, comment.id, reaction)
@@ -522,6 +532,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
       <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
       <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link>{comment.text}</p>
+        {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
         <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}</span>
       </div>
     </article>;
@@ -536,9 +547,11 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
       <FanAvatar alt="" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
       <label>
         <input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => onChange(event.target.value)} placeholder="Add a comment..." value={value} />
+        <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={mutation.isPending || voiceCommentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
       </label>
       <button className="seen-comment-post" disabled={!value.trim() || mutation.isPending} type="submit">Post</button>
     </form>
+    {voiceCommentOpen ? <VoiceCommentRecorder busy={voiceCommentMutation.isPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={(recording) => voiceCommentMutation.mutate(recording)} /> : null}
     {reactionTarget ? <ReactionPicker item={{ title: `Comment by ${reactionTarget.author?.name || "Fan"}`, engagement: { reactionBreakdown: reactionTarget.reactionBreakdown || {} }, viewerState: { reaction: reactionTarget.viewerReaction } }} onClose={() => setReactionTarget(null)} onSelect={(reaction) => commentReactionMutation.mutate({ comment: reactionTarget, reaction })} pending={commentReactionMutation.isPending} /> : null}
   </section>;
 }

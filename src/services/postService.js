@@ -43,6 +43,7 @@ function normalizeList(response) {
 export const postService = {
   getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params })),
   getPost: async (postId) => normalizePost((await axiosInstance.get(`/posts/${encodeURIComponent(postId)}`)).data?.data?.post),
+  getReactions: async (postId) => (await axiosInstance.get(`/posts/${encodeURIComponent(postId)}/reactions`)).data?.data || {},
   getMyPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts/mine", { params })),
   getDrafts: async () => normalizeList(await axiosInstance.get("/posts/drafts")),
   createPost: async (formData, options = {}) => {
@@ -67,8 +68,14 @@ export const postService = {
     const response = await axiosInstance.put(`/posts/${postId}/reaction`, { reaction });
     return normalizePost(response.data?.data?.post);
   },
-  createComment: async (postId, text) => {
-    const response = await axiosInstance.post(`/posts/${postId}/comments`, { text });
+  createComment: async (postId, text, voice = null) => {
+    const body = voice?.audioBlob ? new FormData() : { text };
+    if (voice?.audioBlob) {
+      body.append("voice", voice.audioBlob, "voice-comment.webm");
+      if (text) body.append("text", text);
+      if (voice.waveform?.length) body.append("waveform", JSON.stringify(voice.waveform));
+    }
+    const response = await axiosInstance.post(`/posts/${postId}/comments`, body);
     return normalizePost(response.data?.data?.post);
   },
   toggleSave: async (postId) => {
