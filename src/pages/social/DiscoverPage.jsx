@@ -123,19 +123,6 @@ function DiscoverPage() {
     discoverQuery.refetch();
   }, [discoverQuery]);
 
-  const invite = useCallback(async () => {
-    const url = typeof window === "undefined" ? "" : `${window.location.origin}/discover`;
-    try {
-      if (navigator.share) await navigator.share({ title: "@seen", text: "Find people worth seeing next on @seen.", url });
-      else {
-        await navigator.clipboard.writeText(url);
-        showToast("Discover link copied.");
-      }
-    } catch (error) {
-      if (error?.name !== "AbortError") showToast("Unable to share Discover right now.");
-    }
-  }, [showToast]);
-
   const toggleFollow = useCallback((person) => {
     if (!person?.username) return;
     followMutation.mutate(person, {
@@ -268,9 +255,9 @@ function DiscoverPage() {
                 <Link aria-label="Search" className="discover-orb-icon" to="/search">
                   <FiSearch aria-hidden="true" />
                 </Link>
-                <button aria-label="Invite people" className="discover-orb-icon" onClick={invite} type="button">
+                <Link aria-label="Find people" className="discover-orb-icon" to="/search">
                   <FiUserPlus aria-hidden="true" />
-                </button>
+                </Link>
               </div>
             </div>
 

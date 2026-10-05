@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiChevronDown, FiGlobe, FiMapPin, FiNavigation, FiSearch } from "react-icons/fi";
 import ActivitySparkMark from "../../activity/ActivitySparkMark";
+import AtseenLogo from "../../branding/AtseenLogo";
 import { searchService } from "../../../services/searchService";
 
 function cityName(value = "") {
@@ -116,7 +117,12 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
 
   return (
     <div className="home-prototype-top">
-      <div className="home-location-control" ref={menuRef}>
+      <div className="home-header-primary">
+        <Link aria-label="Atseen Wall" className="home-mobile-brand" to="/wall">
+          <AtseenLogo wordmarkOnly />
+        </Link>
+
+        <div className="home-location-control" ref={menuRef}>
         <button
           aria-expanded={open}
           aria-haspopup="dialog"
@@ -171,6 +177,7 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
             </section>
           </div>
         ) : null}
+        </div>
       </div>
 
       <Link aria-label="Open activity" className="home-spark-button" to="/activity">

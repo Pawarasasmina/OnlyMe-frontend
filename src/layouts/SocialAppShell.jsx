@@ -1,7 +1,6 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import AtseenLogo from "../components/branding/AtseenLogo";
 import FanCreateSheet from "../components/fanWeb/FanCreateSheet";
 import FanMobileNav from "../components/fanWeb/FanMobileNav";
 import FanWebRightRail from "../components/fanWeb/FanWebRightRail";
@@ -91,11 +90,6 @@ function SocialAppShell({ children = null }) {
   }, [location.pathname]);
 
   const outletContext = useMemo(() => ({ status, setStatus }), [status]);
-  const mobileAction = capabilities.canCreate
-    ? { label: "Create", to: "/create" }
-    : capabilities.canAccessVerification && !capabilities.isApprovedCreator
-      ? { label: "Verify", to: "/creator/verification" }
-      : null;
   const canCreateStoryNow = capabilities.canCreate && canCreateStory(user);
   const canPostNote = capabilities.canCreate && canCreateFeedPost(user);
   const existingWorld = (worldQuery.data || []).find((item) => ["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"].includes(item.status))
@@ -134,18 +128,6 @@ function SocialAppShell({ children = null }) {
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] min-[881px]:h-screen min-[881px]:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadActivityCount={unreadActivityCount} unreadMessageCount={unreadMessageCount} />
           <div className="social-center-scroll min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
-            {!isDiscoverPage && !isHomePage && !isSeenPage && !isWorldComposePage ? <header className="sticky top-0 z-30 flex items-center justify-between border-b border-atseen-line bg-atseen-bg/92 px-4 py-3 backdrop-blur min-[881px]:hidden">
-              <AtseenLogo size={28} />
-              {mobileAction ? (
-                capabilities.canCreate ? (
-                  <button className="rounded-full bg-atseen-blue px-3 py-2 text-xs font-bold text-atseen-bg" onClick={() => setCreateOpen(true)} type="button">{mobileAction.label}</button>
-                ) : (
-                  <Link className="rounded-full bg-atseen-blue px-3 py-2 text-xs font-bold text-atseen-bg" to={mobileAction.to}>{mobileAction.label}</Link>
-                )
-              ) : (
-                <button className="rounded-full border border-atseen-line px-3 py-2 text-xs font-bold text-atseen-muted" onClick={() => setAppModalOpen(true)} type="button">Get app</button>
-              )}
-            </header> : null}
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isFullWidthUtilityPage
@@ -155,7 +137,7 @@ function SocialAppShell({ children = null }) {
               : isDiscoverPage || isHomePage
               ? "social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-[980px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 min-[881px]:h-screen min-[881px]:px-0 min-[881px]:pb-12 min-[881px]:pt-9"
               : isMessagesPage
-                ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-none px-0 py-0 min-[881px]:h-screen"
+                ? "mx-auto h-[calc(100dvh-54px-env(safe-area-inset-bottom))] min-h-0 w-full min-w-0 max-w-none px-0 py-0 min-[881px]:h-screen"
                 : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 min-[881px]:px-5 min-[881px]:pb-20 min-[881px]:pt-[30px]"}>
               <SocialContentErrorBoundary key={`${location.pathname}${location.search}`}>
                 <Fragment key={location.key}>{children || <Outlet context={outletContext} />}</Fragment>

@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiSmile, FiTrash2, FiUserMinus } from "react-icons/fi";
+import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import ShareSheet from "../../share/ShareSheet";
 import StoryCreator from "../../stories/StoryCreator";
+import VoiceCommentRecorder from "../../comments/VoiceCommentRecorder";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import VerifiedBadge from "../shared/VerifiedBadge";
 import { useFanToast } from "../shared/FanToastContext";
 import { atseenCreators, atseenReportReasons } from "../../../data/atseenMockData";
 import { useAuth } from "../../../hooks/useAuth";
-import { savedService } from "../../../services/savedService";
 import { analyticsService } from "../../../services/analyticsService";
 import { profileService } from "../../../services/profileService";
+import { postService } from "../../../services/postService";
 import {
   useBlockFeedPostAuthor,
   useArchiveFeedPost,
@@ -68,6 +69,8 @@ function useWallSheetPosition(isOpen) {
       setSheetPosition({
         "--wall-sheet-center-x": `${bounds.left + (bounds.width / 2)}px`,
         "--wall-sheet-column-width": `${bounds.width}px`,
+        "--seen-sheet-center-x": `${bounds.left + (bounds.width / 2)}px`,
+        "--seen-sheet-column-width": `${bounds.width}px`,
       });
     };
 
@@ -104,6 +107,10 @@ const homeCommentEmojiGroups = [
   { key: "vibes", label: "Vibes", emojis: ["\u2728", "\uD83D\uDD25", "\uD83D\uDCAF", "\uD83C\uDF89", "\u2B50", "\uD83C\uDF19", "\u2600\uFE0F", "\uD83D\uDCA1", "\uD83C\uDFB6", "\uD83D\uDCCC"] },
   { key: "food", label: "Food", emojis: ["\u2615", "\uD83C\uDF55", "\uD83C\uDF54", "\uD83C\uDF70", "\uD83C\uDF53", "\uD83C\uDF49", "\uD83C\uDF5C", "\uD83C\uDF5F", "\uD83E\uDD57", "\uD83C\uDF7F"] },
 ];
+
+// Retained for compatibility with previously persisted comment-composer preferences.
+void commentEmojiGroups;
+void homeCommentEmojiGroups;
 
 function relativeTime(value, fallback = "now") {
   if (!value) return fallback;
@@ -176,6 +183,61 @@ function MediaItem({ item, title }) {
   return <img alt={`${title} attachment`} loading="lazy" onError={() => setFailed(true)} src={item.url} />;
 }
 
+function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style }) {
+  const [activeReaction, setActiveReaction] = useState("");
+  const query = useQuery({
+    enabled: Boolean(postId),
+    queryKey: ["wall-reactions", postId],
+    queryFn: () => postService.getReactions(postId),
+    retry: false,
+  });
+  const counts = query.data?.counts || {};
+  const reactionTabs = postReactionOptions.filter((item) => Number(counts[item.key]) > 0);
+  const reactors = (query.data?.reactions || []).filter((item) => !activeReaction || item.reaction === activeReaction);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    document.body.classList.add("seen-sheet-lock");
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.classList.remove("seen-sheet-lock");
+    };
+  }, [onClose]);
+
+  return (
+    <div className="seen-reactions-layer" style={style}>
+      <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
+      <section aria-label="Wall note reactions" aria-modal="true" className="seen-reactors-sheet" role="dialog">
+        <span aria-hidden="true" className="seen-reactors-handle" />
+        <header className="seen-reactors-header"><h2>Reactions</h2><span>{formatCount(query.data?.total || 0)}</span></header>
+        <div aria-label="Reaction filters" className="seen-reactors-tabs" role="tablist">
+          <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction("")} role="tab" type="button">All</button>
+          {reactionTabs.map((item) => <button aria-selected={activeReaction === item.key} className={activeReaction === item.key ? "is-active" : ""} key={item.key} onClick={() => setActiveReaction(item.key)} role="tab" type="button"><span aria-hidden="true">{item.icon}</span>{formatCount(counts[item.key])}</button>)}
+        </div>
+        <div className="seen-reactors-list">
+          {query.isLoading ? <p className="seen-reactors-state">Loading reactions...</p> : null}
+          {query.isError ? <div className="seen-reactors-state"><p>Could not load reactions</p><button onClick={() => query.refetch()} type="button">Retry</button></div> : null}
+          {!query.isLoading && !query.isError ? reactors.map((reactor) => {
+            const isCurrentUser = String(reactor.user?.id || "") === String(currentUserId || "");
+            const name = isCurrentUser ? "You" : reactor.user?.name || reactor.user?.username || "Atseen user";
+            const meta = reactionDisplayFor(reactor.reaction);
+            return <Link className="seen-reactor-row" key={reactor.id} onClick={onClose} to={reactor.user?.username ? `/profile/${encodeURIComponent(reactor.user.username)}` : "/profile"}>
+              <FanAvatar alt={`${name} avatar`} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatar} />
+              <span className="seen-reactor-copy"><strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>{reactor.user?.username ? <small>@{reactor.user.username}</small> : null}</span>
+              <span aria-label={meta?.label || "Reaction"} className="seen-reactor-emoji">{meta?.icon || "🤝"}</span>
+            </Link>;
+          }) : null}
+          {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
+        </div>
+        <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button>
+      </section>
+    </div>
+  );
+}
+
 function normalizeFeedPost(post = {}) {
   const mockCreator = post.creatorId ? atseenCreators[post.creatorId] : null;
   const author = post.author || post.creator || mockCreator || { name: "Creator", username: "creator" };
@@ -184,6 +246,7 @@ function normalizeFeedPost(post = {}) {
     ? post.comments.map((comment) => ({
       id: comment.id || comment._id,
       text: comment.text || "",
+      audio: comment.audio || null,
       author: comment.author || comment.user || null,
       creatorId: comment.creatorId,
       viewerSaved: Boolean(comment.viewerSaved || comment.saved),
@@ -269,11 +332,11 @@ function FeedPost({ post, profileMenu = false }) {
   const blockMutation = useBlockFeedPostAuthor();
   const viewMutation = useMarkFeedPostViewed();
   const articleRef = useRef(null);
-  const commentInputRef = useRef(null);
   const impressionTrackedRef = useRef(false);
   const viewTrackedRef = useRef(false);
   const [reaction, setReaction] = useState(normalized.viewerReaction);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [saved, setSaved] = useState(normalized.viewerSaved);
   const [shared, setShared] = useState(normalized.viewerShared);
   const [comments, setComments] = useState(normalized.seededComments);
@@ -281,12 +344,10 @@ function FeedPost({ post, profileMenu = false }) {
   const [shareCaption, setShareCaption] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const [emojiPanelOpen, setEmojiPanelOpen] = useState(false);
-  const [activeEmojiGroupKey, setActiveEmojiGroupKey] = useState(homeCommentEmojiGroups[0].key);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentSavePending, setCommentSavePending] = useState("");
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const wallSheetPosition = useWallSheetPosition(moreOpen);
+  const wallSheetPosition = useWallSheetPosition(moreOpen || reactionPickerOpen || reactionsSheetOpen);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -314,7 +375,6 @@ function FeedPost({ post, profileMenu = false }) {
     ...counts,
     [item.reaction.key]: item.count,
   }), {}), [reactionSummary]);
-  const activeEmojiGroup = homeCommentEmojiGroups.find((group) => group.key === activeEmojiGroupKey) || homeCommentEmojiGroups[0] || commentEmojiGroups[0];
   const commentCount = Math.max(normalized.commentCount, comments.length);
   const compactText = normalized.text.length > 260 && !expanded ? `${normalized.text.slice(0, 260).trim()}...` : normalized.text;
   const visibleReactionSamples = reactionSummary.length
@@ -399,7 +459,11 @@ function FeedPost({ post, profileMenu = false }) {
       if (event.key === "Escape") setReactionPickerOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    document.body.classList.add("seen-sheet-lock");
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.classList.remove("seen-sheet-lock");
+    };
   }, [reactionPickerOpen]);
 
   useEffect(() => {
@@ -530,29 +594,25 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setCommentText("");
-          setEmojiPanelOpen(false);
           showToast("Comment posted.");
         },
       }
     );
   };
 
-  const toggleCommentSave = async (targetComment) => {
-    if (!targetComment?.id || commentSavePending) return;
-    if (!requireDatabasePost()) return;
-    setCommentSavePending(targetComment.id);
-    try {
-      const action = targetComment.viewerSaved ? savedService.unsaveComment : savedService.saveComment;
-      const response = await action(targetComment.id);
-      const nextSaved = Boolean(response.data?.data?.saved);
-      setComments((current) => current.map((item) => item.id === targetComment.id ? { ...item, viewerSaved: nextSaved } : item));
-      queryClient.invalidateQueries({ queryKey: ["saved"] });
-      showToast(nextSaved ? "Comment saved." : "Comment removed from Saved.");
-    } catch (error) {
-      showToast(error?.response?.data?.message || "Comment could not be saved.");
-    } finally {
-      setCommentSavePending("");
-    }
+  const submitVoiceComment = (recording) => {
+    if (commentMutation.isPending || !requireDatabasePost()) return;
+    commentMutation.mutate(
+      { postId: actionPostId, text: recording.text || "Voice comment", voice: recording },
+      {
+        onError: (error) => showToast(error?.response?.data?.message || "Voice comment could not be saved."),
+        onSuccess: (savedPost) => {
+          syncSavedPost(savedPost);
+          setVoiceCommentOpen(false);
+          showToast("Voice comment posted.");
+        },
+      },
+    );
   };
 
   const saveReaction = (nextReaction) => {
@@ -562,7 +622,10 @@ function FeedPost({ post, profileMenu = false }) {
       { postId: actionPostId, reaction: nextReaction },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Reaction could not be saved."),
-        onSuccess: syncSavedPost,
+        onSuccess: (savedPost) => {
+          syncSavedPost(savedPost);
+          queryClient.invalidateQueries({ queryKey: ["wall-reactions", actionPostId] });
+        },
       }
     );
   };
@@ -618,23 +681,6 @@ function FeedPost({ post, profileMenu = false }) {
         },
       }
     );
-  };
-
-  const insertCommentEmoji = (emoji) => {
-    const input = commentInputRef.current;
-    setCommentText((current) => {
-      const start = input?.selectionStart ?? current.length;
-      const end = input?.selectionEnd ?? current.length;
-      const next = `${current.slice(0, start)}${emoji}${current.slice(end)}`;
-      const cursor = start + emoji.length;
-
-      window.requestAnimationFrame(() => {
-        input?.focus();
-        input?.setSelectionRange(cursor, cursor);
-      });
-
-      return next;
-    });
   };
 
   const moreAction = (action) => {
@@ -788,7 +834,7 @@ function FeedPost({ post, profileMenu = false }) {
               aria-label={selectedReaction ? `Change ${selectedReaction.label} reaction` : "React to post"}
               className={`home-reaction-capsule ${selectedReaction ? "is-selected" : ""}`}
               disabled={reactionMutation.isPending}
-              onClick={() => setReactionPickerOpen(true)}
+              onClick={() => reactionCount ? setReactionsSheetOpen(true) : setReactionPickerOpen(true)}
               title="React"
               type="button"
             >
@@ -813,7 +859,7 @@ function FeedPost({ post, profileMenu = false }) {
               <span className="hidden">{reactionCount}</span>
             </button>
           </div>
-          <button aria-label="Open comments" className="home-feed-action-button" onClick={() => setCommentsOpen(true)} title="Comment" type="button">
+          <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
             <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>
           </button>
           <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
@@ -833,21 +879,60 @@ function FeedPost({ post, profileMenu = false }) {
             <FiSend aria-hidden="true" />
           </button>
         </div>
+
+        {commentsOpen ? (
+          <section className="seen-comments-panel wall-comments-panel">
+            <div className="seen-comments-list">
+              {comments.map((comment) => {
+                const commentCreator = comment.author || (comment.creatorId === "me" ? { name: "You" } : atseenCreators[comment.creatorId]) || { name: "Creator" };
+                return (
+                  <article key={comment.id}>
+                    <FanAvatar alt="" name={commentCreator.name} size="h-6 w-6" src={commentCreator.avatar || commentCreator.avatarUrl} />
+                    <div className="seen-comment-copy">
+                      <p>
+                        <Link to={commentCreator.username ? `/profile/${encodeURIComponent(commentCreator.username)}` : "/wall"}>{commentCreator.name}</Link>
+                        {comment.text}
+                      </p>
+                      {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
+                    </div>
+                  </article>
+                );
+              })}
+              {!comments.length ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
+            </div>
+            <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
+              <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
+              <input aria-label="Add a Wall note comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
+              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
+              <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">Post</button>
+            </form>
+          </section>
+        ) : null}
       </article>
+
+      {voiceCommentOpen ? <VoiceCommentRecorder busy={commentMutation.isPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
 
       <ShareSheet isOpen={sendOpen} onClose={() => setSendOpen(false)} payload={sharePayload} />
 
+      {reactionsSheetOpen ? (
+        <WallReactionsSheet
+          currentUserId={user?.id || user?._id}
+          onAddYours={() => {
+            setReactionsSheetOpen(false);
+            setReactionPickerOpen(true);
+          }}
+          onClose={() => setReactionsSheetOpen(false)}
+          postId={actionPostId}
+          style={wallSheetPosition}
+        />
+      ) : null}
+
       {reactionPickerOpen ? (
-        <div
-          aria-label={`Reactions for ${creator.name}'s post`}
-          aria-modal="true"
-          className="home-reaction-overlay"
-          onClick={() => setReactionPickerOpen(false)}
-          role="dialog"
-        >
-          <div className="home-reaction-sheet" onClick={(event) => event.stopPropagation()}>
-            <div className="home-reaction-handle" aria-hidden="true" />
-            <div className="home-reaction-grid" role="group" aria-label="Choose a reaction">
+        <div className="seen-reactions-layer" style={wallSheetPosition}>
+          <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
+          <section aria-label={`Choose a reaction for ${creator.name}'s post`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
+            <span aria-hidden="true" className="seen-reaction-handle" />
+            <div aria-label="Choose a Wall note reaction" className="seen-reaction-grid" role="group">
               {postReactionOptions.map((item) => {
                 const count = reactionCountsByKey[item.key] || 0;
                 const selected = reaction === item.key;
@@ -855,7 +940,7 @@ function FeedPost({ post, profileMenu = false }) {
                   <button
                     aria-label={`${selected ? "Remove" : "Send"} ${item.label} reaction`}
                     aria-pressed={selected}
-                    className={`home-reaction-option ${selected ? "is-selected" : ""}`}
+                    className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"}
                     disabled={reactionMutation.isPending}
                     key={item.key}
                     onClick={() => {
@@ -865,111 +950,15 @@ function FeedPost({ post, profileMenu = false }) {
                     type="button"
                   >
                     <span aria-hidden="true">{item.icon}</span>
-                    <small>{count}</small>
+                    <small>{count || ""}</small>
                   </button>
                 );
               })}
             </div>
-            <p>{reactionCount ? `${reactionCount} reaction${reactionCount === 1 ? "" : "s"} - make it yours` : "One reaction - make it yours"}</p>
-          </div>
+            <p>One reaction — make it yours</p>
+          </section>
         </div>
       ) : null}
-
-      <FanModal
-        isOpen={commentsOpen}
-        onClose={() => {
-          setCommentsOpen(false);
-          setEmojiPanelOpen(false);
-        }}
-        title={`Comments - ${commentCount}`}
-      >
-        <p className="border-b border-atseen-line pb-3 text-xs leading-5 text-atseen-muted">{normalized.text}</p>
-        <div className="max-h-[330px] overflow-y-auto">
-          {comments.map((comment) => {
-            const commentCreator = comment.author || (comment.creatorId === "me" ? { name: "You" } : atseenCreators[comment.creatorId]) || { name: "Creator" };
-            return (
-              <div className="flex gap-3 border-b border-white/[0.05] py-3" key={comment.id}>
-                <FanAvatar name={commentCreator.name} size="h-8 w-8" src={commentCreator.avatar} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-atseen-text">{commentCreator.name}</p>
-                  <p className="mt-1 text-sm leading-6 text-white/85">{comment.text}</p>
-                </div>
-                <button
-                  aria-label={comment.viewerSaved ? "Remove saved comment" : "Save comment"}
-                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${comment.viewerSaved ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted"}`}
-                  disabled={commentSavePending === comment.id}
-                  onClick={() => toggleCommentSave(comment)}
-                  type="button"
-                >
-                  <FiBookmark aria-hidden="true" fill={comment.viewerSaved ? "currentColor" : "none"} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-4">
-          <div className="flex gap-2">
-            <div className="flex min-w-0 flex-1 items-center rounded-xl border border-atseen-line bg-atseen-surface-2 focus-within:border-atseen-blue">
-              <button
-                aria-expanded={emojiPanelOpen}
-                aria-label="Open emoji keyboard"
-                className={`ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg transition hover:bg-white/10 hover:text-white ${emojiPanelOpen ? "text-atseen-blue" : "text-atseen-muted"}`}
-                onClick={() => setEmojiPanelOpen((current) => !current)}
-                type="button"
-              >
-                <FiSmile aria-hidden="true" />
-              </button>
-              <input
-                className="min-w-0 flex-1 bg-transparent px-2 py-3 text-sm text-white outline-none"
-                onChange={(event) => setCommentText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") submitComment();
-                }}
-                placeholder="Say something real..."
-                ref={commentInputRef}
-                value={commentText}
-              />
-            </div>
-            <button
-              className="rounded-xl bg-gradient-to-br from-atseen-blue to-atseen-blue-strong px-4 text-sm font-bold text-atseen-bg disabled:opacity-60"
-              disabled={commentMutation.isPending}
-              onClick={submitComment}
-              type="button"
-            >
-              {commentMutation.isPending ? "Sending..." : "Send"}
-            </button>
-          </div>
-          {emojiPanelOpen ? (
-            <div className="mt-2 rounded-2xl border border-atseen-line bg-[#11161F] p-3 shadow-glow">
-              <div className="mb-3 flex gap-1 overflow-x-auto pb-1">
-                {homeCommentEmojiGroups.map((group) => (
-                  <button
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition ${activeEmojiGroupKey === group.key ? "bg-atseen-blue text-atseen-bg" : "bg-atseen-surface-2 text-atseen-muted hover:text-white"}`}
-                    key={group.key}
-                    onClick={() => setActiveEmojiGroupKey(group.key)}
-                    type="button"
-                  >
-                    {group.label}
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-8 gap-1 sm:grid-cols-10">
-                {activeEmojiGroup.emojis.map((emoji) => (
-                  <button
-                    aria-label={`Add emoji ${emoji}`}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-xl transition hover:bg-white/10 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-atseen-blue"
-                    key={emoji}
-                    onClick={() => insertCommentEmoji(emoji)}
-                    type="button"
-                  >
-                    <span aria-hidden="true">{emoji}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </FanModal>
 
       <FanModal
         isOpen={shareOpen}
