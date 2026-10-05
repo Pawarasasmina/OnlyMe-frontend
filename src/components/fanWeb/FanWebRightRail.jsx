@@ -33,7 +33,7 @@ function FanWebRightRail({ user }) {
   return (
     <HomeRightRail
       activity={discoverQuery.data?.activity}
-      className="social-fixed-rail social-shared-right-rail"
+      className="social-fixed-rail social-shared-right-rail hidden min-[1240px]:grid"
       followPending={followMutation.isPending}
       freshSeens={discoverQuery.data?.freshSeens || []}
       onFollowToggle={toggleFollow}

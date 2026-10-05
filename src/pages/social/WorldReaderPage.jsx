@@ -1783,6 +1783,7 @@ export default function WorldReaderPage() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
+  const routeProductLabel = location.pathname.startsWith("/experience/") ? "Experience" : "World";
   const [comment, setComment] = useState("");
   const [commentReplyTarget, setCommentReplyTarget] = useState(null);
   const [commentPostPending, setCommentPostPending] = useState(false);
@@ -1954,7 +1955,7 @@ export default function WorldReaderPage() {
       if (payload && "commentsEnabled" in payload) {
         setOptimisticCommentsEnabled(null);
         setCommentStatusToast("");
-        showToast(_error?.response?.data?.message || "World comments setting could not be updated.");
+        showToast(_error?.response?.data?.message || `${experience ? "Experience" : "World"} comments setting could not be updated.`);
       }
     },
     onSuccess: async (response, payload) => {
@@ -2032,9 +2033,9 @@ export default function WorldReaderPage() {
     mutationFn: () => api.removeWorldCover(publicationId),
     onSuccess: async () => {
       await Promise.all([query.refetch(), managementQuery.refetch()]);
-      showToast("World cover removed.");
+      showToast(`${experience ? "Experience" : "World"} cover removed.`);
     },
-    onError: (error) => showToast(error?.response?.data?.message || "World cover could not be removed."),
+    onError: (error) => showToast(error?.response?.data?.message || `${experience ? "Experience" : "World"} cover could not be removed.`),
   });
   const waveMutation = useMutation({
     mutationFn: () => api.openWorldWave(publicationId),
@@ -2122,8 +2123,8 @@ export default function WorldReaderPage() {
     return () => window.clearTimeout(timer);
   }, [commentStatusToast]);
 
-  if (authLoading || query.isLoading) return <div className="world-prototype-state">Opening World...</div>;
-  if (query.isError || !publication) return <div className="world-prototype-state"><h1>World unavailable</h1><p>It may be unpublished, archived, or missing.</p></div>;
+  if (authLoading || query.isLoading) return <div className="world-prototype-state">Opening {routeProductLabel}...</div>;
+  if (query.isError || !publication) return <div className="world-prototype-state"><h1>{routeProductLabel} unavailable</h1><p>It may be unpublished, archived, or missing.</p></div>;
 
   const insideRequested = location.pathname.endsWith("/inside");
   const insideDetailRequested = insideRequested && new URLSearchParams(location.search).get("view") === "detail";
@@ -2513,9 +2514,9 @@ export default function WorldReaderPage() {
         <header className="world-prototype-top">
           <button aria-label={experience && returnTo ? "Back to World" : "Back to profile"} onClick={() => experience && returnTo ? returnFromExperience() : navigate(publication.creator?.username ? `/profile/${publication.creator.username}` : -1)} type="button"><FiArrowLeft /></button>
           <div>
-            {owner ? <button aria-label="Open world analytics" onClick={() => setSheet("analytics")} type="button"><FiBarChart2 /></button> : null}
-            <button aria-label="Share world" onClick={() => setSheet("share")} type="button"><FiArrowUpRight /></button>
-            {owner ? <button aria-label="More world actions" onClick={() => setSheet("actions")} type="button"><FiMoreHorizontal /></button> : null}
+            {owner ? <button aria-label={`Open ${experience ? "Experience" : "World"} analytics`} onClick={() => setSheet("analytics")} type="button"><FiBarChart2 /></button> : null}
+            <button aria-label={`Share ${experience ? "Experience" : "World"}`} onClick={() => setSheet("share")} type="button"><FiArrowUpRight /></button>
+            {owner ? <button aria-label={`More ${experience ? "Experience" : "World"} actions`} onClick={() => setSheet("actions")} type="button"><FiMoreHorizontal /></button> : null}
           </div>
         </header>
 
@@ -2612,7 +2613,7 @@ export default function WorldReaderPage() {
         ) : null}
 
         {experience ? (
-          <p className="experience-detail-creator">{creator.name || creator.username || "Creator"} <b>✓</b> · <span>{managedPublication.category || "New world"}</span></p>
+          <p className="experience-detail-creator">{creator.name || creator.username || "Creator"} <b>✓</b> · <span>{managedPublication.category || "Experience"}</span></p>
         ) : null}
 
         {experience ? <button className="world-prototype-premium-pill is-experience" type="button">{experiencePriceLabel}</button> : null}
