@@ -86,7 +86,7 @@ function SocialAppShell({ children = null }) {
   }, [status]);
 
   useEffect(() => {
-    if (window.matchMedia("(min-width: 768px)").matches)
+    if (window.matchMedia("(min-width: 881px)").matches)
       contentScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname]);
 
@@ -130,11 +130,11 @@ function SocialAppShell({ children = null }) {
     <FanToastProvider>
       <CallProvider user={user}>
       {currentWarning ? <div className="fixed inset-0 z-[300] grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="moderation-warning-title"><section className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#210b0d] p-6 text-white shadow-[0_24px_90px_rgba(220,38,38,.35)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-500/20 text-3xl text-red-400">!</div><p className="mt-5 text-center text-xs font-black uppercase tracking-[.2em] text-red-400">Account warning</p><h2 className="mt-2 text-center text-2xl font-black" id="moderation-warning-title">{currentWarning.title}</h2><p className="mt-4 text-center text-sm leading-6 text-red-50/80">{currentWarning.message}</p><p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">Future violations may lead to temporary restriction or account suspension.</p><button className="mt-6 w-full rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white disabled:opacity-50" disabled={acknowledgeWarning.isPending} onClick={() => acknowledgeWarning.mutate()} type="button">{acknowledgeWarning.isPending ? "Saving…" : "I understand"}</button></section></div> : null}
-      <div className="social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text md:h-screen md:overflow-hidden" onClickCapture={handleDraftNavigation}>
-        <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] md:h-screen md:min-h-0">
+      <div className="social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text min-[881px]:h-screen min-[881px]:overflow-hidden" onClickCapture={handleDraftNavigation}>
+        <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] min-[881px]:h-screen min-[881px]:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadActivityCount={unreadActivityCount} unreadMessageCount={unreadMessageCount} />
-          <div className="social-center-scroll min-w-0 flex-1 md:h-screen md:overflow-y-auto md:overscroll-contain" ref={contentScrollRef}>
-            {!isDiscoverPage && !isHomePage && !isSeenPage && !isWorldComposePage ? <header className="sticky top-0 z-30 flex items-center justify-between border-b border-atseen-line bg-atseen-bg/92 px-4 py-3 backdrop-blur md:hidden">
+          <div className="social-center-scroll min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
+            {!isDiscoverPage && !isHomePage && !isSeenPage && !isWorldComposePage ? <header className="sticky top-0 z-30 flex items-center justify-between border-b border-atseen-line bg-atseen-bg/92 px-4 py-3 backdrop-blur min-[881px]:hidden">
               <AtseenLogo size={28} />
               {mobileAction ? (
                 capabilities.canCreate ? (
@@ -147,16 +147,16 @@ function SocialAppShell({ children = null }) {
               )}
             </header> : null}
             <main className={isWorldComposePage
-              ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
+              ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isFullWidthUtilityPage
-              ? "mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 md:pb-0"
+              ? "mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:pb-0"
               : isSeenPage
-              ? "seen-shell-main social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 md:h-screen md:pb-0"
+              ? "seen-shell-main social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isDiscoverPage || isHomePage
-              ? "social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-[980px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 md:h-screen md:px-0 md:pb-12 md:pt-9"
+              ? "social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-[980px] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 min-[881px]:h-screen min-[881px]:px-0 min-[881px]:pb-12 min-[881px]:pt-9"
               : isMessagesPage
-                ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-none px-0 py-0 md:h-screen"
-                : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:px-5 md:pb-20 md:pt-[30px]"}>
+                ? "mx-auto h-[calc(100dvh-8.25rem)] min-h-0 w-full min-w-0 max-w-none px-0 py-0 min-[881px]:h-screen"
+                : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 min-[881px]:px-5 min-[881px]:pb-20 min-[881px]:pt-[30px]"}>
               <SocialContentErrorBoundary key={`${location.pathname}${location.search}`}>
                 <Fragment key={location.key}>{children || <Outlet context={outletContext} />}</Fragment>
               </SocialContentErrorBoundary>

@@ -9,7 +9,7 @@ function FanMobileNav({ unreadMessageCount = 0 }) {
   return (
     <nav
       aria-label="Mobile fan navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-atseen-line bg-atseen-bg/95 px-2 py-2 backdrop-blur md:hidden"
+      className="fan-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-atseen-line bg-atseen-bg/95 px-2 py-2 backdrop-blur min-[881px]:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
         {mobileItems.map((item) => {
