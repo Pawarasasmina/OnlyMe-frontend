@@ -11,14 +11,14 @@ import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
 import VerifiedCreatorPage from "../creator/VerifiedCreatorPage";
 
-function SettingsRow({ icon: Icon, onClick, subtitle, title, to, trailing }) {
-  const content = <><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-atseen-line bg-atseen-surface-2 text-atseen-blue"><Icon /></span><span className="min-w-0 flex-1"><b className="block text-sm font-bold text-white">{title}</b>{subtitle ? <small className="mt-1 block truncate text-xs text-atseen-muted">{subtitle}</small> : null}</span>{trailing || <FiChevronRight className="shrink-0 text-atseen-dim" />}</>;
-  if (onClick) return <button className="flex w-full items-center gap-3 border-b border-atseen-line px-4 py-3.5 text-left last:border-0 hover:bg-white/[0.03]" onClick={onClick} type="button">{content}</button>;
-  return <Link className="flex items-center gap-3 border-b border-atseen-line px-4 py-3.5 last:border-0 hover:bg-white/[0.03]" to={to}>{content}</Link>;
+function SettingsRow({ onClick, subtitle, title, to, trailing }) {
+  const content = <><span className="settings-index-row-copy"><b>{title}</b>{subtitle ? <small>{subtitle}</small> : null}</span>{trailing || <FiChevronRight />}</>;
+  if (onClick) return <button className="settings-index-row" onClick={onClick} type="button">{content}</button>;
+  return <Link className="settings-index-row" to={to}>{content}</Link>;
 }
 
 function SettingsGroup({ children, title }) {
-  return <section className="mt-6"><h2 className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.18em] text-atseen-dim">{title}</h2><div className="overflow-hidden rounded-2xl border border-atseen-line bg-atseen-surface">{children}</div></section>;
+  return <section className="settings-index-group"><h2>{title}</h2><div>{children}</div></section>;
 }
 
 export default function SettingsPage() {
@@ -79,8 +79,8 @@ export default function SettingsPage() {
     }
   };
 
-  return <main className="mx-auto w-full max-w-xl px-4 pb-12 pt-5" ref={settingsMainRef}>
-    <header className="flex items-center gap-3"><button aria-label="Back to profile" className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.07] text-xl" onClick={() => navigate("/profile")} type="button"><FiArrowLeft /></button><div><h1 className="text-2xl font-black">Settings</h1><p className="mt-0.5 text-xs text-atseen-muted">Account, preferences and privacy</p></div></header>
+  return <main className="settings-index-page" ref={settingsMainRef}>
+    <header className="settings-index-header"><button aria-label="Back to profile" onClick={() => navigate("/profile")} type="button"><FiArrowLeft /></button><h1>Settings</h1></header>
 
     <SettingsGroup title="Account">
       {["fan", "creator"].includes(user?.role) ? user.creatorApprovalStatus === "approved" ? <SettingsRow icon={FiUserCheck} subtitle="Approved creator access" title="Creator tools" to="/studio" /> : <SettingsRow icon={FiUserCheck} onClick={() => setCreatorApplyOpen(true)} subtitle={user.creatorApprovalStatus === "pending" ? "Application under review" : "For people who want to publish and earn"} title={user.creatorApprovalStatus === "pending" ? "Creator application" : "Apply as a creator"} /> : null}
