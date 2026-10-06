@@ -33,7 +33,7 @@ import FeedPost from "../../components/fanWeb/home/FeedPost";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileConnectionsModal from "../../components/profile/ProfileConnectionsModal";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
-import ProfileDream from "../../components/profile/ProfileDream";
+import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
 import ProfileMediaSection from "../../components/profile/ProfileMediaSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ProfileExperiences from "../../components/profile/ProfileExperiences";
@@ -653,6 +653,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
 
 function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
   const [sheetPosition, setSheetPosition] = useState(undefined);
+  const [previewGift, setPreviewGift] = useState(null);
   const query = useQuery({
     queryKey: ["profile", "received-gifts", isOwner ? "me" : profile?.username],
     queryFn: () => (isOwner ? profileService.getOwnReceivedGifts() : profileService.getReceivedGifts(profile.username)).then((response) => response.data.data),
@@ -682,20 +683,26 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
       observer?.disconnect();
     };
   }, [isOpen]);
+  useEffect(() => {
+    if (!previewGift) return undefined;
+    const timeout = window.setTimeout(() => setPreviewGift(null), 2600);
+    return () => window.clearTimeout(timeout);
+  }, [previewGift]);
   if (!isOpen) return null;
   const gifts = query.data?.gifts || [];
   return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog" style={sheetPosition}>
+    {previewGift ? <GiftCelebration detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message="Gift received" /> : null}
     <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
       <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={onSendGift} type="button">Send a gift</button> : null}</header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
       <div className="profile-received-gifts-grid">
-        {gifts.map((gift) => <article className="profile-received-gift" key={gift.id}>
+        {gifts.map((gift) => <button aria-label={`Play ${gift.name} gift animation`} className="profile-received-gift" key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
           <span><img alt={gift.name} src={gift.imageUrl} /></span>
           <strong>{gift.name}</strong>
           <small>{gift.sender?.name || gift.source || "Gift"}{gift.visibility && gift.visibility !== "EVERYONE" ? ` · ${gift.visibility.toLowerCase()}` : ""}</small>
-        </article>)}
+        </button>)}
       </div>
     </section>
   </div>;
