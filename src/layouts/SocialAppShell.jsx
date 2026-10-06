@@ -67,6 +67,7 @@ function SocialAppShell({ children = null }) {
   const isHomePage = location.pathname === "/wall";
   const isSeenPage = location.pathname === "/seen"
     || location.pathname.startsWith("/seen/");
+  const isSettingsPage = location.pathname === "/settings" || location.pathname.startsWith("/settings/");
   const isWorldComposePage = location.pathname === "/create/premium-world" || location.pathname === "/create/experience" || location.pathname.startsWith("/studio/experiences/");
   const isFullWidthUtilityPage = location.pathname.startsWith("/create/")
     || location.pathname.startsWith("/settings")
@@ -131,7 +132,7 @@ function SocialAppShell({ children = null }) {
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isFullWidthUtilityPage
-              ? "mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:pb-0"
+              ? `${isSettingsPage ? "settings-shell-main " : ""}mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:pb-0`
               : isSeenPage
               ? "seen-shell-main social-prototype-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isDiscoverPage || isHomePage

@@ -27,13 +27,18 @@ function useStoryViewerPosition(isOpen) {
   const [position, setPosition] = useState(undefined);
 
   useEffect(() => {
-    if (!isOpen || window.innerWidth < 768) { setPosition(undefined); return undefined; }
+    if (!isOpen || window.innerWidth < 881) { setPosition(undefined); return undefined; }
     const centerColumn = document.querySelector(".social-center-scroll");
     if (!centerColumn) return undefined;
     const updatePosition = () => {
-      if (window.innerWidth < 768) { setPosition(undefined); return; }
+      if (window.innerWidth < 881) { setPosition(undefined); return; }
       const bounds = centerColumn.getBoundingClientRect();
-      setPosition({ left: `${bounds.left}px`, right: "auto", width: `${bounds.width}px` });
+      setPosition({
+        left: `${bounds.left}px`,
+        right: 0,
+        width: "auto",
+        "--story-viewer-column-width": `${bounds.width}px`,
+      });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);

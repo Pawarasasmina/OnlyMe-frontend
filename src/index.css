@@ -4657,8 +4657,8 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 }
 .story-viewer-dialog,
 .discover-story-inline-dialog {
-  width: min(100%,500px);
-  max-width: 500px;
+  width: 100vw;
+  max-width: none;
   height: 100dvh !important;
   max-height: 100dvh !important;
   overflow: hidden !important;
@@ -17610,7 +17610,8 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
 .story-composer-stage {
   position: relative;
-  width: min(440px,100vw);
+  width: 100vw;
+  max-width: none;
   height: 100dvh;
   overflow: hidden;
   background: #000;
@@ -17620,18 +17621,38 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
 @media (min-width: 768px) {
   .story-composer-overlay {
-    justify-content: initial;
-    background: transparent;
+    justify-content: center;
+    background: #000;
   }
 
   .story-composer-stage {
     position: fixed;
     top: 0;
+    right: 0;
     bottom: 0;
-    left: var(--story-composer-center-x, 50%);
-    width: var(--story-composer-column-width, 440px);
-    max-width: var(--story-composer-column-width, 440px);
+    left: 0;
+    width: 100vw;
+    max-width: none;
     height: 100dvh;
+    border-right: 0;
+    border-left: 0;
+    transform: none;
+  }
+}
+
+/* Whenever desktop navigation is present, the Story canvas owns the full
+   center column and the remaining workspace to its right stays black. */
+@media (min-width: 881px) {
+  .story-composer-overlay {
+    left: calc(var(--story-composer-center-x, 50%) - (var(--story-composer-column-width, 640px) / 2));
+    justify-content: flex-start;
+  }
+
+  .story-composer-stage {
+    right: auto;
+    left: var(--story-composer-center-x, 50%);
+    width: var(--story-composer-column-width, 640px);
+    max-width: var(--story-composer-column-width, 640px);
     border-right: 1px solid rgba(255,255,255,.08);
     border-left: 1px solid rgba(255,255,255,.08);
     transform: translateX(-50%);
@@ -24290,6 +24311,20 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   .story-viewer-overlay .story-viewer-surface {
     width: 100%;
     height: 100dvh;
+  }
+}
+
+@media (min-width: 881px) {
+  .story-viewer-overlay {
+    align-items: stretch;
+    justify-content: flex-start;
+    background: #000;
+  }
+
+  .story-viewer-overlay .story-viewer-dialog {
+    width: var(--story-viewer-column-width, 640px) !important;
+    max-width: var(--story-viewer-column-width, 640px) !important;
+    flex: 0 0 var(--story-viewer-column-width, 640px);
   }
 }
 
@@ -36340,5 +36375,200 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
   .social-app-shell:has(.discover-rec-story) .fan-mobile-nav {
     display: none;
+  }
+}
+
+/* World and Experience flows always own the complete center canvas. Individual
+   cards may keep readable content widths, but the page surface itself must not
+   collapse to a narrow fixed-width column at responsive breakpoints. */
+.social-app-shell .social-center-scroll > main:has(> :is(
+  .planet-create-entry,
+  .world-prototype-page,
+  .world-preview-page,
+  .world-member-door-page,
+  .world-member-inside-page,
+  .world-inside-detail,
+  .world-actions-page,
+  .experience-first-step,
+  .experience-chapters-step,
+  .experience-final-review,
+  .experience-create-page,
+  .experience-chapter-preview,
+  .experience-viewer-page,
+  .experience-owner-page,
+  .experience-owner-menu-page,
+  .experience-actions-page
+)) {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh;
+  padding: 0 !important;
+  background: #080b0e;
+}
+
+.social-app-shell .social-center-scroll > main > :is(
+  .planet-create-entry,
+  .world-prototype-page,
+  .world-preview-page,
+  .world-member-door-page,
+  .world-member-inside-page:not(.is-membership-popup),
+  .world-inside-detail,
+  .world-actions-page,
+  .experience-first-step,
+  .experience-chapters-step,
+  .experience-final-review,
+  .experience-create-page,
+  .experience-chapter-preview,
+  .experience-viewer-page,
+  .experience-owner-page,
+  .experience-owner-menu-page,
+  .experience-actions-page
+) {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* On compact tablets the Profile center canvas is wider than the Wall feed's
+   desktop cap. Let Notes use that available width instead of creating equal
+   empty gutters; phone and desktop geometry remain unchanged. */
+@media (min-width: 601px) and (max-width: 880px) {
+  .social-app-shell .profile-prototype .profile-wall-section {
+    width: 100%;
+    max-width: none;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .social-app-shell .settings-shell-main > * {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+}
+
+/* Settings index follows the compact, flat prototype. Subpages retain their
+   form-specific cards and controls. */
+.settings-index-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 18px 27px 76px;
+  background: #080b0e;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.settings-index-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-index-header > button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  border: 0;
+  background: #181c21;
+  color: #f4f7fa;
+  font-size: 22px;
+}
+
+.settings-index-header h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.2px;
+}
+
+.settings-index-group {
+  margin-top: 25px;
+}
+
+.settings-index-group > h2 {
+  margin: 0 0 17px;
+  color: #74859b;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.settings-index-group > div {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-index-row {
+  display: flex;
+  width: 100%;
+  min-height: 39px;
+  align-items: center;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 0;
+  text-align: left;
+}
+
+.settings-index-row:hover,
+.settings-index-row:focus-visible {
+  color: #d6eaff;
+  outline: 0;
+}
+
+.settings-index-row-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 5px;
+}
+
+.settings-index-row-copy b {
+  overflow: hidden;
+  color: currentColor;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-index-row-copy small {
+  overflow: hidden;
+  color: #718298;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-index-row > svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: #535c66;
+  stroke-width: 1.5;
+}
+
+@media (max-width: 600px) {
+  .settings-index-page {
+    padding-right: 27px;
+    padding-left: 27px;
   }
 }
