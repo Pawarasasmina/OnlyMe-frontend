@@ -36487,7 +36487,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
 .settings-index-header h1 {
   margin: 0;
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -.2px;
@@ -36500,7 +36500,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .settings-index-group > h2 {
   margin: 0 0 17px;
   color: #74859b;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .16em;
   line-height: 1;
@@ -36515,7 +36515,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .settings-index-row {
   display: flex;
   width: 100%;
-  min-height: 39px;
+  min-height: 42px;
   align-items: center;
   gap: 14px;
   border: 0;
@@ -36541,7 +36541,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .settings-index-row-copy b {
   overflow: hidden;
   color: currentColor;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 750;
   line-height: 1.15;
   text-overflow: ellipsis;
@@ -36551,7 +36551,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .settings-index-row-copy small {
   overflow: hidden;
   color: #718298;
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 400;
   line-height: 1.2;
   text-overflow: ellipsis;
