@@ -6,6 +6,7 @@ import { messageService } from "../../services/messageService";
 import { walletService } from "../../services/walletService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { GiftCelebration } from "../profile/ProfileDream";
+import FanAvatar from "../fanWeb/shared/FanAvatar";
 
 const STAR = String.fromCharCode(10022);
 const giftTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
@@ -104,8 +105,9 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
         {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their activity"}`} /> : null}
         <span className="dream-gift-handle" />
         {!selectedGift ? <>
-        <div className="dream-gift-header">
-          <div><h2>{sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"}</h2><p>{sourceType === "DIRECT" ? "Send directly to" : "Send from this story to"} <strong>{recipient?.name || "this creator"}</strong></p></div>
+        <div className={`dream-gift-header ${sourceType === "DIRECT" ? "is-direct-profile-gift" : ""}`}>
+          {sourceType === "DIRECT" ? <FanAvatar name={recipient?.name || "Creator"} size="h-8 w-8" src={recipient?.avatar} /> : null}
+          <div><h2>{sourceType === "DIRECT" ? `Send ${String(recipient?.name || "them").split(" ")[0]} a gift` : "Send a story gift"}</h2><p>{sourceType === "DIRECT" ? `${recipient?.name || "They"} earns from gifts instantly` : <>Send from this story to <strong>{recipient?.name || "this creator"}</strong></>}</p></div>
           <button aria-label="Close gift picker" disabled={Boolean(sending)} onClick={onClose} type="button"><FiX /></button>
         </div>
         <p className="dream-gift-progress-copy">Your balance: <strong>{STAR}{walletQuery.isLoading ? "…" : balance.toLocaleString()}</strong></p>

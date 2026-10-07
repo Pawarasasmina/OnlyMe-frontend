@@ -1070,7 +1070,7 @@ export default function SeenFeedPage() {
       queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
     },
   });
-  const openCreate = () => setCreateOpen(true);
+  const openCreate = () => setCreateOpen((current) => !current);
   const openActivity = () => {
     if (unreadActivityCount > 0 && !acknowledgeActivityNotifications.isPending) acknowledgeActivityNotifications.mutate();
     navigate("/activity");

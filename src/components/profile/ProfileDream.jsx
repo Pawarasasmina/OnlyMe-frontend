@@ -21,9 +21,10 @@ async function croppedDreamPhoto(file, url, crop) {
   return new File([blob], "dream-photo.jpg", { type: "image/jpeg" });
 }
 
-export function GiftCelebration({ detail, gift, message = "You're part of this Dream now" }) {
+export function GiftCelebration({ detail, gift, message = "You're part of this Dream now", variant = "" }) {
   return <div aria-live="polite" className="gift-celebration-layer">
     <div className="gift-celebration-veil" />
+    <div className={variant ? `gift-celebration-scene ${variant}` : "gift-celebration-scene"} />
     <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>{message}</strong><small>{detail || `${gift.name} · ${STAR}${gift.stars.toLocaleString()} sent`}</small></span></div>
     <div className="gift-celebration-stage">
       <div className="gift-celebration-glow" />

@@ -42,18 +42,31 @@ function FanCreateSheet({
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    const centerColumn = document.querySelector(".social-center-scroll");
-    if (!centerColumn) return undefined;
+    const createButton = document.querySelector('.seen-proto-header-actions button[aria-label="Create"], .profile-top-icon[aria-label="Create"], .sidebar-create-action');
     const updatePosition = () => {
-      const bounds = centerColumn.getBoundingClientRect();
-      setPosition({ "--create-menu-center-x": `${bounds.left + bounds.width / 2}px` });
+      if (!createButton) {
+        setPosition(undefined);
+        return;
+      }
+      const bounds = createButton.getBoundingClientRect();
+      const menuWidth = Math.min(184, window.innerWidth - 16);
+      const left = Math.min(Math.max(8, bounds.left + bounds.width / 2 - 136), window.innerWidth - menuWidth - 8);
+      const menuHeight = 252;
+      const bottom = Math.max(82, Math.min(window.innerHeight - bounds.bottom - 8, 118));
+      setPosition({
+        "--create-menu-left": `${left}px`,
+        "--create-menu-bottom": `${Math.max(8, Math.min(bottom, window.innerHeight - menuHeight - 8))}px`,
+        "--create-menu-width": `${menuWidth}px`,
+      });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
-    observer?.observe(centerColumn);
+    observer?.observe(createButton);
     return () => {
       window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
       observer?.disconnect();
     };
   }, [isOpen]);
