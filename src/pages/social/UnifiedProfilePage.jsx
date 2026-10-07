@@ -418,14 +418,13 @@ function VisitorMoreSheet({ isOpen, onClose, profile }) {
   };
   return (
     <div aria-modal="true" className="profile-quick-actions-backdrop is-visitor-menu" onClick={() => { setReporting(false); setReportDone(false); onClose(); }} role="dialog" style={sheetPosition}>
-      <section className={`profile-quick-actions-sheet is-visitor ${!reporting && !reportDone ? "is-main" : ""}`} onClick={(event) => event.stopPropagation()}>
+      <section className={`profile-quick-actions-sheet is-visitor ${reportDone ? "is-report-done" : !reporting ? "is-main" : ""}`} onClick={(event) => event.stopPropagation()}>
         <span className="profile-quick-actions-handle" />
-        <h2>{reportDone ? "Report received" : reporting ? `Report ${firstName}` : firstName}</h2>
-        {reportDone ? <div className="profile-quick-actions-list px-4 pb-4"><p className="py-3 text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={() => { setReportDone(false); onClose(); }} type="button">Done</button></div> : reporting ? <div className="profile-quick-actions-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this profile?</p>{atseenReportReasons.map((reason) => <button className="profile-quick-action-row" disabled={Boolean(busy)} key={reason} onClick={() => report(reason)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{reason}</b></span></button>)}<button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(false)} type="button"><span className="profile-quick-action-copy"><b>Back</b></span></button></div> : <div className="profile-quick-actions-list">
+        {reportDone ? <div className="profile-report-done-panel"><FiEye aria-hidden="true" /><h2>Thank you</h2><p>Our team will review this shortly.</p><button onClick={() => { setReportDone(false); onClose(); }} type="button">Done</button></div> : reporting ? <><h2>{`Report ${firstName}`}</h2><div className="profile-quick-actions-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this profile?</p>{atseenReportReasons.map((reason) => <button className="profile-quick-action-row" disabled={Boolean(busy)} key={reason} onClick={() => report(reason)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{reason}</b></span></button>)}<button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(false)} type="button"><span className="profile-quick-action-copy"><b>Back</b></span></button></div></> : <><h2>{firstName}</h2><div className="profile-quick-actions-list">
           <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiSend /></span><span className="profile-quick-action-copy"><b>Share profile</b></span></button>
           <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(true)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>Report</b></span></button>
           <button className="profile-quick-action-row is-danger" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? `Unblock ${firstName}` : `Block ${firstName}`}</b><small>{blocked ? "allow them to find and message you" : "they won’t find you or message you"}</small></span></button>
-        </div>}
+        </div></>}
         {error ? <p className="profile-visitor-action-error" role="alert">{error}</p> : null}
       </section>
     </div>
@@ -616,13 +615,13 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
   const [giftsOpen, setGiftsOpen] = useState(false);
   const [sendGiftOpen, setSendGiftOpen] = useState(shouldOpenGiftPicker);
   const [giftRecipient, setGiftRecipient] = useState(() => shouldOpenGiftPicker
-    ? { id: profile.ownerUserId, name: profile.displayName }
+    ? { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar) }
     : null);
   useEffect(() => {
     if (!shouldOpenGiftPicker) return;
-    setGiftRecipient({ id: profile.ownerUserId, name: profile.displayName });
+    setGiftRecipient({ id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar) });
     setSendGiftOpen(true);
-  }, [profile?.displayName, profile?.ownerUserId, shouldOpenGiftPicker]);
+  }, [profile?.avatar, profile?.displayName, profile?.ownerUserId, shouldOpenGiftPicker]);
   const closeGiftPicker = () => {
     setSendGiftOpen(false);
     setGiftRecipient(null);
@@ -668,20 +667,23 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
       </span>
       <FiChevronRight />
     </button>
-    <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={(recipient = null) => { setGiftRecipient(recipient || { id: profile.ownerUserId, name: profile.displayName }); setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} />
+    <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={(recipient = null) => { setGiftRecipient(recipient || { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar) }); setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} />
     {directGiftPicker}
     </>
   );
 }
 
 function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [sheetPosition, setSheetPosition] = useState(undefined);
   const [previewGift, setPreviewGift] = useState(null);
   const [detailGift, setDetailGift] = useState(null);
-  const [featuredGiftIds, setFeaturedGiftIds] = useState(() => new Set());
   const [thanking, setThanking] = useState(false);
   const [thankNotice, setThankNotice] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+  const [reportError, setReportError] = useState("");
+  const [reportingReason, setReportingReason] = useState("");
   const query = useQuery({
     queryKey: ["profile", "received-gifts", isOwner ? "me" : profile?.username],
     queryFn: () => (isOwner ? profileService.getOwnReceivedGifts() : profileService.getReceivedGifts(profile.username)).then((response) => response.data.data),
@@ -693,6 +695,10 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     setPreviewGift(null);
     setDetailGift(null);
     setThankNotice("");
+    setReportOpen(false);
+    setReportDone(false);
+    setReportError("");
+    setReportingReason("");
   }, [isOpen]);
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -730,8 +736,32 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     const timeout = window.setTimeout(() => setThankNotice(""), 2800);
     return () => window.clearTimeout(timeout);
   }, [thankNotice]);
-  if (!isOpen) return null;
   const gifts = query.data?.gifts || [];
+  const total = Number(query.data?.total || gifts.length || 0);
+  const selectedSender = detailGift?.sender || {};
+  const giftValue = Number(detailGift?.stars || 0);
+  const profileStateMutation = useMutation({
+    mutationFn: ({ giftId, payload }) => profileService.updateReceivedGiftProfileState(giftId, payload).then((response) => response.data.data.gift),
+    onError: (error) => setThankNotice(error.response?.data?.message || "Gift setting could not be saved"),
+    onSuccess: async (gift) => {
+      setDetailGift((current) => current?.id === gift.id ? { ...current, ...gift } : current);
+      await query.refetch();
+      await queryClient.invalidateQueries({ queryKey: ["profile", "received-gifts"] });
+    },
+  });
+  const reportMutation = useMutation({
+    mutationFn: ({ giftId, reason }) => profileService.reportReceivedGift(giftId, { reason }).then((response) => response.data.data),
+    onMutate: ({ reason }) => {
+      setReportingReason(reason);
+      setReportError("");
+    },
+    onError: (error) => setReportError(error.response?.data?.message || "Report could not be submitted."),
+    onSuccess: () => {
+      setReportDone(true);
+      setThankNotice("Report submitted.");
+    },
+    onSettled: () => setReportingReason(""),
+  });
   const thankGift = async () => {
     if (!detailGift || detailGift.thankedAt || thanking) return;
     setThanking(true);
@@ -740,44 +770,88 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
       const thankedAt = response.data.data.thankedAt;
       setDetailGift((current) => current ? { ...current, thankedAt } : current);
       setThankNotice("They’ll know you appreciated it ✦");
-      query.refetch();
+      await query.refetch();
     } catch (requestError) {
       setThankNotice(requestError.response?.data?.message || "Could not send your thanks");
     } finally {
       setThanking(false);
     }
   };
+  const toggleFeatured = () => {
+    if (!detailGift || profileStateMutation.isPending) return;
+    profileStateMutation.mutate({ giftId: detailGift.id, payload: { featuredOnProfile: !detailGift.featuredOnProfile } });
+  };
+  const toggleHidden = () => {
+    if (!detailGift || profileStateMutation.isPending) return;
+    profileStateMutation.mutate({ giftId: detailGift.id, payload: { hiddenFromProfile: !detailGift.hiddenFromProfile } });
+  };
+  const senderLine = (gift) => {
+    const parts = [gift.sender?.name || gift.source || "Gift"];
+    if (gift.visibility === "RECIPIENT_ONLY") parts.push("private");
+    if (gift.hiddenFromProfile) parts.push("hidden");
+    return parts.join(" · ");
+  };
+  const reportSheet = reportOpen && detailGift ? (
+    <section aria-label="Report Gift" className="profile-gift-report-sheet">
+      <button aria-label="Back to gift details" className="profile-gift-detail-handle" onClick={() => { setReportOpen(false); setReportDone(false); }} type="button" />
+      {reportDone ? (
+        <div className="profile-gift-report-done">
+          <FiEye aria-hidden="true" />
+          <h2>Thank you</h2>
+          <p>Our team will review this shortly.</p>
+          <button onClick={() => { setReportOpen(false); setReportDone(false); }} type="button">Done</button>
+        </div>
+      ) : (
+        <>
+          <h2>Report Gift</h2>
+          <p>Why are you reporting this?</p>
+          <div className="profile-gift-report-reasons">
+            {atseenReportReasons.map((reason) => (
+              <button disabled={reportMutation.isPending} key={reason} onClick={() => reportMutation.mutate({ giftId: detailGift.id, reason })} type="button">
+                <span>{reportingReason === reason ? "Reporting..." : reason}</span>
+                <FiChevronRight aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+          {reportError ? <p className="profile-gift-report-error">{reportError}</p> : null}
+        </>
+      )}
+    </section>
+  ) : null;
+  if (!isOpen) return null;
   return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog" style={sheetPosition}>
     {thankNotice ? <div aria-live="polite" className="profile-gift-thank-toast">{thankNotice}</div> : null}
-    {previewGift ? <GiftCelebration detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message="Gift received" /> : null}
-    {detailGift ? <section aria-label={`${detailGift.name} gift details`} className="profile-gift-detail-sheet">
+    {previewGift ? <GiftCelebration detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message="Gift received" variant="is-profile-gift" /> : null}
+    {reportSheet || (detailGift ? <section aria-label={`${detailGift.name} gift details`} className="profile-gift-detail-sheet">
       <button aria-label="Back to received gifts" className="profile-gift-detail-handle" onClick={() => setDetailGift(null)} type="button" />
-      <button aria-label="Replay gift animation" className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><img alt={detailGift.name} src={detailGift.imageUrl} /></button>
+      <button aria-label="Replay gift animation" className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><span aria-hidden="true" /><img alt={detailGift.name} src={detailGift.imageUrl} /></button>
       <h2>{detailGift.name}</h2>
-      {detailGift.message ? <blockquote>“{detailGift.message}”</blockquote> : null}
+      {detailGift.message ? <blockquote>&ldquo;{detailGift.message}&rdquo;</blockquote> : null}
       <button className="profile-gift-detail-replay" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button">▶ Replay</button>
-      <p className="profile-gift-detail-sender">from {detailGift.sender?.name || detailGift.source || "a supporter"} · {relativeTime(detailGift.createdAt)}</p>
-      {isOwner ? <p className="profile-gift-detail-balance">+✦{Number(detailGift.stars || 0).toLocaleString()} <span>already in your balance</span></p> : <p className="profile-gift-detail-balance">✦{Number(detailGift.stars || 0).toLocaleString()} <span>gift value</span></p>}
-      <p className="profile-gift-detail-source">via {detailGift.source || "Gift"}</p>
-      {detailGift.sender?.avatar || detailGift.sender?.name ? <div className="profile-gift-detail-person"><FanAvatar name={detailGift.sender?.name || "Supporter"} size="h-7 w-7" src={detailGift.sender?.avatar} /><span>{detailGift.sender?.name || "Supporter"} ›</span></div> : null}
+      <p className="profile-gift-detail-sender">from {selectedSender.name || detailGift.source || "a supporter"}{relativeTime(detailGift.createdAt) ? ` · ${relativeTime(detailGift.createdAt)}` : ""}</p>
+      {giftValue > 0 ? <p className="profile-gift-detail-balance">+✦{giftValue.toLocaleString()} <span>{isOwner ? "already on your balance" : "gift value"}</span></p> : null}
+      <p className="profile-gift-detail-source">{detailGift.visibility === "RECIPIENT_ONLY" ? "Sender visible only to you" : detailGift.hiddenFromProfile ? "Only you can see this gift" : "Sender visible on your profile"}<br />{detailGift.hiddenFromProfile ? "hidden from profile" : "on your profile"}</p>
+      {selectedSender.avatar || selectedSender.name ? (selectedSender.username ? <Link className="profile-gift-detail-person" onClick={onClose} to={`/profile/${encodeURIComponent(selectedSender.username)}`}><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || "Supporter").split(" ")[0]} ›</span></Link> : <div className="profile-gift-detail-person"><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || "Supporter").split(" ")[0]} ›</span></div>) : null}
       <div className="profile-gift-detail-actions">
-        {isOwner && detailGift.sender?.id ? <button className={detailGift.thankedAt ? "is-thanked" : ""} disabled={Boolean(detailGift.thankedAt) || thanking} onClick={thankGift} type="button">{detailGift.thankedAt ? "Thanked ✓" : thanking ? "Thanking…" : "Thank them"}</button> : null}
-        {isOwner ? (detailGift.sender?.username ? <button onClick={() => { onClose(); navigate(`/profile/${encodeURIComponent(detailGift.sender.username)}?sendGift=1`); }} type="button">Send one back</button> : null) : <button onClick={() => onSendGift()} type="button">Send a gift</button>}
+        {isOwner && selectedSender.id ? <button className={detailGift.thankedAt ? "is-thanked" : ""} disabled={Boolean(detailGift.thankedAt) || thanking} onClick={thankGift} type="button">{detailGift.thankedAt ? "Thanked ✓" : thanking ? "Thanking..." : "Thank them"}</button> : null}
+        {isOwner ? (selectedSender.id ? <button onClick={() => { onSendGift({ id: selectedSender.id, name: selectedSender.name, avatar: selectedSender.avatar }); }} type="button">Send one back</button> : null) : <button onClick={() => onSendGift()} type="button">Send a gift</button>}
       </div>
-      {isOwner ? <div className="profile-gift-detail-controls"><button className={featuredGiftIds.has(detailGift.id) ? "is-featured" : ""} onClick={() => setFeaturedGiftIds((current) => { const next = new Set(current); if (next.has(detailGift.id)) next.delete(detailGift.id); else next.add(detailGift.id); return next; })} type="button">✦ {featuredGiftIds.has(detailGift.id) ? "Featured" : "Feature"}</button><button onClick={() => setDetailGift(null)} type="button">Hide from view</button></div> : null}
+      {isOwner ? <div className="profile-gift-detail-controls"><button className={detailGift.featuredOnProfile ? "is-featured" : ""} disabled={profileStateMutation.isPending} onClick={toggleFeatured} type="button">{detailGift.featuredOnProfile ? "✦ Featured" : "Pin to profile"}</button><button disabled={profileStateMutation.isPending} onClick={toggleHidden} type="button">{detailGift.hiddenFromProfile ? "Show on profile" : "Hide from profile"}</button></div> : null}
+      {detailGift.hiddenFromProfile ? <p className="profile-gift-detail-private-note">Only you can see this gift</p> : null}
+      {isOwner ? <button className="profile-gift-detail-report" onClick={() => setReportOpen(true)} type="button">Report this gift or note</button> : null}
     </section> : <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
-      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={onSendGift} type="button">Send a gift</button> : null}</header>
+      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={onSendGift} type="button">Send a gift</button> : null}</header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
       <div className="profile-received-gifts-grid">
-        {gifts.map((gift) => <button aria-label={`Play ${gift.name} gift animation`} className="profile-received-gift" key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
+        {gifts.map((gift) => <button aria-label={`Play ${gift.name} gift animation`} className={gift.featuredOnProfile ? "profile-received-gift is-featured" : "profile-received-gift"} key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
           <span><img alt={gift.name} src={gift.imageUrl} /></span>
           <strong>{gift.name}</strong>
-          <small>{gift.sender?.name || gift.source || "Gift"}{gift.visibility && gift.visibility !== "EVERYONE" ? ` · ${gift.visibility.toLowerCase()}` : ""}</small>
+          <small>{senderLine(gift)}</small>
         </button>)}
       </div>
-    </section>}
+    </section>)}
   </div>;
 }
 
