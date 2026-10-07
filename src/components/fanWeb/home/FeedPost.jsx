@@ -314,6 +314,15 @@ function voiceStoryCopy(media = {}, fallback = "") {
   };
 }
 
+function WallPostViewEye() {
+  return (
+    <svg aria-hidden="true" className="home-feed-head-eye" fill="none" viewBox="0 0 16 10">
+      <path d="M1 5c1.85-2.05 4.2-3.05 7-3.05s5.15 1 7 3.05c-1.85 2.05-4.2 3.05-7 3.05S2.85 7.05 1 5Z" />
+      <circle cx="8" cy="5" r="1.15" />
+    </svg>
+  );
+}
+
 function FeedPost({ post, profileMenu = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -795,7 +804,7 @@ function FeedPost({ post, profileMenu = false }) {
             </Link>
           ) : <span className="ml-auto" />}
           <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
-            <FiEye aria-hidden="true" /> <span>{formatCount(viewCount)}</span>
+            <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>
           <button
             aria-label={`More actions for ${creator.name}'s post`}
