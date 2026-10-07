@@ -12,9 +12,10 @@ function CreateHubPage() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
   const initialStoryDraft = location.state?.storyDraft || null;
   const returnTo = location.state?.returnTo || "";
-  const [storyCreatorOpen, setStoryCreatorOpen] = useState(Boolean(location.state?.openStoryComposer));
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(Boolean(location.state?.openStoryComposer || searchParams.get("story") === "1"));
   const canCreate = canCreateStory(user);
   const capabilities = socialCapabilitiesFor(user);
   const publicationsQuery = useQuery({

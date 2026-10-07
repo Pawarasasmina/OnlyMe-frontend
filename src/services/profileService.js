@@ -9,6 +9,8 @@ export const profileService = {
   getOwnMedia: () => axiosInstance.get("/profiles/me/media"),
   getOwnReceivedGifts: () => axiosInstance.get("/profiles/me/gifts"),
   thankReceivedGift: (giftId) => axiosInstance.post(`/profiles/me/gifts/${encodeURIComponent(giftId)}/thank`),
+  updateReceivedGiftProfileState: (giftId, payload) => axiosInstance.patch(`/profiles/me/gifts/${encodeURIComponent(giftId)}/profile-state`, payload),
+  reportReceivedGift: (giftId, payload) => axiosInstance.post(`/profiles/me/gifts/${encodeURIComponent(giftId)}/report`, payload),
   getReceivedGifts: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/gifts`),
   getProfileMedia: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/media`),
   addProfileMedia: (file, caption = "") => {
