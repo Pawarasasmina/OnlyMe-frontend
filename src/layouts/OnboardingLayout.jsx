@@ -2,7 +2,7 @@ import AtseenLogo from "../components/branding/AtseenLogo";
 
 function OnboardingLayout({ backDisabled = false, children, currentStep = 0, onBack, onSkip, saving = false, steps = [] }) {
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-[#050608] text-white">
+    <div className="user-app-shell min-h-[100dvh] overflow-x-hidden bg-[#050608] text-white">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(900px_500px_at_70%_18%,rgba(156,203,255,0.12),transparent_60%),radial-gradient(640px_420px_at_20%_85%,rgba(111,169,232,0.08),transparent_62%)]" />
       <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[1120px] flex-col px-4 py-[max(16px,env(safe-area-inset-top))] sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-4 py-3">

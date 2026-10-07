@@ -9,7 +9,6 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiCopy,
-  FiEye,
   FiFilm,
   FiGlobe,
   FiGrid,
@@ -3347,10 +3346,6 @@ export default function SeenComposerPage() {
           />
         ) : null}
 
-        <p className="seen-compose-counter">
-          <FiEye aria-hidden="true" />
-          <b>0</b> saw this {"\u2014"} the counter comes alive after you publish
-        </p>
         {replyToSeenId ? (
           <p className="seen-compose-reply-context">
             Replying to{" "}

@@ -41,9 +41,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
                 </span>
               ) : null}
               {item.to === "/activity" && unreadActivityCount > 0 ? (
-                <span aria-hidden="true" className="absolute -right-2 -top-2 hidden h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">
-                  {unreadActivityCount > 99 ? "99+" : unreadActivityCount}
-                </span>
+                <span aria-hidden="true" className="fan-sidebar-activity-dot absolute -right-0.5 -top-0.5 h-[7px] w-[7px] rounded-full bg-atseen-blue" />
               ) : null}
             </span>
 
@@ -54,11 +52,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                 </span>
               ) : null}
-              {item.to === "/activity" && unreadActivityCount > 0 ? (
-                <span aria-label={`${unreadActivityCount} unread activities`} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">
-                  {unreadActivityCount > 99 ? "99+" : unreadActivityCount}
-                </span>
-              ) : null}
+              {item.to === "/activity" && unreadActivityCount > 0 ? <span className="sr-only">{unreadActivityCount} unread activities</span> : null}
             </span>
           </NavLink>
         ))}

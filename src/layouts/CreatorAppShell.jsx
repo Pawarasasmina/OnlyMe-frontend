@@ -31,7 +31,7 @@ export default function CreatorAppShell() {
     </NavLink>
   ));
 
-  return <CallProvider user={user}><div className="creator-shell">
+  return <CallProvider user={user}><div className="user-app-shell creator-shell">
     <header className="creator-mobile-header"><NavLink className="creator-logo" to="/creator/studio">ONLYME</NavLink><button aria-label="Open navigation" onClick={() => setOpen(true)}><FiMenu /></button></header>
     <aside className={`creator-sidebar ${open ? "is-open" : ""}`}>
       <div className="flex items-center justify-between"><NavLink className="creator-logo" to="/creator/studio">ONLYME</NavLink><button className="lg:hidden" aria-label="Close navigation" onClick={() => setOpen(false)}><FiX /></button></div>
