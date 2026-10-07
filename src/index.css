@@ -36685,6 +36685,51 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   }
 }
 
+/* Wall notes must never make the fixed center column wider. Seed/demo notes
+   commonly have long locations, contexts, and translated voice transcripts. */
+.home-prototype-page,
+.home-prototype-main,
+.home-feed-list,
+.home-feed-post,
+.home-shared-post,
+.home-feed-media,
+.home-feed-voice-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-feed-post-head > :nth-child(2) {
+  min-width: 0;
+}
+
+.home-feed-post-head .home-context-pill {
+  min-width: 0;
+  flex: 0 1 150px;
+}
+
+.home-feed-post-head .home-feed-head-views,
+.home-feed-post-head > button {
+  flex: none;
+}
+
+.home-feed-text,
+.home-feed-voice-transcript p {
+  overflow-wrap: anywhere;
+}
+
+.home-feed-voice-card > .voice-message-bubble,
+.home-feed-voice-card > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 520px) {
+  .home-feed-post-head .home-context-pill {
+    max-width: 112px;
+    flex-basis: 112px;
+  }
+}
+
 /* Share sheet prototype sizing at every viewport. Positioning remains responsive,
    while the content proportions and compact action row stay consistent. */
 .share-sheet-overlay .share-sheet-header h2,
