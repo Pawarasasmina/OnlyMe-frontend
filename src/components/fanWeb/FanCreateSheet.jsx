@@ -42,31 +42,29 @@ function FanCreateSheet({
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    const createButton = document.querySelector('.seen-proto-header-actions button[aria-label="Create"], .profile-top-icon[aria-label="Create"], .sidebar-create-action');
+    const centerColumn = document.querySelector(".social-center-scroll");
     const updatePosition = () => {
-      if (!createButton) {
-        setPosition(undefined);
-        return;
-      }
-      const bounds = createButton.getBoundingClientRect();
+      const compact = window.innerWidth < 881;
+      const bounds = compact || !centerColumn
+        ? { left: 0, width: window.innerWidth }
+        : centerColumn.getBoundingClientRect();
       const menuWidth = Math.min(184, window.innerWidth - 16);
-      const left = Math.min(Math.max(8, bounds.left + bounds.width / 2 - 136), window.innerWidth - menuWidth - 8);
-      const menuHeight = 252;
-      const bottom = Math.max(82, Math.min(window.innerHeight - bounds.bottom - 8, 118));
+      const left = Math.min(
+        Math.max(8, bounds.left + (bounds.width - menuWidth) / 2),
+        window.innerWidth - menuWidth - 8,
+      );
       setPosition({
         "--create-menu-left": `${left}px`,
-        "--create-menu-bottom": `${Math.max(8, Math.min(bottom, window.innerHeight - menuHeight - 8))}px`,
+        "--create-menu-bottom": compact ? "calc(env(safe-area-inset-bottom) + 72px)" : "16px",
         "--create-menu-width": `${menuWidth}px`,
       });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
-    observer?.observe(createButton);
+    if (centerColumn) observer?.observe(centerColumn);
     return () => {
       window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
       observer?.disconnect();
     };
   }, [isOpen]);

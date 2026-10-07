@@ -37055,6 +37055,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   bottom: var(--create-menu-bottom, calc(env(safe-area-inset-bottom) + 92px)) !important;
   left: var(--create-menu-left, calc(100vw - 204px)) !important;
   width: var(--create-menu-width, 184px) !important;
+  transform: none !important;
   max-height: none !important;
   overflow: visible !important;
   border: 0 !important;
