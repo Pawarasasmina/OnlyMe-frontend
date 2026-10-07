@@ -10,6 +10,7 @@ import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
+import SeenEyeMark from "../../components/branding/SeenEyeMark";
 import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
@@ -183,13 +184,6 @@ function SeenSkeleton() {
   </div>;
 }
 
-function SeenTabEyeMark({ className = "" } = {}) {
-  return <svg aria-hidden="true" className={`seen-tab-eye-mark ${className}`.trim()} viewBox="0 0 64 40">
-    <path d="M2 20C14 3 50 3 62 20C50 37 14 37 2 20Z" fill="currentColor" />
-    <circle cx="32" cy="20" r="8.5" fill="#0A0C0F" />
-  </svg>;
-}
-
 function SeenThinEyeMark({ className = "" }) {
   return <svg aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <path d="M2.5 12C5.4 6.9 18.6 6.9 21.5 12C18.6 17.1 5.4 17.1 2.5 12Z" />
@@ -201,7 +195,7 @@ function SeenHeader({ activeTab, activityCount = 0, onTabChange, onActivity, onC
   const activityLabel = activityCount > 99 ? "99+" : String(activityCount);
   return <header className="seen-proto-header">
     <nav aria-label="Seen feed tabs" className="seen-proto-tabs">
-      <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><SeenTabEyeMark />Seen</button>
+      <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><SeenEyeMark className="seen-tab-eye-mark" />Seen</button>
       <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">Friends</button>
     </nav>
     <div className="seen-proto-header-actions">
@@ -1022,7 +1016,7 @@ function EmptyState({ tab }) {
 
 function EndState({ onCreate }) {
   return <section className="seen-end-state">
-    <SeenTabEyeMark className="seen-end-eye-mark" />
+    <SeenEyeMark className="seen-tab-eye-mark seen-end-eye-mark" />
     <h2>You’re all caught up ✦</h2>
     <p>Now show them something. Post what only you can show.</p>
     <button onClick={onCreate} type="button">Create a Seen ✦</button>

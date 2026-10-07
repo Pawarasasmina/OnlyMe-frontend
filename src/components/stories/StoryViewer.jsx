@@ -35,8 +35,8 @@ function useStoryViewerPosition(isOpen) {
       const bounds = centerColumn.getBoundingClientRect();
       setPosition({
         left: `${bounds.left}px`,
-        right: 0,
-        width: "auto",
+        right: "auto",
+        width: `${bounds.width}px`,
         "--story-viewer-column-left": `${bounds.left}px`,
         "--story-viewer-column-width": `${bounds.width}px`,
       });

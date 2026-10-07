@@ -88,7 +88,9 @@ function FanHomePage() {
     : "";
   const activeFilter = HOME_FILTERS.some((filter) => filter.key === requestedFilter) ? requestedFilter : "all";
   const requestedCity = searchParams.get("city") || "";
+  const requestedCountryCode = searchParams.get("country") || "";
   const [selectedLocation, setSelectedLocation] = useState(requestedCity);
+  const [selectedCountryCode, setSelectedCountryCode] = useState(requestedCountryCode);
   const [page, setPage] = useState(1);
   const [feedPosts, setFeedPosts] = useState([]);
   const sentinelRef = useRef(null);
@@ -169,12 +171,19 @@ function FanHomePage() {
     window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
   }, [setSearchParams]);
 
-  const changeLocation = useCallback((location) => {
+  const changeLocation = useCallback((location, countryCode = "") => {
     setSelectedLocation(location);
+    setSelectedCountryCode(countryCode);
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
-      if (location) next.set("city", location);
-      else next.delete("city");
+      if (location) {
+        next.set("city", location);
+        if (countryCode) next.set("country", countryCode);
+        else next.delete("country");
+      } else {
+        next.delete("city");
+        next.delete("country");
+      }
       return next;
     }, { replace: true });
   }, [setSearchParams]);
@@ -184,6 +193,7 @@ function FanHomePage() {
       <section className="home-prototype-main" aria-label="Home feed">
         <HomeHeader
           activityCount={unreadActivityCount}
+          countryCode={selectedCountryCode}
           location={feedLocation}
           locationOptions={locationOptions}
           onLocationChange={changeLocation}

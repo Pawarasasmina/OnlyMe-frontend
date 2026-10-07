@@ -4902,8 +4902,8 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 }
 .story-owner-viewers-avatars {
   display: flex;
-  width: 72px;
-  min-width: 72px;
+  width: max-content;
+  min-width: 0;
   align-items: center;
 }
 .story-owner-viewers-avatars > * {
@@ -10312,6 +10312,14 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .home-location-pill svg {
   width: 12px;
   height: 12px;
+}
+
+.home-location-country-code {
+  color: var(--feed-primary);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: -.02em;
+  line-height: 1;
 }
 
 .home-spark-button {
@@ -17772,11 +17780,13 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   }
 }
 
-/* Whenever desktop navigation is present, the Story canvas owns the full
-   center column and the remaining workspace to its right stays black. */
+/* Whenever desktop navigation is present, keep the Story composer and its
+   backdrop inside the center column so both application rails stay visible. */
 @media (min-width: 881px) {
   .story-composer-overlay {
     left: calc(var(--story-composer-center-x, 50%) - (var(--story-composer-column-width, 640px) / 2));
+    right: auto;
+    width: var(--story-composer-column-width, 640px);
     justify-content: flex-start;
   }
 
@@ -24272,6 +24282,13 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-size: 10px;
   font-weight: 600;
   letter-spacing: .1px;
+}
+
+.social-app-shell .discover-recommendation-heading .discover-orb-chip:hover,
+.social-app-shell .discover-recommendation-heading .discover-orb-chip.is-selected {
+  border-color: #fff;
+  background: #fff;
+  color: #07090d;
 }
 
 .social-app-shell .discover-orb-grid {

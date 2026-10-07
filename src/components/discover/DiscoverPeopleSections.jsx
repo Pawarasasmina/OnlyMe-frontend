@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import StoryPresenceLabel from "../stories/StoryPresenceLabel";
 import StoryStatusBadge from "../stories/StoryStatusBadge";
@@ -41,10 +41,9 @@ function FriendAvatarContent({ friend }) {
 
 function DiscoverFriendsSection({
   friends = [],
-  onDismiss,
   onOpenFriendStories,
   title = "Friends",
-  subtitle = "People you follow who follow you back",
+  subtitle,
 }) {
   if (!friends.length) return null;
 
@@ -53,9 +52,8 @@ function DiscoverFriendsSection({
       <div className="discover-orb-heading-row">
         <div className="discover-orb-heading-copy">
           <h2 id="discover-friends-title">{title}</h2>
-          <p>{subtitle}</p>
+          {subtitle ? <p>{subtitle}</p> : null}
         </div>
-        {onDismiss ? <button aria-label="Hide Following" className="discover-following-dismiss" onClick={onDismiss} type="button"><FiX aria-hidden="true" /></button> : null}
       </div>
       <div className="discover-friends-strip atseen-hide-scrollbar" role="list">
         {friends.map((friend) => {
@@ -197,7 +195,6 @@ function DiscoverPeopleSections({
   friendSectionTitle,
   friendSectionSubtitle,
   following,
-  onDismissFriends,
   onOpenFriendStories,
   onOpenFollowingStories,
 }) {
@@ -205,7 +202,6 @@ function DiscoverPeopleSections({
     <>
       <DiscoverFriendsSection
         friends={friends}
-        onDismiss={onDismissFriends}
         onOpenFriendStories={onOpenFriendStories}
         subtitle={friendSectionSubtitle}
         title={friendSectionTitle}

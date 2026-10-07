@@ -20,7 +20,7 @@ function uniqueCities(items = []) {
   }, []);
 }
 
-function HomeHeader({ activityCount = 0, location = "", locationOptions = [], onLocationChange }) {
+function HomeHeader({ activityCount = 0, countryCode = "", location = "", locationOptions = [], onLocationChange }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
@@ -31,7 +31,8 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
   const [sheetPosition, setSheetPosition] = useState({});
   const menuRef = useRef(null);
   const inputRef = useRef(null);
-  const currentLocation = cityName(location) || "Choose city";
+  const hasSelectedLocation = Boolean(String(location || "").trim());
+  const currentLocation = hasSelectedLocation ? cityName(location) : "Worldwide";
   const suggestedLocations = useMemo(() => uniqueCities(locationOptions).slice(0, 12), [locationOptions]);
 
   useEffect(() => {
@@ -93,8 +94,8 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [open, position, search]);
 
-  const chooseLocation = (value) => {
-    onLocationChange?.(value);
+  const chooseLocation = (value, code = "") => {
+    onLocationChange?.(value, code);
     setOpen(false);
     setSearch("");
   };
@@ -130,7 +131,7 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
           onClick={() => setOpen((current) => !current)}
           type="button"
         >
-          <FiMapPin aria-hidden="true" />
+          {hasSelectedLocation ? <span aria-hidden="true" className="home-location-country-code">{countryCode || "--"}</span> : <FiGlobe aria-hidden="true" />}
           <span>{currentLocation}</span>
           <FiChevronDown aria-hidden="true" />
         </button>
@@ -170,8 +171,8 @@ function HomeHeader({ activityCount = 0, location = "", locationOptions = [], on
             <div className="home-location-results">
               {loading ? <p>Searching locations…</p> : null}
               {!loading && searchError ? <p role="alert">{searchError}</p> : null}
-              {!loading && !searchError && search.trim().length < 2 ? suggestedLocations.map((item) => <button key={item.label} onClick={() => chooseLocation(item.label)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong><small>{item.label.includes(",") ? item.label.split(",").slice(1).join(",").trim() : "City or country"}</small></span></button>) : null}
-              {!loading && !searchError ? results.map((item) => <button aria-pressed={location === item.label} key={`${item.code}-${item.label}`} onClick={() => chooseLocation(item.label)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span></button>) : null}
+              {!loading && !searchError && search.trim().length < 2 ? suggestedLocations.map((item) => <button key={item.label} onClick={() => chooseLocation(item.label, item.code)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong><small>{item.label.includes(",") ? item.label.split(",").slice(1).join(",").trim() : "City or country"}</small></span></button>) : null}
+              {!loading && !searchError ? results.map((item) => <button aria-pressed={location === item.label} key={`${item.code}-${item.label}`} onClick={() => chooseLocation(item.label, item.code)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span></button>) : null}
               {!loading && !searchError && search.trim().length >= 2 && !results.length ? <p>No locations found.</p> : null}
             </div>
             </section>
