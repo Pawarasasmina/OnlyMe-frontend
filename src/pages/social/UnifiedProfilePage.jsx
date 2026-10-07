@@ -611,8 +611,28 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
 }
 
 function ProfileGiftStrip({ profile, viewerCapabilities }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const shouldOpenGiftPicker = searchParams.get("sendGift") === "1" && !viewerCapabilities.isOwner && Boolean(profile?.ownerUserId);
   const [giftsOpen, setGiftsOpen] = useState(false);
-  const [sendGiftOpen, setSendGiftOpen] = useState(false);
+  const [sendGiftOpen, setSendGiftOpen] = useState(shouldOpenGiftPicker);
+  const [giftRecipient, setGiftRecipient] = useState(() => shouldOpenGiftPicker
+    ? { id: profile.ownerUserId, name: profile.displayName }
+    : null);
+  useEffect(() => {
+    if (!shouldOpenGiftPicker) return;
+    setGiftRecipient({ id: profile.ownerUserId, name: profile.displayName });
+    setSendGiftOpen(true);
+  }, [profile?.displayName, profile?.ownerUserId, shouldOpenGiftPicker]);
+  const closeGiftPicker = () => {
+    setSendGiftOpen(false);
+    setGiftRecipient(null);
+    if (searchParams.get("sendGift") !== "1") return;
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("sendGift");
+      return next;
+    }, { replace: true });
+  };
   const dreamQuery = useQuery({
     queryKey: ["creator-dream", profile?.username],
     queryFn: () => dreamService.getCreatorDream(profile.username).then((response) => response.data.data),
@@ -627,11 +647,14 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
     retry: false,
     staleTime: 30000,
   });
-  if (profile?.role !== "creator" && !viewerCapabilities.isOwner) return null;
+  const directGiftPicker = sendGiftOpen && giftRecipient
+    ? <StoryGiftPicker onClose={closeGiftPicker} recipient={giftRecipient} sourceType="DIRECT" />
+    : null;
+  if (profile?.role !== "creator" && !viewerCapabilities.isOwner) return directGiftPicker;
   const dream = dreamQuery.data?.dream;
   const gifts = receivedQuery.data?.gifts || [];
   const count = Number(receivedQuery.data?.total || gifts.length || 0);
-  if (!dream && !gifts.length && !viewerCapabilities.isOwner) return null;
+  if (!dream && !gifts.length && !viewerCapabilities.isOwner) return directGiftPicker;
   return (
     <>
     <button className="profile-gift-strip" id="profile-gifts" onClick={() => setGiftsOpen(true)} type="button">
@@ -645,15 +668,20 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
       </span>
       <FiChevronRight />
     </button>
-    <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={() => { setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} />
-    {sendGiftOpen ? <StoryGiftPicker onClose={() => setSendGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName }} sourceType="DIRECT" /> : null}
+    <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={(recipient = null) => { setGiftRecipient(recipient || { id: profile.ownerUserId, name: profile.displayName }); setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} />
+    {directGiftPicker}
     </>
   );
 }
 
 function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
+  const navigate = useNavigate();
   const [sheetPosition, setSheetPosition] = useState(undefined);
   const [previewGift, setPreviewGift] = useState(null);
+  const [detailGift, setDetailGift] = useState(null);
+  const [featuredGiftIds, setFeaturedGiftIds] = useState(() => new Set());
+  const [thanking, setThanking] = useState(false);
+  const [thankNotice, setThankNotice] = useState("");
   const query = useQuery({
     queryKey: ["profile", "received-gifts", isOwner ? "me" : profile?.username],
     queryFn: () => (isOwner ? profileService.getOwnReceivedGifts() : profileService.getReceivedGifts(profile.username)).then((response) => response.data.data),
@@ -661,11 +689,17 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     retry: false,
   });
   useEffect(() => {
+    if (isOpen) return;
+    setPreviewGift(null);
+    setDetailGift(null);
+    setThankNotice("");
+  }, [isOpen]);
+  useEffect(() => {
     if (!isOpen) return undefined;
-    const close = (event) => event.key === "Escape" && onClose();
+    const close = (event) => event.key === "Escape" && (detailGift ? setDetailGift(null) : onClose());
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [isOpen, onClose]);
+  }, [detailGift, isOpen, onClose]);
   useEffect(() => {
     if (!isOpen) return undefined;
     const centerColumn = document.querySelector(".social-center-scroll");
@@ -685,14 +719,53 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
   }, [isOpen]);
   useEffect(() => {
     if (!previewGift) return undefined;
-    const timeout = window.setTimeout(() => setPreviewGift(null), 2600);
+    const timeout = window.setTimeout(() => {
+      setDetailGift(previewGift);
+      setPreviewGift(null);
+    }, 2600);
     return () => window.clearTimeout(timeout);
   }, [previewGift]);
+  useEffect(() => {
+    if (!thankNotice) return undefined;
+    const timeout = window.setTimeout(() => setThankNotice(""), 2800);
+    return () => window.clearTimeout(timeout);
+  }, [thankNotice]);
   if (!isOpen) return null;
   const gifts = query.data?.gifts || [];
+  const thankGift = async () => {
+    if (!detailGift || detailGift.thankedAt || thanking) return;
+    setThanking(true);
+    try {
+      const response = await profileService.thankReceivedGift(detailGift.id);
+      const thankedAt = response.data.data.thankedAt;
+      setDetailGift((current) => current ? { ...current, thankedAt } : current);
+      setThankNotice("They’ll know you appreciated it ✦");
+      query.refetch();
+    } catch (requestError) {
+      setThankNotice(requestError.response?.data?.message || "Could not send your thanks");
+    } finally {
+      setThanking(false);
+    }
+  };
   return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog" style={sheetPosition}>
+    {thankNotice ? <div aria-live="polite" className="profile-gift-thank-toast">{thankNotice}</div> : null}
     {previewGift ? <GiftCelebration detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message="Gift received" /> : null}
-    <section className="profile-received-gifts-sheet">
+    {detailGift ? <section aria-label={`${detailGift.name} gift details`} className="profile-gift-detail-sheet">
+      <button aria-label="Back to received gifts" className="profile-gift-detail-handle" onClick={() => setDetailGift(null)} type="button" />
+      <button aria-label="Replay gift animation" className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><img alt={detailGift.name} src={detailGift.imageUrl} /></button>
+      <h2>{detailGift.name}</h2>
+      {detailGift.message ? <blockquote>“{detailGift.message}”</blockquote> : null}
+      <button className="profile-gift-detail-replay" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button">▶ Replay</button>
+      <p className="profile-gift-detail-sender">from {detailGift.sender?.name || detailGift.source || "a supporter"} · {relativeTime(detailGift.createdAt)}</p>
+      {isOwner ? <p className="profile-gift-detail-balance">+✦{Number(detailGift.stars || 0).toLocaleString()} <span>already in your balance</span></p> : <p className="profile-gift-detail-balance">✦{Number(detailGift.stars || 0).toLocaleString()} <span>gift value</span></p>}
+      <p className="profile-gift-detail-source">via {detailGift.source || "Gift"}</p>
+      {detailGift.sender?.avatar || detailGift.sender?.name ? <div className="profile-gift-detail-person"><FanAvatar name={detailGift.sender?.name || "Supporter"} size="h-7 w-7" src={detailGift.sender?.avatar} /><span>{detailGift.sender?.name || "Supporter"} ›</span></div> : null}
+      <div className="profile-gift-detail-actions">
+        {isOwner && detailGift.sender?.id ? <button className={detailGift.thankedAt ? "is-thanked" : ""} disabled={Boolean(detailGift.thankedAt) || thanking} onClick={thankGift} type="button">{detailGift.thankedAt ? "Thanked ✓" : thanking ? "Thanking…" : "Thank them"}</button> : null}
+        {isOwner ? (detailGift.sender?.username ? <button onClick={() => { onClose(); navigate(`/profile/${encodeURIComponent(detailGift.sender.username)}?sendGift=1`); }} type="button">Send one back</button> : null) : <button onClick={() => onSendGift()} type="button">Send a gift</button>}
+      </div>
+      {isOwner ? <div className="profile-gift-detail-controls"><button className={featuredGiftIds.has(detailGift.id) ? "is-featured" : ""} onClick={() => setFeaturedGiftIds((current) => { const next = new Set(current); if (next.has(detailGift.id)) next.delete(detailGift.id); else next.add(detailGift.id); return next; })} type="button">✦ {featuredGiftIds.has(detailGift.id) ? "Featured" : "Feature"}</button><button onClick={() => setDetailGift(null)} type="button">Hide from view</button></div> : null}
+    </section> : <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
       <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={onSendGift} type="button">Send a gift</button> : null}</header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
@@ -704,7 +777,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
           <small>{gift.sender?.name || gift.source || "Gift"}{gift.visibility && gift.visibility !== "EVERYONE" ? ` · ${gift.visibility.toLowerCase()}` : ""}</small>
         </button>)}
       </div>
-    </section>
+    </section>}
   </div>;
 }
 
