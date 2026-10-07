@@ -24469,6 +24469,17 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
     max-width: var(--story-viewer-column-width, 640px) !important;
     flex: 0 0 var(--story-viewer-column-width, 640px);
   }
+
+  /* The owner insights layer also covers the right rail. Anchor its sheet to
+     the story column itself so viewport flex centering cannot push it right. */
+  .story-owner-viewers-layer .story-owner-viewers-sheet {
+    position: fixed;
+    right: auto;
+    bottom: 0;
+    left: var(--story-viewer-column-left, 0);
+    width: var(--story-viewer-column-width, 500px);
+    max-width: var(--story-viewer-column-width, 500px);
+  }
 }
 
 /* Seen reaction picker and reactor list share the center-column sheet axis. */

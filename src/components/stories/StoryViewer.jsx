@@ -37,6 +37,7 @@ function useStoryViewerPosition(isOpen) {
         left: `${bounds.left}px`,
         right: 0,
         width: "auto",
+        "--story-viewer-column-left": `${bounds.left}px`,
         "--story-viewer-column-width": `${bounds.width}px`,
       });
     };

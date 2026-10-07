@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMoreHorizontal, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -673,7 +673,6 @@ function SeenOverview({
       </div>
       <button aria-label="Close Seen" className="seen-detail-close" onClick={onBack} type="button"><FiX /></button>
       <div className="seen-detail-more-wrap">
-        <button aria-expanded={moreOpen} aria-label="More Seen actions" className="seen-detail-more-button" onClick={() => setMoreOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
         {moreOpen ? <SeenDetailMoreMenu canAddToMedia={canAddToMedia} creator={creator} title={detail.title} onAddToMedia={addToMedia} onClose={() => setMoreOpen(false)} onReport={report} onReportSpam={reportSpam} onShare={share} /> : null}
       </div>
     </header>
