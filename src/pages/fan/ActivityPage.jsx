@@ -22,7 +22,6 @@ import { relativeTime } from "../../utils/relativeTime";
 
 const RECEIVED_FILTERS = [
   ["All", "all"],
-  ["Seen", "seen"],
   ["Support", "support"],
   ["Saves", "saves"],
   ["Comments", "comments"],
@@ -32,7 +31,6 @@ const RECEIVED_FILTERS = [
 
 const SENT_FILTERS = [
   ["All", "all"],
-  ["Seen", "seen"],
   ["Support", "support"],
   ["Saves", "saves"],
   ["Comments", "comments"],
@@ -502,6 +500,10 @@ export default function ActivityPage() {
   const queryFilter = searchParams.get("filter") || "all";
   const [acknowledged, setAcknowledged] = useState(readAcknowledged);
   const [page, setPage] = useState(1);
+  const [introOpen, setIntroOpen] = useState(() => {
+    try { return localStorage.getItem("atseen_activity_intro_dismissed") !== "1"; }
+    catch { return true; }
+  });
   const acknowledgedOnOpenRef = useRef(false);
   const direction = queryDirection;
   const allowedFilters = direction === "received" ? RECEIVED_FILTERS : SENT_FILTERS;
@@ -609,7 +611,7 @@ export default function ActivityPage() {
         <button className="activity-prototype-back" aria-label="Go back" onClick={goBack} type="button">
           <FiArrowLeft aria-hidden="true" />
         </button>
-        <p>Reactions, people and earnings &mdash; everything that found you</p>
+        {introOpen ? <><p>Reactions, people and earnings &mdash; everything that found you</p><button className="activity-prototype-dismiss" aria-label="Dismiss Activity introduction" onClick={() => { try { localStorage.setItem("atseen_activity_intro_dismissed", "1"); } catch { /* best effort */ } setIntroOpen(false); }} type="button">&times;</button></> : null}
       </header>
 
       <div className="activity-prototype-segment" aria-label="Activity direction" role="tablist">
@@ -632,6 +634,10 @@ export default function ActivityPage() {
           Sent
         </button>
       </div>
+
+      <p className="activity-prototype-direction-help">
+        {direction === "received" ? "What reached you — others did this" : "What you did — this is what they receive"}
+      </p>
 
       <FilterChips filter={filter} filters={filters} onChange={(nextFilter) => updateSearch(direction, nextFilter)} />
 
