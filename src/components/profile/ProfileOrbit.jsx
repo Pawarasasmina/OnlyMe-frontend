@@ -64,7 +64,6 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
         <p className="profile-orbit-overline">
           {owner ? "Your World" : `${creatorName}'s World`}
         </p>
-        <p className="profile-orbit-subcopy">One world &mdash; where you step closer.</p>
       </div>
 
       <Link aria-label={`Open ${title}`} className={cardClass} to={worldTarget}>

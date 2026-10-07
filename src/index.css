@@ -28221,6 +28221,8 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .profile-gift-thank-toast { position:fixed;top:55px;left:var(--profile-gifts-center-x,50%);z-index:4;max-width:calc(100vw - 32px);transform:translateX(-50%);border:1px solid rgba(156,203,255,.25);border-radius:999px;background:#151a22;padding:10px 15px;color:#fff;font-size:11px;font-weight:850;box-shadow:0 12px 36px rgba(0,0,0,.5);animation:gift-thank-toast-in .24s ease-out; }
 @keyframes gift-thank-toast-in { from { opacity:0;transform:translate(-50%,-8px); } to { opacity:1;transform:translate(-50%,0); } }
 .profile-gift-report-sheet { position:fixed;bottom:0;left:var(--profile-gifts-center-x,50%);width:min(440px,100%);height:min(760px,calc(100dvh - 128px));overflow-y:auto;transform:translateX(-50%);border:1px solid rgba(255,255,255,.045);border-bottom:0;border-radius:16px 16px 0 0;background:#0b0f14;padding:11px 24px 42px;color:#fff;box-shadow:0 -18px 55px rgba(0,0,0,.5);scrollbar-width:none; }
+.profile-gift-report-sheet.is-done { width:min(var(--profile-gifts-column-width,440px),100%);height:min(545px,calc(100dvh - 128px));overflow:hidden;border-color:rgba(255,255,255,.055);background:#10161e;padding:14px 30px 0; }
+.profile-gift-report-sheet.is-done .profile-gift-detail-handle { width:39px;height:5px;margin-bottom:40px;background:rgba(255,255,255,.28); }
 .profile-gift-report-sheet h2 { margin:0;font-size:16px;font-weight:900;letter-spacing:-.01em; }
 .profile-gift-report-sheet > p { margin:8px 0 17px;color:#9ccbff;font-size:11px; }
 .profile-gift-report-reasons { display:grid; }
@@ -28229,11 +28231,11 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .profile-gift-report-reasons button:disabled { opacity:.55; }
 .profile-gift-report-reasons svg { justify-self:end;color:rgba(255,255,255,.34);font-size:14px; }
 .profile-gift-report-error { margin:14px 0 0;color:#ff8a9a !important;font-size:10px !important; }
-.profile-gift-report-done { display:grid;justify-items:center;padding:47px 6px 0;text-align:center; }
-.profile-gift-report-done > svg { width:29px;height:29px;margin-bottom:21px;color:rgba(156,203,255,.58);fill:currentColor;stroke-width:0; }
-.profile-gift-report-done h2 { margin:0;color:#fff;font-size:16px;font-weight:900;line-height:1.1; }
-.profile-gift-report-done p { margin:14px 0 24px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.45; }
-.profile-gift-report-done button { width:100%;min-height:52px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:#171c24;color:#fff;font-size:13px;font-weight:900; }
+.profile-gift-report-done { display:grid;justify-items:center;padding:14px 6px 6px;text-align:center; }
+.profile-gift-report-eye { display:block;width:34px;height:auto;margin-bottom:12px;color:rgba(156,203,255,.5); }
+.profile-gift-report-done h2 { margin:0;color:#fff;font-size:17px;font-weight:700;letter-spacing:0;line-height:1.15; }
+.profile-gift-report-done p { margin:6px 0 16px;color:rgba(255,255,255,.62);font-size:14px;font-weight:400;line-height:1.45; }
+.profile-gift-report-done button { width:100%;min-height:43px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:#181D25;color:#fff;font-size:15.5px;font-weight:700;letter-spacing:0; }
 .profile-gift-report-done button:hover,.profile-gift-report-done button:focus-visible { border-color:rgba(156,203,255,.34);background:#1b222d; }
 .world-face-custom button:disabled{opacity:.55}
 
@@ -29581,9 +29583,9 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .profile-planet-orbit:has(.profile-world-prototype-card) .profile-orbit-overline {
   margin: 0 !important;
   color: #fff !important;
-  font-size: 18px !important;
-  font-weight: 950 !important;
-  letter-spacing: -.03em !important;
+  font-size: 14px !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
   line-height: 1.1 !important;
   text-transform: none !important;
 }
@@ -30131,7 +30133,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 /* Profile World card: profile alignment with the centered World composition. */
 .profile-planet-orbit:has(.profile-world-prototype-card){width:calc(100% - 36px);margin:24px 18px 0;overflow:visible;border:0;border-radius:0;background:transparent}
 .profile-planet-orbit:has(.profile-world-prototype-card) .profile-orbit-heading{padding:0 0 12px}
-.profile-planet-orbit:has(.profile-world-prototype-card) .profile-orbit-overline{color:#fff;font-size:14px;font-weight:900;letter-spacing:-.02em}
+.profile-planet-orbit:has(.profile-world-prototype-card) .profile-orbit-overline{color:#fff;font-size:14px;font-weight:760;letter-spacing:0}
 .profile-world-prototype-card.profile-orbit-sky{position:relative;display:block;width:100%;height:150px;margin:0;overflow:hidden;border:1px solid var(--profile-line,rgba(255,255,255,.09));border-radius:18px;background:radial-gradient(circle at 50% 35%,rgba(156,203,255,.16),#080b10 72%);color:#fff;text-decoration:none;transition:border-color .18s ease,transform .18s ease}
 .profile-world-prototype-card.profile-orbit-sky:hover{border-color:rgba(156,203,255,.28);transform:translateY(-1px)}
 .profile-world-prototype-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5}
@@ -36227,6 +36229,53 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   min-height: 52px;
   margin-top: 22px;
   font-size: 20px;
+}
+
+.profile-gift-report-sheet.is-done {
+  width: min(var(--profile-gifts-column-width, 440px), 100%);
+  height: min(545px, calc(100dvh - 128px));
+  overflow: hidden;
+  background: #10161e;
+  padding-right: 30px;
+  padding-left: 30px;
+}
+
+.profile-gift-report-sheet.is-done .profile-gift-detail-handle {
+  width: 39px;
+  height: 5px;
+  margin-bottom: 40px;
+}
+
+.profile-gift-report-sheet.is-done .profile-gift-report-done {
+  padding: 14px 6px 6px;
+}
+
+.profile-gift-report-sheet.is-done .profile-gift-report-eye {
+  width: 34px;
+  height: auto;
+  margin-bottom: 12px;
+  color: rgba(156,203,255,.5);
+}
+
+.profile-gift-report-sheet.is-done .profile-gift-report-done h2 {
+  margin-top: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.profile-gift-report-sheet.is-done .profile-gift-report-done p {
+  margin: 6px 0 16px;
+  color: rgba(255,255,255,.62);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.profile-gift-report-sheet.is-done .profile-gift-report-done button {
+  min-height: 43px;
+  margin-top: 0;
+  background: #181D25;
+  font-size: 15.5px;
+  font-weight: 700;
 }
 
 /* Shared activity notification badge: pinned outside the icon at top-right. */

@@ -55,6 +55,15 @@ import { canCreateFeedPost } from "../../utils/postPermissions";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { atseenReportReasons } from "../../data/atseenMockData";
 
+function ReportDoneEyeIcon() {
+  return (
+    <svg aria-hidden="true" className="profile-gift-report-eye" viewBox="0 0 64 40">
+      <path d="M2 20 C14 3 50 3 62 20 C50 37 14 37 2 20 Z" fill="currentColor" />
+      <circle cx="32" cy="20" r="8.5" fill="#0A0C0F" />
+    </svg>
+  );
+}
+
 function relativeTime(value) {
   if (!value) return "";
   const diff = Date.now() - new Date(value).getTime();
@@ -712,7 +721,10 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     if (!centerColumn) return undefined;
     const updatePosition = () => {
       const bounds = centerColumn.getBoundingClientRect();
-      setSheetPosition({ "--profile-gifts-center-x": `${bounds.left + bounds.width / 2}px` });
+      setSheetPosition({
+        "--profile-gifts-center-x": `${bounds.left + bounds.width / 2}px`,
+        "--profile-gifts-column-width": `${bounds.width}px`,
+      });
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -792,11 +804,11 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     return parts.join(" · ");
   };
   const reportSheet = reportOpen && detailGift ? (
-    <section aria-label="Report Gift" className="profile-gift-report-sheet">
+    <section aria-label="Report Gift" className={reportDone ? "profile-gift-report-sheet is-done" : "profile-gift-report-sheet"}>
       <button aria-label="Back to gift details" className="profile-gift-detail-handle" onClick={() => { setReportOpen(false); setReportDone(false); }} type="button" />
       {reportDone ? (
         <div className="profile-gift-report-done">
-          <FiEye aria-hidden="true" />
+          <ReportDoneEyeIcon />
           <h2>Thank you</h2>
           <p>Our team will review this shortly.</p>
           <button onClick={() => { setReportOpen(false); setReportDone(false); }} type="button">Done</button>
