@@ -39,6 +39,7 @@ function WaveBars({ active = false, levels = [] }) {
 export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
   const recorder = useVoiceRecorder();
   const { resetRecording } = recorder;
+  const [overlayPosition, setOverlayPosition] = useState(undefined);
   const [transcript, setTranscript] = useState("");
   const [transcriptStatus, setTranscriptStatus] = useState("idle");
   const [transcriptLanguage, setTranscriptLanguage] = useState("");
@@ -56,6 +57,27 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
   const translationRequestIdsRef = useRef({});
   const translationAbortRefs = useRef({});
   const languageByCode = useMemo(() => new Map(translationLanguages.map((language) => [language.code, language])), [translationLanguages]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const centerColumn = document.querySelector(".social-center-scroll");
+    if (!centerColumn) return undefined;
+    const updatePosition = () => {
+      const bounds = centerColumn.getBoundingClientRect();
+      setOverlayPosition({
+        "--wall-modal-left": `${bounds.left}px`,
+        "--wall-modal-width": `${bounds.width}px`,
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      observer?.disconnect();
+    };
+  }, [isOpen]);
 
   const languageLabel = useCallback((code) => languageByCode.get(code)?.name || languageByCode.get(code)?.label || code, [languageByCode]);
 
@@ -276,6 +298,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
       isOpen={isOpen}
       onClose={close}
       overlayClassName="wall-voice-recorder-overlay"
+      overlayStyle={overlayPosition}
       portal
       title={title}
     >

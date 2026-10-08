@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { FiChevronRight, FiX } from "react-icons/fi";
@@ -11,11 +11,12 @@ import FanAvatar from "../fanWeb/shared/FanAvatar";
 const STAR = String.fromCharCode(10022);
 const giftTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
 
-function useGiftSheetPosition() {
+function useGiftSheetPosition(backdropRef) {
   const [position, setPosition] = useState(undefined);
 
   useEffect(() => {
-    const centerColumn = document.querySelector(".social-center-scroll");
+    const centerColumn = backdropRef.current?.closest(".social-center-scroll")
+      || document.querySelector(".social-center-scroll");
     if (!centerColumn) return undefined;
     const updatePosition = () => {
       const bounds = centerColumn.getBoundingClientRect();
@@ -39,13 +40,14 @@ function useGiftSheetPosition() {
 
 export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType = "STORY" }) {
   const queryClient = useQueryClient();
+  const backdropRef = useRef(null);
   const [sending, setSending] = useState("");
   const [sent, setSent] = useState(null);
   const [error, setError] = useState("");
   const [selectedGift, setSelectedGift] = useState(null);
   const [message, setMessage] = useState("");
   const [visibility, setVisibility] = useState("EVERYONE");
-  const sheetPosition = useGiftSheetPosition();
+  const sheetPosition = useGiftSheetPosition(backdropRef);
   const recipientId = recipient?.id;
   const giftsQuery = useQuery({
     queryKey: ["messages", "gifts", recipientId],
@@ -100,7 +102,7 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
     </button>;
   };
   return (
-    <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()} style={sheetPosition}>
+    <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()} ref={backdropRef} style={sheetPosition}>
       <section aria-label={sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"} className="dream-gift-sheet">
         {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their activity"}`} /> : null}
         <span className="dream-gift-handle" />
