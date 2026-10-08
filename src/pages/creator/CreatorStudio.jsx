@@ -187,7 +187,7 @@ function BestPerformers({ data = {} }) {
   return (
     <section className="creator-studio-section">
       <SectionTitle>Best performers</SectionTitle>
-      <PerformerRow detail={seen ? `Best Seen ${DOT} ${seen.metricLabel}` : "Best Seen · Publish a Seen to unlock this"} icon={<FiEye />} title={seen?.title || "No Seen yet"} to={seen?.id ? `/studio/seens/${seen.id}` : "/create/seen"} />
+      <PerformerRow detail={seen ? `Best Seen ${DOT} ${seen.metricLabel}` : "Best Seen · Publish a Seen to unlock this"} icon={<FiEye />} title={seen?.title || "No Seen yet"} to={seen?.id ? `/seen/${seen.id}` : "/create/seen"} />
       <PerformerRow detail={wallPost ? `Best status ${DOT} ${wallPost.metricLabel}` : "Best status · Write a wall post to unlock this"} icon={<FiMonitor />} title={wallPost?.title || "No wall posts yet"} to={wallPost?.id ? `/wall?post=${wallPost.id}` : "/wall?compose=note"} />
       <PerformerRow detail={location ? `Most used location ${DOT} ${location.metricLabel}` : "Most used location · Add a location to a wall post"} icon={<FiMapPin />} title={location?.title || "No locations yet"} to={location ? "/wall" : "/wall?compose=note"} />
     </section>

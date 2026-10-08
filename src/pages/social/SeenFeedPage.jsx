@@ -650,7 +650,7 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
         </button>;
       })}
     </div>
-    <p>One reaction \u2014 make it yours</p>
+    <p>One reaction - make it yours</p>
     </section>
   </div>;
 }
