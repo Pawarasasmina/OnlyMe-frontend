@@ -345,7 +345,7 @@ function ChapterChecklist({ points = [] }) {
 }
 
 function OverviewSkeleton() {
-  return <section className="seen-detail-page" aria-label="Loading Seen overview">
+  return <section className="seen-detail-page seen-reader-loading-page" aria-label="Loading Seen overview">
     <div className="seen-detail-skeleton-head"><span /><div><i /><b /></div><em /><em /></div>
     <div className="seen-detail-skeleton-media" />
     <div className="seen-detail-skeleton-lines"><span /><span /><span /></div>
@@ -356,7 +356,7 @@ function OverviewSkeleton() {
 }
 
 function ReaderSkeleton() {
-  return <div className="seen-reader-page">
+  return <div className="seen-reader-page seen-reader-loading-page">
     <div className="seen-reader-skeleton-head" />
     <div className="seen-reader-skeleton-card" />
     <div className="seen-reader-skeleton-media" />
@@ -795,6 +795,7 @@ export default function SeenReaderPage() {
   }, [publication?.id, publication?._id]);
 
   useEffect(() => {
+    if (!publication?.id && !publication?._id) return;
     const direction = scrollTransitionDirectionRef.current;
     const page = readerTopRef.current || document.querySelector(".seen-detail-page");
     if (!direction || !page) return;
