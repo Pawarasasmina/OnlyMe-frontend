@@ -7,10 +7,15 @@ import {
   FiCheck,
   FiChevronRight,
   FiClock,
+  FiCornerUpLeft,
+  FiDollarSign,
   FiEye,
   FiGift,
+  FiHeart,
+  FiLock,
   FiMessageCircle,
   FiRefreshCw,
+  FiRepeat,
   FiUserPlus,
   FiZap,
 } from "react-icons/fi";
@@ -41,6 +46,27 @@ const SENT_FILTERS = [
 const FILTER_VALUES = ["seen", "support", "saves", "comments", "follows", "earnings", "purchases"];
 const ACK_KEY = "atseen_activity_acknowledged";
 const PAGE_SIZE = 30;
+
+const ACTIVITY_REACTION_EMOJI = {
+  LIKE: "🤝",
+  LOVE: "❤️",
+  CARE: "🤗",
+  FIRE: "🔥",
+  CLAP: "👏",
+  LAUGH: "😂",
+  SEE_YOU: "👁️",
+  WOW: "😮",
+  TEARY: "🥹",
+  ADMIRE: "😍",
+  SAD: "😢",
+  HUG: "🫂",
+  STRONG: "💪",
+  PRAY: "🙏",
+  HUNDRED: "💯",
+  SPARKLES: "✨",
+  INSIGHTFUL: "🔥",
+  PHONE: "📱",
+};
 
 const LEGACY_ROUTES = {
   "/fan/activity": "/activity",
@@ -284,6 +310,7 @@ function normalizeLedgerEntry(entry) {
     starsChange: Number(entry.starsChange) || 0,
     actionPath,
     reference: entry.reference,
+    metadata: entry.metadata,
   };
   const filterKeys = inferFilterKeys(base, direction);
 
@@ -317,13 +344,54 @@ function normalizeActivity(activity = [], ledger = []) {
 }
 
 function iconFor(item) {
+  const text = `${item.event || ""} ${item.type || ""} ${item.title || ""} ${item.description || ""}`.toLowerCase();
   const filter = item.filter || item.filterKeys?.[0];
+  if (text.includes("refund")) return FiCornerUpLeft;
+  if (text.includes("react") || text.includes("love") || text.includes("care")) return FiHeart;
+  if (text.includes("repost")) return FiRepeat;
+  if (text.includes("unlock")) return FiLock;
+  if (text.includes("gift") || text.includes("support")) return FiGift;
+  if (text.includes("earning") || text.includes("credit") || text.includes("stars")) return FiDollarSign;
   if (filter === "support") return FiGift;
   if (filter === "follows") return FiUserPlus;
   if (filter === "saves") return FiBookmark;
   if (filter === "comments") return FiMessageCircle;
   if (filter === "earnings" || filter === "purchases") return FiZap;
   return FiEye;
+}
+
+function toneFor(item) {
+  const text = `${item.event || ""} ${item.type || ""} ${item.title || ""} ${item.description || ""}`.toLowerCase();
+  const filter = item.filter || item.filterKeys?.[0];
+  if (text.includes("gift") || text.includes("support")) return "gift";
+  if (text.includes("refund") || text.includes("earning") || text.includes("credit") || Number(item.starsChange) > 0) return "earning";
+  if (text.includes("unlock") || text.includes("join")) return "unlock";
+  if (text.includes("react") || text.includes("love") || text.includes("care")) return "reaction";
+  if (text.includes("repost")) return "repost";
+  if (filter === "saves") return "save";
+  if (filter === "comments") return "comment";
+  if (filter === "follows") return "follow";
+  return "seen";
+}
+
+function reactionEmojiFor(item) {
+  const key = String(item.metadata?.reaction || "").trim().toUpperCase();
+  return ACTIVITY_REACTION_EMOJI[key] || "";
+}
+
+function titleMarkFor(item) {
+  const reaction = reactionEmojiFor(item);
+  if (reaction) return reaction;
+  const text = `${item.event || ""} ${item.type || ""} ${item.title || ""} ${item.description || ""}`.toLowerCase();
+  if (text.includes("see each other") || text.includes("sees you") || text.includes("see you") || text.includes("said ‘i see you’") || text.includes("said 'i see you'")) return "👁️";
+  if (text.includes("follow")) return "👋";
+  if (text.includes("supported") && !text.includes("gift")) return "🤝";
+  if (text.includes("replied") || text.includes("refund")) return "↩";
+  if (text.includes("commented")) return "💬";
+  if (text.includes("joined your world")) return "🪐";
+  if (text.includes("repost")) return "↻";
+  if (text.includes("direct access")) return "✦";
+  return "";
 }
 
 function displayAmount(item) {
@@ -346,6 +414,7 @@ function ActivityAvatar({ item }) {
   if (creator) {
     return (
       <FanAvatar
+        className="activity-person-avatar"
         name={creator.displayName || creator.name || creator.username || "Activity"}
         size="h-10 w-10"
         src={creator.avatarUrl || creator.avatar}
@@ -363,12 +432,15 @@ function ActivityAvatar({ item }) {
 function ActivityTitle({ item }) {
   const title = item.title || "Activity";
   const actorName = item.relatedCreator?.displayName || item.relatedCreator?.name || item.relatedCreator?.username || "";
+  const titleMark = titleMarkFor(item);
+  const actionIcon = titleMark ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
 
   if (actorName && title.startsWith(actorName)) {
     return (
       <p>
         <b>{actorName}</b>
         {title.slice(actorName.length)}
+        {actionIcon}
       </p>
     );
   }
@@ -379,18 +451,20 @@ function ActivityTitle({ item }) {
         <b>You</b>
         {" "}
         {title.slice(3)}
+        {actionIcon}
       </p>
     );
   }
 
-  return <p>{title}</p>;
+  return <p>{title}{actionIcon}</p>;
 }
 
 function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
   const amount = displayAmount(item);
   const route = routeFor(item);
   const interactive = Boolean(route);
-  const featuredSupport = item.event?.includes("DREAM") || item.reference?.type === "DREAM_GIFT";
+  const tone = toneFor(item);
+  const giftImageUrl = item.metadata?.giftImageUrl || item.giftImageUrl || "";
 
   const openItem = () => {
     if (!interactive) return;
@@ -406,7 +480,7 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
 
   return (
     <article
-      className={`activity-prototype-row ${featuredSupport ? "is-dream-gift" : ""} ${item.warning ? "is-warning" : ""}`}
+      className={`activity-prototype-row is-${tone} ${item.warning ? "is-warning" : ""}`}
       onClick={openItem}
       onKeyDown={handleKeyDown}
       role={interactive ? "button" : undefined}
@@ -417,12 +491,12 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
       <div className="activity-prototype-copy">
         {item.warning ? <strong>{"HIGH PRIORITY \u00b7 ACCOUNT WARNING"}</strong> : null}
         <ActivityTitle item={item} />
-        {item.metadata?.giftSource ? <span className="mt-1 inline-flex w-fit rounded-full border border-atseen-blue/20 bg-atseen-blue/10 px-2 py-0.5 text-[9px] font-medium text-atseen-blue">{item.metadata.giftSource}</span> : null}
         {item.preview ? <span className="activity-prototype-preview">&quot;{item.preview}&quot;</span> : null}
         <time dateTime={item.createdAt ? new Date(item.createdAt).toISOString() : undefined}>{relativeTime(item.createdAt)}</time>
       </div>
 
       <div className="activity-prototype-right">
+        {giftImageUrl ? <img alt={item.metadata?.giftName || "Gift"} className="activity-prototype-gift" src={giftImageUrl} /> : null}
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
         {item.direction === "received" && item.canAcknowledge ? (
           <button

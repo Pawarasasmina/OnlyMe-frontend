@@ -1399,12 +1399,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     <article className="experience-chapters-step">
       <header>
         <button aria-label="Back to Experience details" onClick={() => setExperienceStep(1)} type="button"><FiArrowLeft /></button>
-        <div><h1>Build the<br />chapters</h1><p>{world.title}</p></div>
-        <div className="experience-chapters-head-actions"><button disabled={saving || !chapters.length} onClick={previewExperience} type="button"><FiEye /> Preview</button><button disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></div>
+        <div><h1>Build the chapters</h1><p>{world.title}</p></div>
+        <div className="experience-chapters-head-actions"><button disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></div>
       </header>
       <ExperienceProgress step={2} />
       <main>
-        <p className="experience-chapters-intro">Photos, places, stories, lessons — each chapter is one step deeper into your Experience.</p>
+        <p className="experience-chapters-intro">Photos, places, stories, lessons — each chapter is one step deeper into your world.</p>
+        {!chapters.length ? <p className="experience-chapters-guidance">Start with one chapter — you can publish from a single one and add more anytime. It grows with you.</p> : null}
         <small className="experience-chapters-tip">Tap a chapter to write inside: text, color, marker, photo and voice.</small>
         <div className="experience-builder-list">
           {chapters.map((chapter, index) => {
@@ -1420,9 +1421,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           })}
         </div>
         <div className="experience-new-chapter"><input maxLength={120} onChange={(event) => setNewChapterTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addNamedExperienceChapter(); } }} placeholder="Next chapter…" value={newChapterTitle} /><button disabled={saving || !newChapterTitle.trim()} onClick={addNamedExperienceChapter} type="button">{saving ? "Adding…" : "Add"}</button></div>
-        <p className={`experience-chapter-minimum ${chapters.length >= 2 ? "is-ready" : ""}`}>{chapters.length >= 2 ? `✓ ${chapters.length} chapters ready · add as many as you need` : `${2 - chapters.length} more chapter${2 - chapters.length === 1 ? "" : "s"} required`}</p>
+        <button className="experience-add-from-notes" type="button">+ &nbsp;Add from my notes <small>optional</small><span>▾</span></button>
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
-        <button className="experience-chapters-continue" disabled={chapters.length < 2 || saving} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(3); }} type="button">{saving ? "Saving…" : `Continue (${chapters.length})`}</button>
+        <button className="experience-chapters-continue" disabled={!chapters.length || saving} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(3); }} type="button">{saving ? "Saving…" : "Continue"}</button>
       </main>
       {chapterCreateOpen ? (
         <div className="experience-chapter-create-layer" role="presentation">
@@ -1467,7 +1468,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           </div>
         </section>
         <button className="experience-review-location" onClick={() => setExperienceStep(1)} type="button"><FiMapPin /><strong>{world.experienceLocation || "Location"}</strong><span>{world.experienceLocation ? "Edit" : "Add"}</span><b>›</b></button>
-        <button className="experience-review-save" disabled={chapters.length < 2 || saving || uploading || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Saving…</> : "Save"}</button>
+        <button className="experience-review-save" disabled={!chapters.length || saving || uploading || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Saving…</> : "Save"}</button>
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
       </main>
     </article>

@@ -2377,7 +2377,7 @@ export default function SeenComposerPage() {
       ? "/seen"
       : fromDrafts
         ? "/profile"
-        : `/studio/seens/${id}${draftSuffix}`
+        : "/profile"
     : fromDrafts
       ? "/profile"
       : "/profile";
@@ -3139,7 +3139,7 @@ export default function SeenComposerPage() {
         setStatus("Link-only Seen published");
         return;
       }
-      nav(fromSeen ? "/seen" : fromDrafts ? "/profile" : `/studio/seens/${publication.id}${draftSuffix}`, { replace: fromSeen || fromDrafts });
+      nav(fromSeen ? "/seen" : "/profile", { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
@@ -3266,7 +3266,7 @@ export default function SeenComposerPage() {
           {introOpen ? (
             <p>
               <span>
-                Seen {"\u2014"} a post made of chapters. People walk it like a
+                Seen - a post made of chapters. People walk it like a
                 small story.
               </span>
               <button
@@ -3358,7 +3358,7 @@ export default function SeenComposerPage() {
           <input
             maxLength={120}
             onChange={(event) => change({ title: event.target.value })}
-            placeholder={"Title \u2014 e.g. \u201c8-Week Transformation\u201d"}
+            placeholder={"Title - e.g. \u201c8-Week Transformation\u201d"}
             value={p.title}
           />
         </label>
@@ -3374,7 +3374,7 @@ export default function SeenComposerPage() {
               })
             }
             placeholder={
-              "About this experience \u2014 what happens inside, honestly"
+              "About this experience - what happens inside, honestly"
             }
             value={p.description || p.summary}
           />
@@ -3383,7 +3383,7 @@ export default function SeenComposerPage() {
         <div className="seen-compose-section-title">
           <span>CHAPTERS</span>
           <small>
-            {p.chapters.length}/5 {"\u00b7"} like a post {"\u2014"} short
+            {p.chapters.length}/5 {"\u00b7"} like a post {"-"} short
           </small>
         </div>
 
