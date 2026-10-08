@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -684,6 +684,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
 
 function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
   const queryClient = useQueryClient();
+  const backdropRef = useRef(null);
   const [sheetPosition, setSheetPosition] = useState(undefined);
   const [previewGift, setPreviewGift] = useState(null);
   const [detailGift, setDetailGift] = useState(null);
@@ -717,7 +718,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
   }, [detailGift, isOpen, onClose]);
   useEffect(() => {
     if (!isOpen) return undefined;
-    const centerColumn = document.querySelector(".social-center-scroll");
+    const centerColumn = backdropRef.current?.closest(".social-center-scroll");
     if (!centerColumn) return undefined;
     const updatePosition = () => {
       const bounds = centerColumn.getBoundingClientRect();
@@ -831,7 +832,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     </section>
   ) : null;
   if (!isOpen) return null;
-  return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog" style={sheetPosition}>
+  return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} ref={backdropRef} role="dialog" style={sheetPosition}>
     {thankNotice ? <div aria-live="polite" className="profile-gift-thank-toast">{thankNotice}</div> : null}
     {previewGift ? <GiftCelebration detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message="Gift received" variant="is-profile-gift" /> : null}
     {reportSheet || (detailGift ? <section aria-label={`${detailGift.name} gift details`} className="profile-gift-detail-sheet">
