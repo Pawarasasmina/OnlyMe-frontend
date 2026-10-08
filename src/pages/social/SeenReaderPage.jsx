@@ -759,6 +759,9 @@ export default function SeenReaderPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const readerTopRef = useRef(null);
+  const scrollSeenActionRef = useRef({ next: null, previous: null });
+  const scrollAdvanceRef = useRef({ locked: false, touchStartY: null, wheelDistance: 0, wheelTimer: null });
+  const scrollTransitionDirectionRef = useRef(null);
   const hasChapterParam = searchParams.has("chapter");
   const requestedChapter = Number(searchParams.get("chapter"));
   const [chapterIndex, setChapterIndex] = useState(Number.isSafeInteger(requestedChapter) && requestedChapter >= 0 ? requestedChapter : 0);
@@ -789,6 +792,18 @@ export default function SeenReaderPage() {
       entityType: "seen",
       source: "seen",
     });
+  }, [publication?.id, publication?._id]);
+
+  useEffect(() => {
+    const direction = scrollTransitionDirectionRef.current;
+    const page = readerTopRef.current || document.querySelector(".seen-detail-page");
+    if (!direction || !page) return;
+    scrollTransitionDirectionRef.current = null;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    page.animate([
+      { opacity: 0, transform: `translateY(${direction === "next" ? 36 : -36}px) scale(.992)` },
+      { opacity: 1, transform: "translateY(0) scale(1)" },
+    ], { duration: 220, easing: "cubic-bezier(.22, 1, .36, 1)" });
   }, [publication?.id, publication?._id]);
 
   const creatorId = String(publication?.creator?.id || publication?.creator?._id || "");
@@ -866,6 +881,15 @@ export default function SeenReaderPage() {
       ...creatorSeens.slice(0, currentIndex),
     ].find((item) => String(item.id || item._id) !== String(id)) || null;
   }, [creatorSeensQuery.data, id, publication?.nextSeen]);
+  const previousSeen = useMemo(() => {
+    const creatorSeens = creatorSeensQuery.data || [];
+    const currentIndex = creatorSeens.findIndex((item) => String(item.id || item._id) === String(id));
+    if (currentIndex < 0) return null;
+    return [
+      ...creatorSeens.slice(0, currentIndex).reverse(),
+      ...creatorSeens.slice(currentIndex + 1).reverse(),
+    ].find((item) => String(item.id || item._id) !== String(id)) || null;
+  }, [creatorSeensQuery.data, id]);
 
   const syncSeenEngagementCaches = (next) => {
     if (!next) return;
@@ -1054,10 +1078,98 @@ export default function SeenReaderPage() {
     setChapterIndex(0);
     navigate(`/seen/${encodeURIComponent(nextSeen.id || nextSeen._id)}`);
   };
+  const openSeenWithScrollEffect = async (direction, destination) => {
+    if (!destination) return;
+    const page = readerTopRef.current || document.querySelector(".seen-detail-page");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let exitAnimation = null;
+    if (page && !reduceMotion) {
+      exitAnimation = page.animate([
+        { opacity: 1, transform: "translateY(0) scale(1)" },
+        { opacity: 0, transform: `translateY(${direction === "next" ? -36 : 36}px) scale(.992)` },
+      ], { duration: 160, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" });
+      await exitAnimation.finished.catch(() => {});
+    }
+    scrollTransitionDirectionRef.current = direction;
+    setChapterIndex(0);
+    navigate(`/seen/${encodeURIComponent(destination.id || destination._id)}`, { replace: true });
+    exitAnimation?.cancel();
+  };
   const continueReader = () => {
     if (safeChapterIndex < chapters.length - 1) changeChapter(safeChapterIndex + 1);
     else openNextSeen();
   };
+  scrollSeenActionRef.current = {
+    next: () => openSeenWithScrollEffect("next", nextSeen),
+    previous: () => openSeenWithScrollEffect("previous", previousSeen),
+  };
+
+  useEffect(() => {
+    const gesture = scrollAdvanceRef.current;
+    const scrollContainer = document.querySelector(".social-center-scroll");
+    gesture.locked = false;
+    gesture.touchStartY = null;
+    gesture.wheelDistance = 0;
+
+    const usesPanelScroll = scrollContainer
+      && window.getComputedStyle(scrollContainer).overflowY !== "visible";
+    const isAtPageEnd = () => usesPanelScroll
+      ? scrollContainer.clientHeight + scrollContainer.scrollTop >= scrollContainer.scrollHeight - 2
+      : window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    const isAtPageStart = () => usesPanelScroll
+      ? scrollContainer.scrollTop <= 2
+      : window.scrollY <= 2;
+    const canAdvance = (target) => !commentsOpen && !mediaPickerOpen && !shareSheetOpen
+      && !target?.closest?.("input, textarea, select, video, audio, [role='dialog']")
+      && Boolean(nextSeen || previousSeen);
+    const switchSeen = (direction) => {
+      if (gesture.locked) return;
+      gesture.locked = true;
+      scrollSeenActionRef.current[direction]?.();
+    };
+    const resetWheel = () => {
+      gesture.wheelDistance = 0;
+      gesture.wheelTimer = null;
+    };
+    const onWheel = (event) => {
+      const direction = event.deltaY > 0 ? "next" : "previous";
+      const atBoundary = !hasChapterParam || (direction === "next" ? isAtPageEnd() : isAtPageStart());
+      const destination = direction === "next" ? nextSeen : previousSeen;
+      if (!event.deltaY || !atBoundary || !destination || !canAdvance(event.target)) {
+        resetWheel();
+        return;
+      }
+      event.preventDefault();
+      if (gesture.wheelDistance && Math.sign(gesture.wheelDistance) !== Math.sign(event.deltaY)) resetWheel();
+      gesture.wheelDistance += event.deltaY;
+      if (gesture.wheelTimer) window.clearTimeout(gesture.wheelTimer);
+      gesture.wheelTimer = window.setTimeout(resetWheel, 240);
+      if (Math.abs(gesture.wheelDistance) >= 80) switchSeen(direction);
+    };
+    const onTouchStart = (event) => {
+      gesture.touchStartY = event.touches.length === 1 && canAdvance(event.target)
+        ? event.touches[0].clientY
+        : null;
+    };
+    const onTouchEnd = (event) => {
+      if (gesture.touchStartY == null || event.changedTouches.length !== 1) return;
+      const distance = gesture.touchStartY - event.changedTouches[0].clientY;
+      gesture.touchStartY = null;
+      if (distance >= 64 && (!hasChapterParam || isAtPageEnd()) && nextSeen) switchSeen("next");
+      if (distance <= -64 && (!hasChapterParam || isAtPageStart()) && previousSeen) switchSeen("previous");
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+      if (gesture.wheelTimer) window.clearTimeout(gesture.wheelTimer);
+    };
+  }, [commentsOpen, hasChapterParam, id, mediaPickerOpen, nextSeen, previousSeen, shareSheetOpen]);
+
   const handleReaderClick = (event) => {
     if (event.target.closest?.("a, button, input, textarea, select, video, audio")) return;
     continueReader();
@@ -1170,14 +1282,6 @@ export default function SeenReaderPage() {
           </button>
         </article>)}
       </section> : null}
-      <div className="seen-reader-nav">
-        {safeChapterIndex < chapters.length - 1
-          ? <button onClick={continueReader} type="button">Next {"\u2192"}</button>
-          : nextSeen
-            ? <button onClick={openNextSeen} type="button">Next Seen {"\u2192"}</button>
-            : <strong>{creatorSeensQuery.isLoading ? "Finding next Seen..." : "Seen complete"}</strong>}
-        <button aria-label="Close Seen reader" onClick={() => navigate(`/seen/${id}`, { replace: true })} type="button"><FiX /></button>
-      </div>
     </footer>
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
   </section>;

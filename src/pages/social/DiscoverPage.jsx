@@ -97,7 +97,7 @@ function DiscoverPage() {
   const firstPage = pages[0] || {};
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])), [pages]);
   const followingPeople = useMemo(
-    () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))).slice(0, 12),
+    () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))),
     [firstPage.following, viewerId],
   );
   const followingStoryPeople = useMemo(
@@ -261,7 +261,7 @@ function DiscoverPage() {
             </div>
 
             <DiscoverPeopleSections
-              friends={followingStoryPeople.slice(0, 4)}
+              friends={followingStoryPeople}
               friendSectionTitle="Following"
               following={[]}
               onOpenFollowingStories={openPersonStories}
