@@ -14397,9 +14397,8 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   display: block;
   overflow: hidden;
   border-radius: 999px;
-  background: linear-gradient(90deg,#12151B,#181D25,#12151B);
-  background-size: 200% 100%;
-  animation: atseen-shimmer 1.4s infinite;
+  background: #181D25;
+  animation: none;
 }
 
 .seen-detail-skeleton-head > span,
@@ -15279,9 +15278,30 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .seen-reader-skeleton-media,
 .seen-reader-skeleton-lines {
   border-radius: 14px;
-  background: linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.07),rgba(255,255,255,.035));
-  background-size: 220% 100%;
-  animation: seenProtoShimmer 1.25s linear infinite;
+  background: rgba(255,255,255,.055);
+  animation: none;
+}
+
+.seen-reader-loading-page {
+  animation: seen-reader-loading-rise .42s cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes seen-reader-loading-rise {
+  from {
+    opacity: 0;
+    transform: translateY(52px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seen-reader-loading-page {
+    animation: none;
+  }
 }
 
 .seen-reader-skeleton-head { height: 72px; }
@@ -20379,6 +20399,11 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .seen-proto-skeleton {
   padding: 16px 0 22px;
   border-bottom: 7px solid rgba(255,255,255,.028);
+  animation: seen-feed-loading-rise .48s cubic-bezier(.22,1,.36,1) both;
+}
+
+.seen-feed-list > .seen-proto-skeleton:nth-child(2) {
+  animation-delay: 90ms;
 }
 
 .seen-proto-skeleton-head {
@@ -20396,9 +20421,8 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   display: block;
   overflow: hidden;
   border-radius: 999px;
-  background: linear-gradient(90deg,#12151B,#181D25,#12151B);
-  background-size: 200% 100%;
-  animation: atseen-shimmer 1.4s infinite;
+  background: #181D25;
+  animation: none;
 }
 
 .seen-proto-skeleton-head > span {
@@ -21814,9 +21838,26 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   display: block;
   height: 11px;
   border-radius: 999px;
-  background: linear-gradient(90deg,#12151B,#181D25,#12151B);
-  background-size: 200% 100%;
-  animation: atseen-shimmer 1.4s infinite;
+  background: #181D25;
+  animation: none;
+}
+
+@keyframes seen-feed-loading-rise {
+  from {
+    opacity: 0;
+    transform: translateY(52px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seen-proto-skeleton {
+    animation: none;
+  }
 }
 
 .seen-proto-skeleton-content > div:last-child span:first-child {

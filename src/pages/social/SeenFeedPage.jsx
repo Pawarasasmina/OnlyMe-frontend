@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion, useReducedMotion } from "framer-motion";
 import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
@@ -672,8 +673,9 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
   </div>;
 }
 
-function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
+function SeenFeedItem({ animateOnScroll = true, currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
   const item = normalizeSeen(rawItem);
+  const reduceMotion = useReducedMotion();
   const target = `/seen/${encodeURIComponent(item.id)}`;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -918,7 +920,13 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
     deleteMutation.mutate();
   };
 
-  return <article className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}>
+  return <motion.article
+    className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
+    initial={reduceMotion || !animateOnScroll ? false : { opacity: 0, y: 52 }}
+    transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+    viewport={{ amount: 0.12, margin: "0px 0px -4% 0px", once: true }}
+    whileInView={reduceMotion || !animateOnScroll ? undefined : { opacity: 1, y: 0 }}
+  >
     <div className="seen-item-menu-wrap">
       <CreatorHeader
         createdAt={item.createdAt}
@@ -998,7 +1006,7 @@ function SeenFeedItem({ currentUser = null, item: rawItem, onFeedRemove, onFeedR
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
       {commentsOpen ? <CommentsPanel currentUser={currentUser} engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onEngagementChange={mergeEngagement} onSubmit={submitComment} value={comment} /> : null}
     </div>
-  </article>;
+  </motion.article>;
 }
 
 function EmptyState({ tab }) {
@@ -1028,6 +1036,7 @@ export default function SeenFeedPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
   const { user } = useAuth();
   const capabilities = useSocialCapabilities();
   const unreadActivityCount = useUnreadActivityCount(Boolean(user));
@@ -1119,9 +1128,15 @@ export default function SeenFeedPage() {
     <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
     {query.isLoading ? <div className="seen-feed-list"><SeenSkeleton /><SeenSkeleton /></div> : null}
     {query.isError ? <div className="seen-feed-error"><p>Couldn’t load Seens.</p><button onClick={() => query.refetch()} type="button">Try again</button></div> : null}
-    {!query.isLoading && !query.isError ? items.length ? <div className="seen-feed-list">
-      {items.map((item) => <SeenFeedItem currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} />)}
+    {!query.isLoading && !query.isError ? items.length ? <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="seen-feed-list"
+      initial={reduceMotion ? false : { opacity: 0, y: 52 }}
+      key={tab}
+      transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} />)}
       <EndState onCreate={openCreate} />
-    </div> : <EmptyState tab={tab} /> : null}
+    </motion.div> : <EmptyState tab={tab} /> : null}
   </section>;
 }
