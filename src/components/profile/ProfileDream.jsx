@@ -381,13 +381,14 @@ function DreamEntryRow({ dream, isOwner, onCreate, onMenu }) {
 
 export default function ProfileDream({ capabilities, profile, role }) {
   const navigate = useNavigate();
+  const creatorEnabled = Boolean(profile?.isCreator || role === "creator");
   const [picker, setPicker] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState(undefined);
   const query = useQuery({
     queryKey: ["creator-dream", profile?.username],
     queryFn: () => dreamService.getCreatorDream(profile.username).then((response) => response.data.data),
-    enabled: role === "creator" && Boolean(profile?.username),
+    enabled: creatorEnabled && Boolean(profile?.username),
     retry: false,
   });
 
@@ -412,7 +413,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
     };
   }, [menuOpen]);
 
-  if (role !== "creator" || query.isLoading || query.isError) return null;
+  if (!creatorEnabled || query.isLoading || query.isError) return null;
 
   const dream = query.data?.dream;
   const gifts = query.data?.gifts || [];

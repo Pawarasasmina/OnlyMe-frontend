@@ -622,6 +622,19 @@ function ProfileContentGrid({
               </>
             );
 
+            if (reposted) {
+              return (
+                <Link
+                  aria-label={`Open reposted Seen ${item.title || "Untitled Seen"}`}
+                  className="profile-seen-tile"
+                  key={item.id}
+                  to={`/seen/${item.id}`}
+                >
+                  {tile}
+                </Link>
+              );
+            }
+
             return (
               <button className="profile-seen-tile" key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
                 {tile}
