@@ -326,6 +326,108 @@ function normalizeLedgerEntry(entry) {
   };
 }
 
+function aggregateAction(item) {
+  const type = String(item.type || "").toLowerCase();
+  if (type.includes("save")) return "save";
+  if (type.includes("reaction")) return "reaction";
+  if (type.includes("comment")) return "comment";
+  if (type.includes("share") || type.includes("repost")) return "share";
+  return null;
+}
+
+function aggregateTargetLabel(item) {
+  const type = String(item.target?.type || item.relatedContent?.type || "").toUpperCase();
+  if (type.includes("SEEN") || type.includes("WORLD")) return "Seen";
+  return "note";
+}
+
+function aggregateReceivedActivity(items) {
+  const groups = new Map();
+  const passthrough = [];
+
+  const seenByDay = new Map();
+  items.forEach((item) => {
+    if (item.direction !== "received" || item.type !== "profile_seen") return;
+    const date = new Date(item.createdAt);
+    const dayKey = Number.isNaN(date.getTime()) ? "unknown" : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    const group = seenByDay.get(dayKey) || [];
+    group.push(item);
+    seenByDay.set(dayKey, group);
+  });
+
+  seenByDay.forEach((group, dayKey) => {
+    if (group.length < 2) return;
+    const latest = [...group].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
+    const people = group.map((item) => item.relatedCreator).filter(Boolean);
+    const names = people.map((person) => person.displayName || person.name || person.username || "Someone");
+    const leadNames = names.slice(0, 2).join(", ");
+    const more = Math.max(0, group.length - 2);
+    passthrough.push({
+      ...latest,
+      id: `profile-seen-group-${dayKey}`,
+      type: "profile_seen_group",
+      title: `${leadNames}${more ? ` and ${more} more` : ""} said “I see you” 🔁`,
+      relatedCreator: null,
+      relatedCreators: people,
+      actor: null,
+      route: "/orbit",
+      actionPath: "/orbit",
+      aggregate: { count: group.length, ids: group.map((item) => item.id), kind: "profile_seen" },
+      canAcknowledge: false,
+      acknowledged: group.every((item) => item.acknowledged || item.read),
+    });
+  });
+
+  items.forEach((item) => {
+    if (item.direction === "received" && item.type === "profile_seen") {
+      const date = new Date(item.createdAt);
+      const dayKey = Number.isNaN(date.getTime()) ? "unknown" : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      if ((seenByDay.get(dayKey) || []).length > 1) return;
+    }
+    const action = aggregateAction(item);
+    const targetId = item.target?.id || item.route || item.actionPath;
+    if (item.direction !== "received" || item.aggregate || !action || !targetId) {
+      passthrough.push(item);
+      return;
+    }
+
+    const key = `${action}:${targetId}`;
+    const group = groups.get(key) || [];
+    group.push(item);
+    groups.set(key, group);
+  });
+
+  groups.forEach((group, key) => {
+    if (group.length === 1) {
+      passthrough.push(group[0]);
+      return;
+    }
+
+    const latest = [...group].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
+    const action = aggregateAction(latest);
+    const targetLabel = aggregateTargetLabel(latest);
+    const verbs = {
+      save: `saved your ${targetLabel}`,
+      reaction: `reacted to your ${targetLabel}`,
+      comment: `commented on your ${targetLabel}`,
+      share: `reposted your ${targetLabel}`,
+    };
+
+    passthrough.push({
+      ...latest,
+      id: `activity-group-${key}`,
+      title: `${group.length} people ${verbs[action]}`,
+      relatedCreator: null,
+      actor: null,
+      aggregate: { count: group.length, ids: group.map((item) => item.id) },
+      canAcknowledge: false,
+      acknowledged: group.every((item) => item.acknowledged || item.read),
+    });
+  });
+
+  return passthrough;
+}
+
 function normalizeActivity(activity = [], ledger = []) {
   const normalized = [
     ...activity.map(normalizeLegacyActivity),
@@ -333,13 +435,15 @@ function normalizeActivity(activity = [], ledger = []) {
   ];
 
   const seen = new Set();
-  return normalized
+  const deduplicated = normalized
     .filter((item) => {
       const key = String(item.dedupeKey || `${item.reference?.type || item.type}:${item.reference?.id || item.id}`);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
+    });
+
+  return aggregateReceivedActivity(deduplicated)
     .sort((left, right) => (new Date(right.createdAt) - new Date(left.createdAt)) || (Number(right.priority) - Number(left.priority)));
 }
 
@@ -380,6 +484,7 @@ function reactionEmojiFor(item) {
 }
 
 function titleMarkFor(item) {
+  if (item.type === "profile_seen_group") return "";
   const reaction = reactionEmojiFor(item);
   if (reaction) return reaction;
   const text = `${item.event || ""} ${item.type || ""} ${item.title || ""} ${item.description || ""}`.toLowerCase();
@@ -411,6 +516,22 @@ function ActivityAvatar({ item }) {
   const creator = item.relatedCreator;
   const Icon = iconFor(item);
 
+  if (item.relatedCreators?.length) {
+    return (
+      <span className="activity-avatar-stack" aria-label={`${item.relatedCreators.length} people`}>
+        {item.relatedCreators.slice(0, 3).map((person, index) => (
+          <FanAvatar
+            className="activity-person-avatar"
+            key={person.id || person.username || index}
+            name={person.displayName || person.name || person.username || "Activity"}
+            size="h-9 w-9"
+            src={person.avatarUrl || person.avatar}
+          />
+        ))}
+      </span>
+    );
+  }
+
   if (creator) {
     return (
       <FanAvatar
@@ -434,6 +555,13 @@ function ActivityTitle({ item }) {
   const actorName = item.relatedCreator?.displayName || item.relatedCreator?.name || item.relatedCreator?.username || "";
   const titleMark = titleMarkFor(item);
   const actionIcon = titleMark ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
+
+  if (item.type === "profile_seen_group" && item.relatedCreators?.length) {
+    const names = item.relatedCreators.map((person) => person.displayName || person.name || person.username || "Someone");
+    const leadNames = names.slice(0, 2).join(", ");
+    const more = Math.max(0, Number(item.aggregate?.count || names.length) - 2);
+    return <p><b>{leadNames}</b>{more ? <> and <b>{more} more</b></> : null} said “I see you” <span aria-hidden="true">🔁</span></p>;
+  }
 
   if (actorName && title.startsWith(actorName)) {
     return (
@@ -492,7 +620,7 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
         {item.warning ? <strong>{"HIGH PRIORITY \u00b7 ACCOUNT WARNING"}</strong> : null}
         <ActivityTitle item={item} />
         {item.preview ? <span className="activity-prototype-preview">&quot;{item.preview}&quot;</span> : null}
-        <time dateTime={item.createdAt ? new Date(item.createdAt).toISOString() : undefined}>{relativeTime(item.createdAt)}</time>
+        <time dateTime={item.createdAt ? new Date(item.createdAt).toISOString() : undefined}>{relativeTime(item.createdAt)}{item.type === "profile_seen_group" ? ` · ${item.aggregate?.count || 0}` : ""}</time>
       </div>
 
       <div className="activity-prototype-right">

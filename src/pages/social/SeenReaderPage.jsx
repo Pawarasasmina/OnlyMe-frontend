@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
+import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
@@ -680,7 +681,7 @@ function SeenOverview({
     <div className="seen-detail-body seen-detail-prototype-body">
       <div className="seen-detail-overview">
         <button aria-label={`Start ${detail.title}`} className="seen-detail-cover" onClick={() => onOpenChapter(0)} type="button">
-          {detail.heroMedia?.thumbnailUrl || detail.heroMedia?.url ? <img alt={`${detail.title} cover`} src={detail.heroMedia.thumbnailUrl || detail.heroMedia.url} /> : <span aria-hidden="true">@seen</span>}
+          {detail.heroMedia?.url ? <PublicationCoverMedia alt={`${detail.title} cover`} autoPlay loop media={detail.heroMedia} /> : detail.heroMedia?.thumbnailUrl ? <img alt={`${detail.title} cover`} src={detail.heroMedia.thumbnailUrl} /> : <span aria-hidden="true">@seen</span>}
         </button>
         <div><h2>{detail.title}</h2><p>{creatorFirstName(creator)} · {detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</p></div>
       </div>
@@ -1248,9 +1249,9 @@ export default function SeenReaderPage() {
     <article className="seen-reader-content" onClick={handleReaderClick}>
       {hasChapterContent ? <>
         {chapterContent}
-        {!hasInlineMedia && publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} className="seen-reader-media" loading="lazy" src={mediaUrl(publication.coverMedia)} /> : null}
+        {!hasInlineMedia && publication.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${publication.title} cover`} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
       </> : <section className="seen-reader-empty-chapter">
-        {publication.coverMedia?.secureUrl ? <img alt={`${publication.title} cover`} className="seen-reader-media" loading="lazy" src={mediaUrl(publication.coverMedia)} /> : null}
+        {publication.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${publication.title} cover`} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
         <h2>{isOwner ? "This chapter needs content" : "This chapter is empty"}</h2>
         <p>{isOwner ? "Add text, key points, highlights, links, or media so readers have something to step through." : "The creator has not added anything to this chapter yet."}</p>
         {isOwner ? <Link to={`/studio/seens/${encodeURIComponent(id)}/edit?from=seen`}>Edit this Seen</Link> : null}
@@ -1259,7 +1260,7 @@ export default function SeenReaderPage() {
 
     <footer className="seen-reader-footer">
       {safeChapterIndex === chapters.length - 1 && nextSeen ? <button className="seen-reader-up-next" onClick={openNextSeen} type="button">
-        {mediaUrl(nextSeen.coverMedia) ? <img alt="" src={mediaUrl(nextSeen.coverMedia)} /> : <span aria-hidden="true"><FiEye /></span>}
+        {mediaUrl(nextSeen.coverMedia) ? <PublicationCoverMedia alt="" autoPlay loop media={nextSeen.coverMedia} /> : <span aria-hidden="true"><FiEye /></span>}
         <span><small>Up next from {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || "Next Seen"}</strong><em>{nextSeen.chapters?.length || 0} chapters</em></span>
         <FiChevronRight aria-hidden="true" />
       </button> : null}

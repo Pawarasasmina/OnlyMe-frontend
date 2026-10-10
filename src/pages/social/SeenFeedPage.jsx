@@ -7,6 +7,7 @@ import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import SeriesPickerSheet from "../../components/publication/SeriesPickerSheet";
+import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import ShareSheet from "../../components/share/ShareSheet";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
@@ -450,7 +451,7 @@ function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
 
 function CompactSeenMedia({ item, target }) {
   return <Link className="seen-media" to={target}>
-    {item.media.url ? <img alt={`${item.title} cover`} loading="lazy" src={item.media.url} /> : <span className="seen-media-fallback">@seen</span>}
+    {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={{ mediaType: item.media.type === "video" ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} /> : <span className="seen-media-fallback">@seen</span>}
     {item.media.type === "video" && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
   </Link>;
 }

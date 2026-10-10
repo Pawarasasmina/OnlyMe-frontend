@@ -729,8 +729,9 @@ function CoverSheet({ hasCover, onClose, onUpload }) {
       <div className="seen-cover-sheet-body">
         <div className="seen-cover-sheet-preview">{hasCover ? <FiCheck /> : <FiImage />}</div>
         <div>
-          <button className="seen-cover-upload" onClick={onUpload} type="button"><FiUpload /> {hasCover ? "Replace" : "Upload"}</button>
-          <small>{hasCover ? "Cover selected" : "Choose a photo from your device"}</small>
+          <button className="seen-cover-upload" onClick={() => onUpload("IMAGE")} type="button"><FiImage /> {hasCover ? "Replace with photo" : "Upload photo"}</button>
+          <button className="seen-cover-upload" onClick={() => onUpload("VIDEO")} type="button"><FiFilm /> {hasCover ? "Replace with video" : "Upload video"}</button>
+          <small>{hasCover ? "Cover selected · photo or video supported" : "Choose a photo or a video up to 30 seconds"}</small>
         </div>
       </div>
       <button className="seen-settings-done" onClick={onClose} type="button">Done</button>
@@ -3492,7 +3493,7 @@ export default function SeenComposerPage() {
         />
       ) : null}
       {settingsSheet === "cover" ? (
-        <CoverSheet hasCover={Boolean(p.coverMedia)} onClose={() => setSettingsSheet("")} onUpload={() => chooseMedia("IMAGE")} />
+        <CoverSheet hasCover={Boolean(p.coverMedia)} onClose={() => setSettingsSheet("")} onUpload={(kind) => chooseMedia(kind, 30)} />
       ) : null}
       {settingsSheet === "series" ? (
         <SeriesSheet
