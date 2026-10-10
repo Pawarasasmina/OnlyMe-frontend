@@ -103,8 +103,8 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
   };
   return (
     <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && onClose()} ref={backdropRef} style={sheetPosition}>
+      {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their activity"}`} variant="is-profile-gift" /> : null}
       <section aria-label={sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"} className="dream-gift-sheet">
-        {sent ? <GiftCelebration gift={sent} message={`Gift sent to ${recipient?.name || "their activity"}`} /> : null}
         <span className="dream-gift-handle" />
         {!selectedGift ? <>
         <div className={`dream-gift-header ${sourceType === "DIRECT" ? "is-direct-profile-gift" : ""}`}>
@@ -123,9 +123,8 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
           <button className="dream-gift-change" disabled={Boolean(sending)} onClick={() => setSelectedGift(null)} type="button">Change gift</button>
           <span className="dream-gift-confirm-image"><img alt={selectedGift.name} src={selectedGift.imageUrl} style={{ transform: giftTransform(selectedGift) }} /></span>
           <h2>{selectedGift.name}</h2>
-          <p>“{message.trim() || "A gift chosen for you"}”</p>
-          <small>for <strong>{recipient?.name || "this creator"}</strong> · {STAR}{Number(selectedGift.stars || 0).toLocaleString()}</small>
-          <em>{recipient?.name || "They"} receives this as real earnings</em>
+          <small>to <strong>{recipient?.username ? `@${recipient.username}` : recipient?.name || "this creator"}</strong></small>
+          <em>{STAR}{Number(selectedGift.stars || 0).toLocaleString()} · {recipient?.name || "They"} receives this as real earnings</em>
           <div className="dream-gift-arrival-note">{recipient?.name || "They"} sees it the moment it lands — first on the shelf</div>
           <button className="dream-gift-visibility" disabled={Boolean(sending)} onClick={() => setVisibility((current) => current === "EVERYONE" ? "RECIPIENT_ONLY" : "EVERYONE")} type="button"><span>Visibility</span><b>{visibility === "EVERYONE" ? "Everyone" : "Only recipient"}</b><FiChevronRight aria-hidden="true" /></button>
           <label className="dream-gift-message"><span>Add a message · optional</span><input maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder="Say something..." value={message} /></label>

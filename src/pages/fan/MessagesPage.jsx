@@ -10,6 +10,7 @@ import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceRecorder from "../../components/messaging/VoiceRecorder";
 import VideoNoteBubble from "../../components/messaging/VideoNoteBubble";
 import DirectAccessSettingsSheet from "../../components/messages/DirectAccessSettingsSheet";
+import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryViewer from "../../components/stories/StoryViewer";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
@@ -21,7 +22,6 @@ import { messageService } from "../../services/messageService";
 import { postService } from "../../services/postService";
 import { getMessageSocket } from "../../services/messageSocket";
 import { storyService } from "../../services/storyService";
-import { walletService } from "../../services/walletService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const relative = (value) => {
@@ -310,11 +310,11 @@ export default function MessagesPage() {
   const [pendingShare, setPendingShare] = useState(() => searchParams.get("share") || "");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [giftOpen, setGiftOpen] = useState(false);
+  const giftBusy = false;
   const [disappearingOpen, setDisappearingOpen] = useState(false);
   const [disappearAfterSeconds, setDisappearAfterSeconds] = useState(null);
   const [disappearingViewer, setDisappearingViewer] = useState(null);
   const [disappearingViewerBusy, setDisappearingViewerBusy] = useState(false);
-  const [giftBusy, setGiftBusy] = useState(false);
   const [reactionFor, setReactionFor] = useState(null);
   const [reactionDetails, setReactionDetails] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
@@ -453,8 +453,6 @@ export default function MessagesPage() {
     refetchOnWindowFocus: "always",
     staleTime: 10000,
   });
-  const giftsQuery = useQuery({ queryKey: ["messages", "gifts", selected?.id], queryFn: () => messageService.getGifts(selected.id).then((response) => response.data.data.gifts), enabled: giftOpen && selected?.type !== "group" && Boolean(selected?.id), staleTime: 60000 });
-  const walletQuery = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet), enabled: giftOpen, retry: false });
   useEffect(() => {
     if (selected?.id) messagesQuery.refetch();
   }, [selected?.directAccessWindowId]);
@@ -1355,22 +1353,6 @@ export default function MessagesPage() {
     setSending(false);
     await deliverText({ body, clientMessageId, optimisticId, reply, disappearingSeconds: selectedTimer });
   };
-  const sendGift = async (gift) => {
-    if (!selected?.id || selected.type === "group" || giftBusy) return;
-    setGiftBusy(true);
-    setError("");
-    try {
-      const response = await messageService.sendGift(selected.id, gift.id, newClientMessageId(), disappearAfterSeconds);
-      const sent = response.data.data.message;
-      if (sent) queryClient.setQueryData(["messages", selected.id], (current) => current ? { ...current, messages: current.messages.some((message) => message.id === sent.id) ? current.messages : [...current.messages, sent] } : current);
-      await Promise.all([queryClient.invalidateQueries({ queryKey: ["wallet"] }), queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] }), queryClient.invalidateQueries({ queryKey: ["fan", "activity"] })]);
-      setGiftOpen(false);
-    } catch (requestError) {
-      setError(requestError.response?.data?.message || "Could not send this gift.");
-    } finally {
-      setGiftBusy(false);
-    }
-  };
   const retryText = async (message) => {
     if (message.deliveryState !== "failed") return;
     setError("");
@@ -1744,7 +1726,7 @@ export default function MessagesPage() {
           </section>
         </div> : null}
         <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {inboxTab === "direct" && user?.role === "creator" ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border border-dashed border-atseen-blue/45 bg-atseen-blue/[0.025] p-4 text-left transition hover:bg-atseen-blue/[0.06]" onClick={() => { setError(""); setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-atseen-blue"><FiPlus /></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-atseen-blue">Set up Direct Access</span><span className="mt-0.5 block text-[11px] text-atseen-muted">Your prices for priority messages and calls</span></span></button> : null}
+          {inboxTab === "direct" && user?.role === "creator" ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-xl border border-atseen-blue/25 bg-atseen-blue/[0.035] px-3 py-2.5 text-left transition hover:bg-atseen-blue/[0.07]" onClick={() => { setError(""); setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-xs text-atseen-blue"><FiSettings /></span><span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-atseen-blue">Set up Direct Access</span><span className="mt-0.5 block text-[9px] text-atseen-muted">Your prices for messages and calls</span></span></button> : null}
           {inboxTab === "direct" && directWindowsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading Direct Access…</p> : null}
           {inboxTab !== "direct" && conversationsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">Loading conversations…</p> : null}
           {conversationsQuery.isError ? <div className="p-6 text-sm text-atseen-danger"><p>Conversations are unavailable.</p><button className="mt-3 rounded-full border border-atseen-danger/30 px-4 py-2 text-xs font-bold" onClick={() => conversationsQuery.refetch()} type="button">Retry</button></div> : null}
@@ -1752,7 +1734,7 @@ export default function MessagesPage() {
             const other = user?.role === "creator" ? windowItem.fan : windowItem.creator;
             if (!other) return null;
             const hoursLeft = Math.max(0, Math.ceil((new Date(windowItem.expiresAt).getTime() - Date.now()) / 3600000));
-            const statusLabel = windowItem.settlementStatus === "HELD" ? "Pending" : windowItem.settlementStatus === "CAPTURED" ? "Answered" : windowItem.settlementStatus === "REFUNDED" ? "Refunded" : windowItem.settlementStatus.replaceAll("_", " ");
+            const statusLabel = windowItem.settlementStatus === "HELD" ? `+$${Number(windowItem.creatorNetUsd || 0).toFixed(2)} to you` : windowItem.settlementStatus === "CAPTURED" ? "Answered" : windowItem.settlementStatus === "REFUNDED" ? "Refunded" : windowItem.settlementStatus.replaceAll("_", " ");
             return <button className="flex w-full items-start gap-3 px-5 py-3.5 text-left transition hover:bg-white/[0.03]" key={windowItem.id} onClick={() => chooseConversation({ id: other.id, participant: other, directAccessWindowId: windowItem.id })} type="button">
               <Identity compact person={other} presence={presence[other.id]} subtitle={windowItem.questionQuote ? `“${windowItem.questionQuote}”` : `${windowItem.messagesRemaining} messages left`} />
               <span className="ml-auto flex shrink-0 flex-col items-end gap-2"><span className="text-[10px] text-atseen-muted">{inboxTime(windowItem.updatedAt || windowItem.createdAt)}</span><span className={`rounded-full px-2.5 py-1 text-[9px] font-black ${windowItem.settlementStatus === "HELD" ? "bg-white/[0.07] text-atseen-muted" : windowItem.settlementStatus === "CAPTURED" ? "bg-atseen-blue/10 text-atseen-blue" : windowItem.settlementStatus === "REFUNDED" ? "bg-atseen-success/10 text-atseen-success" : "bg-white/5 text-atseen-muted"}`}>{statusLabel}</span>{windowItem.settlementStatus === "HELD" ? <span className="text-[9px] text-atseen-muted">⌛ {hoursLeft}h left</span> : null}</span>
@@ -1925,7 +1907,7 @@ export default function MessagesPage() {
           </div> : messagesQuery.data?.conversationStatus === "REQUEST" ? <div className="shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-4 text-center text-xs text-atseen-muted">Message request sent. You can continue after they accept it.</div> : <form className="message-composer-form relative shrink-0 border-t border-atseen-line bg-atseen-bg-2 p-3 sm:p-4" onSubmit={send}>
             {error ? <p className="mb-2 text-xs text-atseen-danger">{error}</p> : null}
             {disappearingOpen ? <section aria-labelledby="disappearing-message-title" aria-modal="true" className="absolute bottom-0 left-0 right-0 z-[95] overflow-hidden rounded-t-[24px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5 shadow-[0_-24px_70px_rgba(0,0,0,.65)]" role="dialog"><div className="mx-auto mb-5 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-black" id="disappearing-message-title">Disappearing message</h2><p className="mt-1 text-xs text-atseen-muted">The timer starts when they open it</p></div><button aria-label="Close disappearing message options" className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/5" onClick={() => setDisappearingOpen(false)} type="button"><FiX /></button></div><div className="mt-4">{[[0, "View once"], [3, "3 seconds"], [10, "10 seconds"], [30, "30 seconds"], [null, "Off"]].map(([seconds, label]) => <button className="flex w-full items-center border-b border-white/[0.07] py-3.5 text-left text-sm font-bold last:border-0" key={label} onClick={() => { setDisappearAfterSeconds(seconds); setDisappearingOpen(false); }} type="button"><span className="flex-1">{label}</span>{disappearAfterSeconds === seconds ? <span className="text-atseen-blue">✓</span> : null}</button>)}</div><p className="mt-2 text-[10px] leading-4 text-atseen-muted">Disappearing messages are removed for both people after opening. Recipients may still capture content before it disappears.</p></section> : null}
-            {giftOpen ? <section aria-modal="true" className="absolute bottom-0 left-0 right-0 z-[90] max-h-[min(68vh,620px)] overflow-y-auto rounded-t-[24px] border border-b-0 border-atseen-line bg-[#1b212c] p-4 pb-6 shadow-[0_-24px_70px_rgba(0,0,0,.65)]" role="dialog"><div className="mx-auto mb-3 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-center justify-between"><div><h2 className="text-base font-black">Send a gift</h2><p className="mt-1 text-[11px] text-atseen-muted">Your balance: <b className="text-atseen-warning">{walletQuery.isLoading ? "✦…" : `✦${Number(walletQuery.data?.balance || 0).toLocaleString()}`}</b></p></div><button aria-label="Close gifts" className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/5" disabled={giftBusy} onClick={() => setGiftOpen(false)} type="button"><FiX /></button></div>{giftsQuery.isLoading ? <p className="py-8 text-center text-sm text-atseen-muted">Loading gifts…</p> : giftsQuery.isError ? <p className="py-8 text-center text-sm text-atseen-danger">Gifts could not be loaded.</p> : <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">{(giftsQuery.data || []).map((gift) => { const affordable = Number(walletQuery.data?.balance || 0) >= gift.stars; return <button className="rounded-2xl border border-atseen-line bg-atseen-surface-2 p-2 text-center transition hover:border-atseen-warning/50 disabled:opacity-45" disabled={giftBusy || walletQuery.isLoading || !affordable} key={gift.id} onClick={() => sendGift(gift)} type="button"><div className="mx-auto h-16 w-16 overflow-hidden"><img alt={gift.name} className="h-full w-full object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></div><b className="mt-1 block truncate text-xs">{gift.name}</b><span className="mt-0.5 block text-[11px] font-black text-atseen-warning">✦{gift.stars.toLocaleString()}</span>{!affordable && !walletQuery.isLoading ? <span className="mt-0.5 block text-[8px] text-atseen-danger">Not enough Stars</span> : null}</button>; })}</div>}{giftBusy ? <p className="mt-3 text-center text-xs font-bold text-atseen-warning">Sending gift securely…</p> : null}</section> : null}
+            {giftOpen && selected?.type !== "group" ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => { queryClient.invalidateQueries({ queryKey: ["messages", selected.id] }); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }} recipient={{ id: selected.id, name: participant?.displayName || "them", username: participant?.username, avatar: participant?.avatarUrl }} sourceType="DIRECT" /> : null}
             {replyTo ? <div className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-atseen-blue bg-atseen-surface-2 px-3 py-2"><FiCornerUpLeft className="shrink-0 text-atseen-blue" /><div className="min-w-0 flex-1"><p className="text-[10px] font-bold text-atseen-blue">Replying to {replyTo.senderId === myId ? "yourself" : participant?.displayName}</p><p className="truncate text-xs text-atseen-muted">{replyTo.body}</p></div><button aria-label="Cancel reply" className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-white/5" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
             {emojiOpen ? <div className="absolute bottom-[4.25rem] left-2 z-20 w-[min(19rem,calc(100%-1rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-2 shadow-2xl sm:bottom-[4.5rem] sm:left-3 sm:w-[min(19rem,calc(100%-1.5rem))] sm:p-3"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-6 gap-1 min-[380px]:grid-cols-7">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 min-w-0 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
             {fanCanAskAfterWindowEnded ? fanCanAffordFollowup ? <div className="mb-2 rounded-xl border border-atseen-blue/20 bg-atseen-blue/[0.04] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-blue">Ask a free follow-up</b> · ✦{followupPriceStars || directAccessWindow.priceStars} is held now, paid only if they reply, or fully refunded after 48h.</div> : <div className="mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-danger/[0.05] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-danger">Not enough Stars</b> · You need ✦{followupPriceStars}, but your Wallet has ✦{followupWalletBalance}. <button className="font-black text-atseen-blue" onClick={() => navigate("/fan/wallet")} type="button">Open Wallet</button></div> : null}

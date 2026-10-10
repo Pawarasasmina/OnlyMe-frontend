@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft, FiChevronRight, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { walletService } from "../../services/walletService";
@@ -8,6 +8,7 @@ const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", cur
 
 export default function WithdrawPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [notice, setNotice] = useState("");
   const walletQuery = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet), retry: false });
   const wallet = walletQuery.data;
@@ -15,11 +16,21 @@ export default function WithdrawPage() {
   const pending = Number(wallet?.pendingIncomeUsd || 0);
   const minimum = Number(wallet?.withdrawalMinimumUsd || 20);
   const canWithdraw = available >= minimum;
+  const withdrawalMutation = useMutation({
+    mutationFn: ({ key, stars }) => walletService.withdrawIncome(stars, key).then((response) => response.data.data.withdrawal),
+    onSuccess: (withdrawal) => {
+      setNotice(`${money(withdrawal.usdAmount)} withdrawal submitted to Bank •• ${withdrawal.bankLast4}. Estimated arrival: ${withdrawal.estimatedArrival}.`);
+      queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] });
+    },
+    onError: (error) => setNotice(error.response?.data?.message || "Withdrawal could not be submitted."),
+  });
 
   const previewWithdrawal = () => {
     if (!canWithdraw) return;
     if (!window.confirm(`Withdraw ${money(available)} to the temporary bank account ending 4832?`)) return;
-    setNotice("Payout processing is not connected yet. No money was moved and your balance was not changed.");
+    setNotice("");
+    withdrawalMutation.mutate({ key: `withdraw-${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`, stars: Number(wallet.availableIncomeStars || 0) });
   };
 
   return <main className="mx-auto min-h-[calc(100dvh-80px)] w-full max-w-xl px-5 py-5 text-white">
@@ -34,7 +45,7 @@ export default function WithdrawPage() {
 
       <button className="flex w-full items-center gap-4 rounded-3xl border border-white/10 bg-[#151922] px-5 py-5 text-left" onClick={() => setNotice("Bank account management will be connected with the payout provider.")} type="button"><FiHome className="text-lg text-white/60" /><span className="flex-1"><b className="block text-sm">Bank •• 4832</b><small className="mt-1 block text-[11px] text-white/40">Temporary payout account · arrives in 3–5 days</small></span><FiChevronRight className="text-white/60" /></button>
 
-      <button className="mt-5 w-full rounded-2xl bg-[#8fc3ff] py-4 text-sm font-black text-[#07101a] shadow-[0_10px_28px_rgba(116,181,255,.3)] disabled:cursor-not-allowed disabled:opacity-40" disabled={!canWithdraw} onClick={previewWithdrawal} type="button">{canWithdraw ? `Withdraw ${money(available)}` : `Minimum ${money(minimum)} required`}</button>
+      <button className="mt-5 w-full rounded-2xl bg-[#8fc3ff] py-4 text-sm font-black text-[#07101a] shadow-[0_10px_28px_rgba(116,181,255,.3)] disabled:cursor-not-allowed disabled:opacity-40" disabled={!canWithdraw || withdrawalMutation.isPending} onClick={previewWithdrawal} type="button">{withdrawalMutation.isPending ? "Submitting withdrawal…" : canWithdraw ? `Withdraw ${money(available)}` : `Minimum ${money(minimum)} required`}</button>
       {notice ? <p className="mt-4 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-center text-xs leading-5 text-white/60" role="status">{notice}</p> : null}
     </> : null}
   </main>;

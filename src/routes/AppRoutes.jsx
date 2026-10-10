@@ -30,6 +30,7 @@ import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
 import CreatorVerificationDetail from "../pages/admin/SimpleCreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
 import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
+import DirectAccessSettingsPage from "../pages/settings/DirectAccessSettingsPage";
 import SettingsPage from "../pages/settings/SettingsPage";
 import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
 import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
@@ -146,6 +147,9 @@ function AppRoutes() {
           <Route path="/profile/dream" element={<DreamEditorPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+          <Route element={<ApprovedCreatorRoute />}>
+            <Route path="/settings/direct-access" element={<DirectAccessSettingsPage />} />
+          </Route>
           <Route path="/settings/account" element={<AccountSettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />

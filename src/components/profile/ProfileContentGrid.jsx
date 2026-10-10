@@ -30,6 +30,7 @@ import {
   FiZap,
 } from "react-icons/fi";
 import SeriesPickerSheet from "../publication/SeriesPickerSheet";
+import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 import { publicationService } from "../../services/publicationService";
 
 const icons = { IMAGE: FiImage, VIDEO: FiVideo, AUDIO: FiHeadphones, TEXT: FiFileText };
@@ -579,7 +580,7 @@ function ProfileContentGrid({
           <header><button onClick={() => setDraftsOpen(false)} type="button">‹ My Seens</button><i>·</i><b>Drafts {drafts.length}</b></header>
           <div className="profile-seens-grid">
             {drafts.map((item) => <Link className="profile-seen-tile is-draft" key={item.id} to={`/studio/seens/${item.id}/edit?from=drafts`}>
-              {item.coverMedia?.secureUrl ? <img alt={`${item.title || "Untitled Seen"} draft cover`} loading="lazy" src={item.coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+              {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title || "Untitled Seen"} draft cover`} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
               <span className="profile-seen-shade" />
               <span className="profile-seen-badge">DRAFT</span>
               <span className="profile-seen-copy"><strong>{item.title || "Untitled Seen"}</strong></span>
@@ -592,7 +593,7 @@ function ProfileContentGrid({
       <>
         <div className="profile-seens-grid">
           {drafts.length ? <button className="profile-seen-tile profile-drafts-tile" onClick={() => setDraftsOpen(true)} type="button">
-            {drafts[0]?.coverMedia?.secureUrl ? <img alt="Seen drafts" loading="lazy" src={drafts[0].coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+            {drafts[0]?.coverMedia?.secureUrl ? <PublicationCoverMedia alt="Seen drafts" autoPlay loop media={drafts[0].coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
             <span className="profile-seen-shade" />
             <span className="profile-draft-count">{drafts.length}</span>
             <span className="profile-seen-copy"><strong>Drafts</strong></span>
@@ -602,7 +603,7 @@ function ProfileContentGrid({
             const count = seriesItem.seenCount ?? seriesItem.seens?.length ?? 0;
             const name = seriesItem.name || seriesItem.title || "Untitled Series";
             return <button className="profile-seen-tile profile-series-tile" key={seriesItem.id} onClick={() => openSeries(seriesItem)} type="button">
-              {media?.secureUrl ? <img alt={`${name} series cover`} loading="lazy" src={media.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+              {media?.secureUrl ? <PublicationCoverMedia alt={`${name} series cover`} autoPlay loop media={media} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
               <span className="profile-seen-shade" />
               <span className="profile-seen-badge">SERIES <b>{count}</b></span>
               <span className="profile-seen-copy"><strong>{name}</strong><small>{count} {count === 1 ? "Seen" : "Seens"}</small></span>
@@ -612,7 +613,7 @@ function ProfileContentGrid({
             const chapters = item.chapters?.length || 0;
             const tile = (
               <>
-                {item.coverMedia?.secureUrl ? <img alt={`${item.title} cover`} loading="lazy" src={item.coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+                {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
                 <span className="profile-seen-badge">{reposted ? <><FiRepeat /> REPOST</> : "PINNED"}</span>
                 <span className="profile-seen-copy">
@@ -642,7 +643,7 @@ function ProfileContentGrid({
             );
           })}
           {!reposted && publishedContent.length ? <button className="profile-seen-tile profile-all-seens-tile" onClick={() => onActiveSeenListChange?.("all")} type="button">
-            {publishedContent[0]?.coverMedia?.secureUrl ? <img alt="All Seens" loading="lazy" src={publishedContent[0].coverMedia.secureUrl} /> : <span className="profile-seen-fallback"><FiGrid /></span>}
+            {publishedContent[0]?.coverMedia?.secureUrl ? <PublicationCoverMedia alt="All Seens" autoPlay loop media={publishedContent[0].coverMedia} /> : <span className="profile-seen-fallback"><FiGrid /></span>}
             <span className="profile-seen-shade" />
             <span className="profile-draft-count">{publishedContent.length}</span>
             <span className="profile-seen-copy"><strong>All Seens</strong><small>Open every Seen</small></span>

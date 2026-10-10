@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiCheckCircle, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
@@ -139,16 +139,19 @@ function Segmented({ label, onChange, options = [
 }
 
 const notificationRows = [
-  ["email", "Email notifications", "Account updates and summaries"],
-  ["inApp", "In-app notifications", "Activity while you use Atseen"],
-  ["messages", "Messages", "New messages and replies"],
-  ["directAccess", "Direct Access & income", "Requests, calls and earnings"],
-  ["marketing", "Product announcements", "New features and occasional news"],
+  ["reactions", "Support on your notes"],
+  ["comments", "Comments & replies"],
+  ["followers", "New followers"],
+  ["messages", "Messages"],
+  ["directAccess", "Direct Access requests"],
+  ["gifts", "Gifts received"],
+  ["email", "Weekly digest"],
 ];
 
-function NotificationSheet({ isOpen, onClose }) {
+function NotificationSheet({ anchorRef, isOpen, onClose }) {
   const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState({});
+  const [anchorBounds, setAnchorBounds] = useState(null);
   const [error, setError] = useState("");
   const query = useQuery({
     queryKey: ["settings", "notifications"],
@@ -163,7 +166,10 @@ function NotificationSheet({ isOpen, onClose }) {
       setPreferences(data.notificationPreferences || {});
       setError("");
     },
-    onError: () => setError("Unable to save notification settings. Please try again."),
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings", "notifications"] });
+      setError("Unable to save notification settings. Please try again.");
+    },
   });
 
   useEffect(() => {
@@ -177,6 +183,17 @@ function NotificationSheet({ isOpen, onClose }) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const syncBounds = () => {
+      const rect = anchorRef?.current?.getBoundingClientRect();
+      setAnchorBounds(rect ? { left: rect.left, width: rect.width } : null);
+    };
+    syncBounds();
+    window.addEventListener("resize", syncBounds);
+    return () => window.removeEventListener("resize", syncBounds);
+  }, [anchorRef, isOpen]);
+
   if (!isOpen) return null;
 
   const toggle = (key) => {
@@ -186,24 +203,24 @@ function NotificationSheet({ isOpen, onClose }) {
     mutation.mutate(next);
   };
 
-  return <div aria-labelledby="profile-notifications-title" aria-modal="true" className="profile-notification-layer" role="dialog">
+  return <div aria-labelledby="profile-notifications-title" aria-modal="true" className="profile-notification-layer settings-notification-layer" role="dialog" style={anchorBounds ? { "--settings-notification-left": `${anchorBounds.left}px`, "--settings-notification-width": `${anchorBounds.width}px` } : undefined}>
     <button aria-label="Close notifications" className="profile-notification-dim" onClick={onClose} type="button" />
-    <section className="profile-notification-sheet">
+    <section className="profile-notification-sheet settings-notification-sheet edit-profile-notification-sheet">
       <span aria-hidden="true" className="profile-notification-grab" />
-      <div className="profile-notification-heading"><div><h2 id="profile-notifications-title">Notifications</h2><p>Choose what deserves your attention.</p></div><button onClick={onClose} type="button">Done</button></div>
+      <h2 id="profile-notifications-title">Notifications</h2>
       {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : <div className="profile-notification-list">
-        {notificationRows.map(([key, title, subtitle]) => <button disabled={mutation.isPending} key={key} onClick={() => toggle(key)} type="button"><span><b>{title}</b><small>{subtitle}</small></span><i aria-hidden="true" className={preferences[key] ? "is-on" : ""}><em /></i></button>)}
+        {notificationRows.map(([key, title]) => <button aria-checked={preferences[key] !== false} disabled={mutation.isPending} key={key} onClick={() => toggle(key)} role="switch" type="button"><span><b>{title}</b></span><i aria-hidden="true" className={preferences[key] !== false ? "is-on" : ""}><em /></i></button>)}
       </div>}
       {query.isError ? <p className="profile-notification-error">Unable to load notification settings.</p> : null}
       {error ? <p className="profile-notification-error">{error}</p> : null}
-      <p className="profile-notification-note">Views are always silent — never a notification.</p>
     </section>
   </div>;
 }
 
-function GiftSettingsSheet({ isOpen, onClose }) {
+function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [anchorBounds, setAnchorBounds] = useState(null);
   const query = useQuery({ queryKey: ["settings", "gifts"], queryFn: () => profileService.getGiftSettings().then((response) => response.data.data), enabled: isOpen });
   const mutation = useMutation({
     mutationFn: (enabledGiftIds) => profileService.updateGiftSettings(enabledGiftIds),
@@ -225,34 +242,37 @@ function GiftSettingsSheet({ isOpen, onClose }) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const syncBounds = () => {
+      const rect = anchorRef?.current?.getBoundingClientRect();
+      setAnchorBounds(rect ? { left: rect.left, width: rect.width } : null);
+    };
+    syncBounds();
+    window.addEventListener("resize", syncBounds);
+    return () => window.removeEventListener("resize", syncBounds);
+  }, [anchorRef, isOpen]);
+
   if (!isOpen) return null;
 
-  const toggle = (gift) => {
+  const toggleGroup = (group) => {
     const gifts = query.data?.gifts || [];
-    const enabledGiftIds = gifts.filter((item) => item.id === gift.id ? !item.enabled : item.enabled).map((item) => item.id);
-    queryClient.setQueryData(["settings", "gifts"], { gifts: gifts.map((item) => item.id === gift.id ? { ...item, enabled: !item.enabled } : item) });
+    const groupIds = new Set(group.gifts.map((gift) => gift.id));
+    const enabled = !group.gifts.every((gift) => gift.enabled);
+    const nextGifts = gifts.map((gift) => groupIds.has(gift.id) ? { ...gift, enabled } : gift);
+    const enabledGiftIds = nextGifts.filter((gift) => gift.enabled).map((gift) => gift.id);
+    queryClient.setQueryData(["settings", "gifts"], { gifts: nextGifts });
     mutation.mutate(enabledGiftIds);
   };
-
-  const setAll = (enabled) => {
-    const gifts = query.data?.gifts || [];
-    const enabledGiftIds = enabled ? gifts.map((gift) => gift.id) : [];
-    queryClient.setQueryData(["settings", "gifts"], { gifts: gifts.map((gift) => ({ ...gift, enabled })) });
-    mutation.mutate(enabledGiftIds);
-  };
+  const toggle = (gift) => toggleGroup({ gifts: [gift] });
 
   return (
-    <div aria-labelledby="gift-settings-title" aria-modal="true" className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-0 pt-10 sm:px-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !mutation.isPending) onClose(); }} role="dialog">
-      <section className="max-h-[78vh] w-full max-w-[548px] overflow-y-auto rounded-t-[24px] border border-b-0 border-white/[0.09] bg-[#1d2430] px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]" onMouseDown={(event) => event.stopPropagation()}>
-        <div aria-hidden="true" className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/35" />
-        <div className="flex items-center justify-between gap-4">
-          <div><h2 className="text-xl font-black text-white" id="gift-settings-title">Gifts</h2><p className="mt-1 text-xs text-atseen-muted">Choose which gifts people can send you.</p></div>
-          <button aria-label="Close gift settings" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={onClose} type="button"><FiX /></button>
-        </div>
-        {!query.isLoading && !query.isError ? <div className="mt-4 flex gap-2">
-          <button className="rounded-full border border-atseen-blue/40 bg-atseen-blue/10 px-4 py-2 text-xs font-black text-atseen-blue disabled:opacity-50" disabled={mutation.isPending || !(query.data?.gifts || []).some((gift) => !gift.enabled)} onClick={() => setAll(true)} type="button">Turn all on</button>
-          <button className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-black text-white/70 disabled:opacity-50" disabled={mutation.isPending || !(query.data?.gifts || []).some((gift) => gift.enabled)} onClick={() => setAll(false)} type="button">Turn all off</button>
-        </div> : null}
+    <div aria-labelledby="gift-settings-title" aria-modal="true" className="profile-notification-layer settings-notification-layer" role="dialog" style={anchorBounds ? { "--settings-notification-left": `${anchorBounds.left}px`, "--settings-notification-width": `${anchorBounds.width}px` } : undefined}>
+      <button aria-label="Close gift settings" className="profile-notification-dim" disabled={mutation.isPending} onClick={onClose} type="button" />
+      <section className="profile-notification-sheet settings-notification-sheet gift-settings-sheet">
+        <span aria-hidden="true" className="profile-notification-grab" />
+        <h2 className="text-[18px] font-black text-white" id="gift-settings-title">Gifts</h2>
+        <p className="mt-1 text-[11px] text-white/45">What fans can send you — coins go to your balance</p>
         {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">Unable to load gift settings.</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-left disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted">✦{Number(gift.stars).toLocaleString()}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
         {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{error}</p> : null}
       </section>
@@ -276,6 +296,7 @@ function ProfileSettingsPage() {
   const queryClient = useQueryClient();
   const { setUser, user } = useAuth();
   const avatarInput = useRef(null);
+  const settingsMainRef = useRef(null);
   const [form, setForm] = useState(emptyForm);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
@@ -527,7 +548,7 @@ function ProfileSettingsPage() {
   }
 
   return (
-    <form className="edit-profile-page" onSubmit={submit}>
+    <form className="edit-profile-page" onSubmit={submit} ref={settingsMainRef}>
       <header className="edit-profile-header">
         <button aria-label={backTarget === "/settings" ? "Back to settings" : "Back to profile"} className="edit-profile-back" onClick={() => navigate(backTarget)} type="button"><FiChevronLeft /></button>
         <h1>Edit Profile</h1>
@@ -573,7 +594,7 @@ function ProfileSettingsPage() {
           </span>
           <FiChevronRight />
         </button>
-        <SettingsRow subtitle={directSummary} title="Direct Access settings" to="/messages?tab=direct" />
+        <SettingsRow subtitle={directSummary} title="Direct Access settings" to="/settings/direct-access" />
         <button className="edit-profile-settings-row" onClick={() => setGiftSettingsOpen(true)} type="button">
           <span><b>Gift settings</b><small>{giftSummary}</small></span><FiChevronRight />
         </button>
@@ -610,8 +631,8 @@ function ProfileSettingsPage() {
         }}
         profile={{ avatar: account.avatar, displayName: account.name, username: account.username }}
       />
-      <NotificationSheet isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
-      <GiftSettingsSheet isOpen={giftSettingsOpen} onClose={() => setGiftSettingsOpen(false)} />
+      <NotificationSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <GiftSettingsSheet anchorRef={settingsMainRef} isOpen={giftSettingsOpen} onClose={() => setGiftSettingsOpen(false)} />
     </form>
   );
 }
