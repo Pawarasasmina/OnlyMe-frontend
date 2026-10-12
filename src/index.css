@@ -14667,6 +14667,11 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   object-fit: cover;
 }
 
+video.seen-reader-media {
+  max-height: 360px;
+  object-fit: contain;
+}
+
 .seen-reader-media-fallback {
   display: grid;
   place-items: center;
