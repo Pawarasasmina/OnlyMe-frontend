@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import VerifiedBadge from "../shared/VerifiedBadge";
-import { resolveMediaUrl } from "../../../utils/media";
+import PublicationCoverMedia from "../../publication/PublicationCoverMedia";
 
 function formatCount(value = 0) {
   const count = Number(value) || 0;
@@ -105,14 +105,14 @@ function TrendingSeenCard({ seen }) {
     );
   }
 
-  const cover = resolveMediaUrl(seen.coverImage || seen.cover);
+  const cover = seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover;
   const creator = seen.creator?.firstName || seen.creator?.name || seen.creator?.displayName || "Creator";
   const target = seen.route || `/seen/${seen.id}`;
   const alreadyHere = location.pathname === target && !location.search;
 
   return (
     <Link className="home-rail-trending" replace={alreadyHere} to={target}>
-      {cover ? <img alt={`${seen.title} cover`} loading="lazy" src={cover} /> : <span className="home-rail-seen-fallback" aria-hidden="true" />}
+      {cover ? <PublicationCoverMedia autoPlay loop alt={`${seen.title} cover`} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span className="home-rail-seen-fallback" aria-hidden="true" />}
       <span className="home-rail-trending-shade" aria-hidden="true" />
       <span className="home-rail-trending-copy">
         <small>TRENDING SEEN</small>
@@ -130,10 +130,10 @@ function FreshSeensCard({ seens = [] }) {
       {seens.length ? (
         <div className="home-rail-fresh-list">
           {seens.slice(0, 3).map((seen) => {
-            const cover = resolveMediaUrl(seen.coverImage || seen.cover);
+            const cover = seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover;
             return (
               <Link className="home-rail-fresh-row" key={seen.id} to={seen.route || `/seen/${seen.id}`}>
-                {cover ? <img alt={`${seen.title} cover`} loading="lazy" src={cover} /> : <span aria-hidden="true" />}
+                {cover ? <PublicationCoverMedia autoPlay loop alt={`${seen.title} cover`} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
                 <span className="min-w-0">
                   <strong>{seen.title}</strong>
                   <small>{seen.creator?.name || seen.creator?.displayName || "Creator"} - {Number(seen.chapterCount) || 0} chapters</small>

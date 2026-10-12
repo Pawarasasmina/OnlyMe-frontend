@@ -2,7 +2,7 @@ import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
-import { resolveMediaUrl } from "../../utils/media";
+import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 
 function formatCount(value = 0) {
   const count = Number(value) || 0;
@@ -77,11 +77,11 @@ function SuggestedForYou({ disabled, onFollowToggle, people = [] }) {
 
 function TrendingSeen({ seen }) {
   if (!seen) return null;
-  const cover = resolveMediaUrl(seen.coverImage || seen.cover);
+  const cover = seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover;
 
   return (
     <Link className="discover-seen-feature" to={seen.route || `/seen/${seen.id}`}>
-      {cover ? <img alt="" loading="lazy" src={cover} /> : <span aria-hidden="true" />}
+      {cover ? <PublicationCoverMedia autoPlay loop alt={`${seen.title} cover`} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
       <span className="discover-seen-shade" aria-hidden="true" />
       <span className="discover-seen-copy">
         <small>TRENDING SEEN</small>
@@ -100,10 +100,10 @@ function FreshSeens({ seens = [] }) {
       <h2 id="discover-fresh-title">Fresh Seens</h2>
       <div className="discover-fresh-list">
         {seens.map((seen) => {
-          const cover = resolveMediaUrl(seen.coverImage || seen.cover);
+          const cover = seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover;
           return (
             <Link className="discover-fresh-row" key={seen.id} to={seen.route || `/seen/${seen.id}`}>
-              {cover ? <img alt="" loading="lazy" src={cover} /> : <span aria-hidden="true" />}
+              {cover ? <PublicationCoverMedia autoPlay loop alt={`${seen.title} cover`} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
               <span className="min-w-0">
                 <strong>{seen.title}</strong>
                 <small>{seen.creator?.name || seen.creator?.displayName || "Creator"}{" \u00b7 "}{seen.chapterCount} chapters</small>
