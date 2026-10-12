@@ -1279,6 +1279,21 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
   </BottomSheet>;
 }
 
+function PublicationReactionSummary({ engagement }) {
+  const reactors = engagement?.reactors || [];
+  if (!engagement?.reactionCount) return null;
+  return <details className="publication-reaction-summary">
+    <summary>{Number(engagement.reactionCount).toLocaleString()} reactions · See who reacted</summary>
+    <div className="publication-reactor-list">
+      {reactors.map((item) => <Link key={item.id} to={item.user?.username ? "/profile/" + item.user.username : "#"}>
+        <FanAvatar name={item.user?.name || "User"} size="h-7 w-7" src={item.user?.avatar} />
+        <span>{item.user?.name || item.user?.username || "User"}</span>
+        <small>{String(item.reaction || "LIKE").replaceAll("_", " ").toLowerCase()}</small>
+      </Link>)}
+    </div>
+  </details>;
+}
+
 function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
   const [visibleTexts, setVisibleTexts] = useState({});
   const comments = engagement?.comments || [];
@@ -1724,6 +1739,7 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
           <div><span>CONVERSATION</span><h2>Comments</h2></div>
           <strong>{Number(engagement.commentCount || 0).toLocaleString()}</strong>
         </header>
+        <PublicationReactionSummary engagement={engagement} />
         {engagementQuery?.isLoading ? <p className="world-inside-detail__comments-empty">Loading comments...</p> : (
           <WorldInsideComments
             engagement={engagement}
@@ -1788,7 +1804,7 @@ export default function WorldReaderPage() {
   const [commentReplyTarget, setCommentReplyTarget] = useState(null);
   const [commentPostPending, setCommentPostPending] = useState(false);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
-  const [visibleVoiceCommentTexts, setVisibleVoiceCommentTexts] = useState({});
+  const [commentReactionPending, setCommentReactionPending] = useState("");
   const [activeChapterIndex, setActiveChapterIndex] = useState(null);
   const [experienceChaptersOpen, setExperienceChaptersOpen] = useState(true);
   const [experienceSettingsOpen, setExperienceSettingsOpen] = useState(false);
@@ -2373,6 +2389,29 @@ export default function WorldReaderPage() {
     }
   };
 
+  const toggleOwnerCommentReaction = async (targetComment) => {
+    if (!user) {
+      navigate("/login", { state: { from: { pathname: location.pathname } } });
+      return;
+    }
+    if (!targetComment?.id || commentReactionPending) return;
+    setCommentReactionPending(targetComment.id);
+    try {
+      const response = targetComment.viewerReaction
+        ? await api.removeSeenCommentReaction(publicationId, targetComment.id)
+        : await api.reactToSeenComment(publicationId, targetComment.id, "LIKE");
+      if (response?.data?.data?.engagement) {
+        queryClient.setQueryData(["world-engagement", id], response.data.data.engagement);
+      } else {
+        await engagement.refetch();
+      }
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Reaction could not be updated.");
+    } finally {
+      setCommentReactionPending("");
+    }
+  };
+
   const removeModeratedComment = async (targetComment) => {
     if (!targetComment?.id || commentRemovePending) return;
     setCommentRemovePending(targetComment.id);
@@ -2768,39 +2807,18 @@ export default function WorldReaderPage() {
               </form>
             </>
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}
-          {engagement.data?.comments?.length ? (
-            <div className="world-prototype-comment-list">
-              {engagement.data.comments.slice(0, 3).map((item) => (
-                <div className="world-comment-thread" key={item.id}>
-                  <article>
-                    <div className="world-comment-copy">
-                      <b>{item.author?.name || "Fan"}</b>
-                      {item.audio ? (
-                        <div className="voice-comment-bubble-row">
-                          <VoiceMessageBubble audio={item.audio} label="Voice comment" />
-                          {item.text ? <button onClick={() => setVisibleVoiceCommentTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{visibleVoiceCommentTexts[item.id] ? "hide text" : "show text"}</button> : null}
-                        </div>
-                      ) : null}
-                      {item.text && (!item.audio || visibleVoiceCommentTexts[item.id]) ? <p>{item.text}</p> : null}
-                    </div>
-                    <div className="world-comment-actions">
-                      {(owner || engagement.data?.viewerIsCreator) ? <button className="world-comment-reply" onClick={() => setCommentReplyTarget(item)} type="button">Reply</button> : null}
-                      {engagement.data?.viewerCanModerate ? <button aria-label="Remove comment" className="world-comment-remove" disabled={commentRemovePending === item.id} onClick={() => removeModeratedComment(item)} type="button"><FiTrash2 /></button> : null}
-                    </div>
-                  </article>
-                  {(item.replies || []).map((reply) => (
-                    <article className="world-comment-child" key={reply.id}>
-                      <div className="world-comment-copy">
-                        <b>{reply.author?.name || "Creator"}</b>
-                        {reply.text ? <p>{reply.text}</p> : null}
-                      </div>
-                      {engagement.data?.viewerCanModerate ? <button aria-label="Remove reply" className="world-comment-remove" disabled={commentRemovePending === reply.id} onClick={() => removeModeratedComment(reply)} type="button"><FiTrash2 /></button> : null}
-                    </article>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ) : commentsEnabled ? <p className="world-prototype-empty-comments"><FiMessageCircle /> No comments yet.</p> : null}
+          <PublicationReactionSummary engagement={engagement.data} />
+          {engagement.isLoading ? <p className="world-prototype-empty-comments">Loading comments...</p> : (
+            <WorldInsideComments
+              engagement={engagement.data || {}}
+              mutationBusy={commentReactionPending || commentRemovePending}
+              onCommentReact={toggleOwnerCommentReaction}
+              onRemove={removeModeratedComment}
+              onReply={setCommentReplyTarget}
+              replyTarget={commentReplyTarget}
+            />
+          )}
+
         </section>
 
         {editingWorld ? (
