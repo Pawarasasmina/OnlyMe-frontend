@@ -1279,21 +1279,6 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
   </BottomSheet>;
 }
 
-function PublicationReactionSummary({ engagement }) {
-  const reactors = engagement?.reactors || [];
-  if (!engagement?.reactionCount) return null;
-  return <details className="publication-reaction-summary">
-    <summary>{Number(engagement.reactionCount).toLocaleString()} reactions · See who reacted</summary>
-    <div className="publication-reactor-list">
-      {reactors.map((item) => <Link key={item.id} to={item.user?.username ? "/profile/" + item.user.username : "#"}>
-        <FanAvatar name={item.user?.name || "User"} size="h-7 w-7" src={item.user?.avatar} />
-        <span>{item.user?.name || item.user?.username || "User"}</span>
-        <small>{String(item.reaction || "LIKE").replaceAll("_", " ").toLowerCase()}</small>
-      </Link>)}
-    </div>
-  </details>;
-}
-
 function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
   const [visibleTexts, setVisibleTexts] = useState({});
   const comments = engagement?.comments || [];
@@ -1739,7 +1724,6 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
           <div><span>CONVERSATION</span><h2>Comments</h2></div>
           <strong>{Number(engagement.commentCount || 0).toLocaleString()}</strong>
         </header>
-        <PublicationReactionSummary engagement={engagement} />
         {engagementQuery?.isLoading ? <p className="world-inside-detail__comments-empty">Loading comments...</p> : (
           <WorldInsideComments
             engagement={engagement}
@@ -2807,7 +2791,6 @@ export default function WorldReaderPage() {
               </form>
             </>
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}
-          <PublicationReactionSummary engagement={engagement.data} />
           {engagement.isLoading ? <p className="world-prototype-empty-comments">Loading comments...</p> : (
             <WorldInsideComments
               engagement={engagement.data || {}}
