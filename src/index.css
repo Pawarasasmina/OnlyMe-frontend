@@ -8460,6 +8460,14 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   max-width: 340px;
   margin-top: 12px;
 }
+.profile-identity-bio {
+  margin-top: 12px;
+  color: #EDEFF3;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .profile-identity-metrics button {
   min-width: 0;
   text-align: left;
