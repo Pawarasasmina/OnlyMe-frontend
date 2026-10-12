@@ -19446,10 +19446,12 @@ video.seen-reader-media {
 
 .seen-feed-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .seen-feed-item {
   position: relative;
+  min-width: 0;
   padding: 16px 0 4px;
   border-bottom: 7px solid rgba(255,255,255,.028);
   background: #0A0C0F;
@@ -19814,6 +19816,8 @@ video.seen-reader-media {
 }
 
 .seen-preview-comment p {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: rgba(255,255,255,.4);
   font-size: 11.5px;
