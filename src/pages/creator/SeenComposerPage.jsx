@@ -2717,6 +2717,11 @@ export default function SeenComposerPage() {
 
   const uploadCoverFile = async (file, kind = pendingCoverKind.current) => {
     if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    setCoverPreview((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return { kind, url: previewUrl };
+    });
     try {
       const publication = await ensure();
       if (!publication) return;
@@ -2739,6 +2744,10 @@ export default function SeenComposerPage() {
     } catch (requestError) {
       setStatus("Upload failed");
       setError(publicationError(requestError));
+      setCoverPreview((current) => {
+        if (current?.url) URL.revokeObjectURL(current.url);
+        return null;
+      });
     } finally {
       setUploading("");
     }
@@ -3184,10 +3193,14 @@ export default function SeenComposerPage() {
     );
   }
 
-  const mediaPreview = coverPreview?.url || p.coverMedia?.secureUrl;
+  const mediaPreview = coverPreview?.url || p.coverMedia?.secureUrl || p.coverMedia?.url;
   const mediaKind =
     coverPreview?.kind ||
-    (p.coverMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE");
+    ([p.coverMedia?.mediaType, p.coverMedia?.resourceType, p.coverMedia?.type]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase() === "video")
+      ? "VIDEO"
+      : "IMAGE");
   const statusText = statusLabel(status, uploading);
   const selectedAudience = audienceOptions.find((option) => option.value === (p.visibility || "PUBLIC")) || audienceOptions[0];
   const selectedSeriesLabel = p.series?.name || savedSeries.find((item) => item.id === p.seriesId)?.name || "None";
@@ -3293,7 +3306,7 @@ export default function SeenComposerPage() {
         {mediaPreview ? (
           <div className="seen-compose-cover">
             {mediaKind === "VIDEO" ? (
-              <video controls preload="metadata" src={mediaPreview} />
+              <video autoPlay controls loop muted playsInline preload="metadata" src={mediaPreview} />
             ) : (
               <img alt="Seen cover" src={mediaPreview} />
             )}
