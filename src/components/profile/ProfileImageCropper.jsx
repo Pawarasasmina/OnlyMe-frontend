@@ -44,8 +44,8 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
       y: (points[0].y + points[1].y) / 2,
     };
     const bounds = event.currentTarget.getBoundingClientRect();
-    setX(clamp(gesture.startX + ((center.x - gesture.origin.x) / bounds.width) * 200, -100, 100));
-    setY(clamp(gesture.startY + ((center.y - gesture.origin.y) / bounds.height) * 200, -100, 100));
+    setX(clamp(gesture.startX - ((center.x - gesture.origin.x) / bounds.width) * 200, -100, 100));
+    setY(clamp(gesture.startY - ((center.y - gesture.origin.y) / bounds.height) * 200, -100, 100));
     if (points.length > 1 && gesture.distance) {
       const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
       setZoom(clamp(gesture.startZoom * (distance / gesture.distance), 1, 3));
@@ -110,7 +110,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
 
         <p className="mt-3 text-center text-xs font-semibold text-atseen-muted sm:hidden">Drag to move · pinch with two fingers to zoom</p>
 
-        <div className="mx-auto mt-6 max-w-md space-y-4">
+        <div className="mx-auto mt-6 hidden max-w-md space-y-4 sm:block">
           {[['Zoom', zoom, setZoom, 1, 3, 0.01], ['Left / right', x, setX, -100, 100, 1], ['Up / down', y, setY, -100, 100, 1]].map(([label, value, setter, min, max, step]) => (
             <label className="grid grid-cols-[88px_1fr] items-center gap-3 text-xs font-bold text-atseen-muted" key={label}><span>{label}</span><input className="w-full accent-atseen-blue" max={max} min={min} onChange={(event) => setter(Number(event.target.value))} step={step} type="range" value={value} /></label>
           ))}

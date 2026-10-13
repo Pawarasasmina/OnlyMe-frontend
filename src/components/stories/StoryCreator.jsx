@@ -4,7 +4,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCreateStory } from "../../hooks/useStories";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
-import ProfileImageCropper from "../profile/ProfileImageCropper";
 
 const STORY_COLORS = ["#FFFFFF", "#D6EAFF", "#9CCBFF", "#0A0C0F", "#6ECF97", "#F17878"];
 const STORY_TEXT_STYLES = [
@@ -48,6 +47,7 @@ function freshStory(initialContent = null) {
     questionSticker: initialContent?.questionSticker || null,
     sharedCard,
     texts: [newTextOverlay(initialText)],
+    transform: { scale: 1, x: 0, y: 0 },
     uploadedUrl: imageUrl,
   };
 }
@@ -70,11 +70,15 @@ function loadStoryImage(src) {
   });
 }
 
-function drawCoverImage(context, image, width, height) {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+function drawCoverImage(context, image, width, height, transform = {}) {
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * (Number(transform.scale) || 1);
   const drawWidth = image.naturalWidth * scale;
   const drawHeight = image.naturalHeight * scale;
-  context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+  const freeX = Math.max(0, drawWidth - width);
+  const freeY = Math.max(0, drawHeight - height);
+  const left = (width - drawWidth) / 2 - ((Number(transform.x) || 0) / 100) * freeX / 2;
+  const top = (height - drawHeight) / 2 - ((Number(transform.y) || 0) / 100) * freeY / 2;
+  context.drawImage(image, left, top, drawWidth, drawHeight);
 }
 
 function fileFromCanvas(canvas) {
@@ -103,7 +107,7 @@ async function renderStoryFile(story) {
 
   if (story.photo) {
     const image = await loadStoryImage(story.uploadedUrl);
-    drawCoverImage(context, image, canvas.width, canvas.height);
+    drawCoverImage(context, image, canvas.width, canvas.height, story.transform);
   }
 
   const shade = context.createLinearGradient(0, 0, 0, canvas.height);
@@ -327,6 +331,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const draggingCardRef = useRef(false);
   const draggingQuestionRef = useRef(false);
   const drawingRef = useRef(null);
+  const photoGestureRef = useRef({ pointers: new Map() });
   const deleteTargetRef = useRef(null);
   const deleteArmedRef = useRef(false);
   const uploadedUrlRef = useRef("");
@@ -335,7 +340,6 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const [activeTextId, setActiveTextId] = useState(() => story.texts[0].id);
   const [hintOpen, setHintOpen] = useState(() => !localStorage.getItem("atseen_story_comp_hint"));
   const [upload, setUpload] = useState({ error: "", progress: 0, step: "" });
-  const [cropSource, setCropSource] = useState("");
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [cameraError, setCameraError] = useState("");
   const [facingMode, setFacingMode] = useState("environment");
@@ -374,7 +378,11 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const ActiveAudienceIcon = activeAudience.icon;
   const hasActiveTextSurface = Boolean(editingTextId || story.texts.some((item) => item.text.trim()));
   const backgroundStyle = story.photo
-    ? { backgroundImage: `url("${story.uploadedUrl}")` }
+    ? {
+        backgroundImage: `url("${story.uploadedUrl}")`,
+        backgroundPosition: `${50 + (story.transform?.x || 0) / 2}% ${50 + (story.transform?.y || 0) / 2}%`,
+        transform: `scale(${story.transform?.scale || 1})`,
+      }
     : { background: `linear-gradient(160deg,${STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length].join(",")})` };
 
   const stopCamera = useCallback(() => {
@@ -527,7 +535,12 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       return;
     }
     stopCamera();
-    setCropSource(URL.createObjectURL(file));
+    const url = URL.createObjectURL(file);
+    setStory((current) => {
+      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
+      return { ...current, drawing: [], photo: true, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: url };
+    });
+    setCameraStatus("captured");
   };
 
   const capturePhoto = async () => {
@@ -554,15 +567,45 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
   const switchCamera = () => startCamera(facingMode === "environment" ? "user" : "environment");
 
-  const useCroppedImage = (file) => {
-    const url = URL.createObjectURL(file);
-    setStory((current) => {
-      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
-      return { ...current, photo: true, uploadedUrl: url };
-    });
-    URL.revokeObjectURL(cropSource);
-    setCropSource("");
-    setCameraStatus("captured");
+  const beginPhotoGesture = (event) => {
+    if (!story.photo || drawingMode || event.target.closest("input,button:not(.story-composer-focus)")) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const gesture = photoGestureRef.current;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    gesture.start = { ...story.transform };
+    gesture.origin = points.length === 1 ? points[0] : { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
+    gesture.distance = points.length > 1 ? Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) : 0;
+  };
+
+  const movePhotoGesture = (event) => {
+    const gesture = photoGestureRef.current;
+    if (!gesture.pointers.has(event.pointerId) || !stageRef.current) return false;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    const center = points.length === 1 ? points[0] : { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
+    const bounds = stageRef.current.getBoundingClientRect();
+    let scale = gesture.start.scale || 1;
+    if (points.length > 1 && gesture.distance) {
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      scale = Math.max(1, Math.min(3, scale * (distance / gesture.distance)));
+    }
+    const x = Math.max(-100, Math.min(100, (gesture.start.x || 0) - ((center.x - gesture.origin.x) / bounds.width) * 200));
+    const y = Math.max(-100, Math.min(100, (gesture.start.y || 0) - ((center.y - gesture.origin.y) / bounds.height) * 200));
+    updateStory({ transform: { scale, x, y } });
+    return true;
+  };
+
+  const endPhotoGesture = (event) => {
+    const gesture = photoGestureRef.current;
+    gesture.pointers.delete(event.pointerId);
+    const point = [...gesture.pointers.values()][0];
+    if (point) {
+      gesture.start = { ...story.transform };
+      gesture.origin = point;
+      gesture.distance = 0;
+    }
   };
 
   const beginDrag = (event, textId) => {
@@ -605,6 +648,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   };
 
   const moveDrag = (event) => {
+    if (movePhotoGesture(event)) return;
     if (drawingRef.current && stageRef.current) {
       const rect = stageRef.current.getBoundingClientRect();
       const point = {
@@ -645,6 +689,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   };
 
   const endDrag = () => {
+    photoGestureRef.current.pointers.clear();
     draggingCardRef.current = false;
     draggingQuestionRef.current = false;
     drawingRef.current = null;
@@ -769,7 +814,6 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
   return (
     <div aria-label="Create Story" aria-modal="true" className="story-composer-overlay" role="dialog" style={composerPosition}>
-      {cropSource ? <ProfileImageCropper kind="story" onCancel={() => { URL.revokeObjectURL(cropSource); setCropSource(""); }} onSave={useCroppedImage} source={cropSource} /> : null}
       <section
         className="story-composer-stage"
         onPointerMove={moveDrag}
@@ -779,7 +823,15 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       >
         <div aria-hidden="true" className="story-composer-bg" style={backgroundStyle} />
         {!story.photo && ["starting", "live"].includes(cameraStatus) ? <video aria-label="Camera preview" autoPlay className={`story-composer-camera ${facingMode === "user" ? "is-mirrored" : ""}`} muted playsInline ref={videoRef} /> : null}
-        <button aria-label="Focus story text" className="story-composer-focus" onClick={focusTextAt} type="button" />
+        <button
+          aria-label={story.photo ? "Adjust story photo. Drag to move and pinch to zoom." : "Focus story text"}
+          className="story-composer-focus"
+          onClick={story.photo ? undefined : focusTextAt}
+          onPointerDown={beginPhotoGesture}
+          onPointerCancel={endPhotoGesture}
+          onPointerUp={endPhotoGesture}
+          type="button"
+        />
 
         <header className="story-composer-head">
           <button aria-label="Close Story composer" onClick={close} type="button"><FiX /></button>
@@ -797,7 +849,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
               }
               if (story.uploadedUrl) {
                 if (story.uploadedUrl.startsWith("blob:")) URL.revokeObjectURL(story.uploadedUrl);
-                updateStory({ drawing: [], photo: false, questionSticker: null, uploadedUrl: "" });
+                updateStory({ drawing: [], photo: false, questionSticker: null, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: "" });
                 startCamera(facingMode);
               } else {
                 updateStory({ gradient: story.gradient + 1 });
