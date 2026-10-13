@@ -376,6 +376,7 @@ function readVideoDuration(url) {
 
 export function VideoTrimSheet({ enableCrop = false, file, limitSeconds, onCancel, onUpload }) {
   const videoRef = useRef(null);
+  const cropGestureRef = useRef({ pointers: new Map() });
   const [duration, setDuration] = useState(0);
   const [start, setStart] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -388,6 +389,45 @@ export function VideoTrimSheet({ enableCrop = false, file, limitSeconds, onCance
   const end = Math.min(duration, start + limitSeconds);
   const clipLength = Math.max(0, end - start);
   const canUploadOriginal = !enableCrop && duration > 0 && duration <= limitSeconds + 0.1;
+
+  const beginCropGesture = (event) => {
+    if (!enableCrop || busy) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const gesture = cropGestureRef.current;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    gesture.startX = positionX;
+    gesture.startY = positionY;
+    gesture.startZoom = zoom;
+    gesture.origin = points.length === 1 ? points[0] : { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
+    gesture.distance = points.length > 1 ? Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) : 0;
+  };
+  const moveCropGesture = (event) => {
+    const gesture = cropGestureRef.current;
+    if (!enableCrop || !gesture.pointers.has(event.pointerId)) return;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    const center = points.length === 1 ? points[0] : { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setPositionX(Math.max(0, Math.min(100, gesture.startX - ((center.x - gesture.origin.x) / bounds.width) * 100)));
+    setPositionY(Math.max(0, Math.min(100, gesture.startY - ((center.y - gesture.origin.y) / bounds.height) * 100)));
+    if (points.length > 1 && gesture.distance) {
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      setZoom(Math.max(1, Math.min(2, gesture.startZoom * (distance / gesture.distance))));
+    }
+  };
+  const endCropGesture = (event) => {
+    const gesture = cropGestureRef.current;
+    gesture.pointers.delete(event.pointerId);
+    const point = [...gesture.pointers.values()][0];
+    if (point) {
+      gesture.startX = positionX;
+      gesture.startY = positionY;
+      gesture.startZoom = zoom;
+      gesture.origin = point;
+      gesture.distance = 0;
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -547,7 +587,15 @@ export function VideoTrimSheet({ enableCrop = false, file, limitSeconds, onCance
             <FiX />
           </button>
         </div>
-        <div className={`seen-video-crop-preview ${enableCrop ? `aspect-${aspect.replace(":", "-")}` : "is-original"}`}><video
+        <div
+          aria-label={enableCrop ? "Video crop preview. Drag to reposition and pinch with two fingers to zoom." : "Video preview"}
+          className={`seen-video-crop-preview ${enableCrop ? `aspect-${aspect.replace(":", "-")}` : "is-original"}`}
+          onPointerCancel={endCropGesture}
+          onPointerDown={beginCropGesture}
+          onPointerMove={moveCropGesture}
+          onPointerUp={endCropGesture}
+          style={enableCrop ? { touchAction: "none" } : undefined}
+        ><video
           controls
           onLoadedMetadata={(event) => {
             const nextDuration = Number(event.currentTarget.duration) || 0;
@@ -561,6 +609,7 @@ export function VideoTrimSheet({ enableCrop = false, file, limitSeconds, onCance
           src={file.url}
             style={enableCrop ? { objectPosition: `${positionX}% ${positionY}%`, transform: `scale(${zoom})`, transformOrigin: `${positionX}% ${positionY}%` } : undefined}
         /></div>
+        {enableCrop ? <p className="seen-video-gesture-hint">Drag to move · pinch with two fingers to zoom</p> : null}
         <div className="seen-video-trim-copy">
           <strong>{formatDuration(limitSeconds)} video</strong>
           <small>
