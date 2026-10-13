@@ -37491,3 +37491,13 @@ video.seen-reader-media {
 
 .world-prototype-comments .world-inside-detail__comment-list { margin-top: 20px; }
 .world-prototype-comments .world-inside-detail__comment-body { min-width: 0; overflow-wrap: anywhere; }
+
+/* Mobile Safari zooms the viewport when a focused form control renders below
+   16px. Keep the visual viewport stable across every mobile form. */
+@media (max-width: 880px), (pointer: coarse) {
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
