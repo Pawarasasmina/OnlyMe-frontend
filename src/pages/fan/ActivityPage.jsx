@@ -499,12 +499,17 @@ function titleMarkFor(item) {
   return "";
 }
 
-function displayAmount(item) {
+function displayAmount(item, starsPerUsd) {
   const value = Number(item.starsChange) || 0;
   if (!value) return null;
+  const storedUsd = Number(item.metadata?.usdAmount ?? item.usdAmount);
+  const rate = Number(item.metadata?.starsPerUsd || starsPerUsd || 10);
+  const usd = Number.isFinite(storedUsd) && storedUsd > 0
+    ? storedUsd
+    : Math.abs(value) / (rate > 0 ? rate : 10);
   return {
     className: value < 0 ? "is-sent" : "",
-    label: `${value > 0 ? "+" : "-"}${Math.abs(value).toLocaleString()} Stars`,
+    label: `${value > 0 ? "+" : "-"}${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usd)}`,
   };
 }
 
@@ -587,8 +592,8 @@ function ActivityTitle({ item }) {
   return <p>{title}{actionIcon}</p>;
 }
 
-function ActivityItem({ acknowledged, item, onAcknowledge, onOpen }) {
-  const amount = displayAmount(item);
+function ActivityItem({ acknowledged, item, onAcknowledge, onOpen, starsPerUsd }) {
+  const amount = displayAmount(item, starsPerUsd);
   const route = routeFor(item);
   const interactive = Boolean(route);
   const tone = toneFor(item);
@@ -879,6 +884,7 @@ export default function ActivityPage() {
             key={item.id}
             onAcknowledge={acknowledge}
             onOpen={(entry) => navigate(routeFor(entry))}
+            starsPerUsd={walletQuery.data?.starsPerUsd}
           />
         )) : null}
         {!loading && !failed && !visible.length ? (

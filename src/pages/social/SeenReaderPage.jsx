@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
+import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
+import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
+import { useAuth } from "../../hooks/useAuth";
 import { analyticsService } from "../../services/analyticsService";
 import { publicationService } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
-import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const reactionEmoji = {
@@ -127,6 +129,69 @@ function SeenEngagementBar({ engagement, mutations, onCommentToggle, onCopyLink,
     </section>
   </div> : null}
   </>;
+}
+
+function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending, onChange, onClose, onReact, onSubmit, onVoiceSubmit, reactionPending, title, voicePending }) {
+  const [replyTo, setReplyTo] = useState(null);
+  const [reactionTarget, setReactionTarget] = useState(null);
+  const [sheetPosition, setSheetPosition] = useState(null);
+  const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const updatePosition = () => {
+      const center = document.querySelector(".social-center-scroll");
+      const rect = center?.getBoundingClientRect();
+      const width = Math.min(440, rect?.width || window.innerWidth);
+      setSheetPosition({ left: Math.max(0, (rect?.left || 0) + ((rect?.width || window.innerWidth) - width) / 2), width });
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    updatePosition();
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+  const comments = engagement.comments || [];
+  const renderComment = (item, isReply = false) => {
+    const icons = (item.topReactions || []).map((key) => reactionEmoji[key] || reactionEmoji.LIKE).join("") || reactionEmoji.LIKE;
+    return <article className={isReply ? "is-reply" : ""} key={item.id}>
+      <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
+      <div className="seen-comment-copy">
+        <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || "Fan"}</Link> : <strong>{item.author?.name || "Fan"}</strong>}{item.text}</p>
+        {item.audio ? <VoiceMessageBubble audio={item.audio} label="Voice comment" /> : null}
+        <span><button aria-label={`React to ${item.author?.name || "comment"}`} className={item.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(reactionTarget === item.id ? null : item.id)} type="button"><b aria-hidden="true">{icons}</b>{formatCount(item.reactionCount || 0)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}</span>
+        {reactionTarget === item.id ? <div className="seen-sheet-comment-reactions">{Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} disabled={reactionPending} key={key} onClick={() => { onReact(item, item.viewerReaction === key ? "" : key); setReactionTarget(null); }} type="button">{icon}</button>)}</div> : null}
+      </div>
+    </article>;
+  };
+
+  return <div className="seen-comments-layer">
+    <button aria-label="Close comments" className="seen-comments-scrim" onClick={onClose} type="button" />
+    <section aria-label={`Comments on ${title}`} aria-modal="true" className="seen-comments-sheet" role="dialog" style={sheetPosition || undefined}>
+      <span aria-hidden="true" className="seen-comments-handle" />
+      <header>
+        <div><h2>Comments</h2><small>{title}</small></div>
+        <button aria-label="Close comments" onClick={onClose} type="button"><FiX /></button>
+      </header>
+      <div className="seen-comments-list">
+        {comments.map((item) => <div className="seen-comment-thread" key={item.id}>{renderComment(item)}{(item.replies || []).map((reply) => renderComment(reply, true))}</div>)}
+        {!comments.length ? <p className="seen-comments-empty">No comments yet. Start the conversation.</p> : null}
+      </div>
+      {replyTo ? <div className="seen-sheet-replying"><span>Replying to <b>{replyTo.author?.name || "Fan"}</b></span><button aria-label="Cancel reply" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+      <form onSubmit={(event) => { onSubmit(event, replyTo?.id || ""); if (comment.trim()) setReplyTo(null); }}>
+        <FanAvatar className="seen-sheet-composer-avatar" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
+        <label><input aria-label="Add a Seen comment" autoFocus maxLength={500} onChange={onChange} placeholder="Add a comment..." value={comment} /><button aria-label="Record a voice comment" disabled={isPending || voicePending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button></label>
+        <button disabled={!comment.trim() || isPending} type="submit">Post</button>
+      </form>
+      {voiceCommentOpen ? <VoiceCommentRecorder busy={voicePending} onClose={() => setVoiceCommentOpen(false)} onSubmit={(recording) => { onVoiceSubmit(recording, replyTo?.id || ""); setReplyTo(null); setVoiceCommentOpen(false); }} /> : null}
+    </section>
+  </div>;
 }
 
 function normalizeSeenDetail(publication, engagement) {
@@ -565,7 +630,6 @@ function SeenReportSheet({ error, isDone, isOpen, isSubmitting, onClose, onDone,
 function SeenOverview({
   comment,
   commentsOpen,
-  commentSavePending,
   detail,
   engagement,
   mutations,
@@ -574,7 +638,6 @@ function SeenOverview({
   onBack,
   onCopyLink,
   onCommentChange,
-  onCommentSave,
   onCommentSubmit,
   onCommentToggle,
   onOpenMediaPicker,
@@ -711,17 +774,6 @@ function SeenOverview({
       <footer className="seen-detail-engagement">
         <div className="seen-detail-start-meta"><span>{detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</span><span>Tap to start ›</span></div>
         <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={mutations} onCommentToggle={onCommentToggle} onCopyLink={onCopyLink} saved={saved} />
-        {commentsOpen ? <section className="seen-reader-comments">
-          <form onSubmit={onCommentSubmit}>
-            <input aria-label="Add a Seen comment" maxLength={500} onChange={onCommentChange} placeholder="Add a comment..." value={comment} />
-            <button disabled={!comment.trim() || mutations.comment.isPending} type="submit">Post</button>
-          </form>
-          {(engagement.comments || []).map((item) => <article key={item.id}>
-            <strong>{item.author?.name || "Fan"}</strong>
-            <p>{item.text}</p>
-            <button aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"} disabled={commentSavePending === item.id} onClick={() => onCommentSave(item)} type="button"><FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} /></button>
-          </article>)}
-        </section> : null}
       </footer>
     </div>
   </section>
@@ -747,11 +799,13 @@ function SeenOverview({
     onDone={closeReport}
     onSelectReason={submitReport}
   />
+  <SeenCommentsSheet comment={comment} currentUser={mutations.currentUser} engagement={engagement} isOpen={commentsOpen} isPending={mutations.comment.isPending} onChange={onCommentChange} onClose={onCommentToggle} onReact={mutations.commentReaction} onSubmit={onCommentSubmit} onVoiceSubmit={mutations.voiceComment} reactionPending={mutations.commentReactionPending} title={detail.title} voicePending={mutations.voiceCommentPending} />
   <ShareSheet isOpen={shareSheetOpen} onClose={onShareClose} payload={sharePayload} variant="seen" />
   </>;
 }
 
 export default function SeenReaderPage() {
+  const { user: currentUser } = useAuth();
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const accessToken = searchParams.get("access") || searchParams.get("token") || "";
@@ -766,7 +820,6 @@ export default function SeenReaderPage() {
   const [chapterIndex, setChapterIndex] = useState(Number.isSafeInteger(requestedChapter) && requestedChapter >= 0 ? requestedChapter : 0);
   const [comment, setComment] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentSavePending, setCommentSavePending] = useState("");
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
@@ -993,32 +1046,20 @@ export default function SeenReaderPage() {
     },
   });
   const commentMutation = useMutation({
-    mutationFn: (text) => updateEngagement(publicationService.commentOnSeen(id, text, accessToken)),
+    mutationFn: ({ parentCommentId, text }) => updateEngagement(publicationService.commentOnSeen(id, text, accessToken, parentCommentId)),
     onSuccess: () => {
       setComment("");
       setCommentsOpen(true);
     },
   });
-  const toggleCommentSave = async (targetComment) => {
-    if (!targetComment?.id || commentSavePending) return;
-    setCommentSavePending(targetComment.id);
-    try {
-      const action = targetComment.viewerSaved ? savedService.unsaveComment : savedService.saveComment;
-      const response = await action(targetComment.id);
-      const nextSaved = Boolean(response.data?.data?.saved);
-      const next = {
-        ...engagement,
-        comments: (engagement.comments || []).map((item) => item.id === targetComment.id ? { ...item, viewerSaved: nextSaved } : item),
-      };
-      syncSeenEngagementCaches(next);
-      queryClient.invalidateQueries({ queryKey: ["saved"] });
-      setNotice(nextSaved ? "Comment saved." : "Comment removed from Saved.");
-    } catch (error) {
-      setNotice(actionError(error));
-    } finally {
-      setCommentSavePending("");
-    }
-  };
+  const commentReactionMutation = useMutation({
+    mutationFn: ({ commentId, reaction }) => updateEngagement(reaction
+      ? publicationService.reactToSeenComment(id, commentId, reaction, accessToken)
+      : publicationService.removeSeenCommentReaction(id, commentId, accessToken)),
+  });
+  const voiceCommentMutation = useMutation({
+    mutationFn: ({ parentCommentId, recording }) => updateEngagement(publicationService.voiceCommentOnSeen(id, { ...recording, accessToken, parentCommentId })),
+  });
   const reportMutation = useMutation({
     mutationFn: (payload) => publicationService.reportSeen(id, payload),
     retry: false,
@@ -1042,10 +1083,18 @@ export default function SeenReaderPage() {
     },
   });
 
-  const submitComment = (event) => {
+  const submitComment = (event, parentCommentId = "") => {
     event.preventDefault();
     const text = comment.trim();
-    if (text) commentMutation.mutate(text);
+    if (text) commentMutation.mutate({ parentCommentId, text });
+  };
+  const reactToComment = (targetComment, reaction) => {
+    if (!targetComment?.id || commentReactionMutation.isPending) return;
+    commentReactionMutation.mutate({ commentId: targetComment.id, reaction });
+  };
+  const submitVoiceComment = (recording, parentCommentId = "") => {
+    if (!recording?.audioBlob || voiceCommentMutation.isPending) return;
+    voiceCommentMutation.mutate({ parentCommentId, recording });
   };
   const openMediaAdd = () => {
     const candidates = detail.mediaCandidates.filter((candidate) => !addedSeenMediaIds.has(candidate.sourceMediaId));
@@ -1171,6 +1220,13 @@ export default function SeenReaderPage() {
 
   const handleReaderClick = (event) => {
     if (event.target.closest?.("a, button, input, textarea, select, video, audio")) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const clickedLeftSide = event.clientX < bounds.left + bounds.width / 2;
+    if (clickedLeftSide) {
+      if (safeChapterIndex > 0) changeChapter(safeChapterIndex - 1);
+      else navigate(`/seen/${encodeURIComponent(id)}`, { replace: true });
+      return;
+    }
     continueReader();
   };
   const backFromOverview = () => {
@@ -1186,16 +1242,14 @@ export default function SeenReaderPage() {
       <SeenOverview
         comment={comment}
         commentsOpen={commentsOpen}
-        commentSavePending={commentSavePending}
         detail={detail}
         engagement={engagement}
-        mutations={{ comment: commentMutation, reaction: reactionMutation, save: saveMutation, share: shareMutation, report: reportMutation }}
+        mutations={{ comment: commentMutation, commentReaction: reactToComment, commentReactionPending: commentReactionMutation.isPending, currentUser, reaction: reactionMutation, save: saveMutation, share: shareMutation, report: reportMutation, voiceComment: submitVoiceComment, voiceCommentPending: voiceCommentMutation.isPending }}
         notice={notice}
         noticeLink={noticeLink}
         onBack={backFromOverview}
         onCopyLink={() => setShareSheetOpen(true)}
         onCommentChange={(event) => setComment(event.target.value)}
-        onCommentSave={toggleCommentSave}
         onCommentSubmit={submitComment}
         onCommentToggle={() => setCommentsOpen((value) => !value)}
         onNotice={(message) => {
@@ -1262,25 +1316,8 @@ export default function SeenReaderPage() {
       </button> : null}
       <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
       {notice ? <p className="seen-reader-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
-      {commentsOpen ? <section className="seen-reader-comments">
-        <form onSubmit={submitComment}>
-          <input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment..." value={comment} />
-          <button disabled={!comment.trim() || commentMutation.isPending} type="submit">Post</button>
-        </form>
-        {(engagement.comments || []).map((item) => <article key={item.id}>
-          <strong>{item.author?.name || "Fan"}</strong>
-          <p>{item.text}</p>
-          <button
-            aria-label={item.viewerSaved ? "Remove saved comment" : "Save comment"}
-            disabled={commentSavePending === item.id}
-            onClick={() => toggleCommentSave(item)}
-            type="button"
-          >
-            <FiBookmark fill={item.viewerSaved ? "currentColor" : "none"} />
-          </button>
-        </article>)}
-      </section> : null}
     </footer>
+    <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
   </section>;
 }

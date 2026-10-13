@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
 import {
   FiArrowLeft,
-  FiArrowUp,
   FiArrowUpRight,
   FiArchive,
   FiBarChart2,
@@ -936,6 +935,8 @@ async function copyToClipboard(value) {
 }
 
 const SHARE_REACTIONS = ["💖", "😂", "🔥", "😍", "👏", "😮", "🙏", "🤝"];
+const COMMENT_REACTIONS = [["LIKE", "🤝"], ["LOVE", "❤️"], ["FIRE", "🔥"], ["CLAP", "👏"], ["LAUGH", "😂"], ["SEE_YOU", "👁️"], ["SAD", "🥲"], ["PRAY", "🙏"]];
+const COMMENT_REACTION_ICONS = Object.fromEntries(COMMENT_REACTIONS);
 
 function WorldSharePerson({ onToggle, person, selected }) {
   const name = person.displayName || person.name || person.username || "Atseen";
@@ -1281,11 +1282,13 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
 
 function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
   const [visibleTexts, setVisibleTexts] = useState({});
+  const [reactionTarget, setReactionTarget] = useState("");
   const comments = engagement?.comments || [];
   if (!comments.length) return <p className="world-inside-detail__comments-empty">No comments yet. Be the first to leave a note.</p>;
   const renderComment = (item, isReply = false) => {
     const active = Boolean(item.viewerReaction);
     const showText = !item.audio || visibleTexts[item.id];
+    const reactionIcons = (item.topReactions || []).map((key) => COMMENT_REACTION_ICONS[key] || COMMENT_REACTION_ICONS.LIKE).join("") || COMMENT_REACTION_ICONS.LIKE;
     return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${engagement.viewerCanModerate ? "can-moderate" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
       <div className="world-inside-detail__comment-body">
@@ -1297,9 +1300,10 @@ function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemov
           </div>
         ) : null}
         <div className="world-inside-detail__comment-meta">
-          <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => onCommentReact(item)} type="button">🤝 <span>{Number(item.reactionCount || 0).toLocaleString()}</span></button>
+          <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => setReactionTarget((current) => current === item.id ? "" : item.id)} type="button"><span>{reactionIcons}</span> <span>{Number(item.reactionCount || 0).toLocaleString()}</span></button>
           {!isReply ? <button className={replyTarget?.id === item.id ? "is-active" : ""} onClick={() => onReply(item)} type="button">Reply</button> : null}
         </div>
+        {reactionTarget === item.id ? <div className="world-comment-reaction-picker">{COMMENT_REACTIONS.map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} className={item.viewerReaction === key ? "is-active" : ""} disabled={mutationBusy === item.id} key={key} onClick={() => { onCommentReact(item, item.viewerReaction === key ? "" : key); setReactionTarget(""); }} type="button">{icon}</button>)}</div> : null}
         {(item.replies || []).map((reply) => renderComment(reply, true))}
       </div>
       {engagement.viewerCanModerate ? <button aria-label="Delete comment" className="is-remove-comment" disabled={mutationBusy === item.id} onClick={() => onRemove(item)} title="Delete comment" type="button"><FiTrash2 /></button> : null}
@@ -1395,12 +1399,12 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     }
   };
 
-  const toggleCommentReaction = async (comment) => {
+  const toggleCommentReaction = async (comment, reaction = "LIKE") => {
     setCommentBusy(comment.id);
     try {
-      const request = comment.viewerReaction
+      const request = !reaction
         ? api.removeSeenCommentReaction(publication.id, comment.id)
-        : api.reactToSeenComment(publication.id, comment.id, "LIKE");
+        : api.reactToSeenComment(publication.id, comment.id, reaction);
       const response = await request;
       queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
     } catch (error) {
@@ -1551,13 +1555,12 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     <section className="world-inside-detail__comments">
       <h2>Comments · {Number(engagement.commentCount || 0).toLocaleString()}</h2>
       <WorldInsideComments engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onRemove={removeComment} onReply={setReplyTarget} replyTarget={replyTarget} />
-      {publication.commentsEnabled === false ? <p className="world-inside-detail__comments-empty">Comments are turned off for this World.</p> : <form onSubmit={submitComment}>
+      {publication.commentsEnabled === false ? <p className="world-inside-detail__comments-empty">Comments are turned off for this World.</p> : <form className="media-comments-composer" onSubmit={submitComment}>
         <FanAvatar name={user?.name || user?.username || "You"} size="h-7 w-7" src={user?.avatar} />
         <div>
           {replyTarget ? <span>Replying to {replyTarget.author?.name || "comment"} <button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
-          <input aria-label="Add a comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
+          <label><input aria-label="Add a comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} /><button aria-label="Record a voice comment" disabled={posting} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button></label>
         </div>
-        <button aria-label="Record a voice comment" disabled={posting} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
         <button disabled={!canPostComment} type="submit">{posting ? "Posting..." : "Post"}</button>
       </form>}
     </section>
@@ -1663,12 +1666,12 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
     }
   };
 
-  const toggleCommentReaction = async (comment) => {
+  const toggleCommentReaction = async (comment, reaction = "LIKE") => {
     if (!comment?.id || commentBusy || !requireAccount()) return;
     setCommentBusy(comment.id);
     try {
-      if (comment.viewerReaction) await api.removeSeenCommentReaction(publicationId, comment.id);
-      else await api.reactToSeenComment(publicationId, comment.id, "LIKE");
+      if (!reaction) await api.removeSeenCommentReaction(publicationId, comment.id);
+      else await api.reactToSeenComment(publicationId, comment.id, reaction);
       await engagementQuery.refetch();
     } catch (error) {
       showToast(error?.response?.data?.message || "Reaction could not be updated.");
@@ -1735,14 +1738,13 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
           />
         )}
         {commentsEnabled ? (
-          <form className="experience-public-comments__form" onSubmit={submitComment}>
+          <form className="experience-public-comments__form media-comments-composer" onSubmit={submitComment}>
             <FanAvatar name={user?.name || user?.username || "You"} size="h-8 w-8" src={user?.avatar} />
             <div>
               {replyTarget ? <span>Replying to <b>{replyTarget.author?.name || "comment"}</b><button onClick={() => setReplyTarget(null)} type="button">Cancel</button></span> : null}
-              <input aria-label={replyTarget ? "Write a reply" : "Add a comment"} maxLength={500} onChange={(event) => setCommentText(event.target.value)} onFocus={() => { if (!user) onRequireLogin?.(); }} placeholder={user ? (replyTarget ? "Write a reply..." : "Join the conversation...") : "Sign in to comment..."} value={commentText} />
+              <label><input aria-label={replyTarget ? "Write a reply" : "Add a comment"} maxLength={500} onChange={(event) => setCommentText(event.target.value)} onFocus={() => { if (!user) onRequireLogin?.(); }} placeholder={user ? (replyTarget ? "Write a reply..." : "Add a comment...") : "Sign in to comment..."} value={commentText} /><button aria-label="Record a voice comment" disabled={posting} onClick={() => { if (requireAccount()) setVoiceCommentOpen(true); }} type="button"><FiMic /></button></label>
             </div>
-            <button aria-label="Record a voice comment" disabled={posting} onClick={() => { if (requireAccount()) setVoiceCommentOpen(true); }} type="button"><FiMic /></button>
-            <button aria-label={replyTarget ? "Post reply" : "Post comment"} disabled={!commentText.trim() || posting} type="submit"><FiArrowUp /></button>
+            <button aria-label={replyTarget ? "Post reply" : "Post comment"} disabled={!commentText.trim() || posting} type="submit">Post</button>
           </form>
         ) : <div className="experience-public-comments__disabled"><FiMessageCircle /><span><b>Comments are off</b><small>The creator has paused this conversation.</small></span></div>}
       </section>
@@ -2373,7 +2375,7 @@ export default function WorldReaderPage() {
     }
   };
 
-  const toggleOwnerCommentReaction = async (targetComment) => {
+  const toggleOwnerCommentReaction = async (targetComment, reaction = "LIKE") => {
     if (!user) {
       navigate("/login", { state: { from: { pathname: location.pathname } } });
       return;
@@ -2381,9 +2383,9 @@ export default function WorldReaderPage() {
     if (!targetComment?.id || commentReactionPending) return;
     setCommentReactionPending(targetComment.id);
     try {
-      const response = targetComment.viewerReaction
+      const response = !reaction
         ? await api.removeSeenCommentReaction(publicationId, targetComment.id)
-        : await api.reactToSeenComment(publicationId, targetComment.id, "LIKE");
+        : await api.reactToSeenComment(publicationId, targetComment.id, reaction);
       if (response?.data?.data?.engagement) {
         queryClient.setQueryData(["world-engagement", id], response.data.data.engagement);
       } else {
@@ -2784,10 +2786,10 @@ export default function WorldReaderPage() {
                   <button onClick={() => setCommentReplyTarget(null)} type="button">Cancel</button>
                 </div>
               ) : null}
-              <form onSubmit={addComment}>
-                <input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder={commentReplyTarget ? "Write a reply..." : "Add a comment..."} value={comment} />
-                <button aria-label="Record a voice comment" disabled={commentPostPending} onClick={() => user ? setVoiceCommentOpen(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })} type="button"><FiMic /></button>
-                <button aria-label={commentReplyTarget ? "Post reply" : "Post comment"} disabled={!comment.trim() || commentPostPending} type="submit"><FiArrowUp /></button>
+              <form className="media-comments-composer" onSubmit={addComment}>
+                <FanAvatar name={user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatar} />
+                <label><input maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder={commentReplyTarget ? "Write a reply..." : "Add a comment..."} value={comment} /><button aria-label="Record a voice comment" disabled={commentPostPending} onClick={() => user ? setVoiceCommentOpen(true) : navigate("/login", { state: { from: { pathname: location.pathname } } })} type="button"><FiMic /></button></label>
+                <button aria-label={commentReplyTarget ? "Post reply" : "Post comment"} disabled={!comment.trim() || commentPostPending} type="submit">Post</button>
               </form>
             </>
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}

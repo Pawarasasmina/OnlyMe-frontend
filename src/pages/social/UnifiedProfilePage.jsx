@@ -13,6 +13,7 @@ import {
   FiFlag,
   FiGift,
   FiGrid,
+  FiMail,
   FiMoreHorizontal,
   FiPlus,
   FiRefreshCw,
@@ -459,8 +460,7 @@ function VisitorProfileBar({ profile, relationship, viewerCapabilities }) {
   return (
     <header className="profile-prototype-topbar profile-visitor-topbar">
       <button aria-label="Go back" className="profile-visitor-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button>
-      <span className="sr-only">@{profile.username}</span>
-      <div><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
+      <div><span className="profile-visitor-username">@{profile.username}</span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
     </header>
   );
 }
@@ -532,6 +532,7 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
             ))}
           </div>
           {profile.bio?.trim() ? <p className="profile-identity-bio">{profile.bio}</p> : null}
+          {isOwner && profile.email?.trim() ? <p className="profile-identity-email"><FiMail aria-hidden="true" />{profile.email}</p> : null}
         </div>
       </div>
       {isOwner || statusText ? (
@@ -855,7 +856,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
       {isOwner ? <button className="profile-gift-detail-report" onClick={() => setReportOpen(true)} type="button">Report this gift or note</button> : null}
     </section> : <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
-      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={onSendGift} type="button">Send a gift</button> : null}</header>
+      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={() => onSendGift()} type="button">Send a gift</button> : null}</header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
       <div className="profile-received-gifts-grid">

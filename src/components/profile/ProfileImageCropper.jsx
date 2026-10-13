@@ -17,6 +17,9 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     seen: { aspect: "aspect-video", frame: "w-full rounded-2xl", height: 1080, label: "Seen image", width: 1920 },
     story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
   }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
+  const translateLimit = ((zoom - 1) / (2 * zoom)) * 100;
+  const translateX = -(x / 100) * translateLimit;
+  const translateY = -(y / 100) * translateLimit;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const beginGesture = (event) => {
@@ -44,8 +47,8 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
       y: (points[0].y + points[1].y) / 2,
     };
     const bounds = event.currentTarget.getBoundingClientRect();
-    setX(clamp(gesture.startX + ((center.x - gesture.origin.x) / bounds.width) * 200, -100, 100));
-    setY(clamp(gesture.startY + ((center.y - gesture.origin.y) / bounds.height) * 200, -100, 100));
+    setX(clamp(gesture.startX - ((center.x - gesture.origin.x) / bounds.width) * 200, -100, 100));
+    setY(clamp(gesture.startY - ((center.y - gesture.origin.y) / bounds.height) * 200, -100, 100));
     if (points.length > 1 && gesture.distance) {
       const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
       setZoom(clamp(gesture.startZoom * (distance / gesture.distance), 1, 3));
@@ -104,13 +107,13 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
           onPointerUp={endGesture}
           style={{ touchAction: "none" }}
         >
-          <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `scale(${zoom})` }} />
+          <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
 
         <p className="mt-3 text-center text-xs font-semibold text-atseen-muted sm:hidden">Drag to move · pinch with two fingers to zoom</p>
 
-        <div className="mx-auto mt-6 max-w-md space-y-4">
+        <div className="mx-auto mt-6 hidden max-w-md space-y-4 sm:block">
           {[['Zoom', zoom, setZoom, 1, 3, 0.01], ['Left / right', x, setX, -100, 100, 1], ['Up / down', y, setY, -100, 100, 1]].map(([label, value, setter, min, max, step]) => (
             <label className="grid grid-cols-[88px_1fr] items-center gap-3 text-xs font-bold text-atseen-muted" key={label}><span>{label}</span><input className="w-full accent-atseen-blue" max={max} min={min} onChange={(event) => setter(Number(event.target.value))} step={step} type="range" value={value} /></label>
           ))}
