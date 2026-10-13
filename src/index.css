@@ -38057,6 +38057,10 @@ video.seen-reader-media {
     padding-right: 0 !important;
     padding-left: 0 !important;
   }
+
+  .social-app-shell :is(.world-prototype-comments,.world-inside-detail__comments,.experience-public-comments) .media-comments-composer {
+    margin-bottom: calc(68px + env(safe-area-inset-bottom)) !important;
+  }
 }
 
 /* Mobile Safari zooms the viewport when a focused form control renders below
