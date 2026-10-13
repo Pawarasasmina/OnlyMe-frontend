@@ -856,7 +856,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
       {isOwner ? <button className="profile-gift-detail-report" onClick={() => setReportOpen(true)} type="button">Report this gift or note</button> : null}
     </section> : <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
-      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={onSendGift} type="button">Send a gift</button> : null}</header>
+      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={() => onSendGift()} type="button">Send a gift</button> : null}</header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
       <div className="profile-received-gifts-grid">
