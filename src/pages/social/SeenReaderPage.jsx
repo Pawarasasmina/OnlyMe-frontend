@@ -1171,6 +1171,13 @@ export default function SeenReaderPage() {
 
   const handleReaderClick = (event) => {
     if (event.target.closest?.("a, button, input, textarea, select, video, audio")) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const clickedLeftSide = event.clientX < bounds.left + bounds.width / 2;
+    if (clickedLeftSide) {
+      if (safeChapterIndex > 0) changeChapter(safeChapterIndex - 1);
+      else navigate(`/seen/${encodeURIComponent(id)}`, { replace: true });
+      return;
+    }
     continueReader();
   };
   const backFromOverview = () => {

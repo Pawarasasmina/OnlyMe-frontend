@@ -5508,6 +5508,15 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
   color: rgba(255,255,255,.8);
   opacity: 1;
 }
+.edit-profile-username-input{display:flex;align-items:center;min-height:48px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:#12151b;padding-left:15px;letter-spacing:0;text-transform:none}
+.edit-profile-username-input:focus-within{border-color:rgba(156,203,255,.42)}
+.edit-profile-username-input.is-available,.edit-profile-username-input.is-current{border-color:rgba(88,229,160,.65)}
+.edit-profile-username-input.is-invalid,.edit-profile-username-input.is-taken{border-color:rgba(241,120,120,.7)}
+.edit-profile-username-input b{color:#9ccbff;font-size:14px}
+.edit-profile-username-input input{min-height:46px;border:0;background:transparent;padding-left:3px}
+.edit-profile-username-input input:focus{border-color:transparent}
+.edit-profile-username-status{margin-top:-1px;color:rgba(255,255,255,.48);font-size:11px;font-weight:650;letter-spacing:0;text-transform:none}
+.edit-profile-username-status.is-valid{color:#58e5a0}.edit-profile-username-status.is-invalid{color:#f17878}.edit-profile-username-status.is-checking{color:#9ccbff}
 .edit-profile-help {
   margin: -9px 0 1px;
   color: rgba(255,255,255,.48);

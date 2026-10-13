@@ -93,6 +93,18 @@ function Field({ className = "", disabled = false, label, name, onChange, placeh
   );
 }
 
+function UsernameField({ onChange, status, value }) {
+  const valid = status.state === "available" || status.state === "current";
+  return <label className="edit-profile-field edit-profile-field-wide">
+    <span>Username</span>
+    <span className={`edit-profile-username-input ${status.state ? `is-${status.state}` : ""}`}>
+      <b aria-hidden="true">@</b>
+      <input aria-describedby="username-status" autoCapitalize="none" autoCorrect="off" maxLength={30} name="username" onChange={(event) => onChange({ target: { name: "username", value: event.target.value.replace(/^@/, "").toLowerCase() } })} placeholder="your_username" spellCheck="false" value={value || ""} />
+    </span>
+    <small className={`edit-profile-username-status ${valid ? "is-valid" : status.state === "checking" ? "is-checking" : "is-invalid"}`} id="username-status" role="status">{status.message}</small>
+  </label>;
+}
+
 function BioField({ onChange, value }) {
   return <label className="edit-profile-field edit-profile-field-wide"><span>Bio</span><textarea maxLength={120} name="bio" onChange={onChange} value={value || ""} /><small className="edit-profile-help">Max 120 — shown right under your name</small></label>;
 }
@@ -308,6 +320,7 @@ function ProfileSettingsPage() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [giftSettingsOpen, setGiftSettingsOpen] = useState(false);
   const [cropImage, setCropImage] = useState(null);
+  const [usernameStatus, setUsernameStatus] = useState({ message: "", state: "" });
   const accessToken = localStorage.getItem("onlyme_access_token");
   const backTarget = new URLSearchParams(location.search).get("from") === "settings" ? "/settings" : "/profile";
 
@@ -358,6 +371,46 @@ function ProfileSettingsPage() {
   const role = account.role === "admin" ? "admin" : profile.socialLinks !== undefined ? "creator" : "fan";
   const activeStatus = account.activeStatus || null;
   const profilePhoto = account.profilePhoto;
+
+  useEffect(() => {
+    const username = form.username.trim().toLowerCase();
+    const currentUsername = String(account.username || "").toLowerCase();
+    if (!username) {
+      setUsernameStatus({ message: "Username is required.", state: "invalid" });
+      return undefined;
+    }
+    if (!/^[a-z0-9_.]+$/.test(username)) {
+      setUsernameStatus({ message: "Use only letters, numbers, underscores, and periods.", state: "invalid" });
+      return undefined;
+    }
+    if (["admin", "administrator", "support", "api", "login", "register", "settings", "dashboard", "creator", "creators", "user", "users", "onlyme"].includes(username)) {
+      setUsernameStatus({ message: "This username is reserved.", state: "invalid" });
+      return undefined;
+    }
+    if (username === currentUsername) {
+      setUsernameStatus({ message: "This is your current username.", state: "current" });
+      return undefined;
+    }
+    setUsernameStatus({ message: "Checking availability…", state: "checking" });
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await profileService.checkUsername(username);
+        if (!active) return;
+        const available = Boolean(response.data?.data?.available);
+        setUsernameStatus(available
+          ? { message: `@${username} is available.`, state: "available" }
+          : { message: `@${username} is already taken.`, state: "taken" });
+      } catch (requestError) {
+        if (!active) return;
+        setUsernameStatus({ message: requestError.response?.data?.message || "Could not check this username.", state: "invalid" });
+      }
+    }, 400);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [account.username, form.username]);
 
   const directSummary = useMemo(() => {
     if (role !== "creator") return "Available in Messages";
@@ -410,6 +463,7 @@ function ProfileSettingsPage() {
       const [city = "", ...countryParts] = form.locationText.split(",").map((part) => part.trim()).filter(Boolean);
       const profilePayload = {
         displayName,
+        username: form.username.trim(),
         bio: form.bio.trim(),
         phoneNumber: form.phoneNumber.trim(),
         whatsapp: form.whatsapp.trim(),
@@ -529,7 +583,7 @@ function ProfileSettingsPage() {
 
   const submit = (event) => {
     event.preventDefault();
-    if (saveMutation.isPending || uploading) return;
+    if (saveMutation.isPending || uploading || !["available", "current"].includes(usernameStatus.state)) return;
     saveMutation.mutate();
   };
 
@@ -576,7 +630,7 @@ function ProfileSettingsPage() {
       <section className="edit-profile-fields">
         <Field label="First name" name="firstName" onChange={updateField} value={form.firstName} />
         <Field label="Last name" name="lastName" onChange={updateField} value={form.lastName} />
-        <Field className="edit-profile-field-wide" disabled label="Username" name="username" onChange={updateField} value={`@${form.username}`} />
+        <UsernameField onChange={updateField} status={usernameStatus} value={form.username} />
         <p className="edit-profile-help edit-profile-field-wide">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
         <BioField onChange={updateField} value={form.bio} />
         <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
@@ -629,7 +683,7 @@ function ProfileSettingsPage() {
       </section>
       </fieldset>
 
-      <button className="edit-profile-save" disabled={saveMutation.isPending || uploading} type="submit">
+      <button className="edit-profile-save" disabled={saveMutation.isPending || uploading || !["available", "current"].includes(usernameStatus.state)} type="submit">
         {saveMutation.isPending ? "Saving..." : "Save"}
       </button>
 

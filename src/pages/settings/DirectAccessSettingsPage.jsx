@@ -43,7 +43,7 @@ export default function DirectAccessSettingsPage() {
     if (query.data) setSettings(normalizeSettings(query.data));
   }, [query.data]);
 
-  const close = () => navigate("/settings/profile?from=settings");
+  const close = () => navigate("/settings");
   const save = async (nextSettings) => {
     setBusy(true);
     setError("");
