@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 
 function outputFileName(kind) {
@@ -9,6 +9,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
+  const gestureRef = useRef({ pointers: new Map() });
   const config = {
     avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: "profile photo", width: 800 },
     cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: "cover", width: 1500 },
@@ -16,6 +17,52 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     seen: { aspect: "aspect-video", frame: "w-full rounded-2xl", height: 1080, label: "Seen image", width: 1920 },
     story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
   }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const beginGesture = (event) => {
+    if (saving) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const gesture = gestureRef.current;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    gesture.startX = x;
+    gesture.startY = y;
+    gesture.startZoom = zoom;
+    gesture.origin = points.length === 1 ? points[0] : {
+      x: (points[0].x + points[1].x) / 2,
+      y: (points[0].y + points[1].y) / 2,
+    };
+    gesture.distance = points.length > 1 ? Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) : 0;
+  };
+  const moveGesture = (event) => {
+    const gesture = gestureRef.current;
+    if (!gesture.pointers.has(event.pointerId)) return;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    const center = points.length === 1 ? points[0] : {
+      x: (points[0].x + points[1].x) / 2,
+      y: (points[0].y + points[1].y) / 2,
+    };
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setX(clamp(gesture.startX + ((center.x - gesture.origin.x) / bounds.width) * 200, -100, 100));
+    setY(clamp(gesture.startY + ((center.y - gesture.origin.y) / bounds.height) * 200, -100, 100));
+    if (points.length > 1 && gesture.distance) {
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      setZoom(clamp(gesture.startZoom * (distance / gesture.distance), 1, 3));
+    }
+  };
+  const endGesture = (event) => {
+    const gesture = gestureRef.current;
+    gesture.pointers.delete(event.pointerId);
+    const points = [...gesture.pointers.values()];
+    if (points.length) {
+      gesture.startX = x;
+      gesture.startY = y;
+      gesture.startZoom = zoom;
+      gesture.origin = points[0];
+      gesture.distance = 0;
+    }
+  };
 
   const save = async () => {
     const image = new Image();
@@ -48,10 +95,20 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
           <button aria-label="Close image editor" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={saving} onClick={onCancel} type="button"><FiX /></button>
         </div>
 
-        <div className={`relative mx-auto mt-5 overflow-hidden bg-black ring-1 ring-white/20 ${config.aspect} ${config.frame}`}>
+        <div
+          aria-label="Crop preview. Drag to reposition and pinch with two fingers to zoom."
+          className={`relative mx-auto mt-5 overflow-hidden bg-black ring-1 ring-white/20 ${config.aspect} ${config.frame}`}
+          onPointerCancel={endGesture}
+          onPointerDown={beginGesture}
+          onPointerMove={moveGesture}
+          onPointerUp={endGesture}
+          style={{ touchAction: "none" }}
+        >
           <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `scale(${zoom})` }} />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
+
+        <p className="mt-3 text-center text-xs font-semibold text-atseen-muted sm:hidden">Drag to move · pinch with two fingers to zoom</p>
 
         <div className="mx-auto mt-6 max-w-md space-y-4">
           {[['Zoom', zoom, setZoom, 1, 3, 0.01], ['Left / right', x, setX, -100, 100, 1], ['Up / down', y, setY, -100, 100, 1]].map(([label, value, setter, min, max, step]) => (
