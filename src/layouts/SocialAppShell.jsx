@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Component, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Component, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import FanCreateSheet from "../components/fanWeb/FanCreateSheet";
 import FanMobileNav from "../components/fanWeb/FanMobileNav";
@@ -18,6 +18,7 @@ import { canCreateStory } from "../utils/storyPermissions";
 import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
 import { moderationWarningService } from "../services/moderationWarningService";
 import { publicationService } from "../services/publicationService";
+import { useSocialScrollRestoration } from "../hooks/useSocialScrollRestoration";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -74,7 +75,7 @@ function SocialAppShell({ children = null }) {
     || location.pathname.startsWith("/studio/seens/");
   const unreadMessageCount = useUnreadMessageCount(Boolean(user), { poll: !isMessagesPage });
   const contentScrollRef = useRef(null);
-  const scrollPositions = useRef(new Map());
+  useSocialScrollRestoration(contentScrollRef);
   const [status, setStatus] = useState(() => localStorage.getItem(STATUS_KEY) || "");
   const [appModalOpen, setAppModalOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -85,23 +86,6 @@ function SocialAppShell({ children = null }) {
     if (status) localStorage.setItem(STATUS_KEY, status);
     else localStorage.removeItem(STATUS_KEY);
   }, [status]);
-
-  useLayoutEffect(() => {
-    const positions = scrollPositions.current;
-    const content = contentScrollRef.current;
-    const saved = location.state?.restoreScroll ? positions.get(location.pathname) : null;
-    const frame = window.requestAnimationFrame(() => {
-      content?.scrollTo({ top: saved?.content || 0, behavior: "instant" });
-      window.scrollTo({ top: saved?.window || 0, behavior: "instant" });
-    });
-    return () => {
-      window.cancelAnimationFrame(frame);
-      positions.set(location.pathname, {
-        content: content?.scrollTop || 0,
-        window: window.scrollY,
-      });
-    };
-  }, [location.pathname, location.state?.restoreScroll]);
 
   const outletContext = useMemo(() => ({ status, setStatus }), [status]);
   const canCreateStoryNow = capabilities.canCreate && canCreateStory(user);
