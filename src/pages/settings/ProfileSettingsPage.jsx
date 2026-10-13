@@ -84,11 +84,11 @@ function displayNameFrom(form) {
   return [form.firstName, form.lastName].map((part) => part.trim()).filter(Boolean).join(" ");
 }
 
-function Field({ className = "", disabled = false, label, name, onChange, placeholder = "", value }) {
+function Field({ className = "", disabled = false, label, name, onChange, placeholder = "", type = "text", value }) {
   return (
     <label className={`edit-profile-field ${className}`}>
       <span>{label}</span>
-      <input disabled={disabled} name={name} onChange={onChange} placeholder={placeholder} value={value || ""} />
+      <input disabled={disabled} name={name} onChange={onChange} placeholder={placeholder} type={type} value={value || ""} />
     </label>
   );
 }
@@ -464,6 +464,7 @@ function ProfileSettingsPage() {
       const profilePayload = {
         displayName,
         username: form.username.trim(),
+        email: form.email.trim(),
         bio: form.bio.trim(),
         phoneNumber: form.phoneNumber.trim(),
         whatsapp: form.whatsapp.trim(),
@@ -640,7 +641,7 @@ function ProfileSettingsPage() {
 
       <section className="edit-profile-fields">
         <h2 className="edit-profile-field-wide">Contact Options</h2>
-        <Field className="edit-profile-field-wide" disabled label="Email" name="email" onChange={updateField} value={form.email} />
+        <Field className="edit-profile-field-wide" label="Email" name="email" onChange={updateField} type="email" value={form.email} />
         <Field label="Phone number" name="phoneNumber" onChange={updateField} value={form.phoneNumber} />
         <Field label="WhatsApp" name="whatsapp" onChange={updateField} value={form.whatsapp} />
       </section>

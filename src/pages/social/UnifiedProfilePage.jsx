@@ -13,6 +13,7 @@ import {
   FiFlag,
   FiGift,
   FiGrid,
+  FiMail,
   FiMoreHorizontal,
   FiPlus,
   FiRefreshCw,
@@ -532,6 +533,7 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
             ))}
           </div>
           {profile.bio?.trim() ? <p className="profile-identity-bio">{profile.bio}</p> : null}
+          {isOwner && profile.email?.trim() ? <p className="profile-identity-email"><FiMail aria-hidden="true" />{profile.email}</p> : null}
         </div>
       </div>
       {isOwner || statusText ? (
