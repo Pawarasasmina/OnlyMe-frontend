@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArchive,
   FiBarChart2,
@@ -32,6 +32,8 @@ import {
 import SeriesPickerSheet from "../publication/SeriesPickerSheet";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 import { publicationService } from "../../services/publicationService";
+import { useAuth } from "../../hooks/useAuth";
+import { SeenFeedItem } from "../../pages/social/SeenFeedPage";
 
 const icons = { IMAGE: FiImage, VIDEO: FiVideo, AUDIO: FiHeadphones, TEXT: FiFileText };
 
@@ -128,6 +130,11 @@ function profileReactionCluster(engagement) {
 }
 
 function ProfileSeenEngagementBar({ item }) {
+  const queryClient = useQueryClient();
+  const [comment, setComment] = useState("");
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const engagementQuery = useQuery({
     enabled: Boolean(item?.id),
     queryKey: ["seen-engagement", item?.id],
@@ -136,28 +143,61 @@ function ProfileSeenEngagementBar({ item }) {
     staleTime: 30000,
   });
   const engagement = normalizeProfileEngagement(item, engagementQuery.data);
-  const target = `/seen/${item.id}`;
+  const refresh = (response) => {
+    const next = response.data?.data?.engagement;
+    if (next) queryClient.setQueryData(["seen-engagement", item.id], next);
+    else engagementQuery.refetch();
+  };
+  const reactionMutation = useMutation({
+    mutationFn: (reaction) => engagementQuery.data?.viewerReaction === reaction
+      ? publicationService.removeSeenReaction(item.id)
+      : publicationService.reactToSeen(item.id, reaction),
+    onSuccess: (response) => { refresh(response); setReactionsOpen(false); },
+  });
+  const commentMutation = useMutation({
+    mutationFn: (text) => publicationService.commentOnSeen(item.id, text),
+    onSuccess: (response) => { refresh(response); setComment(""); },
+  });
+  const repostMutation = useMutation({
+    mutationFn: () => engagementQuery.data?.viewerShared ? publicationService.removeSeenShare(item.id) : publicationService.shareSeen(item.id),
+    onSuccess: refresh,
+  });
+  const saveMutation = useMutation({ mutationFn: () => publicationService.toggleSeenSave(item.id), onSuccess: refresh });
+  const submitComment = (event) => {
+    event.preventDefault();
+    const text = comment.trim();
+    if (text) commentMutation.mutate(text);
+  };
+  const shareUrl = `${window.location.origin}/seen/${encodeURIComponent(item.id)}`;
   return (
+    <>
     <div className="seen-engagement-bar profile-seen-engagement-bar">
       <div className="seen-engagement-left">
-        <Link aria-label={`Open reactions for ${item.title || "Seen"}`} className="seen-reactions" to={target}>
+        <button aria-expanded={reactionsOpen} aria-label={`Open reactions for ${item.title || "Seen"}`} className="seen-reactions" onClick={() => setReactionsOpen((value) => !value)} type="button">
           <span>{profileReactionCluster(engagement)}</span>
           <b>{compactCount(engagement.reactions)}</b>
-        </Link>
-        <Link aria-label={`Open comments for ${item.title || "Seen"}`} to={target}>
+        </button>
+        <button aria-expanded={commentsOpen} aria-label={`Open comments for ${item.title || "Seen"}`} onClick={() => setCommentsOpen((value) => !value)} type="button">
           <FiMessageSquare />
           <b>{compactCount(engagement.comments)}</b>
-        </Link>
-        <Link aria-label={`Open reposts for ${item.title || "Seen"}`} to={target}>
+        </button>
+        <button aria-label={engagementQuery.data?.viewerShared ? "Remove repost" : `Repost ${item.title || "Seen"}`} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate()} type="button">
           <FiRepeat />
           <b>{compactCount(engagement.reposts)}</b>
-        </Link>
+        </button>
       </div>
       <div className="seen-engagement-right">
-        <Link aria-label={`Save ${item.title || "Seen"}`} className={engagement.saved ? "is-selected" : ""} to={target}><FiBookmark fill={engagement.saved ? "currentColor" : "none"} /></Link>
-        <Link aria-label={`Share ${item.title || "Seen"}`} to={target}><FiSend /></Link>
+        <button aria-label={engagement.saved ? "Remove from Saved" : `Save ${item.title || "Seen"}`} className={engagement.saved ? "is-selected" : ""} disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()} type="button"><FiBookmark fill={engagement.saved ? "currentColor" : "none"} /></button>
+        <button aria-label={`Share ${item.title || "Seen"}`} onClick={() => setShareOpen(true)} type="button"><FiSend /></button>
       </div>
     </div>
+    {reactionsOpen ? <div className="profile-seen-reaction-picker">{Object.entries(profileReactionLabel).slice(0, 8).map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} disabled={reactionMutation.isPending} key={key} onClick={() => reactionMutation.mutate(key)} type="button">{icon}</button>)}</div> : null}
+    {commentsOpen ? <section className="profile-seen-comments-panel">
+      <div>{(engagementQuery.data?.comments || []).map((entry) => <article key={entry.id}><strong>{entry.author?.name || "Fan"}</strong><p>{entry.text}</p></article>)}{!engagementQuery.data?.comments?.length ? <p>No comments yet.</p> : null}</div>
+      <form onSubmit={submitComment}><input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment..." value={comment} /><button disabled={!comment.trim() || commentMutation.isPending} type="submit">Post</button></form>
+    </section> : null}
+    {shareOpen ? <SeenShareSheet item={item} onClose={() => setShareOpen(false)} shareUrl={shareUrl} /> : null}
+    </>
   );
 }
 
@@ -282,7 +322,7 @@ function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
   );
 }
 
-function SeenListDetailView({ focusSeenId = "", items, onBack, onMore, owner }) {
+function SeenListDetailView({ currentUser, focusSeenId = "", items, onBack, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
   useEffect(() => {
     if (!focusSeenId || focusSeenId === "all") return undefined;
     const frame = window.requestAnimationFrame(() => {
@@ -293,14 +333,14 @@ function SeenListDetailView({ focusSeenId = "", items, onBack, onMore, owner }) 
   }, [focusSeenId]);
 
   return (
-    <section className="profile-series-feed-view profile-seen-list-feed-view">
+    <section className="profile-series-feed-view profile-seen-list-feed-view seen-shell-main">
       <header className="profile-series-feed-head">
         <button aria-label="Back to Seens" className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
         <h2>My Seens</h2>
         <b>{items.length}</b>
       </header>
-      <div className="profile-series-feed-list">
-        {items.map((item) => <SeriesSeenRow item={item} key={item.id} onMore={onMore} owner={owner} showChapterList />)}
+      <div className="seen-feed-list profile-my-seens-feed">
+        {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={currentUser} item={item} key={item.id} onFeedRemove={onFeedRemove} onFeedRemoveByCreator={onFeedRemoveByCreator} onFeedReplace={onFeedReplace} onFeedUpdate={onFeedUpdate} />)}
       </div>
       {!items.length ? <p className="profile-empty-state">No Seens yet.</p> : null}
     </section>
@@ -498,6 +538,7 @@ function ProfileContentGrid({
   reposted = false,
   series = [],
 }) {
+  const { user: currentUser } = useAuth();
   const [activeSeen, setActiveSeen] = useState(null);
   const [actionSeen, setActionSeen] = useState(null);
   const [draftsOpen, setDraftsOpen] = useState(false);
@@ -538,15 +579,30 @@ function ProfileContentGrid({
     const closeSeenList = () => {
       onActiveSeenListChange?.("");
     };
+    const updateProfileSeenEngagement = (id, engagement) => {
+      setLocalContent((current) => (current || effectiveContent).map((entry) => String(entry.id || entry._id) === String(id) ? { ...entry, engagement } : entry));
+    };
+    const replaceProfileSeen = (id, publication) => {
+      setLocalContent((current) => (current || effectiveContent).map((entry) => String(entry.id || entry._id) === String(id) ? { ...entry, ...publication } : entry));
+    };
+    const removeProfileSeen = (id) => {
+      setLocalContent((current) => (current || effectiveContent).filter((entry) => String(entry.id || entry._id) !== String(id)));
+    };
+    const removeProfileSeensByCreator = (creatorId) => {
+      setLocalContent((current) => (current || effectiveContent).filter((entry) => String(entry.creator?.id || entry.creator?._id || "") !== String(creatorId)));
+    };
     if (activeSeenListId) {
       return (
         <>
           <SeenListDetailView
+            currentUser={currentUser}
             focusSeenId={activeSeenListId}
             items={publishedContent}
             onBack={closeSeenList}
-            onMore={setActionSeen}
-            owner={owner}
+            onFeedRemove={removeProfileSeen}
+            onFeedRemoveByCreator={removeProfileSeensByCreator}
+            onFeedReplace={replaceProfileSeen}
+            onFeedUpdate={updateProfileSeenEngagement}
           />
           {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} onSeriesChanged={(updated) => {
             setLocalContent((current) => (current || effectiveContent).map((item) => item.id === updated.id ? updated : item));

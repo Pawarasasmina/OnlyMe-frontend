@@ -39,7 +39,7 @@ function SeenFeedCard({ item, target }) {
 
   return <article className="seen-feed-card">
     {item.shareCaption ? <div className="border-b border-atseen-line bg-atseen-surface px-5 py-4"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-atseen-blue">Shared with a note</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/90">{item.shareCaption}</p></div> : null}
-    <Link className="seen-feed-cover" to={target}>{item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={item.coverMedia} /> : <span className="seen-cover-fallback">@seen</span>}<span className="seen-cover-shade" /><span className="seen-topic-planet">{item.planet?.emoji || "✦"}</span><span className="seen-new-label">New Seen</span><h2>{item.title}</h2></Link>
+    <Link className="seen-feed-cover" to={target}>{item.coverMedia?.secureUrl || item.coverMedia?.url || item.coverMedia?.playbackUrl ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={item.coverMedia} /> : <span className="seen-cover-fallback">@seen</span>}<span className="seen-cover-shade" /><span className="seen-topic-planet">{item.planet?.emoji || "✦"}</span><span className="seen-new-label">New Seen</span><h2>{item.title}</h2></Link>
     <div className="seen-feed-body">
       {item.creator?.username ? <Link className="seen-feed-author" to={`/profile/${item.creator.username}`}>{item.creator.avatar ? <img alt="" src={resolveMediaUrl(item.creator.avatar)} /> : <span>{item.creator.name?.slice(0, 1)}</span>}<strong>{item.creator.name || `@${item.creator.username}`}</strong>{item.creator.name ? <small>@{item.creator.username}</small> : null}</Link> : null}
       {item.description || item.summary ? <p className="seen-feed-description">{item.description || item.summary}</p> : null}
@@ -65,5 +65,5 @@ function SeenFeedCard({ item, target }) {
 export default function SeenCard({ item, to, variant = "tile" }) {
   const target = to || `/seen/${item.id}`;
   if (variant === "feed") return <SeenFeedCard item={item} target={target} />;
-  return <Link className="overflow-hidden rounded-2xl border border-atseen-line bg-atseen-surface" to={target}><div className="aspect-square bg-atseen-surface-2">{item.coverMedia?.secureUrl ? <PublicationCoverMedia alt="" autoPlay className="h-full w-full object-cover" loop media={item.coverMedia} /> : null}</div><div className="p-3"><strong>{item.title}</strong><p className="text-xs text-atseen-muted">{item.chapterCount || item.chapters?.length || 0} chapters</p></div></Link>;
+  return <Link className="overflow-hidden rounded-2xl border border-atseen-line bg-atseen-surface" to={target}><div className="aspect-square bg-atseen-surface-2">{item.coverMedia?.secureUrl || item.coverMedia?.url || item.coverMedia?.playbackUrl ? <PublicationCoverMedia alt="" autoPlay className="h-full w-full object-cover" loop media={item.coverMedia} /> : null}</div><div className="p-3"><strong>{item.title}</strong><p className="text-xs text-atseen-muted">{item.chapterCount || item.chapters?.length || 0} chapters</p></div></Link>;
 }

@@ -23890,7 +23890,8 @@ video.seen-reader-media {
   color: #fff;
 }
 
-.profile-seen-engagement-bar a {
+.profile-seen-engagement-bar a,
+.profile-seen-engagement-bar button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -23900,9 +23901,57 @@ video.seen-reader-media {
 }
 
 .profile-seen-engagement-bar a:hover,
-.profile-seen-engagement-bar a.is-selected {
+.profile-seen-engagement-bar button:hover,
+.profile-seen-engagement-bar a.is-selected,
+.profile-seen-engagement-bar button.is-selected {
   color: #9ccbff;
 }
+
+.profile-seen-reaction-picker {
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  gap: 4px;
+  margin: 7px 0 5px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: #181D25;
+  padding: 5px 7px;
+}
+
+.profile-seen-reaction-picker button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.profile-seen-reaction-picker button:hover { background: rgba(156,203,255,.14); }
+
+.profile-seen-comments-panel {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.055);
+  padding: 11px 0 8px;
+}
+
+.profile-seen-comments-panel > div {
+  display: grid;
+  max-height: 190px;
+  gap: 9px;
+  overflow-y: auto;
+}
+
+.profile-seen-comments-panel article { padding: 0 2px; }
+.profile-seen-comments-panel article strong { color: #fff; font-size: 11px; }
+.profile-seen-comments-panel article p,
+.profile-seen-comments-panel > div > p { margin-top: 2px; color: rgba(255,255,255,.6); font-size: 11px; line-height: 1.4; }
+.profile-seen-comments-panel form { display: flex; align-items: center; gap: 8px; }
+.profile-seen-comments-panel input { min-width: 0; height: 38px; flex: 1; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: #151A22; padding: 0 13px; color: #fff; font-size: 16px; outline: none; }
+.profile-seen-comments-panel form button { color: #9CCBFF; font-size: 12px; font-weight: 900; }
+.profile-seen-comments-panel form button:disabled { opacity: .42; }
 
 @media (max-width: 390px) {
   .profile-series-feed-item { padding-inline: 16px; }
