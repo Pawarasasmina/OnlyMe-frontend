@@ -377,11 +377,15 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const activeAudience = STORY_AUDIENCES.find((item) => item.value === story.audience) || STORY_AUDIENCES[0];
   const ActiveAudienceIcon = activeAudience.icon;
   const hasActiveTextSurface = Boolean(editingTextId || story.texts.some((item) => item.text.trim()));
+  const photoScale = story.transform?.scale || 1;
+  const photoTranslateLimit = ((photoScale - 1) / (2 * photoScale)) * 100;
+  const photoTranslateX = -((story.transform?.x || 0) / 100) * photoTranslateLimit;
+  const photoTranslateY = -((story.transform?.y || 0) / 100) * photoTranslateLimit;
   const backgroundStyle = story.photo
     ? {
         backgroundImage: `url("${story.uploadedUrl}")`,
         backgroundPosition: `${50 + (story.transform?.x || 0) / 2}% ${50 + (story.transform?.y || 0) / 2}%`,
-        transform: `scale(${story.transform?.scale || 1})`,
+        transform: `translate(${photoTranslateX}%, ${photoTranslateY}%) scale(${photoScale})`,
       }
     : { background: `linear-gradient(160deg,${STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length].join(",")})` };
 
