@@ -17,6 +17,9 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     seen: { aspect: "aspect-video", frame: "w-full rounded-2xl", height: 1080, label: "Seen image", width: 1920 },
     story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
   }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
+  const translateLimit = ((zoom - 1) / (2 * zoom)) * 100;
+  const translateX = -(x / 100) * translateLimit;
+  const translateY = -(y / 100) * translateLimit;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const beginGesture = (event) => {
@@ -104,7 +107,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
           onPointerUp={endGesture}
           style={{ touchAction: "none" }}
         >
-          <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `scale(${zoom})` }} />
+          <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
 
