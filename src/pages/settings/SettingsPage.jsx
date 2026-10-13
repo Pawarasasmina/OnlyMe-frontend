@@ -10,6 +10,7 @@ import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
 import VerifiedCreatorPage from "../creator/VerifiedCreatorPage";
+import DeleteAccountSheet from "./DeleteAccountSheet";
 
 function SettingsRow({ onClick, subtitle, title, to, trailing }) {
   const content = <><span className="settings-index-row-copy"><b>{title}</b>{subtitle ? <small>{subtitle}</small> : null}</span>{trailing || <FiChevronRight />}</>;
@@ -109,7 +110,7 @@ export default function SettingsPage() {
     {error || privacyError ? <p className="mt-5 rounded-xl bg-atseen-danger/10 p-3 text-sm text-atseen-danger" role="alert">{error || privacyError}</p> : null}
     <div className="mt-7 grid gap-2"><button className="flex w-full items-center justify-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 py-3.5 text-sm font-bold disabled:opacity-50" disabled={busy} onClick={signOut} type="button"><FiLogOut /> Log out</button><button className="flex w-full items-center justify-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 py-3.5 text-sm font-bold text-atseen-danger disabled:opacity-50" disabled={busy} onClick={() => setDeleteOpen(true)} type="button"><FiTrash2 /> Delete account</button><small className="mt-2 text-center text-[10px] text-atseen-dim">@seen by Atseen</small></div>
 
-    {deleteOpen ? <div className="edit-profile-delete-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setDeleteOpen(false); }}><section aria-labelledby="settings-delete-title" aria-modal="true" className="edit-profile-delete-sheet" role="dialog"><span className="edit-profile-delete-handle" /><FiTrash2 className="edit-profile-delete-icon" /><h2 id="settings-delete-title">Delete account?</h2><p>Your profile and content will be disabled immediately. Your deletion request will be recorded for permanent removal.</p><button className="edit-profile-delete-confirm" disabled={busy} onClick={deleteAccount} type="button">{busy ? "Requesting deletion..." : "Delete my account"}</button><button className="edit-profile-delete-cancel" disabled={busy} onClick={() => setDeleteOpen(false)} type="button">Keep it</button></section></div> : null}
+    {deleteOpen ? <DeleteAccountSheet anchorRef={settingsMainRef} busy={busy} error={error} onClose={() => setDeleteOpen(false)} onConfirm={deleteAccount} /> : null}
     <NotificationSettingsSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
