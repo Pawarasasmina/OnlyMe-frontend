@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
+import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
 import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
@@ -1042,8 +1043,15 @@ function EndState({ onCreate }) {
   </section>;
 }
 
+const feedTabsByEntry = new Map();
+
 export default function SeenFeedPage() {
-  const [tab, setTab] = useState("seen");
+  const location = useLocation();
+  const [tab, setTabState] = useState(() => feedTabsByEntry.get(location.key) || "seen");
+  const setTab = (nextTab) => {
+    feedTabsByEntry.set(location.key, nextTab);
+    setTabState(nextTab);
+  };
   const [createOpen, setCreateOpen] = useState(false);
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const navigate = useNavigate();
@@ -1052,9 +1060,13 @@ export default function SeenFeedPage() {
   const capabilities = useSocialCapabilities();
   const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const queryClient = useQueryClient();
-  const query = useQuery({
-    queryKey: ["seen-feed", tab],
-    queryFn: () => publicationService.listPublishedSeens({ limit: 30, tab }).then((response) => response.data.data.items || []),
+  const feedKey = ["seen-feed", tab, user?.id || "guest"];
+  const loadMoreRef = useRef(null);
+  const query = useInfiniteQuery({
+    queryKey: feedKey,
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => publicationService.listPublishedSeens({ limit: 30, tab, page: pageParam }).then((response) => response.data.data),
+    getNextPageParam: nextSeenFeedPage,
     retry: 1,
     staleTime: 1000 * 60,
   });
@@ -1065,7 +1077,24 @@ export default function SeenFeedPage() {
     retry: false,
     staleTime: 1000 * 60,
   });
-  const items = useMemo(() => query.data || [], [query.data]);
+  const items = useMemo(() => {
+    const seenIds = new Set();
+    return (query.data?.pages || []).flatMap((page) => page.items || []).filter((item) => {
+      const id = String(item.id || item._id);
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
+  }, [query.data]);
+  const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = query;
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage || isFetchNextPageError || !loadMoreRef.current) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) fetchNextPage();
+    }, { root: loadMoreRef.current.closest(".social-center-scroll"), rootMargin: "300px" });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError, items.length]);
   const existingWorld = (worldQuery.data || []).find((item) => ["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"].includes(item.status))
     || (worldQuery.data || []).find((item) => item.status === "DRAFT");
   const worldTarget = existingWorld
@@ -1090,7 +1119,7 @@ export default function SeenFeedPage() {
     navigate("/activity");
   };
   const updateFeedItem = (id, engagement) => {
-    queryClient.setQueryData(["seen-feed", tab], (current = []) => current.map((entry) => String(entry.id) === String(id) ? {
+    queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.map((entry) => String(entry.id) === String(id) ? {
       ...entry,
       engagement: {
         reactionCount: engagement.reactionCount,
@@ -1105,16 +1134,16 @@ export default function SeenFeedPage() {
         viewerSaved: engagement.viewerSaved,
       },
       previewComment: engagement.comments?.at(-1) || entry.previewComment || null,
-    } : entry));
+    } : entry)));
   };
   const replaceFeedItem = (id, nextItem) => {
-    queryClient.setQueryData(["seen-feed", tab], (current = []) => current.map((entry) => String(entry.id || entry._id) === String(id) ? { ...entry, ...nextItem } : entry));
+    queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.map((entry) => String(entry.id || entry._id) === String(id) ? { ...entry, ...nextItem } : entry)));
   };
   const removeFeedItem = (id) => {
-    queryClient.setQueryData(["seen-feed", tab], (current = []) => current.filter((entry) => String(entry.id) !== String(id)));
+    queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.filter((entry) => String(entry.id) !== String(id))));
   };
   const removeFeedItemsByCreator = (creatorId) => {
-    queryClient.setQueryData(["seen-feed", tab], (current = []) => current.filter((entry) => String(entry.creator?.id || entry.creator?._id || "") !== String(creatorId)));
+    queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.filter((entry) => String(entry.creator?.id || entry.creator?._id || "") !== String(creatorId))));
   };
 
   return <section className="seen-prototype-page">
@@ -1138,8 +1167,8 @@ export default function SeenFeedPage() {
     />
     <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
     {query.isLoading ? <div className="seen-feed-list"><SeenSkeleton /><SeenSkeleton /></div> : null}
-    {query.isError ? <div className="seen-feed-error"><p>Couldn’t load Seens.</p><button onClick={() => query.refetch()} type="button">Try again</button></div> : null}
-    {!query.isLoading && !query.isError ? items.length ? <motion.div
+    {query.isError && !query.data ? <div className="seen-feed-error"><p>Couldn’t load Seens.</p><button onClick={() => query.refetch()} type="button">Try again</button></div> : null}
+    {!query.isLoading && query.data ? items.length || hasNextPage ? <motion.div
       animate={{ opacity: 1, y: 0 }}
       className="seen-feed-list"
       initial={reduceMotion ? false : { opacity: 0, y: 52 }}
@@ -1147,7 +1176,10 @@ export default function SeenFeedPage() {
       transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     >
       {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} />)}
-      <EndState onCreate={openCreate} />
+      {hasNextPage ? <div className="seen-feed-error" ref={loadMoreRef}>
+        {isFetchNextPageError ? <p>Couldn’t load more Seens.</p> : null}
+        <button disabled={isFetchingNextPage} onClick={() => fetchNextPage()} type="button">{isFetchingNextPage ? "Loading more Seens..." : isFetchNextPageError ? "Try again" : "Load more Seens"}</button>
+      </div> : <EndState onCreate={openCreate} />}
     </motion.div> : <EmptyState tab={tab} /> : null}
   </section>;
 }
