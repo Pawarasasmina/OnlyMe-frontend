@@ -531,6 +531,7 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
               </button>
             ))}
           </div>
+          {profile.bio?.trim() ? <p className="profile-identity-bio">{profile.bio}</p> : null}
         </div>
       </div>
       {isOwner || statusText ? (

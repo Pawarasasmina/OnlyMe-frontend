@@ -77,9 +77,6 @@ function blockKey(block) {
   return block?.id || `${block?.type || "block"}-${block?.order || 0}-${block?.text || block?.url || ""}`;
 }
 
-function isMediaBlock(block) {
-  return ["IMAGE", "VIDEO", "AUDIO", "VOICE"].includes(block?.type);
-}
 
 function creatorName(creator = {}) {
   return creator.name || creator.displayName || creator.username || "Creator";
@@ -321,7 +318,8 @@ function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
     </section>;
   }
   if (block.type === "HIGHLIGHT") {
-    return <p className="seen-reader-paragraph"><mark>{block.text}</mark></p>;
+    const colors = { ICE_BLUE: "#9CCBFF", AMBER: "#F2C76E", CORAL: "#F18A78", MINT: "#6ECF97", LILAC: "#B7A5FF", WHITE: "#F4F7FB" };
+    return <p className="seen-reader-paragraph"><mark style={{ background: colors[block.metadata?.color] || colors.ICE_BLUE, color: "#0A0C0F" }}>{block.text}</mark></p>;
   }
   if (block.type === "LINK") {
     return <a className="chapter-link-prototype" href={block.url} rel="noreferrer" target="_blank"><FiExternalLink /><span><b>{block.label || block.url}</b><small>{block.url}</small></span></a>;
@@ -853,7 +851,6 @@ export default function SeenReaderPage() {
   const explicitChecklistPoints = pointBlocks.filter((block) => block.metadata?.presentation === "CHECKLIST");
   const checklistPoints = explicitChecklistPoints.length >= 2 ? explicitChecklistPoints : pointBlocks.length >= 3 ? pointBlocks.slice(1, 5) : [];
   const checklistIds = new Set(checklistPoints.map(blockKey));
-  const hasInlineMedia = visibleBlocks.some(isMediaBlock);
   const hasChapterContent = visibleBlocks.some((block) => block.text?.trim() || block.url || block.media?.secureUrl || block.type === "POLL");
   const shareUrl = useMemo(() => (typeof window === "undefined" ? "" : `${window.location.origin}/seen/${id}`), [id]);
   const sharePayload = useMemo(() => ({
@@ -1249,7 +1246,6 @@ export default function SeenReaderPage() {
     <article className="seen-reader-content" onClick={handleReaderClick}>
       {hasChapterContent ? <>
         {chapterContent}
-        {!hasInlineMedia && publication.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${publication.title} cover`} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
       </> : <section className="seen-reader-empty-chapter">
         {publication.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${publication.title} cover`} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
         <h2>{isOwner ? "This chapter needs content" : "This chapter is empty"}</h2>

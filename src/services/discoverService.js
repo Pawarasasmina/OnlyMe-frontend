@@ -169,12 +169,16 @@ function normalizeSlide(raw = {}) {
 function normalizeSeen(raw = {}) {
   if (!raw) return null;
   const id = raw.id || raw._id;
+  const coverUrl = raw.coverMedia?.secureUrl || raw.coverMedia?.url || raw.coverImage || raw.cover || "";
+  const coverType = raw.coverMedia?.mediaType || raw.coverMedia?.resourceType || raw.coverMedia?.type
+    || (/\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)|\/video\/upload\//i.test(coverUrl) ? "VIDEO" : "IMAGE");
   return {
     ...raw,
     id,
     title: raw.title || "Untitled Seen",
-    cover: raw.cover || raw.coverImage || "",
-    coverImage: raw.coverImage || raw.cover || "",
+    cover: coverUrl,
+    coverImage: coverUrl,
+    coverMedia: { ...raw.coverMedia, secureUrl: coverUrl, mediaType: String(coverType).toUpperCase() },
     route: raw.route || (id ? `/seen/${id}` : "/seen"),
     engagementCount: Number(raw.engagementCount ?? raw.viewCount) || 0,
     viewCount: Number(raw.viewCount) || 0,

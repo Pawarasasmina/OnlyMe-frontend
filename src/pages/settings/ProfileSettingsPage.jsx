@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiCheckCircle, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
+import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import StatusPicker from "../../components/stories/StatusPicker";
 import { useAuth } from "../../hooks/useAuth";
@@ -68,7 +69,8 @@ function profileToForm(data, privacyData) {
     whatsapp: profile.whatsapp || "",
     profileVisibility: privacyData?.profileVisibility || profile.profileVisibility || (account.role === "creator" ? "public" : "private"),
     savedPlacesVisibility: privacyData?.privacySettings?.savedPlacesVisibility || "everyone",
-    showMemberBadgeOnComments: privacyData?.privacySettings?.showMemberBadgeOnComments !== false,
+    showMemberBadgeOnComments: privacyData?.privacySettings?.showMemberBadge !== "only_me",
+    orbitVisibility: privacyData?.privacySettings?.orbitVisibility || "everyone",
     preferredLanguage: languageSource,
     timezone: profile.timezone || "UTC",
     notificationPreferences: {
@@ -197,7 +199,7 @@ function NotificationSheet({ anchorRef, isOpen, onClose }) {
   if (!isOpen) return null;
 
   const toggle = (key) => {
-    const next = { ...preferences, [key]: !preferences[key] };
+    const next = { ...preferences, [key]: preferences[key] === false };
     setPreferences(next);
     setError("");
     mutation.mutate(next);
@@ -295,6 +297,7 @@ function ProfileSettingsPage() {
   const statusContext = useOutletContext();
   const queryClient = useQueryClient();
   const { setUser, user } = useAuth();
+  const { showToast } = useFanToast();
   const avatarInput = useRef(null);
   const settingsMainRef = useRef(null);
   const [form, setForm] = useState(emptyForm);
@@ -352,7 +355,7 @@ function ProfileSettingsPage() {
 
   const account = profileQuery.data?.account || {};
   const profile = profileQuery.data?.profile || {};
-  const role = account.role;
+  const role = account.role === "admin" ? "admin" : profile.socialLinks !== undefined ? "creator" : "fan";
   const activeStatus = account.activeStatus || null;
   const profilePhoto = account.profilePhoto;
 
@@ -400,7 +403,10 @@ function ProfileSettingsPage() {
     mutationFn: async () => {
       const displayName = displayNameFrom(form);
       if (!displayName) throw new Error("First name is required.");
-      const socialLinks = form.website.trim() ? [{ platform: "Website", url: form.website.trim() }] : [];
+      const socialLinks = [
+        ...(form.website.trim() ? [{ platform: "Website", url: form.website.trim() }] : []),
+        ...(profile.socialLinks || []).slice(1),
+      ];
       const [city = "", ...countryParts] = form.locationText.split(",").map((part) => part.trim()).filter(Boolean);
       const profilePayload = {
         displayName,
@@ -409,21 +415,13 @@ function ProfileSettingsPage() {
         whatsapp: form.whatsapp.trim(),
         preferredLanguage: normalizeLanguage(form.languagesText || form.preferredLanguage),
         timezone: form.timezone.trim() || "UTC",
-        notificationPreferences: form.notificationPreferences,
         profileVisibility: form.profileVisibility,
       };
       if (role === "creator") {
         Object.assign(profilePayload, {
-          categories: form.categoriesText.split(",").map((item) => item.trim()).filter(Boolean),
           city,
           country: countryParts.join(", "),
           socialLinks,
-          subscriptionPriceCents: profile.subscriptionPriceCents || 300,
-          nsfwEnabled: Boolean(profile.nsfwEnabled),
-          freePreviewEnabled: profile.freePreviewEnabled ?? true,
-          messagingEnabled: profile.messagingEnabled ?? true,
-          ppmEnabled: Boolean(profile.ppmEnabled),
-          ppmPrice: profile.ppmPrice || 10,
         });
       }
       if (role === "fan") {
@@ -439,7 +437,8 @@ function ProfileSettingsPage() {
           privacySettings: {
             ...(privacyQuery.data?.privacySettings || {}),
             savedPlacesVisibility: form.savedPlacesVisibility,
-            showMemberBadgeOnComments: form.showMemberBadgeOnComments,
+            showMemberBadge: form.showMemberBadgeOnComments ? "everyone" : "only_me",
+            orbitVisibility: form.orbitVisibility,
           },
         }),
       ]);
@@ -465,10 +464,16 @@ function ProfileSettingsPage() {
       setDirty(false);
       setError("");
       setMessage("Profile saved.");
+      showToast("Profile updated ✓", { placement: "profile" });
+      navigate(backTarget, { replace: true, state: { restoreScroll: true } });
     },
     onError: (requestError) => {
+      queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["settings", "privacy"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       setMessage("");
       setError(requestError.response?.data?.message || requestError.message || "Unable to save profile.");
+      settingsMainRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
     },
   });
 
@@ -488,10 +493,9 @@ function ProfileSettingsPage() {
         status: data.account.status,
         creatorApprovalStatus: user?.creatorApprovalStatus,
       });
-      setForm(profileToForm(data, privacyQuery.data));
-      setDirty(false);
       setError("");
       setMessage(text);
+      showToast(text, { placement: "profile" });
     };
   }
 
@@ -525,6 +529,7 @@ function ProfileSettingsPage() {
 
   const submit = (event) => {
     event.preventDefault();
+    if (saveMutation.isPending || uploading) return;
     saveMutation.mutate();
   };
 
@@ -541,7 +546,7 @@ function ProfileSettingsPage() {
   if (profileQuery.isError || privacyQuery.isError) {
     return (
       <div className="edit-profile-page">
-        <button className="edit-profile-back" onClick={() => navigate(backTarget)} type="button"><FiChevronLeft /></button>
+        <button className="edit-profile-back" onClick={() => navigate(backTarget, { state: { restoreScroll: true } })} type="button"><FiChevronLeft /></button>
         <p className="edit-profile-error">Unable to load profile settings.</p>
       </div>
     );
@@ -550,12 +555,12 @@ function ProfileSettingsPage() {
   return (
     <form className="edit-profile-page" onSubmit={submit} ref={settingsMainRef}>
       <header className="edit-profile-header">
-        <button aria-label={backTarget === "/settings" ? "Back to settings" : "Back to profile"} className="edit-profile-back" onClick={() => navigate(backTarget)} type="button"><FiChevronLeft /></button>
+        <button aria-label={backTarget === "/settings" ? "Back to settings" : "Back to profile"} className="edit-profile-back" onClick={() => navigate(backTarget, { state: { restoreScroll: true } })} type="button"><FiChevronLeft /></button>
         <h1>Edit Profile</h1>
       </header>
 
       <PhotoRow
-        disabled={uploading}
+        disabled={uploading || saveMutation.isPending}
         fileRef={avatarInput}
         label="Profile photo"
         onChange={(event) => chooseImage("avatar", event)}
@@ -564,9 +569,10 @@ function ProfileSettingsPage() {
       />
       {cropImage ? <ProfileImageCropper kind={cropImage.kind} onCancel={closeCropper} onSave={uploadCroppedImage} saving={uploading} source={cropImage.url} /> : null}
 
-      {message ? <p className="edit-profile-success">{message}</p> : null}
-      {error ? <p className="edit-profile-error">{error}</p> : null}
+      {message ? <p className="edit-profile-success" role="status">{message}</p> : null}
+      {error ? <p className="edit-profile-error" role="alert">{error}</p> : null}
 
+      <fieldset className="min-w-0" disabled={saveMutation.isPending || uploading}>
       <section className="edit-profile-fields">
         <Field label="First name" name="firstName" onChange={updateField} value={form.firstName} />
         <Field label="Last name" name="lastName" onChange={updateField} value={form.lastName} />
@@ -575,7 +581,7 @@ function ProfileSettingsPage() {
         <BioField onChange={updateField} value={form.bio} />
         <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
         <Field label="Languages" name="languagesText" onChange={updateField} value={form.languagesText} />
-        <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} />
+        {role === "creator" ? <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} /> : null}
       </section>
 
       <section className="edit-profile-fields">
@@ -614,6 +620,14 @@ function ProfileSettingsPage() {
         <h2>Verification</h2>
         <Link to={role === "creator" ? "/creator/verified" : "/settings"}><FiCheckCircle /><span><b>{account.isVerified ? "Verified ✓" : "Get verified"}</b><small>{account.isVerified ? "the badge shows next to your name" : "Learn about profile verification"}</small></span><FiChevronRight /></Link>
       </section>
+      <section className="edit-profile-privacy">
+        <Segmented label="Who can see your orbit?" value={form.orbitVisibility} onChange={(value) => {
+          setDirty(true);
+          setForm((current) => ({ ...current, orbitVisibility: value }));
+        }} />
+        <p>Your orbit only shows public ties. Messages and private signals never appear to others.</p>
+      </section>
+      </fieldset>
 
       <button className="edit-profile-save" disabled={saveMutation.isPending || uploading} type="submit">
         {saveMutation.isPending ? "Saving..." : "Save"}

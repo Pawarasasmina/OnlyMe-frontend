@@ -3,11 +3,13 @@ import { FanToastContext } from "./FanToastContext";
 
 export function FanToastProvider({ children }) {
   const [message, setMessage] = useState("");
+  const [placement, setPlacement] = useState("bottom");
   const timeoutRef = useRef(null);
 
-  const showToast = useCallback((nextMessage) => {
+  const showToast = useCallback((nextMessage, options = {}) => {
     window.clearTimeout(timeoutRef.current);
     setMessage(nextMessage);
+    setPlacement(options.placement || "bottom");
     timeoutRef.current = window.setTimeout(() => setMessage(""), 2400);
   }, []);
 
@@ -20,8 +22,8 @@ export function FanToastProvider({ children }) {
       {children}
       <div
         aria-live="polite"
-        className={`fixed left-1/2 z-[60] max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full border border-atseen-line bg-[#161B24] px-5 py-3 text-center text-xs font-semibold text-atseen-text transition duration-200 ${
-          message ? "bottom-8 opacity-100" : "-bottom-12 opacity-0"
+        className={`pointer-events-none fixed left-1/2 z-[60] max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full border border-atseen-line bg-[#161B24] px-5 py-3 text-center text-xs font-semibold text-atseen-text transition duration-200 ${
+          placement === "profile" ? `profile-draft-saved-toast ${message ? "opacity-100" : "invisible opacity-0"}` : message ? "bottom-8 opacity-100" : "-bottom-12 opacity-0"
         }`}
         role="status"
       >

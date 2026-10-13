@@ -8,7 +8,7 @@ export default function PublicationCoverMedia({ alt = "", autoPlay = false, clas
   const src = resolveMediaUrl(media?.secureUrl || media?.url || "");
   if (!src) return null;
   if (isVideoCover(media)) {
-    return <video aria-label={alt || undefined} autoPlay={autoPlay} className={className} controls={controls} loop={loop} muted playsInline preload={preload} src={src} />;
+    return <video aria-label={alt || undefined} autoPlay={autoPlay} className={className} controls={controls} loop={loop} muted={autoPlay || !controls} playsInline preload={preload} src={src} />;
   }
   return <img alt={alt} className={className} loading={loading} src={src} />;
 }
