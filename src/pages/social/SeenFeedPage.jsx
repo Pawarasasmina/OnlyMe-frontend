@@ -116,6 +116,16 @@ function nextEngagementFromReaction(item, nextReaction) {
 function normalizeSeen(raw = {}) {
   const media = raw.coverMedia || {};
   const creator = raw.creator || {};
+  const mediaDescriptor = [media.mediaType, media.resourceType, media.type, media.mimeType, media.format, media.assetId, media.publicId]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const mediaUrl = String(media.secureUrl || media.url || media.playbackUrl || "");
+  const durationSeconds = Math.round(Number(media.durationSeconds ?? media.duration) || 0);
+  const videoCover = mediaDescriptor.includes("video")
+    || ["mp4", "webm", "mov", "m4v", "ogv"].some((format) => mediaDescriptor.split(/\s+/).includes(format))
+    || /\.(mp4|webm|mov|m4v|ogv)(?:$|[?#])/i.test(mediaUrl)
+    || durationSeconds > 0;
   return {
     id: String(raw.id || raw._id),
     title: raw.title || "Untitled Seen",
@@ -125,9 +135,9 @@ function normalizeSeen(raw = {}) {
     statusVersion: Number(raw.statusVersion ?? 0),
     isPinned: Boolean(raw.isPinned || raw.pinned || raw.profilePinned || raw.featured),
     media: {
-      type: String(media.mediaType || media.resourceType || "IMAGE").toLowerCase().includes("video") ? "video" : "image",
-      url: resolveMediaUrl(media.secureUrl || media.url || ""),
-      durationSeconds: media.duration ? Math.round(Number(media.duration)) : 0,
+      type: videoCover ? "video" : "image",
+      url: resolveMediaUrl(mediaUrl),
+      durationSeconds,
     },
     chapters: (raw.chapters || []).map((chapter, index) => ({
       id: chapter.stableChapterId || chapter.id || `${raw.id}-${index}`,
@@ -674,7 +684,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
   </div>;
 }
 
-function SeenFeedItem({ animateOnScroll = true, currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
+export function SeenFeedItem({ animateOnScroll = true, currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
   const item = normalizeSeen(rawItem);
   const reduceMotion = useReducedMotion();
   const target = `/seen/${encodeURIComponent(item.id)}`;
