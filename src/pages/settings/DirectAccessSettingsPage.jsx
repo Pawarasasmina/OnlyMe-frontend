@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DirectAccessSettingsSheet from "../../components/messages/DirectAccessSettingsSheet";
 import { useAuth } from "../../hooks/useAuth";
 import { messageService } from "../../services/messageService";
@@ -27,6 +27,7 @@ function normalizeSettings(data = {}) {
 
 export default function DirectAccessSettingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const creatorId = String(user?.id || user?._id || "");
@@ -43,7 +44,7 @@ export default function DirectAccessSettingsPage() {
     if (query.data) setSettings(normalizeSettings(query.data));
   }, [query.data]);
 
-  const close = () => navigate("/settings");
+  const close = () => navigate(location.state?.returnTo || "/settings", { state: { restoreScroll: true } });
   const save = async (nextSettings) => {
     setBusy(true);
     setError("");
