@@ -460,7 +460,7 @@ function VisitorProfileBar({ profile, relationship, viewerCapabilities }) {
   return (
     <header className="profile-prototype-topbar profile-visitor-topbar">
       <button aria-label="Go back" className="profile-visitor-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button>
-      <div><span className="profile-visitor-username">@{profile.username}</span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
+      <div><span className="profile-visitor-username"><b>@</b>{profile.username}</span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
     </header>
   );
 }
