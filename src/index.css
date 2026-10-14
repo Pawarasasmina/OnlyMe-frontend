@@ -28735,8 +28735,11 @@ video.seen-reader-media {
   bottom:0;
   left:var(--call-offer-center-x,50%);
   width:min(100vw,440px);
+  overflow-y:auto;
   transform:translateX(-50%);
+  scrollbar-width:none;
 }
+.call-offer-backdrop .call-offer-sheet::-webkit-scrollbar { display:none; }
 .direct-access-page-header {
   display:flex;
   height:68px;

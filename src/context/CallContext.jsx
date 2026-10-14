@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FiMic, FiMicOff, FiPhone, FiVideo, FiVideoOff, FiX } from "react-icons/fi";
+import { FiLock, FiMic, FiMicOff, FiPhone, FiVideo, FiVideoOff, FiX, FiZap } from "react-icons/fi";
 import FanAvatar from "../components/fanWeb/shared/FanAvatar";
 import { getMessageSocket } from "../services/messageSocket";
 import { callService } from "../services/callService";
 import { CallContext } from "./callContextBase";
 
-export function CallProvider({ children, user }) {
+export function CallProvider({ children }) {
   const [call, setCall] = useState(null);
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
+  const [callTopic, setCallTopic] = useState("");
+  const [priority, setPriority] = useState(false);
+  const [requestBusy, setRequestBusy] = useState(false);
   const [offerPosition, setOfferPosition] = useState({});
   const callRef = useRef(null);
   const peerRef = useRef(null);
@@ -44,7 +47,7 @@ export function CallProvider({ children, user }) {
 
   const closeCall = useCallback((finalState = null) => {
     stopMedia();
-    setMuted(false); setCameraOff(false); setElapsed(0);
+    setMuted(false); setCameraOff(false); setElapsed(0); setCallTopic(""); setPriority(false); setRequestBusy(false);
     if (finalState) {
       updateCall((current) => current ? { ...current, state: finalState } : null);
       window.setTimeout(() => { if (callRef.current?.state === finalState) updateCall(null); }, 1800);
@@ -95,7 +98,7 @@ export function CallProvider({ children, user }) {
     if (!socket) return undefined;
     const incoming = (payload) => {
       if (callRef.current) { socket.emit("call:decline", { callId: payload.callId }); return; }
-      updateCall({ id: payload.callId, type: payload.type, direction: "INCOMING", state: payload.requested ? "REQUESTED" : "RINGING", person: payload.caller, paid: Boolean(payload.paid), priceStars: payload.priceStars || 0, durationLimitSeconds: payload.durationLimitSeconds || 0, settlementStatus: payload.paid ? "HELD" : "FREE" });
+      updateCall({ id: payload.callId, type: payload.type, direction: "INCOMING", state: payload.requested ? "REQUESTED" : "RINGING", person: payload.caller, paid: Boolean(payload.paid), topic: payload.topic || "", priority: Boolean(payload.priority), priceStars: payload.priceStars || 0, durationLimitSeconds: payload.durationLimitSeconds || 0, settlementStatus: payload.paid ? "HELD" : "FREE" });
     };
     const accepted = async ({ callId, joinRequired }) => {
       if (callRef.current?.id !== callId) return;
@@ -158,10 +161,12 @@ export function CallProvider({ children, user }) {
   const startCall = useCallback(async (person, type = "AUDIO") => {
     if (!person?.id || callRef.current) return;
     setError("");
-    if (user?.role === "fan" && person.role === "creator") {
+    if (person.role === "creator") {
       try {
         const offer = await callService.getPaidOffer(person.id).then((response) => response.data.data);
         if (!offer.enabled) throw new Error("This creator is not accepting calls right now.");
+        setCallTopic("");
+        setPriority(false);
         updateCall({ id: null, type, direction: "OUTGOING", state: "OFFER", person, paid: true, ...offer });
       } catch (requestError) {
         setError(requestError.response?.data?.message || requestError.message || "Could not load this call offer.");
@@ -178,24 +183,29 @@ export function CallProvider({ children, user }) {
         updateCall((current) => current ? { ...current, id: response.call.callId, state: "RINGING" } : current);
       });
     } catch (requestError) { setError(requestError.name === "NotAllowedError" ? "Allow microphone and camera access to make calls." : requestError.message || "Could not access your microphone."); closeCall("FAILED"); }
-  }, [closeCall, ensureMedia, updateCall, user?.role]);
+  }, [closeCall, ensureMedia, updateCall]);
 
   const confirmPaidCall = async () => {
     const current = callRef.current;
-    if (!current?.paid || current.state !== "OFFER") return;
+    if (!current?.paid || current.state !== "OFFER" || requestBusy) return;
     setError("");
+    if (!callTopic.trim()) {
+      setError("Add one line about what you want to discuss.");
+      return;
+    }
+    setRequestBusy(true);
     try {
-      updateCall((value) => ({ ...value, state: "STARTING" }));
       const key = globalThis.crypto?.randomUUID?.() || `paid-call-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const result = await callService.requestPaidCall(current.person.id, current.type, key).then((response) => response.data.data);
-      updateCall((value) => ({ ...value, id: result.call.id, state: "STARTING", settlementStatus: result.call.settlementStatus, durationLimitSeconds: result.call.durationLimitSeconds }));
+      const result = await callService.requestPaidCall(current.person.id, current.type, key, callTopic.trim(), priority).then((response) => response.data.data);
+      updateCall((value) => ({ ...value, id: result.call.id, state: "REQUESTED", topic: callTopic.trim(), priority, priceStars: result.call.priceStars, settlementStatus: result.call.settlementStatus, durationLimitSeconds: result.call.durationLimitSeconds }));
       getMessageSocket()?.emit("call:start", { callId: result.call.id }, (response) => {
         if (!response?.ok) { getMessageSocket()?.emit("call:end", { callId: result.call.id, reason: "START_FAILED" }); setError(response?.message || "Could not start the paid call."); closeCall("FAILED"); return; }
-        updateCall((value) => value ? { ...value, state: "REQUESTED" } : value);
       });
     } catch (requestError) {
       setError(requestError.response?.data?.code === "INSUFFICIENT_STARS" ? "Not enough Stars. Add Stars in Wallet and try again." : requestError.response?.data?.message || requestError.message || "Could not request this call.");
       updateCall((value) => value ? { ...value, state: "OFFER" } : value);
+    } finally {
+      setRequestBusy(false);
     }
   };
 
@@ -232,6 +242,8 @@ export function CallProvider({ children, user }) {
   const final = ["ENDED", "DECLINED", "MISSED", "FAILED"].includes(call?.state);
   const shownSeconds = call?.paid && call?.durationLimitSeconds ? Math.max(0, call.durationLimitSeconds - elapsed) : elapsed;
   const time = `${String(Math.floor(shownSeconds / 60)).padStart(2, "0")}:${String(shownSeconds % 60).padStart(2, "0")}`;
+  const priorityPrice = Number(call?.priorityPriceStars || 200);
+  const totalPrice = Number(call?.priceStars || 0) + (priority ? priorityPrice : 0);
 
   useEffect(() => {
     if (call?.state !== "OFFER") {
@@ -263,8 +275,8 @@ export function CallProvider({ children, user }) {
       {call.type === "VIDEO" && localStreamRef.current ? <video autoPlay className="absolute right-4 top-4 z-10 h-36 w-24 rounded-2xl border border-white/20 bg-black object-cover shadow-2xl" muted playsInline ref={localVideoRef} /> : null}
       <div className={`relative z-10 flex w-full flex-col items-center text-center ${call.state === "OFFER" ? "call-offer-sheet max-h-[88vh] max-w-[440px] justify-start rounded-t-[24px] border border-b-0 border-[#26374a] bg-[#080b0f] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl" : "h-full max-w-md justify-between px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-16"}`}>
         {call.state === "OFFER" ? <div className="mb-4 h-1 w-8 rounded-full bg-white/30" /> : null}
-        {call.state === "OFFER" ? <div className="flex w-full items-center gap-3 pb-4 text-left"><FanAvatar name={call.person?.displayName || "Call"} size="h-10 w-10" src={call.person?.avatarUrl} /><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black">Call with {call.person?.displayName || "creator"}</h2><p className="mt-1 text-[11px] text-white/60">{call.durationMinutes} min · guaranteed or refunded</p></div><button aria-label="Close call offer" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/60 hover:bg-white/5 hover:text-white" onClick={() => closeCall()} type="button"><FiX /></button></div> : <div><FanAvatar name={call.person?.displayName || "Call"} size="h-24 w-24" src={call.person?.avatarUrl} /><h2 className="mt-5 text-2xl font-black">{call.person?.displayName || "Call"}</h2><p className="mt-2 text-sm text-white/65">{final ? call.state === "DECLINED" ? "Call declined" : call.state === "MISSED" ? "No answer · Stars refunded" : call.state === "FAILED" ? "Call failed" : "Call ended" : call.state === "ACTIVE" ? time : call.state === "REQUESTED" ? call.direction === "INCOMING" ? `Paid call request · ✦${call.priceStars}` : "Call requested · waiting for creator" : call.state === "JOIN_READY" ? `${call.person?.displayName?.split(" ")[0] || "Creator"} accepted your call` : call.state === "WAITING_FOR_JOIN" ? "Accepted · waiting for fan to join" : call.direction === "INCOMING" && call.state === "RINGING" ? `Incoming ${call.paid ? `paid call · ✦${call.priceStars}` : call.type.toLowerCase() + " call"}` : call.state === "CONNECTING" ? "Connecting…" : "Ringing…"}</p>{call.paid ? <p className="mt-2 text-[11px] font-bold text-[#9CCBFF]">✦{call.priceStars} · {call.settlementStatus === "HELD" ? "held until connected" : call.settlementStatus === "CAPTURED" ? "call delivered" : call.settlementStatus === "REFUNDED" ? "refunded" : ""}</p> : null}{error ? <p className="mt-3 text-xs text-red-300">{error}</p> : null}</div>}
-        {!final ? call.state === "OFFER" ? <div className="w-full border-t border-white/10 pt-4"><div className="mb-3 rounded-2xl bg-white/[0.055] p-4 text-left"><div className="flex justify-between text-sm"><span className="text-white/60">Price</span><b>✦{call.priceStars}</b></div><div className="mt-2 flex justify-between text-sm"><span className="text-white/60">Your balance</span><b>✦{call.walletBalance}</b></div><p className="mt-4 text-[10px] leading-4 text-white/50">Stars are held when you request. The creator earns after both sides connect; otherwise you are refunded.</p></div><button className="w-full rounded-2xl bg-[#84b6fb] py-3.5 text-sm font-black text-[#080b0f] disabled:opacity-40" disabled={Number(call.walletBalance) < Number(call.priceStars)} onClick={confirmPaidCall} type="button">Request call · ✦{call.priceStars}</button></div> : call.state === "JOIN_READY" ? <div className="w-full"><p className="mb-4 text-sm text-white/65">{Math.round((call.durationLimitSeconds || 0) / 60)} min · guaranteed or refunded</p><button className="w-full rounded-full bg-[#9CCBFF] py-3 text-sm font-black text-[#0A0C0F]" onClick={joinPaidCall} type="button">Join the call</button></div> : <div className="flex items-center gap-5">{call.direction === "INCOMING" && ["REQUESTED", "RINGING"].includes(call.state) ? <><button aria-label="Decline call" className="grid h-16 w-16 place-items-center rounded-full bg-red-500 text-2xl shadow-xl" onClick={declineCall} type="button"><FiPhone className="rotate-[135deg]" /></button><button aria-label="Accept call" className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500 text-2xl shadow-xl" onClick={acceptCall} type="button"><FiPhone /></button></> : call.state === "REQUESTED" ? <button className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white/65" onClick={declineCall} type="button">Cancel request</button> : <><button aria-label={muted ? "Unmute" : "Mute"} className={`grid h-[52px] w-[52px] place-items-center rounded-full text-xl ${muted ? "bg-white text-black" : "bg-white/15"}`} onClick={toggleMute} type="button">{muted ? <FiMicOff /> : <FiMic />}</button>{call.type === "VIDEO" ? <button aria-label={cameraOff ? "Turn camera on" : "Turn camera off"} className={`grid h-[52px] w-[52px] place-items-center rounded-full text-xl ${cameraOff ? "bg-white text-black" : "bg-white/15"}`} onClick={toggleCamera} type="button">{cameraOff ? <FiVideoOff /> : <FiVideo />}</button> : null}<button aria-label="End call" className="grid h-16 w-16 place-items-center rounded-full bg-red-500 text-2xl shadow-xl" onClick={endCall} type="button"><FiPhone className="rotate-[135deg]" /></button></>}</div> : <div />}
+        {call.state === "OFFER" ? <div className="relative w-full"><button aria-label="Close call offer" className="absolute right-0 top-0 grid h-9 w-9 place-items-center rounded-full text-white/50 hover:bg-white/5 hover:text-white" disabled={requestBusy} onClick={() => closeCall()} type="button"><FiX /></button><FanAvatar name={call.person?.displayName || "Call"} size="h-16 w-16" src={call.person?.avatarUrl} /><h2 className="mt-5 text-lg font-black">Call with {call.person?.displayName?.split(" ")[0] || "creator"}</h2><p className="mt-1 text-xs text-[#c7e2ff]">A real voice, one-on-one — just you and {call.person?.displayName?.split(" ")[0] || "them"}.</p><p className="mt-5 text-xl font-black">🪙 {call.priceStars} <span className="text-[11px] font-medium text-white/40">· {call.durationMinutes} min</span></p></div> : <div><FanAvatar name={call.person?.displayName || "Call"} size="h-24 w-24" src={call.person?.avatarUrl} /><h2 className="mt-5 text-2xl font-black">{call.person?.displayName || "Call"}</h2><p className="mt-2 text-sm text-white/65">{final ? call.state === "DECLINED" ? "Call declined" : call.state === "MISSED" ? "No answer · Stars refunded" : call.state === "FAILED" ? "Call failed" : "Call ended" : call.state === "ACTIVE" ? time : call.state === "REQUESTED" ? call.direction === "INCOMING" ? `Paid call request · ✦${call.priceStars}` : "Call requested · waiting for creator" : call.state === "JOIN_READY" ? `${call.person?.displayName?.split(" ")[0] || "Creator"} accepted your call` : call.state === "WAITING_FOR_JOIN" ? "Accepted · waiting for fan to join" : call.direction === "INCOMING" && call.state === "RINGING" ? `Incoming ${call.paid ? `paid call · ✦${call.priceStars}` : call.type.toLowerCase() + " call"}` : call.state === "CONNECTING" ? "Connecting…" : "Ringing…"}</p>{call.topic ? <p className="mx-auto mt-3 max-w-xs text-xs italic text-white/55">“{call.topic}”</p> : null}{call.priority ? <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-[#9CCBFF]">Priority request</p> : null}{call.paid ? <p className="mt-2 text-[11px] font-bold text-[#9CCBFF]">✦{call.priceStars} · {call.settlementStatus === "HELD" ? "held until connected" : call.settlementStatus === "CAPTURED" ? "call delivered" : call.settlementStatus === "REFUNDED" ? "refunded" : ""}</p> : null}{error ? <p className="mt-3 text-xs text-red-300">{error}</p> : null}</div>}
+        {!final ? call.state === "OFFER" ? <div className="mt-5 w-full text-left"><label className="text-[10px] font-black uppercase tracking-[.18em] text-white/45" htmlFor="paid-call-topic">What is the call about?</label><input autoFocus className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-white/[0.025] px-4 text-sm outline-none placeholder:text-white/35 focus:border-[#9CCBFF]/60" disabled={requestBusy} id="paid-call-topic" maxLength={160} onChange={(event) => { setCallTopic(event.target.value); if (error) setError(""); }} placeholder={`One line — ${call.person?.displayName?.split(" ")[0] || "the creator"} reads it and decides`} value={callTopic} /><button aria-pressed={priority} className={`mt-3 flex w-full items-center gap-3 rounded-xl border p-3 text-left ${priority ? "border-[#9CCBFF]/60 bg-[#9CCBFF]/10" : "border-white/10 bg-white/[0.035]"}`} disabled={requestBusy} onClick={() => setPriority((value) => !value)} type="button"><FiZap className="text-[#9CCBFF]" /><span className="min-w-0 flex-1"><b className="block text-sm">Priority · +✦{priorityPrice}</b><small className="block text-[9px] text-white/40">your request is first in {call.person?.displayName?.split(" ")[0] || "the creator"}’s queue</small></span><span className={`relative h-6 w-10 rounded-full ${priority ? "bg-[#8fc5ff]" : "bg-white/15"}`}><i className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${priority ? "left-5" : "left-1"}`} /></span></button><p className="mt-3 text-[9px] leading-4 text-white/40">{call.person?.displayName?.split(" ")[0] || "The creator"} reads your topic and decides. Stars are held now and only paid when both sides connect. No answer in 48h — everything comes back.</p><div className="mt-3 flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.035] p-3 text-[9px] leading-4 text-white/60"><FiLock className="mt-0.5 shrink-0 text-emerald-400" /><span>The call happens inside @seen. Numbers and contacts are never shared. Once connected, the reserved time is paid.</span></div>{error ? <p className="mt-3 text-center text-xs text-red-300">{error}</p> : null}<button className="mt-3 w-full rounded-xl bg-[#84b6fb] py-3.5 text-sm font-black text-[#080b0f] shadow-[0_8px_24px_rgba(132,182,251,.2)] disabled:opacity-40" disabled={requestBusy || !callTopic.trim() || Number(call.walletBalance) < totalPrice} onClick={confirmPaidCall} type="button">{requestBusy ? "Requesting…" : `Request the call · 🪙${totalPrice}`}</button>{Number(call.walletBalance) < totalPrice ? <p className="mt-2 text-center text-[10px] text-red-300">Not enough Stars · balance {call.walletBalance}</p> : <p className="mt-2 text-center text-[9px] text-white/30">reminder before the call · time within 48h</p>}</div> : call.state === "JOIN_READY" ? <div className="w-full"><p className="mb-4 text-sm text-white/65">{Math.round((call.durationLimitSeconds || 0) / 60)} min · guaranteed or refunded</p><button className="w-full rounded-full bg-[#9CCBFF] py-3 text-sm font-black text-[#0A0C0F]" onClick={joinPaidCall} type="button">Join the call</button></div> : <div className="flex items-center gap-5">{call.direction === "INCOMING" && ["REQUESTED", "RINGING"].includes(call.state) ? <><button aria-label="Decline call" className="grid h-16 w-16 place-items-center rounded-full bg-red-500 text-2xl shadow-xl" onClick={declineCall} type="button"><FiPhone className="rotate-[135deg]" /></button><button aria-label="Accept call" className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500 text-2xl shadow-xl" onClick={acceptCall} type="button"><FiPhone /></button></> : call.state === "REQUESTED" ? <button className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white/65" onClick={declineCall} type="button">Cancel request</button> : <><button aria-label={muted ? "Unmute" : "Mute"} className={`grid h-[52px] w-[52px] place-items-center rounded-full text-xl ${muted ? "bg-white text-black" : "bg-white/15"}`} onClick={toggleMute} type="button">{muted ? <FiMicOff /> : <FiMic />}</button>{call.type === "VIDEO" ? <button aria-label={cameraOff ? "Turn camera on" : "Turn camera off"} className={`grid h-[52px] w-[52px] place-items-center rounded-full text-xl ${cameraOff ? "bg-white text-black" : "bg-white/15"}`} onClick={toggleCamera} type="button">{cameraOff ? <FiVideoOff /> : <FiVideo />}</button> : null}<button aria-label="End call" className="grid h-16 w-16 place-items-center rounded-full bg-red-500 text-2xl shadow-xl" onClick={endCall} type="button"><FiPhone className="rotate-[135deg]" /></button></>}</div> : <div />}
       </div>
     </div>, document.body)}
   </CallContext.Provider>;
