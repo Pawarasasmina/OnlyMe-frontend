@@ -12,7 +12,7 @@ const definitions = {
   verification: ["Verification", "/creator/verification", FiCheckCircle],
   settings: ["Settings", "/settings", FiSettings],
   security: ["Password & security", "/settings/security", FiLock],
-  direct: ["Direct Access", "/messages?tab=direct", FiMessageCircle],
+  direct: ["Direct Access", "/settings/direct-access", FiMessageCircle],
   public: ["View public profile", null, FiCheckCircle],
 };
 

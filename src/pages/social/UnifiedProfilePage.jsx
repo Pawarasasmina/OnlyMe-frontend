@@ -585,7 +585,9 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
     profile.directAccess?.callEnabled ? `Calls ${String.fromCharCode(10022)}${profile.directAccess.callPriceStars} / ${profile.directAccess.callDurationMinutes} min` : "",
     "chats & requests",
   ].filter(Boolean).join(" - ");
-  const open = () => viewerCapabilities.isOwner ? navigate("/messages?tab=direct") : setOfferOpen(true);
+  const open = () => viewerCapabilities.isOwner
+    ? navigate("/settings/direct-access", { state: { returnTo: "/profile" } })
+    : setOfferOpen(true);
   return (
     <>
       <button className="profile-row profile-direct-row" onClick={open} type="button">
@@ -594,7 +596,7 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
           <b>Direct Access {waiting ? <i> - {waiting} waiting</i> : null}</b>
           <small>{meta}</small>
         </span>
-        {viewerCapabilities.isOwner ? <Link aria-label="Direct Access settings" onClick={(event) => event.stopPropagation()} to="/messages?tab=direct"><FiSettings /></Link> : null}
+        {viewerCapabilities.isOwner ? <Link aria-label="Direct Access settings" onClick={(event) => event.stopPropagation()} state={{ returnTo: "/profile" }} to="/settings/direct-access"><FiSettings /></Link> : null}
         <FiChevronRight />
       </button>
       {offerOpen ? <DirectAccessOfferModal onClose={() => setOfferOpen(false)} profile={profile} /> : null}

@@ -17,6 +17,116 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Seen chapter reader: compact editorial prototype. */
+.seen-reader-page {
+  width: min(440px,100vw);
+  padding: 34px 27px 28px;
+  background: linear-gradient(180deg,#111722 0%,#0b1018 100%);
+}
+
+.seen-reader-header {
+  grid-template-columns: auto minmax(0,1fr) 30px;
+  gap: 10px;
+  align-items: start;
+}
+
+.seen-reader-brand-pill {
+  min-width: 51px;
+  height: 23px;
+  margin-top: 2px;
+  border: 1px solid rgba(156,203,255,.42);
+  border-radius: 999px;
+  background: rgba(156,203,255,.1);
+  color: #c5e1ff;
+  padding: 0 11px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .16em;
+}
+
+.seen-reader-titleblock h1 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+}
+
+.seen-reader-titleblock span {
+  margin-top: 2px;
+  color: rgba(255,255,255,.48);
+  font-size: 9px;
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.seen-reader-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: rgba(255,255,255,.82);
+}
+
+.seen-reader-close svg { width: 19px; height: 19px; }
+
+.seen-reader-chapter-heading { margin-top: 48px; }
+.seen-reader-chapter-heading > span {
+  display: block;
+  color: rgba(156,203,255,.72);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+.seen-reader-chapter-heading h2 {
+  margin-top: 12px;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 850;
+  letter-spacing: -.035em;
+  line-height: 1.1;
+}
+.seen-reader-chapter-heading i {
+  display: block;
+  width: 34px;
+  height: 3px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: #9ccbff;
+}
+
+.seen-reader-content { margin-top: 18px; gap: 18px; }
+.seen-reader-paragraph,
+.seen-reader-keypoint p {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.78;
+}
+.seen-reader-media,
+.seen-reader-media-fallback { max-height: 270px; border-radius: 13px; }
+.seen-reader-image-frame,
+.world-chapter-reader-image-frame { border-radius: 13px; }
+
+.seen-reader-footer { margin-top: auto; padding-top: 30px; }
+.seen-reader-progress-wrap { margin-bottom: 10px; }
+.seen-reader-progress { margin-top: 0; gap: 0; }
+.seen-reader-progress button { height: 2px; border-radius: 0; }
+.seen-reader-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: rgba(255,255,255,.4);
+  font-size: 9px;
+}
+.seen-reader-progress-meta button { color: rgba(255,255,255,.62); }
+
+@media (max-width: 480px) {
+  .seen-reader-page { padding: 26px 20px 24px; }
+  .seen-reader-chapter-heading { margin-top: 36px; }
+  .seen-reader-chapter-heading h2 { font-size: 23px; }
+}
+
 .seen-owner-options-layer .seen-feed-options-scrim,
 .seen-feed-options-layer .seen-feed-options-scrim {
   background: rgba(0, 0, 0, .72);
@@ -38178,3 +38288,27 @@ video.seen-reader-media {
     font-size: 16px !important;
   }
 }
+
+/* Final Seen reader prototype overrides: kept last to win over legacy reader rules. */
+.seen-reader-page { width: min(440px,100vw); padding: 34px 27px 28px; background: linear-gradient(180deg,#111722 0%,#0b1018 100%); }
+.seen-reader-header { grid-template-columns: auto minmax(0,1fr) 30px; gap: 10px; align-items: start; }
+.seen-reader-brand-pill { min-width: 51px; height: 23px; margin-top: 2px; border: 1px solid rgba(156,203,255,.42); border-radius: 999px; background: rgba(156,203,255,.1); color: #c5e1ff; padding: 0 11px; font-size: 9px; font-weight: 850; letter-spacing: .16em; }
+.seen-reader-titleblock h1 { margin: 0; color: #fff; font-size: 13px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
+.seen-reader-titleblock span { margin-top: 2px; color: rgba(255,255,255,.48); font-size: 9px; font-weight: 550; letter-spacing: 0; text-transform: none; }
+.seen-reader-close { display: grid; width: 30px; height: 30px; place-items: center; color: rgba(255,255,255,.82); }
+.seen-reader-close svg { width: 19px; height: 19px; }
+.seen-reader-chapter-heading { margin-top: 48px; }
+.seen-reader-chapter-heading > span { display: block; color: rgba(156,203,255,.72); font-size: 13px; font-weight: 850; letter-spacing: .08em; }
+.seen-reader-chapter-heading h2 { margin-top: 12px; color: #fff; font-size: 24px; font-weight: 850; letter-spacing: -.035em; line-height: 1.1; }
+.seen-reader-chapter-heading i { display: block; width: 34px; height: 3px; margin-top: 16px; border-radius: 999px; background: #9ccbff; }
+.seen-reader-content { margin-top: 18px; gap: 18px; }
+.seen-reader-paragraph,.seen-reader-keypoint p { font-size: 14px; font-weight: 600; line-height: 1.78; }
+.seen-reader-media,.seen-reader-media-fallback { max-height: 270px; border-radius: 13px; }
+.seen-reader-image-frame,.world-chapter-reader-image-frame { border-radius: 13px; }
+.seen-reader-footer { margin-top: auto; padding-top: 30px; }
+.seen-reader-progress-wrap { margin-bottom: 10px; }
+.seen-reader-progress { margin-top: 0; gap: 0; }
+.seen-reader-progress button { height: 2px; border-radius: 0; }
+.seen-reader-progress-meta { display: flex; justify-content: space-between; margin-top: 8px; color: rgba(255,255,255,.4); font-size: 9px; }
+.seen-reader-progress-meta button { color: rgba(255,255,255,.62); }
+@media (max-width: 480px) { .seen-reader-page { padding: 26px 20px 24px; } .seen-reader-chapter-heading { margin-top: 36px; } .seen-reader-chapter-heading h2 { font-size: 23px; } }

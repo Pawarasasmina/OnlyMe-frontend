@@ -1285,16 +1285,18 @@ export default function SeenReaderPage() {
 
   return <section className="seen-reader-page" ref={readerTopRef}>
     <header className="seen-reader-header">
-      <button aria-label="Back to Seen overview" className="seen-reader-circle" onClick={() => navigate(`/seen/${id}`, { replace: true })} type="button"><FiArrowLeft /></button>
+      <button aria-label="Back to Seen overview" className="seen-reader-brand-pill" onClick={() => navigate(`/seen/${id}`, { replace: true })} type="button">SEEN</button>
       <div className="seen-reader-titleblock">
-        <span>Chapter {safeChapterIndex + 1} of {chapters.length || 1} {"\u00b7"} {publication.title}</span>
-        <h1>{chapter?.title || publication.title}</h1>
+        <h1>{publication.title}</h1>
+        <span>{[publication.category, `${chapters.length || 1} ${chapters.length === 1 ? "chapter" : "chapters"}`, `~${Math.max(1, chapters.length)} min`, `${safeChapterIndex + 1}/${chapters.length || 1}`].filter(Boolean).join(" · ")}</span>
       </div>
-      <button aria-label="Close Seen reader" className="seen-reader-circle" onClick={() => navigate("/seen")} type="button"><FiX /></button>
+      <button aria-label="Close Seen reader" className="seen-reader-close" onClick={() => navigate("/seen")} type="button"><FiX /></button>
     </header>
 
-    <div className="seen-reader-progress" aria-label="Chapter progress">
-      {(chapters.length ? chapters : [chapter]).map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index <= safeChapterIndex ? "is-active" : ""} key={item?.stableChapterId || index} onClick={() => changeChapter(index)} type="button" />)}
+    <div className="seen-reader-chapter-heading">
+      <span>{String(safeChapterIndex + 1).padStart(2, "0")}</span>
+      <h2>{chapter?.title || publication.title}</h2>
+      <i aria-hidden="true" />
     </div>
 
     <article className="seen-reader-content" onClick={handleReaderClick}>
@@ -1314,6 +1316,12 @@ export default function SeenReaderPage() {
         <span><small>Up next from {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || "Next Seen"}</strong><em>{nextSeen.chapters?.length || 0} chapters</em></span>
         <FiChevronRight aria-hidden="true" />
       </button> : null}
+      <div className="seen-reader-progress-wrap">
+        <div className="seen-reader-progress" aria-label="Chapter progress">
+          {(chapters.length ? chapters : [chapter]).map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index <= safeChapterIndex ? "is-active" : ""} key={item?.stableChapterId || index} onClick={() => changeChapter(index)} type="button" />)}
+        </div>
+        <div className="seen-reader-progress-meta"><span>Chapter {safeChapterIndex + 1} of {chapters.length || 1}</span><button onClick={continueReader} type="button">{safeChapterIndex < chapters.length - 1 ? "Tap to continue ›" : "Complete"}</button></div>
+      </div>
       <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
       {notice ? <p className="seen-reader-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
     </footer>
