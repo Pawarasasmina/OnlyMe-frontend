@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FiLock, FiMic, FiMicOff, FiPhone, FiVideo, FiVideoOff, FiX, FiZap } from "react-icons/fi";
+import { FiClock, FiLock, FiMic, FiMicOff, FiPhone, FiVideo, FiVideoOff, FiX, FiZap } from "react-icons/fi";
 import FanAvatar from "../components/fanWeb/shared/FanAvatar";
 import { getMessageSocket } from "../services/messageSocket";
 import { callService } from "../services/callService";
@@ -15,6 +15,9 @@ export function CallProvider({ children }) {
   const [callTopic, setCallTopic] = useState("");
   const [priority, setPriority] = useState(false);
   const [requestBusy, setRequestBusy] = useState(false);
+  const [callReminder, setCallReminder] = useState(null);
+  const [reminderPosition, setReminderPosition] = useState({});
+  const dismissedReminderIdsRef = useRef(new Set());
   const [offerPosition, setOfferPosition] = useState({});
   const callRef = useRef(null);
   const peerRef = useRef(null);
@@ -94,12 +97,61 @@ export function CallProvider({ children }) {
   }, [stopMedia]);
 
   useEffect(() => {
+    let active = true;
+    const syncScheduledReminder = async () => {
+      try {
+        const calls = await callService.getHistory().then((response) => response.data.data.calls || []);
+        const currentCall = callRef.current;
+        const waitingForScheduledCall = currentCall?.direction === "OUTGOING" && currentCall?.state === "REQUESTED";
+        if (!active || (currentCall && !waitingForScheduledCall)) return;
+        const now = Date.now();
+        const due = calls.find((item) => item.paid && item.scheduledFor && !item.endedAt && new Date(item.scheduledFor).getTime() > now && new Date(item.scheduledFor).getTime() <= now + (10 * 60 * 1000) && !dismissedReminderIdsRef.current.has(item.id));
+        if (!due) return;
+        const person = due.direction === "OUTGOING" ? due.recipient : due.caller;
+        setCallReminder({ callId: due.id, scheduledFor: due.scheduledFor, person });
+      } catch {
+        // The socket reminder remains the primary path; polling retries quietly.
+      }
+    };
+    syncScheduledReminder();
+    const interval = window.setInterval(syncScheduledReminder, 30000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, []);
+
+  useEffect(() => {
+    if (!callReminder) { setReminderPosition({}); return undefined; }
+    const centerColumn = document.querySelector(".social-center-scroll");
+    const updatePosition = () => {
+      if (!centerColumn) return setReminderPosition({});
+      const bounds = centerColumn.getBoundingClientRect();
+      setReminderPosition({ "--call-reminder-center-x": `${bounds.left + (bounds.width / 2)}px` });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    const observer = typeof ResizeObserver === "undefined" || !centerColumn ? null : new ResizeObserver(updatePosition);
+    observer?.observe(centerColumn);
+    return () => { window.removeEventListener("resize", updatePosition); observer?.disconnect(); };
+  }, [callReminder]);
+
+  const dismissReminder = () => {
+    if (callReminder?.callId) dismissedReminderIdsRef.current.add(callReminder.callId);
+    setCallReminder(null);
+  };
+
+  useEffect(() => {
     const socket = getMessageSocket();
     if (!socket) return undefined;
     const incoming = (payload) => {
+      setCallReminder(null);
       if (callRef.current) { socket.emit("call:decline", { callId: payload.callId }); return; }
       updateCall({ id: payload.callId, type: payload.type, direction: "INCOMING", state: payload.requested ? "REQUESTED" : "RINGING", person: payload.caller, paid: Boolean(payload.paid), topic: payload.topic || "", priority: Boolean(payload.priority), priceStars: payload.priceStars || 0, durationLimitSeconds: payload.durationLimitSeconds || 0, settlementStatus: payload.paid ? "HELD" : "FREE" });
     };
+    const scheduledOutgoing = (payload) => {
+      setCallReminder(null);
+      if (callRef.current) return;
+      updateCall({ id: payload.callId, type: payload.type, direction: "OUTGOING", state: "REQUESTED", person: payload.person, paid: true, topic: payload.topic || "", priority: Boolean(payload.priority), priceStars: payload.priceStars || 0, durationLimitSeconds: payload.durationLimitSeconds || 0, settlementStatus: "HELD" });
+    };
+    const reminder = (payload) => setCallReminder(payload);
     const accepted = async ({ callId, joinRequired }) => {
       if (callRef.current?.id !== callId) return;
       if (joinRequired) { updateCall((current) => current ? { ...current, state: "JOIN_READY" } : current); return; }
@@ -141,8 +193,8 @@ export function CallProvider({ children }) {
       if (payload.settlementStatus === "REFUNDED" && ["JOIN_READY", "WAITING_FOR_JOIN"].includes(callRef.current.state)) { closeCall("MISSED"); return; }
       updateCall((current) => current ? { ...current, settlementStatus: payload.settlementStatus } : current);
     };
-    socket.on("call:incoming", incoming); socket.on("call:accepted", accepted); socket.on("call:join-ready", joinReady); socket.on("call:signal", signal); socket.on("call:ended", ended); socket.on("call:settlement", settlement);
-    return () => { socket.off("call:incoming", incoming); socket.off("call:accepted", accepted); socket.off("call:join-ready", joinReady); socket.off("call:signal", signal); socket.off("call:ended", ended); socket.off("call:settlement", settlement); };
+    socket.on("call:incoming", incoming); socket.on("call:scheduled-outgoing", scheduledOutgoing); socket.on("call:reminder", reminder); socket.on("call:accepted", accepted); socket.on("call:join-ready", joinReady); socket.on("call:signal", signal); socket.on("call:ended", ended); socket.on("call:settlement", settlement);
+    return () => { socket.off("call:incoming", incoming); socket.off("call:scheduled-outgoing", scheduledOutgoing); socket.off("call:reminder", reminder); socket.off("call:accepted", accepted); socket.off("call:join-ready", joinReady); socket.off("call:signal", signal); socket.off("call:ended", ended); socket.off("call:settlement", settlement); };
   }, [closeCall, createPeer, updateCall]);
 
   useEffect(() => {
@@ -161,33 +213,22 @@ export function CallProvider({ children }) {
   const startCall = useCallback(async (person, type = "AUDIO") => {
     if (!person?.id || callRef.current) return;
     setError("");
-    if (person.role === "creator") {
-      try {
-        const offer = await callService.getPaidOffer(person.id).then((response) => response.data.data);
-        if (!offer.enabled) throw new Error("This creator is not accepting calls right now.");
-        setCallTopic("");
-        setPriority(false);
-        updateCall({ id: null, type, direction: "OUTGOING", state: "OFFER", person, paid: true, ...offer });
-      } catch (requestError) {
-        setError(requestError.response?.data?.message || requestError.message || "Could not load this call offer.");
-        updateCall({ id: null, type, direction: "OUTGOING", state: "FAILED", person });
-      }
-      return;
-    }
+    setCallTopic("");
+    setPriority(false);
+    updateCall({ id: null, type, direction: "OUTGOING", state: "OFFER", person, paid: false, offerLoading: true, priceStars: 0, priorityPriceStars: 200, durationMinutes: 0, walletBalance: 0 });
     try {
-      await ensureMedia(type);
-      updateCall({ id: null, type, direction: "OUTGOING", state: "STARTING", person });
-      const socket = getMessageSocket();
-      socket.emit("call:start", { recipientId: person.id, type }, (response) => {
-        if (!response?.ok) { setError(response?.message || "Could not start call."); closeCall("FAILED"); return; }
-        updateCall((current) => current ? { ...current, id: response.call.callId, state: "RINGING" } : current);
-      });
-    } catch (requestError) { setError(requestError.name === "NotAllowedError" ? "Allow microphone and camera access to make calls." : requestError.message || "Could not access your microphone."); closeCall("FAILED"); }
-  }, [closeCall, ensureMedia, updateCall]);
+      const offer = await callService.getPaidOffer(person.id).then((response) => response.data.data);
+      if (!offer.enabled) throw new Error("This creator is not accepting calls right now.");
+      updateCall((current) => current ? { ...current, paid: true, offerLoading: false, ...offer } : current);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || requestError.message || "Could not load this call offer.");
+      updateCall((current) => current ? { ...current, offerLoading: false, offerUnavailable: true } : current);
+    }
+  }, [updateCall]);
 
   const confirmPaidCall = async () => {
     const current = callRef.current;
-    if (!current?.paid || current.state !== "OFFER" || requestBusy) return;
+    if (!current?.paid || current.offerLoading || current.offerUnavailable || current.state !== "OFFER" || requestBusy) return;
     setError("");
     if (!callTopic.trim()) {
       setError("Add one line about what you want to discuss.");
@@ -198,9 +239,6 @@ export function CallProvider({ children }) {
       const key = globalThis.crypto?.randomUUID?.() || `paid-call-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const result = await callService.requestPaidCall(current.person.id, current.type, key, callTopic.trim(), priority).then((response) => response.data.data);
       updateCall((value) => ({ ...value, id: result.call.id, state: "REQUESTED", topic: callTopic.trim(), priority, priceStars: result.call.priceStars, settlementStatus: result.call.settlementStatus, durationLimitSeconds: result.call.durationLimitSeconds }));
-      getMessageSocket()?.emit("call:start", { callId: result.call.id }, (response) => {
-        if (!response?.ok) { getMessageSocket()?.emit("call:end", { callId: result.call.id, reason: "START_FAILED" }); setError(response?.message || "Could not start the paid call."); closeCall("FAILED"); return; }
-      });
     } catch (requestError) {
       setError(requestError.response?.data?.code === "INSUFFICIENT_STARS" ? "Not enough Stars. Add Stars in Wallet and try again." : requestError.response?.data?.message || requestError.message || "Could not request this call.");
       updateCall((value) => value ? { ...value, state: "OFFER" } : value);
@@ -244,6 +282,7 @@ export function CallProvider({ children }) {
   const time = `${String(Math.floor(shownSeconds / 60)).padStart(2, "0")}:${String(shownSeconds % 60).padStart(2, "0")}`;
   const priorityPrice = Number(call?.priorityPriceStars || 200);
   const totalPrice = Number(call?.priceStars || 0) + (priority ? priorityPrice : 0);
+  const canShowReminder = !call || (call.direction === "OUTGOING" && call.state === "REQUESTED");
 
   useEffect(() => {
     if (call?.state !== "OFFER") {
@@ -268,6 +307,17 @@ export function CallProvider({ children }) {
 
   return <CallContext.Provider value={{ activeCall: call, startCall }}>
     {children}
+    {callReminder && canShowReminder ? createPortal(<div className="call-reminder-backdrop fixed inset-0 z-[9998] bg-black/70 backdrop-blur-[3px]" role="presentation" style={reminderPosition}>
+      <section aria-labelledby="call-reminder-title" aria-modal="true" className="call-reminder-sheet fixed top-1/2 w-[calc(100vw-2rem)] max-w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] border border-[#2c745b] bg-[#111923] px-6 pb-6 pt-7 text-center text-white shadow-[0_22px_80px_rgba(0,0,0,.65)]" role="dialog">
+        <button aria-label="Close call reminder" className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full text-white/45 hover:bg-white/5 hover:text-white" onClick={dismissReminder} type="button"><FiX /></button>
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#193b39] text-[24px] text-[#59d89b]"><FiClock /></span>
+        <p className="mt-5 text-[10px] font-black uppercase tracking-[.18em] text-[#59d89b]">Call reminder</p>
+        <h2 className="mt-2 text-xl font-black" id="call-reminder-title">Call with {callReminder.person?.displayName || "your contact"} in 10 minutes</h2>
+        <p className="mt-2 text-xs text-[#7898bd]">{new Date(callReminder.scheduledFor).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Open @seen and be ready to connect.</p>
+        <div className="mt-5 rounded-xl border border-[#2c745b]/60 bg-[#193b39]/35 px-4 py-3 text-[10px] leading-4 text-[#9ab5c5]">Both of you will receive the call prompt automatically at the confirmed time.</div>
+        <button className="mt-5 w-full rounded-xl bg-[#8fc5ff] py-3 text-sm font-black text-[#07101a]" onClick={dismissReminder} type="button">Got it</button>
+      </section>
+    </div>, document.body) : null}
     {call && !(call.direction === "OUTGOING" && call.state === "REQUESTED") && createPortal(<div className={`fixed inset-0 z-[9999] flex text-white ${call.state === "OFFER" ? "call-offer-backdrop items-end justify-center bg-black/70 backdrop-blur-[2px]" : "items-center justify-center bg-[#06080c]"}`} style={call.state === "OFFER" ? offerPosition : undefined}>
       {call.type === "VIDEO" && !final ? <video autoPlay className="absolute inset-0 h-full w-full object-cover" playsInline ref={remoteVideoRef} /> : null}
       <audio autoPlay ref={remoteAudioRef} />

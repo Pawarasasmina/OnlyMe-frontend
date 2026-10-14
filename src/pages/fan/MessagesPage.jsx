@@ -19,6 +19,7 @@ import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { useCalls } from "../../context/callContextBase";
 import { UNREAD_MESSAGE_COUNT_EVENT } from "../../hooks/useUnreadMessageCount";
 import { messageService } from "../../services/messageService";
+import { callService } from "../../services/callService";
 import { postService } from "../../services/postService";
 import { getMessageSocket } from "../../services/messageSocket";
 import { storyService } from "../../services/storyService";
@@ -31,6 +32,19 @@ const relative = (value) => {
   if (seconds < 3600) return `Last seen ${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `Last seen ${Math.floor(seconds / 3600)}h ago`;
   return `Last seen ${new Date(value).toLocaleDateString()}`;
+};
+
+const callScheduleLabel = (value) => {
+  if (!value) return "Confirmed";
+  const date = new Date(value);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isSameDate = (left, right) => left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (isSameDate(date, today)) return `today ${time}`;
+  if (isSameDate(date, tomorrow)) return `tomorrow ${time}`;
+  return date.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 };
 
 const inboxTime = (value) => {
@@ -363,6 +377,8 @@ export default function MessagesPage() {
   const [reportReason, setReportReason] = useState("SPAM");
   const [reportDetails, setReportDetails] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
+  const [callScheduleDrafts, setCallScheduleDrafts] = useState({});
+  const [schedulingCallId, setSchedulingCallId] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
   const [directAccessBusy, setDirectAccessBusy] = useState(false);
   const [directAccessSettings, setDirectAccessSettings] = useState({ enabled: false, priceStars: 100, callEnabled: false, callPriceStars: 500, callDurationMinutes: 5, callAutoDeclineAway: false });
@@ -453,6 +469,16 @@ export default function MessagesPage() {
     refetchOnWindowFocus: "always",
     staleTime: 10000,
   });
+  const callHistoryQuery = useQuery({
+    queryKey: ["calls", "history", selected?.id],
+    queryFn: () => callService.getHistory().then((response) => response.data.data.calls),
+    enabled: Boolean(selected?.id) && selected?.type !== "group",
+    refetchInterval: 3000,
+    refetchIntervalInBackground: false,
+  });
+  const conversationCalls = useMemo(() => (callHistoryQuery.data || []).filter((item) => (
+    item.paid && [item.caller?.id, item.recipient?.id].includes(String(selected?.id))
+  )).sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt)), [callHistoryQuery.data, selected?.id]);
   useEffect(() => {
     if (selected?.id) messagesQuery.refetch();
   }, [selected?.directAccessWindowId]);
@@ -887,7 +913,12 @@ export default function MessagesPage() {
         if (inboxTab === "requests") return item.status === "REQUEST" && item.requestReceived;
         return !item.archived && item.status !== "DECLINED" && (item.status !== "REQUEST" || !item.requestReceived);
       }),
-    ];
+    ].sort((left, right) => {
+      if (Boolean(left.hasPriorityCall) !== Boolean(right.hasPriorityCall)) return left.hasPriorityCall ? -1 : 1;
+      const leftTime = new Date(left.hasPriorityCall ? left.priorityCallRequestedAt : left.lastMessage?.createdAt || left.updatedAt || left.createdAt || 0).getTime();
+      const rightTime = new Date(right.hasPriorityCall ? right.priorityCallRequestedAt : right.lastMessage?.createdAt || right.updatedAt || right.createdAt || 0).getTime();
+      return rightTime - leftTime;
+    });
     if (inboxTab !== "all" || inboxFilter === "all") return items;
     return items.filter((item) => {
       if (inboxFilter === "unread") return Number(item.unreadCount) > 0;
@@ -1902,6 +1933,21 @@ export default function MessagesPage() {
                 </div>
               </div>
               </Fragment>;
+            })}
+            {conversationCalls.map((item) => {
+              const reschedulePending = Boolean(item.rescheduleRequestedBy);
+              const confirmed = !reschedulePending && (Boolean(item.scheduledFor) || ["RINGING", "ACTIVE", "COMPLETED"].includes(item.status));
+              const ended = ["DECLINED", "MISSED", "CANCELED", "FAILED"].includes(item.status);
+              const canSchedule = !ended && ((!item.scheduledFor && item.recipient?.id === myId) || (reschedulePending && item.rescheduleRequestedBy !== myId));
+              return <article className={`mx-auto mb-3 w-full rounded-[18px] border text-center ${confirmed ? "max-w-[214px] border-[#2c745b] bg-[#111923] px-[14px] py-[14px]" : ended ? "max-w-[214px] border-atseen-line bg-white/[0.02] px-4 py-4 opacity-70" : "max-w-[214px] border-atseen-blue/40 bg-atseen-blue/[0.035] px-4 py-4"}`} key={`call:${item.id}`}>
+                <span className={`mx-auto grid h-10 w-10 place-items-center rounded-full text-[17px] ${confirmed ? "bg-[#193b39] text-[#59d89b]" : "bg-atseen-blue/15 text-atseen-blue"}`}><FiPhone /></span>
+                <h3 className={`${confirmed ? "mt-[13px] text-[13px] leading-4" : "mt-3 text-sm"} font-black`}>{confirmed ? "Call confirmed ✦" : reschedulePending ? "Reschedule requested" : ended ? "Call unavailable" : "Call requested"}</h3>
+                {item.topic ? <p className={`${confirmed ? "mt-[3px] text-[9px] leading-3 text-white" : "mt-1 text-[10px] text-white/75"} line-clamp-2 italic`}>“{item.topic}”</p> : null}
+                {!confirmed ? <p className="mt-2 text-[9px] text-atseen-muted">{item.type === "VIDEO" ? "video" : "audio"} · ✦{item.priceStars} · {Math.round((item.durationLimitSeconds || 0) / 60)} min</p> : null}
+                <p className={`${confirmed ? "mt-2 text-[8px] leading-[11px] text-[#7898bd]" : "mt-1 text-[8px] leading-3 text-atseen-dim"}`}>{confirmed ? <>{callScheduleLabel(item.scheduledFor)} · <span className="text-[#d2a43d]">✦{item.priceStars}</span> · reminder 10 min before</> : reschedulePending ? "The other person can choose a new time within 24h" : ended ? "This request is no longer active" : "✦ held · answer within 24h"}</p>
+                {confirmed ? <p className="mx-auto mt-2 max-w-[188px] text-[8px] leading-[11px] text-[#7895a5]">No-show by them—full refund. Once connected—the time is paid, however short the call. · <button className="font-black text-[#73b9ff] hover:underline" disabled={schedulingCallId === item.id} onClick={async () => { setSchedulingCallId(item.id); setError(""); try { await callService.requestReschedule(item.id); await callHistoryQuery.refetch(); } catch (requestError) { setError(requestError.response?.data?.message || "Could not request a new time."); } finally { setSchedulingCallId(""); } }} type="button">reschedule</button></p> : null}
+                {canSchedule ? <div className="mt-3 border-t border-white/10 pt-3"><input className="w-full rounded-lg border border-atseen-line bg-atseen-bg px-2 py-2 text-[10px] text-white" max={new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString().slice(0, 16)} min={new Date(Date.now() + (5 * 60 * 1000)).toISOString().slice(0, 16)} onChange={(event) => setCallScheduleDrafts((current) => ({ ...current, [item.id]: event.target.value }))} type="datetime-local" value={callScheduleDrafts[item.id] || ""} /><button className="mt-2 w-full rounded-full bg-atseen-blue px-3 py-2 text-[10px] font-black text-atseen-bg disabled:opacity-40" disabled={!callScheduleDrafts[item.id] || schedulingCallId === item.id} onClick={async () => { setSchedulingCallId(item.id); setError(""); try { await callService.schedulePaidCall(item.id, new Date(callScheduleDrafts[item.id]).toISOString()); await callHistoryQuery.refetch(); } catch (requestError) { setError(requestError.response?.data?.message || "Could not schedule this call."); } finally { setSchedulingCallId(""); } }} type="button">{schedulingCallId === item.id ? "Confirming…" : reschedulePending ? "Confirm new time" : "Confirm call time"}</button></div> : null}
+              </article>;
             })}
             <div ref={bottomRef} />
           </section>

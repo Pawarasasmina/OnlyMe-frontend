@@ -28740,6 +28740,7 @@ video.seen-reader-media {
   scrollbar-width:none;
 }
 .call-offer-backdrop .call-offer-sheet::-webkit-scrollbar { display:none; }
+.call-reminder-backdrop .call-reminder-sheet { left:var(--call-reminder-center-x,50%); }
 .direct-access-page-header {
   display:flex;
   height:68px;
