@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiX, FiZap } from "react-icons/fi";
+import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiVideo, FiX, FiZap } from "react-icons/fi";
 import { FiExternalLink } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
@@ -532,6 +532,9 @@ export default function MessagesPage() {
   const participant = selected?.type === "group"
     ? { ...(messagesQuery.data?.group || selected), displayName: messagesQuery.data?.group?.name || selected?.name || "Group", avatarUrl: messagesQuery.data?.group?.avatarUrl || selected?.avatarUrl, members: (messagesQuery.data?.group?.members || selected?.members || []).map((member) => ({ ...member, presence: presence[member.id] })) }
     : messagesQuery.data?.participant || selected?.participant || selected;
+  const canCallParticipant = selected?.type !== "group"
+    && Boolean(participant)
+    && !(user?.role === "fan" && participant.role === "creator" && !participant.callEnabled);
   const groupPresenceIds = useMemo(() => (
     selected?.type === "group"
       ? (messagesQuery.data?.group?.members || selected?.members || []).map((member) => member.id)
@@ -1776,7 +1779,10 @@ export default function MessagesPage() {
             <button aria-label="Back to conversations" className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
             {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else if (participant.username) navigate(`/profile/${encodeURIComponent(participant.username)}`); }} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members${participant.admins?.includes(myId) ? " · you're admin" : ""}` : `${presence[selected.id]?.online ? "● At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)}${participant.typicalReplyHours ? ` · replies within ${participant.typicalReplyHours}h` : ""}`} /></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
-            {selected.type !== "group" && user?.role === "fan" && participant?.role === "creator" && participant?.callEnabled ? <button aria-label={`Call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-atseen-line text-sm text-atseen-blue transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button> : null}
+            {canCallParticipant ? <div className="flex shrink-0 items-center gap-1">
+              <button aria-label={`Audio call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button>
+              <button aria-label={`Video call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "VIDEO")} type="button"><FiVideo /></button>
+            </div> : null}
             <div className="relative">
               <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setMessageMenu(null); setReactionFor(null); setChatMenuOpen((current) => !current); }} type="button"><FiMoreVertical /></button>
               {chatMenuOpen ? <div className="absolute right-0 top-11 z-[70] w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl" data-chat-popover>
