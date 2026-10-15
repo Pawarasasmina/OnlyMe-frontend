@@ -21,6 +21,7 @@ import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
+import ContentEmptyState from "../../components/shared/ContentEmptyState";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useAuth } from "../../hooks/useAuth";
 import { useSocialCapabilities } from "../../hooks/useSocialCapabilities";
@@ -1021,17 +1022,9 @@ export function SeenFeedItem({ animateOnScroll = true, currentUser = null, item:
   </motion.article>;
 }
 
-function EmptyState({ tab }) {
-  return <div className="seen-empty-state">
-    <FiEye aria-hidden="true" />
-    {tab === "friends" ? <>
-      <h2>Your friends’ Seens live here</h2>
-      <p>Follow people — what they post appears first.</p>
-    </> : <>
-      <h2>No Seens yet</h2>
-      <p>Published free Seens will appear here.</p>
-    </>}
-  </div>;
+function EmptyState({ canCreate, onCreate, tab }) {
+  const friends = tab === "friends";
+  return <ContentEmptyState message={friends ? "Follow people to fill this space with the stories and ideas they publish." : "Published Seens will appear here. You can explore people or create the first one."} primaryAction={friends ? { label: "Discover people", to: "/discover" } : canCreate ? { label: "Create a Seen", onClick: onCreate } : { label: "Discover people", to: "/discover" }} secondaryAction={friends ? { label: "Explore Seens", to: "/seen?tab=explore" } : null} title={friends ? "Your friends’ Seens live here" : "No Seens yet"} variant="seen" />;
 }
 
 function EndState({ onCreate }) {
@@ -1180,6 +1173,6 @@ export default function SeenFeedPage() {
         {isFetchNextPageError ? <p>Couldn’t load more Seens.</p> : null}
         <button disabled={isFetchingNextPage} onClick={() => fetchNextPage()} type="button">{isFetchingNextPage ? "Loading more Seens..." : isFetchNextPageError ? "Try again" : "Load more Seens"}</button>
       </div> : <EndState onCreate={openCreate} />}
-    </motion.div> : <EmptyState tab={tab} /> : null}
+    </motion.div> : <EmptyState canCreate={capabilities.canCreate} onCreate={openCreate} tab={tab} /> : null}
   </section>;
 }

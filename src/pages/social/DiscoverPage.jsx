@@ -6,6 +6,7 @@ import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSect
 import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import StoryViewer from "../../components/stories/StoryViewer";
+import ContentEmptyState from "../../components/shared/ContentEmptyState";
 import { useAuth } from "../../hooks/useAuth";
 import {
   useDiscoverFollowMutation,
@@ -51,17 +52,7 @@ function DiscoverSkeleton() {
 }
 
 function DiscoverEmpty({ onRefresh }) {
-  return (
-    <section className="discover-empty-panel" aria-live="polite">
-      <span aria-hidden="true" />
-      <h1>No recommendations</h1>
-      <p>Refresh when more public creators are available for your preferences.</p>
-      <button onClick={onRefresh} type="button">
-        <FiRefreshCw aria-hidden="true" />
-        Refresh
-      </button>
-    </section>
-  );
+  return <ContentEmptyState message="You’re caught up for now. Refresh suggestions or search for someone you already know." primaryAction={{ label: "Refresh suggestions", onClick: onRefresh }} secondaryAction={{ label: "Search people", to: "/search?from=discover" }} title="No recommendations yet" variant="discover" />;
 }
 
 function DiscoverError({ error, onRetry }) {

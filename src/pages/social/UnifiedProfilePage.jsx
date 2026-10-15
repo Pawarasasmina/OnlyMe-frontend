@@ -41,6 +41,7 @@ import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryViewer from "../../components/stories/StoryViewer";
+import ContentEmptyState from "../../components/shared/ContentEmptyState";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useAuth } from "../../hooks/useAuth";
@@ -887,8 +888,8 @@ function ProfileTabs({ tab, setTab }) {
   );
 }
 
-function ProfileMixedContentPanel({ emptyText, reposted = false, seens = [], wallPosts = [] }) {
-  if (!seens.length && !wallPosts.length) return <div className="profile-empty-state">{emptyText}</div>;
+function ProfileMixedContentPanel({ emptyText, owner = false, reposted = false, seens = [], wallPosts = [] }) {
+  if (!seens.length && !wallPosts.length) return <ContentEmptyState compact message={owner ? "Items you save or share will be collected here." : "There is nothing in this section yet."} primaryAction={owner ? { label: "Explore content", to: "/seen" } : { label: "Discover people", to: "/discover" }} title={emptyText} variant="profile" />;
   return <div className="profile-mixed-content">
     {seens.length ? <section className="profile-mixed-section is-seens">
       <header><h2>Seens</h2><span>{seens.length}</span></header>
@@ -909,11 +910,11 @@ function ContentTabsPanel({ data, isOwner, tab }) {
     retry: false,
   });
   if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
-  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
+  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
   if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
   if (saved.isError) return <div className="profile-empty-state">Saved items could not be loaded.</div>;
-  return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
+  return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." owner seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
 }
 
 function ProfileNotes({ isOwner, posts = [] }) {
@@ -923,7 +924,7 @@ function ProfileNotes({ isOwner, posts = [] }) {
         <h2>Notes</h2>
         <span>{compact(posts.length)} {posts.length === 1 ? "note" : "notes"}</span>
       </header>
-      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <p className="profile-empty-state">{isOwner ? "Your notes will appear here." : "No notes yet."}</p>}
+      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <ContentEmptyState compact message={isOwner ? "Write a Wall note and it will appear here." : "This creator has not posted a Wall note yet."} primaryAction={isOwner ? { label: "Create a post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} title={isOwner ? "Create your first post" : "No posts yet"} variant="wall" />}
     </section>
   );
 }

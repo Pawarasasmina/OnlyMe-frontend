@@ -31,6 +31,7 @@ import {
 } from "react-icons/fi";
 import SeriesPickerSheet from "../publication/SeriesPickerSheet";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
+import ContentEmptyState from "../shared/ContentEmptyState";
 import { publicationService } from "../../services/publicationService";
 import { useAuth } from "../../hooks/useAuth";
 import { SeenFeedItem } from "../../pages/social/SeenFeedPage";
@@ -551,7 +552,7 @@ function ProfileContentGrid({
   }, [visibleContent]);
 
   if (kind === "seens") {
-    if (!effectiveContent.length && !series.length) return <div className="profile-empty-state">{emptyText || "No published Seens yet."}</div>;
+    if (!effectiveContent.length && !series.length) return <ContentEmptyState compact message={owner ? "Publish a Seen to start sharing your stories and ideas." : "Published Seens will appear here when this creator shares one."} primaryAction={owner ? { label: "Create a Seen", to: "/create/seen" } : { label: "Explore Seens", to: "/seen" }} secondaryAction={{ label: "Discover people", to: "/discover" }} title={owner ? "Create your first Seen" : (emptyText || "No Seens yet")} variant="seen" />;
     const drafts = owner ? effectiveContent.filter((item) => item.status === "DRAFT") : [];
     const publishedContent = effectiveContent.filter((item) => item.status !== "DRAFT");
     const seriesGroups = new Map(series.map((item) => [String(item.id), { ...item, seens: [] }]));
@@ -713,7 +714,7 @@ function ProfileContentGrid({
     );
   }
 
-  if (!visibleContent.length) return <div className="profile-empty-state">{emptyText || "No published content yet."}</div>;
+  if (!visibleContent.length) return <ContentEmptyState compact message={owner ? "Create something new and it will appear on your profile." : "There is no published content in this section yet."} primaryAction={owner ? { label: "Create", to: "/create" } : { label: "Discover people", to: "/discover" }} title={owner ? "Share your first creation" : (emptyText || "No content yet")} variant="profile" />;
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {visibleContent.map((item) => {

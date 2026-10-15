@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+.content-empty-state{display:grid;justify-items:center;width:100%;min-height:430px;align-content:center;margin:18px 0;border:1px solid rgba(156,203,255,.12);border-radius:24px;background:radial-gradient(circle at 50% 33%,rgba(111,169,232,.11),transparent 38%),#0a0d12;padding:42px 24px;text-align:center;overflow:hidden}
+.content-empty-state.is-compact{min-height:310px;padding:32px 22px}
+.content-empty-state.is-compact .content-empty-illustration{width:min(250px,72%);margin-bottom:8px}
+.content-empty-illustration{width:min(74%,320px);height:auto;margin-bottom:18px;filter:drop-shadow(0 18px 28px rgba(0,0,0,.28))}
+.content-empty-state h2{color:#fff;font-size:clamp(24px,5vw,34px);font-weight:950;letter-spacing:-.7px;line-height:1.1}
+.content-empty-state p{max-width:430px;margin-top:12px;color:rgba(255,255,255,.56);font-size:14px;line-height:1.65}
+.content-empty-actions{display:flex;width:min(100%,420px);flex-wrap:wrap;justify-content:center;gap:10px;margin-top:25px}
+.content-empty-primary,.content-empty-secondary{display:inline-flex;min-height:48px;flex:1;align-items:center;justify-content:center;border-radius:14px;padding:0 22px;font-size:13px;font-weight:900;transition:transform .18s ease,filter .18s ease,background .18s ease}
+.content-empty-primary{border:1px solid transparent;background:linear-gradient(135deg,#6fa9e8,#9ccbff);color:#07101a;box-shadow:0 12px 28px rgba(111,169,232,.18)}
+.content-empty-secondary{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.045);color:rgba(255,255,255,.84)}
+.content-empty-primary:hover,.content-empty-secondary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.content-empty-primary:focus-visible,.content-empty-secondary:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:520px){.content-empty-state{min-height:390px;margin:10px 0;padding:34px 18px}.content-empty-actions{display:grid}.content-empty-primary,.content-empty-secondary{width:100%}}
+
 :root {
   color: #f3f4f6;
   background: #06080b;
