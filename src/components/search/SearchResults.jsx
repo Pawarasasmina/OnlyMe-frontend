@@ -164,10 +164,12 @@ export function SearchSection({ data, type }) {
   );
 }
 
-export function SearchAllResults({ sections = {} }) {
+export function SearchAllResults({ priority = "people", sections = {} }) {
+  const sectionOrder = [priority, "people", "worlds", "seens", "posts"]
+    .filter((type, index, items) => items.indexOf(type) === index);
   return (
     <div aria-live="polite">
-      {["people", "worlds", "seens", "posts"].map((type) => (
+      {sectionOrder.map((type) => (
         <SearchSection data={sections[type]} key={type} type={type} />
       ))}
     </div>

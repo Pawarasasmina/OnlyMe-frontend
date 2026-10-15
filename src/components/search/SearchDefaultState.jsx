@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { atseenCreators } from "../../data/atseenMockData";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
+import { SearchSection } from "./SearchResults";
 
 const people = [
   ["lina", "Lina"],
@@ -21,11 +22,13 @@ function SearchSectionTitle({ children, className = "", id }) {
   );
 }
 
-function SearchDefaultState({ defaults, loading, onSearch }) {
+function SearchDefaultState({ defaults, loading, onSearch, priority = "people", selectedType = "all" }) {
   const serverTrending = defaults?.trending?.length ? defaults.trending : [];
   const trending = [...serverTrending, ...fallbackTrending.map((label) => ({ label }))]
     .filter((item, index, items) => items.findIndex((candidate) => candidate.label?.toLowerCase() === item.label?.toLowerCase()) === index)
     .slice(0, 6);
+  const previewType = selectedType === "all" ? priority : selectedType;
+  const preview = defaults?.sections?.[previewType];
   const recent = defaults?.recent?.[0]?.query || "morning routine · ethan brooks";
 
   if (loading) {
@@ -54,7 +57,9 @@ function SearchDefaultState({ defaults, loading, onSearch }) {
 
   return (
     <div className="space-y-7 pt-2">
-      <section aria-labelledby="search-people">
+      {preview?.items?.length ? <SearchSection data={preview} type={previewType} /> : null}
+
+      {!preview?.items?.length && previewType === "people" ? <section aria-labelledby="search-people">
         <SearchSectionTitle id="search-people">People</SearchSectionTitle>
         <div className="atseen-hide-scrollbar mt-4 flex justify-between gap-3 overflow-x-auto pb-1">
           {people.map(([id, label]) => {
@@ -67,7 +72,7 @@ function SearchDefaultState({ defaults, loading, onSearch }) {
             );
           })}
         </div>
-      </section>
+      </section> : null}
 
       <section aria-labelledby="trending-searches">
         <SearchSectionTitle id="trending-searches">Trending</SearchSectionTitle>

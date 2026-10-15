@@ -181,10 +181,15 @@ function HomeHeader({ activityCount = 0, countryCode = "", location = "", locati
         </div>
       </div>
 
-      <Link aria-label="Open activity" className="home-spark-button" to="/activity">
-        <ActivitySparkMark className="h-5 w-5" />
-        {activityCount > 0 ? <span className="activity-count-badge">{activityCount > 99 ? "99+" : activityCount}</span> : null}
-      </Link>
+      <div className="home-header-actions">
+        <Link aria-label="Search" className="home-spark-button" to="/search?from=wall">
+          <FiSearch aria-hidden="true" />
+        </Link>
+        <Link aria-label="Open activity" className="home-spark-button" to="/activity">
+          <ActivitySparkMark className="h-5 w-5" />
+          {activityCount > 0 ? <span className="activity-count-badge">{activityCount > 99 ? "99+" : activityCount}</span> : null}
+        </Link>
+      </div>
     </div>
   );
 }

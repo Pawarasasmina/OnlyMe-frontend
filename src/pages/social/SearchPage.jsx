@@ -11,7 +11,14 @@ import {
 } from "../../components/search/SearchResults";
 import { SearchEmptyState, SearchErrorState, SearchPromptState, SearchSkeleton } from "../../components/search/SearchStates";
 import { SEARCH_TYPES, normalizeSearchInput } from "../../components/search/searchConfig";
+import SearchTabs from "../../components/search/SearchTabs";
 import { searchService } from "../../services/searchService";
+
+const SEARCH_PRIORITY = {
+  discover: "people",
+  seen: "seens",
+  wall: "posts",
+};
 
 function useDebouncedValue(value, delay = 300) {
   const [debounced, setDebounced] = useState(value);
@@ -34,6 +41,7 @@ function paramsObject(searchParams) {
     location: searchParams.get("location") || "",
     sort: searchParams.get("sort") || "relevant",
     cursor: searchParams.get("cursor") || "",
+    from: searchParams.get("from") || "discover",
   };
 }
 
@@ -47,6 +55,7 @@ function SearchPage() {
   const normalizedDebounced = normalizeSearchInput(debouncedDraft);
   const hasSearch = normalizedDebounced.length >= 2 || current.category || current.location;
   const searchType = current.type;
+  const priority = SEARCH_PRIORITY[current.from] || "people";
 
   useEffect(() => {
     setDraft(current.q);
@@ -139,7 +148,7 @@ function SearchPage() {
   function renderResults() {
     if (!hasSearch && draft.trim().length === 1) return <SearchPromptState />;
     if (!hasSearch) {
-      return <SearchDefaultState defaults={defaultsQuery.data} loading={defaultsQuery.isLoading} onSearch={runImmediate} />;
+      return <SearchDefaultState defaults={defaultsQuery.data} loading={defaultsQuery.isLoading} onSearch={runImmediate} priority={priority} selectedType={searchType} />;
     }
     if (searchQuery.isLoading) return <SearchSkeleton />;
     if (searchQuery.isError) return <SearchErrorState error={searchQuery.error} onRetry={() => searchQuery.refetch()} />;
@@ -156,7 +165,7 @@ function SearchPage() {
       );
     }
     if (searchQuery.data?.sections) {
-      return <SearchAllResults sections={searchQuery.data.sections} />;
+      return <SearchAllResults priority={priority} sections={searchQuery.data.sections} />;
     }
     return (
       <>
@@ -196,6 +205,11 @@ function SearchPage() {
         suggestionsOpen={false}
         placeholder="People, Seens, Experiences"
         value={draft}
+      />
+      <SearchTabs
+        counts={searchQuery.data?.counts || {}}
+        onChange={(type) => updateParam("type", type)}
+        value={searchType}
       />
       {searchQuery.isFetching && !searchQuery.isLoading ? <p className="mb-2 text-xs text-atseen-dim" role="status">Updating results...</p> : null}
       <ResultCountAnnouncer count={totalCount} query={normalizedDebounced || "current filters"} />

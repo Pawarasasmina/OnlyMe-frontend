@@ -10520,6 +10520,12 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   display: none;
 }
 
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .home-location-pill {
   min-height: 30px;
   gap: 6px;

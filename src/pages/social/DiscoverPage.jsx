@@ -251,10 +251,10 @@ function DiscoverPage() {
             <div className="discover-orb-toolbar">
               <span />
               <div>
-                <Link aria-label="Search" className="discover-orb-icon" to="/search">
+                <Link aria-label="Search" className="discover-orb-icon" to="/search?from=discover">
                   <FiSearch aria-hidden="true" />
                 </Link>
-                <Link aria-label="Find people" className="discover-orb-icon" to="/search">
+                <Link aria-label="Find people" className="discover-orb-icon" to="/search?from=discover">
                   <FiUserPlus aria-hidden="true" />
                 </Link>
               </div>
