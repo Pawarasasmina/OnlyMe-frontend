@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Component, Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Component, Fragment, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import FanCreateSheet from "../components/fanWeb/FanCreateSheet";
 import FanMobileNav from "../components/fanWeb/FanMobileNav";
@@ -19,6 +19,7 @@ import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
 import { moderationWarningService } from "../services/moderationWarningService";
 import { publicationService } from "../services/publicationService";
 import { useSocialScrollRestoration } from "../hooks/useSocialScrollRestoration";
+import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -137,9 +138,12 @@ function SocialAppShell({ children = null }) {
               : isMessagesPage
                 ? "mx-auto h-[calc(100dvh-54px-env(safe-area-inset-bottom))] min-h-0 w-full min-w-0 max-w-none px-0 py-0 min-[881px]:h-screen"
                 : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 min-[881px]:px-5 min-[881px]:pb-20 min-[881px]:pt-[30px]"}>
-              <SocialContentErrorBoundary key={`${location.pathname}${location.search}`}>
-                <Fragment key={location.key}>{children || <Outlet context={outletContext} />}</Fragment>
-              </SocialContentErrorBoundary>
+              <CenterRefreshOverlay />
+              <Suspense fallback={<CenterRouteLoading />}>
+                <SocialContentErrorBoundary key={`${location.pathname}${location.search}`}>
+                  <Fragment key={location.key}>{children || <Outlet context={outletContext} />}</Fragment>
+                </SocialContentErrorBoundary>
+              </Suspense>
             </main>
           </div>
           <FanWebRightRail capabilities={capabilities} status={status} user={user} />

@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
     }
 
     // A cached user lets the application render immediately while this request
-    // validates and refreshes the session in the background.
+    // request validates and refreshes the session in the background.
     authService.getProfile()
       .then((response) => {
         if (mounted) setUser(response.data?.data?.user ?? null);

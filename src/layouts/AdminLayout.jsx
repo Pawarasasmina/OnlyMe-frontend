@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { FiActivity, FiAlertTriangle, FiBarChart2, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
+import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
 
 const navigation = [
   { title: "Overview", links: [{ label: "Dashboard", to: "/admin/dashboard", icon: FiHome }, { label: "Analytics", to: "/admin/analytics", icon: FiBarChart2 }] },
@@ -39,7 +40,7 @@ function AdminLayout() {
           <div className="flex items-center gap-3"><button aria-label="Open admin navigation" className="rounded-lg border border-slate-200 p-2 text-slate-600 lg:hidden" onClick={() => setOpen(true)} type="button"><FiMenu /></button><div><p className="text-sm font-bold">{activeItem?.label || "Administration"}</p><p className="hidden text-xs text-slate-400 sm:block">OnlyMe admin console</p></div></div>
           <div className="flex items-center gap-3"><div className="hidden text-right sm:block"><p className="text-sm font-semibold">{user?.name}</p><p className="text-xs text-slate-400">Administrator</p></div><span className="grid h-9 w-9 overflow-hidden rounded-full bg-slate-900 text-sm font-bold text-white">{user?.avatar ? <img alt={user.name} className="h-full w-full object-cover" src={resolveMediaUrl(user.avatar)} /> : <span className="grid place-items-center">{user?.name?.slice(0, 1)}</span>}</span></div>
         </header>
-        <main className="admin-main min-h-[calc(100vh-4rem)] p-4 sm:p-6 xl:p-8"><Outlet /></main>
+        <main className="admin-main relative min-h-[calc(100vh-4rem)] p-4 sm:p-6 xl:p-8"><CenterRefreshOverlay light /><Suspense fallback={<CenterRouteLoading light />}><Outlet /></Suspense></main>
       </div>
     </div>
   );

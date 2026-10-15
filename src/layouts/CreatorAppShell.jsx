@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FiCheckCircle, FiDollarSign, FiFileText, FiGrid, FiHome, FiLogOut, FiMenu, FiSettings, FiUser, FiX } from "react-icons/fi";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 import { CallProvider } from "../context/CallContext";
+import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
 
 const nav = [
   { to: "/creator/dashboard", label: "Overview", icon: FiHome },
@@ -43,7 +44,7 @@ export default function CreatorAppShell() {
       <button className="creator-signout" onClick={signOut} type="button"><FiLogOut /> Sign out</button>
     </aside>
     {open ? <button aria-label="Close navigation" className="creator-backdrop" onClick={() => setOpen(false)} /> : null}
-    <main className="creator-main"><Outlet /></main>
+    <main className="creator-main relative"><CenterRefreshOverlay /><Suspense fallback={<CenterRouteLoading />}><Outlet /></Suspense></main>
     <nav className="creator-bottom-nav">{visibleNav.slice(0, 5).map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => isActive ? "active" : ""}><Icon /><span>{label}</span></NavLink>)}</nav>
   </div></CallProvider>;
 }

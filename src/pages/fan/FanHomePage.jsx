@@ -6,6 +6,7 @@ import HomeHeader from "../../components/fanWeb/home/HomeHeader";
 import PostComposer from "../../components/fanWeb/home/PostComposer";
 import StoriesRow from "../../components/fanWeb/home/StoriesRow";
 import WallSeenTodayNotice from "../../components/fanWeb/home/WallSeenTodayNotice";
+import WallFeedSkeleton from "../../components/fanWeb/home/WallFeedSkeleton";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
 import { useAuth } from "../../hooks/useAuth";
@@ -203,7 +204,7 @@ function FanHomePage() {
         <WallSeenTodayNotice />
         {canPost ? <PostComposer currentUser={display} openSignal={composeSignal} /> : null}
 
-        {loading ? <LoadingSkeleton className="h-20" count={4} /> : null}
+        {loading ? <WallFeedSkeleton /> : null}
         {feedQuery.isError ? (
           <section className="home-feed-error" role="alert">
             <p>Unable to load posts from the database.</p>
