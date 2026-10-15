@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FiBookmark, FiChevronRight, FiCompass, FiFileText, FiGrid, FiMapPin, FiMessageCircle, FiUserCheck, FiUserPlus } from "react-icons/fi";
+import { FiBookmark, FiChevronRight, FiCompass, FiFileText, FiGrid, FiMapPin, FiMessageCircle } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
-import { profileService } from "../../services/profileService";
+import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 import { analyticsService } from "../../services/analyticsService";
 import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
-import { followInvalidationKeys } from "../../utils/savedPeople";
 
 const resultIcons = {
   journey: FiCompass,
@@ -21,14 +20,15 @@ const resultIcons = {
 };
 
 function ResultThumb({ item }) {
-  if (item.type === "person") {
-    return <FanAvatar name={item.title} size="h-12 w-12" src={item.image} />;
+  if (item.type === "person" || item.type === "post") {
+    const author = item.metadata?.author;
+    return <FanAvatar className="ring-1 ring-[#526681]" name={author?.name || item.title} size={item.type === "post" ? "h-10 w-10" : "h-11 w-11"} src={author?.avatar || item.image} />;
   }
   const Icon = resultIcons[item.type] || FiGrid;
   const image = resolveMediaUrl(item.image);
   return (
-    <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-[14px] border border-atseen-line bg-atseen-surface-2 text-atseen-blue">
-      {image ? <img alt="" className="h-full w-full object-cover" loading="lazy" src={image} /> : <Icon aria-hidden="true" />}
+    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[12px] bg-atseen-surface-2 text-atseen-blue">
+      {item.coverMedia ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay className="h-full w-full object-cover" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : image ? <img alt="" className="h-full w-full object-cover" loading="lazy" src={image} /> : <Icon aria-hidden="true" />}
     </span>
   );
 }
@@ -44,23 +44,12 @@ function ResultMeta({ item }) {
 export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
   const isPerson = item.type === "person";
   const queryClient = useQueryClient();
-  const [following, setFollowing] = useState(Boolean(item.following ?? item.isFollowing ?? item.metadata?.following));
   const [saved, setSaved] = useState(Boolean(item.saved));
   const [error, setError] = useState("");
-  const username = item.metadata?.username || item.username || "";
+  const personSubtitle = [item.metadata?.profileCategory || item.category, item.location?.city].filter(Boolean).join(" · ") || item.subtitle;
+  const creatorName = item.metadata?.creator?.name || item.metadata?.author?.name || item.subtitle;
+  const wallTitle = item.metadata?.isOwn ? "You" : item.metadata?.author?.name || "User";
   const saveTarget = item.saveTarget || null;
-  const follow = useMutation({
-    mutationFn: () => profileService.toggleFollow(username),
-    onSuccess: (response) => {
-      const active = Boolean(response.data?.data?.relationship?.active);
-      setFollowing(active);
-      setError("");
-      followInvalidationKeys().forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
-    },
-    onError: (requestError) => {
-      setError(requestError.response?.data?.message || "Unable to update follow.");
-    },
-  });
   const save = useMutation({
     mutationFn: async () => {
       if (!saveTarget?.id) return null;
@@ -82,10 +71,6 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
   });
 
   useEffect(() => {
-    setFollowing(Boolean(item.following ?? item.isFollowing ?? item.metadata?.following));
-  }, [item.following, item.isFollowing, item.metadata?.following]);
-
-  useEffect(() => {
     setSaved(Boolean(item.saved));
   }, [item.saved]);
 
@@ -93,13 +78,12 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
     <>
       <ResultThumb item={item} />
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5 truncate text-sm font-extrabold text-atseen-text">
-          <span className="truncate">{item.title}</span>
+        <span className={`flex items-center gap-1.5 truncate text-atseen-text ${searchCategory === "posts" ? "text-[13px] font-bold" : "text-sm font-extrabold"}`}>
+          <span className="truncate">{searchCategory === "posts" ? wallTitle : item.title}</span>
           {item.verified ? <VerifiedBadge /> : null}
         </span>
-        {item.subtitle ? <span className="mt-0.5 block truncate text-xs font-semibold text-atseen-muted">{item.subtitle}</span> : null}
-        {item.description ? <span className="mt-1 block line-clamp-2 text-xs leading-5 text-atseen-muted">{item.description}</span> : null}
-        <ResultMeta item={item} />
+        {searchCategory === "posts" && item.description ? <span className="mt-px block truncate text-[12px] font-normal leading-[17px] text-[#78869b]">{item.description}</span> : (isPerson ? personSubtitle : creatorName) ? <span className="mt-0.5 block truncate text-xs font-medium text-[#78869b]">{isPerson ? personSubtitle : creatorName}</span> : null}
+        {searchCategory === "typed" ? <ResultMeta item={item} /> : null}
         {error ? <span className="mt-1 block text-[11px] font-semibold text-atseen-danger" role="alert">{error}</span> : null}
       </span>
     </>
@@ -116,30 +100,22 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
 
   if (isPerson) {
     return (
-      <div className="group flex min-h-[64px] items-center gap-3 rounded-[14px] px-0 py-2 transition hover:bg-white/[0.035]">
+      <div className="group flex min-h-[56px] items-center gap-3 rounded-[12px] px-0 py-1.5 transition hover:bg-white/[0.035]">
         <Link className="flex min-w-0 flex-1 items-center gap-3" onClick={trackClick} to={item.route || "/search"}>
           {content}
         </Link>
-        <button
-          aria-label={`${following ? "Unfollow" : "Follow"} ${item.title}`}
-          className={`inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-extrabold transition ${following ? "border-white/15 bg-white/10 text-white" : "border-atseen-blue/35 bg-atseen-blue/10 text-atseen-blue hover:bg-atseen-blue/20"}`}
-          disabled={follow.isPending || !username}
-          onClick={() => follow.mutate()}
-          type="button"
-        >
-          {following ? <FiUserCheck aria-hidden="true" /> : <FiUserPlus aria-hidden="true" />}
-          {following ? "Following" : "Follow"}
-        </button>
+        <Link aria-label={`Open ${item.title}`} className="grid h-9 w-9 place-items-center text-lg text-white/25 transition hover:text-atseen-blue" onClick={trackClick} to={item.route || "/search"}><FiChevronRight /></Link>
       </div>
     );
   }
 
   return (
-    <div className="group flex min-h-[64px] items-center gap-3 rounded-[14px] px-0 py-2 transition hover:bg-white/[0.035]">
+    <div className={`group flex items-center gap-3 overflow-hidden rounded-[12px] px-0 transition hover:bg-white/[0.035] ${searchCategory === "posts" ? "min-h-[57px] py-2" : "min-h-[56px] py-1.5"}`}>
       <Link className="flex min-w-0 flex-1 items-center gap-3" onClick={trackClick} to={item.route || "/search"}>
         {content}
       </Link>
       <span className="flex shrink-0 items-center gap-2">
+        {searchCategory === "worlds" && item.metadata?.price ? <span className="text-xs font-black text-[#78baff]">✦{item.metadata.price}</span> : null}
         {saveTarget ? (
           <button
             aria-label={`${saved ? "Remove from" : "Save to"} Saved`}
@@ -151,7 +127,7 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
         ) : saved ? <FiBookmark aria-label="Saved" className="text-atseen-blue" fill="currentColor" /> : null}
-        <Link aria-label={`Open ${item.title}`} className="grid h-9 w-9 place-items-center rounded-full text-atseen-dim transition hover:text-atseen-blue" onClick={trackClick} to={item.route || "/search"}>
+        <Link aria-label={`Open ${item.title}`} className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:text-atseen-blue ${searchCategory === "posts" ? "text-white/25" : "text-atseen-dim"}`} onClick={trackClick} to={item.route || "/search"}>
           <FiChevronRight aria-hidden="true" />
         </Link>
       </span>
@@ -164,36 +140,35 @@ function sectionLabel(type) {
     journeys: "Journeys",
     people: "People",
     places: "Places",
-    posts: "Posts",
+    posts: "Wall",
     saved: "Saved",
     seens: "Seens",
-    worlds: "Worlds",
+    worlds: "Experiences",
   }[type] || type;
 }
 
-export function SearchSection({ data, onSeeAll, type }) {
+export function SearchSection({ data, type }) {
   const items = data?.items || [];
   if (!items.length) return null;
   return (
     <section className="mt-6" aria-labelledby={`search-section-${type}`}>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[13px] font-extrabold uppercase tracking-[0.22em] text-white/[0.42]" id={`search-section-${type}`}>
-          {sectionLabel(type)} {typeof data.total === "number" ? <span className="text-atseen-blue">{data.total}</span> : null}
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7f8999]" id={`search-section-${type}`}>
+          {sectionLabel(type)}
         </h2>
-        <button className="text-xs font-bold text-atseen-blue hover:text-white" onClick={() => onSeeAll(type)} type="button">See all</button>
       </div>
-      <div className="grid gap-1">
+      <div className={`grid ${type === "posts" ? "gap-0" : "gap-1"}`}>
         {items.map((item, index) => <SearchResultRow item={item} key={`${item.type}-${item.id}`} position={index + 1} searchCategory={type} />)}
       </div>
     </section>
   );
 }
 
-export function SearchAllResults({ onSeeAll, sections = {} }) {
+export function SearchAllResults({ sections = {} }) {
   return (
     <div aria-live="polite">
-      {["people", "worlds", "seens", "posts", "places", "journeys"].map((type) => (
-        <SearchSection data={sections[type]} key={type} onSeeAll={onSeeAll} type={type} />
+      {["people", "worlds", "seens", "posts"].map((type) => (
+        <SearchSection data={sections[type]} key={type} type={type} />
       ))}
     </div>
   );
@@ -202,7 +177,7 @@ export function SearchAllResults({ onSeeAll, sections = {} }) {
 export function SearchTypedResults({ items = [] }) {
   return (
     <div className="mt-4 grid gap-1" aria-live="polite">
-      {items.map((item, index) => <SearchResultRow item={item} key={`${item.type}-${item.id}`} position={index + 1} searchCategory={item.type} />)}
+      {items.map((item, index) => <SearchResultRow item={item} key={`${item.type}-${item.id}`} position={index + 1} searchCategory="typed" />)}
     </div>
   );
 }

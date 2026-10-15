@@ -45,7 +45,7 @@ function SearchPage() {
   const [draft, setDraft] = useState(current.q);
   const debouncedDraft = useDebouncedValue(draft, 300);
   const normalizedDebounced = normalizeSearchInput(debouncedDraft);
-  const hasSearch = normalizedDebounced.length >= 1 || current.category || current.location;
+  const hasSearch = normalizedDebounced.length >= 2 || current.category || current.location;
   const searchType = current.type;
 
   useEffect(() => {
@@ -156,7 +156,7 @@ function SearchPage() {
       );
     }
     if (searchQuery.data?.sections) {
-      return <SearchAllResults onSeeAll={(type) => updateParam("type", type)} sections={searchQuery.data.sections} />;
+      return <SearchAllResults sections={searchQuery.data.sections} />;
     }
     return (
       <>
@@ -177,7 +177,7 @@ function SearchPage() {
   }
 
   return (
-    <div className="min-h-[calc(100dvh-7rem)]">
+    <div className="min-h-[calc(100dvh-7rem)] pb-10">
       <SearchInput
         activeSuggestionId=""
         hasFilters={Boolean(current.category || current.location || current.sort !== "relevant")}
@@ -194,6 +194,7 @@ function SearchPage() {
         showBack
         showFilters={false}
         suggestionsOpen={false}
+        placeholder="People, Seens, Experiences"
         value={draft}
       />
       {searchQuery.isFetching && !searchQuery.isLoading ? <p className="mb-2 text-xs text-atseen-dim" role="status">Updating results...</p> : null}
