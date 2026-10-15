@@ -517,7 +517,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
     <section className="profile-identity is-owner">
       {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> Only {profile.displayName?.split(" ")[0] || "they"} sees this</div> : null}
       <div className="profile-identity-row">
-        <button aria-label={hasStories ? `View ${profile.displayName}'s stories` : `Check ${profile.displayName}'s stories`} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={onStoriesOpen} style={{ "--profile-status-color": statusColor }} type="button">
+        <button aria-label={hasStories ? `View ${profile.displayName}'s stories` : `Check ${profile.displayName}'s stories`} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
           <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
         </button>
         <div className="profile-copy">
@@ -938,17 +938,25 @@ function ProfileBody({ data, setConnectionsType }) {
   const [activeSeenListId, setActiveSeenListId] = useState("");
   const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
-  const [profileStoriesOpen, setProfileStoriesOpen] = useState(false);
+  const [profileStoryViewer, setProfileStoryViewer] = useState(null);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
-  const profileStories = storiesQuery.data || [];
+  const profileStories = storiesQuery.data?.length ? storiesQuery.data : data.profileStories || [];
   const hasProfileStories = profile.hasActiveStories || profileStories.length > 0;
   const firstUnseenStoryIndex = Math.max(0, profileStories.findIndex((story) => !story.viewed));
-  const openProfileStories = async () => {
-    const result = await storiesQuery.refetch();
-    if ((result.data || []).length) setProfileStoriesOpen(true);
+  const openProfileStories = () => {
+    if (profileStories.length) {
+      setProfileStoryViewer({ index: firstUnseenStoryIndex, stories: profileStories });
+      return;
+    }
+    void storiesQuery.refetch().then((result) => {
+      const stories = result.data || [];
+      if (!stories.length) return;
+      const unseenIndex = stories.findIndex((story) => !story.viewed);
+      setProfileStoryViewer({ index: unseenIndex >= 0 ? unseenIndex : 0, stories });
+    });
   };
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
@@ -1059,7 +1067,7 @@ function ProfileBody({ data, setConnectionsType }) {
         worldTarget={worldCreateTarget(data.planets || [])}
       /> : null}
       <StoryCreator isOpen={experienceStoryOpen} onClose={() => setExperienceStoryOpen(false)} />
-      <StoryViewer initialIndex={firstUnseenStoryIndex} isOpen={profileStoriesOpen} onClose={() => setProfileStoriesOpen(false)} stories={profileStories} />
+      <StoryViewer initialIndex={profileStoryViewer?.index || 0} isOpen={Boolean(profileStoryViewer?.stories?.length)} onClose={() => setProfileStoryViewer(null)} stories={profileStoryViewer?.stories || []} />
     </div>
   );
 }

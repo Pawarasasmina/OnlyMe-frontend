@@ -6458,9 +6458,11 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 }
 .profile-avatar-ring.has-stories {
   border-color: transparent;
-  background: conic-gradient(from 210deg, #8ab8ff, #a77aff, #ff6fae, #ffbd66, #8ab8ff);
-  box-shadow: 0 0 22px rgba(167,122,255,.42);
+  background: linear-gradient(45deg,#6FA9E8,#9CCBFF,#D6EAFF);
+  box-shadow: 0 0 18px rgba(156,203,255,.48);
   cursor: pointer;
+  pointer-events: auto;
+  z-index: 20;
 }
 .profile-avatar-ring.has-stories:hover {
   filter: brightness(1.1);
@@ -28301,11 +28303,11 @@ video.seen-reader-media {
 .profile-prototype.is-public-profile .profile-identity.is-owner { padding:6px 20px 0; }
 .profile-prototype.is-public-profile .profile-identity.is-owner .profile-identity-row { align-items:center;gap:14px;padding:0; }
 .profile-prototype.is-public-profile .profile-identity.is-owner .profile-avatar-ring { width:80px;height:80px;margin-top:0;border-color:rgba(255,255,255,.16);box-shadow:none; }
-.profile-prototype.is-public-profile .profile-identity.is-owner .profile-avatar-ring.has-stories { border-color:transparent;box-shadow:0 0 18px rgba(167,122,255,.48); }
+.profile-prototype.is-public-profile .profile-identity.is-owner .profile-avatar-ring.has-stories { border-color:transparent;box-shadow:0 0 18px rgba(156,203,255,.48); }
 
 /* Keep story state visible in profile layouts that otherwise add a status ring. */
 .profile-prototype .profile-identity .profile-avatar-ring.no-stories { border-color:rgba(255,255,255,.16);background:#0a0c0f;box-shadow:none; }
-.profile-prototype .profile-identity .profile-avatar-ring.has-stories { border-color:transparent;background:conic-gradient(from 210deg,#8ab8ff,#a77aff,#ff6fae,#ffbd66,#8ab8ff);box-shadow:0 0 22px rgba(167,122,255,.42); }
+.profile-prototype .profile-identity .profile-avatar-ring.has-stories { border-color:transparent;background:linear-gradient(45deg,#6FA9E8,#9CCBFF,#D6EAFF);box-shadow:0 0 18px rgba(156,203,255,.48); }
 .profile-prototype.is-public-profile .profile-identity.is-owner .profile-avatar-ring > * { width:74px!important;height:74px!important; }
 .profile-prototype.is-public-profile .profile-identity.is-owner .profile-copy h1 { font-size:21px;font-weight:900;letter-spacing:-.3px; }
 .profile-prototype.is-public-profile .profile-identity-metrics { gap:0;margin-top:9px; }
