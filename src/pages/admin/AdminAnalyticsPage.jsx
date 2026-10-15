@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiActivity, FiBarChart2, FiCalendar, FiDownload, FiEye, FiFileText, FiPieChart, FiRefreshCw, FiSearch, FiTrendingUp, FiUsers } from "react-icons/fi";
+import { FiActivity, FiBarChart2, FiCalendar, FiDownload, FiEye, FiFileText, FiPieChart, FiRefreshCw, FiSearch, FiShield, FiTrendingUp, FiUsers } from "react-icons/fi";
 import Loader from "../../components/common/Loader";
 import { adminAnalyticsService } from "../../services/adminAnalyticsService";
 
@@ -234,6 +234,7 @@ export default function AdminAnalyticsPage() {
         <Card><SectionHeader eyebrow="Account Distribution" title="Account mix" icon={FiPieChart} /><DonutChart data={data.accountDistribution} /></Card>
         <Card><SectionHeader eyebrow="User Activity" title="Activity trend" icon={FiActivity} /><LineChart data={data.userActivity} series={[{ key: "activeUsers", label: "Activity signals" }, { key: "messages", label: "Messages" }]} /></Card>
         <Card><SectionHeader eyebrow="User Behavior" title="Action distribution" icon={FiBarChart2} /><BarChart data={data.userBehavior} keys={["value"]} /></Card>
+        <Card><SectionHeader eyebrow="Internal only" title="REAL / SEED / TEST activity" icon={FiShield} /><CompactTable empty="No classified activity for this period." rows={Object.entries(data.accountTypeBreakdown || {}).map(([metric, values]) => ({ metric: labelize(metric), ...values }))} columns={[{ key: "metric", label: "Metric" }, { key: "total", label: "Total", render: (row) => formatNumber(row.total) }, { key: "real", label: "Real", render: (row) => formatNumber(row.real) }, { key: "seed", label: "Seed", render: (row) => formatNumber(row.seed) }, { key: "test", label: "Test", render: (row) => formatNumber(row.test) }]} /></Card>
         <Card><SectionHeader eyebrow="Retention" title="Cohort retention" icon={FiUsers} /><div className="grid gap-3 sm:grid-cols-3">{[["D1", data.retention?.day1], ["D7", data.retention?.day7], ["D30", data.retention?.day30]].map(([label, value]) => <div className="rounded-xl bg-slate-50 p-4" key={label}><p className="text-xs font-bold uppercase text-slate-400">{label}</p><p className="mt-1 text-2xl font-black">{rate(value)}</p></div>)}</div><p className="mt-3 text-xs text-slate-500">Retention tracking available from {new Date(data.retention.trackingStartDate).toLocaleDateString()}.</p><div className="mt-4"><CompactTable empty="No retention cohorts available yet." rows={data.retention?.cohorts || []} columns={[{ key: "cohort", label: "Cohort" }, { key: "newUsers", label: "New users", render: (row) => formatNumber(row.newUsers) }, { key: "day1", label: "Day 1", render: (row) => rate(row.day1) }, { key: "day7", label: "Day 7", render: (row) => rate(row.day7) }, { key: "day30", label: "Day 30", render: (row) => rate(row.day30) }]} /></div></Card>
       </div> : null}
 

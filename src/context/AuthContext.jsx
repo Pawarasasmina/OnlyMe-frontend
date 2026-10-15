@@ -6,13 +6,38 @@ import { analyticsService } from "../services/analyticsService";
 import { clearAnalyticsSession } from "../services/analyticsSession";
 
 const ACCESS_TOKEN_KEY = "onlyme_access_token";
+const CACHED_USER_KEY = "onlyme_cached_user";
+
+function readCachedUser() {
+  if (!localStorage.getItem(ACCESS_TOKEN_KEY)) return null;
+  try {
+    return JSON.parse(localStorage.getItem(CACHED_USER_KEY)) || null;
+  } catch {
+    localStorage.removeItem(CACHED_USER_KEY);
+    return null;
+  }
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(CACHED_USER_KEY);
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(readCachedUser);
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem(ACCESS_TOKEN_KEY)) && !readCachedUser());
 
   useEffect(() => {
-    const clearAuthState = () => setUser(null);
+    if (user) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
+    else localStorage.removeItem(CACHED_USER_KEY);
+  }, [user]);
+
+  useEffect(() => {
+    const clearAuthState = () => {
+      clearStoredAuth();
+      setUser(null);
+      setLoading(false);
+    };
     window.addEventListener("onlyme-auth-cleared", clearAuthState);
     return () => window.removeEventListener("onlyme-auth-cleared", clearAuthState);
   }, []);
@@ -34,15 +59,17 @@ export function AuthProvider({ children }) {
       return () => { mounted = false; };
     }
 
+    // A cached user lets the application render immediately while this request
+    // validates and refreshes the session in the background.
     authService.getProfile()
       .then((response) => {
         if (mounted) setUser(response.data?.data?.user ?? null);
       })
       .catch(() => {
-        if (mounted) {
-          setUser(null);
-          localStorage.removeItem(ACCESS_TOKEN_KEY);
-        }
+        // The response interceptor removes the token only when the API has
+        // confirmed that both access and refresh credentials are invalid.
+        // Keep the last session during timeouts, cold starts and temporary 5xxs.
+        if (mounted && !localStorage.getItem(ACCESS_TOKEN_KEY)) setUser(null);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -57,13 +84,17 @@ export function AuthProvider({ children }) {
     login: async (credentials) => {
       const response = await authService.login(credentials);
       localStorage.setItem(ACCESS_TOKEN_KEY, response.data.data.accessToken);
-      setUser(response.data?.data?.user ?? null);
+      const nextUser = response.data?.data?.user ?? null;
+      if (nextUser) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
+      setUser(nextUser);
       return response;
     },
     register: async (details) => {
       const response = await authService.register(details);
       localStorage.setItem(ACCESS_TOKEN_KEY, response.data.data.accessToken);
-      setUser(response.data?.data?.user ?? null);
+      const nextUser = response.data?.data?.user ?? null;
+      if (nextUser) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
+      setUser(nextUser);
       return response;
     },
     refreshUser: async () => {
@@ -77,7 +108,7 @@ export function AuthProvider({ children }) {
         await authService.logout();
       } finally {
         disconnectMessageSocket();
-        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        clearStoredAuth();
         clearAnalyticsSession();
         setUser(null);
       }
