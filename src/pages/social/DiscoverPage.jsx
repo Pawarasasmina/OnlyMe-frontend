@@ -84,7 +84,7 @@ function DiscoverPage() {
   const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
   const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
   const viewerId = user?.id || user?._id || "";
-  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8 }), [activeFilter, viewerId]);
+  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, view: "slides" }), [activeFilter, viewerId]);
   const discoverQuery = useDiscoverSlidesQuery(queryParams);
   const followMutation = useDiscoverFollowMutation(queryParams);
   const sentinelRef = useRef(null);

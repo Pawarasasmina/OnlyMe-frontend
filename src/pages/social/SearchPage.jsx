@@ -17,7 +17,7 @@ import { searchService } from "../../services/searchService";
 const SEARCH_PRIORITY = {
   discover: "people",
   seen: "seens",
-  wall: "posts",
+  wall: "wall_notes",
 };
 
 function useDebouncedValue(value, delay = 300) {

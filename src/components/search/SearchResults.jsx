@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FiBookmark, FiChevronRight, FiCompass, FiFileText, FiGrid, FiMapPin, FiMessageCircle } from "react-icons/fi";
+import { FiBookmark, FiChevronRight, FiCompass, FiEye, FiFileText, FiGrid, FiLock, FiMapPin, FiMessageCircle } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
@@ -39,6 +39,62 @@ function ResultMeta({ item }) {
   if (item.location?.city) bits.push(item.location.country ? `${item.location.city}, ${item.location.country}` : item.location.city);
   if (item.createdAt) bits.push(new Date(item.createdAt).toLocaleDateString());
   return bits.length ? <p className="mt-1 truncate text-[11px] text-atseen-dim">{bits.join(" - ")}</p> : null;
+}
+
+function trackResult(item, position, searchCategory) {
+  if (!item?.id) return;
+  void analyticsService.trackSearchResultClick({
+    entityId: item.id,
+    entityType: item.type === "person" ? "profile" : item.type === "post" ? "feed_post" : item.type,
+    position,
+    searchCategory,
+  });
+}
+
+function compactCount(value) {
+  return new Intl.NumberFormat("en", { maximumFractionDigits: 1, notation: "compact" }).format(Number(value) || 0);
+}
+
+function SeenResults({ items }) {
+  return <div className="search-seen-grid">
+    {items.map((item, index) => <Link aria-label={`Open Seen ${item.title}`} className="search-seen-tile" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "seens")} to={item.route || "/search"}>
+      {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiFileText /></span>}
+      <span className="search-seen-shade" />
+      <span className="search-seen-views"><FiEye aria-hidden="true" />{compactCount(item.metadata?.viewCount)}</span>
+    </Link>)}
+  </div>;
+}
+
+function ExperienceResults({ items }) {
+  return <div className="search-experience-grid">
+    {items.map((item, index) => <Link className="search-experience-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "experiences")} to={item.route || "/search"}>
+      <span className="search-experience-cover">
+        {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiGrid /></span>}
+        <span className="search-experience-price"><FiLock />{item.metadata?.price ? <>✦{Number(item.metadata.price).toLocaleString()}</> : "Free"}</span>
+      </span>
+      <span className="search-experience-copy"><strong>{item.title}</strong><small>by {item.metadata?.creator?.name || "Creator"}</small></span>
+    </Link>)}
+  </div>;
+}
+
+function WallResults({ items }) {
+  return <div className="search-wall-list">
+    {items.map((item, index) => <Link className="search-wall-result" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "wall_notes")} to={item.route || "/wall"}>
+      <span className="search-wall-result-top"><strong>{item.metadata?.isOwn ? "You" : item.metadata?.author?.name || "User"}</strong><time>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</time></span>
+      <span className="search-wall-result-text">{item.description || item.title}</span>
+      <span className="search-wall-result-meta">{item.category ? <em>#{item.category.replace(/^#/u, "")}</em> : null}{item.location?.city ? <small><FiMapPin />{item.location.city}</small> : null}</span>
+    </Link>)}
+  </div>;
+}
+
+function WorldResults({ items }) {
+  return <div className="search-world-list">
+    {items.map((item, index) => <Link className="search-world-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "worlds")} to={item.route || "/search"}>
+      <span className="search-world-cover">{resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <FiGrid />}</span>
+      <span className="search-world-copy"><small>World by {item.metadata?.creator?.name || "Creator"}</small><strong>{item.title}</strong><em>{item.metadata?.subscriptionPriceCents ? `$${(Number(item.metadata.subscriptionPriceCents) / 100).toFixed(2)}/month` : "Open World"}</em></span>
+      <FiChevronRight aria-hidden="true" />
+    </Link>)}
+  </div>;
 }
 
 export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
@@ -141,9 +197,11 @@ function sectionLabel(type) {
     people: "People",
     places: "Places",
     posts: "Wall",
+    wall_notes: "Wall Notes",
     saved: "Saved",
     seens: "Seens",
-    worlds: "Experiences",
+    experiences: "Experiences",
+    worlds: "Worlds",
   }[type] || type;
 }
 
@@ -157,15 +215,17 @@ export function SearchSection({ data, type }) {
           {sectionLabel(type)}
         </h2>
       </div>
-      <div className={`grid ${type === "posts" ? "gap-0" : "gap-1"}`}>
-        {items.map((item, index) => <SearchResultRow item={item} key={`${item.type}-${item.id}`} position={index + 1} searchCategory={type} />)}
-      </div>
+      {type === "seens" ? <SeenResults items={items} /> : null}
+      {type === "experiences" ? <ExperienceResults items={items} /> : null}
+      {type === "worlds" ? <WorldResults items={items} /> : null}
+      {["posts", "wall_notes"].includes(type) ? <WallResults items={items} /> : null}
+      {!["experiences", "posts", "seens", "wall_notes", "worlds"].includes(type) ? <div className="grid gap-1">{items.map((item, index) => <SearchResultRow item={item} key={`${item.type}-${item.id}`} position={index + 1} searchCategory={type} />)}</div> : null}
     </section>
   );
 }
 
 export function SearchAllResults({ priority = "people", sections = {} }) {
-  const sectionOrder = [priority, "people", "worlds", "seens", "posts"]
+  const sectionOrder = [priority, "people", "seens", "experiences", "worlds", "wall_notes"]
     .filter((type, index, items) => items.indexOf(type) === index);
   return (
     <div aria-live="polite">
@@ -177,6 +237,8 @@ export function SearchAllResults({ priority = "people", sections = {} }) {
 }
 
 export function SearchTypedResults({ items = [] }) {
+  const type = items[0]?.type === "seen" ? "seens" : items[0]?.type === "experience" ? "experiences" : items[0]?.type === "post" ? "wall_notes" : items[0]?.type === "world" || items[0]?.type === "book" ? "worlds" : "";
+  if (type) return <SearchSection data={{ items }} type={type} />;
   return (
     <div className="mt-4 grid gap-1" aria-live="polite">
       {items.map((item, index) => <SearchResultRow item={item} key={`${item.type}-${item.id}`} position={index + 1} searchCategory="typed" />)}
