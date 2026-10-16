@@ -1,3 +1,4 @@
+import ProfileLanguagesField from "../../components/profile/ProfileLanguagesField";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +21,6 @@ const emptyForm = {
   locationText: "",
   city: "",
   country: "",
-  languagesText: "",
   website: "",
   email: "",
   phoneNumber: "",
@@ -62,7 +62,6 @@ function profileToForm(data, privacyData) {
     locationText: [profile.city, profile.country].filter(Boolean).join(", "),
     city: profile.city || "",
     country: profile.country || "",
-    languagesText: languageSource === "en" ? "English" : languageSource,
     website,
     email: account.email || "",
     phoneNumber: profile.phoneNumber || "",
@@ -294,15 +293,6 @@ function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
   );
 }
 
-function normalizeLanguage(text) {
-  const value = String(text || "")
-    .split(/[,\u00b7]/)
-    .map((part) => part.trim())
-    .filter(Boolean)[0] || "en";
-  const codes = { english: "en", "العربية": "ar", arabic: "ar", "русский": "ru", russian: "ru", "español": "es", spanish: "es", "français": "fr", french: "fr", "português": "pt", portuguese: "pt" };
-  return codes[value.toLowerCase()] || value.toLowerCase();
-}
-
 function ProfileSettingsPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -468,7 +458,7 @@ function ProfileSettingsPage() {
         bio: form.bio.trim(),
         phoneNumber: form.phoneNumber.trim(),
         whatsapp: form.whatsapp.trim(),
-        preferredLanguage: normalizeLanguage(form.languagesText || form.preferredLanguage),
+        preferredLanguage: form.preferredLanguage,
         timezone: form.timezone.trim() || "UTC",
         profileVisibility: form.profileVisibility,
       };
@@ -500,6 +490,7 @@ function ProfileSettingsPage() {
       return { profile: profileResponse.data.data, privacy: privacyResponse.data.data };
     },
     onSuccess: ({ profile: data, privacy }) => {
+      queryClient.invalidateQueries({ queryKey: ["wall-language"] });
       queryClient.setQueryData(["profile", "me"], data);
       queryClient.setQueryData(["settings", "privacy"], privacy);
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
@@ -635,7 +626,7 @@ function ProfileSettingsPage() {
         <p className="edit-profile-help edit-profile-field-wide">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
         <BioField onChange={updateField} value={form.bio} />
         <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
-        <Field label="Languages" name="languagesText" onChange={updateField} value={form.languagesText} />
+        <ProfileLanguagesField preferredLanguage={form.preferredLanguage} onChange={updateField} />
         {role === "creator" ? <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} /> : null}
       </section>
 

@@ -1,3 +1,5 @@
+import { wallPostCaption } from "../../../utils/wallVoiceDisplay";
+import { WallTextContent, WallVoiceNote } from "./WallPostContent";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -132,51 +134,13 @@ function formatCount(value = 0) {
   return count.toLocaleString();
 }
 
-function MediaItem({ item, title }) {
+function MediaItem({ item, title, postId, postText }) {
   const [failed, setFailed] = useState(false);
-  const translations = useMemo(() => item?.translations || [], [item?.translations]);
-  const [selectedTranslation, setSelectedTranslation] = useState(translations[0]?.language || "");
-  const activeTranslation = translations.find((translation) => translation.language === selectedTranslation) || translations[0] || null;
-  useEffect(() => {
-    if (!translations.length) return;
-    if (!translations.some((translation) => translation.language === selectedTranslation)) {
-      setSelectedTranslation(translations[0].language);
-    }
-  }, [selectedTranslation, translations]);
   if (!item?.url || failed) {
     return <span className="home-feed-media-fallback" role="img" aria-label="Media unavailable">Media unavailable</span>;
   }
   if (String(item.type || "").toLowerCase() === "audio") {
-    return (
-      <div className="home-feed-voice-card">
-        <div className="home-feed-voice-title"><FiMic aria-hidden="true" /> Voice note</div>
-        <VoiceMessageBubble audio={{ duration: item.duration, url: item.url, waveform: item.waveform }} label="Voice note" />
-        {item.transcript ? (
-          <div className="home-feed-voice-transcript">
-            <span>Original transcript</span>
-            <p>{item.transcript}</p>
-          </div>
-        ) : null}
-        {translations.length ? (
-          <div className="home-feed-voice-transcript">
-            <label>
-              View translation
-              <select onChange={(event) => setSelectedTranslation(event.target.value)} value={activeTranslation?.language || ""}>
-                {translations.map((translation) => {
-                  return <option key={translation.language} value={translation.language}>{translation.languageName || translation.language}</option>;
-                })}
-              </select>
-            </label>
-            {activeTranslation ? (
-              <>
-                <span>Translated to {activeTranslation.languageName || activeTranslation.language}</span>
-                <p>{activeTranslation.text}</p>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    );
+    return <WallVoiceNote item={item} postId={postId} postText={postText} />;
   }
   if (String(item.type || "").toLowerCase().startsWith("video")) {
     return <video controls preload="metadata" src={item.url} title={`${title} video`} />;
@@ -332,6 +296,7 @@ function FeedPost({ post, profileMenu = false }) {
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
   const [resolvedAt, setResolvedAt] = useState(normalized.resolvedAt);
   useEffect(() => { setResolvedAt(normalized.resolvedAt); }, [normalized.resolvedAt]);
+  const caption = wallPostCaption(normalized.text, normalized.media);
   const creator = normalized.author;
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -367,7 +332,6 @@ function FeedPost({ post, profileMenu = false }) {
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [viewCount, setViewCount] = useState(normalized.viewCount);
   const [moreBusy, setMoreBusy] = useState("");
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
@@ -391,7 +355,6 @@ function FeedPost({ post, profileMenu = false }) {
     [item.reaction.key]: item.count,
   }), {}), [reactionSummary]);
   const commentCount = Math.max(normalized.commentCount, comments.length);
-  const compactText = normalized.text.length > 260 && !expanded ? `${normalized.text.slice(0, 260).trim()}...` : normalized.text;
   const visibleReactionSamples = reactionSummary.length
     ? reactionSummary.slice(0, 3).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
     : "\uD83E\uDD1D \u2764\uFE0F \uD83D\uDD25";
@@ -837,12 +800,7 @@ function FeedPost({ post, profileMenu = false }) {
         </div>
 
         {resolvedAt ? <span className="wall-solved-label" role="status"><FiCheck aria-hidden="true" /> Solved</span> : null}
-        <p className="home-feed-text">{compactText}</p>
-        {normalized.text.length > 260 ? (
-          <button className="home-feed-show-more" onClick={() => setExpanded((current) => !current)} type="button">
-            {expanded ? "Show less" : "Show more"}
-          </button>
-        ) : null}
+        <WallTextContent postId={actionPostId} text={caption} />
         <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
@@ -852,7 +810,7 @@ function FeedPost({ post, profileMenu = false }) {
         {normalized.media?.length ? (
           <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
             {normalized.media.map((mediaItem) => (
-              <MediaItem item={mediaItem} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
+              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
             ))}
           </div>
         ) : null}

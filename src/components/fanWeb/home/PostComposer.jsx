@@ -1,3 +1,4 @@
+import { transcriptAlreadyShown } from "../../../utils/wallVoiceDisplay";
 import { canLookupLocation, geolocationErrorMessage } from "../../../utils/locationLookup";
 import { useEffect, useRef, useState } from "react";
 import { FiMapPin, FiMic, FiNavigation, FiImage, FiSearch, FiTrash2, FiX, FiArrowLeft, FiChevronRight, FiTag, FiGrid, FiGlobe, FiCheck, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiCompass, FiShoppingBag, FiCoffee, FiBookOpen, FiUsers, FiStar, FiZap } from "react-icons/fi";
@@ -296,14 +297,6 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
       id: `${recording.file.name}-${recording.file.size}-${recording.file.lastModified}`,
       url,
     });
-    const transcript = recording.transcript?.trim();
-    if (transcript) {
-      setText((current) => {
-        if (!current.trim()) return transcript.slice(0, POST_TEXT_MAX_LENGTH);
-        const next = `${current.trimEnd()}\n\n${transcript}`;
-        return next.slice(0, POST_TEXT_MAX_LENGTH);
-      });
-    }
     setError("");
   };
 
@@ -433,29 +426,7 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
                 </div>
               </div>
               <VoiceMessageBubble audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label="Voice note" />
-              {voiceAttachment.transcript || voiceAttachment.translations?.length ? (
-                <div className="home-note-voice-copy">
-                  {voiceAttachment.transcript ? (
-                    <>
-                      <span>Transcript</span>
-                      <p>{voiceAttachment.transcript}</p>
-                    </>
-                  ) : null}
-                  {voiceAttachment.translations?.length ? (
-                    <>
-                      <span>Translations</span>
-                      <div className="home-note-voice-translations">
-                        {voiceAttachment.translations.map((translation) => (
-                          <p key={translation.language}>
-                            <b>{translation.languageName || translation.language}</b>
-                            <span>{translation.text}</span>
-                          </p>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
+              {voiceAttachment.transcript && !transcriptAlreadyShown(text, voiceAttachment.transcript) ? <div className="wall-composer-voice-text"><details className="wall-composer-transcript"><summary>View transcript</summary><p dir="auto">{voiceAttachment.transcript}</p></details><button className="wall-transcript-toggle" onClick={() => setText((current) => [current.trim(), voiceAttachment.transcript.trim()].filter(Boolean).join("\n\n").slice(0, POST_TEXT_MAX_LENGTH))} type="button">Use as post text</button></div> : null}
               <button aria-label="Remove voice note" onClick={removeVoiceNote} type="button"><FiTrash2 /></button>
             </div>
           ) : null}

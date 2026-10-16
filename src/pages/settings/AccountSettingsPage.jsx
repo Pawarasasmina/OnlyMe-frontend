@@ -1,3 +1,5 @@
+import { useProfileLanguageOptions } from "../../hooks/useProfileLanguageOptions";
+import { profileLanguageCode } from "../../utils/profileLanguages";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiClock, FiGlobe } from "react-icons/fi";
@@ -35,7 +37,8 @@ function TimezoneSelector({ label, onChange, value }) {
 
 function AccountSettingsPage() {
   const queryClient = useQueryClient();
-  const { language, setLanguage, t } = useLanguage();
+  const { setLanguage, t } = useLanguage();
+  const languageOptions = useProfileLanguageOptions();
   const [preferences, setPreferences] = useState({ preferredLanguage: "en", timezone: "UTC", phoneNumber: "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [dirty, setDirty] = useState(false);
@@ -50,7 +53,7 @@ function AccountSettingsPage() {
   useEffect(() => {
     if (query.data && !dirty) {
       setPreferences((current) => ({ ...current, ...(query.data.preferences || {}) }));
-      setLanguage(query.data.preferences?.preferredLanguage || "en");
+      setLanguage((query.data.preferences?.preferredLanguage || "en").split("-")[0]);
     }
   }, [dirty, query.data, setLanguage]);
 
@@ -59,6 +62,7 @@ function AccountSettingsPage() {
     onSuccess: (response) => {
       queryClient.setQueryData(["settings", "account"], response.data.data);
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["wall-language"] });
       setDirty(false);
       setError("");
       setMessage(t("Account preferences saved."));
@@ -90,7 +94,7 @@ function AccountSettingsPage() {
     setDirty(true);
     setMessage("");
     setPreferences((current) => ({ ...current, [target.name]: target.value }));
-    if (target.name === "preferredLanguage") setLanguage(target.value);
+    if (target.name === "preferredLanguage") setLanguage(target.value.split("-")[0]);
   };
   const updatePassword = ({ target }) => setPasswords((current) => ({ ...current, [target.name]: target.value }));
 
@@ -127,7 +131,7 @@ function AccountSettingsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <Input disabled label={t("Email")} value={account.email} />
           <Input disabled label={t("Role")} value={account.role} />
-          <label className="block text-sm font-medium text-brand-mist/80">{t("Preferred language")}<select className="mt-2 w-full rounded-xl border border-white/10 bg-brand-dark px-4 py-3 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="preferredLanguage" onChange={updatePreference} value={language}><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="es">Español</option><option value="fr">Français</option><option value="pt">Português</option></select></label>
+          <label className="block text-sm font-medium text-brand-mist/80">{t("Preferred language")}<select className="mt-2 w-full rounded-xl border border-white/10 bg-brand-dark px-4 py-3 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="preferredLanguage" onChange={updatePreference} value={profileLanguageCode(preferences.preferredLanguage, languageOptions)}>{languageOptions.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}</select></label>
           <TimezoneSelector label={t("Time zone")} onChange={updatePreference} value={preferences.timezone} />
         </div>
         <div className="flex justify-end">
