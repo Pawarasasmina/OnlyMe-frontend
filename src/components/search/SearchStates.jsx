@@ -42,9 +42,9 @@ export function SearchErrorState({ error, onRetry }) {
 
 export function SearchPromptState() {
   return (
-    <div className="mt-8 rounded-[22px] border border-atseen-line bg-atseen-surface p-8 text-center">
-      <FiSearch aria-hidden="true" className="mx-auto text-3xl text-atseen-blue" />
-      <p className="mt-3 text-sm text-atseen-muted">Enter at least 2 characters to search Atseen.</p>
+    <div className="py-8 text-center">
+      <FiSearch aria-hidden="true" className="mx-auto text-2xl text-white/20" />
+      <p className="mt-3 text-sm text-[#78869b]">Type one more character to search.</p>
     </div>
   );
 }

@@ -17,10 +17,10 @@ const SearchInput = forwardRef(function SearchInput({
   onChange,
 }, ref) {
   return (
-    <form className="sticky top-[57px] z-20 -mx-4 bg-atseen-bg/95 px-4 pb-5 pt-2 backdrop-blur md:top-0 md:-mx-6 md:px-6 md:pt-0" onSubmit={onSubmit}>
+    <form className="sticky top-[57px] z-20 -mx-4 bg-atseen-bg/95 px-4 pb-6 pt-2 backdrop-blur md:top-0 md:-mx-6 md:px-6 md:pt-0" onSubmit={onSubmit}>
       <div className="flex items-center gap-3">
         {showBack ? (
-          <button aria-label="Go back" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white/[0.07] text-[24px] text-white transition hover:bg-white/[0.11]" onClick={onBack} type="button">
+          <button aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-[22px] text-white transition hover:bg-white/[0.11]" onClick={onBack} type="button">
             <FiArrowLeft aria-hidden="true" strokeWidth={2.4} />
           </button>
         ) : null}
@@ -31,14 +31,15 @@ const SearchInput = forwardRef(function SearchInput({
             aria-autocomplete="list"
             aria-controls="search-suggestions"
             aria-expanded={suggestionsOpen}
-            className="h-[58px] w-full rounded-[15px] border border-atseen-blue/55 bg-[#11151b] px-5 pr-12 text-[15px] font-medium text-atseen-text outline-none placeholder:text-white/45 focus:border-atseen-blue"
+            className="h-[49px] w-full rounded-[14px] border border-[#303744] bg-[#11151b] px-4 pr-12 text-[14px] font-medium text-atseen-text outline-none placeholder:text-[#758196] focus:border-[#7598c7]"
             maxLength={100}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             ref={ref}
             role="combobox"
-            type="search"
+            inputMode="search"
+            type="text"
             value={value}
           />
           {value ? (

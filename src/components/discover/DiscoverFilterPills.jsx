@@ -15,7 +15,7 @@ function DiscoverFilterPills({ active, filters = [], isFetching, onChange, onRef
   return (
     <div className="discover-slide-top">
       <div className="discover-slide-top-actions">
-        <Link aria-label="Search" className="discover-icon-button" to="/search">
+        <Link aria-label="Search" className="discover-icon-button" to="/search?from=discover">
           <FiSearch aria-hidden="true" />
         </Link>
         <button aria-label="Tune Discover" className="discover-icon-button" onClick={onSettings} type="button">

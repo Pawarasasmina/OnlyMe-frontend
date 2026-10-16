@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useOutletContext, useSearchParams } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
 import HomeHeader from "../../components/fanWeb/home/HomeHeader";
 import PostComposer from "../../components/fanWeb/home/PostComposer";
 import StoriesRow from "../../components/fanWeb/home/StoriesRow";
 import WallSeenTodayNotice from "../../components/fanWeb/home/WallSeenTodayNotice";
+import WallFeedSkeleton from "../../components/fanWeb/home/WallFeedSkeleton";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
 import { useAuth } from "../../hooks/useAuth";
@@ -14,6 +15,7 @@ import { useFeedPosts, useMyFeedPosts } from "../../hooks/useFeedPosts";
 import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
+import ContentEmptyState from "../../components/shared/ContentEmptyState";
 
 const HOME_FILTERS = [
   { key: "all", label: "All" },
@@ -63,17 +65,9 @@ function HomeFeedFilters({ activeFilter, onChange }) {
   );
 }
 
-function HomeEmptyState({ activeFilter }) {
-  return (
-    <section className="home-empty-state">
-      <h2>No posts here yet.</h2>
-      <p>{activeFilter === "all" ? "Follow creators or check Seen for published stories." : "Try All or another supported filter."}</p>
-      <div>
-        <Link to="/discover">Discover people</Link>
-        <Link to="/seen">View Seen</Link>
-      </div>
-    </section>
-  );
+function HomeEmptyState({ activeFilter, canPost, onShowAll }) {
+  const filtered = activeFilter !== "all";
+  return <ContentEmptyState message={filtered ? "There are no posts in this category yet. Show everything or explore new people." : "Give your Wall some life with a note, or discover people worth following."} primaryAction={filtered ? { label: "Show all posts", onClick: onShowAll } : canPost ? { label: "Create your first post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} secondaryAction={filtered || canPost ? { label: "Discover people", to: "/discover" } : { label: "View Seen", to: "/seen" }} title={filtered ? "Nothing here yet" : "Create your first post"} variant="wall" />;
 }
 
 function FanHomePage() {
@@ -203,14 +197,14 @@ function FanHomePage() {
         <WallSeenTodayNotice />
         {canPost ? <PostComposer currentUser={display} openSignal={composeSignal} /> : null}
 
-        {loading ? <LoadingSkeleton className="h-20" count={4} /> : null}
+        {loading ? <WallFeedSkeleton /> : null}
         {feedQuery.isError ? (
           <section className="home-feed-error" role="alert">
             <p>Unable to load posts from the database.</p>
             <button onClick={() => feedQuery.refetch()} type="button">Retry</button>
           </section>
         ) : null}
-        {!loading && !feedQuery.isError && !feedPosts.length ? <HomeEmptyState activeFilter={activeFilter} /> : null}
+        {!loading && !feedQuery.isError && !feedPosts.length ? <HomeEmptyState activeFilter={activeFilter} canPost={canPost} onShowAll={() => changeFilter("all")} /> : null}
         <div aria-busy={loading ? "true" : "false"} className="home-feed-list">
           {feedPosts.map((post) => <FeedPost key={post.id} post={post} />)}
         </div>

@@ -40,10 +40,13 @@ import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
+import StoryViewer from "../../components/stories/StoryViewer";
+import ContentEmptyState from "../../components/shared/ContentEmptyState";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { useAuth } from "../../hooks/useAuth";
 import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
+import { useCreatorStories } from "../../hooks/useStories";
 import { messageService } from "../../services/messageService";
 import { analyticsService } from "../../services/analyticsService";
 import { dreamService } from "../../services/dreamService";
@@ -469,7 +472,7 @@ function metricValue(metrics = {}, key, fallback = 0) {
   return metrics[key] ?? metrics[`${key}Count`] ?? fallback;
 }
 
-function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationship = {}, viewerCapabilities }) {
+function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, onStoriesOpen, profile, relationship = {}, viewerCapabilities }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [viewersOpen, setViewersOpen] = useState(false);
@@ -515,9 +518,9 @@ function IdentitySection({ metrics = {}, onConnectionsOpen, profile, relationshi
     <section className="profile-identity is-owner">
       {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> Only {profile.displayName?.split(" ")[0] || "they"} sees this</div> : null}
       <div className="profile-identity-row">
-        <span className="profile-avatar-ring" style={{ "--profile-status-color": statusColor }}>
+        <button aria-label={hasStories ? `View ${profile.displayName}'s stories` : `Check ${profile.displayName}'s stories`} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
           <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
-        </span>
+        </button>
         <div className="profile-copy">
           <h1>
             {profile.displayName}
@@ -885,8 +888,8 @@ function ProfileTabs({ tab, setTab }) {
   );
 }
 
-function ProfileMixedContentPanel({ emptyText, reposted = false, seens = [], wallPosts = [] }) {
-  if (!seens.length && !wallPosts.length) return <div className="profile-empty-state">{emptyText}</div>;
+function ProfileMixedContentPanel({ emptyText, owner = false, reposted = false, seens = [], wallPosts = [] }) {
+  if (!seens.length && !wallPosts.length) return <ContentEmptyState compact message={owner ? "Items you save or share will be collected here." : "There is nothing in this section yet."} primaryAction={owner ? { label: "Explore content", to: "/seen" } : { label: "Discover people", to: "/discover" }} title={emptyText} variant="profile" />;
   return <div className="profile-mixed-content">
     {seens.length ? <section className="profile-mixed-section is-seens">
       <header><h2>Seens</h2><span>{seens.length}</span></header>
@@ -907,11 +910,11 @@ function ContentTabsPanel({ data, isOwner, tab }) {
     retry: false,
   });
   if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
-  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
+  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
   if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
   if (saved.isError) return <div className="profile-empty-state">Saved items could not be loaded.</div>;
-  return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
+  return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." owner seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
 }
 
 function ProfileNotes({ isOwner, posts = [] }) {
@@ -921,7 +924,7 @@ function ProfileNotes({ isOwner, posts = [] }) {
         <h2>Notes</h2>
         <span>{compact(posts.length)} {posts.length === 1 ? "note" : "notes"}</span>
       </header>
-      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <p className="profile-empty-state">{isOwner ? "Your notes will appear here." : "No notes yet."}</p>}
+      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <ContentEmptyState compact message={isOwner ? "Write a Wall note and it will appear here." : "This creator has not posted a Wall note yet."} primaryAction={isOwner ? { label: "Create a post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} title={isOwner ? "Create your first post" : "No posts yet"} variant="wall" />}
     </section>
   );
 }
@@ -936,9 +939,26 @@ function ProfileBody({ data, setConnectionsType }) {
   const [activeSeenListId, setActiveSeenListId] = useState("");
   const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
+  const [profileStoryViewer, setProfileStoryViewer] = useState(null);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
+  const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
+  const profileStories = storiesQuery.data?.length ? storiesQuery.data : data.profileStories || [];
+  const hasProfileStories = profile.hasActiveStories || profileStories.length > 0;
+  const firstUnseenStoryIndex = Math.max(0, profileStories.findIndex((story) => !story.viewed));
+  const openProfileStories = () => {
+    if (profileStories.length) {
+      setProfileStoryViewer({ index: firstUnseenStoryIndex, stories: profileStories });
+      return;
+    }
+    void storiesQuery.refetch().then((result) => {
+      const stories = result.data || [];
+      if (!stories.length) return;
+      const unseenIndex = stories.findIndex((story) => !story.viewed);
+      setProfileStoryViewer({ index: unseenIndex >= 0 ? unseenIndex : 0, stories });
+    });
+  };
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
   useEffect(() => {
@@ -1010,7 +1030,7 @@ function ProfileBody({ data, setConnectionsType }) {
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
-      <IdentitySection metrics={publicMetrics} onConnectionsOpen={setConnectionsType} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
+      <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
@@ -1048,6 +1068,7 @@ function ProfileBody({ data, setConnectionsType }) {
         worldTarget={worldCreateTarget(data.planets || [])}
       /> : null}
       <StoryCreator isOpen={experienceStoryOpen} onClose={() => setExperienceStoryOpen(false)} />
+      <StoryViewer initialIndex={profileStoryViewer?.index || 0} isOpen={Boolean(profileStoryViewer?.stories?.length)} onClose={() => setProfileStoryViewer(null)} stories={profileStoryViewer?.stories || []} />
     </div>
   );
 }

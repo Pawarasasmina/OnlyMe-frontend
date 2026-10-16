@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
@@ -7,76 +8,80 @@ import SocialAppShell from "../layouts/SocialAppShell";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
-import ExplorePage from "../pages/public/ExplorePage";
-import LoginPage from "../pages/auth/LoginPage";
-import RegisterPage from "../pages/auth/RegisterPage";
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
-import FanHomePage from "../pages/fan/FanHomePage";
-import MessagesPage from "../pages/fan/MessagesPage";
-import ActivityPage from "../pages/fan/ActivityPage";
-import WorldsPage from "../pages/fan/WorldsPage";
-import CreatorStudio from "../pages/creator/CreatorStudio";
-import CreatorApplicationPage from "../pages/creator/CreatorApplicationPage";
-import CreatorVerificationPage from "../pages/creator/CreatorVerificationPage";
-import ContentManager from "../pages/creator/ContentManager";
-import ContentComposerPage from "../pages/creator/ContentComposerPage";
-import ContentDetailPage from "../pages/creator/ContentDetailPage";
-import EarningsPage from "../pages/creator/EarningsPage";
-import AdminDashboard from "../pages/admin/AdminDashboard";
-import AdminAnalyticsPage from "../pages/admin/AdminAnalyticsPage";
-import UserManagement from "../pages/admin/UserManagement";
-import AdminProfilePage from "../pages/admin/AdminProfilePage";
-import CreatorVerificationQueue from "../pages/admin/CreatorVerificationQueue";
-import CreatorVerificationDetail from "../pages/admin/SimpleCreatorVerificationDetail";
 import { ROLES } from "../utils/constants";
-import ProfileSettingsPage from "../pages/settings/ProfileSettingsPage";
-import DirectAccessSettingsPage from "../pages/settings/DirectAccessSettingsPage";
-import SettingsPage from "../pages/settings/SettingsPage";
-import CreatorSettingsPage from "../pages/creator/CreatorSettingsPage";
-import CreatorSecurityPage from "../pages/creator/CreatorSecurityPage";
-import AccountSecurityPage from "../pages/settings/AccountSecurityPage";
-import UnifiedProfilePage from "../pages/social/UnifiedProfilePage";
-import ProfileStatusPage from "../pages/social/ProfileStatusPage";
-import DreamEditorPage from "../pages/social/DreamEditorPage";
 import { useAuth } from "../hooks/useAuth";
-import CreateHubPage from "../pages/create/CreateHubPage";
-import SeenComposerPage from "../pages/creator/SeenComposerPage";
-import SeenFeedPage from "../pages/social/SeenFeedPage";
-import SeenReaderPage from "../pages/social/SeenReaderPage";
-import ShareSeenAsStoryPage from "../pages/social/ShareSeenAsStoryPage";
-import PublicationModeration from "../pages/admin/PublicationModeration";
-import PublicationModerationDetail from "../pages/admin/PublicationModerationDetail";
-import WelcomeEmailSettingsPage from "../pages/admin/WelcomeEmailSettingsPage";
-import WorldComposerPage from "../pages/creator/WorldComposerPage";
-import WorldReaderPage from "../pages/social/WorldReaderPage";
-import OrbitPage from "../pages/social/OrbitPage";
-import WalletPage from "../pages/social/WalletPage";
-import WalletLedgerPage from "../pages/social/WalletLedgerPage";
-import WithdrawPage from "../pages/social/WithdrawPage";
-import IncomeToCoinsPage from "../pages/social/IncomeToCoinsPage";
-import MyExperiencesPage from "../pages/social/MyExperiencesPage";
-import PurchasesPage from "../pages/social/PurchasesPage";
-import MembershipsPage from "../pages/social/MembershipsPage";
-import FinancialAdminPage from "../pages/admin/FinancialAdminPage";
-import SavedPage from "../pages/social/SavedPage";
-import ArchivePage from "../pages/social/ArchivePage";
-import AdminReportListPage from "../pages/admin/AdminReportListPage";
-import AdminReportDetailPage from "../pages/admin/AdminReportDetailPage";
-import EntityDetailPage from "../pages/social/EntityDetailPage";
-import SearchPage from "../pages/social/SearchPage";
-import DiscoverPage from "../pages/social/DiscoverPage";
-import PostDetailPage from "../pages/social/PostDetailPage";
-import OnboardingPage from "../pages/onboarding/OnboardingPage";
-import WelcomePage from "../pages/onboarding/WelcomePage";
-import AccountSettingsPage from "../pages/settings/AccountSettingsPage";
-import PrivacySettingsPage from "../pages/settings/PrivacySettingsPage";
-import NotificationSettingsPage from "../pages/settings/NotificationSettingsPage";
-import ContentPreferencesPage from "../pages/settings/ContentPreferencesPage";
-import SupportPage from "../pages/settings/SupportPage";
-import GiftManagementPage from "../pages/admin/GiftManagementPage";
-import VerifiedCreatorPage from "../pages/creator/VerifiedCreatorPage";
-import VerifiedCreatorManagementPage from "../pages/admin/VerifiedCreatorManagementPage";
 import { defaultDestinationFor } from "../utils/socialAccess";
+import Loader from "../components/common/Loader";
+
+const pageModules = import.meta.glob("../pages/**/*.jsx");
+const lazyPage = (path) => lazy(pageModules[`${path}.jsx`]);
+const ExplorePage = lazyPage("../pages/public/ExplorePage");
+const LoginPage = lazyPage("../pages/auth/LoginPage");
+const RegisterPage = lazyPage("../pages/auth/RegisterPage");
+const ForgotPasswordPage = lazyPage("../pages/auth/ForgotPasswordPage");
+const FanHomePage = lazyPage("../pages/fan/FanHomePage");
+const MessagesPage = lazyPage("../pages/fan/MessagesPage");
+const ActivityPage = lazyPage("../pages/fan/ActivityPage");
+const WorldsPage = lazyPage("../pages/fan/WorldsPage");
+const CreatorStudio = lazyPage("../pages/creator/CreatorStudio");
+const CreatorApplicationPage = lazyPage("../pages/creator/CreatorApplicationPage");
+const CreatorVerificationPage = lazyPage("../pages/creator/CreatorVerificationPage");
+const ContentManager = lazyPage("../pages/creator/ContentManager");
+const ContentComposerPage = lazyPage("../pages/creator/ContentComposerPage");
+const ContentDetailPage = lazyPage("../pages/creator/ContentDetailPage");
+const EarningsPage = lazyPage("../pages/creator/EarningsPage");
+const AdminDashboard = lazyPage("../pages/admin/AdminDashboard");
+const AdminAnalyticsPage = lazyPage("../pages/admin/AdminAnalyticsPage");
+const UserManagement = lazyPage("../pages/admin/UserManagement");
+const AdminProfilePage = lazyPage("../pages/admin/AdminProfilePage");
+const CreatorVerificationQueue = lazyPage("../pages/admin/CreatorVerificationQueue");
+const CreatorVerificationDetail = lazyPage("../pages/admin/SimpleCreatorVerificationDetail");
+const ProfileSettingsPage = lazyPage("../pages/settings/ProfileSettingsPage");
+const DirectAccessSettingsPage = lazyPage("../pages/settings/DirectAccessSettingsPage");
+const SettingsPage = lazyPage("../pages/settings/SettingsPage");
+const CreatorSettingsPage = lazyPage("../pages/creator/CreatorSettingsPage");
+const CreatorSecurityPage = lazyPage("../pages/creator/CreatorSecurityPage");
+const AccountSecurityPage = lazyPage("../pages/settings/AccountSecurityPage");
+const UnifiedProfilePage = lazyPage("../pages/social/UnifiedProfilePage");
+const ProfileStatusPage = lazyPage("../pages/social/ProfileStatusPage");
+const DreamEditorPage = lazyPage("../pages/social/DreamEditorPage");
+const CreateHubPage = lazyPage("../pages/create/CreateHubPage");
+const SeenComposerPage = lazyPage("../pages/creator/SeenComposerPage");
+const SeenFeedPage = lazyPage("../pages/social/SeenFeedPage");
+const SeenReaderPage = lazyPage("../pages/social/SeenReaderPage");
+const ShareSeenAsStoryPage = lazyPage("../pages/social/ShareSeenAsStoryPage");
+const PublicationModeration = lazyPage("../pages/admin/PublicationModeration");
+const PublicationModerationDetail = lazyPage("../pages/admin/PublicationModerationDetail");
+const WelcomeEmailSettingsPage = lazyPage("../pages/admin/WelcomeEmailSettingsPage");
+const WorldComposerPage = lazyPage("../pages/creator/WorldComposerPage");
+const WorldReaderPage = lazyPage("../pages/social/WorldReaderPage");
+const OrbitPage = lazyPage("../pages/social/OrbitPage");
+const WalletPage = lazyPage("../pages/social/WalletPage");
+const WalletLedgerPage = lazyPage("../pages/social/WalletLedgerPage");
+const WithdrawPage = lazyPage("../pages/social/WithdrawPage");
+const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
+const MyExperiencesPage = lazyPage("../pages/social/MyExperiencesPage");
+const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
+const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
+const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
+const SavedPage = lazyPage("../pages/social/SavedPage");
+const ArchivePage = lazyPage("../pages/social/ArchivePage");
+const AdminReportListPage = lazyPage("../pages/admin/AdminReportListPage");
+const AdminReportDetailPage = lazyPage("../pages/admin/AdminReportDetailPage");
+const EntityDetailPage = lazyPage("../pages/social/EntityDetailPage");
+const SearchPage = lazyPage("../pages/social/SearchPage");
+const DiscoverPage = lazyPage("../pages/social/DiscoverPage");
+const PostDetailPage = lazyPage("../pages/social/PostDetailPage");
+const OnboardingPage = lazyPage("../pages/onboarding/OnboardingPage");
+const WelcomePage = lazyPage("../pages/onboarding/WelcomePage");
+const AccountSettingsPage = lazyPage("../pages/settings/AccountSettingsPage");
+const PrivacySettingsPage = lazyPage("../pages/settings/PrivacySettingsPage");
+const NotificationSettingsPage = lazyPage("../pages/settings/NotificationSettingsPage");
+const ContentPreferencesPage = lazyPage("../pages/settings/ContentPreferencesPage");
+const SupportPage = lazyPage("../pages/settings/SupportPage");
+const GiftManagementPage = lazyPage("../pages/admin/GiftManagementPage");
+const VerifiedCreatorPage = lazyPage("../pages/creator/VerifiedCreatorPage");
+const VerifiedCreatorManagementPage = lazyPage("../pages/admin/VerifiedCreatorManagementPage");
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -106,7 +111,7 @@ function WorldRoute() {
 }
 
 function AppRoutes() {
-  return <Routes>
+  return <Suspense fallback={<div className="grid min-h-[50vh] place-items-center"><Loader label="Loading page..." /></div>}><Routes>
     <Route element={<MainLayout />}>
       <Route index element={<RootRedirect />} />
       <Route path="/explore" element={<ExplorePage />} />
@@ -221,8 +226,8 @@ function AppRoutes() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/admin/fans" element={<UserManagement fixedRole="fan" />} />
-          <Route path="/admin/creators" element={<UserManagement fixedRole="creator" />} />
+          <Route path="/admin/fans" element={<Navigate replace to="/admin/users" />} />
+          <Route path="/admin/creators" element={<Navigate replace to="/admin/users" />} />
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
           <Route path="/admin/verified-creators" element={<VerifiedCreatorManagementPage />} />
@@ -252,7 +257,7 @@ function AppRoutes() {
     <Route path="/planet/:id" element={<WorldRoute />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />
-  </Routes>;
+  </Routes></Suspense>;
 }
 
 export default AppRoutes;

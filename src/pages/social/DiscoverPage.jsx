@@ -6,6 +6,7 @@ import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSect
 import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import StoryViewer from "../../components/stories/StoryViewer";
+import ContentEmptyState from "../../components/shared/ContentEmptyState";
 import { useAuth } from "../../hooks/useAuth";
 import {
   useDiscoverFollowMutation,
@@ -51,17 +52,7 @@ function DiscoverSkeleton() {
 }
 
 function DiscoverEmpty({ onRefresh }) {
-  return (
-    <section className="discover-empty-panel" aria-live="polite">
-      <span aria-hidden="true" />
-      <h1>No recommendations</h1>
-      <p>Refresh when more public creators are available for your preferences.</p>
-      <button onClick={onRefresh} type="button">
-        <FiRefreshCw aria-hidden="true" />
-        Refresh
-      </button>
-    </section>
-  );
+  return <ContentEmptyState message="You’re caught up for now. Refresh suggestions or search for someone you already know." primaryAction={{ label: "Refresh suggestions", onClick: onRefresh }} secondaryAction={{ label: "Search people", to: "/search?from=discover" }} title="No recommendations yet" variant="discover" />;
 }
 
 function DiscoverError({ error, onRetry }) {
@@ -84,7 +75,7 @@ function DiscoverPage() {
   const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
   const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
   const viewerId = user?.id || user?._id || "";
-  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8 }), [activeFilter, viewerId]);
+  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, view: "slides" }), [activeFilter, viewerId]);
   const discoverQuery = useDiscoverSlidesQuery(queryParams);
   const followMutation = useDiscoverFollowMutation(queryParams);
   const sentinelRef = useRef(null);
@@ -251,10 +242,10 @@ function DiscoverPage() {
             <div className="discover-orb-toolbar">
               <span />
               <div>
-                <Link aria-label="Search" className="discover-orb-icon" to="/search">
+                <Link aria-label="Search" className="discover-orb-icon" to="/search?from=discover">
                   <FiSearch aria-hidden="true" />
                 </Link>
-                <Link aria-label="Find people" className="discover-orb-icon" to="/search">
+                <Link aria-label="Find people" className="discover-orb-icon" to="/search?from=discover">
                   <FiUserPlus aria-hidden="true" />
                 </Link>
               </div>

@@ -2,8 +2,9 @@ import axiosInstance from "../api/axiosInstance";
 
 export const adminService = {
   getDashboard: () => axiosInstance.get("/admin/dashboard"),
-  getUsers: () => axiosInstance.get("/admin/users"),
+  getUsers: (params = {}) => axiosInstance.get("/admin/users", { params }),
   updateUserStatus: (userId, status) => axiosInstance.patch(`/admin/users/${userId}/status`, { status }),
+  bulkUpdateUsers: (payload) => axiosInstance.patch("/admin/users/bulk", payload),
   getMessageReports: (params) => axiosInstance.get("/admin/message-reports", { params }),
   getReportedMessageUsers: () => axiosInstance.get("/admin/message-report-users"),
   getReportedMessageUser: (userId) => axiosInstance.get(`/admin/message-report-users/${userId}`),
