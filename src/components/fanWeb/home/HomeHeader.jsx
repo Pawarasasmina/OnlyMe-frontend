@@ -1,3 +1,4 @@
+import { canLookupLocation, geolocationErrorMessage } from "../../../utils/locationLookup";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiChevronDown, FiGlobe, FiMapPin, FiNavigation, FiSearch } from "react-icons/fi";
@@ -74,7 +75,7 @@ function HomeHeader({ activityCount = 0, countryCode = "", location = "", locati
   useEffect(() => {
     if (!open) return undefined;
     const query = search.trim();
-    if (query.length < 2) {
+    if (!canLookupLocation(query, position)) {
       setResults([]);
       setLoading(false);
       setSearchError("");
@@ -105,14 +106,18 @@ function HomeHeader({ activityCount = 0, countryCode = "", location = "", locati
       setSearchError("Location access is not supported by this browser.");
       return;
     }
+    setSearchError("");
+    setResults([]);
     setPositioning(true);
     navigator.geolocation.getCurrentPosition(({ coords }) => {
-      setPosition({ latitude: coords.latitude, longitude: coords.longitude });
+      setSearch("");
+        setLoading(true);
+        setPosition({ latitude: coords.latitude, longitude: coords.longitude });
       setPositioning(false);
-      setSearch((value) => value || "near me");
-    }, () => {
+      setSearchError("");
+    }, (error) => {
       setPositioning(false);
-      setSearchError("Allow location access to find your current city.");
+      setSearchError(geolocationErrorMessage(error));
     }, { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 });
   };
 
@@ -166,14 +171,14 @@ function HomeHeader({ activityCount = 0, countryCode = "", location = "", locati
                 <FiGlobe aria-hidden="true" />
                 Worldwide
               </button>
-              <button className={position ? "is-current" : ""} disabled={positioning} onClick={useCurrentArea} type="button"><FiNavigation aria-hidden="true" />{positioning ? "Finding your area…" : "Use my current area"}</button>
+              <button className={position ? "is-current" : ""} disabled={positioning || (loading && !search.trim())} onClick={useCurrentArea} type="button"><FiNavigation aria-hidden="true" />{positioning || (loading && !search.trim()) ? "Finding your area..." : "Use my current area"}</button>
             </div>
             <div className="home-location-results">
               {loading ? <p>Searching locations…</p> : null}
               {!loading && searchError ? <p role="alert">{searchError}</p> : null}
-              {!loading && !searchError && search.trim().length < 2 ? suggestedLocations.map((item) => <button key={item.label} onClick={() => chooseLocation(item.label, item.code)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong><small>{item.label.includes(",") ? item.label.split(",").slice(1).join(",").trim() : "City or country"}</small></span></button>) : null}
+              {!positioning && !position && !loading && !searchError && search.trim().length < 2 ? suggestedLocations.map((item) => <button key={item.label} onClick={() => chooseLocation(item.label, item.code)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong><small>{item.label.includes(",") ? item.label.split(",").slice(1).join(",").trim() : "City or country"}</small></span></button>) : null}
               {!loading && !searchError ? results.map((item) => <button aria-pressed={location === item.label} key={`${item.code}-${item.label}`} onClick={() => chooseLocation(item.label, item.code)} type="button"><span>{item.code || <FiMapPin />}</span><span><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span></button>) : null}
-              {!loading && !searchError && search.trim().length >= 2 && !results.length ? <p>No locations found.</p> : null}
+              {!positioning && !loading && !searchError && canLookupLocation(search, position) && !results.length ? <p>No locations found.</p> : null}
             </div>
             </section>
           </div>

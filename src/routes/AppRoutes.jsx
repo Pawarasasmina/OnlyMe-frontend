@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import CreatorAppShell from "../layouts/CreatorAppShell";
@@ -111,6 +111,12 @@ function WorldRoute() {
   return <WorldReaderPage key={id} />;
 }
 
+function WallRoute() {
+  const [params] = useSearchParams();
+  const post = params.get("post");
+  return post ? <Navigate replace to={`/posts/${encodeURIComponent(post)}`} /> : <FanHomePage />;
+}
+
 function AppRoutes() {
   return <Suspense fallback={<div className="grid min-h-[50vh] place-items-center"><Loader label="Loading page..." /></div>}><Routes>
     <Route element={<MainLayout />}>
@@ -132,7 +138,8 @@ function AppRoutes() {
       <Route path="/onboarding/:step" element={<OnboardingPage />} />
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
-          <Route path="/wall" element={<FanHomePage />} />
+          <Route path="/wall" element={<WallRoute />} />
+          <Route path="/wall/notes/:id" element={<PostDetailPage legacy />} />
           <Route path="/home" element={<Navigate replace to="/wall" />} />
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/discover" element={<DiscoverPage />} />

@@ -1,5 +1,7 @@
+import { transcriptAlreadyShown } from "../../../utils/wallVoiceDisplay";
+import { canLookupLocation, geolocationErrorMessage } from "../../../utils/locationLookup";
 import { useEffect, useRef, useState } from "react";
-import { FiMapPin, FiMic, FiNavigation, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
+import { FiMapPin, FiMic, FiNavigation, FiImage, FiSearch, FiTrash2, FiX, FiArrowLeft, FiChevronRight, FiTag, FiGrid, FiGlobe, FiCheck, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiCompass, FiShoppingBag, FiCoffee, FiBookOpen, FiUsers, FiStar, FiZap } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
 import { useAuth } from "../../../hooks/useAuth";
@@ -9,7 +11,6 @@ import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import WallVoiceRecorder from "../../voice/WallVoiceRecorder";
 import { formatVoiceTime } from "../../../hooks/useVoiceRecorder";
 import {
-  POST_CONTEXTS,
   POST_IMAGE_TYPES,
   POST_MAX_IMAGE_SIZE,
   POST_MAX_IMAGES,
@@ -18,20 +19,26 @@ import {
 import ProfileImageCropper from "../../profile/ProfileImageCropper";
 import { searchService } from "../../../services/searchService";
 
-const noteContextOptions = [
-  { icon: "⚡", label: "Right now", value: "Right now" },
-  { icon: "☕", label: "Coffee", value: "Coffee" },
-  { icon: "SOS", label: "Need help", value: "Need help" },
-  { icon: "📍", label: "Place", value: "" },
-  { icon: "🍽️", label: "Restaurant", value: "Restaurant" },
-  { icon: "📚", label: "Book", value: "Book" },
-  { icon: "🎬", label: "Movie", value: "Things to do" },
-  { icon: "✈️", label: "Travel", value: "Travel" },
-  { icon: "💼", label: "Business", value: "Business" },
-  { icon: "💪", label: "Fitness", value: "Fitness" },
-  { icon: "🌿", label: "Wellness", value: "Other" },
-  { icon: "✨", label: "Lifestyle", value: "Other" },
-  { icon: "💄", label: "Beauty", value: "Other" },
+const POST_TYPES = [
+  { value: "Looking for", context: "Looking for", icon: FiLink, color: "blue", description: "Find people, places or recommendations" },
+  { value: "Offering", context: "Buy/Sell", icon: FiBriefcase, color: "amber", description: "Share what you offer: services, items or help" },
+  { value: "Need Help", context: "Need help", icon: FiHeart, color: "rose", description: "Ask your community for a helping hand" },
+  { value: "Question", context: "Advice", icon: FiHelpCircle, color: "purple", description: "Get advice from the community" },
+  { value: "Recommendation", context: "Recommendation", icon: FiStar, color: "green", description: "Recommend a place, service or person" },
+  { value: "Right Now", context: "Right now", icon: FiZap, color: "amber", description: "Share something useful happening nearby" },
+  { value: "Event", context: "Events", icon: FiCalendar, color: "rose", description: "Create or share a community event" },
+];
+const POST_TOPICS = [
+  { value: "Buy / Sell", icon: FiShoppingBag, color: "rose" },
+  { value: "Places", icon: FiMapPin, color: "blue" },
+  { value: "Food", icon: FiCoffee, color: "amber" },
+  { value: "Travel", icon: FiCompass, color: "blue" },
+  { value: "Work", icon: FiBriefcase, color: "amber" },
+  { value: "Wellness", icon: FiHeart, color: "green" },
+  { value: "Learning", icon: FiBookOpen, color: "purple" },
+  { value: "Lifestyle", icon: FiStar, color: "amber" },
+  { value: "Services", icon: FiTag, color: "blue" },
+  { value: "Community", icon: FiUsers, color: "blue" },
 ];
 
 function LocationPicker({ onClose, onSelect, selected }) {
@@ -59,7 +66,7 @@ function LocationPicker({ onClose, onSelect, selected }) {
 
   useEffect(() => {
     const query = search.trim();
-    if (query.length < 2) {
+    if (!canLookupLocation(query, position)) {
       setResults([]);
       setLoading(false);
       setSearchError("");
@@ -97,17 +104,20 @@ function LocationPicker({ onClose, onSelect, selected }) {
       setSearchError("Location access is not supported by this browser.");
       return;
     }
+    setResults([]);
     setPositioning(true);
     setSearchError("");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        setSearch("");
+        setLoading(true);
         setPosition({ latitude: coords.latitude, longitude: coords.longitude });
         setPositioning(false);
         inputRef.current?.focus();
       },
-      () => {
+      (error) => {
         setPositioning(false);
-        setSearchError("Allow location access to prioritize places near you.");
+        setSearchError(geolocationErrorMessage(error));
       },
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 },
     );
@@ -123,20 +133,20 @@ function LocationPicker({ onClose, onSelect, selected }) {
           <span className="sr-only">Search a country or city</span>
           <input onChange={(event) => setSearch(event.target.value)} placeholder="Search a country or city" ref={inputRef} value={search} />
         </label>
-        <button className={`home-note-location-nearby ${position ? "is-active" : ""}`} disabled={positioning} onClick={useCurrentArea} type="button">
-          <FiNavigation aria-hidden="true" />{positioning ? "Finding your area…" : position ? "Results prioritized near you" : "Use my current area"}
+        <button className={`home-note-location-nearby ${position ? "is-active" : ""}`} disabled={positioning || (loading && !search.trim())} onClick={useCurrentArea} type="button">
+          <FiNavigation aria-hidden="true" />{positioning || (loading && !search.trim()) ? "Finding your area..." : position ? "Refresh current area" : "Use my current area"}
         </button>
         {selected ? <button className="home-note-location-clear" onClick={() => { onSelect(""); onClose(); }} type="button">Remove location</button> : null}
         <div className="home-note-location-results">
           {loading ? <p aria-live="polite">Searching locations…</p> : null}
           {!loading && searchError ? <p role="alert">{searchError}</p> : null}
-          {!loading && !searchError && search.trim().length < 2 ? <p>Type at least 2 letters to find any city, country, address, landmark, or venue.</p> : null}
+          {!positioning && !loading && !searchError && !position && search.trim().length < 2 ? <p>Type at least 2 letters to find any city, country, address, landmark, or venue.</p> : null}
           {!loading && results.map((item) => (
             <button aria-pressed={selected === item.label} className={selected === item.label ? "is-selected" : ""} key={item.code + item.label} onClick={() => { onSelect(item.label); onClose(); }} type="button">
               <span>{item.code || <FiMapPin aria-hidden="true" />}</span><span className="home-note-location-result-copy"><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>
             </button>
           ))}
-          {!loading && !searchError && search.trim().length >= 2 && !results.length ? <p>No locations found.</p> : null}
+          {!positioning && !loading && !searchError && canLookupLocation(search, position) && !results.length ? <p>No locations found.</p> : null}
         </div>
       </section>
     </div>
@@ -168,7 +178,9 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [text, setText] = useState("");
-  const [selectedContext, setSelectedContext] = useState(noteContextOptions[0]);
+  const [selectedType, setSelectedType] = useState(POST_TYPES[0]);
+  const [topic, setTopic] = useState("");
+  const [screen, setScreen] = useState("compose");
   const [location, setLocation] = useState("");
   const [files, setFiles] = useState([]);
   const [voiceAttachment, setVoiceAttachment] = useState(null);
@@ -178,7 +190,7 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
   const canPostToHome = canCreateFeedPost(user);
   const createMutation = useCreateFeedPost();
   const trimmedText = text.trim();
-  const validContextValue = POST_CONTEXTS.includes(selectedContext?.value) ? selectedContext.value : "";
+  const validContextValue = selectedType.context;
   const canPublish = canPostToHome && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
   const hasDraft = Boolean(trimmedText || location.trim() || files.length || voiceAttachment);
 
@@ -202,11 +214,20 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
     window.setTimeout(() => textRef.current?.focus(), 80);
   }, [onComposeOpened, openSignal]);
 
+  useEffect(() => {
+    if (!composerOpen) return;
+    const center = textRef.current?.closest(".social-center-scroll");
+    center?.scrollTo({ top: 0 });
+    if (window.innerWidth <= 880) window.scrollTo({ top: 0 });
+  }, [composerOpen]);
+
   const resetComposer = () => {
     files.forEach((item) => URL.revokeObjectURL(item.url));
     if (voiceAttachment?.url) URL.revokeObjectURL(voiceAttachment.url);
     setText("");
-    setSelectedContext(noteContextOptions[0]);
+    setSelectedType(POST_TYPES[0]);
+    setTopic("");
+    setScreen("compose");
     setLocation("");
     setFiles([]);
     setVoiceAttachment(null);
@@ -276,14 +297,6 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
       id: `${recording.file.name}-${recording.file.size}-${recording.file.lastModified}`,
       url,
     });
-    const transcript = recording.transcript?.trim();
-    if (transcript) {
-      setText((current) => {
-        if (!current.trim()) return transcript.slice(0, POST_TEXT_MAX_LENGTH);
-        const next = `${current.trimEnd()}\n\n${transcript}`;
-        return next.slice(0, POST_TEXT_MAX_LENGTH);
-      });
-    }
     setError("");
   };
 
@@ -303,6 +316,8 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
     const formData = new FormData();
     formData.append("text", trimmedText);
     formData.append("context", validContextValue);
+    formData.append("postType", selectedType.value);
+    formData.append("topic", topic);
     formData.append("location", location.trim());
     formData.append("entityRefs", "[]");
     files.forEach((item) => formData.append("media", item.file));
@@ -340,21 +355,39 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
     );
   };
 
-  const locationLabel = location.trim() || "Location";
 
   return (
-    <>
+    <div className={`wall-composer-host ${composerOpen ? "is-open" : ""}`}>
       {cropQueue[0] ? <ProfileImageCropper kind="feed" onCancel={skipCrop} onSave={finishCrop} source={cropQueue[0].url} /> : null}
       {composerOpen ? (
         <section
           aria-label="Create a wall note"
-          className="home-note-composer"
+          className="home-note-composer wall-create-screen"
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
             event.preventDefault();
             addFiles(event.dataTransfer.files || []);
           }}
         >
+          <header className="wall-create-header">
+            {screen !== "compose" ? <button aria-label="Back to post" onClick={() => setScreen("compose")} type="button"><FiArrowLeft /></button> : null}
+            <h1>{screen === "type" ? "Select type" : screen === "topic" ? "Select topic" : screen === "visibility" ? "Visibility" : "Create a post"}</h1>
+            {screen === "compose" ? <button aria-label="Close create post" disabled={createMutation.isPending} onClick={closeComposer} type="button"><FiX /></button> : null}
+          </header>
+          {screen === "type" || screen === "topic" ? (
+            <div className={`wall-create-options ${screen === "type" ? "is-types" : ""}`} aria-label={screen === "type" ? "Post type" : "Post topic"}>
+              {(screen === "type" ? POST_TYPES : POST_TOPICS).map(({ value, description, icon: Icon, color }) => {
+                const selected = screen === "type" ? selectedType.value === value : topic === value;
+                return <button aria-pressed={selected} className={selected ? "is-selected" : ""} key={value} onClick={() => { if (screen === "type") setSelectedType(POST_TYPES.find((item) => item.value === value)); else setTopic(value); setScreen("compose"); }} type="button">
+                  <span className={`wall-create-option-icon is-${color}`}><Icon /></span>
+                  <span className="wall-create-option-copy"><strong>{value}</strong>{description ? <small>{description}</small> : null}</span>
+                  <span className={`wall-create-radio ${selected ? "is-selected" : ""}`}>{selected ? <FiCheck /> : null}</span>
+                </button>;
+              })}
+            </div>
+          ) : screen === "visibility" ? (
+            <div className="wall-create-options"><button aria-pressed="true" onClick={() => setScreen("compose")} type="button"><span className="wall-create-option-icon is-blue"><FiGlobe /></span><span className="wall-create-option-copy"><strong>Public</strong><small>Visible to the community on Wall</small></span><span className="wall-create-radio is-selected"><FiCheck /></span></button></div>
+          ) : <div className="wall-create-body">
           <textarea
             aria-label="Note text"
             maxLength={POST_TEXT_MAX_LENGTH}
@@ -362,25 +395,14 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
               setText(event.target.value);
               setError("");
             }}
-            placeholder="Share what you've seen..."
+            placeholder="What do you want to share?"
             ref={textRef}
             value={text}
           />
-          <div className="home-note-chip-row" aria-label="Note context">
-            {noteContextOptions.map((option) => (
-              <button
-                aria-pressed={option.label === "Place" ? Boolean(location) : selectedContext.label === option.label}
-                className={(option.label === "Place" ? Boolean(location) : selectedContext.label === option.label) ? "is-selected" : ""}
-                key={option.label}
-                onClick={() => {
-                  if (option.label === "Place") setLocationPickerOpen(true);
-                  else setSelectedContext(option);
-                }}
-                type="button"
-              >
-                <span aria-hidden="true">{option.icon}</span>{option.label}
-              </button>
-            ))}
+          <div className="wall-create-attachments home-note-tools">
+            <button aria-label="Attach image" onClick={() => fileInputRef.current?.click()} type="button"><FiImage /></button>
+            <button aria-label={voiceAttachment ? "Replace voice note" : "Record voice note"} className={voiceAttachment ? "is-selected" : ""} onClick={() => setVoiceRecorderOpen(true)} type="button"><FiMic /></button>
+            <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => { addFiles(event.target.files || []); event.target.value = ""; }} ref={fileInputRef} type="file" />
           </div>
 
           {files.length ? (
@@ -404,52 +426,22 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
                 </div>
               </div>
               <VoiceMessageBubble audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label="Voice note" />
-              {voiceAttachment.transcript || voiceAttachment.translations?.length ? (
-                <div className="home-note-voice-copy">
-                  {voiceAttachment.transcript ? (
-                    <>
-                      <span>Transcript</span>
-                      <p>{voiceAttachment.transcript}</p>
-                    </>
-                  ) : null}
-                  {voiceAttachment.translations?.length ? (
-                    <>
-                      <span>Translations</span>
-                      <div className="home-note-voice-translations">
-                        {voiceAttachment.translations.map((translation) => (
-                          <p key={translation.language}>
-                            <b>{translation.languageName || translation.language}</b>
-                            <span>{translation.text}</span>
-                          </p>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
+              {voiceAttachment.transcript && !transcriptAlreadyShown(text, voiceAttachment.transcript) ? <div className="wall-composer-voice-text"><details className="wall-composer-transcript"><summary>View transcript</summary><p dir="auto">{voiceAttachment.transcript}</p></details><button className="wall-transcript-toggle" onClick={() => setText((current) => [current.trim(), voiceAttachment.transcript.trim()].filter(Boolean).join("\n\n").slice(0, POST_TEXT_MAX_LENGTH))} type="button">Use as post text</button></div> : null}
               <button aria-label="Remove voice note" onClick={removeVoiceNote} type="button"><FiTrash2 /></button>
             </div>
           ) : null}
 
-          <div className="home-note-footer">
-            <div className="home-note-tools">
-              <button aria-label="Attach image" onClick={() => fileInputRef.current?.click()} type="button"><FiPlus /></button>
-              <button aria-label={voiceAttachment ? "Replace voice note" : "Record voice note"} className={voiceAttachment ? "is-selected" : ""} onClick={() => setVoiceRecorderOpen(true)} type="button"><FiMic /></button>
-              <button
-                className="home-note-location"
-                onClick={() => setLocationPickerOpen(true)}
-                type="button"
-              >
-                <FiMapPin />{locationLabel}
-              </button>
-              <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => { addFiles(event.target.files || []); event.target.value = ""; }} ref={fileInputRef} type="file" />
-            </div>
-            <div className="home-note-actions">
-              {error ? <span role="status">{error}</span> : uploadLabel ? <span role="status">{uploadLabel}</span> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
-              <button disabled={createMutation.isPending} onClick={closeComposer} type="button">Cancel</button>
-              <button disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? "Publishing" : "Publish"}</button>
-            </div>
+          <div className="wall-create-fields">
+            <button onClick={() => setScreen("type")} type="button"><FiTag /><span>Type</span><strong>{selectedType.value}</strong><FiChevronRight /></button>
+            <button onClick={() => setScreen("topic")} type="button"><FiGrid /><span>Topic</span><strong className={!topic ? "is-placeholder" : ""}>{topic || "Choose"}</strong><FiChevronRight /></button>
+            <button onClick={() => setLocationPickerOpen(true)} type="button"><FiMapPin /><span>Location</span><strong className={!location ? "is-placeholder" : ""}>{location || "Choose location"}</strong><FiChevronRight /></button>
+            <button onClick={() => setScreen("visibility")} type="button"><FiGlobe /><span>Visibility</span><strong>Public</strong><FiChevronRight /></button>
           </div>
+          <div className="wall-create-submit">
+            {error ? <p role="alert">{error}</p> : uploadLabel ? <p role="status">{uploadLabel}</p> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
+            <button disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? "Posting..." : "Post"}</button>
+          </div>
+          </div>}
         </section>
       ) : (
         <div className="home-composer-trigger">
@@ -459,13 +451,13 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
             type="button"
           >
             <FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} />
-            <span className="truncate">Share what you&apos;ve seen...</span>
+            <span className="truncate">Ask, offer, or share with your community...</span>
           </button>
         </div>
       )}
       {locationPickerOpen ? <LocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={setLocation} selected={location} /> : null}
       <WallVoiceRecorder isOpen={voiceRecorderOpen} onClose={() => setVoiceRecorderOpen(false)} onUse={attachVoiceNote} />
-    </>
+    </div>
   );
 }
 

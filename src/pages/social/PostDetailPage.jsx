@@ -1,3 +1,5 @@
+import LegacyWallNoteDetail from "../../components/fanWeb/home/LegacyWallNoteDetail";
+import { wallService } from "../../services/wallService";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FiArrowLeft } from "react-icons/fi";
@@ -6,11 +8,18 @@ import FanCard from "../../components/fanWeb/shared/FanCard";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { postService } from "../../services/postService";
 
-function PostDetailPage() {
+function PostDetailPage({ legacy = false }) {
   const { id } = useParams();
   const postQuery = useQuery({
-    queryKey: ["feed-posts", "detail", id],
-    queryFn: () => postService.getPost(id),
+    queryKey: [legacy ? "legacy-wall-post" : "feed-posts", "detail", id],
+    queryFn: async () => {
+      if (legacy) return { ...await wallService.get(id), legacy: true };
+      try { return await postService.getPost(id); }
+      catch (error) {
+        if (error?.response?.status !== 404) throw error;
+        return { ...await wallService.get(id), legacy: true };
+      }
+    },
     enabled: Boolean(id),
     retry: false,
   });
@@ -23,7 +32,7 @@ function PostDetailPage() {
     return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft /> Back to Wall</Link><FanCard className="text-center"><h1 className="text-lg font-bold">Post not found</h1><p className="mt-2 text-sm text-atseen-muted">This post may have been removed or is unavailable.</p></FanCard></div>;
   }
 
-  return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft /> Back to Wall</Link><FeedPost post={postQuery.data} /></div>;
+  return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft /> Back to Wall</Link>{postQuery.data.legacy ? <LegacyWallNoteDetail post={postQuery.data} /> : <FeedPost post={postQuery.data} />}</div>;
 }
 
 export default PostDetailPage;

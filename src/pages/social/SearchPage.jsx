@@ -186,7 +186,8 @@ function SearchPage() {
   }
 
   return (
-    <div className="min-h-[calc(100dvh-7rem)] pb-10">
+    <div className="search-page min-w-0 min-h-[calc(100dvh-7rem)] pb-10">
+      <div className="search-page-header">
       <SearchInput
         activeSuggestionId=""
         hasFilters={Boolean(current.category || current.location || current.sort !== "relevant")}
@@ -211,6 +212,7 @@ function SearchPage() {
         onChange={(type) => updateParam("type", type)}
         value={searchType}
       />
+      </div>
       {searchQuery.isFetching && !searchQuery.isLoading ? <p className="mb-2 text-xs text-atseen-dim" role="status">Updating results...</p> : null}
       <ResultCountAnnouncer count={totalCount} query={normalizedDebounced || "current filters"} />
       {renderResults()}

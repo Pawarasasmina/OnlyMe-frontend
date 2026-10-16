@@ -17,21 +17,21 @@ const SearchInput = forwardRef(function SearchInput({
   onChange,
 }, ref) {
   return (
-    <form className="sticky top-[57px] z-20 -mx-4 bg-atseen-bg/95 px-4 pb-6 pt-2 backdrop-blur md:top-0 md:-mx-6 md:px-6 md:pt-0" onSubmit={onSubmit}>
-      <div className="flex items-center gap-3">
+    <form className="search-input-form min-w-0 w-full" onSubmit={onSubmit}>
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         {showBack ? (
           <button aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-[22px] text-white transition hover:bg-white/[0.11]" onClick={onBack} type="button">
             <FiArrowLeft aria-hidden="true" strokeWidth={2.4} />
           </button>
         ) : null}
-        <label className="relative min-w-0 flex-1">
+        <label className="relative block min-w-0 flex-1">
           <span className="sr-only">Search Atseen</span>
           <input
             aria-activedescendant={activeSuggestionId || undefined}
             aria-autocomplete="list"
             aria-controls="search-suggestions"
             aria-expanded={suggestionsOpen}
-            className="h-[49px] w-full rounded-[14px] border border-[#303744] bg-[#11151b] px-4 pr-12 text-[14px] font-medium text-atseen-text outline-none placeholder:text-[#758196] focus:border-[#7598c7]"
+            className="h-[49px] w-full rounded-[14px] border border-[#303744] bg-[#11151b] px-4 pr-12 text-[16px] sm:text-[14px] font-medium text-atseen-text outline-none placeholder:text-[#758196] focus:border-[#7598c7]"
             maxLength={100}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={onKeyDown}

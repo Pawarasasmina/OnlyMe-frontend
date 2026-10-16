@@ -43,6 +43,8 @@ function normalizeList(response) {
 export const postService = {
   getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params })),
   getPost: async (postId) => normalizePost((await axiosInstance.get(`/posts/${encodeURIComponent(postId)}`)).data?.data?.post),
+  getContentLanguage: async (postId, mediaId, signal) => (await axiosInstance.get(`/posts/${encodeURIComponent(postId)}/language`, { params: mediaId ? { mediaId } : {}, signal })).data?.data || {},
+  translateContent: async (postId, mediaId) => (await axiosInstance.post(`/posts/${encodeURIComponent(postId)}/translation`, { ...(mediaId ? { mediaId } : {}) })).data?.data || {},
   getReactions: async (postId) => (await axiosInstance.get(`/posts/${encodeURIComponent(postId)}/reactions`)).data?.data || {},
   getMyPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts/mine", { params })),
   getDrafts: async () => normalizeList(await axiosInstance.get("/posts/drafts")),
@@ -60,6 +62,7 @@ export const postService = {
     });
     return normalizePost(response.data?.data?.post);
   },
+  setResolution: async (postId, solved) => normalizePost((await axiosInstance.put(`/posts/${encodeURIComponent(postId)}/resolution`, { solved })).data?.data?.post),
   updatePost: async (postId, payload) => {
     const response = await axiosInstance.put(`/posts/${postId}`, payload);
     return normalizePost(response.data?.data?.post);
