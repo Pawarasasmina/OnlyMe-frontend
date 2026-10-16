@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
+import { FiChevronDown, FiSliders } from "react-icons/fi";
+import WallFilterSheet from "../../components/fanWeb/home/WallFilterSheet";
+import { DEFAULT_WALL_FILTERS, WALL_FILTER_SORTS } from "../../data/wallFilters";
+import { mergeWallPages, readWallFilters, writeWallFilters } from "../../utils/wallFilters";
 import { useQuery } from "@tanstack/react-query";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
 import HomeHeader from "../../components/fanWeb/home/HomeHeader";
@@ -11,7 +15,7 @@ import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { getUserDisplay } from "../../components/fanWeb/shared/userDisplay";
 import { useAuth } from "../../hooks/useAuth";
 import { useDiscoverQuery } from "../../hooks/useDiscoverQuery";
-import { useFeedPosts, useMyFeedPosts } from "../../hooks/useFeedPosts";
+import { useFeedPosts } from "../../hooks/useFeedPosts";
 import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
@@ -41,33 +45,9 @@ function creatorLocation(creator = {}) {
   return [creator.city || creator.location?.city, creator.country || creator.location?.country].filter(Boolean).join(", ");
 }
 
-function mergePosts(current = [], next = []) {
-  const byId = new Map(current.map((post) => [post.id, post]));
-  next.forEach((post) => byId.set(post.id, post));
-  return [...byId.values()].sort((left, right) => new Date(right.feedCreatedAt || right.publishedAt || right.createdAt) - new Date(left.feedCreatedAt || left.publishedAt || left.createdAt));
-}
-
-function HomeFeedFilters({ activeFilter, onChange }) {
-  return (
-    <nav aria-label="Home feed filters" className="home-filter-strip">
-      {HOME_FILTERS.map((filter) => (
-        <button
-          aria-pressed={activeFilter === filter.key}
-          className={`home-filter-chip ${activeFilter === filter.key ? "is-selected" : ""}`}
-          key={filter.key}
-          onClick={() => onChange(filter.key)}
-          type="button"
-        >
-          {filter.label}
-        </button>
-      ))}
-    </nav>
-  );
-}
-
 function HomeEmptyState({ activeFilter, canPost, onShowAll }) {
   const filtered = activeFilter !== "all";
-  return <ContentEmptyState message={filtered ? "There are no posts in this category yet. Show everything or explore new people." : "Give your Wall some life with a note, or discover people worth following."} primaryAction={filtered ? { label: "Show all posts", onClick: onShowAll } : canPost ? { label: "Create your first post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} secondaryAction={filtered || canPost ? { label: "Discover people", to: "/discover" } : { label: "View Seen", to: "/seen" }} title={filtered ? "Nothing here yet" : "Create your first post"} variant="wall" />;
+  return <ContentEmptyState message={filtered ? "No posts match these filters yet. Try another type, topic, or location." : "Give your Wall some life with a note, or discover people worth following."} primaryAction={filtered ? { label: "Show all posts", onClick: onShowAll } : canPost ? { label: "Create your first post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} secondaryAction={filtered || canPost ? { label: "Discover people", to: "/discover" } : { label: "View Seen", to: "/seen" }} title={filtered ? "Nothing here yet" : "Create your first post"} variant="wall" />;
 }
 
 function FanHomePage() {
@@ -81,12 +61,15 @@ function FanHomePage() {
     ? searchParams.get("composeRequest") || "note"
     : "";
   const activeFilter = HOME_FILTERS.some((filter) => filter.key === requestedFilter) ? requestedFilter : "all";
-  const requestedCity = searchParams.get("city") || "";
-  const requestedCountryCode = searchParams.get("country") || "";
-  const [selectedLocation, setSelectedLocation] = useState(requestedCity);
-  const [selectedCountryCode, setSelectedCountryCode] = useState(requestedCountryCode);
-  const [page, setPage] = useState(1);
-  const [feedPosts, setFeedPosts] = useState([]);
+  const filters = useMemo(() => readWallFilters(searchParams), [searchParams]);
+  const queryScope = JSON.stringify({ ...filters, filter: activeFilter });
+  const [cursor, setCursor] = useState({ scope: "", page: 1 });
+  const page = cursor.scope === queryScope ? cursor.page : 1;
+  const [feedState, setFeedState] = useState({ scope: "", items: [] });
+  const feedPosts = useMemo(() => feedState.scope === queryScope ? feedState.items : [], [feedState, queryScope]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sheetPosition, setSheetPosition] = useState({});
+  const filterButtonRef = useRef(null);
   const sentinelRef = useRef(null);
 
   const profileQuery = useQuery({
@@ -97,49 +80,58 @@ function FanHomePage() {
   });
 
   const profileCity = profileQuery.data?.profile?.city || display.location || "";
-  const feedLocation = selectedLocation || "";
+  const profileCountry = profileQuery.data?.profile?.country || "";
+  const feedLocation = filters.location;
+  const selectedCountryCode = searchParams.get("country") || "";
   const feedParams = useMemo(() => ({
+    ...JSON.parse(queryScope),
     limit: 20,
     page,
     _viewerId: user?.id || user?._id || "",
-    ...(activeFilter !== "all" ? { filter: activeFilter } : {}),
-    ...(feedLocation ? { location: feedLocation } : {}),
-  }), [activeFilter, feedLocation, page, user?.id, user?._id]);
+  }), [queryScope, page, user?.id, user?._id]);
   const feedQuery = useFeedPosts(feedParams);
   const canPost = canCreateFeedPost(user);
-  const myPostsQuery = useMyFeedPosts({
-    limit: 10,
-    page: 1,
-    ...(activeFilter !== "all" ? { filter: activeFilter } : {}),
-  }, {
-    enabled: Boolean(user) && !authLoading && canPost && Boolean(feedLocation),
-  });
+
+  useEffect(() => {
+    const refreshResolution = () => {
+      setCursor({ scope: queryScope, page: 1 });
+      setFeedState({ scope: queryScope, items: [] });
+    };
+    window.addEventListener("wall-resolution-changed", refreshResolution);
+    return () => window.removeEventListener("wall-resolution-changed", refreshResolution);
+  }, [queryScope]);
+  useEffect(() => {
+    if (!filtersOpen) return undefined;
+    const update = () => {
+      const bounds = filterButtonRef.current?.closest(".social-center-scroll")?.getBoundingClientRect();
+      setSheetPosition(window.innerWidth > 880 && bounds ? { "--wall-filter-left": `${bounds.left}px`, "--wall-filter-width": `${bounds.width}px` } : {});
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [filtersOpen]);
 
   const discoverParams = useMemo(() => ({ _viewerId: user?.id || user?._id || "", filter: "for_you", limit: 8 }), [user?.id, user?._id]);
   const discoverQuery = useDiscoverQuery(discoverParams);
 
   useEffect(() => {
-    setPage(1);
-    setFeedPosts([]);
-  }, [activeFilter, feedLocation]);
-
-  useEffect(() => {
     if (!feedQuery.data?.items) return;
-    const ownLocationSafePosts = page === 1 && feedLocation ? myPostsQuery.data?.items || [] : [];
-    const nextItems = mergePosts(feedQuery.data.items, ownLocationSafePosts);
-    setFeedPosts((current) => (page === 1 ? nextItems : mergePosts(current, feedQuery.data.items)));
-  }, [feedLocation, feedQuery.data?.items, myPostsQuery.data?.items, page]);
+    setFeedState((current) => ({
+      scope: queryScope,
+      items: page === 1 || current.scope !== queryScope ? feedQuery.data.items : mergeWallPages(current.items, feedQuery.data.items),
+    }));
+  }, [feedQuery.data?.items, page, queryScope]);
 
   useEffect(() => {
     const target = sentinelRef.current;
     const pagination = feedQuery.data?.pagination;
     if (!target || !pagination || page >= pagination.pages) return undefined;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !feedQuery.isFetching) setPage((current) => current + 1);
+      if (entry.isIntersecting && !feedQuery.isFetching) setCursor({ scope: queryScope, page: page + 1 });
     }, { rootMargin: "420px 0px" });
     observer.observe(target);
     return () => observer.disconnect();
-  }, [feedQuery.data?.pagination, feedQuery.isFetching, page]);
+  }, [feedQuery.data?.pagination, feedQuery.isFetching, page, queryScope]);
 
   const recommendations = useMemo(() => discoverQuery.data?.recommendations || [], [discoverQuery.data?.recommendations]);
   const suggestedUsers = useMemo(() => {
@@ -155,32 +147,27 @@ function FanHomePage() {
   ]), [display.location, feedPosts, profileCity, recommendations, suggestedUsers]);
   const loading = profileQuery.isLoading || (feedQuery.isLoading && page === 1);
 
-  const changeFilter = useCallback((filterKey) => {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (filterKey === "all") next.delete("filter");
-      else next.set("filter", filterKey);
-      return next;
-    }, { replace: true });
-    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+  const applyFilters = useCallback((nextFilters) => {
+    setSearchParams((current) => writeWallFilters(current, nextFilters), { replace: true });
+    setFiltersOpen(false);
   }, [setSearchParams]);
 
-  const changeLocation = useCallback((location, countryCode = "") => {
-    setSelectedLocation(location);
-    setSelectedCountryCode(countryCode);
+  const resetFilters = () => {
     setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (location) {
-        next.set("city", location);
-        if (countryCode) next.set("country", countryCode);
-        else next.delete("country");
-      } else {
-        next.delete("city");
-        next.delete("country");
-      }
+      const next = writeWallFilters(current, DEFAULT_WALL_FILTERS);
+      next.delete("q");
+      return next;
+    }, { replace: true });
+  };
+  const changeLocation = useCallback((location, countryCode = "") => {
+    setSearchParams((current) => {
+      const next = writeWallFilters(current, { ...readWallFilters(current), location, near: location.split(",")[0].trim(), scope: location ? "custom" : "worldwide", sort: !location && readWallFilters(current).sort === "nearby" ? "recent" : readWallFilters(current).sort });
+      if (countryCode) next.set("country", countryCode);
       return next;
     }, { replace: true });
   }, [setSearchParams]);
+  const activeCount = Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(filters.scope !== "worldwide") + Number(filters.sort !== "recent") + Number(activeFilter !== "all");
+  const summary = `${filters.scope === "worldwide" ? "Worldwide" : filters.scope === "nearby" ? `Near ${filters.near || filters.location}` : filters.location} \u00b7 ${WALL_FILTER_SORTS.find((option) => option.value === filters.sort)?.label || "Recent"}`;
 
   return (
     <div className="home-prototype-page">
@@ -193,7 +180,11 @@ function FanHomePage() {
           onLocationChange={changeLocation}
         />
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
-        <HomeFeedFilters activeFilter={activeFilter} onChange={changeFilter} />
+        <div className="wall-filter-toolbar">
+          <button aria-expanded={filtersOpen} aria-haspopup="dialog" className={`wall-filter-trigger ${activeCount ? "has-filters" : ""}`} onClick={() => setFiltersOpen(true)} ref={filterButtonRef} type="button"><FiSliders aria-hidden="true" />Filters{activeCount ? <span>{activeCount}</span> : null}<FiChevronDown aria-hidden="true" /></button>
+          <button aria-label={`Change filters and sort: ${summary}`} className="wall-filter-summary" onClick={() => setFiltersOpen(true)} type="button">{summary}</button>
+        </div>
+        {filtersOpen ? <WallFilterSheet filters={filters} onApply={applyFilters} onClose={() => setFiltersOpen(false)} position={sheetPosition} profileCity={profileCity} profileCountry={profileCountry} /> : null}
         <WallSeenTodayNotice />
         {canPost ? <PostComposer currentUser={display} openSignal={composeSignal} /> : null}
 
@@ -204,7 +195,7 @@ function FanHomePage() {
             <button onClick={() => feedQuery.refetch()} type="button">Retry</button>
           </section>
         ) : null}
-        {!loading && !feedQuery.isError && !feedPosts.length ? <HomeEmptyState activeFilter={activeFilter} canPost={canPost} onShowAll={() => changeFilter("all")} /> : null}
+        {!loading && !feedQuery.isError && !feedPosts.length ? <HomeEmptyState activeFilter={activeCount ? "filtered" : "all"} canPost={canPost} onShowAll={resetFilters} /> : null}
         <div aria-busy={loading ? "true" : "false"} className="home-feed-list">
           {feedPosts.map((post) => <FeedPost key={post.id} post={post} />)}
         </div>

@@ -1,7 +1,11 @@
+import ShowMoreEyeIcon from "../../branding/ShowMoreEyeIcon";
+import WallPostTypeBadge from "./WallPostTypeBadge";
+import { wallPostCaption } from "../../../utils/wallVoiceDisplay";
+import { WallTextContent, WallVoiceNote } from "./WallPostContent";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
+import { FiArchive, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
@@ -18,6 +22,7 @@ import { analyticsService } from "../../../services/analyticsService";
 import { profileService } from "../../../services/profileService";
 import { postService } from "../../../services/postService";
 import {
+  useSetPostResolution,
   useBlockFeedPostAuthor,
   useArchiveFeedPost,
   useCreateFeedPostComment,
@@ -131,51 +136,13 @@ function formatCount(value = 0) {
   return count.toLocaleString();
 }
 
-function MediaItem({ item, title }) {
+function MediaItem({ item, title, postId, postText }) {
   const [failed, setFailed] = useState(false);
-  const translations = useMemo(() => item?.translations || [], [item?.translations]);
-  const [selectedTranslation, setSelectedTranslation] = useState(translations[0]?.language || "");
-  const activeTranslation = translations.find((translation) => translation.language === selectedTranslation) || translations[0] || null;
-  useEffect(() => {
-    if (!translations.length) return;
-    if (!translations.some((translation) => translation.language === selectedTranslation)) {
-      setSelectedTranslation(translations[0].language);
-    }
-  }, [selectedTranslation, translations]);
   if (!item?.url || failed) {
     return <span className="home-feed-media-fallback" role="img" aria-label="Media unavailable">Media unavailable</span>;
   }
   if (String(item.type || "").toLowerCase() === "audio") {
-    return (
-      <div className="home-feed-voice-card">
-        <div className="home-feed-voice-title"><FiMic aria-hidden="true" /> Voice note</div>
-        <VoiceMessageBubble audio={{ duration: item.duration, url: item.url, waveform: item.waveform }} label="Voice note" />
-        {item.transcript ? (
-          <div className="home-feed-voice-transcript">
-            <span>Original transcript</span>
-            <p>{item.transcript}</p>
-          </div>
-        ) : null}
-        {translations.length ? (
-          <div className="home-feed-voice-transcript">
-            <label>
-              View translation
-              <select onChange={(event) => setSelectedTranslation(event.target.value)} value={activeTranslation?.language || ""}>
-                {translations.map((translation) => {
-                  return <option key={translation.language} value={translation.language}>{translation.languageName || translation.language}</option>;
-                })}
-              </select>
-            </label>
-            {activeTranslation ? (
-              <>
-                <span>Translated to {activeTranslation.languageName || activeTranslation.language}</span>
-                <p>{activeTranslation.text}</p>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    );
+    return <WallVoiceNote item={item} postId={postId} postText={postText} />;
   }
   if (String(item.type || "").toLowerCase().startsWith("video")) {
     return <video controls preload="metadata" src={item.url} title={`${title} video`} />;
@@ -268,6 +235,10 @@ function normalizeFeedPost(post = {}) {
       verified: Boolean(author.verified || author.isVerified),
     },
     commentCount: Number(post.commentCount ?? post.comments ?? 0),
+    resolvedAt: post.resolvedAt || null,
+    canResolve: Boolean(post.canResolve),
+    postType: post.postType || "",
+    topic: post.topic || "",
     context: post.context || "",
     contextEmoji: post.contextEmoji || "",
     createdAt: post.createdAt || post.publishedAt,
@@ -290,16 +261,6 @@ function normalizeFeedPost(post = {}) {
     viewerSaved: Boolean(post.viewerSaved),
     viewerShared: Boolean(post.viewerShared),
   };
-}
-
-function filterForContext(context = "", location = "") {
-  const normalized = String(context || "").trim().toLowerCase();
-  if (normalized === "right now") return "right_now";
-  if (normalized === "events") return "events";
-  if (normalized === "things to do") return "things_to_do";
-  if (["coffee", "restaurant"].includes(normalized)) return "food";
-  if (!normalized && location) return "places";
-  return "";
 }
 
 function voiceStoryCopy(media = {}, fallback = "") {
@@ -327,10 +288,14 @@ function FeedPost({ post, profileMenu = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
+  const [resolvedAt, setResolvedAt] = useState(normalized.resolvedAt);
+  useEffect(() => { setResolvedAt(normalized.resolvedAt); }, [normalized.resolvedAt]);
+  const caption = wallPostCaption(normalized.text, normalized.media);
   const creator = normalized.author;
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const deleteMutation = useDeleteFeedPost();
+  const resolutionMutation = useSetPostResolution();
   const archiveMutation = useArchiveFeedPost();
   const reactionMutation = useReactToFeedPost();
   const commentMutation = useCreateFeedPostComment();
@@ -361,7 +326,6 @@ function FeedPost({ post, profileMenu = false }) {
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [viewCount, setViewCount] = useState(normalized.viewCount);
   const [moreBusy, setMoreBusy] = useState("");
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
@@ -385,7 +349,6 @@ function FeedPost({ post, profileMenu = false }) {
     [item.reaction.key]: item.count,
   }), {}), [reactionSummary]);
   const commentCount = Math.max(normalized.commentCount, comments.length);
-  const compactText = normalized.text.length > 260 && !expanded ? `${normalized.text.slice(0, 260).trim()}...` : normalized.text;
   const visibleReactionSamples = reactionSummary.length
     ? reactionSummary.slice(0, 3).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
     : "\uD83E\uDD1D \u2764\uFE0F \uD83D\uDD25";
@@ -432,10 +395,6 @@ function FeedPost({ post, profileMenu = false }) {
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
       : normalized.text.slice(0, 96) || "Home post",
   }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
-  const contextFilter = filterForContext(normalized.context, normalized.location);
-  const contextHref = contextFilter
-    ? `/wall?filter=${encodeURIComponent(contextFilter)}${normalized.location ? `&city=${encodeURIComponent(normalized.location)}` : ""}`
-    : "/wall";
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
@@ -718,6 +677,20 @@ function FeedPost({ post, profileMenu = false }) {
   };
 
   const moreAction = (action) => {
+    if (action === "resolution") {
+      if (moreBusy || resolutionMutation.isPending || !ownsPost || !normalized.canResolve || !requireDatabasePost()) return;
+      setMoreBusy("resolution");
+      resolutionMutation.mutate({ postId: actionPostId, solved: !resolvedAt }, {
+        onSuccess: (savedPost) => {
+          setResolvedAt(savedPost.resolvedAt || null);
+          setMoreOpen(false);
+          showToast(savedPost.resolvedAt ? "Marked as Solved. Your post and replies stay visible." : "Request reopened.");
+        },
+        onError: (error) => showToast(error?.response?.data?.message || "Could not update this request. Please try again."),
+        onSettled: () => setMoreBusy(""),
+      });
+      return;
+    }
     if (action === "story") {
       if (!requireDatabasePost()) return;
       setMoreOpen(false);
@@ -800,7 +773,7 @@ function FeedPost({ post, profileMenu = false }) {
 
   return (
     <>
-      <article className="home-feed-post" ref={articleRef}>
+      <article className={`home-feed-post ${resolvedAt ? "is-solved" : ""}`} ref={articleRef}>
         {normalized.sharedBy ? (
           <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
@@ -823,11 +796,7 @@ function FeedPost({ post, profileMenu = false }) {
             </Link>
             <p className="home-feed-meta">{[normalized.location, normalized.timestamp].filter(Boolean).join(" - ")}</p>
           </div>
-          {normalized.context || normalized.location ? (
-            <Link className="home-context-pill" to={contextHref}>
-              {[`${normalized.contextEmoji} ${normalized.context}`.trim(), normalized.location].filter(Boolean).join(" - ")}
-            </Link>
-          ) : <span className="ml-auto" />}
+          <WallPostTypeBadge postType={normalized.postType} topic={normalized.topic} location={normalized.location} context={normalized.context} />
           <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>
@@ -841,12 +810,8 @@ function FeedPost({ post, profileMenu = false }) {
           </button>
         </div>
 
-        <p className="home-feed-text">{compactText}</p>
-        {normalized.text.length > 260 ? (
-          <button className="home-feed-show-more" onClick={() => setExpanded((current) => !current)} type="button">
-            {expanded ? "Show less" : "Show more"}
-          </button>
-        ) : null}
+        {resolvedAt ? <span className="wall-solved-label" role="status"><FiCheck aria-hidden="true" /> Solved</span> : null}
+        <WallTextContent postId={actionPostId} text={caption} />
         <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
@@ -856,7 +821,7 @@ function FeedPost({ post, profileMenu = false }) {
         {normalized.media?.length ? (
           <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
             {normalized.media.map((mediaItem) => (
-              <MediaItem item={mediaItem} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
+              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
             ))}
           </div>
         ) : null}
@@ -1063,12 +1028,13 @@ function FeedPost({ post, profileMenu = false }) {
               { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
               { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
+              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen request" : "Mark as Solved", subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
               { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
               { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
             ]
             : [
               { key: "share", label: "Share", icon: FiSend },
-              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: FiEye },
+              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: ShowMoreEyeIcon },
               { key: "hide", label: "Hide this note", icon: FiEyeOff },
               { key: "unfollow", label: `Unfollow ${creator.name.split(" ")[0]}`, icon: FiUserMinus },
               { key: "report-spam", label: "Report spam", subtitle: "Spam, misleading links or repeated promotions", icon: FiSlash, danger: true },
@@ -1077,7 +1043,7 @@ function FeedPost({ post, profileMenu = false }) {
             ]).map(({ danger, icon: Icon, key, label, subtitle }) => (
             <button
               className={danger || key === "delete" ? "is-danger" : ""}
-              disabled={moreBusy === key}
+              disabled={Boolean(moreBusy)}
               key={key}
               onClick={() => moreAction(key)}
               type="button"

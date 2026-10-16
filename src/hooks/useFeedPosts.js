@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { patchWallResolution } from "../utils/wallResolution";
 import { postService } from "../services/postService";
 
 export const postKeys = {
@@ -7,14 +8,6 @@ export const postKeys = {
   mine: (params = {}) => ["feed-posts", "mine", params],
   drafts: ["feed-posts", "drafts"],
 };
-
-function insertPostIntoFeed(queryClient, post) {
-  queryClient.setQueriesData({ queryKey: ["feed-posts", "feed"] }, (current) => {
-    if (!current?.items) return current;
-    const withoutDuplicate = current.items.filter((item) => item.id !== post.id);
-    return { ...current, items: [post, ...withoutDuplicate] };
-  });
-}
 
 function replacePostInCaches(queryClient, post) {
   queryClient.setQueriesData({ queryKey: ["feed-posts"] }, (current) => {
@@ -68,8 +61,7 @@ export function useCreateFeedPost() {
   return useMutation({
     mutationFn: ({ formData, onUploadProgress, signal }) => postService.createPost(formData, { onUploadProgress, signal }),
     retry: false,
-    onSuccess: (post) => {
-      insertPostIntoFeed(queryClient, post);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: postKeys.all });
     },
   });
@@ -81,6 +73,25 @@ export function useSavePostDraft() {
     mutationFn: ({ formData, onUploadProgress, signal }) => postService.saveDraft(formData, { onUploadProgress, signal }),
     retry: false,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: postKeys.drafts }),
+  });
+}
+
+export function useSetPostResolution() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, solved }) => postService.setResolution(postId, solved),
+    retry: false,
+    onSuccess: (post) => {
+      queryClient.setQueriesData({ queryKey: postKeys.all }, (current) => patchWallResolution(current, post));
+      // Let the confirmation render before restarting pagination and moving the post.
+      if (typeof window !== "undefined") window.setTimeout(() => {
+        window.dispatchEvent(new Event("wall-resolution-changed"));
+        queryClient.resetQueries({ queryKey: ["feed-posts", "feed"] });
+      }, 0);
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+      queryClient.invalidateQueries({ queryKey: ["saved-content"] });
+    },
   });
 }
 
