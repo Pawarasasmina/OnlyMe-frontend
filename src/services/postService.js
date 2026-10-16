@@ -60,6 +60,7 @@ export const postService = {
     });
     return normalizePost(response.data?.data?.post);
   },
+  setResolution: async (postId, solved) => normalizePost((await axiosInstance.put(`/posts/${encodeURIComponent(postId)}/resolution`, { solved })).data?.data?.post),
   updatePost: async (postId, payload) => {
     const response = await axiosInstance.put(`/posts/${postId}`, payload);
     return normalizePost(response.data?.data?.post);

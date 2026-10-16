@@ -1,5 +1,6 @@
 import api from "../api/axiosInstance";
 export const wallService = {
+  get: (id) => api.get(`/wall/${encodeURIComponent(id)}`).then((response) => response.data?.data?.post),
   list: (params = {}) => api.get("/wall", { params }),
   create: ({ attachedEntities = [], entityRefs = [], text, context, location, image }) => { const body = new FormData(); body.append("text", text); body.append("context", context); body.append("location", location || ""); body.append("entityRefs", JSON.stringify(entityRefs.length ? entityRefs : attachedEntities.map((entity) => ({ entityId: entity.id, entityType: entity.type })))); if (image) body.append("image", image); return api.post("/wall", body); },
   comments: (id, shareId) => api.get(`/wall/${id}/comments`, { params: shareId ? { shareId } : {} }),

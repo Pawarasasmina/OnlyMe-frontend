@@ -18,6 +18,7 @@ import { analyticsService } from "../../../services/analyticsService";
 import { profileService } from "../../../services/profileService";
 import { postService } from "../../../services/postService";
 import {
+  useSetPostResolution,
   useBlockFeedPostAuthor,
   useArchiveFeedPost,
   useCreateFeedPostComment,
@@ -268,6 +269,8 @@ function normalizeFeedPost(post = {}) {
       verified: Boolean(author.verified || author.isVerified),
     },
     commentCount: Number(post.commentCount ?? post.comments ?? 0),
+    resolvedAt: post.resolvedAt || null,
+    canResolve: Boolean(post.canResolve),
     context: post.context || "",
     contextEmoji: post.contextEmoji || "",
     createdAt: post.createdAt || post.publishedAt,
@@ -327,10 +330,13 @@ function FeedPost({ post, profileMenu = false }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
+  const [resolvedAt, setResolvedAt] = useState(normalized.resolvedAt);
+  useEffect(() => { setResolvedAt(normalized.resolvedAt); }, [normalized.resolvedAt]);
   const creator = normalized.author;
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const deleteMutation = useDeleteFeedPost();
+  const resolutionMutation = useSetPostResolution();
   const archiveMutation = useArchiveFeedPost();
   const reactionMutation = useReactToFeedPost();
   const commentMutation = useCreateFeedPostComment();
@@ -693,6 +699,20 @@ function FeedPost({ post, profileMenu = false }) {
   };
 
   const moreAction = (action) => {
+    if (action === "resolution") {
+      if (moreBusy || resolutionMutation.isPending || !ownsPost || !normalized.canResolve || !requireDatabasePost()) return;
+      setMoreBusy("resolution");
+      resolutionMutation.mutate({ postId: actionPostId, solved: !resolvedAt }, {
+        onSuccess: (savedPost) => {
+          setResolvedAt(savedPost.resolvedAt || null);
+          setMoreOpen(false);
+          showToast(savedPost.resolvedAt ? "Marked as Solved. Your post and replies stay visible." : "Request reopened.");
+        },
+        onError: (error) => showToast(error?.response?.data?.message || "Could not update this request. Please try again."),
+        onSettled: () => setMoreBusy(""),
+      });
+      return;
+    }
     if (action === "story") {
       if (!requireDatabasePost()) return;
       setMoreOpen(false);
@@ -775,7 +795,7 @@ function FeedPost({ post, profileMenu = false }) {
 
   return (
     <>
-      <article className="home-feed-post" ref={articleRef}>
+      <article className={`home-feed-post ${resolvedAt ? "is-solved" : ""}`} ref={articleRef}>
         {normalized.sharedBy ? (
           <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
@@ -816,6 +836,7 @@ function FeedPost({ post, profileMenu = false }) {
           </button>
         </div>
 
+        {resolvedAt ? <span className="wall-solved-label" role="status"><FiCheck aria-hidden="true" /> Solved</span> : null}
         <p className="home-feed-text">{compactText}</p>
         {normalized.text.length > 260 ? (
           <button className="home-feed-show-more" onClick={() => setExpanded((current) => !current)} type="button">
@@ -1038,6 +1059,7 @@ function FeedPost({ post, profileMenu = false }) {
               { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
               { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
+              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen request" : "Mark as Solved", subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
               { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
               { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
             ]
@@ -1052,7 +1074,7 @@ function FeedPost({ post, profileMenu = false }) {
             ]).map(({ danger, icon: Icon, key, label, subtitle }) => (
             <button
               className={danger || key === "delete" ? "is-danger" : ""}
-              disabled={moreBusy === key}
+              disabled={Boolean(moreBusy)}
               key={key}
               onClick={() => moreAction(key)}
               type="button"
