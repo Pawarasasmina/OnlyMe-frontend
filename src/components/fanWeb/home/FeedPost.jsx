@@ -1,3 +1,4 @@
+import WallPostTypeBadge from "./WallPostTypeBadge";
 import { wallPostCaption } from "../../../utils/wallVoiceDisplay";
 import { WallTextContent, WallVoiceNote } from "./WallPostContent";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -235,6 +236,8 @@ function normalizeFeedPost(post = {}) {
     commentCount: Number(post.commentCount ?? post.comments ?? 0),
     resolvedAt: post.resolvedAt || null,
     canResolve: Boolean(post.canResolve),
+    postType: post.postType || "",
+    topic: post.topic || "",
     context: post.context || "",
     contextEmoji: post.contextEmoji || "",
     createdAt: post.createdAt || post.publishedAt,
@@ -257,16 +260,6 @@ function normalizeFeedPost(post = {}) {
     viewerSaved: Boolean(post.viewerSaved),
     viewerShared: Boolean(post.viewerShared),
   };
-}
-
-function filterForContext(context = "", location = "") {
-  const normalized = String(context || "").trim().toLowerCase();
-  if (normalized === "right now") return "right_now";
-  if (normalized === "events") return "events";
-  if (normalized === "things to do") return "things_to_do";
-  if (["coffee", "restaurant"].includes(normalized)) return "food";
-  if (!normalized && location) return "places";
-  return "";
 }
 
 function voiceStoryCopy(media = {}, fallback = "") {
@@ -401,10 +394,6 @@ function FeedPost({ post, profileMenu = false }) {
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
       : normalized.text.slice(0, 96) || "Home post",
   }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
-  const contextFilter = filterForContext(normalized.context, normalized.location);
-  const contextHref = contextFilter
-    ? `/wall?filter=${encodeURIComponent(contextFilter)}${normalized.location ? `&city=${encodeURIComponent(normalized.location)}` : ""}`
-    : "/wall";
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
@@ -781,11 +770,7 @@ function FeedPost({ post, profileMenu = false }) {
             </Link>
             <p className="home-feed-meta">{[normalized.location, normalized.timestamp].filter(Boolean).join(" - ")}</p>
           </div>
-          {normalized.context || normalized.location ? (
-            <Link className="home-context-pill" to={contextHref}>
-              {[`${normalized.contextEmoji} ${normalized.context}`.trim(), normalized.location].filter(Boolean).join(" - ")}
-            </Link>
-          ) : <span className="ml-auto" />}
+          <WallPostTypeBadge postType={normalized.postType} topic={normalized.topic} location={normalized.location} context={normalized.context} />
           <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>

@@ -38696,3 +38696,11 @@ video.seen-reader-media {
 
 .wall-translation-notice { flex-basis: 100%; margin-left: 17px; color: #8b9aa8; font-size: 10px; }
 
+.wall-post-type { position: relative; margin-left: auto; flex-shrink: 0; max-width: 134px; }
+.wall-post-type .home-context-pill { display: block; max-width: 100%; cursor: pointer; color: #a9cfff; border-color: #35536e; background: #14212d; }
+.wall-post-type .home-context-pill[data-type="offering"] { color: #8ed9b3; border-color: #2b5945; background: #13251e; }
+.wall-post-type .home-context-pill[data-type="question"] { color: #c6a4ed; border-color: #53396f; background: #241a31; }
+.wall-post-type .home-context-pill:focus-visible { outline: 2px solid #9bcaff; outline-offset: 3px; }
+.wall-post-type .home-context-pill { display: flex; align-items: center; gap: 4px; }
+.wall-post-type .home-context-pill > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wall-post-type .home-context-pill > svg { width: 11px; height: 11px; flex-shrink: 0; }
