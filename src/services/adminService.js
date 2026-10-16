@@ -30,6 +30,10 @@ export const adminService = {
   updateGift: (id, formData, onUploadProgress) => axiosInstance.patch(`/admin/gifts/${id}`, formData, { onUploadProgress }),
   reorderGifts: (ids) => axiosInstance.patch("/admin/gifts/reorder", { ids }),
   deleteGift: (id) => axiosInstance.delete(`/admin/gifts/${id}`),
+  getRecommendationSettings: () => axiosInstance.get("/admin/recommendations"),
+  createRecommendationDraft: (payload) => axiosInstance.post("/admin/recommendations/drafts", payload),
+  activateRecommendationConfig: (id) => axiosInstance.post(`/admin/recommendations/${id}/activate`),
+  resetRecommendationConfig: () => axiosInstance.post("/admin/recommendations/reset"),
 };
 
 

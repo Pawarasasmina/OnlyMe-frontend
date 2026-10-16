@@ -55,6 +55,12 @@ export const analyticsService = {
     eventType: "CONTENT_VIEW",
     source,
   }),
+  trackRecommendationSignal: ({ batchId = "", completion = 0, creatorId = "", durationMs = 0, entityId, entityType = "seen", eventType, position = 0, reason = "", topics = [], watchMs = 0 }) => analyticsService.trackEvent({
+    entityId,
+    entityType,
+    eventType,
+    metadata: { batchId, completion, creatorId, durationMs, position, reason, topics, watchMs },
+  }),
   queueContentImpression: (event) => {
     impressionQueue.push(withSession({
       entityType: "feed_post",
