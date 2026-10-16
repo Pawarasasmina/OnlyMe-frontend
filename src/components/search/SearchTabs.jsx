@@ -2,7 +2,7 @@ import { SEARCH_TYPES } from "./searchConfig";
 
 function SearchTabs({ counts = {}, onChange, value }) {
   return (
-    <div className="-mx-4 overflow-x-auto px-4 py-3 atseen-hide-scrollbar" role="tablist" aria-label="Search result type">
+    <div className="search-result-tabs min-w-0 max-w-full overflow-x-auto pt-3 pb-1 atseen-hide-scrollbar" role="tablist" aria-label="Search result type">
       <div className="flex min-w-max gap-2">
         {SEARCH_TYPES.map((tab) => {
           const selected = value === tab.id;
@@ -10,7 +10,7 @@ function SearchTabs({ counts = {}, onChange, value }) {
           return (
             <button
               aria-selected={selected}
-              className={`min-h-11 rounded-full border px-4 text-sm font-bold transition ${selected ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line bg-atseen-surface-2 text-atseen-muted hover:text-white"}`}
+              className={`shrink-0 min-h-11 rounded-full border px-4 text-sm font-bold transition ${selected ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line bg-atseen-surface-2 text-atseen-muted hover:text-white"}`}
               key={tab.id}
               onClick={() => onChange(tab.id)}
               role="tab"

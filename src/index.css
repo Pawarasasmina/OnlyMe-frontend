@@ -38704,3 +38704,16 @@ video.seen-reader-media {
 .wall-post-type .home-context-pill { display: flex; align-items: center; gap: 4px; }
 .wall-post-type .home-context-pill > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wall-post-type .home-context-pill > svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+/* Keep the search field and scrollable tabs in one mobile sticky header. */
+.search-page-header { position: sticky; top: 0; z-index: 20; min-width: 0; margin: 0 -16px 16px; padding: 10px 16px 8px; background: var(--feed-page-bg, #0a0c0f); }
+.search-result-tabs { overscroll-behavior-x: contain; }
+@media (min-width: 640px) {
+  .search-page-header { margin-inline: -24px; padding-inline: 24px; }
+}
+@media (min-width: 881px) {
+  .search-page-header { margin-inline: -20px; padding-inline: 20px; }
+}
+@media (max-width: 880px) {
+  .social-center-scroll > main:has(> .search-page) { padding-top: 0; }
+}
