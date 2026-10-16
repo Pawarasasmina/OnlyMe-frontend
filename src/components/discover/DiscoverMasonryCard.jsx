@@ -1,7 +1,9 @@
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { FiMapPin } from "react-icons/fi";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { resolveMediaUrl } from "../../utils/media";
+import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
+import { analyticsService } from "../../services/analyticsService";
 
 function initials(name = "") {
   return name.trim().slice(0, 1).toUpperCase() || "@";
@@ -18,12 +20,16 @@ function DiscoverMasonryCard({ card, index = 0, onOpen }) {
   const category = card.category || card.creator?.category || "Creator";
   const sizeClass = index % 5 === 1 ? "is-wide" : index % 4 === 2 ? "is-short" : "is-tall";
   const place = locationLabel(card);
+  const creatorId = card.id || card.creator?.id || card.userId || "";
+  const topics = useMemo(() => [category].filter(Boolean), [category]);
+  const trackingRef = useRecommendationTracking({ creatorId, entityId: creatorId, entityType: "profile", position: index, topics });
 
   return (
     <button
       aria-label={`Open ${name}'s discover story`}
       className={`discover-orb-card ${sizeClass}`}
-      onClick={() => onOpen?.(index)}
+      onClick={() => { void analyticsService.trackProfileView({ profileUserId: creatorId, source: "discover" }); onOpen?.(index); }}
+      ref={trackingRef}
       type="button"
     >
       {imageUrl && !failed ? (

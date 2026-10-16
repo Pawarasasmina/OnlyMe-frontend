@@ -1,12 +1,12 @@
 import { Suspense, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { FiActivity, FiAlertTriangle, FiBarChart2, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiStar, FiUsers, FiX } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiBarChart2, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiSliders, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
 
 const navigation = [
-  { title: "Overview", links: [{ label: "Dashboard", to: "/admin/dashboard", icon: FiHome }, { label: "Analytics", to: "/admin/analytics", icon: FiBarChart2 }] },
+  { title: "Overview", links: [{ label: "Dashboard", to: "/admin/dashboard", icon: FiHome }, { label: "Analytics", to: "/admin/analytics", icon: FiBarChart2 }, { label: "Recommendations", to: "/admin/recommendations", icon: FiSliders }] },
   { title: "People", links: [{ label: "Users", to: "/admin/users", icon: FiUsers }, { label: "Creator applications", to: "/admin/creator-verifications", icon: FiShield }, { label: "Verified creators", to: "/admin/verified-creators", icon: FiStar }] },
   { title: "Trust & safety", links: [{ label: "Message reports", to: "/admin/message-reports", icon: FiAlertTriangle }, { label: "User reports", to: "/admin/user-reports", icon: FiAlertTriangle }, { label: "Post reports", to: "/admin/post-reports", icon: FiFileText }] },
   { title: "Commerce", links: [{ label: "Financial operations", to: "/admin/financial", icon: FiCreditCard }, { label: "Gift catalog", to: "/admin/gifts", icon: FiGift }] },

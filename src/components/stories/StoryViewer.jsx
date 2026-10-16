@@ -8,10 +8,12 @@ import FanModal from "../fanWeb/shared/FanModal";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
+import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
 import { useDeleteStory, useMarkStoryViewed, useStoryInsights } from "../../hooks/useStories";
 import { storyService } from "../../services/storyService";
 import { messageService } from "../../services/messageService";
 import { profileService } from "../../services/profileService";
+import { analyticsService } from "../../services/analyticsService";
 import { canCreateStory, canDeleteStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
 import StoryGiftPicker from "./StoryGiftPicker";
 import ShareSheet from "../share/ShareSheet";
@@ -701,6 +703,8 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
   const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || Boolean(selectedViewer) || giftOpen || shareOpen;
 
   const activeStory = stories[index] || null;
+  const storyTopics = useMemo(() => [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title].filter(Boolean), [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title]);
+  const storyTrackingRef = useRecommendationTracking({ creatorId: activeStory?.owner?.id || activeStory?.creatorId || "", enabled: isOpen && !previewOnly, entityId: activeStory?.id || "", entityType: "story", position: index, topics: storyTopics });
   const sharedCard = activeStory?.editorMetadata?.sharedCard || null;
   const canReply = !previewOnly && canReplyToStory(user, activeStory);
   const canDelete = !previewOnly && canDeleteStory(user, activeStory);
@@ -1050,6 +1054,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
     setMenuBusy("hide");
     try {
       await storyService.hideCreatorStories(activeStory.id);
+      void analyticsService.trackRecommendationSignal({ creatorId: activeStory.owner?.id || activeStory.creatorId || "", entityId: activeStory.id, entityType: "story", eventType: "NOT_INTERESTED", reason: "hide_creator_stories", topics: storyTopics });
       await queryClient.invalidateQueries({ queryKey: ["stories"] });
       await queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
       showToast(`Stories from ${activeStory.owner.name} are now hidden.`);
@@ -1113,6 +1118,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
           onPointerDown={() => setHoldPaused(true)}
           onPointerLeave={() => setHoldPaused(false)}
           onPointerUp={() => setHoldPaused(false)}
+          ref={storyTrackingRef}
         >
           <StoryMedia
             muted={muted}

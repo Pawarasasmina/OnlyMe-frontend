@@ -75,7 +75,10 @@ function DiscoverPage() {
   const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
   const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
   const viewerId = user?.id || user?._id || "";
-  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, view: "slides" }), [activeFilter, viewerId]);
+  const [refreshToken, setRefreshToken] = useState(() => `${Date.now()}-${Math.random()}`);
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullStart = useRef(null);
+  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, refreshToken, view: "slides" }), [activeFilter, refreshToken, viewerId]);
   const discoverQuery = useDiscoverSlidesQuery(queryParams);
   const followMutation = useDiscoverFollowMutation(queryParams);
   const sentinelRef = useRef(null);
@@ -110,8 +113,22 @@ function DiscoverPage() {
   }, [setSearchParams]);
 
   const refresh = useCallback(() => {
-    discoverQuery.refetch();
-  }, [discoverQuery]);
+    setRefreshToken(`${Date.now()}-${Math.random()}`);
+  }, []);
+
+  const startPull = (event) => {
+    const scrollRoot = event.currentTarget.closest(".social-center-scroll");
+    if ((scrollRoot?.scrollTop || 0) <= 0) pullStart.current = event.touches?.[0]?.clientY ?? null;
+  };
+  const movePull = (event) => {
+    if (pullStart.current == null) return;
+    setPullDistance(Math.max(0, Math.min(110, (event.touches?.[0]?.clientY || 0) - pullStart.current)));
+  };
+  const endPull = () => {
+    if (pullDistance >= 72 && !discoverQuery.isFetching) refresh();
+    pullStart.current = null;
+    setPullDistance(0);
+  };
 
   const toggleFollow = useCallback((person) => {
     if (!person?.username) return;
@@ -216,7 +233,8 @@ function DiscoverPage() {
   }
 
   return (
-    <div className="discover-orb-page">
+    <div className="discover-orb-page" onTouchCancel={endPull} onTouchEnd={endPull} onTouchMove={movePull} onTouchStart={startPull}>
+      {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? "Release for fresh recommendations" : "Pull for fresh recommendations"}</div> : null}
       <section className="discover-orb-main" aria-label="Discover">
         {activeStoryPerson ? (
           <StoryViewer
@@ -295,7 +313,6 @@ function DiscoverPage() {
           </>
         )}
       </section>
-
     </div>
   );
 }

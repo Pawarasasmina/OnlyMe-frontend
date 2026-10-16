@@ -484,13 +484,22 @@ function FeedPost({ post, profileMenu = false }) {
     const target = articleRef.current;
     if (!target || ownsPost || !mongoIdPattern.test(String(actionPostId || ""))) return undefined;
     let impressionTimer = null;
+    let visibleAt = 0;
+    const topics = [normalized.context, normalized.location].filter(Boolean);
+    const signal = (eventType, extra = {}) => analyticsService.trackRecommendationSignal({ creatorId: creator.id, entityId: actionPostId, entityType: "feed_post", eventType, position: Number(normalized.position || 0), topics, ...extra });
 
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) {
         if (impressionTimer) window.clearTimeout(impressionTimer);
         impressionTimer = null;
+        if (visibleAt) {
+          const watchMs = Date.now() - visibleAt;
+          visibleAt = 0;
+          if (!target.querySelector("video")) void signal(watchMs < 2000 ? "FAST_SKIP" : "CONTENT_WATCH", { watchMs });
+        }
         return;
       }
+      if (!visibleAt) visibleAt = Date.now();
       if (!impressionTrackedRef.current && !impressionTimer) {
         impressionTimer = window.setTimeout(() => {
           impressionTrackedRef.current = true;
@@ -498,7 +507,7 @@ function FeedPost({ post, profileMenu = false }) {
           analyticsService.queueContentImpression({
             entityId: actionPostId,
             entityType: "feed_post",
-            metadata: { placement: "home_feed", position: Number(normalized.position || 0), visibleMs: 500, visibleThreshold: 0.55 },
+            metadata: { creatorId: creator.id, placement: "home_feed", position: Number(normalized.position || 0), topics, visibleMs: 500, visibleThreshold: 0.55 },
             source: "home",
           });
         }, 500);
@@ -517,11 +526,24 @@ function FeedPost({ post, profileMenu = false }) {
     }, { threshold: 0.55 });
 
     observer.observe(target);
+    const video = target.querySelector("video");
+    const watched = new Set();
+    let completed = false;
+    const onTime = () => watched.add(Math.floor(video.currentTime));
+    const onEnded = () => { completed = true; void signal("CONTENT_COMPLETED", { completion: 1, durationMs: Math.round((video.duration || 0) * 1000), watchMs: watched.size * 1000 }); };
+    const onPlay = () => { if (completed && video.currentTime < 1) { completed = false; void signal("CONTENT_REPLAY", { completion: 1, durationMs: Math.round((video.duration || 0) * 1000), watchMs: watched.size * 1000 }); } };
+    video?.addEventListener("timeupdate", onTime);
+    video?.addEventListener("ended", onEnded);
+    video?.addEventListener("play", onPlay);
     return () => {
       if (impressionTimer) window.clearTimeout(impressionTimer);
       observer.disconnect();
+      video?.removeEventListener("timeupdate", onTime);
+      video?.removeEventListener("ended", onEnded);
+      video?.removeEventListener("play", onPlay);
+      if (watched.size && !completed) void signal(watched.size < 2 ? "FAST_SKIP" : "CONTENT_WATCH", { completion: video?.duration ? Math.min(1, watched.size / Math.ceil(video.duration)) : 0, durationMs: Math.round((video?.duration || 0) * 1000), watchMs: watched.size * 1000 });
     };
-  }, [actionPostId, normalized.position, ownsPost, viewMutation]);
+  }, [actionPostId, creator.id, normalized.context, normalized.location, normalized.position, ownsPost, viewMutation]);
 
   const syncSavedPost = (savedPost) => {
     const next = normalizeFeedPost(savedPost);
@@ -661,7 +683,10 @@ function FeedPost({ post, profileMenu = false }) {
       { postId: actionPostId, reason: "NOT_USEFUL" },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Post could not be hidden."),
-        onSuccess: () => showToast("Thanks. We will tune your feed."),
+        onSuccess: () => {
+          void analyticsService.trackRecommendationSignal({ creatorId: creator.id, entityId: actionPostId, entityType: "feed_post", eventType: "NOT_INTERESTED", reason: "not_useful", topics: [normalized.context, normalized.location].filter(Boolean) });
+          showToast("Thanks. We will tune your feed.");
+        },
       }
     );
   };

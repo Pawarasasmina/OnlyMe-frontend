@@ -19,6 +19,8 @@ import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
+import { analyticsService } from "../../services/analyticsService";
+import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import ContentEmptyState from "../../components/shared/ContentEmptyState";
@@ -686,7 +688,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
   </div>;
 }
 
-export function SeenFeedItem({ animateOnScroll = true, currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
+export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate, position = 0 }) {
   const item = normalizeSeen(rawItem);
   const reduceMotion = useReducedMotion();
   const target = `/seen/${encodeURIComponent(item.id)}`;
@@ -706,6 +708,8 @@ export function SeenFeedItem({ animateOnScroll = true, currentUser = null, item:
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
   const [busyOwnerAction, setBusyOwnerAction] = useState("");
+  const trackingTopics = useMemo(() => [item.category].filter(Boolean), [item.category]);
+  const trackingRef = useRecommendationTracking({ batchId, creatorId: item.creator.id, entityId: item.id, entityType: "seen", position, topics: trackingTopics });
   const engagementQuery = useQuery({
     enabled: commentsOpen || reactionPickerOpen,
     queryKey: ["seen-engagement", item.id],
@@ -792,6 +796,7 @@ export function SeenFeedItem({ animateOnScroll = true, currentUser = null, item:
   const hideMutation = useMutation({
     mutationFn: () => publicationService.hideSeen(item.id),
     onSuccess: () => {
+      void analyticsService.trackRecommendationSignal({ batchId, creatorId: item.creator.id, entityId: item.id, eventType: "NOT_INTERESTED", position, reason: "hide_seen", topics: [item.category].filter(Boolean) });
       setMenuOpen(false);
       onFeedRemove(item.id);
     },
@@ -936,6 +941,7 @@ export function SeenFeedItem({ animateOnScroll = true, currentUser = null, item:
   return <motion.article
     className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
     initial={reduceMotion || !animateOnScroll ? false : { opacity: 0, y: 52 }}
+    ref={trackingRef}
     transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     viewport={{ amount: 0.12, margin: "0px 0px -4% 0px", once: true }}
     whileInView={reduceMotion || !animateOnScroll ? undefined : { opacity: 1, y: 0 }}
@@ -1047,6 +1053,8 @@ export default function SeenFeedPage() {
   };
   const [createOpen, setCreateOpen] = useState(false);
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullStart = useRef(null);
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
@@ -1138,8 +1146,23 @@ export default function SeenFeedPage() {
   const removeFeedItemsByCreator = (creatorId) => {
     queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.filter((entry) => String(entry.creator?.id || entry.creator?._id || "") !== String(creatorId))));
   };
+  const startPull = (event) => {
+    const scrollRoot = event.currentTarget.closest(".social-center-scroll");
+    if ((scrollRoot?.scrollTop || 0) <= 0) pullStart.current = event.touches?.[0]?.clientY ?? null;
+  };
+  const movePull = (event) => {
+    if (pullStart.current == null) return;
+    const distance = Math.max(0, Math.min(110, (event.touches?.[0]?.clientY || 0) - pullStart.current));
+    setPullDistance(distance);
+  };
+  const endPull = () => {
+    if (pullDistance >= 72 && !query.isRefetching) void query.refetch();
+    pullStart.current = null;
+    setPullDistance(0);
+  };
 
-  return <section className="seen-prototype-page">
+  return <section className="seen-prototype-page" onTouchCancel={endPull} onTouchEnd={endPull} onTouchMove={movePull} onTouchStart={startPull}>
+    {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? "Release for a fresh personalized batch" : "Pull for fresh Seens"}</div> : null}
     <SeenHeader activeTab={tab} activityCount={unreadActivityCount} onActivity={openActivity} onCreate={openCreate} onSearch={() => navigate("/search?from=seen")} onTabChange={setTab} />
     <FanCreateSheet
       canCreateSeen={capabilities.canCreate}
@@ -1168,7 +1191,7 @@ export default function SeenFeedPage() {
       key={tab}
       transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     >
-      {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} />)}
+      {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} batchId={query.data?.pages?.[0]?.recommendation?.batchId || ""} currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} position={index} />)}
       {hasNextPage ? <div className="seen-feed-error" ref={loadMoreRef}>
         {isFetchNextPageError ? <p>Couldn’t load more Seens.</p> : null}
         <button disabled={isFetchingNextPage} onClick={() => fetchNextPage()} type="button">{isFetchingNextPage ? "Loading more Seens..." : isFetchNextPageError ? "Try again" : "Load more Seens"}</button>

@@ -32,6 +32,7 @@ const ContentDetailPage = lazyPage("../pages/creator/ContentDetailPage");
 const EarningsPage = lazyPage("../pages/creator/EarningsPage");
 const AdminDashboard = lazyPage("../pages/admin/AdminDashboard");
 const AdminAnalyticsPage = lazyPage("../pages/admin/AdminAnalyticsPage");
+const RecommendationSettingsPage = lazyPage("../pages/admin/RecommendationSettingsPage");
 const UserManagement = lazyPage("../pages/admin/UserManagement");
 const AdminProfilePage = lazyPage("../pages/admin/AdminProfilePage");
 const CreatorVerificationQueue = lazyPage("../pages/admin/CreatorVerificationQueue");
@@ -225,6 +226,7 @@ function AppRoutes() {
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/recommendations" element={<RecommendationSettingsPage />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/fans" element={<Navigate replace to="/admin/users" />} />
           <Route path="/admin/creators" element={<Navigate replace to="/admin/users" />} />
