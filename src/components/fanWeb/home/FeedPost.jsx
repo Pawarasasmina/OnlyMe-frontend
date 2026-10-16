@@ -1,10 +1,11 @@
+import ShowMoreEyeIcon from "../../branding/ShowMoreEyeIcon";
 import WallPostTypeBadge from "./WallPostTypeBadge";
 import { wallPostCaption } from "../../../utils/wallVoiceDisplay";
 import { WallTextContent, WallVoiceNote } from "./WallPostContent";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArchive, FiBookmark, FiCheck, FiEye, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
+import { FiArchive, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
@@ -1008,7 +1009,7 @@ function FeedPost({ post, profileMenu = false }) {
             ]
             : [
               { key: "share", label: "Share", icon: FiSend },
-              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: FiEye },
+              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: ShowMoreEyeIcon },
               { key: "hide", label: "Hide this note", icon: FiEyeOff },
               { key: "unfollow", label: `Unfollow ${creator.name.split(" ")[0]}`, icon: FiUserMinus },
               { key: "report-spam", label: "Report spam", subtitle: "Spam, misleading links or repeated promotions", icon: FiSlash, danger: true },

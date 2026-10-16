@@ -1,9 +1,10 @@
+import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
-import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEye, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -298,7 +299,7 @@ function SeenOptionsSheet({ creatorName, isOpen, itemTitle, onBlock, onClose, on
   const actions = [
     { icon: FiBookmark, label: saved ? "Remove from library" : "Save to library", onClick: onSave },
     { icon: FiSend, label: "Share", onClick: onShare },
-    { icon: FiEye, label: "Show more like this", subtitle: "Tunes your feed", onClick: onShowMore },
+    { icon: ShowMoreEyeIcon, label: "Show more like this", subtitle: "Tunes your feed", onClick: onShowMore },
     { icon: FiEyeOff, label: "Not interested", onClick: onHide },
     { icon: FiFlag, label: "Report", onClick: onReport },
     { danger: true, icon: FiSlash, label: `Block ${firstName}`, onClick: onBlock },
