@@ -180,6 +180,28 @@ function FanHomePage() {
           onLocationChange={changeLocation}
         />
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
+        <nav aria-label="Wall topics" className="wall-topic-nav">
+          {[
+            { key: "all", label: "For you" },
+            { key: "looking_for", label: "Looking for" },
+            { key: "offering", label: "Offering" },
+            { key: "question", label: "Questions" },
+            { key: "event", label: "Events" },
+            { key: "buy_sell", label: "Buy / Sell" },
+          ].map(({ key, label }) => {
+            const selected = key === "all"
+              ? activeFilter === "all" && filters.type === "all" && filters.topic === "all"
+              : key === "buy_sell" ? filters.topic === key : filters.type === key;
+            return <button aria-pressed={selected} className={selected ? "is-active" : ""} key={key} onClick={() => setSearchParams((current) => {
+              const next = new URLSearchParams(current);
+              next.delete("filter");
+              if (key === "all") { next.delete("type"); next.delete("topic"); }
+              else if (key === "buy_sell") { next.delete("type"); next.set("topic", key); }
+              else { next.set("type", key); next.delete("topic"); }
+              return next;
+            }, { replace: true })} type="button">{label}</button>;
+          })}
+        </nav>
         <div className="wall-filter-toolbar">
           <button aria-expanded={filtersOpen} aria-haspopup="dialog" className={`wall-filter-trigger ${activeCount ? "has-filters" : ""}`} onClick={() => setFiltersOpen(true)} ref={filterButtonRef} type="button"><FiSliders aria-hidden="true" />Filters{activeCount ? <span>{activeCount}</span> : null}<FiChevronDown aria-hidden="true" /></button>
           <button aria-label={`Change filters and sort: ${summary}`} className="wall-filter-summary" onClick={() => setFiltersOpen(true)} type="button">{summary}</button>

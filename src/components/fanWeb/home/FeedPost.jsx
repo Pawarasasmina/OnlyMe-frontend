@@ -787,7 +787,7 @@ function FeedPost({ post, profileMenu = false }) {
         <div className={normalized.sharedBy ? "home-shared-post" : ""}>
         <div className="home-feed-post-head">
           <Link className="shrink-0" to={`/profile/${encodeURIComponent(creator.username)}`}>
-            <FanAvatar name={creator.name} size="h-[22px] w-[22px]" src={creator.avatar} />
+            <FanAvatar name={creator.name} size="h-9 w-9" src={creator.avatar} />
           </Link>
           <div className="min-w-0 flex-1">
             <Link className="home-feed-author" to={`/profile/${encodeURIComponent(creator.username)}`}>
