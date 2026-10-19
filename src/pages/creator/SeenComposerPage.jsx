@@ -1570,7 +1570,7 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
         if (touch) beginChapterSwipe(touch.clientX, touch.clientY, event.target);
       }}
     >
-      {flow && swipeOffset ? <div aria-hidden="true" className={`seen-chapter-swipe-cue ${swipeOffset < 0 ? "is-next" : "is-back"}`} style={{ opacity: Math.min(1, Math.abs(swipeOffset) / 55) }}><FiChevronLeft /><span>{swipeOffset < 0 ? "Next chapter" : "Previous chapter"}</span><FiChevronRight /></div> : null}
+      {flow && swipeOffset ? <div aria-hidden="true" className={`seen-chapter-swipe-cue ${swipeOffset < 0 ? "is-next" : "is-back"}`} style={{ "--swipe-cue-progress": Math.min(1, Math.abs(swipeOffset) / 55), opacity: Math.min(1, .35 + Math.abs(swipeOffset) / 85) }}><FiChevronLeft /><span>{Math.abs(swipeOffset) >= 55 ? `Release for ${swipeOffset < 0 ? "next" : "previous"}` : `Swipe ${swipeOffset < 0 ? "left" : "right"}`}</span><FiChevronRight /></div> : null}
       <header className="seen-chapter-editor-header">
         {flow ? <button aria-label="Previous chapter" className="seen-chapter-flow-back" disabled={busy} onClick={() => finishChapterEditing("back")} type="button"><FiChevronLeft /></button> : null}
         <div>
