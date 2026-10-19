@@ -38614,7 +38614,8 @@ video.seen-reader-media {
 .search-wall-result:hover .search-wall-open { color: #83baff; transform: translateX(2px); }
 
 /* Shared, story-like chapter navigation for Seen and Experience creation. */
-.seen-chapter-editor-page.is-flow-editor { padding-bottom: 92px; }
+.seen-chapter-editor-page.is-flow-editor { padding-bottom: 92px; touch-action: pan-y; overscroll-behavior-x: contain; }
+.seen-chapter-editor-page.is-flow-editor input,.seen-chapter-editor-page.is-flow-editor textarea,.seen-chapter-editor-page.is-flow-editor select,.seen-chapter-editor-page.is-flow-editor audio,.seen-chapter-editor-page.is-flow-editor video { touch-action: auto; }
 .seen-chapter-editor-page.is-flow-editor { animation: seen-chapter-enter .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes seen-chapter-enter { from { opacity: .35; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 .is-flow-editor .seen-chapter-editor-header { grid-template-columns: 38px minmax(0,1fr) auto; gap: 10px; }
