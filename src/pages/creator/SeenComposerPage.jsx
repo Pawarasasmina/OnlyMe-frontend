@@ -1406,6 +1406,19 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
     if (action === "finish" && flow?.onFinish) return flow.onFinish();
     return onDone();
   };
+  const beginChapterSwipe = (x, y, target) => {
+    if (!flow || target?.closest?.("button,input,textarea,select,audio,video")) return;
+    swipeStart.current = { x, y };
+  };
+  const finishChapterSwipe = (x, y) => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || busy) return;
+    const dx = x - start.x;
+    const dy = y - start.y;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    void finishChapterEditing(dx < 0 ? "next" : "back");
+  };
   const openStructuredEditor = (type, block = null) => {
     setStructuredEditor({ type, blockId: block?.id || null });
     setStructuredDraft(
@@ -1506,17 +1519,21 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
       className={`seen-chapter-editor-page ${flow ? "is-flow-editor" : ""}`}
       ref={pageRef}
       onPointerDown={(event) => {
-        if (!flow || event.pointerType === "mouse" || event.target.closest("button,input,textarea,[contenteditable='true'],audio,video")) return;
-        swipeStart.current = { x: event.clientX, y: event.clientY };
+        if (event.pointerType === "mouse" || event.pointerType === "touch") return;
+        beginChapterSwipe(event.clientX, event.clientY, event.target);
       }}
       onPointerUp={(event) => {
-        const start = swipeStart.current;
-        swipeStart.current = null;
-        if (!start || busy) return;
-        const dx = event.clientX - start.x;
-        const dy = event.clientY - start.y;
-        if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
-        void finishChapterEditing(dx < 0 ? "next" : "back");
+        if (event.pointerType === "touch") return;
+        finishChapterSwipe(event.clientX, event.clientY);
+      }}
+      onTouchCancel={() => { swipeStart.current = null; }}
+      onTouchEnd={(event) => {
+        const touch = event.changedTouches?.[0];
+        if (touch) finishChapterSwipe(touch.clientX, touch.clientY);
+      }}
+      onTouchStart={(event) => {
+        const touch = event.touches?.[0];
+        if (touch) beginChapterSwipe(touch.clientX, touch.clientY, event.target);
       }}
     >
       <header className="seen-chapter-editor-header">
