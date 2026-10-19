@@ -38749,8 +38749,8 @@ video.seen-reader-media {
 .home-prototype-page:has(.wall-composer-host.is-open) { display: block; grid-template-columns: minmax(0, 1fr); max-width: none; }
 
 /* Community Wall filters: a compact toolbar and center-column sheet. */
-.wall-filter-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; }
-.wall-filter-trigger { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 8px; min-height: 34px; padding: 0 12px; border: 1px solid #28313a; border-radius: 999px; background: #161d24; color: #dfe6ee; font-size: 12px; font-weight: 600; }
+.wall-filter-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 9px; }
+.wall-filter-trigger { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 6px; min-height: 32px; padding: 0 11px; border: 1px solid #28313a; border-radius: 999px; background: #161d24; color: #dfe6ee; font-size: 11px; font-weight: 600; }
 .wall-filter-trigger.has-filters { border-color: #608dbb; color: #abd4ff; }
 .wall-filter-trigger > span { display: grid; place-items: center; min-width: 17px; height: 17px; border-radius: 50%; background: #91c5fb; color: #102033; font-size: 10px; }
 .wall-filter-summary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8f9ba7; font-size: 11px; text-align: right; }
@@ -38841,11 +38841,12 @@ video.seen-reader-media {
 }
 
 /* Wall refresh: restore @Seen personality with clear, quiet hierarchy. */
+.home-prototype-main > .home-story-strip { padding-bottom: 9px; }
 .wall-topic-nav {
   display: flex;
-  gap: 7px;
-  margin: 2px 0 13px;
-  padding: 2px 0 7px;
+  gap: 6px;
+  margin: 0 0 7px;
+  padding: 0;
   overflow-x: auto;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -38853,8 +38854,8 @@ video.seen-reader-media {
 .wall-topic-nav::-webkit-scrollbar { display: none; }
 .wall-topic-nav button {
   flex: 0 0 auto;
-  min-height: 34px;
-  padding: 0 13px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: #151a20;
