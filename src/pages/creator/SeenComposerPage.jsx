@@ -959,6 +959,7 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
   const voiceChunks = useRef([]);
   const selectedRange = useRef(null);
   const swipeStart = useRef(null);
+  const swipeCommitTimer = useRef(null);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceState, setVoiceState] = useState("idle");
@@ -998,6 +999,8 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
     options: ["", ""],
     resultsVisibility: "SUBSCRIBERS",
   });
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeCommitting, setSwipeCommitting] = useState(false);
   const [flowFooterStyle, setFlowFooterStyle] = useState(undefined);
 
   useLayoutEffect(() => {
@@ -1018,6 +1021,8 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
       window.removeEventListener("resize", positionFooter);
     };
   }, [flowEnabled]);
+
+  useEffect(() => () => window.clearTimeout(swipeCommitTimer.current), []);
   const storyBlock = (chapter?.blocks || []).find(
     (block) => block.type === "TEXT" && !block.metadata?.location,
   );
@@ -1409,6 +1414,16 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
   const beginChapterSwipe = (x, y, target) => {
     if (!flow || target?.closest?.("button,input,textarea,select,audio,video")) return;
     swipeStart.current = { x, y };
+    setSwipeCommitting(false);
+    setSwipeOffset(0);
+  };
+  const moveChapterSwipe = (x, y) => {
+    const start = swipeStart.current;
+    if (!start || busy || swipeCommitting) return;
+    const dx = x - start.x;
+    const dy = y - start.y;
+    if (Math.abs(dx) < Math.abs(dy) || Math.abs(dx) < 8) return;
+    setSwipeOffset(Math.max(-120, Math.min(120, dx * .56)));
   };
   const finishChapterSwipe = (x, y) => {
     const start = swipeStart.current;
@@ -1416,8 +1431,19 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
     if (!start || busy) return;
     const dx = x - start.x;
     const dy = y - start.y;
-    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
-    void finishChapterEditing(dx < 0 ? "next" : "back");
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.25) {
+      setSwipeOffset(0);
+      return;
+    }
+    const action = dx < 0 ? "next" : "back";
+    setSwipeCommitting(true);
+    setSwipeOffset(dx < 0 ? -180 : 180);
+    window.clearTimeout(swipeCommitTimer.current);
+    swipeCommitTimer.current = window.setTimeout(() => {
+      void finishChapterEditing(action);
+      setSwipeOffset(0);
+      setSwipeCommitting(false);
+    }, 150);
   };
   const openStructuredEditor = (type, block = null) => {
     setStructuredEditor({ type, blockId: block?.id || null });
@@ -1516,8 +1542,9 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
 
   return (
     <section
-      className={`seen-chapter-editor-page ${flow ? "is-flow-editor" : ""}`}
+      className={`seen-chapter-editor-page ${flow ? "is-flow-editor" : ""} ${swipeOffset ? "is-swipe-dragging" : ""} ${swipeCommitting ? "is-swipe-committing" : ""}`}
       ref={pageRef}
+      style={flow ? { "--chapter-swipe-x": `${swipeOffset}px` } : undefined}
       onPointerDown={(event) => {
         if (event.pointerType === "mouse" || event.pointerType === "touch") return;
         beginChapterSwipe(event.clientX, event.clientY, event.target);
@@ -1526,16 +1553,24 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
         if (event.pointerType === "touch") return;
         finishChapterSwipe(event.clientX, event.clientY);
       }}
+      onPointerMove={(event) => {
+        if (event.pointerType !== "mouse" && event.pointerType !== "touch") moveChapterSwipe(event.clientX, event.clientY);
+      }}
       onTouchCancel={() => { swipeStart.current = null; }}
       onTouchEnd={(event) => {
         const touch = event.changedTouches?.[0];
         if (touch) finishChapterSwipe(touch.clientX, touch.clientY);
+      }}
+      onTouchMove={(event) => {
+        const touch = event.touches?.[0];
+        if (touch) moveChapterSwipe(touch.clientX, touch.clientY);
       }}
       onTouchStart={(event) => {
         const touch = event.touches?.[0];
         if (touch) beginChapterSwipe(touch.clientX, touch.clientY, event.target);
       }}
     >
+      {flow && swipeOffset ? <div aria-hidden="true" className={`seen-chapter-swipe-cue ${swipeOffset < 0 ? "is-next" : "is-back"}`} style={{ "--swipe-cue-progress": Math.min(1, Math.abs(swipeOffset) / 55), opacity: Math.min(1, .35 + Math.abs(swipeOffset) / 85) }}><FiChevronLeft /><span>{Math.abs(swipeOffset) >= 55 ? `Release for ${swipeOffset < 0 ? "next" : "previous"}` : `Swipe ${swipeOffset < 0 ? "left" : "right"}`}</span><FiChevronRight /></div> : null}
       <header className="seen-chapter-editor-header">
         {flow ? <button aria-label="Previous chapter" className="seen-chapter-flow-back" disabled={busy} onClick={() => finishChapterEditing("back")} type="button"><FiChevronLeft /></button> : null}
         <div>
