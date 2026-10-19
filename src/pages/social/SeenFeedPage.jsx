@@ -477,17 +477,20 @@ function SeenSummary({ item, target }) {
   const meta = [item.category, `${chapterCount} ${chapterWord}`, `~${item.readMinutes} min`].filter(Boolean).join(" - ");
   return <div className="seen-summary">
     <CompactSeenMedia item={item} target={target} />
-    <Link className="seen-summary-copy" to={target}>
-      <strong>{item.title}</strong>
-      <small>{meta}</small>
-      {item.description ? <p>{item.description}</p> : null}
-    </Link>
+    <div className="seen-summary-copy">
+      <Link className="seen-summary-main-link" to={target}>
+        <strong>{item.title}</strong>
+        <small>{meta}</small>
+        {item.description ? <p>{item.description}</p> : null}
+      </Link>
+      <ChapterPreviewList chapters={item.chapters} maxVisible={2} target={target} />
+    </div>
   </div>;
 }
 
-function ChapterPreviewList({ chapters, target }) {
+function ChapterPreviewList({ chapters, maxVisible = 3, target }) {
   if (!chapters.length) return null;
-  const visible = chapters.slice(0, 3);
+  const visible = chapters.slice(0, maxVisible);
   const extra = chapters.length - visible.length;
   return <div className="seen-chapter-list" aria-label="Seen chapters">
     {visible.map((chapter, index) => (
@@ -1017,7 +1020,6 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     />
     <div className="seen-feed-copy">
       <SeenSummary item={item} target={target} />
-      <ChapterPreviewList chapters={item.chapters} target={target} />
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       <PreviewComment comment={item.previewComment} />
       <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />

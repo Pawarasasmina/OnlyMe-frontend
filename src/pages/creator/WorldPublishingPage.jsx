@@ -378,6 +378,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const autoOpenStoryComposerRef = useRef(false);
   const autoSaveAttemptedStoryIds = useRef(new Set());
   const draftAutoSaveTimer = useRef(null);
+  const chapterAutoSaveTimer = useRef(null);
   const pendingDraftSaveRef = useRef(false);
   const pendingExperienceContinueRef = useRef(false);
   const saveDraftRef = useRef(null);
@@ -524,6 +525,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   useEffect(() => () => {
     storyPreviewsRef.current.forEach(revokePreviewUrl);
     window.clearTimeout(draftAutoSaveTimer.current);
+    window.clearTimeout(chapterAutoSaveTimer.current);
   }, []);
 
   useEffect(() => () => {
@@ -799,8 +801,20 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const continueExperienceDetails = async () => {
     if (world.id) {
       pendingExperienceContinueRef.current = false;
-      setExperienceStep(2);
-      void saveDraft();
+      const saved = await saveDraft();
+      if (saved) setExperienceStep(2);
+      if (saved && !(saved.chapters || []).length) {
+        const response = await api.addChapter(saved.id, { blocks: [], isPreview: false, releaseMode: "IMMEDIATE", statusVersion: saved.statusVersion, title: "Chapter 1" });
+        const createdId = response.data.data.chapter?.stableChapterId;
+        const next = await refreshWorld(saved.id);
+        const nextIndex = next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId);
+        setActiveChapter(Math.max(0, nextIndex));
+        setChapterStory("");
+      } else if (saved?.chapters?.length) {
+        setActiveChapter(0);
+        setChapterStory(chapterStoryText(saved.chapters[0]));
+        setChapterStatus("Draft saved");
+      }
       return;
     }
     pendingExperienceContinueRef.current = true;
@@ -808,6 +822,18 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (saved) {
       pendingExperienceContinueRef.current = false;
       setExperienceStep(2);
+      if (!(saved.chapters || []).length) {
+        const response = await api.addChapter(saved.id, { blocks: [], isPreview: false, releaseMode: "IMMEDIATE", statusVersion: saved.statusVersion, title: "Chapter 1" });
+        const createdId = response.data.data.chapter?.stableChapterId;
+        const next = await refreshWorld(saved.id);
+        const nextIndex = next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId);
+        setActiveChapter(Math.max(0, nextIndex));
+        setChapterStory("");
+      } else {
+        setActiveChapter(0);
+        setChapterStory(chapterStoryText(saved.chapters[0]));
+        setChapterStatus("Draft saved");
+      }
     }
   };
 
@@ -1020,7 +1046,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         isPreview: Boolean(chapter.isPreview || activeChapter === 0),
         releaseMode: chapter.releaseMode || "IMMEDIATE",
         statusVersion: publication.statusVersion,
-        title: chapter.title || `Chapter ${activeChapter + 1}`,
+        title: activePlanetChapter?.title || chapter.title || `Chapter ${activeChapter + 1}`,
       });
       await refreshChapterEditor();
       setChapterStatus("Chapter saved");
@@ -1034,15 +1060,89 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     }
   };
 
-  const saveChapterStory = async () => {
+  const saveChapterStory = async ({ close = true } = {}) => {
     if (!activePlanetEditorChapter) return;
+    window.clearTimeout(chapterAutoSaveTimer.current);
     const saved = await updateActiveChapterBlocks(chapterBlocksWithStory(activePlanetEditorChapter, chapterStory), "Saving chapter...");
-    if (saved) {
+    if (saved && close) {
       const openedDirectly = new URLSearchParams(location.search).has("chapter");
       setActiveChapter(null);
-      setChapterStatus("");
+      setChapterStatus("Draft saved");
       if (openedDirectly && world.id) nav(`/experience/${world.id}`, { replace: true });
     }
+    return saved;
+  };
+
+  useEffect(() => {
+    if (activeChapter == null || !activePlanetEditorChapter || chapterSaving) return undefined;
+    window.clearTimeout(chapterAutoSaveTimer.current);
+    chapterAutoSaveTimer.current = window.setTimeout(() => {
+      void saveChapterStory({ close: false });
+    }, 900);
+    return () => window.clearTimeout(chapterAutoSaveTimer.current);
+  }, [activeChapter, activePlanetEditorChapter?.title, chapterStory]);
+
+  const selectExperienceChapter = async (index) => {
+    if (index === activeChapter) return;
+    const saved = await saveChapterStory({ close: false });
+    if (!saved || !chapters[index]) return;
+    setActiveChapter(index);
+    setChapterStory(chapterStoryText(chapters[index]));
+    setChapterStatus("Draft saved");
+  };
+
+  const previousExperienceChapter = async () => {
+    if (activeChapter > 0) return selectExperienceChapter(activeChapter - 1);
+    const saved = await saveChapterStory({ close: false });
+    if (saved) {
+      setActiveChapter(null);
+      setExperienceStep(1);
+    }
+  };
+
+  const nextExperienceChapter = async () => {
+    const currentIndex = activeChapter;
+    const saved = await saveChapterStory({ close: false });
+    if (!saved) return;
+    if (chapters[currentIndex + 1]) {
+      setActiveChapter(currentIndex + 1);
+      setChapterStory(chapterStoryText(chapters[currentIndex + 1]));
+      return;
+    }
+    setChapterSaving(true);
+    setChapterStatus("Creating next chapter...");
+    try {
+      const latest = (await api.getMyPublication(world.id)).data.data.publication;
+      const response = await api.addChapter(latest.id, {
+        blocks: [],
+        isPreview: latest.pricing?.mode === "FREE",
+        releaseMode: "IMMEDIATE",
+        statusVersion: latest.statusVersion,
+        title: `Chapter ${(latest.chapters?.length || 0) + 1}`,
+      });
+      const createdId = response.data.data.chapter?.stableChapterId;
+      const next = await refreshWorld(latest.id);
+      const nextIndex = next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId);
+      setActiveChapter(Math.max(0, nextIndex));
+      setChapterStory("");
+      setChapterStatus("Draft saved");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+    } finally {
+      setChapterSaving(false);
+    }
+  };
+
+  const finishExperienceChapters = async () => {
+    if (chapters.length < 2) {
+      setChapterStatus("Premium Experiences need at least 2 chapters");
+      await nextExperienceChapter();
+      return;
+    }
+    const saved = await saveChapterStory({ close: false });
+    if (!saved) return;
+    setActiveChapter(null);
+    setExperienceStep(3);
   };
 
   const uploadChapterMedia = async (mediaType, file, metadata = {}) => {
@@ -1335,16 +1435,32 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     <>
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} source={cropTarget.url} /> : null}
       <SeenChapterEditor
+        key={activePlanetEditorChapter.stableChapterId || activeChapter}
         busy={chapterSaving}
         chapter={activePlanetEditorChapter}
         error={error}
+        flow={{
+          canAdd: true,
+          index: activeChapter,
+          max: Math.max(chapters.length + 1, 2),
+          nextLabel: activeChapter < chapters.length - 1 ? "Next" : "New chapter",
+          onBack: previousExperienceChapter,
+          onFinish: finishExperienceChapters,
+          onNext: nextExperienceChapter,
+          onSelect: selectExperienceChapter,
+          total: chapters.length,
+        }}
         onAddBlocks={addStructuredBlocks}
         onAddPlace={addPlaceBlock}
         onDone={saveChapterStory}
         onMediaUpload={requestChapterMedia}
         onRemoveBlock={removeChapterBlock}
         onReorderBlocks={reorderChapterBlocks}
-        onStoryChange={setChapterStory}
+        onStoryChange={(value) => { setChapterStory(value); setChapterStatus("Saving…"); }}
+        onTitleChange={(title) => {
+          setWorld((current) => ({ ...current, chapters: (current.chapters || []).map((chapter, index) => index === activeChapter ? { ...chapter, title } : chapter) }));
+          setChapterStatus("Saving…");
+        }}
         onUpdateBlock={updateStructuredBlock}
         status={chapterStatus}
         story={chapterStory}
@@ -1456,7 +1572,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   if (experience && creationStarted && experienceStep === 3) return (
     <article className="experience-final-preview experience-final-review">
-      <header><button aria-label="Back to chapters" onClick={() => setExperienceStep(2)} type="button"><FiArrowLeft /></button><div><h1>One last look</h1><p>Exactly what people will see</p></div><aside><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> Preview</button><button className="experience-final-save-later" disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></aside></header>
+      {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
+      <header><button aria-label="Back to chapters" onClick={() => { const index = Math.max(0, chapters.length - 1); setExperienceStep(2); setActiveChapter(index); setChapterStory(chapterStoryText(chapters[index])); setChapterStatus("Draft saved"); }} type="button"><FiArrowLeft /></button><div><h1>One last look</h1><p>Exactly what people will see</p></div><aside><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> Preview</button><button className="experience-final-save-later" disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></aside></header>
       <ExperienceProgress step={3} />
       <main>
         <section className="experience-review-card">
@@ -1467,8 +1584,23 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             {chapters.map((chapter, index) => <div key={chapter.stableChapterId || chapter.localId || index}><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong><em><FiLock /></em></div>)}
           </div>
         </section>
-        <button className="experience-review-location" onClick={() => setExperienceStep(1)} type="button"><FiMapPin /><strong>{world.experienceLocation || "Location"}</strong><span>{world.experienceLocation ? "Edit" : "Add"}</span><b>›</b></button>
-        <button className="experience-review-save" disabled={!chapters.length || saving || uploading || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Saving…</> : "Save"}</button>
+        <section className="experience-final-settings">
+          <header><span>FINAL DETAILS</span><small>Autosaved</small></header>
+          <button className={`experience-final-cover ${coverUrl ? "has-cover" : ""}`} disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">
+            {coverUrl ? <img alt="Experience cover" src={coverUrl} /> : <FiPlus />}
+            <span>{uploading ? "Uploading…" : coverUrl ? "Change cover" : "Add cover"}</span>
+          </button>
+          <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
+          <label><span>Title</span><input maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder="Name your Experience" value={world.title} /></label>
+          <label><span>Description</span><textarea maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, experiencePath: event.target.value, summary: event.target.value })} placeholder="What journey will people take?" rows={3} value={world.experiencePath || ""} /></label>
+          <div className="experience-final-settings-grid">
+            <label><span>Category</span><select onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Choose</option>{["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"].map((category) => <option key={category}>{category}</option>)}</select></label>
+            <label><span>Price</span><div className="experience-final-price"><b>{STAR}</b><input aria-label="One-time Experience price" min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /></div></label>
+          </div>
+          <label><span>Location <em>optional</em></span><div className="experience-final-location"><FiMapPin /><input onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Add a location" value={world.experienceLocation || ""} /></div></label>
+          <button aria-pressed={world.allowDownload} className={`experience-final-toggle ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span><strong>Allow download</strong><small>Watermarked text and photos</small></span><i><b /></i></button>
+        </section>
+        <button className="experience-review-save" disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Publishing…</> : "Publish Experience"}</button>
         {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
       </main>
     </article>
