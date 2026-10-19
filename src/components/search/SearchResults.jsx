@@ -88,26 +88,48 @@ function ExperienceResults({ items }) {
         {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiGrid /></span>}
         <span className="search-experience-price"><FiLock />{item.metadata?.price ? <>✦{Number(item.metadata.price).toLocaleString()}</> : "Free"}</span>
       </span>
-      <span className="search-experience-copy"><strong>{item.title}</strong><small>by {item.metadata?.creator?.name || "Creator"}</small></span>
+      <span className="search-experience-copy">
+        <small>Experience by {item.metadata?.creator?.name || "Creator"}</small>
+        <strong>{item.title}</strong>
+        {item.description ? <span>{item.description}</span> : null}
+        <em>{item.metadata?.chapterCount || 0} {(item.metadata?.chapterCount || 0) === 1 ? "chapter" : "chapters"} · {item.category || "Experience"}</em>
+      </span>
+      <FiChevronRight aria-hidden="true" />
     </Link>)}
   </div>;
 }
 
 function WallResults({ items }) {
   return <div className="search-wall-list">
-    {items.map((item, index) => <Link className="search-wall-result" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "wall_notes")} to={item.route || "/wall"}>
-      <span className="search-wall-result-top"><strong>{item.metadata?.isOwn ? "You" : item.metadata?.author?.name || "User"}</strong><time>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</time></span>
-      <span className="search-wall-result-text">{item.description || item.title}</span>
-      <span className="search-wall-result-meta">{item.category ? <em>#{item.category.replace(/^#/u, "")}</em> : null}{item.location?.city ? <small><FiMapPin />{item.location.city}</small> : null}</span>
-    </Link>)}
+    {items.map((item, index) => {
+      const author = item.metadata?.author || {};
+      const authorName = item.metadata?.isOwn ? "You" : author.name || "User";
+      return <Link className="search-wall-result" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "wall_notes")} to={item.route || "/wall"}>
+        <span className="search-wall-result-copy">
+          <span className="search-wall-result-text">{item.description || item.title}</span>
+          <span className="search-wall-result-byline">
+            <FanAvatar className="search-wall-avatar" name={authorName} size="h-6 w-6" src={author.avatar} />
+            <strong>{authorName}</strong>
+            <time>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</time>
+          </span>
+          <span className="search-wall-result-meta">{item.category ? <em>#{item.category.replace(/^#/u, "")}</em> : null}{item.location?.city ? <small><FiMapPin />{item.location.city}</small> : null}</span>
+        </span>
+        <FiChevronRight aria-hidden="true" className="search-wall-open" />
+      </Link>;
+    })}
   </div>;
 }
 
 function WorldResults({ items }) {
   return <div className="search-world-list">
     {items.map((item, index) => <Link className="search-world-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "worlds")} to={item.route || "/search"}>
-      <span className="search-world-cover">{resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <FiGrid />}</span>
-      <span className="search-world-copy"><small>World by {item.metadata?.creator?.name || "Creator"}</small><strong>{item.title}</strong><em>{item.metadata?.subscriptionPriceCents ? `$${(Number(item.metadata.subscriptionPriceCents) / 100).toFixed(2)}/month` : "Open World"}</em></span>
+      <span className="search-world-cover">{item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <FiGrid />}</span>
+      <span className="search-world-copy">
+        <small>World by {item.metadata?.creator?.name || "Creator"}</small>
+        <strong>{item.title}</strong>
+        {item.description ? <span>{item.description}</span> : null}
+        <em>{item.metadata?.subscriptionPriceCents ? `$${(Number(item.metadata.subscriptionPriceCents) / 100).toFixed(2)}/month` : "Open World"}{item.metadata?.chapterCount ? ` · ${item.metadata.chapterCount} chapters` : ""}</em>
+      </span>
       <FiChevronRight aria-hidden="true" />
     </Link>)}
   </div>;
@@ -172,9 +194,14 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
 
   if (isPerson) {
     return (
-      <div className="group flex min-h-[56px] items-center gap-3 rounded-[12px] px-0 py-1.5 transition hover:bg-white/[0.035]">
+      <div className="search-person-row group flex min-h-[64px] items-center gap-3 rounded-[12px] px-2 py-2 transition hover:bg-white/[0.035]">
         <Link className="flex min-w-0 flex-1 items-center gap-3" onClick={trackClick} to={item.route || "/search"}>
-          {content}
+          <ResultThumb item={item} />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 text-sm font-extrabold text-atseen-text"><span className="truncate">{item.title}</span>{item.verified ? <VerifiedBadge /> : null}</span>
+            <span className="mt-0.5 block truncate text-xs font-medium text-[#78869b]">{personSubtitle}</span>
+            {item.description ? <span className="search-person-description">{item.description}</span> : null}
+          </span>
         </Link>
         <Link aria-label={`Open ${item.title}`} className="grid h-9 w-9 place-items-center text-lg text-white/25 transition hover:text-atseen-blue" onClick={trackClick} to={item.route || "/search"}><FiChevronRight /></Link>
       </div>

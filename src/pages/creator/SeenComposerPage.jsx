@@ -943,7 +943,9 @@ function SettingsRow({ Icon, label, onClick, toggle = false, value }) {
   );
 }
 
-export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlace, onDone, onMediaUpload, onRemoveBlock, onReorderBlocks, onStoryChange, onUpdateBlock, story, status }) {
+export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBlocks, onAddPlace, onDone, onMediaUpload, onRemoveBlock, onReorderBlocks, onStoryChange, onTitleChange, onUpdateBlock, story, status }) {
+  const flowEnabled = Boolean(flow);
+  const pageRef = useRef(null);
   const photoInput = useRef(null);
   const voiceInput = useRef(null);
   const textareaRef = useRef(null);
@@ -956,6 +958,7 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
   const voiceTimer = useRef(null);
   const voiceChunks = useRef([]);
   const selectedRange = useRef(null);
+  const swipeStart = useRef(null);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceState, setVoiceState] = useState("idle");
@@ -995,6 +998,26 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
     options: ["", ""],
     resultsVisibility: "SUBSCRIBERS",
   });
+  const [flowFooterStyle, setFlowFooterStyle] = useState(undefined);
+
+  useLayoutEffect(() => {
+    if (!flowEnabled || !pageRef.current) return undefined;
+    const center = pageRef.current.closest(".social-center-scroll");
+    const positionFooter = () => {
+      const bounds = center?.getBoundingClientRect();
+      setFlowFooterStyle(bounds ? { left: bounds.left, width: bounds.width } : undefined);
+    };
+    positionFooter();
+    const observer = typeof ResizeObserver === "function" && center
+      ? new ResizeObserver(positionFooter)
+      : null;
+    observer?.observe(center);
+    window.addEventListener("resize", positionFooter);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", positionFooter);
+    };
+  }, [flowEnabled]);
   const storyBlock = (chapter?.blocks || []).find(
     (block) => block.type === "TEXT" && !block.metadata?.location,
   );
@@ -1372,13 +1395,16 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
       });
     await Promise.all(saves);
   };
-  const finishChapterEditing = async () => {
+  const finishChapterEditing = async (action = "done") => {
     await flushImageOverlayText();
     if (structuredEditor) {
       await saveStructuredBlock();
       return;
     }
-    onDone();
+    if (action === "back" && flow?.onBack) return flow.onBack();
+    if (action === "next" && flow?.onNext) return flow.onNext();
+    if (action === "finish" && flow?.onFinish) return flow.onFinish();
+    return onDone();
   };
   const openStructuredEditor = (type, block = null) => {
     setStructuredEditor({ type, blockId: block?.id || null });
@@ -1476,18 +1502,36 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
   };
 
   return (
-    <section className="seen-chapter-editor-page">
+    <section
+      className={`seen-chapter-editor-page ${flow ? "is-flow-editor" : ""}`}
+      ref={pageRef}
+      onPointerDown={(event) => {
+        if (!flow || event.pointerType === "mouse" || event.target.closest("button,input,textarea,[contenteditable='true'],audio,video")) return;
+        swipeStart.current = { x: event.clientX, y: event.clientY };
+      }}
+      onPointerUp={(event) => {
+        const start = swipeStart.current;
+        swipeStart.current = null;
+        if (!start || busy) return;
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        void finishChapterEditing(dx < 0 ? "next" : "back");
+      }}
+    >
       <header className="seen-chapter-editor-header">
+        {flow ? <button aria-label="Previous chapter" className="seen-chapter-flow-back" disabled={busy} onClick={() => finishChapterEditing("back")} type="button"><FiChevronLeft /></button> : null}
         <div>
-          <h1>{chapter?.title?.trim() || "Chapter name"}</h1>
-          <p>
-            drag a block - move - double-tap - edit
-          </p>
+          {flow ? <input aria-label="Chapter title" className="seen-chapter-flow-title" disabled={busy} maxLength={120} onChange={(event) => onTitleChange?.(event.target.value)} placeholder="Name this chapter" value={chapter?.title || ""} /> : <h1>{chapter?.title?.trim() || "Chapter name"}</h1>}
+          <p>{flow ? `Chapter ${flow.index + 1} of ${flow.max || flow.total}` : "drag a block - move - double-tap - edit"}</p>
         </div>
-        <button disabled={busy} onClick={finishChapterEditing} type="button">
-          {busy ? "Saving" : "Done"}
-        </button>
+        <button disabled={busy} onClick={() => finishChapterEditing(flow ? "finish" : "done")} type="button">{busy ? "Saving" : flow ? "Review" : "Done"}</button>
       </header>
+
+      {flow ? <nav aria-label="Chapters" className="seen-chapter-flow-progress">
+        {Array.from({ length: flow.total }, (_, index) => <button aria-label={`Open chapter ${index + 1}`} aria-current={index === flow.index ? "step" : undefined} className={index === flow.index ? "is-active" : index < flow.index ? "is-complete" : ""} disabled={busy} key={index} onClick={() => flow.onSelect?.(index)} type="button"><span>{index + 1}</span></button>)}
+        {flow.canAdd ? <button aria-label="Add next chapter" className="is-add" disabled={busy} onClick={() => finishChapterEditing("next")} type="button"><FiPlus /></button> : null}
+      </nav> : null}
 
       {textToolsOpen ? (
         <div
@@ -2367,6 +2411,11 @@ export function SeenChapterEditor({ busy, chapter, error, onAddBlocks, onAddPlac
           <FiX />
         </button>
       </div> : null}
+      {flow ? <footer className="seen-chapter-flow-footer" style={flowFooterStyle}>
+        <button disabled={busy} onClick={() => finishChapterEditing("back")} type="button"><FiChevronLeft /> Back</button>
+        <span aria-live="polite">{busy ? "Saving…" : status || (typeof navigator !== "undefined" && !navigator.onLine ? "Offline — changes pending" : "Saved as draft")}</span>
+        <button className="is-primary" disabled={busy} onClick={() => finishChapterEditing("next")} type="button">{flow.nextLabel || "Next"} <FiChevronRight /></button>
+      </footer> : null}
       <button
         aria-expanded={actionsOpen}
         aria-label={actionsOpen ? "Close block menu" : "Add story block"}
@@ -2438,6 +2487,9 @@ export default function SeenComposerPage() {
   const pendingCoverKind = useRef("IMAGE");
   const pendingVideoLimit = useRef(15);
   const chapterTitleInputs = useRef(new Map());
+  const chapterAutoSaveTimer = useRef(null);
+  const publicationAutoSaveTimer = useRef(null);
+  const initialChapterStarted = useRef(false);
   const [p, setP] = useState(() => ({
     ...empty,
     replyToSeen: replyToSeenId || null,
@@ -2619,7 +2671,7 @@ export default function SeenComposerPage() {
 
   const change = (values) => {
     dirty.current = true;
-    setStatus("Unsaved changes - click Save for later");
+    setStatus("Saving...");
     setError("");
     setLinkOnlyShare(null);
     setP((current) => ({ ...current, ...values }));
@@ -2715,6 +2767,13 @@ export default function SeenComposerPage() {
     nav(draftCount ? `/profile?draftSaved=${draftCount}` : "/profile", { replace: true });
   };
 
+  useEffect(() => {
+    if (!dirty.current || activeChapterId || busy.current || !hasDraftContent(p)) return undefined;
+    window.clearTimeout(publicationAutoSaveTimer.current);
+    publicationAutoSaveTimer.current = window.setTimeout(() => void save(), 850);
+    return () => window.clearTimeout(publicationAutoSaveTimer.current);
+  }, [activeChapterId, p.allowDownload, p.category, p.description, p.experienceLocation, p.seriesId, p.summary, p.taggedPeople, p.title, p.visibility]);
+
   const cancelCreation = async () => {
     if (uploading || submitting || canceling) return;
     setCanceling(true);
@@ -2753,6 +2812,8 @@ export default function SeenComposerPage() {
   useEffect(
     () => () => {
       if (videoToTrim?.url) URL.revokeObjectURL(videoToTrim.url);
+      window.clearTimeout(chapterAutoSaveTimer.current);
+      window.clearTimeout(publicationAutoSaveTimer.current);
     },
     [videoToTrim?.url],
   );
@@ -2870,12 +2931,12 @@ export default function SeenComposerPage() {
       });
       const addedChapterId = response.data?.data?.chapter?.stableChapterId || "";
       await refresh(publication.id, { preserveLocalChanges: dirty.current });
-      if (addedChapterId) setChapterTitleFocusId(addedChapterId);
+      if (addedChapterId) setActiveChapterId(addedChapterId);
       setStatus("Chapter added");
       if (creatingDraft) {
         nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
           replace: true,
-          state: { focusChapterId: addedChapterId },
+          state: { openChapterId: addedChapterId },
         });
       }
     } catch (requestError) {
@@ -2884,6 +2945,12 @@ export default function SeenComposerPage() {
       setChapterAdding(false);
     }
   };
+
+  useEffect(() => {
+    if (id || loadingPublication || p.id || p.chapters.length || initialChapterStarted.current) return;
+    initialChapterStarted.current = true;
+    void addChapter();
+  }, [id, loadingPublication, p.chapters.length, p.id]);
 
   const openChapterEditor = (chapter) => {
     setActiveChapterId(chapter.stableChapterId);
@@ -2900,12 +2967,13 @@ export default function SeenComposerPage() {
         chapter.stableChapterId === chapterId ? { ...chapter, title } : chapter,
       ),
     }));
-    setStatus("Unsaved changes - click Save for later");
+    setStatus("Saving...");
     setError("");
   };
 
-  const saveChapterStory = async () => {
+  const saveChapterStory = async ({ close = true } = {}) => {
     if (!activeChapter || !p.id || chapterSaving) return;
+    window.clearTimeout(chapterAutoSaveTimer.current);
     setChapterSaving(true);
     setChapterStatus("Saving chapter...");
     setError("");
@@ -2917,18 +2985,87 @@ export default function SeenComposerPage() {
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
-      await refresh(p.id);
-      setActiveChapterId("");
-      setChapterStatus("");
+      const publication = await refresh(p.id);
+      if (close) setActiveChapterId("");
+      setChapterStatus("Draft saved");
       setStatus("Chapter saved");
+      return publication;
     } catch (requestError) {
       setChapterStatus("Chapter save failed");
       setError(publicationError(requestError));
       if (requestError.response?.status === 409 && p.id)
         await refresh(p.id).catch(() => {});
+      return null;
     } finally {
       setChapterSaving(false);
     }
+  };
+
+  useEffect(() => {
+    if (!activeChapterId || !p.id || chapterSaving) return undefined;
+    window.clearTimeout(chapterAutoSaveTimer.current);
+    chapterAutoSaveTimer.current = window.setTimeout(() => {
+      void saveChapterStory({ close: false });
+    }, 900);
+    return () => window.clearTimeout(chapterAutoSaveTimer.current);
+  }, [activeChapter?.title, activeChapterId, chapterStory]);
+
+  const selectSeenChapter = async (index) => {
+    const publication = await saveChapterStory({ close: false });
+    const target = publication?.chapters?.[index] || p.chapters?.[index];
+    if (target?.stableChapterId) {
+      setActiveChapterId(target.stableChapterId);
+      setChapterStory(chapterStoryText(target));
+      setChapterStatus("Draft saved");
+    }
+  };
+
+  const nextSeenChapter = async () => {
+    const currentIndex = p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId);
+    const publication = await saveChapterStory({ close: false });
+    if (!publication) return;
+    const existingNext = publication.chapters?.[currentIndex + 1];
+    if (existingNext?.stableChapterId) {
+      setActiveChapterId(existingNext.stableChapterId);
+      setChapterStory(chapterStoryText(existingNext));
+      setChapterStatus("Draft saved");
+      return;
+    }
+    if ((publication.chapters?.length || 0) >= 5) {
+      setActiveChapterId("");
+      return;
+    }
+    setChapterSaving(true);
+    setChapterStatus("Creating next chapter...");
+    try {
+      const response = await api.addChapter(publication.id, {
+        title: `Chapter ${(publication.chapters?.length || 0) + 1}`,
+        blocks: [],
+        isPreview: true,
+        releaseMode: "IMMEDIATE",
+        statusVersion: publication.statusVersion,
+      });
+      const chapterId = response.data?.data?.chapter?.stableChapterId;
+      await refresh(publication.id);
+      if (chapterId) {
+        setActiveChapterId(chapterId);
+        setChapterStory("");
+      }
+      setChapterStatus("Draft saved");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+    } finally {
+      setChapterSaving(false);
+    }
+  };
+
+  const previousSeenChapter = async () => {
+    const currentIndex = p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId);
+    if (currentIndex <= 0) {
+      await saveChapterStory();
+      return;
+    }
+    await selectSeenChapter(currentIndex - 1);
   };
 
   const uploadChapterMedia = async (mediaType, file, metadata = {}) => {
@@ -3277,9 +3414,21 @@ export default function SeenComposerPage() {
           />
         ) : null}
         <SeenChapterEditor
+          key={activeChapter.stableChapterId}
           busy={chapterSaving}
           chapter={activeChapter}
           error={error}
+          flow={{
+            canAdd: p.chapters.length < 5,
+            index: Math.max(0, p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId)),
+            max: 5,
+            nextLabel: p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId) < p.chapters.length - 1 ? "Next" : p.chapters.length < 5 ? "New chapter" : "Review",
+            onBack: previousSeenChapter,
+            onFinish: () => saveChapterStory(),
+            onNext: nextSeenChapter,
+            onSelect: selectSeenChapter,
+            total: p.chapters.length,
+          }}
           onAddBlocks={addStructuredBlocks}
           onAddPlace={addPlaceBlock}
           onDone={saveChapterStory}
@@ -3288,8 +3437,9 @@ export default function SeenComposerPage() {
           onReorderBlocks={reorderChapterBlocks}
           onStoryChange={(value) => {
             setChapterStory(value);
-            setChapterStatus(value.trim() ? "Unsaved chapter" : "");
+            setChapterStatus("Saving…");
           }}
+          onTitleChange={(title) => changeChapterTitle(activeChapter.stableChapterId, title)}
           onUpdateBlock={updateStructuredBlock}
           status={chapterStatus}
           story={chapterStory}
@@ -3325,8 +3475,8 @@ export default function SeenComposerPage() {
           <FiChevronLeft />
         </button>
         <div className="seen-compose-heading">
-          <h1>New Seen</h1>
-          {introOpen ? (
+          <h1>{p.chapters.length ? "Finish your Seen" : "New Seen"}</h1>
+          {introOpen && !p.chapters.length ? (
             <p>
               <span>
                 Seen - a post made of chapters. People walk it like a
@@ -3444,7 +3594,7 @@ export default function SeenComposerPage() {
         </label>
 
         <div className="seen-compose-section-title">
-          <span>CHAPTERS</span>
+          <span>REVIEW CHAPTERS</span>
           <small>
             {p.chapters.length}/5 {"\u00b7"} like a post {"-"} short
           </small>
