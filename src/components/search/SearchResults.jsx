@@ -57,11 +57,27 @@ function compactCount(value) {
 
 function SeenResults({ items }) {
   return <div className="search-seen-grid">
-    {items.map((item, index) => <Link aria-label={`Open Seen ${item.title}`} className="search-seen-tile" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "seens")} to={item.route || "/search"}>
-      {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiFileText /></span>}
-      <span className="search-seen-shade" />
-      <span className="search-seen-views"><FiEye aria-hidden="true" />{compactCount(item.metadata?.viewCount)}</span>
-    </Link>)}
+    {items.map((item, index) => {
+      const chapters = item.metadata?.chapters || [];
+      const chapterCount = Number(item.metadata?.chapterCount) || chapters.length;
+      const extra = Math.max(0, chapterCount - chapters.length);
+      return <Link aria-label={`Open Seen ${item.title}`} className="search-seen-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "seens")} to={item.route || "/search"}>
+        <span className="search-seen-media">
+          {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiFileText /></span>}
+          <span className="search-seen-shade" />
+          <span className="search-seen-views"><FiEye aria-hidden="true" />{compactCount(item.metadata?.viewCount)}</span>
+        </span>
+        <span className="search-seen-copy">
+          <strong>{item.title}</strong>
+          {item.description ? <span className="search-seen-description">{item.description}</span> : null}
+          {chapters.length ? <span className="search-seen-chapters">
+            {chapters.map((chapter, chapterIndex) => <span key={chapter.id || chapterIndex}><b>{String(chapterIndex + 1).padStart(2, "0")}</b><em>{chapter.title}</em></span>)}
+            {extra > 0 ? <span className="is-more"><b>+{extra}</b><em>more inside</em></span> : null}
+          </span> : null}
+        </span>
+        <FiChevronRight aria-hidden="true" className="search-seen-open" />
+      </Link>;
+    })}
   </div>;
 }
 
