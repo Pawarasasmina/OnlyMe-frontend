@@ -375,7 +375,7 @@ function PostComposer({ currentUser, onComposeOpened, openSignal = "" }) {
             {screen === "compose" ? <button aria-label="Close create post" disabled={createMutation.isPending} onClick={closeComposer} type="button"><FiX /></button> : null}
           </header>
           {screen === "type" || screen === "topic" ? (
-            <div className={`wall-create-options ${screen === "type" ? "is-types" : ""}`} aria-label={screen === "type" ? "Post type" : "Post topic"}>
+            <div className={`wall-create-options ${screen === "type" ? "is-types" : "is-topics"}`} aria-label={screen === "type" ? "Post type" : "Post topic"}>
               {(screen === "type" ? POST_TYPES : POST_TOPICS).map(({ value, description, icon: Icon, color }) => {
                 const selected = screen === "type" ? selectedType.value === value : topic === value;
                 return <button aria-pressed={selected} className={selected ? "is-selected" : ""} key={value} onClick={() => { if (screen === "type") setSelectedType(POST_TYPES.find((item) => item.value === value)); else setTopic(value); setScreen("compose"); }} type="button">
