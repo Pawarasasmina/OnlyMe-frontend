@@ -1092,6 +1092,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, presentati
     contentId: activeStory.id,
     contentType: "story",
     imageUrl: activeStory.mediaUrl || activeStory.image || "",
+    mediaType: activeStory.mediaType || activeStory.type || "",
     previewText: activeStory.caption || `Story from ${activeStory.owner.name}`,
     route: `/stories/${activeStory.id}`,
     title: `${activeStory.owner.name}'s story`,

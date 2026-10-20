@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiAperture, FiDisc, FiEdit3, FiImage } from "react-icons/fi";
+import { FiAperture, FiChevronRight, FiLock, FiMonitor } from "react-icons/fi";
 
 function ThinSeenEyeIcon() {
   return (
@@ -23,21 +23,28 @@ function FanCreateSheet({
   worldTarget = "",
 }) {
   const [position, setPosition] = useState(undefined);
-  const options = [
-    { disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
-    { disabled: !canCreateWorld, icon: FiImage, label: "Experience", to: "/create/experience" },
-    { disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
-    { disabled: !canPostNote, icon: FiEdit3, label: "Note", onClick: onNote },
-    { disabled: !canCreateWorld, icon: FiDisc, label: "World", to: worldTarget || "/create/premium-world" },
+  const primaryOptions = [
+    { description: "Gone in 24 hours", disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
+    { description: "A story in chapters", disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
+    { description: "Ask, offer, recommend", disabled: !canPostNote, icon: FiMonitor, label: "Wall post", onClick: onNote },
+  ];
+  const creatorOptions = [
+    { description: "Premium content, unlocked with coins", disabled: !canCreateWorld, icon: FiLock, label: "Experience", to: "/create/experience" },
+    { description: "Your subscription — everything you share", disabled: !canCreateWorld, icon: ThinSeenEyeIcon, label: "Open my World", to: worldTarget || "/create/premium-world" },
   ];
 
   useEffect(() => {
     if (!isOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [isOpen, onClose]);
 
   useEffect(() => {
@@ -48,15 +55,10 @@ function FanCreateSheet({
       const bounds = compact || !centerColumn
         ? { left: 0, width: window.innerWidth }
         : centerColumn.getBoundingClientRect();
-      const menuWidth = Math.min(184, window.innerWidth - 16);
-      const left = Math.min(
-        Math.max(8, bounds.left + (bounds.width - menuWidth) / 2),
-        window.innerWidth - menuWidth - 8,
-      );
       setPosition({
-        "--create-menu-left": `${left}px`,
-        "--create-menu-bottom": compact ? "calc(env(safe-area-inset-bottom) + 72px)" : "16px",
-        "--create-menu-width": `${menuWidth}px`,
+        "--create-menu-left": `${bounds.left}px`,
+        "--create-menu-bottom": compact ? "0px" : "0px",
+        "--create-menu-width": `${bounds.width}px`,
       });
     };
     updatePosition();
@@ -84,23 +86,26 @@ function FanCreateSheet({
     <div aria-modal="true" className="seen-create-layer" role="dialog" style={position}>
       <button aria-label="Close create menu" className="seen-create-dim" onClick={onClose} type="button" />
       <section aria-label="Create" className="seen-create-sheet">
-        <div className="seen-create-list">
-          {options.map((option) => {
+        <span className="seen-create-handle" aria-hidden="true" />
+        <h2>Create</h2>
+        <div className="seen-create-primary">
+          {primaryOptions.map((option) => {
             const Icon = option.icon;
             const content = (
               <>
                 <span className="seen-create-option-icon"><Icon aria-hidden="true" /></span>
-                <span className="seen-create-option-copy"><b>{option.label}</b></span>
+                <span className="seen-create-option-copy"><b>{option.label}</b><small>{option.description}</small></span>
               </>
             );
 
             if (option.to) {
               return (
                 <Link
-                  className={`seen-create-option ${option.disabled ? "is-disabled" : ""}`}
+                  aria-disabled={option.disabled}
+                  className={`seen-create-card ${option.disabled ? "is-disabled" : ""}`}
                   key={option.label}
-                  onClick={onClose}
-                  to={option.disabled ? "/create" : option.to}
+                  onClick={(event) => { if (option.disabled) event.preventDefault(); else onClose(); }}
+                  to={option.to}
                 >
                   {content}
                 </Link>
@@ -109,7 +114,7 @@ function FanCreateSheet({
 
             return (
               <button
-                className={`seen-create-option ${option.disabled ? "is-disabled" : ""}`}
+                className={`seen-create-card ${option.disabled ? "is-disabled" : ""}`}
                 disabled={option.disabled}
                 key={option.label}
                 onClick={() => handleAction(option)}
@@ -118,6 +123,17 @@ function FanCreateSheet({
                 {content}
               </button>
             );
+          })}
+        </div>
+        <p className="seen-create-section-label">For creators</p>
+        <div className="seen-create-creator-list">
+          {creatorOptions.map((option) => {
+            const Icon = option.icon;
+            return <Link aria-disabled={option.disabled} className={`seen-create-creator-option ${option.disabled ? "is-disabled" : ""}`} key={option.label} onClick={(event) => { if (option.disabled) event.preventDefault(); else onClose(); }} to={option.to}>
+              <span className="seen-create-option-icon"><Icon aria-hidden="true" /></span>
+              <span className="seen-create-option-copy"><b>{option.label}</b><small>{option.description}</small></span>
+              <FiChevronRight aria-hidden="true" />
+            </Link>;
           })}
         </div>
       </section>

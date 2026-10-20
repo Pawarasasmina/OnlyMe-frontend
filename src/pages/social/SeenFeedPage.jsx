@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
-import { FiArchive, FiBarChart2, FiBookmark, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -464,43 +464,69 @@ function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
   return <div className="seen-feed-options-layer" style={sheetPosition}><button aria-label="Close report" className="seen-feed-options-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="seen-feed-options-sheet" role="dialog"><span className="seen-feed-options-handle" /><h2>{done ? "Report received" : `Report ${title}`}</h2>{done ? <div className="p-4"><p className="text-sm leading-6 text-white/60">Our team reviews every report. You will not be revealed as the reporter.</p><button className="mt-4 w-full rounded-xl bg-atseen-blue px-4 py-3 text-sm font-bold text-slate-950" onClick={onClose} type="button">Done</button></div> : <div className="seen-feed-options-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this Seen?</p>{atseenReportReasons.map((reason) => <button disabled={pending} key={reason} onClick={() => onReport(reason)} type="button"><FiFlag /><span><b>{reason}</b></span></button>)}</div>}</section></div>;
 }
 
-function CompactSeenMedia({ item, target }) {
-  return <Link className="seen-media" to={target}>
+function CompactSeenMedia({ item, onOpen }) {
+  return <button aria-label={`Open ${item.title}`} className="seen-media" onClick={onOpen} type="button">
     {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={{ mediaType: item.media.type === "video" ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} /> : <span className="seen-media-fallback">@seen</span>}
     {item.media.type === "video" && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
-  </Link>;
+  </button>;
 }
 
-function SeenSummary({ item, target }) {
+function SeenSummary({ item, onOpenChapter }) {
   const chapterCount = item.chapters.length;
   const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
-  const meta = [item.category, `${chapterCount} ${chapterWord}`, `~${item.readMinutes} min`].filter(Boolean).join(" - ");
+  const meta = [`${chapterCount} ${chapterWord}`, `~${item.readMinutes} min`].join(" Â· ");
   return <div className="seen-summary">
-    <CompactSeenMedia item={item} target={target} />
+    <CompactSeenMedia item={item} onOpen={() => onOpenChapter(0)} />
     <div className="seen-summary-copy">
-      <Link className="seen-summary-main-link" to={target}>
+      <button className="seen-summary-main-link" onClick={() => onOpenChapter(0)} type="button">
+        {item.category ? <em>{item.category}</em> : null}
         <strong>{item.title}</strong>
         <small>{meta}</small>
         {item.description ? <p>{item.description}</p> : null}
-      </Link>
-      <ChapterPreviewList chapters={item.chapters} maxVisible={2} target={target} />
+      </button>
     </div>
+    <ChapterPreviewList chapters={item.chapters} maxVisible={5} onOpenChapter={onOpenChapter} />
   </div>;
 }
 
-function ChapterPreviewList({ chapters, maxVisible = 3, target }) {
+function ChapterPreviewList({ chapters, maxVisible = 3, onOpenChapter }) {
   if (!chapters.length) return null;
   const visible = chapters.slice(0, maxVisible);
   const extra = chapters.length - visible.length;
   return <div className="seen-chapter-list" aria-label="Seen chapters">
     {visible.map((chapter, index) => (
-      <Link className="seen-chapter-preview" key={chapter.id || index} to={`${target}?chapter=${index}`}>
+      <button className="seen-chapter-preview" key={chapter.id || index} onClick={() => onOpenChapter(index)} type="button">
         <span>{String(index + 1).padStart(2, "0")}</span>
         <strong>{chapter.title}</strong>
-      </Link>
+        <FiChevronRight aria-hidden="true" />
+      </button>
     ))}
-    {extra > 0 ? <Link className="seen-chapter-preview is-more" to={target}><span>+{extra}</span><strong>more inside</strong></Link> : null}
+    {extra > 0 ? <button className="seen-chapter-preview is-more" onClick={() => onOpenChapter(visible.length)} type="button"><span>+{extra}</span><strong>more inside</strong><FiChevronRight aria-hidden="true" /></button> : null}
   </div>;
+}
+
+function InlineChapterBlock({ block }) {
+  const type = String(block?.type || "TEXT").toUpperCase();
+  const url = resolveMediaUrl(block?.secureUrl || block?.url || block?.media?.secureUrl || block?.media?.url || "");
+  if (type.includes("IMAGE") || type.includes("PHOTO")) return url ? <img alt={block.alt || ""} className="seen-inline-image" src={url} /> : null;
+  if (type.includes("VIDEO")) return url ? <video className="seen-inline-image" controls playsInline poster={resolveMediaUrl(block?.thumbnailUrl || "")} src={url} /> : null;
+  if (type.includes("AUDIO") || type.includes("VOICE")) return <div className="seen-inline-audio"><button aria-label="Play voice note" type="button"><FiPlay /></button><span aria-hidden="true">||||||||||</span><small>{formatDuration(block.durationSeconds || block.duration)}</small></div>;
+  if (type.includes("HIGHLIGHT") || type.includes("QUOTE")) return <blockquote>{block.text || block.label || ""}</blockquote>;
+  const points = block.items || block.points || block.options;
+  if (Array.isArray(points) && points.length) return <ul>{points.map((point, index) => <li key={point.id || index}>{point.text || point.label || String(point)}</li>)}</ul>;
+  return block?.text || block?.label ? <p>{block.text || block.label}</p> : null;
+}
+
+function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onOverview, onSelect }) {
+  const blocks = chapter?.blocks || [];
+  const nextChapter = chapters[chapterIndex + 1];
+  return <section className="seen-inline-chapter" aria-live="polite">
+    <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>Chapter {chapterIndex + 1} of {chapters.length}</span></div>
+    <h2>{chapter?.title || item.title}</h2>
+    <i className="seen-inline-accent" />
+    <div className="seen-inline-blocks">{blocks.length ? blocks.map((block, index) => <InlineChapterBlock block={block} key={block.id || `${chapter.id}-${index}`} />) : <p>This chapter has no content yet.</p>}</div>
+    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} Â· {nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
+  </section>;
 }
 
 function PreviewComment({ comment }) {
@@ -712,6 +738,9 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
   const [busyOwnerAction, setBusyOwnerAction] = useState("");
+  const [activeChapter, setActiveChapter] = useState(-1);
+  const [swipeDirection, setSwipeDirection] = useState(1);
+  const [mobileSwipe, setMobileSwipe] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
   const trackingTopics = useMemo(() => [item.category].filter(Boolean), [item.category]);
   const trackingRef = useRecommendationTracking({ batchId, creatorId: item.creator.id, entityId: item.id, entityType: "seen", position, topics: trackingTopics });
   const engagementQuery = useQuery({
@@ -904,9 +933,10 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     contentType: "seen",
     destinationRoute: target,
     imageUrl: item.media.url,
+    mediaType: item.media.type,
     textPreview: `${item.title} — ${item.creator.displayName.split(" ").filter(Boolean)[0] || item.creator.displayName}`,
     title: item.title,
-  }), [item.creator.avatarUrl, item.creator.displayName, item.creator.id, item.creator.username, item.id, item.media.url, item.title, shareUrl, target]);
+  }), [item.creator.avatarUrl, item.creator.displayName, item.creator.id, item.creator.username, item.id, item.media.type, item.media.url, item.title, shareUrl, target]);
   const submitComment = (event, parentCommentId = "") => {
     event.preventDefault();
     const text = comment.trim();
@@ -941,6 +971,32 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     if (!window.confirm("Delete this Seen?\n\nThis will permanently remove it for everyone.")) return;
     deleteMutation.mutate();
   };
+  const selectChapter = (index, direction) => {
+    const next = Math.min(Math.max(index, -1), item.chapters.length - 1);
+    setSwipeDirection(direction || (next > activeChapter || (activeChapter === item.chapters.length - 1 && next === -1) ? 1 : -1));
+    setActiveChapter(next);
+  };
+  const previousPanel = () => selectChapter(activeChapter - 1, -1);
+  const nextPanel = () => selectChapter(activeChapter < item.chapters.length - 1 ? activeChapter + 1 : -1, 1);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobileSwipe(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener?.("change", update);
+    return () => mediaQuery.removeEventListener?.("change", update);
+  }, []);
+  const finishSwipe = (_event, info) => {
+    if (!mobileSwipe) return;
+    const forward = info.offset.x <= -52 || info.velocity.x <= -420;
+    const backward = info.offset.x >= 52 || info.velocity.x >= 420;
+    if (forward) nextPanel();
+    else if (backward && activeChapter >= 0) previousPanel();
+  };
+  const previousChapterPanel = activeChapter >= 0 ? activeChapter - 1 : null;
+  const nextChapterPanel = activeChapter < item.chapters.length - 1 ? activeChapter + 1 : item.chapters.length ? -1 : null;
+  const renderInlinePanel = (panel) => panel == null ? <span /> : panel < 0
+    ? <SeenSummary item={item} onOpenChapter={selectChapter} />
+    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} onOverview={() => selectChapter(-1, -1)} onSelect={selectChapter} />;
 
   return <motion.article
     className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
@@ -1018,10 +1074,22 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       selectedSeries={item.series}
       selectedSeriesId={item.seriesId}
     />
-    <div className="seen-feed-copy">
-      <SeenSummary item={item} target={target} />
+    <div className={`seen-feed-copy ${activeChapter >= 0 ? "is-reading" : "is-overview"}`}>
+      <div className="seen-inline-stage">
+        <button aria-label={activeChapter <= 0 ? "Back to Seen overview" : "Previous chapter"} className="seen-inline-arrow is-previous" disabled={activeChapter < 0} onClick={previousPanel} type="button"><FiChevronLeft /></button>
+        <motion.div animate={{ opacity: 1, x: 0 }} className="seen-inline-track" drag={mobileSwipe ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragDirectionLock dragElastic={mobileSwipe ? .82 : 0} dragMomentum={false} initial={reduceMotion ? false : { opacity: .45, x: swipeDirection * 54 }} key={activeChapter} onDragEnd={finishSwipe} transition={reduceMotion ? { duration: 0 } : { duration: .26, ease: [0.22,1,0.36,1] }}>
+          <div aria-hidden="true" className="seen-inline-panel is-neighbor">{renderInlinePanel(previousChapterPanel)}</div>
+          <div className="seen-inline-panel is-current">{renderInlinePanel(activeChapter)}</div>
+          <div aria-hidden="true" className="seen-inline-panel is-neighbor">{renderInlinePanel(nextChapterPanel)}</div>
+        </motion.div>
+        <button aria-label={activeChapter < 0 ? "Open first chapter" : activeChapter < item.chapters.length - 1 ? "Next chapter" : "Back to Seen overview"} className="seen-inline-arrow is-next" disabled={!item.chapters.length} onClick={nextPanel} type="button"><FiChevronRight /></button>
+      </div>
+      {item.chapters.length ? <div className="seen-inline-progress" aria-label="Seen chapter navigation">
+        <div>{[-1, ...item.chapters.map((_, index) => index)].map((panel) => <button aria-label={panel < 0 ? "Open overview" : `Open chapter ${panel + 1}`} className={panel === activeChapter ? "is-active" : ""} key={panel} onClick={() => selectChapter(panel)} type="button" />)}</div>
+        <button onClick={() => selectChapter(activeChapter < 0 ? 0 : -1)} type="button">{activeChapter < 0 ? "Swipe for chapters" : "Overview"} <FiChevronRight /></button>
+      </div> : null}
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
-      <PreviewComment comment={item.previewComment} />
+      {activeChapter < 0 ? <PreviewComment comment={item.previewComment} /> : null}
       <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}

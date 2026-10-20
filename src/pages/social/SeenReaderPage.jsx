@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiArrowLeft, FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
+import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
@@ -918,6 +918,7 @@ export default function SeenReaderPage() {
     contentType: "seen",
     destinationRoute: `/seen/${encodeURIComponent(id)}`,
     imageUrl: mediaUrl(publication?.coverMedia),
+    mediaType: mediaType(publication?.coverMedia),
     textPreview: publication?.title || "Seen",
     title: publication?.title || "Seen",
   }), [id, publication, shareUrl]);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
-import { FiCheck, FiLink, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
+import { FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
+import { FiCheck, FiLink, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -60,6 +60,31 @@ function ExternalAction({ Icon, label, onClick }) {
       <small>{label}</small>
     </button>
   );
+}
+
+function ShareContentPreview({ payload, canonicalUrl }) {
+  const author = payload.author || {};
+  const authorName = author.name || author.displayName || author.username || "@seen";
+  const mediaUrl = payload.imageUrl || payload.mediaUrl || payload.thumbnailUrl || "";
+  const mediaType = String(payload.mediaType || payload.type || "").toLowerCase();
+  const isVideo = mediaType.includes("video") || /\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(mediaUrl);
+  const typeLabel = payload.contentType === "seen" ? "Seen" : payload.contentType === "feed_post" ? "post" : payload.contentType || "share";
+  const shortUrl = String(canonicalUrl || "@seen.com").replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+  return <section className="share-chat-preview" aria-label="How the shared content looks in a chat">
+    <p>How it looks in a chat</p>
+    <div className={`share-chat-card ${mediaUrl ? "has-media" : ""}`}>
+      <div className="share-chat-media">
+        {mediaUrl ? isVideo ? <video aria-label={`${payload.title || "Shared content"} preview`} muted playsInline preload="metadata" src={mediaUrl} /> : <img alt={`${payload.title || "Shared content"} preview`} src={mediaUrl} /> : null}
+        <span className="share-chat-media-shade" />
+        <span className="share-chat-avatar"><FanAvatar alt={`${authorName} avatar`} name={authorName} size="h-[66px] w-[66px]" src={author.avatarUrl || author.avatar} /></span>
+      </div>
+      <div className="share-chat-copy">
+        <strong>{payload.title || payload.textPreview || "Shared on @seen"}</strong>
+        <span>a {typeLabel} by {firstName(authorName)}</span>
+        <small>⌁&nbsp; {shortUrl || "@seen.com"}</small>
+      </div>
+    </div>
+  </section>;
 }
 
 function selectedLabel(recipients = []) {
@@ -248,10 +273,15 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     showToast("Opening WhatsApp...");
   };
 
-  const shareSnapchat = () => {
-    const shareUrl = `https://www.snapchat.com/share?link=${encodeURIComponent(canonicalUrl)}`;
-    window.open(shareUrl, "_blank", "noopener,noreferrer");
-    showToast("Opening Snapchat...");
+  const shareTelegram = () => {
+    const title = payload?.title || payload?.textPreview || "See this on @seen";
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(canonicalUrl)}&text=${encodeURIComponent(title)}`, "_blank", "noopener,noreferrer");
+    showToast("Opening Telegram...");
+  };
+
+  const openMessages = () => {
+    close();
+    navigate("/messages", { state: { sharePayload: payload } });
   };
 
   const nativeShare = async () => {
@@ -307,13 +337,16 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         <div className="share-sheet-handle" aria-hidden="true" />
         <header className="share-sheet-header">
           <div className="min-w-0">
-            <h2 id="share-sheet-title">Send to</h2>
-            <p>{isSeenVariant ? payload.title : payload.textPreview || payload.previewText || payload.title || "Share this on @seen"}</p>
+            <h2 id="share-sheet-title">Share</h2>
           </div>
           <button aria-label="Close share sheet" className="share-sheet-close" disabled={!canClose} onClick={close} type="button">
             <FiX aria-hidden="true" />
           </button>
         </header>
+
+        <ShareContentPreview canonicalUrl={canonicalUrl} payload={payload} />
+
+        <p className="share-send-label">Send in @seen</p>
 
         <label className="share-search">
           <span className="sr-only">Search recipients</span>
@@ -370,7 +403,8 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
             <ExternalAction Icon={FiPlusCircle} label="Story" onClick={shareToStory} />
             <ExternalAction Icon={externalBusy === "copy" ? FiCheck : FiLink} label="Copy link" onClick={() => copyLink()} />
             <ExternalAction Icon={FaWhatsapp} label="WhatsApp" onClick={shareWhatsApp} />
-            <ExternalAction Icon={FaSnapchatGhost} label="Snapchat" onClick={shareSnapchat} />
+            <ExternalAction Icon={FaTelegramPlane} label="Telegram" onClick={shareTelegram} />
+            <ExternalAction Icon={FiMessageCircle} label="Messages" onClick={openMessages} />
             <ExternalAction Icon={FiMoreHorizontal} label="More" onClick={nativeShare} />
           </section>
         )}
