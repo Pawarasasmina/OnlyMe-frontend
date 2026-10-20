@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArchive,
   FiBarChart2,
   FiBookmark,
   FiBookOpen,
-  FiCamera,
   FiChevronLeft,
-  FiCheck,
   FiEdit3,
   FiFileText,
   FiGrid,
   FiHeadphones,
   FiEye,
   FiImage,
-  FiLink,
   FiLock,
   FiMessageSquare,
   FiMoreHorizontal,
@@ -32,6 +29,7 @@ import {
 import SeriesPickerSheet from "../publication/SeriesPickerSheet";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 import ContentEmptyState from "../shared/ContentEmptyState";
+import AppShareSheet from "../share/ShareSheet";
 import { publicationService } from "../../services/publicationService";
 import { useAuth } from "../../hooks/useAuth";
 import { SeenFeedItem } from "../../pages/social/SeenFeedPage";
@@ -367,85 +365,21 @@ function SeriesDetailView({ activeSeries, items, onBack, onMore, owner }) {
   );
 }
 
-async function copyText(value) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return true;
-  }
-  const textarea = document.createElement("textarea");
-  textarea.value = value;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.select();
-  const copied = document.execCommand("copy");
-  document.body.removeChild(textarea);
-  return copied;
-}
-
 function SeenShareSheet({ item, onClose, shareUrl }) {
-  const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState("");
   const title = item?.title || "Untitled Seen";
   const creatorName = creatorNameFor(item);
-  const shortUrl = shareUrl.replace(/^https?:\/\//, "").replace(/^www\./, "");
-
-  const copy = async () => {
-    setError("");
-    try {
-      const ok = await copyText(shareUrl);
-      if (!ok) throw new Error("Copy failed");
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-      return true;
-    } catch {
-      setError("Could not copy link.");
-      return false;
-    }
-  };
-
-  const shareStory = async () => {
-    await copy();
-    onClose();
-    navigate("/create");
-  };
-
-  const shareWhatsApp = () => {
-    const text = `${title} on @seen - ${shareUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-  };
-
-  return (
-    <div aria-modal="true" className="profile-share-backdrop is-seen-share" onMouseDown={onClose} role="dialog">
-      <section className="profile-share-sheet is-seen-share" onMouseDown={(event) => event.stopPropagation()}>
-        <span className="profile-share-handle" />
-        <h2>Share</h2>
-        <div className="profile-share-preview">
-          <i className="profile-share-seen-mark"><FiEye aria-hidden="true" /></i>
-          <strong>{title}</strong>
-          <small>a Seen by {creatorName}</small>
-          <span>{shortUrl}</span>
-        </div>
-        <div className="profile-share-actions">
-          <button onClick={copy} type="button">
-            <i>{copied ? <FiCheck /> : <FiLink />}</i>
-            <span>{copied ? "Copied" : "Copy link"}</span>
-          </button>
-          <button onClick={shareStory} type="button">
-            <i><FiCamera /></i>
-            <span>Your story</span>
-          </button>
-          <button onClick={shareWhatsApp} type="button">
-            <i><FiMessageSquare /></i>
-            <span>WhatsApp</span>
-          </button>
-        </div>
-        {error ? <p className="profile-share-error">{error}</p> : null}
-      </section>
-    </div>
-  );
+  const media = findMedia(item);
+  return <AppShareSheet isOpen onClose={onClose} payload={{
+    author: { avatarUrl: item?.creator?.avatar || item?.creator?.avatarUrl || "", id: item?.creator?.id || item?.creator?._id || "", name: creatorName, username: item?.creator?.username || "" },
+    canonicalUrl: shareUrl,
+    contentId: String(item?.id || item?._id || ""),
+    contentType: "seen",
+    destinationRoute: `/seen/${encodeURIComponent(item?.id || item?._id || "")}`,
+    imageUrl: media?.secureUrl || media?.url || media?.thumbnailUrl || "",
+    mediaType: media?.mediaType || media?.resourceType || media?.type || "",
+    textPreview: title,
+    title,
+  }} variant="seen" />;
 }
 
 function SeenPreviewSheet({ item, onClose, onSeriesChanged, owner }) {

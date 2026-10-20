@@ -374,6 +374,7 @@ function FeedPost({ post, profileMenu = false }) {
     contentType: "feed_post",
     destinationRoute: `/posts/${actionPostId}`,
     imageUrl: isVoiceOnlyPost ? "" : normalized.media?.[0]?.url || "",
+    mediaType: firstMediaType,
     storyDraft: isVoiceOnlyPost ? {
       caption: voiceTextForStory,
       imageUrl: "",
@@ -394,7 +395,7 @@ function FeedPost({ post, profileMenu = false }) {
     title: normalized.context
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
       : normalized.text.slice(0, 96) || "Home post",
-  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
+  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
