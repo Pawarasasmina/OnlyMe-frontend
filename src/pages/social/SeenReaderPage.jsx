@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
+import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
@@ -408,17 +408,6 @@ function ChapterChecklist({ points = [] }) {
   </section>;
 }
 
-function OverviewSkeleton() {
-  return <section className="seen-detail-page seen-reader-loading-page" aria-label="Loading Seen overview">
-    <div className="seen-detail-skeleton-head"><span /><div><i /><b /></div><em /><em /></div>
-    <div className="seen-detail-skeleton-media" />
-    <div className="seen-detail-skeleton-lines"><span /><span /><span /></div>
-    <div className="seen-detail-skeleton-thumbs"><span /><span /><span /></div>
-    <div className="seen-detail-skeleton-row" />
-    <div className="seen-detail-skeleton-row" />
-  </section>;
-}
-
 function ReaderSkeleton() {
   return <div className="seen-reader-page seen-reader-loading-page">
     <div className="seen-reader-skeleton-head" />
@@ -627,6 +616,8 @@ function SeenReportSheet({ error, isDone, isOpen, isSubmitting, onClose, onDone,
   </div>;
 }
 
+// Kept temporarily for compatibility with embedders that still import the legacy presentation.
+// eslint-disable-next-line no-unused-vars
 function SeenOverview({
   comment,
   commentsOpen,
@@ -808,6 +799,7 @@ export default function SeenReaderPage() {
   const { user: currentUser } = useAuth();
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const accessToken = searchParams.get("access") || searchParams.get("token") || "";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -815,7 +807,6 @@ export default function SeenReaderPage() {
   const scrollSeenActionRef = useRef({ next: null, previous: null });
   const scrollAdvanceRef = useRef({ locked: false, touchStartY: null, wheelDistance: 0, wheelTimer: null });
   const scrollTransitionDirectionRef = useRef(null);
-  const hasChapterParam = searchParams.has("chapter");
   const requestedChapter = Number(searchParams.get("chapter"));
   const [chapterIndex, setChapterIndex] = useState(Number.isSafeInteger(requestedChapter) && requestedChapter >= 0 ? requestedChapter : 0);
   const [comment, setComment] = useState("");
@@ -824,6 +815,29 @@ export default function SeenReaderPage() {
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [chapterListOpen, setChapterListOpen] = useState(false);
+  const [chapterSheetPosition, setChapterSheetPosition] = useState(null);
+  const originRef = useRef(location.state?.seenOrigin || null);
+
+  useEffect(() => {
+    if (!chapterListOpen) return undefined;
+    const positionSheet = () => {
+      const center = document.querySelector(".social-center-scroll");
+      const rect = center?.getBoundingClientRect();
+      const width = Math.min(440, rect?.width || window.innerWidth);
+      setChapterSheetPosition({ left: Math.max(0, (rect?.left || 0) + ((rect?.width || window.innerWidth) - width) / 2), width });
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setChapterListOpen(false);
+    };
+    positionSheet();
+    window.addEventListener("resize", positionSheet);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("resize", positionSheet);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [chapterListOpen]);
 
   const publicationQuery = useQuery({
     queryKey: ["seen-detail", id, accessToken],
@@ -969,27 +983,21 @@ export default function SeenReaderPage() {
   };
 
   useEffect(() => {
-    if (!chapters.length || !hasChapterParam) return;
+    if (!chapters.length) return;
     const next = Math.min(Math.max(Number.isSafeInteger(requestedChapter) ? requestedChapter : 0, 0), chapters.length - 1);
     setChapterIndex(next);
     if (String(next) !== searchParams.get("chapter")) {
       const nextParams = new URLSearchParams(searchParams);
       nextParams.set("chapter", String(next));
-      setSearchParams(nextParams, { replace: true });
+      setSearchParams(nextParams, { replace: true, state: location.state });
     }
-  }, [chapters.length, hasChapterParam, requestedChapter, searchParams, setSearchParams]);
+  }, [chapters.length, location.state, requestedChapter, searchParams, setSearchParams]);
 
   useEffect(() => {
-    if (!publication || !hasChapterParam || chapters.length) return;
-    setSearchParams(new URLSearchParams(), { replace: true });
-  }, [chapters.length, hasChapterParam, publication, setSearchParams]);
-
-  useEffect(() => {
-    if (!hasChapterParam) return;
     window.requestAnimationFrame(() => {
       readerTopRef.current?.scrollIntoView({ block: "start" });
     });
-  }, [hasChapterParam, safeChapterIndex]);
+  }, [safeChapterIndex]);
 
   const updateEngagement = async (request) => {
     try {
@@ -1061,10 +1069,6 @@ export default function SeenReaderPage() {
   const voiceCommentMutation = useMutation({
     mutationFn: ({ parentCommentId, recording }) => updateEngagement(publicationService.voiceCommentOnSeen(id, { ...recording, accessToken, parentCommentId })),
   });
-  const reportMutation = useMutation({
-    mutationFn: (payload) => publicationService.reportSeen(id, payload),
-    retry: false,
-  });
   const addSeenMediaMutation = useMutation({
     mutationFn: (mediaIds) => profileService.addSeenMediaToProfileMedia(id, mediaIds).then((response) => response.data?.data),
     onSuccess: async (result) => {
@@ -1115,17 +1119,12 @@ export default function SeenReaderPage() {
     setChapterIndex(next);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("chapter", String(next));
-    setSearchParams(nextParams, { replace: true });
-  };
-  const openChapter = (nextIndex) => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set("chapter", String(nextIndex));
-    setSearchParams(nextParams, { replace: false });
+    setSearchParams(nextParams, { replace: true, state: location.state });
   };
   const openNextSeen = () => {
     if (!nextSeen) return;
     setChapterIndex(0);
-    navigate(`/seen/${encodeURIComponent(nextSeen.id || nextSeen._id)}`);
+    navigate(`/seen/${encodeURIComponent(nextSeen.id || nextSeen._id)}?chapter=0`, { state: { seenOrigin: originRef.current } });
   };
   const openSeenWithScrollEffect = async (direction, destination) => {
     if (!destination) return;
@@ -1141,7 +1140,7 @@ export default function SeenReaderPage() {
     }
     scrollTransitionDirectionRef.current = direction;
     setChapterIndex(0);
-    navigate(`/seen/${encodeURIComponent(destination.id || destination._id)}`, { replace: true });
+    navigate(`/seen/${encodeURIComponent(destination.id || destination._id)}?chapter=0`, { replace: true, state: { seenOrigin: originRef.current } });
     exitAnimation?.cancel();
   };
   const continueReader = () => {
@@ -1168,7 +1167,7 @@ export default function SeenReaderPage() {
     const isAtPageStart = () => usesPanelScroll
       ? scrollContainer.scrollTop <= 2
       : window.scrollY <= 2;
-    const canAdvance = (target) => !commentsOpen && !mediaPickerOpen && !shareSheetOpen
+    const canAdvance = (target) => !chapterListOpen && !commentsOpen && !mediaPickerOpen && !shareSheetOpen
       && !target?.closest?.("input, textarea, select, video, audio, [role='dialog']")
       && Boolean(nextSeen || previousSeen);
     const switchSeen = (direction) => {
@@ -1182,7 +1181,7 @@ export default function SeenReaderPage() {
     };
     const onWheel = (event) => {
       const direction = event.deltaY > 0 ? "next" : "previous";
-      const atBoundary = !hasChapterParam || (direction === "next" ? isAtPageEnd() : isAtPageStart());
+      const atBoundary = direction === "next" ? isAtPageEnd() : isAtPageStart();
       const destination = direction === "next" ? nextSeen : previousSeen;
       if (!event.deltaY || !atBoundary || !destination || !canAdvance(event.target)) {
         resetWheel();
@@ -1204,8 +1203,8 @@ export default function SeenReaderPage() {
       if (gesture.touchStartY == null || event.changedTouches.length !== 1) return;
       const distance = gesture.touchStartY - event.changedTouches[0].clientY;
       gesture.touchStartY = null;
-      if (distance >= 64 && (!hasChapterParam || isAtPageEnd()) && nextSeen) switchSeen("next");
-      if (distance <= -64 && (!hasChapterParam || isAtPageStart()) && previousSeen) switchSeen("previous");
+      if (distance >= 64 && isAtPageEnd() && nextSeen) switchSeen("next");
+      if (distance <= -64 && isAtPageStart() && previousSeen) switchSeen("previous");
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -1217,7 +1216,7 @@ export default function SeenReaderPage() {
       window.removeEventListener("touchend", onTouchEnd);
       if (gesture.wheelTimer) window.clearTimeout(gesture.wheelTimer);
     };
-  }, [commentsOpen, hasChapterParam, id, mediaPickerOpen, nextSeen, previousSeen, shareSheetOpen]);
+  }, [chapterListOpen, commentsOpen, id, mediaPickerOpen, nextSeen, previousSeen, shareSheetOpen]);
 
   const handleReaderClick = (event) => {
     if (event.target.closest?.("a, button, input, textarea, select, video, audio")) return;
@@ -1225,54 +1224,24 @@ export default function SeenReaderPage() {
     const clickedLeftSide = event.clientX < bounds.left + bounds.width / 2;
     if (clickedLeftSide) {
       if (safeChapterIndex > 0) changeChapter(safeChapterIndex - 1);
-      else navigate(`/seen/${encodeURIComponent(id)}`, { replace: true });
       return;
     }
     continueReader();
   };
-  const backFromOverview = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/seen");
+  const closeReader = () => {
+    const origin = originRef.current;
+    if (origin?.pathname) {
+      navigate(`${origin.pathname}${origin.search || ""}${origin.hash || ""}`, {
+        replace: true,
+        state: { restoreScroll: origin.scroll },
+      });
+      return;
+    }
+    navigate("/seen", { replace: true });
   };
 
-  if (publicationQuery.isLoading) return hasChapterParam ? <ReaderSkeleton /> : <OverviewSkeleton />;
+  if (publicationQuery.isLoading) return <ReaderSkeleton />;
   if (publicationQuery.isError || !publication) return <div className="seen-reader-page"><section className="seen-reader-error"><h1>This Seen is not available.</h1><Link to="/seen">Back to Seen</Link></section></div>;
-
-  if (!hasChapterParam) {
-    return <>
-      <SeenOverview
-        comment={comment}
-        commentsOpen={commentsOpen}
-        detail={detail}
-        engagement={engagement}
-        mutations={{ comment: commentMutation, commentReaction: reactToComment, commentReactionPending: commentReactionMutation.isPending, currentUser, reaction: reactionMutation, save: saveMutation, share: shareMutation, report: reportMutation, voiceComment: submitVoiceComment, voiceCommentPending: voiceCommentMutation.isPending }}
-        notice={notice}
-        noticeLink={noticeLink}
-        onBack={backFromOverview}
-        onCopyLink={() => setShareSheetOpen(true)}
-        onCommentChange={(event) => setComment(event.target.value)}
-        onCommentSubmit={submitComment}
-        onCommentToggle={() => setCommentsOpen((value) => !value)}
-        onNotice={(message) => {
-          setNotice(message);
-          setNoticeLink("");
-        }}
-        onOpenChapter={openChapter}
-        onOpenMediaPicker={openMediaAdd}
-        onShareClose={() => setShareSheetOpen(false)}
-        sharePayload={sharePayload}
-        shareSheetOpen={shareSheetOpen}
-      />
-      <SeenToMediaPicker
-        addedKeys={addedSeenMediaIds}
-        candidates={detail.mediaCandidates}
-        isOpen={mediaPickerOpen}
-        isSubmitting={addSeenMediaMutation.isPending}
-        onClose={() => setMediaPickerOpen(false)}
-        onSubmit={(mediaIds) => addSeenMediaMutation.mutate(mediaIds)}
-      />
-    </>;
-  }
 
   let renderedChecklist = false;
   const chapterContent = visibleBlocks.flatMap((block) => {
@@ -1286,12 +1255,12 @@ export default function SeenReaderPage() {
 
   return <section className="seen-reader-page" ref={readerTopRef}>
     <header className="seen-reader-header">
-      <button aria-label="Back to Seen overview" className="seen-reader-brand-pill" onClick={() => navigate(`/seen/${id}`, { replace: true })} type="button">SEEN</button>
+      <button aria-expanded={chapterListOpen} aria-label="Open chapter list" className="seen-reader-brand-pill" onClick={() => setChapterListOpen(true)} type="button"><FiList /> SEEN</button>
       <div className="seen-reader-titleblock">
         <h1>{publication.title}</h1>
         <span>{[publication.category, `${chapters.length || 1} ${chapters.length === 1 ? "chapter" : "chapters"}`, `~${Math.max(1, chapters.length)} min`, `${safeChapterIndex + 1}/${chapters.length || 1}`].filter(Boolean).join(" · ")}</span>
       </div>
-      <button aria-label="Close Seen reader" className="seen-reader-close" onClick={() => navigate("/seen")} type="button"><FiX /></button>
+      <button aria-label="Close Seen reader" className="seen-reader-close" onClick={closeReader} type="button"><FiX /></button>
     </header>
 
     <div className="seen-reader-chapter-heading">
@@ -1327,6 +1296,29 @@ export default function SeenReaderPage() {
       {notice ? <p className="seen-reader-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
     </footer>
     <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
+    {chapterListOpen ? <div className="seen-chapter-list-layer">
+      <button aria-label="Close chapter list" className="seen-chapter-list-scrim" onClick={() => setChapterListOpen(false)} type="button" />
+      <section aria-label={`Chapters in ${publication.title}`} aria-modal="true" className="seen-chapter-list-sheet" role="dialog" style={chapterSheetPosition || undefined}>
+        <span aria-hidden="true" className="seen-chapter-list-handle" />
+        <header>
+          {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt="" className="seen-chapter-list-cover" media={publication.coverMedia} /> : <span className="seen-chapter-list-cover is-fallback"><FiEye /></span>}
+          <div><small>Seen</small><h2>{publication.title}</h2>{detail.description ? <p>{detail.description}</p> : null}</div>
+          <button aria-label="Close chapter list" onClick={() => setChapterListOpen(false)} type="button"><FiX /></button>
+        </header>
+        <nav aria-label="Seen chapters">
+          {(chapters.length ? chapters : [{ title: publication.title }]).map((item, index) => <button aria-current={index === safeChapterIndex ? "page" : undefined} className={index === safeChapterIndex ? "is-active" : ""} key={item.stableChapterId || index} onClick={() => { changeChapter(index); setChapterListOpen(false); }} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title || `Chapter ${index + 1}`}</strong>{index === safeChapterIndex ? <small>Reading</small> : <FiChevronRight />}</button>)}
+        </nav>
+        {isOwner && detail.mediaCandidates.length ? <button className="seen-chapter-list-media-action" disabled={addSeenMediaMutation.isPending} onClick={() => { setChapterListOpen(false); openMediaAdd(); }} type="button"><FiPlus /> Add Seen media to profile</button> : null}
+      </section>
+    </div> : null}
+    <SeenToMediaPicker
+      addedKeys={addedSeenMediaIds}
+      candidates={detail.mediaCandidates}
+      isOpen={mediaPickerOpen}
+      isSubmitting={addSeenMediaMutation.isPending}
+      onClose={() => setMediaPickerOpen(false)}
+      onSubmit={(mediaIds) => addSeenMediaMutation.mutate(mediaIds)}
+    />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
   </section>;
 }

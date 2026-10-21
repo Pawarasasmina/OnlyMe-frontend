@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
-import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -337,6 +337,56 @@ function SeenActionRow({ danger = false, disabled = false, icon: Icon, onClick, 
   );
 }
 
+function SeenContextMenu({ busyAction = "", isOpen, isOwn, item, onArchive, onClose, onDelete, onEdit, onHide, onInsights, onMove, onMute, onPinToggle, onReact, onReport, onRepost, onSave, onShare, pending }) {
+  const sheetPosition = useSeenSheetPosition(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+  const firstName = item.creator.displayName.split(" ").filter(Boolean)[0] || "creator";
+  const chapterCount = item.chapters.length;
+  const actions = isOwn ? [
+    { icon: FiEdit3, key: "edit", title: "Edit", onClick: onEdit },
+    { icon: FiZap, key: "pin", title: item.isPinned ? "Unpin from top" : "Pin to top", onClick: onPinToggle },
+    { icon: FiChevronLeft, key: "earlier", title: "Move earlier", onClick: () => onMove(-1) },
+    { icon: FiChevronRight, key: "later", title: "Move later", onClick: () => onMove(1) },
+    { icon: FiBarChart2, key: "insights", title: "Insights", onClick: onInsights },
+    { icon: FiArchive, key: "archive", title: "Archive", onClick: onArchive },
+    { danger: true, icon: FiTrash2, key: "delete", title: "Delete", onClick: onDelete },
+  ] : [
+    { icon: FiBookmark, key: "save", title: item.viewerState.saved ? "Remove from Saved" : "Save", onClick: onSave },
+    { icon: FiRepeat, key: "repost", title: item.viewerState.reposted ? "Remove repost" : "Repost", onClick: onRepost },
+    { icon: FiUploadCloud, key: "share", title: "Share", onClick: onShare },
+    { icon: FiEyeOff, key: "hide", title: "Not interested", onClick: onHide },
+    { icon: FiVolumeX, key: "mute", title: `Mute ${firstName}`, onClick: onMute },
+    { danger: true, icon: FiFlag, key: "report", title: "Report", onClick: onReport },
+  ];
+
+  return <div className="seen-context-layer seen-feed-options-layer" style={sheetPosition}>
+    <button aria-label="Close Seen actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
+    <section aria-label={`${isOwn ? "Manage" : "Options for"} ${item.title}`} aria-modal="true" className={`seen-context-menu ${isOwn ? "is-owner" : "is-visitor"}`} role="dialog">
+      {!isOwn ? <div aria-label="React to Seen" className="seen-context-reactions">{seenReactionOptions.slice(0, 6).map((reaction) => <button aria-label={reaction.label} className={item.viewerState.reaction === reaction.key ? "is-selected" : ""} disabled={pending} key={reaction.key} onClick={() => onReact(reaction.key)} type="button">{reaction.icon}</button>)}</div> : null}
+      <div className="seen-context-preview">
+        <span>{item.media.url ? item.media.type === "video" ? <video muted playsInline preload="metadata" src={item.media.url} /> : <img alt="" src={item.media.url} /> : <SeenEyeMark />}</span>
+        <div><strong>{item.title}</strong><small>{isOwn ? "" : `${item.creator.displayName} · `}{chapterCount} {chapterCount === 1 ? "chapter" : "chapters"}</small></div>
+      </div>
+      <div className="seen-context-actions">{actions.map((action) => <SeenActionRow danger={action.danger} disabled={(!isOwn && pending) || (Boolean(busyAction) && busyAction !== action.key)} icon={action.icon} key={action.key} onClick={action.onClick} pending={busyAction === action.key} title={action.title} />)}</div>
+    </section>
+  </div>;
+}
+
 function OwnerSeenActionsSheet({ busyAction = "", isOpen, item, onAddStory, onArchive, onChangeCover, onClose, onDelete, onEdit, onInsights, onPinToggle, onSeries, onShare }) {
   const sheetPosition = useSeenSheetPosition(isOpen);
 
@@ -465,10 +515,18 @@ function SeenReportSheet({ done, isOpen, onClose, onReport, pending, title }) {
 }
 
 function CompactSeenMedia({ item, onOpen }) {
-  return <button aria-label={`Open ${item.title}`} className="seen-media" onClick={onOpen} type="button">
-    {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={{ mediaType: item.media.type === "video" ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} /> : <span className="seen-media-fallback">@seen</span>}
-    {item.media.type === "video" && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
-  </button>;
+  const isVideo = item.media.type === "video";
+  const [muted, setMuted] = useState(true);
+
+  useEffect(() => setMuted(true), [item.id]);
+
+  return <div className="seen-media-wrap">
+    <button aria-label={`Open ${item.title}`} className="seen-media" onClick={onOpen} type="button">
+      {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={{ mediaType: isVideo ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} muted={muted} /> : <span className="seen-media-fallback">@seen</span>}
+      {isVideo && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
+    </button>
+    {isVideo && item.media.url ? <button aria-label={muted ? "Unmute video" : "Mute video"} aria-pressed={!muted} className="seen-video-sound-toggle" onClick={() => setMuted((value) => !value)} title={muted ? "Unmute video" : "Mute video"} type="button">{muted ? <FiVolumeX aria-hidden="true" /> : <FiVolume2 aria-hidden="true" />}</button> : null}
+  </div>;
 }
 
 function SeenSummary({ item, onOpenChapter }) {
@@ -718,7 +776,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
   </div>;
 }
 
-export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser = null, item: rawItem, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate, position = 0 }) {
+export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser = null, item: rawItem, onFeedMove = () => {}, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate, position = 0 }) {
   const item = normalizeSeen(rawItem);
   const reduceMotion = useReducedMotion();
   const target = `/seen/${encodeURIComponent(item.id)}`;
@@ -728,6 +786,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
@@ -737,10 +796,12 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const [reportDone, setReportDone] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
+  const [actionPill, setActionPill] = useState("");
   const [busyOwnerAction, setBusyOwnerAction] = useState("");
   const [activeChapter, setActiveChapter] = useState(-1);
   const [swipeDirection, setSwipeDirection] = useState(1);
   const [mobileSwipe, setMobileSwipe] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
+  const longPressRef = useRef({ startX: 0, startY: 0, timer: null });
   const trackingTopics = useMemo(() => [item.category].filter(Boolean), [item.category]);
   const trackingRef = useRecommendationTracking({ batchId, creatorId: item.creator.id, entityId: item.id, entityType: "seen", position, topics: trackingTopics });
   const engagementQuery = useQuery({
@@ -749,6 +810,12 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     queryFn: () => publicationService.getSeenEngagement(item.id).then((response) => response.data.data.engagement),
     retry: false,
   });
+
+  useEffect(() => {
+    if (!actionPill) return undefined;
+    const timeout = window.setTimeout(() => setActionPill(""), 1800);
+    return () => window.clearTimeout(timeout);
+  }, [actionPill]);
 
   const mergeEngagement = (engagement) => {
     if (!engagement) return;
@@ -803,12 +870,12 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       const shared = Boolean(response.data.data.engagement?.viewerShared);
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       if (shared) {
-        setNotice("Reposted to your profile.");
-        setNoticeLink("/profile?tab=reposts");
+        setActionPill("Reposted ↻");
       } else {
-        setNotice("Removed from your profile.");
-        setNoticeLink("");
+        setActionPill("Repost removed");
       }
+      setNotice("");
+      setNoticeLink("");
     },
   });
   const saveMutation = useMutation({
@@ -816,7 +883,9 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
       queryClient.invalidateQueries({ queryKey: ["saved"] });
-      setNotice(response.data.data.engagement?.viewerSaved ? "Saved to library." : "Removed from library.");
+      setActionPill(response.data.data.engagement?.viewerSaved ? "Saved" : "Removed from Saved");
+      setNotice("");
+      setNoticeLink("");
     },
   });
   const commentMutation = useMutation({
@@ -971,6 +1040,32 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     if (!window.confirm("Delete this Seen?\n\nThis will permanently remove it for everyone.")) return;
     deleteMutation.mutate();
   };
+  const closeContextMenu = () => setContextMenuOpen(false);
+  const runContextAction = (action) => {
+    closeContextMenu();
+    action();
+  };
+  const clearLongPress = () => {
+    if (longPressRef.current.timer) window.clearTimeout(longPressRef.current.timer);
+    longPressRef.current.timer = null;
+  };
+  const startLongPress = (event) => {
+    if (event.pointerType === "mouse" || event.target.closest?.("button, a, input, textarea, select, video, audio, [role='dialog']")) return;
+    clearLongPress();
+    longPressRef.current.startX = event.clientX;
+    longPressRef.current.startY = event.clientY;
+    longPressRef.current.timer = window.setTimeout(() => {
+      setMenuOpen(false);
+      setContextMenuOpen(true);
+      navigator.vibrate?.(18);
+      longPressRef.current.timer = null;
+    }, 520);
+  };
+  const moveLongPress = (event) => {
+    if (!longPressRef.current.timer) return;
+    if (Math.hypot(event.clientX - longPressRef.current.startX, event.clientY - longPressRef.current.startY) > 10) clearLongPress();
+  };
+  useEffect(() => clearLongPress, []);
   const selectChapter = (index, direction) => {
     const next = Math.min(Math.max(index, -1), item.chapters.length - 1);
     setSwipeDirection(direction || (next > activeChapter || (activeChapter === item.chapters.length - 1 && next === -1) ? 1 : -1));
@@ -1002,10 +1097,17 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
     initial={reduceMotion || !animateOnScroll ? false : { opacity: 0, y: 52 }}
     ref={trackingRef}
+    onContextMenu={(event) => { if (!event.target.closest?.("input, textarea")) { event.preventDefault(); setMenuOpen(false); setContextMenuOpen(true); } }}
+    onPointerCancel={clearLongPress}
+    onPointerDown={startLongPress}
+    onPointerLeave={clearLongPress}
+    onPointerMove={moveLongPress}
+    onPointerUp={clearLongPress}
     transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     viewport={{ amount: 0.12, margin: "0px 0px -4% 0px", once: true }}
     whileInView={reduceMotion || !animateOnScroll ? undefined : { opacity: 1, y: 0 }}
   >
+    {actionPill ? <p className="seen-action-pill" role="status">{actionPill}</p> : null}
     <div className="seen-item-menu-wrap">
       <CreatorHeader
         createdAt={item.createdAt}
@@ -1060,6 +1162,27 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
         />
       )}
     </div>
+    <SeenContextMenu
+      busyAction={busyOwnerAction}
+      isOpen={contextMenuOpen}
+      isOwn={isOwn}
+      item={item}
+      onArchive={() => runContextAction(() => archiveMutation.mutate())}
+      onClose={closeContextMenu}
+      onDelete={() => runContextAction(confirmDelete)}
+      onEdit={() => runContextAction(() => navigate(`/studio/seens/${item.id}/edit?from=seen`))}
+      onHide={() => runContextAction(() => hideMutation.mutate())}
+      onInsights={() => { closeContextMenu(); setInsightsOpen(true); }}
+      onMove={(direction) => runContextAction(() => onFeedMove(item.id, direction))}
+      onMute={() => runContextAction(() => muteMutation.mutate())}
+      onPinToggle={() => runContextAction(() => pinMutation.mutate())}
+      onReact={(reaction) => runContextAction(() => reactionMutation.mutate(reaction))}
+      onReport={() => { closeContextMenu(); setReportDone(false); setReportOpen(true); }}
+      onRepost={() => runContextAction(() => repostMutation.mutate())}
+      onSave={() => runContextAction(() => saveMutation.mutate())}
+      onShare={() => { closeContextMenu(); setShareSheetOpen(true); }}
+      pending={pending}
+    />
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
     <SeenInsightsSheet fallbackViews={item.engagement.views} insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
@@ -1211,6 +1334,28 @@ export default function SeenFeedPage() {
   const replaceFeedItem = (id, nextItem) => {
     queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.map((entry) => String(entry.id || entry._id) === String(id) ? { ...entry, ...nextItem } : entry)));
   };
+  const moveFeedItem = (id, direction) => {
+    queryClient.setQueryData(feedKey, (current) => {
+      if (!current) return current;
+      const flattened = current.pages.flatMap((page) => page.items || []);
+      const from = flattened.findIndex((entry) => String(entry.id || entry._id) === String(id));
+      const to = Math.min(Math.max(from + direction, 0), flattened.length - 1);
+      if (from < 0 || from === to) return current;
+      const reordered = [...flattened];
+      const [moved] = reordered.splice(from, 1);
+      reordered.splice(to, 0, moved);
+      let cursor = 0;
+      return {
+        ...current,
+        pages: current.pages.map((page) => {
+          const count = (page.items || []).length;
+          const nextPage = { ...page, items: reordered.slice(cursor, cursor + count) };
+          cursor += count;
+          return nextPage;
+        }),
+      };
+    });
+  };
   const removeFeedItem = (id) => {
     queryClient.setQueryData(feedKey, (current) => updateSeenFeedPages(current, (entries) => entries.filter((entry) => String(entry.id) !== String(id))));
   };
@@ -1262,7 +1407,7 @@ export default function SeenFeedPage() {
       key={tab}
       transition={reduceMotion ? { duration: 0 } : { duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     >
-      {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} batchId={query.data?.pages?.[0]?.recommendation?.batchId || ""} currentUser={user} item={item} key={item.id} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} position={index} />)}
+      {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} batchId={query.data?.pages?.[0]?.recommendation?.batchId || ""} currentUser={user} item={item} key={item.id} onFeedMove={moveFeedItem} onFeedRemove={removeFeedItem} onFeedRemoveByCreator={removeFeedItemsByCreator} onFeedReplace={replaceFeedItem} onFeedUpdate={updateFeedItem} position={index} />)}
       {hasNextPage ? <div className="seen-feed-error" ref={loadMoreRef}>
         {isFetchNextPageError ? <p>Couldn’t load more Seens.</p> : null}
         <button disabled={isFetchingNextPage} onClick={() => fetchNextPage()} type="button">{isFetchingNextPage ? "Loading more Seens..." : isFetchNextPageError ? "Try again" : "Load more Seens"}</button>

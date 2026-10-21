@@ -6,6 +6,7 @@ function outputFileName(kind) {
 }
 
 export default function ProfileImageCropper({ kind, onCancel, onSave, saving, source }) {
+  const isSeenCover = kind === "seen";
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
@@ -14,7 +15,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: "profile photo", width: 800 },
     cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: "cover", width: 1500 },
     feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "feed image", width: 1080 },
-    seen: { aspect: "aspect-video", frame: "w-full rounded-2xl", height: 1080, label: "Seen image", width: 1920 },
+    seen: { aspect: "aspect-[4/5]", frame: "w-full rounded-2xl", height: 1350, label: "Seen cover", width: 1080 },
     story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
   }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
   const translateLimit = ((zoom - 1) / (2 * zoom)) * 100;
@@ -66,6 +67,11 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
       gesture.distance = 0;
     }
   };
+  const zoomWithWheel = (event) => {
+    if (!isSeenCover || saving) return;
+    event.preventDefault();
+    setZoom((current) => clamp(current - event.deltaY * 0.002, 1, 3));
+  };
 
   const save = async () => {
     const image = new Image();
@@ -91,35 +97,38 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
   };
 
   return (
-    <div aria-modal="true" className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog">
-      <section className="w-full max-w-xl rounded-3xl border border-atseen-line bg-[#171c25] p-5 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div><h2 className="text-lg font-black">Adjust {config.label}</h2><p className="mt-1 text-xs text-atseen-muted">Zoom and reposition the image before uploading.</p></div>
+    <div aria-modal="true" className={`profile-image-crop-layer ${isSeenCover ? "is-seen-cover" : ""}`} role="dialog">
+      <button aria-label="Close image editor" className="profile-image-crop-scrim" disabled={saving} onClick={onCancel} type="button" />
+      <section className="profile-image-crop-sheet">
+        {isSeenCover ? <span aria-hidden="true" className="profile-image-crop-handle" /> : null}
+        <div className="profile-image-crop-head">
+          <div><h2>{isSeenCover ? "Cover — exactly as in the feed" : `Adjust ${config.label}`}</h2><p>{isSeenCover ? "Move it with your fingers in any direction · two fingers to zoom" : "Zoom and reposition the image before uploading."}</p></div>
           <button aria-label="Close image editor" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={saving} onClick={onCancel} type="button"><FiX /></button>
         </div>
 
         <div
           aria-label="Crop preview. Drag to reposition and pinch with two fingers to zoom."
-          className={`relative mx-auto mt-5 overflow-hidden bg-black ring-1 ring-white/20 ${config.aspect} ${config.frame}`}
+          className={`profile-image-crop-preview ${config.aspect} ${config.frame}`}
           onPointerCancel={endGesture}
           onPointerDown={beginGesture}
           onPointerMove={moveGesture}
           onPointerUp={endGesture}
+          onWheel={zoomWithWheel}
           style={{ touchAction: "none" }}
         >
           <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
 
-        <p className="mt-3 text-center text-xs font-semibold text-atseen-muted sm:hidden">Drag to move · pinch with two fingers to zoom</p>
+        <p className="profile-image-crop-touch-hint">Drag to move · pinch with two fingers to zoom</p>
 
-        <div className="mx-auto mt-6 hidden max-w-md space-y-4 sm:block">
+        <div className="profile-image-crop-controls">
           {[['Zoom', zoom, setZoom, 1, 3, 0.01], ['Left / right', x, setX, -100, 100, 1], ['Up / down', y, setY, -100, 100, 1]].map(([label, value, setter, min, max, step]) => (
             <label className="grid grid-cols-[88px_1fr] items-center gap-3 text-xs font-bold text-atseen-muted" key={label}><span>{label}</span><input className="w-full accent-atseen-blue" max={max} min={min} onChange={(event) => setter(Number(event.target.value))} step={step} type="range" value={value} /></label>
           ))}
         </div>
 
-        <div className="mt-7 flex gap-3"><button className="flex-1 rounded-xl border border-atseen-line py-3 text-sm font-bold" disabled={saving} onClick={onCancel} type="button">Cancel</button><button className="flex-1 rounded-xl bg-atseen-blue py-3 text-sm font-black text-atseen-bg disabled:opacity-50" disabled={saving} onClick={save} type="button">{saving ? "Uploading..." : "Save image"}</button></div>
+        <div className="profile-image-crop-actions"><button className="profile-image-crop-cancel" disabled={saving} onClick={onCancel} type="button">Cancel</button><button className="profile-image-crop-save" disabled={saving} onClick={save} type="button">{saving ? "Uploading..." : isSeenCover ? "Done" : "Save image"}</button></div>
       </section>
     </div>
   );
