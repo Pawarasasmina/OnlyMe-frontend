@@ -38,6 +38,7 @@ import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileD
 import ProfileMediaSection from "../../components/profile/ProfileMediaSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ProfileExperiences from "../../components/profile/ProfileExperiences";
+import StoryHighlights from "../../components/profile/StoryHighlights";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryViewer from "../../components/stories/StoryViewer";
@@ -1031,6 +1032,7 @@ function ProfileBody({ data, setConnectionsType }) {
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
       <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
+      <StoryHighlights creatorId={profile.ownerUserId} isOwner={isOwner} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />

@@ -280,6 +280,24 @@ function requireMocks() {
 }
 
 export const storyService = {
+  getStoryArchive: async () => axiosInstance.get("/stories/archive").then((response) => {
+    const items = response.data?.data?.items || [];
+    return items.map(normalizeStory);
+  }),
+
+  getCreatorHighlights: async (creatorId) => axiosInstance.get(`/stories/creators/${encodeURIComponent(creatorId)}/highlights`).then((response) => {
+    const items = response.data?.data?.items || [];
+    return items.map((highlight) => ({
+      ...highlight,
+      stories: (highlight.stories || []).map(normalizeStory),
+    }));
+  }),
+
+  createHighlight: async (payload) => axiosInstance.post("/stories/highlights", payload).then((response) => {
+    const highlight = response.data?.data?.highlight || response.data?.data;
+    return { ...highlight, stories: (highlight?.stories || []).map(normalizeStory) };
+  }),
+
   getStory: async (storyId) => {
     const response = await axiosInstance.get(`/stories/${storyId}`);
     return normalizeStory(response.data?.data?.story || response.data?.data || response.data);
