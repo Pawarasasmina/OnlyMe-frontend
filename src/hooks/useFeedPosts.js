@@ -1,3 +1,5 @@
+import { useAuth } from "./useAuth";
+import { prependCreatedWallPosts } from "../utils/wallCreatedPosts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { patchWallResolution } from "../utils/wallResolution";
 import { postService } from "../services/postService";
@@ -57,11 +59,14 @@ export function usePostDrafts(options = {}) {
 }
 
 export function useCreateFeedPost() {
+  const { user } = useAuth();
+  const viewerId = String(user?.id || user?._id || "");
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ formData, onUploadProgress, signal }) => postService.createPost(formData, { onUploadProgress, signal }),
+    mutationFn: ({ formData, onUploadProgress, signal, idempotencyKey }) => postService.createPost(formData, { onUploadProgress, signal, idempotencyKey }),
     retry: false,
-    onSuccess: () => {
+    onSuccess: (post) => {
+      queryClient.setQueryData(["feed-posts", "created", viewerId], (current) => ({ items: prependCreatedWallPosts(current?.items || [], [post]) }));
       queryClient.invalidateQueries({ queryKey: postKeys.all });
     },
   });
@@ -88,6 +93,7 @@ export function useSetPostResolution() {
         window.dispatchEvent(new Event("wall-resolution-changed"));
         queryClient.resetQueries({ queryKey: ["feed-posts", "feed"] });
       }, 0);
+      queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       queryClient.invalidateQueries({ queryKey: ["saved"] });
       queryClient.invalidateQueries({ queryKey: ["saved-content"] });
@@ -127,6 +133,7 @@ export function useArchiveFeedPost() {
     onSuccess: (_data, postId) => {
       removePostFromCaches(queryClient, postId);
       queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
     },
   });
@@ -177,6 +184,7 @@ export function useToggleFeedPostShare() {
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
       queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
     },
   });

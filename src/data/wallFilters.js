@@ -1,4 +1,5 @@
 export const WALL_FILTER_TYPES = [
+  { value: "buy_sell", label: "Buy & Sell" },
   { value: "all", label: "All posts" },
   { value: "looking_for", label: "Looking for" },
   { value: "offering", label: "Offering" },
@@ -9,6 +10,9 @@ export const WALL_FILTER_TYPES = [
   { value: "right_now", label: "Right Now" },
 ];
 export const WALL_FILTER_TOPICS = [
+  { value: "meet_people", label: "Meet people" },
+  { value: "housing", label: "Housing" },
+  { value: "kids_family", label: "Kids & Family" },
   { value: "all", label: "All topics" },
   { value: "buy_sell", label: "Buy / Sell" },
   { value: "places", label: "Places" },

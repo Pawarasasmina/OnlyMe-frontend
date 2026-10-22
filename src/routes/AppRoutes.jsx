@@ -70,6 +70,8 @@ const ArchivePage = lazyPage("../pages/social/ArchivePage");
 const AdminReportListPage = lazyPage("../pages/admin/AdminReportListPage");
 const AdminReportDetailPage = lazyPage("../pages/admin/AdminReportDetailPage");
 const EntityDetailPage = lazyPage("../pages/social/EntityDetailPage");
+const WallExplorePage = lazyPage("../pages/social/WallExplorePage");
+const WallSearchPage = lazyPage("../pages/social/WallSearchPage");
 const SearchPage = lazyPage("../pages/social/SearchPage");
 const DiscoverPage = lazyPage("../pages/social/DiscoverPage");
 const PostDetailPage = lazyPage("../pages/social/PostDetailPage");
@@ -144,6 +146,8 @@ function AppRoutes() {
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/wall/search" element={<WallSearchPage />} />
+          <Route path="/wall/explore" element={<WallExplorePage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/seen/:id/share/story" element={<ShareSeenAsStoryPage />} />
           <Route path="/seen/:id" element={<SeenPermalinkPage />} />
