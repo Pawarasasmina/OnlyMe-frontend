@@ -1,3 +1,10 @@
 node_modules
 dist
 .env
+
+# Local browser verification artifacts
+test-results/
+playwright-report/
+
+# Local PDF inspection dependency
+.codex-pdf-tools/

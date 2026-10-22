@@ -22,8 +22,8 @@ test("Wall renders compact audio with hidden, nonduplicated transcript content",
     assert.ok(!voiceOnly.includes(item.transcript));
     assert.ok(!voiceOnly.includes("<select"));
     assert.ok(voiceOnly.includes("wall-audio-player"));
-    assert.ok(voiceOnly.includes("Original"));
-    assert.ok(voiceOnly.includes("Show translation"));
+    assert.ok(!voiceOnly.includes("Original"));
+    assert.ok(!voiceOnly.includes("Show translation"));
     const translated = render(React.createElement(TranslationLink, { alwaysVisible: true, translation: { showing: true, metadata: { sourceLanguageName: "Arabic", canTranslate: true } } }));
     assert.ok(translated.includes("Translated from Arabic"));
     assert.ok(translated.includes("Show original"));

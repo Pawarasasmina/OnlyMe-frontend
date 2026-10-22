@@ -41,6 +41,7 @@ function normalizeList(response) {
 }
 
 export const postService = {
+  getNeedCounts: async (params = {}) => (await axiosInstance.get("/posts/need-counts", { params })).data.data,
   getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params })),
   getPost: async (postId) => normalizePost((await axiosInstance.get(`/posts/${encodeURIComponent(postId)}`)).data?.data?.post),
   getContentLanguage: async (postId, mediaId, signal) => (await axiosInstance.get(`/posts/${encodeURIComponent(postId)}/language`, { params: mediaId ? { mediaId } : {}, signal })).data?.data || {},
@@ -50,6 +51,7 @@ export const postService = {
   getDrafts: async () => normalizeList(await axiosInstance.get("/posts/drafts")),
   createPost: async (formData, options = {}) => {
     const response = await axiosInstance.post("/posts", formData, {
+      headers: options.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : undefined,
       onUploadProgress: options.onUploadProgress,
       signal: options.signal,
     });

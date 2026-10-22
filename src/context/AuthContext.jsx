@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { clearWallDraft } from "../services/wallDraftStore";
+import { useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
 import { AuthContext } from "./AuthContext";
 import { disconnectMessageSocket, getMessageSocket } from "../services/messageSocket";
@@ -19,6 +20,7 @@ function readCachedUser() {
 }
 
 function clearStoredAuth() {
+  clearWallDraft();
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(CACHED_USER_KEY);
 }

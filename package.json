@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test src/utils/socialAccess.test.js src/utils/profileCapabilities.test.js src/utils/publicationValidation.test.js src/utils/worldValidation.test.js src/utils/financialAccess.test.js src/utils/idempotencyKey.test.js src/utils/financialErrorMessages.test.js src/utils/discoverFriends.test.js src/utils/savedPeople.test.js src/utils/relativeTime.test.js src/utils/profileStatus.test.js src/utils/seenOwnership.test.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:wall:browser": "playwright test --config playwright.wall.config.js"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.51.23",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
+    "@playwright/test": "^1.64.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

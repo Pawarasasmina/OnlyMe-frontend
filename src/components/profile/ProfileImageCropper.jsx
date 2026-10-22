@@ -92,7 +92,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     const top = (height - drawnHeight) / 2 - (y / 100) * freeY / 2;
 
     context.drawImage(image, left, top, drawnWidth, drawnHeight);
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", kind === "feed" ? 0.82 : 0.9));
     if (blob) onSave(new File([blob], outputFileName(kind), { type: "image/jpeg" }));
   };
 

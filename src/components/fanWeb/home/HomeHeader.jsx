@@ -1,8 +1,7 @@
 import { canLookupLocation, geolocationErrorMessage } from "../../../utils/locationLookup";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { FiChevronDown, FiGlobe, FiMapPin, FiNavigation, FiSearch } from "react-icons/fi";
-import ActivitySparkMark from "../../activity/ActivitySparkMark";
+import { Link, useLocation } from "react-router-dom";
+import { FiChevronDown, FiGlobe, FiMapPin, FiNavigation, FiPlus, FiSearch } from "react-icons/fi";
 import AtseenLogo from "../../branding/AtseenLogo";
 import { searchService } from "../../../services/searchService";
 
@@ -21,7 +20,8 @@ function uniqueCities(items = []) {
   }, []);
 }
 
-function HomeHeader({ activityCount = 0, countryCode = "", location = "", locationOptions = [], onLocationChange }) {
+function HomeHeader({ countryCode = "", location = "", locationOptions = [], onLocationChange, onNeedOpen }) {
+  const pageLocation = useLocation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
@@ -124,6 +124,7 @@ function HomeHeader({ activityCount = 0, countryCode = "", location = "", locati
   return (
     <div className="home-prototype-top">
       <div className="home-header-primary">
+        <h1 className="wall-page-title">Wall</h1>
         <Link aria-label="Atseen Wall" className="home-mobile-brand" to="/wall">
           <AtseenLogo wordmarkOnly />
         </Link>
@@ -187,13 +188,9 @@ function HomeHeader({ activityCount = 0, countryCode = "", location = "", locati
       </div>
 
       <div className="home-header-actions">
-        <Link aria-label="Search" className="home-spark-button" to="/search?from=wall">
-          <FiSearch aria-hidden="true" />
-        </Link>
-        <Link aria-label="Open activity" className="home-spark-button" to="/activity">
-          <ActivitySparkMark className="h-5 w-5" />
-          {activityCount > 0 ? <span className="activity-count-badge">{activityCount > 99 ? "99+" : activityCount}</span> : null}
-        </Link>
+        <Link aria-label="Search Wall" className="home-spark-button" to="/wall/search" state={{ wallReturnTo: `/wall${pageLocation.search}` }}><FiSearch aria-hidden="true" /></Link>
+        {onNeedOpen ? <button aria-label="Create Wall note" className="home-spark-button" onClick={onNeedOpen} type="button"><FiPlus aria-hidden="true" /></button> : null}
+
       </div>
     </div>
   );

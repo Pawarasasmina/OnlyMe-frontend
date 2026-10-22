@@ -40,7 +40,7 @@ export function WallVoiceNote({ item, postId, postText }) {
     {transcript ? <>
       <button aria-controls={transcriptId} aria-expanded={open} className="wall-transcript-toggle" onClick={() => setOpen(!open)} type="button">{open ? "Hide text" : "Show text"}{open ? <FiChevronUp aria-hidden="true" /> : <FiChevronDown aria-hidden="true" />}</button>
       {open ? <p className="wall-transcript-text" dir="auto" id={transcriptId}>{translation.text}</p> : null}
-      <TranslationLink alwaysVisible onClick={() => { setOpen(true); translation.toggle(); }} translation={translation} />
+      {open ? <TranslationLink alwaysVisible onClick={() => { setOpen(true); translation.toggle(); }} translation={translation} /> : null}
     </> : null}
   </div>;
 }
