@@ -1444,6 +1444,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           index: activeChapter,
           max: Math.max(chapters.length + 1, 2),
           nextLabel: activeChapter < chapters.length - 1 ? "Next" : "New chapter",
+          onAdd: nextExperienceChapter,
           onBack: previousExperienceChapter,
           onFinish: finishExperienceChapters,
           onNext: nextExperienceChapter,

@@ -49,7 +49,7 @@ const DreamEditorPage = lazyPage("../pages/social/DreamEditorPage");
 const CreateHubPage = lazyPage("../pages/create/CreateHubPage");
 const SeenComposerPage = lazyPage("../pages/creator/SeenComposerPage");
 const SeenFeedPage = lazyPage("../pages/social/SeenFeedPage");
-const SeenReaderPage = lazyPage("../pages/social/SeenReaderPage");
+const SeenPermalinkPage = lazyPage("../pages/social/SeenPermalinkPage");
 const ShareSeenAsStoryPage = lazyPage("../pages/social/ShareSeenAsStoryPage");
 const PublicationModeration = lazyPage("../pages/admin/PublicationModeration");
 const PublicationModerationDetail = lazyPage("../pages/admin/PublicationModerationDetail");
@@ -146,7 +146,7 @@ function AppRoutes() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/seen/:id/share/story" element={<ShareSeenAsStoryPage />} />
-          <Route path="/seen/:id" element={<SeenReaderPage />} />
+          <Route path="/seen/:id" element={<SeenPermalinkPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<ActivityPage />} />
