@@ -66,7 +66,7 @@ function SocialAppShell({ children = null }) {
   const acknowledgeWarning = useMutation({ mutationFn: () => moderationWarningService.acknowledge(currentWarning.id), onSuccess: () => { queryClient.setQueryData(["moderation-warnings", user?.id], (warnings = []) => warnings.filter((warning) => warning.id !== currentWarning.id)); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); } });
   const isMessagesPage = location.pathname === "/messages";
   const isDiscoverPage = location.pathname === "/discover";
-  const isHomePage = location.pathname === "/wall";
+  const isHomePage = location.pathname === "/wall" || ["/wall/search", "/wall/explore"].includes(location.pathname);
   const isSeenPage = location.pathname === "/seen"
     || location.pathname.startsWith("/seen/");
   const isSettingsPage = location.pathname === "/settings" || location.pathname.startsWith("/settings/");
@@ -140,8 +140,8 @@ function SocialAppShell({ children = null }) {
                 : "mx-auto w-full min-w-0 max-w-none px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 min-[881px]:px-5 min-[881px]:pb-20 min-[881px]:pt-[30px]"}>
               <CenterRefreshOverlay />
               <Suspense fallback={<CenterRouteLoading />}>
-                <SocialContentErrorBoundary key={`${location.pathname}${location.search}`}>
-                  <Fragment key={location.key}>{children || <Outlet context={outletContext} />}</Fragment>
+                <SocialContentErrorBoundary key={location.pathname === "/wall" ? "/wall" : `${location.pathname}${location.search}`}>
+                  <Fragment key={location.pathname === "/wall" ? "/wall" : location.key}>{children || <Outlet context={outletContext} />}</Fragment>
                 </SocialContentErrorBoundary>
               </Suspense>
             </main>

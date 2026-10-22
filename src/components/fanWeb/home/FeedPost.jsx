@@ -1,3 +1,6 @@
+import { relativeTime as compactPostAge } from "../../../utils/relativeTime";
+import WallReactionTray from "./WallReactionTray";
+import { wallCloseLabels } from "../../../utils/wallResolution";
 import ShowMoreEyeIcon from "../../branding/ShowMoreEyeIcon";
 import WallPostTypeBadge from "./WallPostTypeBadge";
 import { wallPostCaption } from "../../../utils/wallVoiceDisplay";
@@ -5,7 +8,7 @@ import { WallTextContent, WallVoiceNote } from "./WallPostContent";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArchive, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
+import { FiArchive, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMapPin, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
@@ -236,6 +239,9 @@ function normalizeFeedPost(post = {}) {
     },
     commentCount: Number(post.commentCount ?? post.comments ?? 0),
     resolvedAt: post.resolvedAt || null,
+    closedReason: post.closedReason || "",
+    isClosed: Boolean(post.isClosed),
+    rightNow: Boolean(post.rightNow || post.postType === "Right Now" || post.context === "Right now"),
     canResolve: Boolean(post.canResolve),
     postType: post.postType || "",
     topic: post.topic || "",
@@ -254,7 +260,7 @@ function normalizeFeedPost(post = {}) {
     supportCount: Number(post.supportCount ?? post.handshakes ?? 0),
     shareCount: Number(post.shareCount ?? 0),
     text: post.text || "",
-    timestamp: post.timestamp || relativeTime(post.createdAt || post.publishedAt),
+    timestamp: post.timestamp || compactPostAge(post.publishedAt || post.createdAt),
     topReactions: post.topReactions || [],
     viewCount: Number(post.viewCount ?? post.views ?? post.viewerCount ?? 0),
     viewerReaction: post.viewerReaction || null,
@@ -306,10 +312,17 @@ function FeedPost({ post, profileMenu = false }) {
   const blockMutation = useBlockFeedPostAuthor();
   const viewMutation = useMarkFeedPostViewed();
   const articleRef = useRef(null);
+  const reactionAnchorRef = useRef(null);
+  const reactionHoldRef = useRef(null);
+  const reactionHeldRef = useRef(false);
+  useEffect(() => () => window.clearTimeout(reactionHoldRef.current), []);
   const impressionTrackedRef = useRef(false);
   const viewTrackedRef = useRef(false);
   const [reaction, setReaction] = useState(normalized.viewerReaction);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [reactionExpanded, setReactionExpanded] = useState(false);
+  const [allComments, setAllComments] = useState(false);
+  const openReactionPicker = () => { setReactionExpanded(false); setReactionPickerOpen(true); };
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [saved, setSaved] = useState(normalized.viewerSaved);
   const [shared, setShared] = useState(normalized.viewerShared);
@@ -332,6 +345,7 @@ function FeedPost({ post, profileMenu = false }) {
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
   const headerName = ownsPost ? "You" : creator.name;
+  const closeLabels = wallCloseLabels(normalized.postType);
   const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (normalized.reactions?.length
     ? normalized.reactions
@@ -350,8 +364,8 @@ function FeedPost({ post, profileMenu = false }) {
   }), {}), [reactionSummary]);
   const commentCount = Math.max(normalized.commentCount, comments.length);
   const visibleReactionSamples = reactionSummary.length
-    ? reactionSummary.slice(0, 3).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
-    : "\uD83E\uDD1D \u2764\uFE0F \uD83D\uDD25";
+    ? [...reactionSummary].sort((a, b) => Number(b.reaction.key === reaction) - Number(a.reaction.key === reaction) || b.count - a.count).slice(0, 2).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
+    : "\u2764\uFE0F \uD83D\uDD25";
   const actionPostId = normalized.originalPostId || normalized.id;
   const postUrl = useMemo(() => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
@@ -423,7 +437,7 @@ function FeedPost({ post, profileMenu = false }) {
   }, [normalized.viewCount]);
 
   useEffect(() => {
-    if (!reactionPickerOpen) return undefined;
+    if (!reactionPickerOpen || !reactionExpanded) return undefined;
     const onKeyDown = (event) => {
       if (event.key === "Escape") setReactionPickerOpen(false);
     };
@@ -433,7 +447,7 @@ function FeedPost({ post, profileMenu = false }) {
       window.removeEventListener("keydown", onKeyDown);
       document.body.classList.remove("seen-sheet-lock");
     };
-  }, [reactionPickerOpen]);
+  }, [reactionPickerOpen, reactionExpanded]);
 
   useEffect(() => {
     viewTrackedRef.current = false;
@@ -685,7 +699,7 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: (savedPost) => {
           setResolvedAt(savedPost.resolvedAt || null);
           setMoreOpen(false);
-          showToast(savedPost.resolvedAt ? "Marked as Solved. Your post and replies stay visible." : "Request reopened.");
+          showToast(savedPost.resolvedAt ? `${closeLabels.state}. Your post and replies stay visible.` : "Post reopened.");
         },
         onError: (error) => showToast(error?.response?.data?.message || "Could not update this request. Please try again."),
         onSettled: () => setMoreBusy(""),
@@ -774,7 +788,7 @@ function FeedPost({ post, profileMenu = false }) {
 
   return (
     <>
-      <article className={`home-feed-post ${resolvedAt ? "is-solved" : ""}`} ref={articleRef}>
+      <article className={`home-feed-post ${resolvedAt || normalized.isClosed ? "is-solved" : ""}`} ref={articleRef}>
         {normalized.sharedBy ? (
           <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
@@ -795,9 +809,8 @@ function FeedPost({ post, profileMenu = false }) {
               {headerName}
               {creator.verified ? <VerifiedBadge /> : null}
             </Link>
-            <p className="home-feed-meta">{[normalized.location, normalized.timestamp].filter(Boolean).join(" - ")}</p>
+            <div className="home-feed-meta wall-note-meta"><WallPostTypeBadge closedLabel={resolvedAt ? closeLabels.state : normalized.isClosed ? normalized.closedReason === "ended" ? "Ended" : "Expired" : ""} rightNow={normalized.rightNow && !normalized.isClosed && !resolvedAt} postType={normalized.postType} context={normalized.context} /><span className="wall-note-age">&middot; {normalized.timestamp}</span>{normalized.location ? <span className="wall-note-place" title={normalized.location}>&middot; <FiMapPin aria-hidden="true" />{normalized.location.split(",")[0]}</span> : null}</div>
           </div>
-          <WallPostTypeBadge postType={normalized.postType} topic={normalized.topic} location={normalized.location} context={normalized.context} />
           <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>
@@ -811,8 +824,8 @@ function FeedPost({ post, profileMenu = false }) {
           </button>
         </div>
 
-        {resolvedAt ? <span className="wall-solved-label" role="status"><FiCheck aria-hidden="true" /> Solved</span> : null}
         <WallTextContent postId={actionPostId} text={caption} />
+        <WallPostTypeBadge topicOnly postType={normalized.postType} topic={normalized.topic} context={normalized.context} />
         <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
@@ -828,39 +841,30 @@ function FeedPost({ post, profileMenu = false }) {
         ) : null}
         </div>
 
+        {ownsPost && normalized.canResolve && !normalized.isClosed && !resolvedAt ? <button className="wall-note-solve" disabled={resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button"><FiCheck aria-hidden="true" />{closeLabels.action}</button> : null}
         <div className="home-feed-actions">
           <div className="relative">
             <button
               aria-label={selectedReaction ? `Change ${selectedReaction.label} reaction` : "React to post"}
               className={`home-reaction-capsule ${selectedReaction ? "is-selected" : ""}`}
               disabled={reactionMutation.isPending}
-              onClick={() => reactionCount ? setReactionsSheetOpen(true) : setReactionPickerOpen(true)}
+              onClick={() => { if (!reactionHeldRef.current) openReactionPicker(); reactionHeldRef.current = false; }}
+              onPointerDown={() => { reactionHeldRef.current = false; reactionHoldRef.current = window.setTimeout(() => { reactionHeldRef.current = true; setReactionsSheetOpen(true); }, 500); }}
+              onPointerUp={() => window.clearTimeout(reactionHoldRef.current)}
+              onPointerLeave={() => window.clearTimeout(reactionHoldRef.current)}
+              onPointerCancel={() => window.clearTimeout(reactionHoldRef.current)}
+              onContextMenu={(event) => { event.preventDefault(); setReactionsSheetOpen(true); }}
+              ref={reactionAnchorRef}
               title="React"
               type="button"
             >
               <span className="home-reaction-samples" aria-hidden="true">{visibleReactionSamples}</span>
-              <strong>{formatCount(reactionCount)}</strong>
-              {reactionSummary.length ? (
-                <span aria-hidden="true" className="inline-flex items-center gap-2">
-                  {reactionSummary.map(({ count, reaction: summaryReaction }) => (
-                    <span className="inline-flex items-center gap-1" key={summaryReaction.key}>
-                      <span className="text-base">{summaryReaction.icon}</span>
-                      <span>{count}</span>
-                    </span>
-                  ))}
-                </span>
-              ) : (
-                <span aria-hidden="true" className="inline-flex items-center gap-1">
-                  <span className="text-base">👍</span>
-                  <span>0</span>
-                </span>
-              )}
-              <span aria-hidden="true" className="text-base">{selectedReaction?.icon || "👍"}</span>
-              <span className="hidden">{reactionCount}</span>
+              <strong>{reactionCount ? formatCount(reactionCount) : "+"}</strong>
+
             </button>
           </div>
           <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
-            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>
+            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{normalized.topic === "Meet people" && !ownsPost && !normalized.isClosed && !resolvedAt ? <strong className="wall-join-label">I’m in</strong> : null}
           </button>
           <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
@@ -880,10 +884,12 @@ function FeedPost({ post, profileMenu = false }) {
           </button>
         </div>
 
+        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={() => { setAllComments(true); setCommentsOpen(true); }} type="button">View all {commentCount} comments</button> : null}
         {commentsOpen ? (
-          <section className="seen-comments-panel wall-comments-panel">
+          <section aria-label="Wall note comments" className="seen-comments-panel wall-comments-panel">
+            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {commentCount} comments</button> : null}
             <div className="seen-comments-list">
-              {comments.map((comment) => {
+              {(allComments ? comments : comments.slice(-2)).map((comment) => {
                 const commentCreator = comment.author || (comment.creatorId === "me" ? { name: "You" } : atseenCreators[comment.creatorId]) || { name: "Creator" };
                 return (
                   <article key={comment.id}>
@@ -900,11 +906,12 @@ function FeedPost({ post, profileMenu = false }) {
               })}
               {!comments.length ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
             </div>
-            <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
+            {normalized.isClosed || resolvedAt ? <p className="wall-replies-closed">Replies are closed. Existing comments stay visible.</p> : null}
+            <form onSubmit={(event) => { event.preventDefault(); if (!normalized.isClosed && !resolvedAt) submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input aria-label="Add a Wall note comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
-              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
-              <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">Post</button>
+              <input disabled={normalized.isClosed || Boolean(resolvedAt)} aria-label="Add a Wall note comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
+              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={normalized.isClosed || Boolean(resolvedAt) || commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
+              <button className="seen-comment-post" disabled={normalized.isClosed || Boolean(resolvedAt) || !commentText.trim() || commentMutation.isPending} type="submit">Post</button>
             </form>
           </section>
         ) : null}
@@ -919,7 +926,7 @@ function FeedPost({ post, profileMenu = false }) {
           currentUserId={user?.id || user?._id}
           onAddYours={() => {
             setReactionsSheetOpen(false);
-            setReactionPickerOpen(true);
+            openReactionPicker();
           }}
           onClose={() => setReactionsSheetOpen(false)}
           postId={actionPostId}
@@ -927,7 +934,8 @@ function FeedPost({ post, profileMenu = false }) {
         />
       ) : null}
 
-      {reactionPickerOpen ? (
+      {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={(value) => { saveReaction(value); setReactionPickerOpen(false); }} options={postReactionOptions} selected={reaction} /> : null}
+      {reactionPickerOpen && reactionExpanded ? (
         <div className="seen-reactions-layer" style={wallSheetPosition}>
           <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
           <section aria-label={`Choose a reaction for ${creator.name}'s post`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
@@ -1029,7 +1037,7 @@ function FeedPost({ post, profileMenu = false }) {
               { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
               { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
-              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen request" : "Mark as Solved", subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
+              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen post" : closeLabels.action, subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
               { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
               { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
             ]

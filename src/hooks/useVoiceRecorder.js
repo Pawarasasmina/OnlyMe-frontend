@@ -46,6 +46,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
   const activeStartedAtRef = useRef(0);
   const accumulatedMsRef = useRef(0);
   const discardRef = useRef(false);
+  const captureRequestRef = useRef(0);
   const audioUrlRef = useRef("");
 
   const clearTimer = useCallback(() => {
@@ -71,6 +72,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
   }, []);
 
   const resetRecording = useCallback(() => {
+    captureRequestRef.current += 1;
     discardRef.current = true;
     const recorder = recorderRef.current;
     if (recorder && recorder.state !== "inactive") {
@@ -129,6 +131,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
   }, []);
 
   const startRecording = useCallback(async () => {
+    const request = ++captureRequestRef.current;
     setError("");
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       setStatus("error");
@@ -150,6 +153,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
+      if (request !== captureRequestRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
       const mimeType = getSupportedAudioMimeType();
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       streamRef.current = stream;
@@ -158,6 +162,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
         if (event.data?.size) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
+        if (request !== captureRequestRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
         cleanupCapture();
         if (discardRef.current) return;
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
@@ -177,6 +182,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
       startTimer();
       beginLevelMeter(stream);
     } catch (recordingError) {
+      if (request !== captureRequestRef.current) return;
       cleanupCapture();
       setStatus("error");
       setError(microphoneErrorMessage(recordingError));
@@ -213,6 +219,17 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
     recorder.stop();
   }, [clearTimer]);
 
+  const loadRecording = useCallback((recording) => {
+    resetRecording();
+    const url = URL.createObjectURL(recording.file);
+    audioUrlRef.current = url;
+    setAudioBlob(recording.file);
+    setAudioUrl(url);
+    setElapsedMs(Math.max(0, Number(recording.duration) || 0) * 1000);
+    setLevels(recording.waveform || []);
+    setStatus("preview");
+  }, [resetRecording]);
+
   useEffect(() => () => resetRecording(), [resetRecording]);
 
   return {
@@ -222,6 +239,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
     elapsedMs,
     error,
     levels,
+    loadRecording,
     pauseRecording,
     resetRecording,
     resumeRecording,

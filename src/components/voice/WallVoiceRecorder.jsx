@@ -22,23 +22,26 @@ function fileFromBlob(blob) {
 }
 
 function WaveBars({ active = false, levels = [] }) {
-  const bars = levels.length ? levels.slice(-36) : Array.from({ length: 28 }, (_, index) => 0.12 + ((index * 5) % 9) / 18);
-  return (
-    <div aria-hidden="true" className="flex h-12 min-w-0 flex-1 items-center justify-center gap-[3px] overflow-hidden rounded-2xl bg-white/[0.035] px-3">
-      {bars.map((level, index) => (
-        <span
-          className={`w-[3px] rounded-full ${active ? "bg-atseen-blue" : "bg-white/25"}`}
-          key={`${index}-${Math.round(level * 100)}`}
-          style={{ height: `${Math.max(6, Math.round(level * 34))}px` }}
-        />
-      ))}
-    </div>
-  );
+  const measured = levels.slice(-36);
+  const bars = Array.from({ length: 26 }, (_, index) => {
+    if (!measured.length) return 0.08;
+    const position = index * (measured.length - 1) / 25;
+    const lower = Math.floor(position);
+    const start = Number(measured[lower]) || 0.08;
+    const end = Number(measured[Math.min(lower + 1, measured.length - 1)]) || start;
+    return start + (end - start) * (position - lower);
+  });
+  return <div aria-hidden="true" className="flex h-12 min-w-0 flex-1 items-center justify-center gap-[3px] overflow-hidden rounded-2xl bg-white/[0.035] px-3">
+    {bars.map((level, index) => <span className={`w-[3px] rounded-full ${active ? "bg-atseen-blue" : "bg-white/25"}`} key={index} style={{ height: `${Math.max(4, Math.round(level * 26))}px` }} />)}
+  </div>;
 }
 
-export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
-  const recorder = useVoiceRecorder();
-  const { resetRecording } = recorder;
+export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = false, initialRecording = null, onDelete }) {
+  const recorder = useVoiceRecorder({ maxDurationSeconds: 30 });
+  const { resetRecording, startRecording, loadRecording } = recorder;
+  const initializedRef = useRef(false);
+  const attachedRef = useRef(false);
+  const preparedBlobRef = useRef(null);
   const [overlayPosition, setOverlayPosition] = useState(undefined);
   const [transcript, setTranscript] = useState("");
   const [transcriptStatus, setTranscriptStatus] = useState("idle");
@@ -225,23 +228,50 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
   }, [languageByCode, languageLabel, selectedLanguage, transcript, transcriptLanguage, transcriptStatus, translations]);
 
   useEffect(() => {
+    if (!isOpen) { initializedRef.current = false; attachedRef.current = false; return undefined; }
+    const timer = window.setTimeout(() => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+      if (initialRecording?.file) loadRecording(initialRecording);
+      else if (quick) startRecording();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, quick, initialRecording, loadRecording, startRecording]);
+
+  useEffect(() => {
+    if (!isOpen || !quick || recorder.status !== "preview" || !recorder.audioBlob || attachedRef.current) return;
+    if (recorder.durationSeconds < 1) { setTranscriptionError("Record at least one second before stopping."); return; }
+    if (recorder.audioBlob.size > POST_VOICE_NOTE_MAX_SIZE) { setTranscriptionError("Voice notes must be 20 MB or smaller."); return; }
+    attachedRef.current = true;
+    onUse({ file: fileFromBlob(recorder.audioBlob), duration: recorder.durationSeconds, waveform: recorder.levels, transcript: "", transcriptLanguage: "", translations: [] });
+    onClose();
+  }, [isOpen, quick, recorder.status, recorder.audioBlob, recorder.durationSeconds, recorder.levels, onUse, onClose]);
+
+  useEffect(() => {
     if (isOpen) return;
     resetRecording();
     resetTranscript();
   }, [isOpen, resetRecording, resetTranscript]);
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen || quick) return undefined;
     loadTranslationLanguages();
     return () => languageAbortRef.current?.abort();
-  }, [isOpen, loadTranslationLanguages]);
+  }, [isOpen, quick, loadTranslationLanguages]);
 
   useEffect(() => {
+    if (quick || recorder.status !== "preview" || !recorder.audioBlob) return;
+    if (preparedBlobRef.current === recorder.audioBlob) return;
+    preparedBlobRef.current = recorder.audioBlob;
     resetTranscript();
-    if (recorder.status === "preview" && recorder.audioBlob) {
-      transcribe();
-    }
-  }, [recorder.audioBlob, recorder.status, resetTranscript, transcribe]);
+    if (initialRecording?.file === recorder.audioBlob && initialRecording.transcript) {
+      setTranscript(initialRecording.transcript);
+      setTranscriptLanguage(initialRecording.transcriptLanguage || "");
+      setTranscriptStatus("success");
+      setTranslations(Object.fromEntries((initialRecording.translations || []).map((entry) => [entry.language, { ...entry, sourceText: initialRecording.transcript }])));
+      setTranslationStatuses(Object.fromEntries((initialRecording.translations || []).map((entry) => [entry.language, "success"])));
+    } else transcribe();
+  }, [quick, recorder.status, recorder.audioBlob, initialRecording, resetTranscript, transcribe]);
 
   const useRecording = () => {
     if (!recorder.audioBlob) return;
@@ -280,6 +310,11 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
     resetTranscript();
   };
 
+  const deleteRecording = () => {
+    if (initialRecording && onDelete) { onDelete(); close(); }
+    else rerecord();
+  };
+
   const recordingActive = recorder.status === "recording";
   const recordingPaused = recorder.status === "paused";
   const recordingBusy = recorder.status === "requesting-permission" || recorder.status === "stopping";
@@ -293,11 +328,11 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
 
   return (
     <FanModal
-      className="wall-voice-recorder-sheet max-w-md"
+      className={`wall-voice-recorder-sheet max-w-md ${quick ? "wall-voice-prototype-sheet" : ""}`}
       hideHeader
       isOpen={isOpen}
       onClose={close}
-      overlayClassName="wall-voice-recorder-overlay"
+      overlayClassName={`wall-voice-recorder-overlay ${quick ? "wall-voice-prototype-overlay" : ""}`}
       overlayStyle={overlayPosition}
       portal
       title={title}
@@ -309,7 +344,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
             <FiMic aria-hidden="true" />
           </div>
           <p className="mt-4 text-xl font-black text-atseen-text">Voice note</p>
-          <p className="mt-1 text-sm text-atseen-muted">Record what you&apos;ve seen</p>
+          <p className="mt-1 text-sm text-atseen-muted">Up to 30 seconds. We can turn your voice into text.</p>
           {recorder.error ? <p className="mt-4 rounded-2xl border border-atseen-danger/20 bg-atseen-danger/10 p-3 text-sm text-atseen-danger">{recorder.error}</p> : null}
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
             <button className="rounded-2xl border border-atseen-line px-5 py-3 text-sm font-bold text-atseen-text" onClick={close} type="button">
@@ -328,21 +363,23 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
             <FiSquare aria-hidden="true" />
           </button>
           <h2>Say what you see</h2>
-          <p aria-live="polite">{recordingBusy ? "Preparing your microphone..." : recordingPaused ? "Recording paused" : `${formatVoiceTime(recorder.durationSeconds)} of 00:30 — we'll turn it into text`}</p>
+          <p aria-live="polite">{recordingBusy ? "Preparing your microphone..." : recordingPaused ? "Recording paused" : quick ? "Up to 30 seconds \u2014 we\u2019ll turn it into text" : `${formatVoiceTime(recorder.durationSeconds)} of 00:30 \u2014 we'll turn it into text`}</p>
           <div className="wall-voice-capture-wave">
             <WaveBars active={recordingActive} levels={recorder.levels} />
           </div>
+          <span className="sr-only" aria-live="off">{formatVoiceTime(recorder.durationSeconds)} of 00:30</span>
           <button className="wall-voice-stop-action" disabled={recordingBusy} onClick={recorder.stopRecording} type="button">Stop</button>
         </div>
       ) : null}
 
-      {recorder.status === "preview" ? (
+      {quick && recorder.status === "preview" && transcriptionError ? <div className="wall-voice-quick-error"><p role="alert">{transcriptionError}</p><button onClick={() => { setTranscriptionError(""); recorder.startRecording(); }} type="button">Try recording again</button><button onClick={close} type="button">Cancel</button></div> : null}
+      {!quick && recorder.status === "preview" ? (
         <div>
           <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-lg font-bold text-atseen-text">{title}</h2><button aria-label="Close voice recorder" className="grid h-9 w-9 place-items-center rounded-full border border-atseen-line text-atseen-muted" onClick={close} type="button"><FiX /></button></div>
           <div className="rounded-2xl border border-atseen-line bg-white/[0.025] p-3">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-black text-atseen-text">Voice note - {formatVoiceTime(recorder.durationSeconds)}</p>
-              <button aria-label="Delete voice note" className="grid h-8 w-8 place-items-center rounded-full text-atseen-danger hover:bg-atseen-danger/10" onClick={rerecord} type="button">
+              <button aria-label="Delete voice note" className="grid h-8 w-8 place-items-center rounded-full text-atseen-danger hover:bg-atseen-danger/10" onClick={deleteRecording} type="button">
                 <FiTrash2 aria-hidden="true" />
               </button>
             </div>
@@ -485,7 +522,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse }) {
             <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-atseen-line px-4 text-sm font-bold text-atseen-text" onClick={rerecord} type="button">
               <FiRefreshCw aria-hidden="true" /> Re-record
             </button>
-            <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-atseen-danger/25 px-4 text-sm font-bold text-atseen-danger" onClick={close} type="button">
+            <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-atseen-danger/25 px-4 text-sm font-bold text-atseen-danger" onClick={deleteRecording} type="button">
               <FiTrash2 aria-hidden="true" /> Delete
             </button>
             <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-atseen-blue px-5 text-sm font-black text-atseen-bg" onClick={useRecording} type="button">

@@ -12,7 +12,7 @@ const finiteDuration = (value, fallback = 0) => {
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
 };
 
-export default function VoiceMessageBubble({ audio, label = "Voice message", mine = false, compact = false }) {
+export default function VoiceMessageBubble({ audio, label = "Voice message", mine = false, compact = false, variant = "default" }) {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -56,7 +56,7 @@ export default function VoiceMessageBubble({ audio, label = "Voice message", min
     seekFromWaveform(event);
   };
 
-  return <div className={compact ? "wall-audio-player" : "flex w-[min(190px,62vw)] min-w-0 max-w-full items-center gap-2.5 sm:w-auto sm:min-w-[190px]"}>
+  return <div className={compact ? `wall-audio-player ${variant === "chip" ? "wall-audio-chip" : ""}` : "flex w-[min(190px,62vw)] min-w-0 max-w-full items-center gap-2.5 sm:w-auto sm:min-w-[190px]"}>
     <audio onDurationChange={(event) => setDuration(finiteDuration(event.currentTarget.duration, suppliedDuration))} onEnded={() => { setPlaying(false); setCurrent(0); }} onError={() => setFailed(true)} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={(event) => setCurrent(finiteDuration(event.currentTarget.currentTime))} preload="metadata" ref={audioRef} src={audio?.url} />
     <button aria-label={playing ? `Pause ${label}` : `Play ${label}`} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${mine ? "bg-atseen-bg/15" : "bg-atseen-blue/15 text-atseen-blue"}`} disabled={failed} onClick={toggle} type="button">{playing ? <FiPause /> : <FiPlay className="ml-0.5" />}</button>
     <div className="min-w-0 flex-1">

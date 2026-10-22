@@ -1,8 +1,8 @@
+import WallExploreNeeds from "../../components/fanWeb/home/WallExploreNeeds";
+import { prependCreatedWallPosts } from "../../utils/wallCreatedPosts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useOutletContext, useSearchParams } from "react-router-dom";
-import { FiChevronDown, FiSliders } from "react-icons/fi";
-import WallFilterSheet from "../../components/fanWeb/home/WallFilterSheet";
-import { DEFAULT_WALL_FILTERS, WALL_FILTER_SORTS } from "../../data/wallFilters";
+import { useLocation, useOutletContext, useSearchParams } from "react-router-dom";
+import { DEFAULT_WALL_FILTERS, WALL_FILTER_TYPES, WALL_FILTER_TOPICS } from "../../data/wallFilters";
 import { mergeWallPages, readWallFilters, writeWallFilters } from "../../utils/wallFilters";
 import { useQuery } from "@tanstack/react-query";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
@@ -52,6 +52,7 @@ function HomeEmptyState({ activeFilter, canPost, onShowAll }) {
 
 function FanHomePage() {
   const { status, setStatus } = useOutletContext();
+  const navigation = useLocation();
   const { user, loading: authLoading } = useAuth();
   const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const [searchParams, setSearchParams] = useSearchParams();
@@ -60,16 +61,33 @@ function FanHomePage() {
   const composeSignal = searchParams.get("compose") === "note"
     ? searchParams.get("composeRequest") || "note"
     : "";
+  const consumeCompose = useCallback(() => setSearchParams((current) => {
+    const next = new URLSearchParams(current); next.delete("compose"); next.delete("composeRequest"); next.delete("question"); return next;
+  }, { replace: true }), [setSearchParams]);
+  const handlePublished = () => {
+    setCursor({ scope: JSON.stringify({ ...readWallFilters(new URLSearchParams()), filter: "all" }), page: 1 });
+    setSearchParams(new URLSearchParams(), { replace: true });
+    document.querySelector(".social-center-scroll")?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  };
   const activeFilter = HOME_FILTERS.some((filter) => filter.key === requestedFilter) ? requestedFilter : "all";
   const filters = useMemo(() => readWallFilters(searchParams), [searchParams]);
   const queryScope = JSON.stringify({ ...filters, filter: activeFilter });
   const [cursor, setCursor] = useState({ scope: "", page: 1 });
   const page = cursor.scope === queryScope ? cursor.page : 1;
   const [feedState, setFeedState] = useState({ scope: "", items: [] });
-  const feedPosts = useMemo(() => feedState.scope === queryScope ? feedState.items : [], [feedState, queryScope]);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sheetPosition, setSheetPosition] = useState({});
-  const filterButtonRef = useRef(null);
+  const createdQuery = useQuery({
+    queryKey: ["feed-posts", "created", String(user?.id || user?._id || "")],
+    queryFn: () => ({ items: [] }),
+    enabled: false,
+    initialData: { items: [] },
+  });
+  const feedPosts = useMemo(() => {
+    const items = feedState.scope === queryScope ? feedState.items : [];
+    const selection = JSON.parse(queryScope);
+    const unfiltered = selection.filter === "all" && Object.entries(DEFAULT_WALL_FILTERS).every(([key, value]) => selection[key] === value);
+    return unfiltered ? prependCreatedWallPosts(items, createdQuery.data?.items || []) : items;
+  }, [feedState, queryScope, createdQuery.data]);
   const sentinelRef = useRef(null);
 
   const profileQuery = useQuery({
@@ -80,7 +98,6 @@ function FanHomePage() {
   });
 
   const profileCity = profileQuery.data?.profile?.city || display.location || "";
-  const profileCountry = profileQuery.data?.profile?.country || "";
   const feedLocation = filters.location;
   const selectedCountryCode = searchParams.get("country") || "";
   const feedParams = useMemo(() => ({
@@ -100,16 +117,6 @@ function FanHomePage() {
     window.addEventListener("wall-resolution-changed", refreshResolution);
     return () => window.removeEventListener("wall-resolution-changed", refreshResolution);
   }, [queryScope]);
-  useEffect(() => {
-    if (!filtersOpen) return undefined;
-    const update = () => {
-      const bounds = filterButtonRef.current?.closest(".social-center-scroll")?.getBoundingClientRect();
-      setSheetPosition(window.innerWidth > 880 && bounds ? { "--wall-filter-left": `${bounds.left}px`, "--wall-filter-width": `${bounds.width}px` } : {});
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [filtersOpen]);
 
   const discoverParams = useMemo(() => ({ _viewerId: user?.id || user?._id || "", filter: "for_you", limit: 8 }), [user?.id, user?._id]);
   const discoverQuery = useDiscoverQuery(discoverParams);
@@ -147,15 +154,24 @@ function FanHomePage() {
   ]), [display.location, feedPosts, profileCity, recommendations, suggestedUsers]);
   const loading = profileQuery.isLoading || (feedQuery.isLoading && page === 1);
 
+  useEffect(() => {
+    if (loading || !navigation.state?.scrollToWallFeed) return undefined;
+    const frame = window.requestAnimationFrame(() => document.querySelector(".wall-feed-heading")?.scrollIntoView({ block: "start" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, navigation.key, navigation.state]);
+
   const applyFilters = useCallback((nextFilters) => {
-    setSearchParams((current) => writeWallFilters(current, nextFilters), { replace: true });
-    setFiltersOpen(false);
+    setSearchParams((current) => {
+      const next = writeWallFilters(current, nextFilters);
+      if (current.has("country")) next.set("country", current.get("country"));
+      return next;
+    }, { replace: true });
   }, [setSearchParams]);
 
   const resetFilters = () => {
     setSearchParams((current) => {
-      const next = writeWallFilters(current, DEFAULT_WALL_FILTERS);
-      next.delete("q");
+      const next = new URLSearchParams(current);
+      for (const key of ["type", "topic", "filter", "q"]) next.delete(key);
       return next;
     }, { replace: true });
   };
@@ -166,8 +182,12 @@ function FanHomePage() {
       return next;
     }, { replace: true });
   }, [setSearchParams]);
-  const activeCount = Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(filters.scope !== "worldwide") + Number(filters.sort !== "recent") + Number(activeFilter !== "all");
-  const summary = `${filters.scope === "worldwide" ? "Worldwide" : filters.scope === "nearby" ? `Near ${filters.near || filters.location}` : filters.location} \u00b7 ${WALL_FILTER_SORTS.find((option) => option.value === filters.sort)?.label || "Recent"}`;
+  const activeCount = Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(activeFilter !== "all") + Number(Boolean(searchParams.get("q")));
+  const selectedLabels = [
+    filters.type !== "all" ? ({ need_help: "Need help", right_now: "Right now", buy_sell: "Buy & Sell", looking_for: "Looking for" }[filters.type] || WALL_FILTER_TYPES.find((item) => item.value === filters.type)?.label) : "",
+    filters.topic !== "all" ? WALL_FILTER_TOPICS.find((item) => item.value === filters.topic)?.label : "",
+  ].filter(Boolean);
+  const feedTitle = selectedLabels.join(" \u00b7 ") || (activeFilter !== "all" ? HOME_FILTERS.find((item) => item.key === activeFilter)?.label : "For you");
 
   return (
     <div className="home-prototype-page">
@@ -178,37 +198,20 @@ function FanHomePage() {
           location={feedLocation}
           locationOptions={locationOptions}
           onLocationChange={changeLocation}
+          onNeedOpen={canPost ? () => setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.set("compose", "note");
+            next.set("composeRequest", String(Date.now()));
+            return next;
+          }, { replace: true }) : undefined}
         />
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
-        <nav aria-label="Wall topics" className="wall-topic-nav">
-          {[
-            { key: "all", label: "For you" },
-            { key: "looking_for", label: "Looking for" },
-            { key: "offering", label: "Offering" },
-            { key: "question", label: "Questions" },
-            { key: "event", label: "Events" },
-            { key: "buy_sell", label: "Buy / Sell" },
-          ].map(({ key, label }) => {
-            const selected = key === "all"
-              ? activeFilter === "all" && filters.type === "all" && filters.topic === "all"
-              : key === "buy_sell" ? filters.topic === key : filters.type === key;
-            return <button aria-pressed={selected} className={selected ? "is-active" : ""} key={key} onClick={() => setSearchParams((current) => {
-              const next = new URLSearchParams(current);
-              next.delete("filter");
-              if (key === "all") { next.delete("type"); next.delete("topic"); }
-              else if (key === "buy_sell") { next.delete("type"); next.set("topic", key); }
-              else { next.set("type", key); next.delete("topic"); }
-              return next;
-            }, { replace: true })} type="button">{label}</button>;
-          })}
-        </nav>
-        <div className="wall-filter-toolbar">
-          <button aria-expanded={filtersOpen} aria-haspopup="dialog" className={`wall-filter-trigger ${activeCount ? "has-filters" : ""}`} onClick={() => setFiltersOpen(true)} ref={filterButtonRef} type="button"><FiSliders aria-hidden="true" />Filters{activeCount ? <span>{activeCount}</span> : null}<FiChevronDown aria-hidden="true" /></button>
-          <button aria-label={`Change filters and sort: ${summary}`} className="wall-filter-summary" onClick={() => setFiltersOpen(true)} type="button">{summary}</button>
-        </div>
-        {filtersOpen ? <WallFilterSheet filters={filters} onApply={applyFilters} onClose={() => setFiltersOpen(false)} position={sheetPosition} profileCity={profileCity} profileCountry={profileCountry} /> : null}
         <WallSeenTodayNotice />
-        {canPost ? <PostComposer currentUser={display} openSignal={composeSignal} /> : null}
+        {canPost ? <PostComposer initialQuestion={searchParams.get("question")} key={user?.id || user?._id} onComposeOpened={consumeCompose} onPublished={handlePublished} defaultLocation={feedLocation || profileCity} currentUser={display} openSignal={composeSignal} /> : null}
+
+
+        <WallExploreNeeds location={feedLocation} viewerId={String(user?.id || user?._id || "")} filters={filters} onSelect={(selection) => applyFilters({ ...filters, type: "all", topic: "all", ...selection })} />
+        <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || "Worldwide"}</span>{activeCount ? <button onClick={resetFilters} type="button">Clear</button> : null}</div>
 
         {loading ? <WallFeedSkeleton /> : null}
         {feedQuery.isError ? (
