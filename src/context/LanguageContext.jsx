@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { LanguageContext } from "./LanguageContext";
 
 const LANGUAGE_KEY = "atseen_language";
-const supported = new Set(["en", "ar", "ru", "es", "fr", "pt"]);
+const supported = new Set(["en", "ar", "ru", "uk", "es", "fr", "pt", "de"]);
 
 const russian = {
   Home: "Главная", Seen: "Просмотрено", Discover: "Обзор", Messages: "Сообщения", Activity: "Активность", Profile: "Профиль",
@@ -32,7 +32,13 @@ const portuguese = {
   Home: "Início", Seen: "Vistos", Discover: "Descobrir", Messages: "Mensagens", Activity: "Atividade", Profile: "Perfil", Verification: "Verificação", "Your space": "Seu espaço", "Create ✦": "Criar ✦", "Verify ✦": "Verificar ✦",
   "Account settings": "Configurações da conta", "Account identifiers are shown here as read-only.": "Os dados da conta são exibidos somente para leitura.", Email: "E-mail", Role: "Função", "Preferred language": "Idioma preferido", "Time zone": "Fuso horário", "Phone number": "Número de telefone", "Save account": "Salvar conta", "Saving...": "Salvando...", "Change password": "Alterar senha", "Your current password is required.": "Sua senha atual é obrigatória.", "Current password": "Senha atual", "New password": "Nova senha", "Confirm new password": "Confirmar nova senha", "Changing...": "Alterando...", Privacy: "Privacidade", Notifications: "Notificações", Account: "Conta",
 };
-const translations = { ar: arabic, es: spanish, fr: french, pt: portuguese, ru: russian };
+const ukrainian = {
+  Home: "Головна", Seen: "Переглянуте", Discover: "Огляд", Messages: "Повідомлення", Activity: "Активність", Profile: "Профіль", Verification: "Перевірка", "Your space": "Ваш простір", "Account settings": "Налаштування облікового запису", Email: "Електронна пошта", Role: "Роль", "Preferred language": "Бажана мова", "Time zone": "Часовий пояс", "Phone number": "Номер телефону", "Save account": "Зберегти", "Saving...": "Збереження...", Privacy: "Конфіденційність", Notifications: "Сповіщення", Account: "Обліковий запис",
+};
+const german = {
+  Home: "Startseite", Seen: "Gesehen", Discover: "Entdecken", Messages: "Nachrichten", Activity: "Aktivität", Profile: "Profil", Verification: "Verifizierung", "Your space": "Dein Bereich", "Account settings": "Kontoeinstellungen", Email: "E-Mail", Role: "Rolle", "Preferred language": "Bevorzugte Sprache", "Time zone": "Zeitzone", "Phone number": "Telefonnummer", "Save account": "Konto speichern", "Saving...": "Wird gespeichert...", Privacy: "Datenschutz", Notifications: "Benachrichtigungen", Account: "Konto",
+};
+const translations = { ar: arabic, de: german, es: spanish, fr: french, pt: portuguese, ru: russian, uk: ukrainian };
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
@@ -43,7 +49,7 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(LANGUAGE_KEY, language);
     document.documentElement.lang = language;
-    document.documentElement.dir = "ltr";
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     document.documentElement.dataset.language = language;
   }, [language]);
   const value = useMemo(() => ({ language, setLanguage, t: (text) => translations[language]?.[text] || text }), [language, setLanguage]);

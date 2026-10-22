@@ -346,6 +346,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const [canSwitchCamera, setCanSwitchCamera] = useState(false);
   const [textDragging, setTextDragging] = useState(false);
   const [deleteArmed, setDeleteArmed] = useState(false);
+  const [photoGuides, setPhotoGuides] = useState({ x: false, y: false });
   const [composerPosition, setComposerPosition] = useState(undefined);
   const [editingTextId, setEditingTextId] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(true);
@@ -593,10 +594,15 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     let scale = gesture.start.scale || 1;
     if (points.length > 1 && gesture.distance) {
       const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
-      scale = Math.max(1, Math.min(3, scale * (distance / gesture.distance)));
+      scale = Math.max(0.4, Math.min(4, scale * (distance / gesture.distance)));
     }
-    const x = Math.max(-100, Math.min(100, (gesture.start.x || 0) - ((center.x - gesture.origin.x) / bounds.width) * 200));
-    const y = Math.max(-100, Math.min(100, (gesture.start.y || 0) - ((center.y - gesture.origin.y) / bounds.height) * 200));
+    const rawX = Math.max(-100, Math.min(100, (gesture.start.x || 0) - ((center.x - gesture.origin.x) / bounds.width) * 200));
+    const rawY = Math.max(-100, Math.min(100, (gesture.start.y || 0) - ((center.y - gesture.origin.y) / bounds.height) * 200));
+    const snapX = Math.abs(rawX) < 3;
+    const snapY = Math.abs(rawY) < 3;
+    const x = snapX ? 0 : rawX;
+    const y = snapY ? 0 : rawY;
+    setPhotoGuides({ x: snapX, y: snapY });
     updateStory({ transform: { scale, x, y } });
     return true;
   };
@@ -609,6 +615,15 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       gesture.start = { ...story.transform };
       gesture.origin = point;
       gesture.distance = 0;
+    } else {
+      setPhotoGuides({ x: false, y: false });
+      setStory((current) => ({
+        ...current,
+        transform: {
+          ...current.transform,
+          scale: Math.abs((current.transform?.scale || 1) - 1) < 0.06 ? 1 : current.transform.scale,
+        },
+      }));
     }
   };
 
@@ -747,6 +762,14 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       const file = await renderStoryFile(story);
       const editorMetadata = {
         prototypeComposer: true,
+        ...(story.photo ? {
+          mediaFraming: {
+            fitMode: (story.transform?.scale || 1) < 1 ? "fit" : "fill",
+            scale: story.transform?.scale || 1,
+            translateX: story.transform?.x || 0,
+            translateY: story.transform?.y || 0,
+          },
+        } : {}),
         ...((story.photo || story.sharedCard) && story.questionSticker ? { questionSticker: story.questionSticker } : {}),
         ...(story.drawing.length ? { drawing: story.drawing } : {}),
         ...(story.sharedCard ? { sharedCard: story.sharedCard } : {}),
@@ -826,6 +849,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         ref={stageRef}
       >
         <div aria-hidden="true" className="story-composer-bg" style={backgroundStyle} />
+        {story.photo && photoGuides.x ? <span aria-hidden="true" className="story-composer-guide is-x" /> : null}
+        {story.photo && photoGuides.y ? <span aria-hidden="true" className="story-composer-guide is-y" /> : null}
         {!story.photo && ["starting", "live"].includes(cameraStatus) ? <video aria-label="Camera preview" autoPlay className={`story-composer-camera ${facingMode === "user" ? "is-mirrored" : ""}`} muted playsInline ref={videoRef} /> : null}
         <button
           aria-label={story.photo ? "Adjust story photo. Drag to move and pinch to zoom." : "Focus story text"}

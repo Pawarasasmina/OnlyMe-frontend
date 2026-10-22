@@ -39,7 +39,15 @@ function markStoryViewedInDiscoverPage(page, storyId) {
       firstUnseenStoryId: stories.find((story) => !story.viewed)?.id || null,
     };
   });
-  return { ...page, friends };
+  const items = (page.items || []).map((group) => {
+    const stories = (group.stories || []).map((story) => markStoryViewedInStory(story, storyId));
+    return { ...group, stories, hasUnseenStories: stories.some((story) => !story.viewed) };
+  });
+  const viewer = page.viewer?.stories ? {
+    ...page.viewer,
+    stories: page.viewer.stories.map((story) => markStoryViewedInStory(story, storyId)),
+  } : page.viewer;
+  return { ...page, friends, items, viewer };
 }
 
 function setStoryReactionInDiscoverPage(page, storyId, reaction) {
@@ -60,6 +68,14 @@ function setStoryReactionInDiscoverPage(page, storyId, reaction) {
         firstUnseenStoryId: stories.find((story) => !story.viewed)?.id || null,
       };
     }),
+    items: (page.items || []).map((group) => {
+      const stories = (group.stories || []).map((story) => setStoryReactionInStory(story, storyId, reaction));
+      return { ...group, stories, hasUnseenStories: stories.some((story) => !story.viewed) };
+    }),
+    viewer: page.viewer?.stories ? {
+      ...page.viewer,
+      stories: page.viewer.stories.map((story) => setStoryReactionInStory(story, storyId, reaction)),
+    } : page.viewer,
   };
 }
 
@@ -132,20 +148,25 @@ export function useMarkStoryViewed() {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: ["stories"] }),
         queryClient.cancelQueries({ queryKey: ["discover"] }),
+        queryClient.cancelQueries({ queryKey: ["wall-stories"] }),
       ]);
       const previousStories = queryClient.getQueriesData({ queryKey: ["stories"] });
       const previousDiscover = queryClient.getQueriesData({ queryKey: ["discover"] });
+      const previousWallStories = queryClient.getQueriesData({ queryKey: ["wall-stories"] });
       queryClient.setQueriesData({ queryKey: ["stories"] }, (current) => markStoryViewedInQueryData(current, storyId));
       queryClient.setQueriesData({ queryKey: ["discover"] }, (current) => markStoryViewedInQueryData(current, storyId));
-      return { previousDiscover, previousStories };
+      queryClient.setQueriesData({ queryKey: ["wall-stories"] }, (current) => markStoryViewedInQueryData(current, storyId));
+      return { previousDiscover, previousStories, previousWallStories };
     },
     onError: (_error, _storyId, context) => {
       context?.previousStories?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
       context?.previousDiscover?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      context?.previousWallStories?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
     },
     onSuccess: (_result, storyId) => {
       queryClient.setQueriesData({ queryKey: ["stories"] }, (current) => markStoryViewedInQueryData(current, storyId));
       queryClient.setQueriesData({ queryKey: ["discover"] }, (current) => markStoryViewedInQueryData(current, storyId));
+      queryClient.setQueriesData({ queryKey: ["wall-stories"] }, (current) => markStoryViewedInQueryData(current, storyId));
       invalidateStoryLists(queryClient);
     },
   });
@@ -169,20 +190,25 @@ export function useReactToStory() {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: ["stories"] }),
         queryClient.cancelQueries({ queryKey: ["discover"] }),
+        queryClient.cancelQueries({ queryKey: ["wall-stories"] }),
       ]);
       const previousStories = queryClient.getQueriesData({ queryKey: ["stories"] });
       const previousDiscover = queryClient.getQueriesData({ queryKey: ["discover"] });
+      const previousWallStories = queryClient.getQueriesData({ queryKey: ["wall-stories"] });
       queryClient.setQueriesData({ queryKey: ["stories"] }, (current) => setStoryReactionInQueryData(current, storyId, reaction));
       queryClient.setQueriesData({ queryKey: ["discover"] }, (current) => setStoryReactionInQueryData(current, storyId, reaction));
-      return { previousDiscover, previousStories };
+      queryClient.setQueriesData({ queryKey: ["wall-stories"] }, (current) => setStoryReactionInQueryData(current, storyId, reaction));
+      return { previousDiscover, previousStories, previousWallStories };
     },
     onError: (_error, _payload, context) => {
       context?.previousStories?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
       context?.previousDiscover?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      context?.previousWallStories?.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
     },
     onSuccess: (_result, { reaction, storyId }) => {
       queryClient.setQueriesData({ queryKey: ["stories"] }, (current) => setStoryReactionInQueryData(current, storyId, reaction));
       queryClient.setQueriesData({ queryKey: ["discover"] }, (current) => setStoryReactionInQueryData(current, storyId, reaction));
+      queryClient.setQueriesData({ queryKey: ["wall-stories"] }, (current) => setStoryReactionInQueryData(current, storyId, reaction));
       invalidateStoryLists(queryClient);
     },
   });

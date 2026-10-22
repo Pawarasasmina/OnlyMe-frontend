@@ -11,7 +11,7 @@ const PURPOSES = [
   ["nearby", "Find my people nearby", "Same city, real places"],
   ["build", "Build and earn myself", "Creator tools first"],
 ];
-const LANGUAGES = [["en", "English"], ["ar", "العربية"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["pt", "Português"]];
+const LANGUAGES = [["en", "English"], ["ar", "العربية"], ["ru", "Русский"], ["uk", "Українська"], ["es", "Español"], ["pt", "Português (Portugal)"], ["fr", "Français"], ["de", "Deutsch"]];
 const STORAGE_KEY = "atseen_content_preferences";
 
 function readLocal() {
