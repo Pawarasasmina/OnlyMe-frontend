@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -23,6 +23,8 @@ import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import { fanService } from "../../services/fanService";
 import { walletService } from "../../services/walletService";
 import { getMessageSocket } from "../../services/messageSocket";
+import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
+import { isGiftActivity, mergeActivitySources } from "../../utils/activitySources";
 import { relativeTime } from "../../utils/relativeTime";
 
 const RECEIVED_FILTERS = [
@@ -154,6 +156,7 @@ function creatorName(creator, fallback = "Someone") {
 function creatorForCounterparty(counterparty) {
   if (!counterparty) return null;
   return {
+    id: counterparty.id || counterparty._id,
     displayName: counterparty.name || counterparty.displayName || counterparty.username,
     username: counterparty.username,
     avatarUrl: counterparty.avatar || counterparty.avatarUrl,
@@ -429,15 +432,15 @@ function aggregateReceivedActivity(items) {
 }
 
 function normalizeActivity(activity = [], ledger = []) {
-  const normalized = [
-    ...activity.map(normalizeLegacyActivity),
-    ...ledger.map(normalizeLedgerEntry),
-  ];
+  const normalized = mergeActivitySources(
+    activity.map(normalizeLegacyActivity),
+    ledger.map(normalizeLedgerEntry),
+  );
 
   const seen = new Set();
   const deduplicated = normalized
     .filter((item) => {
-      const key = String(item.dedupeKey || `${item.reference?.type || item.type}:${item.reference?.id || item.id}`);
+      const key = `${item.direction}:${item.dedupeKey || `${item.reference?.type || item.type}:${item.reference?.id || item.id}`}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -595,7 +598,7 @@ function ActivityTitle({ item }) {
 function ActivityItem({ acknowledged, item, onAcknowledge, onOpen, starsPerUsd }) {
   const amount = displayAmount(item, starsPerUsd);
   const route = routeFor(item);
-  const interactive = Boolean(route);
+  const interactive = isGiftActivity(item) || Boolean(route);
   const tone = toneFor(item);
   const giftImageUrl = item.metadata?.giftImageUrl || item.giftImageUrl || "";
 
@@ -706,6 +709,8 @@ export default function ActivityPage() {
   const queryDirection = searchParams.get("direction") === "sent" ? "sent" : "received";
   const queryFilter = searchParams.get("filter") || "all";
   const [acknowledged, setAcknowledged] = useState(readAcknowledged);
+  const [previewGift, setPreviewGift] = useState(null);
+  const closeGiftPreview = useCallback(() => setPreviewGift(null), []);
   const [page, setPage] = useState(1);
   const [introOpen, setIntroOpen] = useState(() => {
     try { return localStorage.getItem("atseen_activity_intro_dismissed") !== "1"; }
@@ -814,6 +819,7 @@ export default function ActivityPage() {
 
   return (
     <main className="activity-prototype-page">
+      {previewGift ? <ActivityGiftPreview activity={previewGift} key={previewGift.id} onClose={closeGiftPreview} /> : null}
       <header className="activity-prototype-header">
         <button className="activity-prototype-back" aria-label="Go back" onClick={goBack} type="button">
           <FiArrowLeft aria-hidden="true" />
@@ -883,7 +889,7 @@ export default function ActivityPage() {
             item={item}
             key={item.id}
             onAcknowledge={acknowledge}
-            onOpen={(entry) => navigate(routeFor(entry))}
+            onOpen={(entry) => isGiftActivity(entry) ? setPreviewGift(entry) : navigate(routeFor(entry))}
             starsPerUsd={walletQuery.data?.starsPerUsd}
           />
         )) : null}

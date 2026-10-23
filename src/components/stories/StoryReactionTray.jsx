@@ -2,7 +2,9 @@ const QUICK_REACTIONS = [
   { label: "love", value: "\u2764\ufe0f" },
   { label: "fire", value: "\ud83d\udd25" },
   { label: "laugh", value: "\ud83d\ude02" },
-  { label: "support", value: "\ud83d\ude4f" },
+  { label: "wow", value: "\ud83d\ude2e" },
+  { label: "sad", value: "\ud83d\ude22" },
+  { label: "applause", value: "\ud83d\udc4f" },
 ];
 
 function SeenEyeIcon() {

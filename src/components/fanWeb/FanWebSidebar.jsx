@@ -22,10 +22,10 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
       <nav aria-label="Fan navigation" className="fan-sidebar-nav grid gap-0.5">
         {socialPrimaryNavItems.map((item) => (
           <NavLink
-            aria-current={item.to === "/profile" && location.pathname.startsWith("/saved") ? "page" : undefined}
+            aria-current={location.pathname === "/profile/seen" ? false : item.to === "/profile" && location.pathname.startsWith("/saved") ? "page" : undefined}
             className={({ isActive }) => {
               const isProfileSection = item.to === "/profile" && location.pathname.startsWith("/saved");
-              const active = isActive || isProfileSection;
+              const active = (isActive || isProfileSection) && location.pathname !== "/profile/seen";
               return `fan-sidebar-nav-link flex min-h-[46px] items-center justify-start gap-4 rounded-full px-3.5 py-3 text-[15px] font-semibold text-white/60 transition duration-150 hover:translate-x-0.5 hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-atseen-blue ${
                 active ? "is-active text-white !font-extrabold" : ""
               }`;

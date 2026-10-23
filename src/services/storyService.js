@@ -130,6 +130,7 @@ function normalizeUser(user = {}) {
 function normalizeStory(story = {}) {
   const createdAt = story.createdAt || new Date().toISOString();
   const mediaUrl = story.mediaUrl || story.image || story.url || "";
+  const mediaType = story.mediaType || (String(mediaUrl).match(/\.(mp4|mov|webm)(\?|$)/i) ? "video" : "image");
   const owner = normalizeOwner(story);
   const creator = atseenCreators[owner.id] || {};
   const id = story.id || story._id || `${owner.id}-${createdAt}`;
@@ -147,7 +148,8 @@ function normalizeStory(story = {}) {
     avatar: owner.avatar,
     verified: owner.verified,
     brand: Boolean(story.brand),
-    mediaType: story.mediaType || (String(mediaUrl).match(/\.(mp4|mov|webm)(\?|$)/i) ? "video" : "image"),
+    mediaType,
+    hasAudio: story.hasAudio ?? story.audioAvailable ?? (mediaType === "video"),
     mediaUrl: resolveMediaUrl(mediaUrl),
     image: resolveMediaUrl(mediaUrl),
     thumbnailUrl: resolveMediaUrl(story.thumbnailUrl || story.thumbnail || story.avatar || mediaUrl),
@@ -169,6 +171,7 @@ function normalizeStory(story = {}) {
     viewed: Boolean(story.viewed || readStore(SEEN_KEY)[id]),
     viewCount: Number(story.viewCount) || 0,
     reactionCount: Number(story.reactionCount) || 0,
+    viewerReaction: story.viewerReaction || null,
     replyCount: Number(story.replyCount ?? story.insights?.replies) || 0,
     questionReplyCount: Number(story.questionReplyCount ?? story.insights?.questionReplies) || 0,
     statusEmoji: story.statusEmoji || "",
@@ -189,7 +192,7 @@ function normalizeApiList(data) {
   if (payload?.viewer || Array.isArray(payload?.items)) {
     return [
       ...((payload.viewer?.stories || []).map((story) => normalizeStory({ ...story, isOwner: true, isOwn: true }))),
-      ...((payload.items || []).flatMap((group) => (group.stories || []).map((story) => normalizeStory(story)))),
+      ...((payload.items || []).flatMap((item) => Array.isArray(item.stories) ? item.stories.map(normalizeStory) : [normalizeStory(item)])),
     ].filter((story) => !isExpired(story));
   }
   const list = payload?.items || payload || [];
@@ -444,20 +447,16 @@ export const storyService = {
       return axiosInstance.post(`/stories/${storyId}/reactions`, { reaction });
     }
 
-    if (!storyId || !reaction) {
-      throw new Error("Story and reaction are required.");
+    if (!storyId) {
+      throw new Error("Story is required.");
     }
 
     const reactions = readStore(REACTIONS_KEY);
-    const nextReactions = {
-      ...reactions,
-      [storyId]: {
-        reaction,
-        reactedAt: new Date().toISOString(),
-      },
-    };
+    const nextReactions = { ...reactions };
+    if (reaction) nextReactions[storyId] = { reaction, reactedAt: new Date().toISOString() };
+    else delete nextReactions[storyId];
     writeStore(REACTIONS_KEY, nextReactions);
-    return { data: { data: nextReactions[storyId] } };
+    return { data: { data: nextReactions[storyId] || { reaction: null } } };
   },
 
   replyToStory: async (storyId, message) => {

@@ -179,6 +179,7 @@ function FanHomePage() {
     setSearchParams((current) => {
       const next = writeWallFilters(current, { ...readWallFilters(current), location, near: location.split(",")[0].trim(), scope: location ? "custom" : "worldwide", sort: !location && readWallFilters(current).sort === "nearby" ? "recent" : readWallFilters(current).sort });
       if (countryCode) next.set("country", countryCode);
+      else next.delete("country");
       return next;
     }, { replace: true });
   }, [setSearchParams]);
