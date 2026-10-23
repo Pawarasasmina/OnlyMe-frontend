@@ -1,22 +1,21 @@
 import { SEARCH_TYPES } from "./searchConfig";
 
-function SearchTabs({ counts = {}, onChange, value }) {
+function SearchTabs({ onChange, value }) {
   return (
     <div className="search-result-tabs min-w-0 max-w-full overflow-x-auto pt-3 pb-1 atseen-hide-scrollbar" role="tablist" aria-label="Search result type">
       <div className="flex min-w-max gap-2">
-        {SEARCH_TYPES.map((tab) => {
+        {SEARCH_TYPES.filter((tab) => ["all", "people", "seens", "wall_notes"].includes(tab.id)).map((tab) => {
           const selected = value === tab.id;
-          const count = counts[tab.id];
           return (
             <button
               aria-selected={selected}
-              className={`shrink-0 min-h-11 rounded-full border px-4 text-sm font-bold transition ${selected ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line bg-atseen-surface-2 text-atseen-muted hover:text-white"}`}
+              className={`search-result-tab ${selected ? "is-selected" : ""}`}
               key={tab.id}
               onClick={() => onChange(tab.id)}
               role="tab"
               type="button"
             >
-              {tab.label}{typeof count === "number" ? <span className="ml-1 text-[11px] opacity-70">{count}</span> : null}
+              {tab.label}
             </button>
           );
         })}

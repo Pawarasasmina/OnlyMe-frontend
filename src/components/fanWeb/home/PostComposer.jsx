@@ -448,7 +448,6 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
 
   return (
     <div className={`wall-composer-host ${composerOpen ? "is-open" : ""}`} ref={hostRef}>
-      {composerOpen && !createMutation.isPending ? <button className="wall-draft-discard" onClick={() => { resetComposer(); clearWallDraft(); attemptRef.current = null; setComposerOpen(false); }} type="button">Discard draft</button> : null}
       {cropQueue[0] ? <ProfileImageCropper kind="feed" onCancel={skipCrop} onSave={finishCrop} source={cropQueue[0].url} /> : null}
       {composerOpen && screen === "needs" ? (
         <WallNeedPicker location={defaultLocation} viewerId={user?.id || user?._id} onClose={() => { setComposerOpen(false); }} onSelect={(need) => {

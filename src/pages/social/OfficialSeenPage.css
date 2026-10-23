@@ -1,0 +1,96 @@
+﻿.social-center-scroll > main:has(> .seen-brand-page) { padding:0; }
+.seen-brand-page { min-height:100dvh;padding-bottom:120px;background:radial-gradient(120% 44% at 50% -8%,#111a2b 0%,#0a0e16 56%,#07090c 100%);color:#fff; }
+.seen-brand-page button { -webkit-tap-highlight-color:transparent; }
+.seen-brand-topbar { display:flex;align-items:center;gap:10px;padding:56px 16px 4px; }
+.seen-brand-topbar > button { display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:50%;background:rgba(255,255,255,.07);font-size:24px; }
+.seen-brand-topbar > b { display:flex;flex:1;align-items:center;justify-content:center;gap:5px;font-size:15.5px;letter-spacing:-.2px; }
+.seen-brand-topbar > span { width:36px;flex:none; }
+.seen-brand-intro { padding:14px 20px 0; }
+.seen-brand-identity { display:flex;align-items:center;gap:18px; }
+.seen-brand-avatar { display:block;flex:none;width:92px;height:92px;padding:2px;border-radius:50%;background:linear-gradient(160deg,rgba(156,203,255,.8),rgba(156,203,255,.16)); }
+.seen-brand-avatar > span { display:flex;width:100%;height:100%;align-items:center;justify-content:center;border:3px solid #0b1120;border-radius:50%;background:radial-gradient(circle at 50% 40%,#16233a,#090d16 70%); }
+.seen-brand-avatar svg { width:46px;height:46px;color:#9ccbff;animation:seen-brand-breathe 4.5s ease-in-out infinite; }
+.seen-brand-identity h1 { display:flex;align-items:center;gap:6px;font-size:24px;font-weight:800;letter-spacing:-.6px;line-height:1.3; }
+.seen-brand-identity p { margin-top:2px;color:rgba(255,255,255,.4);font-size:12.5px; }
+.seen-brand-page [aria-label="Verified"] { width:17px;height:17px;font-size:11px; }
+.seen-brand-bio { margin-top:16px;color:#edeff3;font-size:15px;line-height:1.5; }
+.seen-brand-bio > b { font-weight:750; }
+.seen-brand-bio > span { color:rgba(255,255,255,.66); }
+.seen-brand-actions { display:flex;gap:8px;margin-top:16px; }
+.seen-brand-actions button { flex:1;padding:11px 0;border-radius:12px;background:rgba(255,255,255,.032);font-size:14px;font-weight:700;line-height:1.4; }
+.seen-brand-actions button:first-child { background:#9ccbff;color:#0a0c0f; }
+.seen-brand-actions button.is-following { background:rgba(255,255,255,.08);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14); }
+.seen-brand-actions button:disabled { opacity:.6; }
+.seen-brand-action-error { margin-top:8px;color:#f6b8b8;font-size:11px; }
+.seen-brand-highlights { display:flex;gap:8px;overflow-x:auto;padding:20px 16px 4px;scrollbar-width:none; }
+.seen-brand-highlights::-webkit-scrollbar,.seen-brand-earning-cards::-webkit-scrollbar { display:none; }
+.seen-brand-highlights > button { width:64px;flex:none;text-align:center; }
+.seen-brand-highlights > button > span { display:flex;width:58px;height:58px;margin:0 auto;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.045);color:rgba(255,255,255,.7); }
+.seen-brand-highlights svg { width:21px;height:21px;stroke-width:1.6; }
+.seen-brand-highlights small { display:block;margin-top:6px;color:rgba(255,255,255,.5);font-size:10.5px; }
+.seen-brand-earn { padding-top:30px; }
+.seen-brand-earn > header { display:flex;align-items:baseline;padding:0 20px;gap:8px; }
+.seen-brand-earn h2 { font-size:16px;font-weight:700;letter-spacing:-.25px; }
+.seen-brand-earn > header > button { margin-left:auto;color:rgba(255,255,255,.5);font-size:12.5px;font-weight:550;white-space:nowrap; }
+.seen-brand-earning-cards { display:flex;gap:10px;overflow-x:auto;padding:12px 20px 4px;scrollbar-width:none; }
+.seen-brand-earning-cards > div { width:142px;flex:none;border-radius:18px;padding:14px 14px 13px;background:rgba(255,255,255,.032); }
+.seen-brand-earning-cards > div > span { display:flex;align-items:center;gap:6px;white-space:nowrap;color:rgba(255,255,255,.5);font-size:11px;font-weight:600; }
+.seen-brand-earning-cards svg { width:13px;height:13px;flex:none;stroke-width:1.8; }
+.seen-brand-earning-cards strong { display:block;margin-top:14px;font-size:22px;font-weight:700;letter-spacing:-.5px;color:#edeff3;line-height:1.3; }
+.seen-brand-earning-cards strong.is-word { font-size:18px; }
+.seen-brand-earning-cards small { display:block;margin-top:2px;font-size:11px;line-height:1.35;color:rgba(255,255,255,.4); }
+.seen-brand-earn > p { display:flex;align-items:center;gap:7px;padding:8px 20px 0;font-size:11.5px;color:rgba(255,255,255,.4);flex-wrap:wrap; }
+.seen-brand-earn > p > svg { width:12px;height:12px;flex:none; }
+.seen-brand-earn > p > b { color:rgba(255,255,255,.7);font-weight:600; }
+.seen-brand-content { padding:0 20px; }
+.seen-brand-section-label { margin:40px 0 14px;font-size:10.5px;font-weight:650;letter-spacing:1.5px;line-height:1.4;text-transform:uppercase;color:rgba(255,255,255,.34); }
+.seen-brand-module { display:block;width:100%;margin-bottom:10px;padding:20px 18px 18px;border-radius:22px;background:rgba(255,255,255,.032);text-align:left; }
+.seen-brand-eyebrow { display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.42);font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase; }
+.seen-brand-eyebrow svg { width:13px;height:13px;flex:none; }
+.seen-brand-eyebrow > svg:last-child { margin-left:auto; }
+.seen-brand-module:first-of-type .seen-brand-eyebrow > svg:first-child { color:#9ccbff; }
+.seen-brand-module h3 { margin-top:10px;font-size:19px;font-weight:700;letter-spacing:-.4px;line-height:1.22; }
+.seen-brand-module > p { margin-top:6px;color:rgba(255,255,255,.55);font-size:13.5px;line-height:1.6; }
+.seen-brand-module-art { margin-top:14px; }
+.seen-brand-chapters { display:flex;align-items:center;gap:12px; }
+.seen-brand-chapters > img { width:58px;aspect-ratio:4/5;border-radius:12px;flex:none;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.4); }
+.seen-brand-chapters > div { flex:1;min-width:0; }
+.seen-brand-chapters b { display:block;font-size:13.5px;font-weight:700; }
+.seen-brand-chapter-steps { display:flex;align-items:center;gap:5px;margin-top:9px;overflow-x:auto;scrollbar-width:none; }
+.seen-brand-chapter-steps i { display:flex;min-width:26px;height:22px;align-items:center;justify-content:center;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-size:9.5px;font-weight:750;font-style:normal; }
+.seen-brand-chapter-steps i:first-child { min-width:44px;background:rgba(255,255,255,.1);color:#edeff3; }
+.seen-brand-chapters small { display:block;margin-top:7px;color:rgba(255,255,255,.4);font-size:10.5px; }
+.seen-brand-wall { border-top:1px solid rgba(255,255,255,.05); }
+.seen-brand-wall > div { display:flex;align-items:center;gap:9px;padding:7px 0; }
+.seen-brand-wall i { width:6px;height:6px;flex:none;border-radius:50%;background:#ff9f8a; }
+.seen-brand-wall > div:nth-child(2) i { background:#9ccbff; }
+.seen-brand-wall b { flex:none;font-size:12px;font-weight:600;color:rgba(255,255,255,.78); }
+.seen-brand-wall span { flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12.5px;color:#edeff3; }
+.seen-brand-wall small { flex:none;color:rgba(255,255,255,.4);font-size:10.5px; }
+.seen-brand-wall .is-solved { opacity:.55; }.seen-brand-wall .is-solved i { background:#8fddaf; }.seen-brand-wall .is-solved b { color:rgba(143,221,175,.8); }
+.seen-brand-discover { display:flex;align-items:center;gap:12px; }.seen-brand-discover > span { display:flex;flex:none; }
+.seen-brand-discover img { width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #0b1120; }.seen-brand-discover img + img { margin-left:-10px; }
+.seen-brand-discover > div { color:rgba(255,255,255,.75);font-size:12.5px;line-height:1.4; }.seen-brand-discover small { display:block;margin-top:2px;color:rgba(255,255,255,.4);font-size:10.5px; }
+.seen-brand-statuses { display:flex;gap:14px;overflow-x:auto;scrollbar-width:none; }.seen-brand-statuses > span { width:56px;flex:none;text-align:center; }
+.seen-brand-statuses i { display:block;width:46px;height:46px;margin:0 auto;padding:1.5px;border-radius:50%;background:rgba(255,255,255,.2); }.seen-brand-statuses img { width:100%;height:100%;object-fit:cover;border:2px solid #0b1120;border-radius:50%; }
+.seen-brand-statuses small { display:block;margin-top:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:rgba(255,255,255,.4);font-size:9.5px; }
+.seen-brand-world { display:flex;align-items:center;gap:14px; }.seen-brand-world > span:last-child { color:rgba(255,255,255,.75);font-size:12.5px;line-height:1.45; }.seen-brand-world small { display:block;color:rgba(255,255,255,.4);font-size:11px; }
+.seen-brand-planet { position:relative;display:block;width:46px;height:46px;flex:none; }.seen-brand-planet > i { position:absolute;inset:6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d6eaff,#6fa9e8 55%,#24406b); }.seen-brand-planet > b { position:absolute;left:-4px;right:-4px;top:19px;height:9px;border:1.5px solid rgba(156,203,255,.6);border-radius:50%;transform:rotate(-14deg); }
+.seen-brand-belief { display:flex;gap:16px;padding:14px 0; }.seen-brand-belief + .seen-brand-belief { border-top:1px solid rgba(255,255,255,.06); }.seen-brand-belief > span { width:20px;flex:none;padding-top:3px;color:rgba(255,255,255,.3);font-size:11.5px;letter-spacing:1px;font-weight:600; }
+.seen-brand-belief h3 { font-size:15.5px;font-weight:650;letter-spacing:-.25px; }.seen-brand-belief p { margin-top:3px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.58); }
+.seen-brand-footer { margin-top:40px;text-align:center; }.seen-brand-footer > svg { width:28px;height:28px;margin:0 auto;color:#9ccbff;opacity:.55; }.seen-brand-footer > strong { display:block;margin-top:8px;font-size:15px;font-weight:750;letter-spacing:-.2px; }.seen-brand-footer > button { margin-top:8px;font-size:12px;color:rgba(255,255,255,.55); }
+.seen-brand-page .official-seen-story-overlay { left:var(--seen-brand-center-x,50%);right:auto;width:min(var(--seen-brand-column-width,440px),100vw);transform:translateX(-50%);padding:0; }
+.seen-brand-page .official-seen-story-surface { width:100%;max-width:none;height:100%;max-height:none;border-radius:0; }
+@keyframes seen-brand-breathe { 0%,100% { transform:scale(1);filter:drop-shadow(0 0 6px rgba(156,203,255,.12)); } 50% { transform:scale(1.03);filter:drop-shadow(0 0 12px rgba(156,203,255,.22)); } }
+@media (prefers-reduced-motion:reduce) { .seen-brand-avatar svg { animation:none; } }
+
+.seen-brand-earn > p > img { width:12px;height:12px;object-fit:contain;flex:none; }
+.seen-brand-page .official-seen-coin-pill img { display:inline-block;width:16px;height:16px;vertical-align:middle; }
+
+/* The team's contact uses the same tall center-column sheet as the prototype. */
+.seen-brand-contact-backdrop { z-index:240;left:var(--seen-brand-center-x,50%);right:auto;width:min(var(--seen-brand-column-width,440px),100vw);transform:translateX(-50%);align-items:flex-end;padding:0;background:rgba(0,0,0,.55);backdrop-filter:none; }
+.seen-brand-contact-backdrop .seen-brand-contact-sheet { width:100%;max-width:none;height:86dvh;max-height:88dvh;border:0;border-radius:16px 16px 0 0;background:#0c0f14;padding:8px 20px 36px;box-shadow:none; }
+.seen-brand-contact-handle { display:block;width:32px;height:4px;margin:4px auto 16px;border-radius:999px;background:rgba(255,255,255,.28); }
+.seen-brand-contact-content { padding:8px 0;text-align:center; }
+.seen-brand-contact-content h2 { font-size:15px;font-weight:700;line-height:1.4; }
+.seen-brand-contact-content p { margin-top:6px;color:rgba(255,255,255,.62);font-size:14px;line-height:1.5; }

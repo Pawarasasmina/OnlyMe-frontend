@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FiEye, FiMessageCircle, FiPause, FiPlay, FiRepeat, FiX } from "react-icons/fi";
 import { atseenCreators } from "../../data/atseenMockData";
 import { useStoryViewerPosition } from "../../hooks/useStoryViewerPosition";
+import { officialPortrait } from "../../utils/officialPortrait";
 
 function BrandEye({ className = "" }) {
   return (
@@ -25,7 +26,7 @@ function MiniAvatar({ creatorId, label, muted = false }) {
   return (
     <div className="official-seen-mini">
       <span className={muted ? "official-seen-mini-ring is-muted" : "official-seen-mini-ring"}>
-        <img alt="" src={creator?.avatar} />
+        <img alt="" src={officialPortrait(creatorId)} />
       </span>
       <span>{label || creator?.name?.split(" ")[0]}</span>
     </div>
@@ -36,11 +37,11 @@ function ChapterCard() {
   return (
     <div className="official-seen-card official-seen-chapter-card">
       <div className="official-seen-card-author">
-        <img alt="" src={atseenCreators.ethan.avatar} />
+        <img alt="" src={officialPortrait("ethan")} />
         <strong>Ethan Brooks</strong>
       </div>
       <strong className="official-seen-card-title">8-Week Transformation</strong>
-      <span className="official-seen-card-meta">3 chapters</span>
+      <span className="official-seen-card-meta">5 chapters</span>
       <div className="official-seen-card-stats">
         <span className="official-seen-reactions">🤝 ❤️ 🔥 <b>90</b></span>
         <span>
@@ -58,11 +59,11 @@ function WallNoteCard() {
   return (
     <div className="official-seen-card official-seen-wall-card">
       <div className="official-seen-card-author">
-        <img alt="" src={atseenCreators.omar.avatar} />
+        <img alt="" src={officialPortrait("omar")} />
         <strong>Omar</strong>
         <span>· Dubai · now</span>
       </div>
-      <p>Kite Beach night market opens this Friday — free entry, runs till 2 AM.</p>
+      <p>Need help: Lost a grey cat at Marina. If you see her, reply here.</p>
       <div className="official-seen-wall-stats">
         <span>🤝 ❤️ 🔥 57</span>
         <span>
@@ -89,14 +90,14 @@ function DiscoverPreview() {
       </div>
       <div className="official-seen-discover-cards">
         <div className="official-seen-discover-card">
-          <img alt="" src={atseenCreators.ethan.avatar} />
+          <img alt="" src={officialPortrait("ethan")} />
           <span>
             <strong>Ethan</strong>
             <small>trains at 5am · near you</small>
           </span>
         </div>
         <div className="official-seen-discover-card is-offset">
-          <img alt="" src={atseenCreators.anna.avatar} />
+          <img alt="" src={officialPortrait("anna")} />
           <span>
             <strong>Anna</strong>
             <small>3 mutual friends</small>
@@ -152,9 +153,9 @@ function MoneyCard() {
   return (
     <div className="official-seen-card official-seen-money-card">
       <div className="official-seen-money-row">
-        <span className="official-seen-coin-pill">🪙 100</span>
+        <span className="official-seen-coin-pill"><img alt="" src="/brand/goldcoin.png" /> 100</span>
         <span className="official-seen-money-arrow">→</span>
-        <span className="official-seen-dollar-pill">+$7.00</span>
+        <span className="official-seen-dollar-pill">+$6.80</span>
       </div>
       <p>fan pays coins · creator earns dollars · bank payout from $20</p>
     </div>
@@ -194,7 +195,7 @@ function getSlides() {
     },
     {
       title: "Closer — when you’re ready",
-      body: "Some creators open a private world 🪐 for their closest people, and a direct line with guaranteed answers. Quiet, optional, never in your way.",
+      body: "Creators open their World: a monthly subscription to everything they share. Premium experiences unlock once.",
       art: <CloserCard />,
     },
     {
@@ -205,7 +206,7 @@ function getSlides() {
   ];
 }
 
-function OfficialSeenStoryViewer({ isOpen, onClose, onComplete }) {
+function OfficialSeenStoryViewer({ initialIndex = 0, isOpen, onClose, onComplete }) {
   const slides = useMemo(getSlides, []);
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -218,7 +219,7 @@ function OfficialSeenStoryViewer({ isOpen, onClose, onComplete }) {
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    setIndex(0);
+    setIndex(Math.max(0, Math.min(initialIndex, slides.length - 1)));
     setProgress(0);
     setManualPaused(false);
     const previousOverflow = document.body.style.overflow;
@@ -226,7 +227,7 @@ function OfficialSeenStoryViewer({ isOpen, onClose, onComplete }) {
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen]);
+  }, [initialIndex, isOpen, slides.length]);
 
   useEffect(() => {
     if (!isOpen) return undefined;

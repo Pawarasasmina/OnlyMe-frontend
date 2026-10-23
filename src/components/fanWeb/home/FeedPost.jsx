@@ -825,7 +825,6 @@ function FeedPost({ post, profileMenu = false }) {
         </div>
 
         <WallTextContent postId={actionPostId} text={caption} />
-        <WallPostTypeBadge topicOnly postType={normalized.postType} topic={normalized.topic} context={normalized.context} />
         <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">

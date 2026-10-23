@@ -285,7 +285,7 @@ for(const width of [1440,393]){
 }
 
 for(const width of [1440,393]){
- test(`Wall purpose metadata and filter links ${width}`,async({page},testInfo)=>{
+ test(`Wall header metadata without trailing topic links ${width}`,async({page},testInfo)=>{
   await page.setViewportSize({width,height:1000});const state=await fixture(page);
   state.posts=["Recommendation","Question","Event"].map((postType,index)=>({id:`507f1f77bcf86cd79943901${index+2}`,author:user,text:`Metadata fixture ${postType}`,postType,topic:"Food",rightNow:index===0,comments:[],media:[],location:"Dubai, UAE",createdAt:new Date(Date.now()-9*3600000).toISOString(),publishedAt:new Date(Date.now()-3*3600000).toISOString()}));
   await page.getByRole("button",{name:"Close need picker"}).click();
@@ -298,7 +298,7 @@ for(const width of [1440,393]){
   await expect(posts.nth(1).locator(".wall-note-place")).toHaveAttribute("title","Dubai, UAE");
   await expect(posts.nth(1).locator(".wall-note-place svg")).toHaveCount(1);
   await expect(posts.nth(1).locator(".wall-note-meta")).not.toContainText("Food");
-  await expect(posts.nth(1).getByRole("link",{name:"Filter Wall by topic: Food",exact:true})).toBeVisible();
+  await expect(posts.locator(".wall-note-topic")).toHaveCount(0);
   await posts.nth(1).getByRole("link",{name:"Filter Wall by Question",exact:true}).click();
   expect(new URL(page.url()).searchParams.get("type")).toBe("question");
   expect(new URL(page.url()).searchParams.get("location")).toBe("Dubai");
@@ -330,4 +330,48 @@ for(const width of [1440,393]){
   await expect(page.locator(".wall-feed-heading h2")).toHaveText("Food");
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  });
+}
+
+for (const size of [{ width: 1440, height: 1000 }, { width: 393, height: 852 }]) {
+  test(`Wall location hierarchy, search and selection ${size.width}`, async ({ page }, testInfo) => {
+    await page.setViewportSize(size);
+    await fixture(page);
+    await page.getByRole("button", { name: "Close need picker" }).click();
+    const trigger = page.locator(".home-location-pill");
+    await trigger.click();
+    const dialog = page.getByRole("dialog", { name: "Location", exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Worldwide", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(dialog.locator(".wall-location-group").first()).toHaveText("FRFranceParis");
+    const sheet = await dialog.boundingBox();
+    const center = await page.locator(".social-center-scroll").boundingBox();
+    expect(Math.abs(sheet.x - center.x)).toBeLessThan(2);
+    expect(Math.abs(sheet.width - center.width)).toBeLessThan(2);
+    expect(await dialog.locator(".wall-location-list").evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath("location.png") });
+    await dialog.getByRole("button", { name: "Italy", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(trigger).toContainText("Italy");
+    await expect(page).toHaveURL(/country=IT/);
+    await trigger.click();
+    await expect(dialog.getByRole("button", { name: "Italy", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await dialog.getByPlaceholder("Search a country or city").fill("Rome");
+    await expect(dialog.locator(".wall-location-group")).toHaveCount(1);
+    await dialog.getByRole("button", { name: "Rome", exact: true }).click();
+    await expect(trigger).toContainText("Rome");
+    await trigger.click();
+    await expect(dialog.getByRole("button", { name: "Rome", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await dialog.getByPlaceholder("Search a country or city").fill("Test");
+    await dialog.getByRole("button", { name: /Test City.*Test Country/ }).click();
+    await expect(trigger).toContainText("Test City");
+    await trigger.click();
+    await dialog.getByRole("button", { name: "Worldwide", exact: true }).click();
+    await expect(trigger).toContainText("Worldwide");
+    expect(new URL(page.url()).searchParams.has("country")).toBe(false);
+    await trigger.click();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  });
 }

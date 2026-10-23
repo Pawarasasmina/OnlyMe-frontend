@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FiBookmark, FiChevronRight, FiCompass, FiEye, FiFileText, FiGrid, FiLock, FiMapPin, FiMessageCircle } from "react-icons/fi";
+import { FiBookmark, FiChevronRight, FiCompass, FiFileText, FiGrid, FiMapPin, FiMessageCircle } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
@@ -51,31 +51,25 @@ function trackResult(item, position, searchCategory) {
   });
 }
 
-function compactCount(value) {
-  return new Intl.NumberFormat("en", { maximumFractionDigits: 1, notation: "compact" }).format(Number(value) || 0);
-}
-
-function SeenResults({ items }) {
-  return <div className="search-seen-grid">
+function SeenResults({ items, preview = false }) {
+  return <div className={preview ? "search-seen-strip atseen-hide-scrollbar" : "search-seen-grid"}>
     {items.map((item, index) => {
       const chapters = item.metadata?.chapters || [];
       const chapterCount = Number(item.metadata?.chapterCount) || chapters.length;
-      const extra = Math.max(0, chapterCount - chapters.length);
+      const creator = item.metadata?.creator || {};
       return <Link aria-label={`Open Seen ${item.title}`} className="search-seen-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "seens")} to={item.route || "/search"}>
         <span className="search-seen-media">
           {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiFileText /></span>}
-          <span className="search-seen-shade" />
-          <span className="search-seen-views"><FiEye aria-hidden="true" />{compactCount(item.metadata?.viewCount)}</span>
+
         </span>
         <span className="search-seen-copy">
+          {item.category ? <small className="search-seen-category">{item.category}</small> : null}
           <strong>{item.title}</strong>
-          {item.description ? <span className="search-seen-description">{item.description}</span> : null}
           {chapters.length ? <span className="search-seen-chapters">
-            {chapters.map((chapter, chapterIndex) => <span key={chapter.id || chapterIndex}><b>{String(chapterIndex + 1).padStart(2, "0")}</b><em>{chapter.title}</em></span>)}
-            {extra > 0 ? <span className="is-more"><b>+{extra}</b><em>more inside</em></span> : null}
+            {chapters.slice(0, 2).map((chapter, chapterIndex) => <span key={chapter.id || chapterIndex}><b>{String(chapterIndex + 1).padStart(2, "0")}</b><em>{typeof chapter === "string" ? chapter : chapter.title || chapter.preview || chapter.p}</em></span>)}
           </span> : null}
         </span>
-        <FiChevronRight aria-hidden="true" className="search-seen-open" />
+        <span className="search-seen-byline"><FanAvatar name={creator.name || "Creator"} size="h-4 w-4" src={creator.avatar} /><span>{creator.name?.split(" ")[0] || "Creator"} · {chapterCount} chapters</span></span>
       </Link>;
     })}
   </div>;
@@ -86,15 +80,12 @@ function ExperienceResults({ items }) {
     {items.map((item, index) => <Link className="search-experience-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "experiences")} to={item.route || "/search"}>
       <span className="search-experience-cover">
         {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiGrid /></span>}
-        <span className="search-experience-price"><FiLock />{item.metadata?.price ? <>✦{Number(item.metadata.price).toLocaleString()}</> : "Free"}</span>
       </span>
       <span className="search-experience-copy">
-        <small>Experience by {item.metadata?.creator?.name || "Creator"}</small>
         <strong>{item.title}</strong>
-        {item.description ? <span>{item.description}</span> : null}
-        <em>{item.metadata?.chapterCount || 0} {(item.metadata?.chapterCount || 0) === 1 ? "chapter" : "chapters"} · {item.category || "Experience"}</em>
+        <span>{[item.metadata?.creator?.name?.split(" ")[0], item.description].filter(Boolean).join(" \u00b7 ")}</span>
       </span>
-      <FiChevronRight aria-hidden="true" />
+      <span className="search-experience-price">{item.metadata?.unlocked ? "\u2713" : Number(item.metadata?.price) > 0 ? <><img alt="coins" src="/brand/goldcoin.png" />{Number(item.metadata.price).toLocaleString()}</> : "Free"}</span>
     </Link>)}
   </div>;
 }
@@ -137,10 +128,14 @@ function WorldResults({ items }) {
 
 export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
   const isPerson = item.type === "person";
+  const personRoute = isPerson && (item.id === "seen" || item.metadata?.username === "seen" || item.route === "/profile/seen") ? "/profile/seen" : item.route || "/search";
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(Boolean(item.saved));
   const [error, setError] = useState("");
   const personSubtitle = [item.metadata?.profileCategory || item.category, item.location?.city].filter(Boolean).join(" · ") || item.subtitle;
+  const status = item.metadata?.activeStatus || item.metadata?.status;
+  const statusLabel = typeof status === "string" ? status : status?.label || status?.text || "";
+  const statusEmoji = typeof status === "object" ? status?.emoji : item.metadata?.statusEmoji;
   const creatorName = item.metadata?.creator?.name || item.metadata?.author?.name || item.subtitle;
   const wallTitle = item.metadata?.isOwn ? "You" : item.metadata?.author?.name || "User";
   const saveTarget = item.saveTarget || null;
@@ -194,16 +189,16 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
 
   if (isPerson) {
     return (
-      <div className="search-person-row group flex min-h-[64px] items-center gap-3 rounded-[12px] px-2 py-2 transition hover:bg-white/[0.035]">
-        <Link className="flex min-w-0 flex-1 items-center gap-3" onClick={trackClick} to={item.route || "/search"}>
-          <ResultThumb item={item} />
+      <div className="search-person-row group flex items-center gap-3">
+        <Link className="flex min-w-0 flex-1 items-center gap-3" onClick={trackClick} to={personRoute}>
+          <span className={`search-person-avatar ${item.metadata?.hasActiveStory ? "has-story" : ""}`}><ResultThumb item={item} />{statusEmoji ? <span className="search-person-status-badge">{statusEmoji}</span> : null}</span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-1.5 text-sm font-extrabold text-atseen-text"><span className="truncate">{item.title}</span>{item.verified ? <VerifiedBadge /> : null}</span>
-            <span className="mt-0.5 block truncate text-xs font-medium text-[#78869b]">{personSubtitle}</span>
-            {item.description ? <span className="search-person-description">{item.description}</span> : null}
+            <span className="mt-0.5 block truncate text-xs font-medium text-[#78869b]">{statusLabel ? <><em className="search-person-status">{statusLabel}</em>{personSubtitle ? " \u00b7 " : ""}</> : null}{personSubtitle}</span>
+
           </span>
         </Link>
-        <Link aria-label={`Open ${item.title}`} className="grid h-9 w-9 place-items-center text-lg text-white/25 transition hover:text-atseen-blue" onClick={trackClick} to={item.route || "/search"}><FiChevronRight /></Link>
+        <Link aria-label={`Open ${item.title}`} className="grid h-9 w-9 place-items-center text-lg text-white/25 transition hover:text-atseen-blue" onClick={trackClick} to={personRoute}><FiChevronRight /></Link>
       </div>
     );
   }
@@ -240,25 +235,25 @@ function sectionLabel(type) {
     people: "People",
     places: "Places",
     posts: "Wall",
-    wall_notes: "Wall Notes",
+    wall_notes: "Wall",
     saved: "Saved",
-    seens: "Seens",
+    seens: "Seen",
     experiences: "Experiences",
     worlds: "Worlds",
   }[type] || type;
 }
 
-export function SearchSection({ data, type }) {
+export function SearchSection({ data, type, preview = false }) {
   const items = data?.items || [];
   if (!items.length) return null;
   return (
-    <section className="mt-6" aria-labelledby={`search-section-${type}`}>
+    <section className="search-results-section" aria-labelledby={`search-section-${type}`}>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7f8999]" id={`search-section-${type}`}>
+        <h2 className="search-results-heading" id={`search-section-${type}`}>
           {sectionLabel(type)}
         </h2>
       </div>
-      {type === "seens" ? <SeenResults items={items} /> : null}
+      {type === "seens" ? <SeenResults items={items} preview={preview} /> : null}
       {type === "experiences" ? <ExperienceResults items={items} /> : null}
       {type === "worlds" ? <WorldResults items={items} /> : null}
       {["posts", "wall_notes"].includes(type) ? <WallResults items={items} /> : null}
@@ -267,13 +262,13 @@ export function SearchSection({ data, type }) {
   );
 }
 
-export function SearchAllResults({ priority = "people", sections = {} }) {
-  const sectionOrder = [priority, "people", "seens", "experiences", "worlds", "wall_notes"]
+export function SearchAllResults({ sections = {} }) {
+  const sectionOrder = ["people", "experiences", "seens", "wall_notes", "worlds"]
     .filter((type, index, items) => items.indexOf(type) === index);
   return (
     <div aria-live="polite">
       {sectionOrder.map((type) => (
-        <SearchSection data={sections[type]} key={type} type={type} />
+        <SearchSection data={sections[type]} key={type} type={type} preview />
       ))}
     </div>
   );

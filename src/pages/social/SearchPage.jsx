@@ -165,16 +165,11 @@ function SearchPage() {
       );
     }
     if (searchQuery.data?.sections) {
-      return <SearchAllResults priority={priority} sections={searchQuery.data.sections} />;
+      return searchType === "all" ? <SearchAllResults sections={searchQuery.data.sections} /> : <SearchTypedResults items={searchQuery.data.sections[searchType]?.items || []} />;
     }
     return (
       <>
         <SearchTypeNote type={searchType} />
-        <div className="mb-3 mt-4 flex items-center justify-between">
-          <h2 className="text-[13px] font-extrabold uppercase tracking-[0.22em] text-white/[0.42]">
-            {SEARCH_TYPES.find((item) => item.id === searchType)?.label || "Results"} <span className="text-atseen-blue">{searchQuery.data?.total || 0}</span>
-          </h2>
-        </div>
         <SearchTypedResults items={searchQuery.data?.items || []} />
         {searchQuery.data?.nextCursor ? (
           <button className="mt-4 min-h-11 w-full rounded-full border border-atseen-line bg-atseen-surface-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={loadMore} type="button">
@@ -204,14 +199,14 @@ function SearchPage() {
         showBack
         showFilters={false}
         suggestionsOpen={false}
-        placeholder="People, Seens, Experiences"
+        placeholder="People, Seens, Wall"
         value={draft}
       />
-      <SearchTabs
+      {hasSearch ? <SearchTabs
         counts={searchQuery.data?.counts || {}}
         onChange={(type) => updateParam("type", type)}
         value={searchType}
-      />
+      /> : null}
       </div>
       {searchQuery.isFetching && !searchQuery.isLoading ? <p className="mb-2 text-xs text-atseen-dim" role="status">Updating results...</p> : null}
       <ResultCountAnnouncer count={totalCount} query={normalizedDebounced || "current filters"} />

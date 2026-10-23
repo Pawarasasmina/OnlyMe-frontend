@@ -1,10 +1,10 @@
 export const SEARCH_TYPES = [
-  { id: "all", label: "All" },
+  { id: "all", label: "Top" },
   { id: "people", label: "People" },
-  { id: "seens", label: "Seens" },
+  { id: "seens", label: "Seen" },
   { id: "experiences", label: "Experiences" },
   { id: "worlds", label: "Worlds" },
-  { id: "wall_notes", label: "Wall Notes" },
+  { id: "wall_notes", label: "Wall" },
 ];
 
 export const SORT_OPTIONS = [
