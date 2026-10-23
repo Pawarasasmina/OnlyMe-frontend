@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiCheckCircle, FiLoader, FiXCircle } from "react-icons/fi";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
@@ -9,6 +9,7 @@ import { profileService } from "../../services/profileService";
 function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ name: "", username: "", email: "", password: "" });
   const [usernameState, setUsernameState] = useState({ status: "idle", message: "Choose your unique username" });
   const [error, setError] = useState("");
@@ -63,7 +64,7 @@ function RegisterPage() {
     }
     setSubmitting(true);
     try {
-      await register(form);
+      await register({ ...form, referralCode: searchParams.get("ref") || undefined });
       navigate("/seen", { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to create your account. Please try again.");

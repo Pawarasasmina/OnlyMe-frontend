@@ -13,6 +13,7 @@ import {
   FiFlag,
   FiGift,
   FiGrid,
+  FiUsers,
   FiMail,
   FiMoreHorizontal,
   FiPlus,
@@ -38,6 +39,7 @@ import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileD
 import ProfileMediaSection from "../../components/profile/ProfileMediaSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ProfileExperiences from "../../components/profile/ProfileExperiences";
+import StoryHighlights from "../../components/profile/StoryHighlights";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryViewer from "../../components/stories/StoryViewer";
@@ -472,7 +474,7 @@ function metricValue(metrics = {}, key, fallback = 0) {
   return metrics[key] ?? metrics[`${key}Count`] ?? fallback;
 }
 
-function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, onStoriesOpen, profile, relationship = {}, viewerCapabilities }) {
+function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, onStoriesCreate, onStoriesOpen, planets = [], profile, relationship = {}, viewerCapabilities }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [viewersOpen, setViewersOpen] = useState(false);
@@ -486,6 +488,8 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
   const shareUrl = `${window.location.origin}/profile/${profile.username}`;
   const editStatus = () => isOwner && navigate("/profile/status");
   const statusText = activeStatus?.label || "";
+  const world = planets.find((item) => item.kind === "PREMIUM_WORLD");
+  const worldTarget = world?.id ? `/world/${world.id}` : "";
   const showSeenConfirmation = () => setSeenConfirmation(true);
   const seeSignal = useMutation({
     mutationFn: () => profileService.toggleSeeSignal(profile.username),
@@ -518,9 +522,15 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
     <section className="profile-identity is-owner">
       {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> Only {profile.displayName?.split(" ")[0] || "they"} sees this</div> : null}
       <div className="profile-identity-row">
-        <button aria-label={hasStories ? `View ${profile.displayName}'s stories` : `Check ${profile.displayName}'s stories`} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
-          <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
-        </button>
+        <div className={`profile-avatar-orbit-shell ${world ? "has-world" : ""}`}>
+          {world ? <span aria-hidden="true" className="profile-avatar-world-orbit-ring" /> : null}
+          <button aria-label={hasStories ? `View ${profile.displayName}'s stories` : `Check ${profile.displayName}'s stories`} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
+            <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
+          </button>
+          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={`Open ${world.title || `${profile.displayName}'s World`}`} className="profile-avatar-world-planet" to={worldTarget} title={world.title || "Open World"}>{world.planet?.emoji || "🪐"}</Link></span> : null}
+          {activeStatus ? <span aria-label="Online now" className="profile-avatar-now-dot" role="img" /> : null}
+          {isOwner ? <button aria-label="Create a story" className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
+        </div>
         <div className="profile-copy">
           <h1>
             {profile.displayName}
@@ -615,11 +625,10 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
     <section className="profile-access-group">
       {canShowDirect ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       {canShowDashboard ? (
-        <Link className="profile-row profile-dashboard-row" to="/studio">
-          <FiBarChart2 />
-          <span>Professional dashboard</span>
-          <FiChevronRight />
-        </Link>
+        <>
+          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>Professional dashboard</span><FiChevronRight /></Link>
+          <Link className="profile-row profile-dashboard-row" to="/grow"><FiUsers /><span>Grow</span><FiChevronRight /></Link>
+        </>
       ) : null}
     </section>
   );
@@ -1030,7 +1039,9 @@ function ProfileBody({ data, setConnectionsType }) {
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
-      <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
+      <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesCreate={() => setExperienceStoryOpen(true)} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
+      <StoryHighlights creatorId={profile.ownerUserId} isOwner={isOwner} />
+      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
@@ -1051,7 +1062,6 @@ function ProfileBody({ data, setConnectionsType }) {
       </section>
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <ProfileNotes isOwner={isOwner} posts={data.wallPosts || []} />
-      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
       {isOwner ? <FanCreateSheet
         canCreateSeen={viewerCapabilities.canCreate}

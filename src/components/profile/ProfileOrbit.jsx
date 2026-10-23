@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { FiChevronRight } from "react-icons/fi";
+import { resolveMediaUrl } from "../../utils/media";
 
 const PLANET = String.fromCodePoint(0x1FA90);
 const FLEX = String.fromCodePoint(0x1F4AA);
@@ -32,13 +34,8 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     0,
   );
   const faceEmoji = planetFaceEmoji(primaryPlanet?.planet);
-  const cover = primaryPlanet?.coverMedia?.secureUrl || "";
   const isInside = !owner && Boolean(primaryPlanet?.viewer?.isMember || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_WORLD"].includes(primaryPlanet?.access));
-  const billing = primaryPlanet
-    ? `${numberLabel(residents)} residents${price ? ` ${STAR}${numberLabel(price)}/mo` : ""}`
-    : "Stories, experiences, and members live here";
-  const actionLabel = owner ? "Manage \u203a" : isInside ? "inside \u2713" : "Join \u203a";
-  const cardClass = `profile-orbit-sky profile-world-prototype-card ${owner ? "is-owner-world" : "is-visitor-world"} ${isInside ? "is-inside-world" : ""}`;
+  const memberPreview = primaryPlanet?.memberPreview || [];
 
   if (isInside) {
     return (
@@ -59,27 +56,19 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   }
 
   return (
-    <section className="profile-planet-orbit">
-      <div className="profile-orbit-heading">
-        <p className="profile-orbit-overline">
-          {owner ? "Your World" : `${creatorName}'s World`}
-        </p>
-      </div>
-
-      <Link aria-label={`Open ${title}`} className={cardClass} to={worldTarget}>
-        {cover ? <img alt="" className="profile-world-prototype-cover" src={cover} /> : null}
-        <span className="profile-orbit-stars" aria-hidden="true" />
-        <span className="profile-orbit-ring ring-one" aria-hidden="true" />
-        <span className="profile-orbit-ring ring-two" aria-hidden="true" />
-        <span className="profile-world-prototype-planet" aria-hidden="true">
-          <i>{faceEmoji}</i>
-          <b>{PLANET}</b>
+    <section className="profile-world-compact-section">
+      <Link aria-label={`Open ${title}`} className={`profile-world-compact-card ${owner ? "is-owner-world" : "is-visitor-world"}`} to={worldTarget}>
+        <span className="profile-world-compact-planet" aria-hidden="true"><i>{faceEmoji}</i><b>{PLANET}</b></span>
+        <span className="profile-world-compact-copy">
+          <strong>{owner ? "Your World" : `${creatorName}'s World`}</strong>
+          <small>{title}</small>
+          {primaryPlanet ? <span className="profile-world-compact-members">
+            {memberPreview.length ? <i>{memberPreview.map((member) => <b key={member.id}>{member.avatar ? <img alt="" src={resolveMediaUrl(member.avatar)} /> : String(member.name || member.username || "?")[0]}</b>)}</i> : null}
+            <em>{numberLabel(residents)} {residents === 1 ? "member" : "members"}</em>
+            {price ? <><u>·</u><strong>{STAR}{numberLabel(price)}</strong><em>a month</em></> : null}
+          </span> : <span className="profile-world-compact-members"><em>Stories, experiences, and members live here</em></span>}
         </span>
-        <span className="profile-world-prototype-copy">
-          <strong>{title}</strong>
-          {owner ? <em>{billing}</em> : null}
-          <small>{actionLabel}</small>
-        </span>
+        <FiChevronRight />
       </Link>
     </section>
   );

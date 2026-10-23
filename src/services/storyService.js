@@ -202,7 +202,7 @@ function normalizeWallStoryGroup(group = {}) {
   return {
     id: group.user?.id || group.user?._id || stories[0]?.owner?.id || "",
     activeStatus: normalizeStatus(group.activeStatus || group.user?.activeStatus) || storyStatus,
-    hasUnseenStories: Boolean(group.hasUnseenStories || stories.some((story) => !story.viewed)),
+    hasUnseenStories: stories.some((story) => !story.viewed),
     presence: {
       isOnline: Boolean(group.presence?.isOnline),
       lastActiveAt: group.presence?.lastActiveAt || null,
@@ -280,6 +280,28 @@ function requireMocks() {
 }
 
 export const storyService = {
+  getStoryArchive: async () => axiosInstance.get("/stories/archive").then((response) => {
+    const items = response.data?.data?.items || [];
+    return items.map(normalizeStory);
+  }),
+
+  getCreatorHighlights: async (creatorId) => axiosInstance.get(`/stories/creators/${encodeURIComponent(creatorId)}/highlights`).then((response) => {
+    const items = response.data?.data?.items || [];
+    return items.map((highlight) => ({
+      ...highlight,
+      stories: (highlight.stories || []).map(normalizeStory),
+    }));
+  }),
+
+  createHighlight: async (payload) => axiosInstance.post("/stories/highlights", payload).then((response) => {
+    const highlight = response.data?.data?.highlight || response.data?.data;
+    return { ...highlight, stories: (highlight?.stories || []).map(normalizeStory) };
+  }),
+  updateHighlight: (highlightId, payload) => axiosInstance.patch(`/stories/highlights/${encodeURIComponent(highlightId)}`, payload).then((response) => response.data?.data),
+  deleteHighlight: (highlightId) => axiosInstance.delete(`/stories/highlights/${encodeURIComponent(highlightId)}`).then((response) => response.data?.data),
+  addStoryToHighlight: (highlightId, storyId) => axiosInstance.post(`/stories/highlights/${encodeURIComponent(highlightId)}/stories`, { storyId }).then((response) => response.data?.data),
+  removeStoryFromHighlight: (highlightId, storyId) => axiosInstance.delete(`/stories/highlights/${encodeURIComponent(highlightId)}/stories/${encodeURIComponent(storyId)}`).then((response) => response.data?.data),
+
   getStory: async (storyId) => {
     const response = await axiosInstance.get(`/stories/${storyId}`);
     return normalizeStory(response.data?.data?.story || response.data?.data || response.data);

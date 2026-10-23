@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiEye, FiMessageCircle, FiRepeat, FiX } from "react-icons/fi";
+import { FiEye, FiMessageCircle, FiPause, FiPlay, FiRepeat, FiX } from "react-icons/fi";
 import { atseenCreators } from "../../data/atseenMockData";
+import { useStoryViewerPosition } from "../../hooks/useStoryViewerPosition";
 
 function BrandEye({ className = "" }) {
   return (
@@ -204,20 +205,64 @@ function getSlides() {
   ];
 }
 
-function OfficialSeenStoryViewer({ isOpen, onClose }) {
+function OfficialSeenStoryViewer({ isOpen, onClose, onComplete }) {
   const slides = useMemo(getSlides, []);
   const [index, setIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [holdPaused, setHoldPaused] = useState(false);
+  const [manualPaused, setManualPaused] = useState(false);
+  const [systemPaused, setSystemPaused] = useState(false);
+  const paused = holdPaused || manualPaused || systemPaused;
+  const viewerPosition = useStoryViewerPosition(isOpen);
   const slide = slides[index];
 
   useEffect(() => {
     if (!isOpen) return undefined;
     setIndex(0);
+    setProgress(0);
+    setManualPaused(false);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const pause = () => setSystemPaused(true);
+    const resume = () => setSystemPaused(false);
+    const onVisibility = () => setSystemPaused(document.hidden);
+    window.addEventListener("blur", pause);
+    window.addEventListener("focus", resume);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("blur", pause);
+      window.removeEventListener("focus", resume);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    setProgress(0);
+  }, [index]);
+
+  useEffect(() => {
+    if (!isOpen || paused) return undefined;
+    const timer = window.setInterval(() => {
+      setProgress((current) => {
+        const next = current + 2;
+        if (next < 100) return next;
+        window.clearInterval(timer);
+        window.setTimeout(() => {
+          if (index >= slides.length - 1) onComplete?.();
+          else setIndex(index + 1);
+        }, 0);
+        return 100;
+      });
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [index, isOpen, onComplete, paused, slides.length]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -230,7 +275,7 @@ function OfficialSeenStoryViewer({ isOpen, onClose }) {
         event.preventDefault();
         setIndex((current) => {
           if (current >= slides.length - 1) {
-            onClose();
+            onComplete?.();
             return current;
           }
           return current + 1;
@@ -243,7 +288,7 @@ function OfficialSeenStoryViewer({ isOpen, onClose }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose, slides.length]);
+  }, [isOpen, onClose, onComplete, slides.length]);
 
   if (!isOpen) return null;
 
@@ -252,7 +297,7 @@ function OfficialSeenStoryViewer({ isOpen, onClose }) {
       const next = current + direction;
       if (next < 0) return current;
       if (next >= slides.length) {
-        onClose();
+        onComplete?.();
         return current;
       }
       return next;
@@ -260,23 +305,26 @@ function OfficialSeenStoryViewer({ isOpen, onClose }) {
   };
 
   return (
-    <div aria-label="@seen story" aria-modal="true" className="official-seen-story-overlay" role="dialog">
-      <div className="official-seen-story-surface">
+    <div aria-label="@seen story" aria-modal="true" className="official-seen-story-overlay story-viewer-overlay" role="dialog" style={viewerPosition}>
+      <div className="official-seen-story-surface story-viewer-surface" onPointerCancel={() => setHoldPaused(false)} onPointerDown={() => setHoldPaused(true)} onPointerLeave={() => setHoldPaused(false)} onPointerUp={() => setHoldPaused(false)}>
         <div className="official-seen-story-bg" />
         <header className="official-seen-story-head">
           <span className="official-seen-story-brand">
-            <SeenAvatar />
-            <b>seen</b>
+            <SeenAvatar size={36} />
+            <span className="official-seen-story-owner"><b>seen <i>✓</i></b><small>About the project</small></span>
             <span>✓</span>
           </span>
           <span className="official-seen-story-kicker">About the project</span>
+          <button aria-label={paused ? "Resume story" : "Pause story"} className="official-seen-story-control" onClick={(event) => { event.stopPropagation(); setManualPaused((current) => !current); }} onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} type="button">
+            {paused ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}
+          </button>
           <button aria-label="Close @seen story" className="official-seen-story-close" onClick={onClose} type="button">
             <FiX aria-hidden="true" />
           </button>
         </header>
         <div aria-hidden="true" className="official-seen-story-progress">
           {slides.map((item, itemIndex) => (
-            <span className={itemIndex <= index ? "is-active" : ""} key={item.title} />
+            <span key={item.title}><b style={{ width: `${itemIndex < index ? 100 : itemIndex === index ? progress : 0}%` }} /></span>
           ))}
         </div>
         <main className="official-seen-story-body" key={slide.title}>
@@ -286,11 +334,6 @@ function OfficialSeenStoryViewer({ isOpen, onClose }) {
         </main>
         <button aria-label="Previous @seen story" className="official-seen-story-zone is-left" onClick={() => step(-1)} type="button" />
         <button aria-label="Next @seen story" className="official-seen-story-zone is-right" onClick={() => step(1)} type="button" />
-        <div aria-label={`Slide ${index + 1} of ${slides.length}`} className="official-seen-story-dots" role="status">
-          {slides.map((item, itemIndex) => (
-            <span className={itemIndex === index ? "is-current" : ""} key={item.title} />
-          ))}
-        </div>
       </div>
     </div>
   );
