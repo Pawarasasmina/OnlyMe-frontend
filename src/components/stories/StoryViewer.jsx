@@ -17,6 +17,7 @@ import { profileService } from "../../services/profileService";
 import { analyticsService } from "../../services/analyticsService";
 import { canCreateStory, canDeleteStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
 import StoryGiftPicker from "./StoryGiftPicker";
+import StoryReactionTray from "./StoryReactionTray";
 import ShareSheet from "../share/ShareSheet";
 import SharedSeenStoryCard from "./SharedSeenStoryCard";
 import { sharedSeenCardData } from "../../utils/sharedSeenStoryCard";
@@ -38,6 +39,21 @@ function formatStoryTimeAgo(value) {
   if (hours < 24) return `${hours}h`;
 
   return `${Math.floor(hours / 24)}d`;
+}
+
+function StoryHeartIcon({ active = false }) {
+  if (!active) return <FiHeart aria-hidden="true" />;
+  return (
+    <svg aria-hidden="true" className="discover-story-heart-lit" viewBox="0 0 24 24">
+      <defs>
+        <linearGradient id="discover-story-heart-gradient" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#F2F8FF" />
+          <stop offset="1" stopColor="#9CCBFF" />
+        </linearGradient>
+      </defs>
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" fill="url(#discover-story-heart-gradient)" stroke="#BFE3FF" strokeLinejoin="round" strokeWidth="1.2" />
+    </svg>
+  );
 }
 
 function StoryMedia({ muted, onDurationChange, onEnded, onPlay, story, videoRef }) {
@@ -669,14 +685,19 @@ function StoryViewerActionsSheet({ layerStyle, onBlock, onClose, onHide, onMessa
   ), document.body);
 }
 
-function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete, onMore, onPreviousComplete, presentation = "modal", previewOnly = false, stories = [] }) {
+function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, onClose, onComplete, onMore, onNextCreator, onPreviousComplete, onPreviousCreator, presentation = "modal", previewOnly = false, stories = [] }) {
   const viewerPosition = useStoryViewerPosition(isOpen);
   const { user } = useAuth();
-  const { showToast } = useFanToast();
+  const { showToast, showGiftSequence } = useFanToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const replyInputRef = useRef(null);
   const reactionHoldRef = useRef(null);
+  const storySwipe = useRef(null);
+  const suppressStoryClick = useRef(false);
+  const reactionHold = useRef(null);
+  const reactionToastTimer = useRef(null);
+  const suppressReactionClick = useRef(false);
   const videoRef = useRef(null);
   const viewedRef = useRef(new Set());
   const [index, setIndex] = useState(initialIndex);
@@ -694,6 +715,9 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
   const [shareOpen, setShareOpen] = useState(false);
   const [highlightOpen, setHighlightOpen] = useState(false);
   const [reactionTrayOpen, setReactionTrayOpen] = useState(false);
+  const [reactionAnimation, setReactionAnimation] = useState(0);
+  const [reactionToast, setReactionToast] = useState("");
+  const [reactionToastKey, setReactionToastKey] = useState(0);
   const [selectedReaction, setSelectedReaction] = useState("");
   const [heartBurstKey, setHeartBurstKey] = useState(0);
   const [floatingReaction, setFloatingReaction] = useState(null);
@@ -703,6 +727,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
   const markStoryViewed = markViewedMutation.mutate;
   const deleteMutation = useDeleteStory();
   const reactMutation = useReactToStory();
+  const reactionMutation = reactMutation;
   const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || Boolean(selectedViewer) || giftOpen || shareOpen || highlightOpen || reactionTrayOpen;
 
   const activeStory = stories[index] || null;
@@ -717,6 +742,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
   const canAddToProfileMedia = canDelete && ["image", "video"].includes(activeStory?.mediaType);
   const canUseViewerMenu = Boolean(activeStory && !canDelete && !previewOnly);
   const hasStoryMenu = Boolean(onMore) || canDelete || canViewInsights || canAdd || canUseViewerMenu;
+  const hasStoryAudio = activeStory?.mediaType === "video" && activeStory?.hasAudio !== false;
   const ownInsightsQuery = useStoryInsights(activeStory?.id, { enabled: isOpen && canViewInsights && Boolean(activeStory?.id) });
   const ownInsights = ownInsightsQuery.data || {};
   const ownViewers = normalizeInsightViewers(ownInsights);
@@ -749,6 +775,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
       queryClient.setQueriesData({ queryKey: ["wall-stories"] }, markInCache);
       showToast("Added to Profile Media ✓");
       setOwnerMenuOpen(false);
+      setReactionToast("");
     },
     onError: (error) => showToast(error?.response?.data?.message || "Story no longer available"),
   });
@@ -836,6 +863,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
 
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
+      if (event.target?.closest?.("input,textarea,[contenteditable=true]")) return;
       if (event.key === "ArrowRight") goStory(1);
       if (event.key === "ArrowLeft") goStory(-1);
     };
@@ -929,6 +957,21 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
     window.setTimeout(() => replyInputRef.current?.focus(), 0);
   };
 
+
+  const reactToActiveStory = (reaction, sourceElement) => {
+    if (!activeStory || activeStory.allowReactions === false || reactionMutation.isPending) return;
+    const nextReaction = reaction || null;
+    if (nextReaction) {
+      setReactionAnimation((value) => value + 1);
+      window.clearTimeout(reactionToastTimer.current);
+      setReactionToastKey((value) => value + 1);
+      setReactionToast(`Sent to ${replyName}`);
+      reactionToastTimer.current = window.setTimeout(() => setReactionToast(""), 1600);
+    }
+    reactionMutation.mutate({ storyId: activeStory.id, reaction: nextReaction });
+    setReactionTrayOpen(false);
+    if (sourceElement && document.activeElement === replyInputRef.current) replyInputRef.current.blur();
+  };
 
   const openGiftPicker = () => {
     if (!activeStory?.owner?.id && !activeStory?.ownerId) {
@@ -1118,16 +1161,27 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
         hideHeader
         isOpen={isOpen}
         onClose={onClose}
-        overlayClassName="story-viewer-overlay !p-0"
+        overlayClassName={`story-viewer-overlay !p-0 ${discover ? "discover-story-viewer" : ""}`}
         overlayStyle={viewerPosition}
         portal
         title="Story viewer"
       >
         <div
           className={`story-viewer-surface relative h-[100dvh] overflow-hidden bg-black ${inline ? "discover-story-inline-surface" : ""}`}
-          onPointerDown={() => setHoldPaused(true)}
+          onPointerDown={(event) => { setHoldPaused(true); if (discover) storySwipe.current = { x: event.clientX, y: event.clientY }; }}
           onPointerLeave={() => setHoldPaused(false)}
-          onPointerUp={() => setHoldPaused(false)}
+          onClickCapture={(event) => { if (suppressStoryClick.current) { event.preventDefault(); event.stopPropagation(); suppressStoryClick.current = false; } }}
+          onPointerUp={(event) => {
+            setHoldPaused(false);
+            const start = storySwipe.current;
+            storySwipe.current = null;
+            if (!discover || !start) return;
+            const dx = event.clientX-start.x, dy = event.clientY-start.y;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.4) {
+              event.preventDefault(); suppressStoryClick.current = true;
+              if (dx < 0) onNextCreator?.(); else onPreviousCreator?.();
+            }
+          }}
           ref={storyTrackingRef}
         >
           <StoryMedia
@@ -1140,6 +1194,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
           />
           <div className={sharedCard ? "story-viewer-shared-shade" : "absolute inset-0 bg-gradient-to-b from-atseen-bg/80 via-transparent to-atseen-bg/95"} />
           <StoryOverlays canOpenQuestionAnswers={canOpenQuestionAnswers} canReply={canReply} onQuestionStickerClick={answerQuestionSticker} questionAnswerCount={activeStory.questionReplyCount} story={activeStory} />
+          {discover && reactionToast ? <div aria-live="polite" className="discover-story-reaction-toast" key={reactionToastKey} role="status">{reactionToast}</div> : null}
           {sharedCard ? (
             <div
               className="story-viewer-shared-card-wrap"
@@ -1184,14 +1239,14 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
               )}
             </div>
           ) : null}
-          <div className="absolute left-4 right-4 top-4 z-30 flex gap-1" role="group" aria-label="Story progress">
+          <div className="story-progress-bars absolute left-4 right-4 top-4 z-30 flex gap-1" role="group" aria-label="Story progress">
             {stories.map((story, storyIndex) => (
               <span aria-hidden="true" className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/30" key={story.id}>
                 <span className="block h-full rounded-full bg-white transition-[width] duration-100" style={{ width: `${storyIndex < index ? 100 : storyIndex === index ? progress : 0}%` }} />
               </span>
             ))}
           </div>
-          <div className="absolute left-4 right-4 top-9 z-30 flex items-center gap-2.5">
+          <div className="story-viewer-header absolute left-4 right-4 top-9 z-30 flex items-center gap-2.5">
             <button
               aria-label={`Open ${activeStory.owner.name || "story owner"} profile`}
               className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
@@ -1202,15 +1257,16 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
               type="button"
             >
               <FanAvatar brand={activeStory.brand} name={activeStory.owner.name} size="h-9 w-9" src={activeStory.owner.avatar} />
-              <div className="min-w-0 flex-1">
+              <div className="story-viewer-owner-copy min-w-0 flex-1">
               <p className="flex items-center gap-1 truncate text-sm font-bold text-white">
-                <span className="truncate">{activeStory.owner.name}</span>
-                {activeStory.owner.verified ? <VerifiedBadge className="h-3.5 w-3.5 shrink-0" /> : null}
+                <span className="truncate">{discover ? replyName : activeStory.owner.name}</span>
+                {activeStory.owner.verified && !discover ? <VerifiedBadge className="h-3.5 w-3.5 shrink-0" /> : null}
               </p>
               <p className="story-viewer-head-meta">{canDelete ? "now" : formatStoryTimeAgo(activeStory.createdAt)}<i aria-label={activeStory.audience || "everyone"} /></p>
               </div>
             </button>
             <button
+              data-story-pause
               aria-label={paused ? "Resume story" : "Pause story"}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55"
               onPointerDown={(event) => event.stopPropagation()}
@@ -1223,7 +1279,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
             >
               {paused ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}
             </button>
-            {activeStory.mediaType === "video" ? (
+            {hasStoryAudio ? (
               <button
                 aria-label={muted ? "Unmute story" : "Mute story"}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55"
@@ -1312,6 +1368,8 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
               viewers={ownViewers}
             />
           ) : null}
+          {discover && reactionTrayOpen === "hold" ? <button aria-label="Close reactions" className="discover-story-reaction-scrim" onClick={() => setReactionTrayOpen(false)} type="button" /> : null}
+          {discover && reactionTrayOpen ? <div className="discover-story-reaction-tray" onPointerDown={(event) => event.preventDefault()}><StoryReactionTray canReact={activeStory.allowReactions !== false} selectedReaction={activeStory.viewerReaction} pending={reactionMutation.isPending} onReact={(reaction) => reactToActiveStory(reaction, true)} /></div> : null}
           {canReply ? (
             <form
               className="absolute bottom-[max(22px,env(safe-area-inset-bottom))] left-5 right-5 z-40 flex items-center gap-2"
@@ -1323,13 +1381,14 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
                 aria-label="Reply to story"
                 className="min-w-0 flex-1 rounded-full border border-white/40 bg-black/50 px-4 py-3 text-sm text-white outline-none backdrop-blur-md transition placeholder:text-white/60 focus:border-white/80 focus:bg-black/60 focus:ring-2 focus:ring-white/10"
                 maxLength={1000}
-                onBlur={() => setSystemPaused(false)}
+                onBlur={() => { setSystemPaused(false); if (discover) window.setTimeout(() => setReactionTrayOpen((current) => current === "quick" ? false : current), 250); }}
                 onChange={(event) => setReplyText(event.target.value)}
                 onFocus={() => { setSystemPaused(true); setReactionTrayOpen(true); }}
                 placeholder={activeQuestionPrompt ? `Answer: ${activeQuestionPrompt}` : `Reply to ${replyName}...`}
                 ref={replyInputRef}
                 value={replyText}
               />
+              {discover ? <button aria-label={activeStory.viewerReaction ? "Remove story reaction" : "React to story"} aria-pressed={Boolean(activeStory.viewerReaction)} className="discover-story-heart" onPointerCancel={() => window.clearTimeout(reactionHold.current)} onPointerDown={() => { suppressReactionClick.current = false; reactionHold.current = window.setTimeout(() => { suppressReactionClick.current = true; setReactionTrayOpen("hold"); }, 420); }} onPointerUp={() => window.clearTimeout(reactionHold.current)} onPointerLeave={() => window.clearTimeout(reactionHold.current)} disabled={activeStory.allowReactions === false || reactionMutation.isPending} onClick={() => { if (suppressReactionClick.current) { suppressReactionClick.current = false; return; } reactToActiveStory(activeStory.viewerReaction ? null : "\u2764\ufe0f"); }} type="button"><span className="discover-story-heart-face" key={`${activeStory.viewerReaction || "empty"}-${reactionAnimation}`}>{activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <span className="discover-story-heart-emoji">{activeStory.viewerReaction}</span> : <StoryHeartIcon active={activeStory.viewerReaction === "\u2764\ufe0f"} />}{reactionAnimation && activeStory.viewerReaction ? <i aria-hidden="true" className="discover-story-heart-ring" /> : null}{reactionAnimation && activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <i aria-hidden="true" className="discover-story-reaction-rise">{activeStory.viewerReaction}</i> : null}</span></button> : <>
               <button
                 aria-label="React with heart. Hold for more reactions."
                 className={`story-viewer-heart ${selectedReaction ? "is-selected" : ""}`}
@@ -1344,6 +1403,7 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
                 {heartBurstKey ? <span className="story-viewer-heart-burst" key={heartBurstKey} aria-hidden="true" /> : null}
                 <FiHeart aria-hidden="true" />
               </button>
+              </>}
               <button
                 aria-label={replyText.trim() ? "Send story reply" : "Share story in messages"}
                 className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/45 bg-white/10 text-lg text-white shadow-[0_6px_18px_rgba(0,0,0,.3)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20 disabled:opacity-45"
@@ -1381,7 +1441,11 @@ function StoryViewer({ initialIndex = 0, isOpen, onAddStory, onClose, onComplete
       {giftOpen ? createPortal((
         <StoryGiftPicker
           onClose={() => setGiftOpen(false)}
-          onSent={() => showToast("Gift sent in Messages.")}
+          onSent={(gift) => {
+            const recipient = activeStory.owner;
+            showGiftSequence(gift, recipient, () => navigate(`/profile/${recipient.username || recipient.id || activeStory.ownerId}`));
+            onClose();
+          }}
           recipient={{ ...activeStory.owner, id: activeStory.owner.id || activeStory.ownerId }}
         />
       ), document.body) : null}

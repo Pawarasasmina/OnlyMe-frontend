@@ -51,7 +51,7 @@ import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { useCreatorStories } from "../../hooks/useStories";
 import { messageService } from "../../services/messageService";
 import { analyticsService } from "../../services/analyticsService";
-import { dreamService } from "../../services/dreamService";
+import { sortedProfileGifts } from "../../utils/profileGifts";
 import { profileService } from "../../services/profileService";
 import { savedService } from "../../services/savedService";
 import { walletService } from "../../services/walletService";
@@ -86,6 +86,20 @@ function compact(value) {
   if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`;
   if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`;
   return number.toLocaleString();
+}
+
+function groupedProfileGifts(gifts) {
+  const grouped = new Map();
+  gifts.forEach((gift) => {
+    const key = [gift.name, gift.sender?.id || gift.sender?.username || "private", gift.visibility].join(":");
+    const current = grouped.get(key);
+    if (current) {
+      current.quantity += 1;
+      return;
+    }
+    grouped.set(key, { ...gift, quantity: 1 });
+  });
+  return [...grouped.values()];
 }
 
 const PUBLIC_WORLD_STATUSES = new Set(["PUBLISHED", "CHANGES_REQUESTED", "PENDING_REVIEW", "REJECTED"]);
@@ -565,7 +579,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
       </div>
       <ProfileViewersSheet isOpen={viewersOpen} onClose={() => setViewersOpen(false)} />
       <ProfileShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} shareUrl={shareUrl} />
-      {directGiftOpen ? <StoryGiftPicker onClose={() => setDirectGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName }} sourceType="DIRECT" /> : null}
+      {directGiftOpen ? <StoryGiftPicker onClose={() => setDirectGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName, username: profile.username, avatar: resolveMediaUrl(profile.avatar) }} sourceType="DIRECT" /> : null}
     </section>
   );
 }
@@ -634,19 +648,19 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
   );
 }
 
-function ProfileGiftStrip({ profile, viewerCapabilities }) {
+function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const shouldOpenGiftPicker = searchParams.get("sendGift") === "1" && !viewerCapabilities.isOwner && Boolean(profile?.ownerUserId);
   const [giftsOpen, setGiftsOpen] = useState(false);
   const [sendGiftOpen, setSendGiftOpen] = useState(shouldOpenGiftPicker);
   const [giftRecipient, setGiftRecipient] = useState(() => shouldOpenGiftPicker
-    ? { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar) }
+    ? { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar), username: profile.username }
     : null);
   useEffect(() => {
     if (!shouldOpenGiftPicker) return;
-    setGiftRecipient({ id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar) });
+    setGiftRecipient({ id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar), username: profile.username });
     setSendGiftOpen(true);
-  }, [profile?.avatar, profile?.displayName, profile?.ownerUserId, shouldOpenGiftPicker]);
+  }, [profile?.avatar, profile?.displayName, profile?.ownerUserId, profile?.username, shouldOpenGiftPicker]);
   const closeGiftPicker = () => {
     setSendGiftOpen(false);
     setGiftRecipient(null);
@@ -657,13 +671,6 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
       return next;
     }, { replace: true });
   };
-  const dreamQuery = useQuery({
-    queryKey: ["creator-dream", profile?.username],
-    queryFn: () => dreamService.getCreatorDream(profile.username).then((response) => response.data.data),
-    enabled: profile?.role === "creator" && Boolean(profile?.username) && !viewerCapabilities.isOwner,
-    retry: false,
-    staleTime: 30000,
-  });
   const receivedQuery = useQuery({
     queryKey: ["profile", "received-gifts", viewerCapabilities.isOwner ? "me" : profile?.username],
     queryFn: () => (viewerCapabilities.isOwner ? profileService.getOwnReceivedGifts() : profileService.getReceivedGifts(profile.username)).then((response) => response.data.data),
@@ -674,31 +681,28 @@ function ProfileGiftStrip({ profile, viewerCapabilities }) {
   const directGiftPicker = sendGiftOpen && giftRecipient
     ? <StoryGiftPicker onClose={closeGiftPicker} recipient={giftRecipient} sourceType="DIRECT" />
     : null;
-  if (profile?.role !== "creator" && !viewerCapabilities.isOwner) return directGiftPicker;
-  const dream = dreamQuery.data?.dream;
-  const gifts = receivedQuery.data?.gifts || [];
+  const gifts = sortedProfileGifts(receivedQuery.data?.gifts || [], viewerId);
   const count = Number(receivedQuery.data?.total || gifts.length || 0);
-  if (!dream && !gifts.length && !viewerCapabilities.isOwner) return directGiftPicker;
+  if (!gifts.length && !viewerCapabilities.isOwner) return directGiftPicker;
   return (
     <>
-    <button className="profile-gift-strip" id="profile-gifts" onClick={() => setGiftsOpen(true)} type="button">
+    <button aria-label={`View ${profile.displayName?.split(" ")[0] || "creator"}\u2019s gifts`} className="profile-gift-strip" id="profile-gifts" onClick={() => setGiftsOpen(true)} type="button">
       <span className="profile-gift-art" aria-hidden="true">
-        {gifts.slice(0, 4).map((gift) => gift.imageUrl ? <img alt="" key={gift.key || gift.id || gift.name} src={gift.imageUrl} /> : <i key={gift.key || gift.id || gift.name}><FiGift /></i>)}
+        {gifts.filter((gift, index, all) => all.findIndex((item) => (item.giftId || item.name) === (gift.giftId || gift.name)) === index).slice(0, 3).map((gift) => gift.imageUrl ? <img alt="" key={gift.key || gift.id || gift.name} src={gift.imageUrl} /> : <i key={gift.key || gift.id || gift.name}><FiGift /></i>)}
         {!gifts.length ? <i><FiGift /></i> : null}
       </span>
       <span className="profile-gift-copy">
         <b>{viewerCapabilities.isOwner ? `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}` : `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}`}</b>
-        {!viewerCapabilities.isOwner ? <small>{dream ? "Dream support and received gifts" : "Gift support opens with Dream"}</small> : null}
       </span>
       <FiChevronRight />
     </button>
-    <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={(recipient = null) => { setGiftRecipient(recipient || { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar) }); setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} />
+    <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={(recipient = null) => { setGiftRecipient(recipient || { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar), username: profile.username }); setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} viewerId={viewerId} />
     {directGiftPicker}
     </>
   );
 }
 
-function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
+function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, viewerId }) {
   const queryClient = useQueryClient();
   const backdropRef = useRef(null);
   const [sheetPosition, setSheetPosition] = useState(undefined);
@@ -765,7 +769,8 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     const timeout = window.setTimeout(() => setThankNotice(""), 2800);
     return () => window.clearTimeout(timeout);
   }, [thankNotice]);
-  const gifts = query.data?.gifts || [];
+  const gifts = sortedProfileGifts(query.data?.gifts || [], viewerId);
+  const displayGifts = groupedProfileGifts(gifts);
   const total = Number(query.data?.total || gifts.length || 0);
   const selectedSender = detailGift?.sender || {};
   const giftValue = Number(detailGift?.stars || 0);
@@ -815,7 +820,13 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
     profileStateMutation.mutate({ giftId: detailGift.id, payload: { hiddenFromProfile: !detailGift.hiddenFromProfile } });
   };
   const senderLine = (gift) => {
-    const parts = [gift.sender?.name || gift.source || "Gift"];
+    const fromViewer = Boolean(viewerId && String(gift.sender?.id || gift.sender?._id || "") === String(viewerId));
+    if (gift.visibility === "RECIPIENT_ONLY" && !isOwner && !fromViewer) return "";
+    const from = fromViewer
+      ? "you"
+      : gift.sender?.username ? `@${gift.sender.username}` : gift.sender?.name || "a supporter";
+    const parts = [`from ${from}`];
+    if (gift.quantity > 1) parts.push(`×${gift.quantity}`);
     if (gift.visibility === "RECIPIENT_ONLY") parts.push("private");
     if (gift.hiddenFromProfile) parts.push("hidden");
     return parts.join(" · ");
@@ -870,12 +881,16 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile }) {
       {isOwner ? <button className="profile-gift-detail-report" onClick={() => setReportOpen(true)} type="button">Report this gift or note</button> : null}
     </section> : <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
-      <header className="profile-received-gifts-head"><FiGift /><div><h2 id="received-gifts-title">{isOwner ? "My gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}'s gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={() => onSendGift()} type="button">Send a gift</button> : null}</header>
+      <header className="profile-received-gifts-head"><FanAvatar name={profile.displayName} src={resolveMediaUrl(profile.avatar)} size="h-8 w-8" /><div><h2 id="received-gifts-title">{isOwner ? "My Gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}\u2019s Gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={() => onSendGift()} type="button">Send a gift</button> : null}</header>
       {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
       <div className="profile-received-gifts-grid">
-        {gifts.map((gift) => <button aria-label={`Play ${gift.name} gift animation`} className={gift.featuredOnProfile ? "profile-received-gift is-featured" : "profile-received-gift"} key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
-          <span><img alt={gift.name} src={gift.imageUrl} /></span>
+        {displayGifts.map((gift) => <button aria-label={`Play ${gift.name} gift animation`} className={gift.featuredOnProfile ? "profile-received-gift is-featured" : "profile-received-gift"} key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
+          <span><img alt={gift.name} onLoad={(event) => {
+            const image = event.currentTarget;
+            const ratio = image.naturalWidth / image.naturalHeight;
+            image.style.setProperty("--profile-gift-art-height", ratio < .85 ? "78px" : ratio > 1.15 ? "60px" : "68px");
+          }} src={resolveMediaUrl(gift.imageUrl)} style={{ transform: `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})` }} /></span>
           <strong>{gift.name}</strong>
           <small>{senderLine(gift)}</small>
         </button>)}
@@ -1043,7 +1058,7 @@ function ProfileBody({ data, setConnectionsType }) {
       <StoryHighlights creatorId={profile.ownerUserId} isOwner={isOwner} />
       <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
-      <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
+      <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} viewerId={user?.id || user?._id} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
       <ProfileExperiences creatorUsername={profile.username} experiences={data.experiences || []} onCreate={() => setExperienceCreateOpen(true)} owner={isOwner} />
       <ProfileTabs setTab={setTab} tab={tab} />

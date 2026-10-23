@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { FiArrowLeft, FiSliders, FiX } from "react-icons/fi";
+import { FiChevronLeft, FiSliders, FiX } from "react-icons/fi";
 
 const SearchInput = forwardRef(function SearchInput({
   activeSuggestionId,
@@ -20,8 +20,8 @@ const SearchInput = forwardRef(function SearchInput({
     <form className="search-input-form min-w-0 w-full" onSubmit={onSubmit}>
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         {showBack ? (
-          <button aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-[22px] text-white transition hover:bg-white/[0.11]" onClick={onBack} type="button">
-            <FiArrowLeft aria-hidden="true" strokeWidth={2.4} />
+          <button aria-label="Go back" className="search-input-back grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-[22px] text-white transition hover:bg-white/[0.11]" onClick={onBack} type="button">
+            <FiChevronLeft aria-hidden="true" strokeWidth={2} />
           </button>
         ) : null}
         <label className="relative block min-w-0 flex-1">
@@ -31,7 +31,7 @@ const SearchInput = forwardRef(function SearchInput({
             aria-autocomplete="list"
             aria-controls="search-suggestions"
             aria-expanded={suggestionsOpen}
-            className="h-[49px] w-full rounded-[14px] border border-[#303744] bg-[#11151b] px-4 pr-12 text-[16px] sm:text-[14px] font-medium text-atseen-text outline-none placeholder:text-[#758196] focus:border-[#7598c7]"
+            className="search-input-field h-[49px] w-full rounded-[14px] border border-[#303744] bg-[#11151b] px-4 pr-12 text-[16px] sm:text-[14px] font-medium text-atseen-text outline-none placeholder:text-[#758196] focus:border-[#7598c7]"
             maxLength={100}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={onKeyDown}

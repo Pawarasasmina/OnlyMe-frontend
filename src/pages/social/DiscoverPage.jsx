@@ -5,7 +5,6 @@ import DiscoverMasonryCard from "../../components/discover/DiscoverMasonryCard";
 import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSections";
 import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
-import StoryViewer from "../../components/stories/StoryViewer";
 import ContentEmptyState from "../../components/shared/ContentEmptyState";
 import { useAuth } from "../../hooks/useAuth";
 import {
@@ -89,7 +88,7 @@ function DiscoverPage() {
 
   const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
   const firstPage = pages[0] || {};
-  const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])), [pages]);
+  const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])).sort((left, right) => Number(String(right.creator?.status || right.status || "").toLowerCase() === "at seen") - Number(String(left.creator?.status || left.status || "").toLowerCase() === "at seen")), [pages]);
   const followingPeople = useMemo(
     () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))),
     [firstPage.following, viewerId],
@@ -115,6 +114,20 @@ function DiscoverPage() {
   const refresh = useCallback(() => {
     setRefreshToken(`${Date.now()}-${Math.random()}`);
   }, []);
+
+  useEffect(() => {
+    const onNavigationClick = (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target.closest?.("a");
+      if (!link || new URL(link.href, window.location.origin).pathname !== "/discover") return;
+      event.preventDefault();
+      refresh();
+      sentinelRef.current?.closest(".social-center-scroll")?.scrollTo({ top: 0, behavior: "auto" });
+      showToast("Fresh picks");
+    };
+    document.addEventListener("click", onNavigationClick, true);
+    return () => document.removeEventListener("click", onNavigationClick, true);
+  }, [refresh, showToast]);
 
   const startPull = (event) => {
     const scrollRoot = event.currentTarget.closest(".social-center-scroll");
@@ -179,6 +192,7 @@ function DiscoverPage() {
     if (nextIndex < 0) return;
     if (nextIndex >= recommendations.length) {
       if (discoverQuery.hasNextPage && !discoverQuery.isFetchingNextPage) discoverQuery.fetchNextPage();
+      else if (!discoverQuery.hasNextPage) setActiveRecommendationStory(null);
       return;
     }
     setActiveRecommendationStory(recommendations[nextIndex]);
@@ -237,15 +251,24 @@ function DiscoverPage() {
       {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? "Release for fresh recommendations" : "Pull for fresh recommendations"}</div> : null}
       <section className="discover-orb-main" aria-label="Discover">
         {activeStoryPerson ? (
-          <StoryViewer
+          <DiscoverRecommendationStory
+            key={activeStoryPerson.id}
+            card={activeStoryPerson}
             initialIndex={storyViewer.index}
-            isOpen
             onClose={closeFriendStories}
-            presentation="inline"
-            stories={activeStoryPerson.stories || []}
+            onNext={() => {
+              const next = followingStoryPeople[followingStoryPeople.indexOf(activeStoryPerson) + 1];
+              if (next) setStoryViewer({ personId: next.id, index: firstUnseenStoryIndex(next) });
+              else closeFriendStories();
+            }}
+            onPrevious={() => {
+              const previous = followingStoryPeople[followingStoryPeople.indexOf(activeStoryPerson) - 1];
+              if (previous) setStoryViewer({ personId: previous.id, index: 0 });
+            }}
           />
         ) : activeRecommendationStory ? (
           <DiscoverRecommendationStory
+            key={activeRecommendationStory.userId || activeRecommendationStory.id}
             card={activeRecommendationStory}
             followPending={followMutation.isPending}
             onClose={closeRecommendationStory}
@@ -258,7 +281,7 @@ function DiscoverPage() {
         ) : (
           <>
             <div className="discover-orb-toolbar">
-              <span />
+              <h1>Discover</h1>
               <div>
                 <Link aria-label="Search" className="discover-orb-icon" to="/search?from=discover">
                   <FiSearch aria-hidden="true" />
@@ -270,24 +293,22 @@ function DiscoverPage() {
             </div>
 
             <DiscoverPeopleSections
-              friends={followingStoryPeople}
+              friends={followingPeople}
               friendSectionTitle="Following"
               following={[]}
               onOpenFollowingStories={openPersonStories}
               onOpenFriendStories={openPersonStories}
             />
 
-            {firstPage.sharedWalks?.length ? <div className="mb-4 grid gap-2">{firstPage.sharedWalks.map((walk) => <Link className="flex items-center gap-3 rounded-2xl border border-amber-300/25 bg-amber-300/[0.07] px-4 py-3 text-left" key={walk.id} to={`/world/${walk.world.id}`}><span className="text-xl">{walk.world.emoji}</span><span className="min-w-0"><b className="block truncate text-xs text-amber-200">You both walked {walk.world.title}</b><span className="block truncate text-[10px] text-atseen-muted">with {walk.person.name || `@${walk.person.username}`}</span></span></Link>)}</div> : null}
             <div className="discover-recommendation-heading">
               <h2>People worth seeing next</h2>
-              <div className="discover-orb-filters" role="tablist" aria-label="Discover filters">
+              <div className="discover-orb-filters" role="group" aria-label="Discover filters">
                 {PROTOTYPE_FILTERS.map((filter) => (
                   <button
-                    aria-selected={activeFilter === filter.id}
+                    aria-pressed={activeFilter === filter.id}
                     className={`discover-orb-chip ${activeFilter === filter.id ? "is-selected" : ""}`}
                     key={filter.id}
-                    onClick={() => changeFilter(filter.id)}
-                    role="tab"
+                    onClick={() => changeFilter(activeFilter === filter.id ? DEFAULT_FILTER : filter.id)}
                     type="button"
                   >
                     {filter.label}

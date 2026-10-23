@@ -21,11 +21,11 @@ async function croppedDreamPhoto(file, url, crop) {
   return new File([blob], "dream-photo.jpg", { type: "image/jpeg" });
 }
 
-export function GiftCelebration({ detail, gift, message = "You're part of this Dream now", variant = "" }) {
+export function GiftCelebration({ caption = "", detail, gift, message = "You're part of this Dream now", recipientName = "", showSuccessToast = true, variant = "" }) {
   return <div aria-live="polite" className="gift-celebration-layer">
     <div className="gift-celebration-veil" />
     <div className={variant ? `gift-celebration-scene ${variant}` : "gift-celebration-scene"} />
-    <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>{message}</strong><small>{detail || `${gift.name} · ${STAR}${gift.stars.toLocaleString()} sent`}</small></span></div>
+    {showSuccessToast ? <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>{message}</strong><small>{detail || `${gift.name} · ${STAR}${gift.stars.toLocaleString()} sent`}</small></span></div> : null}
     <div className="gift-celebration-stage">
       <div className="gift-celebration-glow" />
       <i className="gift-celebration-ring is-outer" />
@@ -33,6 +33,8 @@ export function GiftCelebration({ detail, gift, message = "You're part of this D
       {celebrationParticles.map((particle, index) => <i className="gift-celebration-particle" key={index} style={{ "--angle": `${particle.angle}deg`, "--delay": `${particle.delay}ms`, "--distance": `${particle.distance}px`, "--size": `${particle.size}px` }} />)}
       <div className="gift-celebration-image"><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></div>
       <strong className="gift-celebration-name">{gift.name}</strong>
+      {caption ? <span className="gift-celebration-caption">“{caption}”</span> : null}
+      {recipientName ? <small className="gift-celebration-recipient">for {recipientName} · {STAR}{Number(gift.stars || 0).toLocaleString()}</small> : null}
     </div>
   </div>;
 }
