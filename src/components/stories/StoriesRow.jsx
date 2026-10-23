@@ -68,6 +68,19 @@ function StoriesRow({ currentUser }) {
     setViewer({ groupId: "own", index: index >= 0 ? index : 0 });
   };
 
+  const openStoryAfterSeen = () => {
+    setSeenStoryOpen(false);
+    if (ownStories.length) {
+      const ownIndex = ownStories.findIndex((story) => !story.viewed);
+      setViewer({ groupId: "own", index: ownIndex >= 0 ? ownIndex : 0 });
+      return;
+    }
+    const firstGroup = peopleGroups[0];
+    if (!firstGroup) return;
+    const firstIndex = firstGroup.stories.findIndex((story) => !story.viewed);
+    setViewer({ groupId: firstGroup.id || firstGroup.user.id, index: firstIndex >= 0 ? firstIndex : 0 });
+  };
+
   const openNextStoryGroup = () => {
     const currentIndex = peopleGroups.findIndex((group) => group.id === viewer.groupId || group.user?.id === viewer.groupId);
     const nextGroup = viewer.groupId === "own" ? peopleGroups[0] : peopleGroups[currentIndex + 1];
@@ -129,7 +142,7 @@ function StoriesRow({ currentUser }) {
         })}
       </div>
 
-      <OfficialSeenStoryViewer isOpen={seenStoryOpen} onClose={() => setSeenStoryOpen(false)} />
+      <OfficialSeenStoryViewer isOpen={seenStoryOpen} onClose={() => setSeenStoryOpen(false)} onComplete={openStoryAfterSeen} />
       {showStoryPublishing ? (
         <StoryCreator
           isOpen={creatorOpen}

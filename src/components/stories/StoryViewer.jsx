@@ -9,6 +9,7 @@ import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
+import { useStoryViewerPosition } from "../../hooks/useStoryViewerPosition";
 import { useDeleteStory, useMarkStoryViewed, useReactToStory, useStoryInsights } from "../../hooks/useStories";
 import { storyService } from "../../services/storyService";
 import { messageService } from "../../services/messageService";
@@ -24,37 +25,6 @@ const IMAGE_DURATION_MS = 5000;
 const VIEW_THRESHOLD_MS = 1000;
 const STORY_EXPORT_WIDTH = 1080;
 const STORY_EXPORT_HEIGHT = 1920;
-
-function useStoryViewerPosition(isOpen) {
-  const [position, setPosition] = useState(undefined);
-
-  useEffect(() => {
-    if (!isOpen || window.innerWidth < 881) { setPosition(undefined); return undefined; }
-    const centerColumn = document.querySelector(".social-center-scroll");
-    if (!centerColumn) return undefined;
-    const updatePosition = () => {
-      if (window.innerWidth < 881) { setPosition(undefined); return; }
-      const bounds = centerColumn.getBoundingClientRect();
-      setPosition({
-        left: `${bounds.left}px`,
-        right: "auto",
-        width: `${bounds.width}px`,
-        "--story-viewer-column-left": `${bounds.left}px`,
-        "--story-viewer-column-width": `${bounds.width}px`,
-      });
-    };
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
-    observer?.observe(centerColumn);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      observer?.disconnect();
-    };
-  }, [isOpen]);
-
-  return position;
-}
 
 function formatStoryTimeAgo(value) {
   const created = new Date(value).getTime();
