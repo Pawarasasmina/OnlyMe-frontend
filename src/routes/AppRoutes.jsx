@@ -24,6 +24,9 @@ const MessagesPage = lazyPage("../pages/fan/MessagesPage");
 const ActivityPage = lazyPage("../pages/fan/ActivityPage");
 const WorldsPage = lazyPage("../pages/fan/WorldsPage");
 const CreatorStudio = lazyPage("../pages/creator/CreatorStudio");
+const GrowPage = lazyPage("../pages/creator/GrowPage");
+const GrowFanPreviewPage = lazyPage("../pages/creator/GrowFanPreviewPage");
+const ReferralLandingPage = lazyPage("../pages/public/ReferralLandingPage");
 const CreatorApplicationPage = lazyPage("../pages/creator/CreatorApplicationPage");
 const CreatorVerificationPage = lazyPage("../pages/creator/CreatorVerificationPage");
 const ContentManager = lazyPage("../pages/creator/ContentManager");
@@ -125,6 +128,7 @@ function AppRoutes() {
       <Route index element={<RootRedirect />} />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/creators/:username" element={<LegacyCreatorProfileRedirect />} />
+      <Route path="/invite/:code" element={<ReferralLandingPage />} />
     </Route>
 
     <Route element={<AuthLayout />}>
@@ -192,6 +196,8 @@ function AppRoutes() {
           <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/studio" element={<CreatorStudio />} />
+            <Route path="/grow" element={<GrowPage />} />
+            <Route path="/grow/fan-preview" element={<GrowFanPreviewPage />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
             <Route path="/create/experience" element={<WorldComposerPage experience />} />

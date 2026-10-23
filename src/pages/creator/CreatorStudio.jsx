@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   FiArrowLeft,
@@ -131,6 +131,20 @@ function MetricCard({ label, sub, trend, value, valueClassName = "" }) {
       <strong className={valueClassName}>{value}</strong>
       <small className={trendClass(trend)}>{sub}</small>
     </Card>
+  );
+}
+
+function GrowSummaryCard({ data = {}, loading = false }) {
+  const total = Number(data.counts?.total || 0);
+  const goal = Number(data.config?.spotlightGoal || 2500);
+  const remaining = Number(data.counts?.spotlightRemaining ?? Math.max(0, goal - total));
+  const progress = goal > 0 ? Math.min(100, total / goal * 100) : 0;
+  return (
+    <Link aria-label="Open Grow" className={`creator-studio-grow-card ${loading ? "is-loading" : ""}`} to="/grow">
+      <span className="creator-studio-grow-head"><b>Grow</b><strong>+{money(data.earnings?.amount || 0)}</strong></span>
+      <small>{loading ? "Loading your growth…" : <>{total.toLocaleString()} people came through your link {DOT} {remaining.toLocaleString()} to Spotlight</>}</small>
+      <i><b style={{ width: `${progress}%` }} /></i>
+    </Link>
   );
 }
 
@@ -313,6 +327,7 @@ function EarningRow({ item }) {
 function Earnings({ data = {}, onPayouts }) {
   const earnings = data.earnings || {};
   const bySource = earnings.bySource || {};
+  const [price, setPrice] = useState(10);
   return (
     <div className="creator-studio-panel">
       <Card className="creator-studio-earnings-hero">
@@ -336,6 +351,8 @@ function Earnings({ data = {}, onPayouts }) {
         {earnings.recent?.length ? earnings.recent.map((item) => <EarningRow item={item} key={item.id} />) : <p className="creator-studio-empty">No earnings yet</p>}
       </section>
       <Link className="creator-studio-wallet-row" to="/wallet"><span>Wallet & payouts</span><FiChevronRight /></Link>
+      <section className="creator-ways-card"><SectionTitle>Ways to earn</SectionTitle><article><b>Experiences</b><small>Sell focused chapters people can keep.</small></article><article><b>World subscriptions</b><small>Build recurring value for your residents.</small></article><article><b>Gifts</b><small>Let people support your work directly.</small></article></section>
+      <section className="creator-calculator-card"><SectionTitle>Earnings calculator</SectionTitle><p>Choose an example Experience price.</p><div>{[5, 10, 20, 50].map((value) => <button className={price === value ? "is-active" : ""} key={value} onClick={() => setPrice(value)} type="button">${value}</button>)}</div><strong>Your earnings for a ${price} sale are shown before publishing.</strong><small>This example is educational and is not guaranteed income.</small></section>
       <p className="creator-studio-note">Your numbers are yours. No subscription, no paywall - ever. {STAR} <button onClick={onPayouts} type="button">How payouts work <FiChevronRight /></button></p>
     </div>
   );
@@ -383,12 +400,19 @@ function PayoutsSheet({ onClose }) {
 
 export default function CreatorStudio() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
   const [payoutsOpen, setPayoutsOpen] = useState(false);
   const dashboardQuery = useQuery({
     queryKey: ["creator-dashboard"],
     queryFn: () => creatorService.getDashboard().then((response) => response.data.data),
     enabled: true,
+    retry: false,
+    staleTime: 30000,
+  });
+  const growQuery = useQuery({
+    queryKey: ["creator-grow"],
+    queryFn: () => creatorService.getGrow().then((response) => response.data.data),
     retry: false,
     staleTime: 30000,
   });
@@ -425,14 +449,17 @@ export default function CreatorStudio() {
   }
 
   const data = dashboardQuery.data || {};
+  const previewNew = searchParams.get("preview") === "new";
   return (
     <>
       <main className="creator-studio-prototype">
         <Header onBack={() => navigate(-1)} />
+        {!previewNew ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
         <Tabs active={activeTab} onChange={setActiveTab} />
-        {activeTab === "overview" ? <Overview data={data} onEarnings={() => setActiveTab("earnings")} /> : null}
-        {activeTab === "audience" ? <Audience data={data} /> : null}
-        {activeTab === "earnings" ? <Earnings data={data} onPayouts={() => setPayoutsOpen(true)} /> : null}
+        {previewNew ? <section className="creator-new-preview"><small>PREVIEW · NEW CREATOR</small><h2>Start creating. Start earning.</h2><p>Lina began with one useful Experience, welcomed people into her World, and made Gifts available on her profile. Her example shows what is possible—not guaranteed income.</p><div><Link to="/create/experience">Create an Experience</Link><Link to="/create/world">Start your World</Link><Link to="/grow">Share your gift link</Link></div><button onClick={() => navigate("/studio", { replace: true })} type="button">Exit preview</button></section> : null}
+        {!previewNew && activeTab === "overview" ? <Overview data={data} onEarnings={() => setActiveTab("earnings")} /> : null}
+        {!previewNew && activeTab === "audience" ? <Audience data={data} /> : null}
+        {!previewNew && activeTab === "earnings" ? <Earnings data={data} onPayouts={() => setPayoutsOpen(true)} /> : null}
       </main>
       {payoutsOpen ? <PayoutsSheet onClose={() => setPayoutsOpen(false)} /> : null}
     </>

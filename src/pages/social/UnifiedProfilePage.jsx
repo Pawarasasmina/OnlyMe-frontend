@@ -13,6 +13,7 @@ import {
   FiFlag,
   FiGift,
   FiGrid,
+  FiUsers,
   FiMail,
   FiMoreHorizontal,
   FiPlus,
@@ -616,11 +617,10 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
     <section className="profile-access-group">
       {canShowDirect ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       {canShowDashboard ? (
-        <Link className="profile-row profile-dashboard-row" to="/studio">
-          <FiBarChart2 />
-          <span>Professional dashboard</span>
-          <FiChevronRight />
-        </Link>
+        <>
+          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>Professional dashboard</span><FiChevronRight /></Link>
+          <Link className="profile-row profile-dashboard-row" to="/grow"><FiUsers /><span>Grow</span><FiChevronRight /></Link>
+        </>
       ) : null}
     </section>
   );
@@ -1033,6 +1033,7 @@ function ProfileBody({ data, setConnectionsType }) {
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
       <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <StoryHighlights creatorId={profile.ownerUserId} isOwner={isOwner} />
+      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
@@ -1053,7 +1054,6 @@ function ProfileBody({ data, setConnectionsType }) {
       </section>
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <ProfileNotes isOwner={isOwner} posts={data.wallPosts || []} />
-      <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
       {isOwner ? <FanCreateSheet
         canCreateSeen={viewerCapabilities.canCreate}
