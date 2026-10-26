@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiVideo, FiX, FiZap } from "react-icons/fi";
+import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiImage, FiInbox, FiLogOut, FiMessageCircle, FiMoreVertical, FiPhone, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiSmile, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiX, FiZap } from "react-icons/fi";
 import { FiExternalLink } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
@@ -24,6 +24,7 @@ import { postService } from "../../services/postService";
 import { getMessageSocket } from "../../services/messageSocket";
 import { storyService } from "../../services/storyService";
 import { resolveMediaUrl } from "../../utils/media";
+import { CHAT_GIFT_TIP_KEY, classifySharedUrl, isGiftRequestMessage, shouldKeepLatestVisible } from "../../utils/messagePresentation";
 
 const relative = (value) => {
   if (!value) return "Offline";
@@ -80,7 +81,6 @@ const chatDateLabel = (value) => {
   });
 };
 
-const MESSAGE_EMOJIS = ["😀", "😂", "🥰", "😍", "😊", "😉", "😎", "🥳", "😭", "😮", "😅", "🤔", "🙌", "👏", "🙏", "👍", "👎", "💪", "❤️", "🔥", "✨", "🎉", "💯", "👀", "🌍", "🪐", "⭐", "💙"];
 const MESSAGE_REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
 const REPORT_REASONS = [
@@ -183,8 +183,17 @@ function PostMessagePreview({ mine, postId, sharedUrl }) {
 
 function MessageText({ body, mine }) {
   const value = String(body || "");
+  const classifiedUrl = classifySharedUrl(value);
   const sharedUrl = /^https?:\/\/\S+\/(?:posts|profile|worlds?|publications?)\/[^\s]+$/i.test(value) ? value : null;
-  if (!sharedUrl) return <p className="whitespace-pre-wrap break-words">{value}</p>;
+  if (!sharedUrl && !classifiedUrl) return <p className="whitespace-pre-wrap break-words">{value}</p>;
+  if (!sharedUrl && classifiedUrl) {
+    const copy = classifiedUrl.kind === "gift"
+      ? ["GIFT LINK", "Send a gift", "Open this creator's gift page"]
+      : classifiedUrl.kind === "profile"
+        ? ["PROFILE", "Creator profile", "Open profile"]
+        : ["LINK", classifiedUrl.host, "Open link"];
+    return <a className={`block w-[min(15rem,72vw)] max-w-full overflow-hidden rounded-2xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={classifiedUrl.href} rel="noreferrer" target="_blank"><span className="block p-3"><span className={`block text-[9px] font-black tracking-[0.14em] ${mine ? "text-atseen-bg/60" : classifiedUrl.kind === "gift" ? "text-atseen-warning" : "text-atseen-blue"}`}>{copy[0]}</span><span className="mt-1 block text-sm font-black">{copy[1]}</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{classifiedUrl.host}</span><span className={`mt-2 block text-[10px] font-bold ${mine ? "text-atseen-bg/75" : "text-atseen-blue"}`}>{copy[2]} ↗</span></span></a>;
+  }
   const postId = sharedUrl.match(/\/posts\/([^/?#]+)/i)?.[1];
   if (postId) return <PostMessagePreview mine={mine} postId={decodeURIComponent(postId)} sharedUrl={sharedUrl} />;
   const profileShare = /\/profile\//i.test(sharedUrl);
@@ -322,8 +331,8 @@ export default function MessagesPage() {
   });
   const [draft, setDraft] = useState("");
   const [pendingShare, setPendingShare] = useState(() => searchParams.get("share") || "");
-  const [emojiOpen, setEmojiOpen] = useState(false);
   const [giftOpen, setGiftOpen] = useState(false);
+  const [giftTipVisible, setGiftTipVisible] = useState(false);
   const giftBusy = false;
   const [disappearingOpen, setDisappearingOpen] = useState(false);
   const [disappearAfterSeconds, setDisappearAfterSeconds] = useState(null);
@@ -379,7 +388,6 @@ export default function MessagesPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [callScheduleDrafts, setCallScheduleDrafts] = useState({});
   const [schedulingCallId, setSchedulingCallId] = useState("");
-  const [imageBusy, setImageBusy] = useState(false);
   const [directAccessBusy, setDirectAccessBusy] = useState(false);
   const [directAccessSettings, setDirectAccessSettings] = useState({ enabled: false, priceStars: 100, callEnabled: false, callPriceStars: 500, callDurationMinutes: 5, callAutoDeclineAway: false });
   const [directAccessSetupOpen, setDirectAccessSetupOpen] = useState(false);
@@ -402,6 +410,10 @@ export default function MessagesPage() {
   const bottomRef = useRef(null);
   const threadRef = useRef(null);
   const scrollDateTimerRef = useRef(null);
+  const initialScrollRef = useRef(true);
+  const mediaScrollFrameRef = useRef(null);
+  const reactionHoldRef = useRef(null);
+  const lastMessageTapRef = useRef(null);
 
   useEffect(() => {
     if (searchParams.get("gift") !== "1" || !selected?.id || selected.type === "group") return;
@@ -412,7 +424,16 @@ export default function MessagesPage() {
       return next;
     }, { replace: true });
   }, [searchParams, selected?.id, selected?.type, setSearchParams]);
-  const imageInputRef = useRef(null);
+  useEffect(() => {
+    initialScrollRef.current = true;
+    setGiftTipVisible(false);
+    if (!selected?.id || selected.type === "group") return;
+    try {
+      if (window.localStorage.getItem(CHAT_GIFT_TIP_KEY) !== "1") setGiftTipVisible(true);
+    } catch {
+      setGiftTipVisible(true);
+    }
+  }, [selected?.id, selected?.type]);
   const groupAvatarInputRef = useRef(null);
   const newGroupAvatarInputRef = useRef(null);
   useEffect(() => {
@@ -883,8 +904,78 @@ export default function MessagesPage() {
   }, [conversations, groupPresenceIds, myId, selected?.id, selected?.type]);
 
   const latestMessageId = messages[messages.length - 1]?.id || null;
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [latestMessageId]);
-  useEffect(() => () => window.clearTimeout(scrollDateTimerRef.current), []);
+  const scrollToLatest = useCallback((behavior = "auto") => {
+    bottomRef.current?.scrollIntoView({ behavior, block: "end" });
+  }, []);
+  useEffect(() => {
+    scrollToLatest(initialScrollRef.current ? "auto" : "smooth");
+    const timer = window.setTimeout(() => {
+      scrollToLatest("auto");
+      initialScrollRef.current = false;
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [latestMessageId, scrollToLatest]);
+  useEffect(() => () => {
+    window.clearTimeout(scrollDateTimerRef.current);
+    window.cancelAnimationFrame(mediaScrollFrameRef.current);
+    window.clearTimeout(reactionHoldRef.current?.timer);
+  }, []);
+
+  const handleThreadMediaLoad = () => {
+    const container = threadRef.current;
+    if (!container) return;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (!shouldKeepLatestVisible({ distanceFromBottom, initialPositioning: initialScrollRef.current })) return;
+    window.cancelAnimationFrame(mediaScrollFrameRef.current);
+    mediaScrollFrameRef.current = window.requestAnimationFrame(() => scrollToLatest("auto"));
+  };
+
+  const beginReactionHold = (event, message) => {
+    if (message.deletedAt || (event.pointerType === "mouse" && event.button !== 0)) return;
+    window.clearTimeout(reactionHoldRef.current?.timer);
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const timer = window.setTimeout(() => {
+      setMessageMenu(null);
+      setReactionFor(message.id);
+      reactionHoldRef.current = { held: true, messageId: message.id, startX, startY };
+    }, 420);
+    reactionHoldRef.current = { timer, held: false, messageId: message.id, startX, startY };
+  };
+  const moveReactionHold = (event) => {
+    const hold = reactionHoldRef.current;
+    if (!hold || hold.held) return;
+    if (Math.hypot(event.clientX - hold.startX, event.clientY - hold.startY) > 10) {
+      window.clearTimeout(hold.timer);
+      reactionHoldRef.current = null;
+    }
+  };
+  const cancelReactionHold = () => {
+    window.clearTimeout(reactionHoldRef.current?.timer);
+    reactionHoldRef.current = null;
+  };
+  const endReactionHold = (event, message) => {
+    const hold = reactionHoldRef.current;
+    cancelReactionHold();
+    if (!hold || hold.held || event.pointerType === "mouse" || event.target.closest?.("button,a,input,video,audio")) return;
+    const previous = lastMessageTapRef.current;
+    const now = Date.now();
+    if (previous?.messageId === message.id && now - previous.at < 330) {
+      lastMessageTapRef.current = null;
+      reactToMessage(message, "❤️");
+    } else {
+      lastMessageTapRef.current = { messageId: message.id, at: now };
+    }
+  };
+  const dismissGiftTip = () => {
+    setGiftTipVisible(false);
+    try { window.localStorage.setItem(CHAT_GIFT_TIP_KEY, "1"); } catch { /* storage can be unavailable */ }
+  };
+  useEffect(() => {
+    if (!giftOpen || !giftTipVisible) return;
+    setGiftTipVisible(false);
+    try { window.localStorage.setItem(CHAT_GIFT_TIP_KEY, "1"); } catch { /* storage can be unavailable */ }
+  }, [giftOpen, giftTipVisible]);
 
   const handleThreadScroll = (event) => {
     const container = event.currentTarget;
@@ -1383,7 +1474,6 @@ export default function MessagesPage() {
     } : current);
     setDraft("");
     setReplyTo(null);
-    setEmojiOpen(false);
     setSending(false);
     await deliverText({ body, clientMessageId, optimisticId, reply, disappearingSeconds: selectedTimer });
   };
@@ -1678,30 +1768,6 @@ export default function MessagesPage() {
       setActionBusy(false);
     }
   };
-  const sendImage = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file || !selected?.id) return;
-    setImageBusy(true);
-    setError("");
-    try {
-      const response = selected.type === "group" ? await messageService.sendGroupImage(selected.id, file, newClientMessageId()) : await messageService.sendImage(selected.id, file, newClientMessageId(), null, directAccessWindow?.id || null, disappearAfterSeconds);
-      const { message, conversationStatus = "ACTIVE", directAccessWindow: updatedDirectAccessWindow } = response.data.data;
-      const cacheKey = selected.type === "group" ? ["messages", "group", selected.id] : ["messages", selected.id];
-      queryClient.setQueryData(cacheKey, (current) => current ? {
-        ...current,
-        messages: [...current.messages.filter((item) => item.id !== message.id), message],
-        conversationStatus,
-        directAccessWindow: updatedDirectAccessWindow || current.directAccessWindow,
-        requestRequired: false,
-      } : current);
-      queryClient.invalidateQueries({ queryKey: selected.type === "group" ? ["messages", "groups"] : ["messages", "conversations"] });
-    } catch (requestError) {
-      setError(requestError.response?.data?.message || "Could not send this image.");
-    } finally {
-      setImageBusy(false);
-    }
-  };
   const openStoryReply = async (reply, knownExpired = false) => {
     if (knownExpired) return setStoryViewer({ expired: true });
     setStoryViewer({ loading: true });
@@ -1812,7 +1878,6 @@ export default function MessagesPage() {
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">Reconnecting…</span> : null}
             {canCallParticipant ? <div className="flex shrink-0 items-center gap-1">
               <button aria-label={`Audio call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button>
-              <button aria-label={`Video call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "VIDEO")} type="button"><FiVideo /></button>
             </div> : null}
             <div className="relative">
               <button aria-expanded={chatMenuOpen} aria-label="Chat options" className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setMessageMenu(null); setReactionFor(null); setChatMenuOpen((current) => !current); }} type="button"><FiMoreVertical /></button>
@@ -1829,7 +1894,7 @@ export default function MessagesPage() {
           </header>
           {awaitingFollowupCreatorReply ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>✦{directAccessWindow.priceStars} held</b> · awaiting creator reply · ⏳ {directAccessTimeLabel} · 0/3 used</div> : fanAwaitingFreeAskReply || creatorCanReplyToFreeFanAsk ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>Free follow-up pending</b> · no Stars charged yet</div> : hasActiveDirectAccessWindow ? <div className="shrink-0 border-b border-atseen-blue/15 bg-atseen-blue/[0.045] px-4 py-2 text-center text-[10px] text-atseen-blue"><b>✦ Direct Access</b> · ⏳ {directAccessTimeLabel} · {directAccessWindow.fanMessagesUsed}/{directAccessWindow.fanMessageLimit} used · {directAccessWindow.settlementStatus === "HELD" ? "Pending" : directAccessWindow.settlementStatus === "INCLUDED" ? "Premium" : "Answered"}</div> : creatorCanAnswerClosedPaidWindow ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>3/3 fan messages used</b> · You can still answer · ⏳ {directAccessTimeLabel}</div> : directAccessEffectivelyClosed ? <div className="shrink-0 border-b border-atseen-line/70 px-4 py-2 text-center text-[10px] text-atseen-muted"><b>✦ Direct Access ended</b> · History remains readable</div> : user?.role === "fan" && participant?.role === "creator" && selectedDirectAccessOfferQuery.data?.enabled ? <div className="shrink-0 border-b border-atseen-line/60 px-4 py-2.5 text-center"><button className="rounded-full border border-atseen-blue/45 bg-atseen-blue/[0.035] px-4 py-1.5 text-[11px] font-bold text-atseen-blue transition hover:bg-atseen-blue/10 disabled:opacity-50" disabled={directAccessBusy} onClick={openDirectAccess} type="button">{directAccessBusy ? "Opening…" : `Direct Access · ✦${selectedDirectAccessOfferQuery.data.priceStars}`}</button><p className="mt-1 text-[9px] text-atseen-muted">Guaranteed within 48 hours or fully refunded</p></div> : null}
           {selected.type !== "group" && messagesQuery.data?.requestReceived ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-2 text-center text-[11px] font-semibold text-atseen-warning">They won’t know you’ve seen it until you accept.</div> : null}
-          <section className="atseen-hide-scrollbar relative z-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-3 py-4 sm:px-8 sm:py-6" onScroll={handleThreadScroll} ref={threadRef}>
+          <section className="atseen-hide-scrollbar relative z-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-3 py-4 sm:px-8 sm:py-6" onLoadCapture={handleThreadMediaLoad} onScroll={handleThreadScroll} ref={threadRef}>
             {selected.type !== "group" && (participant?.statusLine || participant?.personalLine) ? <div className="mx-auto mb-7 max-w-sm px-5 py-1 text-center"><span className="inline-flex items-center gap-1.5 rounded-full border border-atseen-blue/35 bg-atseen-blue/[0.035] px-3 py-1 text-[10px] font-black text-atseen-blue"><FiEye className="text-[11px]" />{participant.statusLine || "At seen"}</span>{participant.personalLine ? <p className="mt-2 line-clamp-2 text-xs italic leading-5 text-white/80">“{participant.personalLine}”</p> : null}{participant.typicalReplyHours ? <p className="mt-0.5 text-[10px] text-atseen-muted">usually replies within {participant.typicalReplyHours}h</p> : null}</div> : null}
             {user?.role === "creator" && directAccessWindow?.settlementStatus === "HELD" ? <div className="mx-auto mb-4 max-w-sm rounded-2xl border border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-3 text-center"><p className="text-xs font-black text-atseen-warning">Answer honestly · earn ${Number(directAccessWindow.creatorNetUsd || 0).toFixed(2)}</p><p className="mt-1 text-[10px] leading-4 text-atseen-muted">Your first reply completes this paid request and releases your net earnings.</p></div> : null}
             <div className={`pointer-events-none sticky top-2 z-30 mx-auto -mb-7 flex h-7 w-fit items-center rounded-full border border-atseen-line bg-atseen-bg-2/95 px-3 text-[10px] font-bold text-atseen-muted shadow-lg backdrop-blur transition-all duration-200 ${scrollDate.visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>{scrollDate.label}</div>
@@ -1850,19 +1915,20 @@ export default function MessagesPage() {
                 {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
                 <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
                 <div className={`relative flex max-w-[86%] flex-col sm:max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
-                  <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
+                  <div className={`min-w-[112px] touch-manipulation select-none rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} onPointerCancel={cancelReactionHold} onPointerDown={(event) => beginReactionHold(event, message)} onPointerMove={moveReactionHold} onPointerUp={(event) => endReactionHold(event, message)} title="Double-tap to react with ❤️; hold for more reactions">
                     {selected.type === "group" && !mine && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
                     {message.forwarded ? <p className={`mb-1 text-[9px] italic ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>↪ Forwarded</p> : null}
                     {message.messageKind === "CREATOR_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Asks you</p> : null}
                     {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>Free follow-up</p> : null}
-                    {message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><div className="mx-auto grid h-24 w-24 place-items-center overflow-hidden"><img alt={message.gift.name} className="h-full w-full object-contain" src={message.gift.imageUrl} style={{ transform: `translate(${message.gift.imagePositionX || 0}%, ${message.gift.imagePositionY || 0}%) scale(${(message.gift.displayScale || 100) / 100})` }} /></div><p className="mt-1 font-black">{mine ? "You sent" : "You received"} {message.gift.name}</p><p className={`text-xs font-black ${mine ? "text-atseen-bg/75" : "text-atseen-warning"}`}>✦{Number(message.gift.stars).toLocaleString()}</p></div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
+                    {message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><div className="mx-auto grid h-24 w-24 place-items-center overflow-hidden"><img alt={message.gift.name} className="h-full w-full object-contain" src={message.gift.imageUrl} style={{ transform: `translate(${message.gift.imagePositionX || 0}%, ${message.gift.imagePositionY || 0}%) scale(${(message.gift.displayScale || 100) / 100})` }} /></div><p className="mt-1 font-black">{mine ? "You sent" : "You received"} {message.gift.name}</p><p className={`text-xs font-black ${mine ? "text-atseen-bg/75" : "text-atseen-warning"}`}><img alt="coins" className="mr-1 inline-block h-3.5 w-3.5 object-contain align-[-2px]" src="/brand/goldcoin.png" />{Number(message.gift.stars).toLocaleString()}</p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : selected.type !== "group" && mine && !message.readAt ? " · Sent" : ""}</span>
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}
                     </p>
                   </div>
+                  {isGiftRequestMessage(message, mine) ? <button className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-warning/40 bg-atseen-warning/10 px-4 py-2 text-xs font-black text-atseen-warning transition hover:bg-atseen-warning/15" onClick={() => { dismissGiftTip(); setGiftOpen(true); }} type="button"><FiGift /> Send a gift</button> : null}
                   {message.messageKind === "CREATOR_ASK" && !mine && user?.role === "fan" ? <button className="mt-2 rounded-full border border-atseen-blue/40 bg-atseen-blue/10 px-4 py-2 text-xs font-black text-atseen-blue" onClick={async () => {
                     setDirectAccessBusy(true);
                     setError("");
@@ -1910,7 +1976,7 @@ export default function MessagesPage() {
                       });
                       setMessageMenu((current) => current === message.id ? null : message.id);
                     }} title="More" type="button"><FiMoreVertical /></button>
-                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
+                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "left-full" : "right-full"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
                     {messageMenu === message.id ? createPortal(<div className="fixed z-[240] w-44 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl" data-chat-popover style={messageMenuPosition || undefined}>
                       <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setReactionFor(null); setReplyTo(message); }} type="button"><FiCornerUpLeft /> Reply</button>
                       {message.body && !message.deletedAt ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => copyMessage(message)} type="button"><FiCopy /> Copy</button> : null}
@@ -1961,14 +2027,22 @@ export default function MessagesPage() {
             {disappearingOpen ? <section aria-labelledby="disappearing-message-title" aria-modal="true" className="absolute bottom-0 left-0 right-0 z-[95] overflow-hidden rounded-t-[24px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5 shadow-[0_-24px_70px_rgba(0,0,0,.65)]" role="dialog"><div className="mx-auto mb-5 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-black" id="disappearing-message-title">Disappearing message</h2><p className="mt-1 text-xs text-atseen-muted">The timer starts when they open it</p></div><button aria-label="Close disappearing message options" className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/5" onClick={() => setDisappearingOpen(false)} type="button"><FiX /></button></div><div className="mt-4">{[[0, "View once"], [3, "3 seconds"], [10, "10 seconds"], [30, "30 seconds"], [null, "Off"]].map(([seconds, label]) => <button className="flex w-full items-center border-b border-white/[0.07] py-3.5 text-left text-sm font-bold last:border-0" key={label} onClick={() => { setDisappearAfterSeconds(seconds); setDisappearingOpen(false); }} type="button"><span className="flex-1">{label}</span>{disappearAfterSeconds === seconds ? <span className="text-atseen-blue">✓</span> : null}</button>)}</div><p className="mt-2 text-[10px] leading-4 text-atseen-muted">Disappearing messages are removed for both people after opening. Recipients may still capture content before it disappears.</p></section> : null}
             {giftOpen && selected?.type !== "group" ? <StoryGiftPicker onClose={() => setGiftOpen(false)} onSent={() => { queryClient.invalidateQueries({ queryKey: ["messages", selected.id] }); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }} recipient={{ id: selected.id, name: participant?.displayName || "them", username: participant?.username, avatar: participant?.avatarUrl }} sourceType="DIRECT" /> : null}
             {replyTo ? <div className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-atseen-blue bg-atseen-surface-2 px-3 py-2"><FiCornerUpLeft className="shrink-0 text-atseen-blue" /><div className="min-w-0 flex-1"><p className="text-[10px] font-bold text-atseen-blue">Replying to {replyTo.senderId === myId ? "yourself" : participant?.displayName}</p><p className="truncate text-xs text-atseen-muted">{replyTo.body}</p></div><button aria-label="Cancel reply" className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-white/5" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
-            {emojiOpen ? <div className="absolute bottom-[4.25rem] left-2 z-20 w-[min(19rem,calc(100%-1rem))] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-2 shadow-2xl sm:bottom-[4.5rem] sm:left-3 sm:w-[min(19rem,calc(100%-1.5rem))] sm:p-3"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-bold text-atseen-muted">Emojis</p><button aria-label="Close emoji picker" className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/5" onClick={() => setEmojiOpen(false)} type="button"><FiX /></button></div><div className="grid grid-cols-6 gap-1 min-[380px]:grid-cols-7">{MESSAGE_EMOJIS.map((emoji) => <button className="grid h-9 min-w-0 place-items-center rounded-lg text-xl transition hover:bg-white/10" key={emoji} onClick={() => setDraft((current) => `${current}${emoji}`)} type="button">{emoji}</button>)}</div></div> : null}
             {fanCanAskAfterWindowEnded ? fanCanAffordFollowup ? <div className="mb-2 rounded-xl border border-atseen-blue/20 bg-atseen-blue/[0.04] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-blue">Ask a free follow-up</b> · ✦{followupPriceStars || directAccessWindow.priceStars} is held now, paid only if they reply, or fully refunded after 48h.</div> : <div className="mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-danger/[0.05] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-danger">Not enough Stars</b> · You need ✦{followupPriceStars}, but your Wallet has ✦{followupWalletBalance}. <button className="font-black text-atseen-blue" onClick={() => navigate("/fan/wallet")} type="button">Open Wallet</button></div> : null}
             {user?.role === "fan" && awaitingFollowupCreatorReply ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-center text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Waiting for the creator</b> · ✦{directAccessWindow.priceStars} is held and will be fully refunded if they do not reply in time.</div> : null}
             {fanAwaitingFreeAskReply ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-center text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Waiting for the creator</b> · No Stars have been charged. The configured Direct Access price is charged only when the creator replies.</div> : null}
             {creatorCanReplyToFreeFanAsk ? <div className="mb-2 rounded-xl border border-atseen-warning/20 bg-atseen-warning/[0.05] px-3 py-2 text-[11px] leading-5 text-atseen-muted"><b className="text-atseen-warning">Free fan question</b> · Your reply opens and settles a new paid window at your configured price.</div> : null}
             {user?.role === "creator" && directAccessWindow?.settlementStatus === "HELD" ? <p className="mb-2 text-center text-[11px] text-atseen-dim">Answer the actual question — specific and real. Your reply remains available even after the fan reaches 3/3.</p> : null}
             {directAccessFanLocked && !fanCanAskAfterWindowEnded && !awaitingFollowupCreatorReply ? <p className="mb-2 text-center text-xs font-bold text-atseen-warning">This Direct Access window is closed. Its message history remains visible to both people.</p> : null}
-            <div className="flex items-end gap-2"><VoiceRecorder disabled={sending || imageBusy || directAccessFanLocked} onSend={sendVoice} /><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={sendImage} ref={imageInputRef} type="file" /><button aria-label="Send image" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:text-white disabled:opacity-40" disabled={sending || imageBusy || directAccessFanLocked} onClick={() => imageInputRef.current?.click()} title="Send image" type="button">{imageBusy ? <FiRefreshCw className="animate-spin" /> : <FiImage />}</button>{selected.type !== "group" ? <button aria-label="Send a gift" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${giftOpen ? "border-atseen-warning bg-atseen-warning/10 text-atseen-warning" : "border-atseen-line text-atseen-muted hover:text-atseen-warning"}`} disabled={giftBusy || directAccessFanLocked} onClick={() => setGiftOpen((current) => !current)} title="Send a gift" type="button"><FiGift /></button> : null}<button aria-expanded={emojiOpen} aria-label="Open emoji picker" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition ${emojiOpen ? "border-atseen-blue bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line text-atseen-muted hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => setEmojiOpen((current) => !current)} type="button"><FiSmile /></button><div className="relative min-w-0 flex-1"><textarea aria-label="Message" className="max-h-32 min-h-11 w-full resize-none rounded-3xl border border-atseen-line bg-atseen-surface-2 py-2.5 pl-4 pr-11 text-sm outline-none placeholder:text-atseen-dim focus:border-atseen-blue/60 disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }} placeholder="Message…" rows={1} value={draft} />{selected.type !== "group" ? <button aria-expanded={disappearingOpen} aria-label="Disappearing message timer" className={`absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-[13px] transition ${disappearAfterSeconds !== null ? "bg-atseen-blue/15 text-atseen-blue" : "text-atseen-muted hover:bg-white/5 hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => { setGiftOpen(false); setEmojiOpen(false); setDisappearingOpen((current) => !current); }} title="Disappearing message" type="button"><FiClock />{disappearAfterSeconds !== null ? <span className="absolute -right-0.5 -top-0.5 grid h-3 min-w-3 place-items-center rounded-full bg-atseen-blue px-0.5 text-[7px] font-black leading-none text-atseen-bg">{disappearAfterSeconds === 0 ? "1" : disappearAfterSeconds}</span> : null}</button> : null}</div><button aria-label="Send message" className="grid h-11 w-11 place-items-center rounded-full bg-atseen-blue text-atseen-bg disabled:opacity-40" disabled={!draft.trim() || sending || imageBusy || directAccessFanLocked}><FiSend /></button></div>
+            {giftTipVisible && selected.type !== "group" ? <div className="relative mb-2 ml-24 flex max-w-xs items-start gap-3 rounded-2xl border border-atseen-warning/30 bg-[#211f1a] px-4 py-3 text-xs shadow-xl"><FiGift className="mt-0.5 shrink-0 text-atseen-warning" /><p className="min-w-0 flex-1 leading-5"><b className="block text-atseen-warning">Send a gift from the chat</b><span className="text-atseen-muted">Add an optional note and it will stay in this conversation.</span></p><button aria-label="Dismiss gift tip" className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={dismissGiftTip} type="button"><FiX /></button><span className="absolute -bottom-1.5 left-7 h-3 w-3 rotate-45 border-b border-r border-atseen-warning/30 bg-[#211f1a]" /></div> : null}
+            <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center rounded-full border border-atseen-line bg-atseen-surface-2 px-2 transition focus-within:border-atseen-blue/50">
+                <textarea aria-label="Message" className="max-h-28 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm leading-5 outline-none placeholder:text-atseen-dim disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(event); } }} placeholder="Message…" rows={1} value={draft} />
+                {selected.type !== "group" ? <button aria-expanded={disappearingOpen} aria-label="Disappearing message timer" className={`relative grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs transition ${disappearAfterSeconds !== null ? "bg-atseen-blue/15 text-atseen-blue" : "text-atseen-muted hover:bg-white/5 hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => { setGiftOpen(false); setDisappearingOpen((current) => !current); }} title="Disappearing message" type="button"><FiClock />{disappearAfterSeconds !== null ? <span className="absolute -right-0.5 -top-0.5 grid h-3 min-w-3 place-items-center rounded-full bg-atseen-blue px-0.5 text-[7px] font-black leading-none text-atseen-bg">{disappearAfterSeconds === 0 ? "1" : disappearAfterSeconds}</span> : null}</button> : null}
+                {selected.type !== "group" ? <button aria-label="Send a gift" className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition ${giftOpen ? "bg-atseen-warning/10 text-atseen-warning" : "text-atseen-warning hover:bg-atseen-warning/10"}`} disabled={giftBusy || directAccessFanLocked} onClick={() => setGiftOpen((current) => !current)} title="Send a gift" type="button"><FiGift /></button> : null}
+                <VoiceRecorder compact disabled={sending || directAccessFanLocked} onSend={sendVoice} />
+              </div>
+              <button aria-label="Send message" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-atseen-blue text-atseen-bg transition hover:brightness-110 disabled:opacity-40" disabled={!draft.trim() || sending || directAccessFanLocked}><FiSend /></button>
+            </div>
           </form>)}
         </> : null}
       </main>

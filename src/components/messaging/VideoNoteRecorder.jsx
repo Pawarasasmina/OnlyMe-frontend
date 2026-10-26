@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiCamera, FiCheck, FiPause, FiPlay, FiRotateCcw, FiSend, FiSquare, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { FiCheck, FiPause, FiPlay, FiRotateCcw, FiSend, FiSquare, FiVideo, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 
 const MAX_DURATION_MS = 60000;
 const clock = (milliseconds = 0) => {
@@ -8,7 +8,7 @@ const clock = (milliseconds = 0) => {
 };
 const supportedMime = () => ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/mp4", "video/webm"].find((type) => window.MediaRecorder?.isTypeSupported(type)) || "";
 
-export default function VideoNoteRecorder({ disabled = false, onSend }) {
+export default function VideoNoteRecorder({ compact = false, disabled = false, onSend }) {
   const [mode, setMode] = useState("idle");
   const [elapsed, setElapsed] = useState(0);
   const [preview, setPreview] = useState(null);
@@ -162,7 +162,7 @@ export default function VideoNoteRecorder({ disabled = false, onSend }) {
     if (player.paused) player.play().catch(() => {});
   };
 
-  if (mode === "idle") return <div className="shrink-0"><button aria-label="Record video note" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10 hover:text-atseen-blue disabled:opacity-40" disabled={disabled} onClick={openCamera} title="Record video note" type="button"><FiCamera /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs leading-5 text-atseen-danger shadow-xl">{error}<button aria-label="Dismiss camera error" className="float-right ml-2" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div>;
+  if (mode === "idle") return <div className="shrink-0"><button aria-label="Record video note" className={compact ? "grid h-8 w-8 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-atseen-blue disabled:opacity-40" : "grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10 hover:text-atseen-blue disabled:opacity-40"} disabled={disabled} onClick={openCamera} title="Record video note" type="button"><FiVideo /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs leading-5 text-atseen-danger shadow-xl">{error}<button aria-label="Dismiss camera error" className="float-right ml-2" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div>;
 
   const showingCamera = ["opening", "ready", "recording"].includes(mode);
   const reviewing = ["preview", "failed"].includes(mode);
