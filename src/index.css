@@ -16334,6 +16334,29 @@ video.seen-reader-media {
   .is-seen-cover .profile-image-crop-preview { max-height: 56dvh; }
 }
 @media (min-width: 1020px) {
+  .social-app-shell .profile-image-crop-layer.is-message {
+    right: auto;
+    left: calc((100vw - (var(--social-left-width) + var(--social-center-width) + var(--social-right-width))) / 2 + var(--social-left-width));
+    width: var(--social-center-width);
+    padding: 12px;
+  }
+  .social-app-shell .profile-image-crop-layer.is-message .profile-image-crop-sheet {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 18px;
+  }
+  .social-app-shell .profile-image-crop-layer.is-message .profile-image-crop-preview {
+    width: min(100%,360px);
+  }
+  .social-app-shell .profile-image-crop-layer.is-message .profile-image-crop-controls {
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .social-app-shell .profile-image-crop-layer.is-message .profile-image-crop-actions {
+    gap: 8px;
+    margin-top: 20px;
+  }
   .social-app-shell .profile-image-crop-layer.is-seen-cover { place-items: end start; }
   .social-app-shell .profile-image-crop-layer.is-seen-cover .profile-image-crop-sheet {
     left: calc((100vw - (var(--social-left-width) + var(--social-center-width) + var(--social-right-width))) / 2 + var(--social-left-width));

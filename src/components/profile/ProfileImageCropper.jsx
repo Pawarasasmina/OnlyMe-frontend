@@ -5,7 +5,7 @@ function outputFileName(kind) {
   return `${kind || "image"}.jpg`;
 }
 
-export default function ProfileImageCropper({ kind, onCancel, onSave, saving, source }) {
+export default function ProfileImageCropper({ actionLabel = "", kind, onCancel, onSave, saving, source }) {
   const isSeenCover = kind === "seen";
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
@@ -15,6 +15,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: "profile photo", width: 800 },
     cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: "cover", width: 1500 },
     feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "feed image", width: 1080 },
+    message: { aspect: "aspect-square", frame: "w-full max-w-[360px] rounded-2xl", height: 1080, label: "chat image", width: 1080 },
     seen: { aspect: "aspect-[4/5]", frame: "w-full rounded-2xl", height: 1350, label: "Seen cover", width: 1080 },
     story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
   }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
@@ -68,9 +69,14 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
     }
   };
   const zoomWithWheel = (event) => {
-    if (!isSeenCover || saving) return;
+    if (saving) return;
     event.preventDefault();
     setZoom((current) => clamp(current - event.deltaY * 0.002, 1, 3));
+  };
+  const reset = () => {
+    setZoom(1);
+    setX(0);
+    setY(0);
   };
 
   const save = async () => {
@@ -97,7 +103,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
   };
 
   return (
-    <div aria-modal="true" className={`profile-image-crop-layer ${isSeenCover ? "is-seen-cover" : ""}`} role="dialog">
+    <div aria-modal="true" className={`profile-image-crop-layer ${isSeenCover ? "is-seen-cover" : ""} ${kind === "message" ? "is-message" : ""}`} role="dialog">
       <button aria-label="Close image editor" className="profile-image-crop-scrim" disabled={saving} onClick={onCancel} type="button" />
       <section className="profile-image-crop-sheet">
         {isSeenCover ? <span aria-hidden="true" className="profile-image-crop-handle" /> : null}
@@ -128,7 +134,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
           ))}
         </div>
 
-        <div className="profile-image-crop-actions"><button className="profile-image-crop-cancel" disabled={saving} onClick={onCancel} type="button">Cancel</button><button className="profile-image-crop-save" disabled={saving} onClick={save} type="button">{saving ? "Uploading..." : isSeenCover ? "Done" : "Save image"}</button></div>
+        <div className="profile-image-crop-actions"><button className="profile-image-crop-cancel" disabled={saving} onClick={onCancel} type="button">Cancel</button><button className="profile-image-crop-cancel" disabled={saving || (zoom === 1 && x === 0 && y === 0)} onClick={reset} type="button">Reset</button><button className="profile-image-crop-save" disabled={saving} onClick={save} type="button">{saving ? "Uploading..." : actionLabel || (isSeenCover ? "Done" : "Save image")}</button></div>
       </section>
     </div>
   );
