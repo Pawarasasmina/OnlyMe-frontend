@@ -26,6 +26,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { formatVoiceTime, useVoiceRecorder } from "../../hooks/useVoiceRecorder";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import StoryCreator from "../../components/stories/StoryCreator";
+import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import { publicationService as api } from "../../services/publicationService";
 import { normalizeTags, publicationError } from "../../utils/publicationValidation";
 import { worldCompletenessBySection } from "../../utils/worldValidation";
@@ -416,6 +417,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [videoTrimFile, setVideoTrimFile] = useState(null);
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
   const [experiencePreviewOpen, setExperiencePreviewOpen] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const [worldCreateSheet, setWorldCreateSheet] = useState("");
   const chapters = world.chapters || [];
@@ -1598,7 +1600,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             <label><span>Category</span><select onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Choose</option>{["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"].map((category) => <option key={category}>{category}</option>)}</select></label>
             <label><span>Price</span><div className="experience-final-price"><b>{STAR}</b><input aria-label="One-time Experience price" min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /></div></label>
           </div>
-          <label><span>Location <em>optional</em></span><div className="experience-final-location"><FiMapPin /><input onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Add a location" value={world.experienceLocation || ""} /></div></label>
+          <label><span>Location <em>optional</em></span><button className="experience-final-location" onClick={() => setLocationPickerOpen(true)} type="button"><FiMapPin />{world.experienceLocation || "Add a location"}</button></label>
+          {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
           <button aria-pressed={world.allowDownload} className={`experience-final-toggle ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span><strong>Allow download</strong><small>Watermarked text and photos</small></span><i><b /></i></button>
         </section>
         <button className="experience-review-save" disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Publishing…</> : "Publish Experience"}</button>
@@ -1636,7 +1639,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <textarea className="experience-form-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, summary: event.target.value.slice(0, 300) })} placeholder="Description" value={world.description} />
         <div className="experience-inline-fields">
           <select className="experience-form-input" onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Category</option>{WORLD_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select>
-          <input className="experience-form-input" onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Location" value={world.experienceLocation || ""} />
+          <button className="experience-form-input" onClick={() => setLocationPickerOpen(true)} type="button">{world.experienceLocation || "Location"}</button>
+          {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
         </div>
 
         <p className="experience-field-label">CONTENT</p>
@@ -1843,6 +1847,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {worldCreateSheet === "name" ? <WorldCreateTextSheet busy={saving} description="One World per creator. The name carries your stories, experiences, and private access." label="name" maxLength={30} onClose={() => setWorldCreateSheet("")} onSave={(title) => { updateWorld({ title }); setWorldCreateSheet(""); }} placeholder="Name your World" title="Name your World" value={world.title} /> : null}
       {worldCreateSheet === "description" ? <WorldCreateTextSheet busy={saving} description="One honest paragraph. People see it right under your World settings." label="description" maxLength={300} onClose={() => setWorldCreateSheet("")} onSave={(description) => { updateWorld({ description, summary: description }); setWorldCreateSheet(""); }} placeholder="Describe what members will experience" title="Describe your World" value={world.description} /> : null}
+      {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
 
       {worldCreateSheet === "price" ? (
         <WorldCreatePriceSheet busy={saving} currentPrice={world.pricing?.starsAmount} onClose={() => setWorldCreateSheet("")} onSave={(price) => { updateWorld({ pricing: { mode: "MONTHLY", presetId: `MONTHLY_${price}`, starsAmount: price } }); setWorldCreateSheet(""); }} />

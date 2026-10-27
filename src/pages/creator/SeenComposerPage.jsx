@@ -31,6 +31,7 @@ import { publicationService as api } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
 import { voiceService } from "../../services/voiceService";
 import { searchService } from "../../services/searchService";
+import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import EntityAttachmentPicker from "../../components/contentEntities/EntityAttachmentPicker";
 import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
@@ -887,32 +888,7 @@ function PeopleSheet({ onChange, onClose, selectedIds, selectedPeople }) {
 }
 
 function LocationSheet({ onClose, onSelect, value }) {
-  const [query, setQuery] = useState(value || "");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const search = query.trim();
-    if (search.length < 2 || search === value) { setResults([]); return undefined; }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      searchService.searchLocations({ q: search, language: navigator.language || "en" }, controller.signal)
-        .then(setResults)
-        .catch(() => setResults([]))
-        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    }, 300);
-    return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [query, value]);
-  return (
-    <SelectionSheet onClose={onClose} title="Location">
-      <input className="seen-settings-search" onChange={(event) => setQuery(event.target.value)} placeholder="Search a country or city" value={query} />
-      <div className="seen-settings-options">
-        {value ? <SheetRow Icon={FiMapPin} label={value} onClick={() => onSelect("")} selected /> : null}
-        {loading ? <p className="seen-settings-empty">Searching locations...</p> : null}
-        {results.map((place) => <SheetRow description={place.subtitle} Icon={FiMapPin} key={place.id} label={place.name || place.label} onClick={() => onSelect(place.label)} />)}
-      </div>
-    </SelectionSheet>
-  );
+  return <UniversalLocationPicker onClose={onClose} onSelect={onSelect} value={value} />;
 }
 
 function SeriesSheet({ creating, error, items, loading, newSeries, onClose, onCreate, onInput, onRemove, onSelect, selectedId }) {
@@ -983,9 +959,6 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
   const [recordedVoice, setRecordedVoice] = useState(null);
   const [voiceError, setVoiceError] = useState("");
   const [placeOpen, setPlaceOpen] = useState(false);
-  const [placeQuery, setPlaceQuery] = useState("");
-  const [placeSuggestions, setPlaceSuggestions] = useState([]);
-  const [placeLoading, setPlaceLoading] = useState(false);
   const [draggingBlockId, setDraggingBlockId] = useState("");
   const [editorHintVisible, setEditorHintVisible] = useState(true);
   const [textToolsOpen, setTextToolsOpen] = useState(false);
@@ -1173,30 +1146,6 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
     return () => window.removeEventListener("resize", keepTextToolsInViewport);
   }, [textToolsOpen, textToolPosition.left, textToolPosition.top]);
 
-  useEffect(() => {
-    if (!placeOpen || placeQuery.trim().length < 2) {
-      setPlaceSuggestions([]);
-      setPlaceLoading(false);
-      return undefined;
-    }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setPlaceLoading(true);
-      searchService
-        .getSuggestions(placeQuery.trim(), controller.signal)
-        .then((data) =>
-          setPlaceSuggestions(
-            (data.suggestions || []).filter((item) => item.type === "place"),
-          ),
-        )
-        .catch(() => setPlaceSuggestions([]))
-        .finally(() => setPlaceLoading(false));
-    }, 300);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [placeOpen, placeQuery]);
 
   const discardVoice = () => {
     if (recordedVoice?.url) URL.revokeObjectURL(recordedVoice.url);
@@ -2091,83 +2040,7 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
           </div>
         </section>
       ) : null}
-      {placeOpen ? (
-        <section
-          className="seen-chapter-place-picker"
-          aria-label="Add a location"
-        >
-          <div className="seen-chapter-place-head">
-            <strong>Add location</strong>
-            <button onClick={() => setPlaceOpen(false)} type="button">
-              <FiX />
-            </button>
-          </div>
-          <label>
-            <FiMapPin />
-            <input
-              autoFocus
-              onChange={(event) => setPlaceQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && placeQuery.trim()) {
-                  onAddPlace(placeQuery.trim());
-                  setPlaceOpen(false);
-                  setPlaceQuery("");
-                }
-              }}
-              placeholder="Place — e.g. Lisbon, Alfama"
-              value={placeQuery}
-            />
-          </label>
-          <button
-            className="seen-chapter-place-add"
-            disabled={!placeQuery.trim()}
-            onClick={() => {
-              onAddPlace(placeQuery.trim());
-              setPlaceOpen(false);
-              setPlaceQuery("");
-            }}
-            type="button"
-          >
-            Add
-          </button>
-          <div className="seen-chapter-place-results">
-            {placeLoading ? <p>Searching locations...</p> : null}
-            {placeSuggestions.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onAddPlace(item.value || item.label);
-                  setPlaceOpen(false);
-                  setPlaceQuery("");
-                }}
-                type="button"
-              >
-                <FiMapPin />
-                <span>
-                  <b>{item.label}</b>
-                  <small>Place</small>
-                </span>
-              </button>
-            ))}
-            {!placeLoading && placeQuery.trim().length >= 2 ? (
-              <button
-                onClick={() => {
-                  onAddPlace(placeQuery.trim());
-                  setPlaceOpen(false);
-                  setPlaceQuery("");
-                }}
-                type="button"
-              >
-                <FiPlus />
-                <span>
-                  <b>Add “{placeQuery.trim()}”</b>
-                  <small>Use this location</small>
-                </span>
-              </button>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
+      {placeOpen ? <UniversalLocationPicker onClose={() => setPlaceOpen(false)} onSelect={(location) => onAddPlace(location)} title="Place" /> : null}
       {structuredEditor ? (
         <section
           className={`seen-chapter-structured-editor is-${structuredEditor.type.toLowerCase()}-editor`}

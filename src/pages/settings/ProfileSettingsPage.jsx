@@ -8,6 +8,7 @@ import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import StatusPicker from "../../components/stories/StatusPicker";
+import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import { useAuth } from "../../hooks/useAuth";
 import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
@@ -303,6 +304,7 @@ function ProfileSettingsPage() {
   const avatarInput = useRef(null);
   const settingsMainRef = useRef(null);
   const [form, setForm] = useState(emptyForm);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -625,11 +627,12 @@ function ProfileSettingsPage() {
         <UsernameField onChange={updateField} status={usernameStatus} value={form.username} />
         <p className="edit-profile-help edit-profile-field-wide">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
         <BioField onChange={updateField} value={form.bio} />
-        <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
+        <label className="edit-profile-field"><span>Location</span><button className="edit-profile-location-picker" onClick={() => setLocationPickerOpen(true)} type="button">{form.locationText || "Add a location"}</button></label>
         <ProfileLanguagesField preferredLanguage={form.preferredLanguage} onChange={updateField} />
         {role === "creator" ? <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} /> : null}
       </section>
 
+      {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(locationText) => { setDirty(true); setForm((current) => ({ ...current, locationText })); }} value={form.locationText} /> : null}
       <section className="edit-profile-fields">
         <h2 className="edit-profile-field-wide">Contact Options</h2>
         <Field className="edit-profile-field-wide" label="Email" name="email" onChange={updateField} type="email" value={form.email} />

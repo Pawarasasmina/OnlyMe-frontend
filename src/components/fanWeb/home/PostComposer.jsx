@@ -1,12 +1,10 @@
 import { voiceService } from "../../../services/voiceService";
 import { inferWallTopic as autoTopic } from "../../../utils/wallTopic";
 import { readWallDraft, saveWallDraft, clearWallDraft } from "../../../services/wallDraftStore";
-import WallSheetFrame from "./WallSheetFrame";
 import WallTopicSheet from "./WallTopicSheet";
 import WallNeedPicker from "./WallNeedPicker";
-import { canLookupLocation, geolocationErrorMessage } from "../../../utils/locationLookup";
 import { useEffect, useRef, useState } from "react";
-import { FiMapPin, FiMic, FiNavigation, FiImage, FiSearch, FiMoreHorizontal, FiX, FiArrowLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
+import { FiMic, FiImage, FiMoreHorizontal, FiX, FiArrowLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
 import { useAuth } from "../../../hooks/useAuth";
@@ -20,7 +18,7 @@ import {
   POST_TEXT_MAX_LENGTH,
 } from "../../../data/postOptions";
 import ProfileImageCropper from "../../profile/ProfileImageCropper";
-import { searchService } from "../../../services/searchService";
+import UniversalLocationPicker from "../../location/UniversalLocationPicker";
 
 const POST_TYPES = [
   { value: "Buy & Sell", context: "Buy/Sell", icon: FiShoppingBag, color: "blue", description: "Sell or find something second-hand" },
@@ -42,117 +40,7 @@ const NEED_PLACEHOLDERS = {
 };
 
 function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = [] }) {
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchError, setSearchError] = useState("");
-  const [retry, setRetry] = useState(0);
-  const [position, setPosition] = useState(null);
-  const [positioning, setPositioning] = useState(false);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") { event.stopImmediatePropagation(); onClose(); }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.setTimeout(() => inputRef.current?.focus(), 80);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onClose]);
-
-  useEffect(() => {
-    const query = search.trim();
-    if (!canLookupLocation(query, position)) {
-      setResults([]);
-      setLoading(false);
-      setSearchError("");
-      return undefined;
-    }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      setSearchError("");
-      searchService.searchLocations({
-        q: query,
-        language: navigator.language || "en",
-        latitude: position?.latitude,
-        longitude: position?.longitude,
-      }, controller.signal)
-        .then((items) => { if (!controller.signal.aborted) setResults(items); })
-        .catch((error) => {
-          if (error?.code !== "ERR_CANCELED") {
-            setResults([]);
-            setSearchError(error?.response?.data?.message || "Could not search locations. Try again.");
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoading(false);
-        });
-    }, 450);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [position, search, retry]);
-
-  const useCurrentArea = () => {
-    if (!navigator.geolocation) {
-      setSearchError("Location access is not supported by this browser.");
-      return;
-    }
-    setResults([]);
-    setPositioning(true);
-    setSearchError("");
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        setSearch("");
-        setLoading(true);
-        setPosition({ latitude: coords.latitude, longitude: coords.longitude });
-        setPositioning(false);
-        inputRef.current?.focus();
-      },
-      (error) => {
-        setPositioning(false);
-        setSearchError(geolocationErrorMessage(error));
-      },
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 },
-    );
-  };
-
-  return (
-    <WallSheetFrame anchorRef={anchorRef} title="Location" onClose={onClose}>
-      <section className="home-note-location-sheet">
-        <div className="home-note-location-handle" aria-hidden="true" />
-        <header><h2>Location</h2><button aria-label="Close location picker" onClick={onClose} type="button"><FiX /></button></header>
-        <label className="home-note-location-search">
-          <FiSearch aria-hidden="true" />
-          <span className="sr-only">Search a country or city</span>
-          <input onChange={(event) => setSearch(event.target.value)} placeholder="Search a country or city" ref={inputRef} value={search} />
-        </label>
-        <button className={`home-note-location-nearby ${position ? "is-active" : ""}`} disabled={positioning || (loading && !search.trim())} onClick={useCurrentArea} type="button">
-          <FiNavigation aria-hidden="true" />{positioning || (loading && !search.trim()) ? "Finding your area..." : position ? "Refresh current area" : "Use my current area"}
-        </button>
-        {selected ? <button className="home-note-location-clear" onClick={() => { onSelect(""); onClose(); }} type="button">Remove location</button> : null}
-        <div className="home-note-location-results">
-          {loading ? <p aria-live="polite">Searching locations...</p> : null}
-          {!loading && searchError ? <p role="alert">{searchError} <button onClick={() => setRetry((value) => value + 1)} type="button">Retry</button></p> : null}
-          {!positioning && !loading && !searchError && !position && search.trim().length < 2 ? [...new Set(suggestions.filter(Boolean))].map((value) => <button key={value} onClick={() => { onSelect(value); onClose(); }} type="button"><FiMapPin /><strong>{value}</strong></button>) : null}
-          {!positioning && !loading && !searchError && !position && search.trim().length < 2 ? <p>Type at least 2 letters to find any city, country, address, landmark, or venue.</p> : null}
-          {!loading && results.map((item) => (
-            <button aria-pressed={selected === item.label} className={selected === item.label ? "is-selected" : ""} key={item.code + item.label} onClick={() => { onSelect(item.label); onClose(); }} type="button">
-              <span>{item.code || <FiMapPin aria-hidden="true" />}</span><span className="home-note-location-result-copy"><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>
-            </button>
-          ))}
-          {!positioning && !loading && !searchError && canLookupLocation(search, position) && !results.length ? <p>No locations found.</p> : null}
-        </div>
-      </section>
-    </WallSheetFrame>
-  );
+  return <UniversalLocationPicker anchorRef={anchorRef} onClose={onClose} onSelect={onSelect} value={selected || suggestions[0] || ""} />;
 }
 
 function fileError(file) {

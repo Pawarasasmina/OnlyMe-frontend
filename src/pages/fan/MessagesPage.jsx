@@ -99,6 +99,24 @@ const chatDateLabel = (value) => {
   });
 };
 
+const chatTimeLabel = (value, language = "en") => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const russian = String(language || "").toLowerCase().startsWith("ru");
+  return date.toLocaleTimeString(russian ? "ru-RU" : "en-US", {
+    hour: "2-digit",
+    hour12: !russian,
+    minute: "2-digit",
+  });
+};
+
+const messagesAreGrouped = (left, right) => {
+  if (!left || !right || left.senderId !== right.senderId || chatDateKey(left.createdAt) !== chatDateKey(right.createdAt)) return false;
+  const leftTime = new Date(left.createdAt).getTime();
+  const rightTime = new Date(right.createdAt).getTime();
+  return Number.isFinite(leftTime) && Number.isFinite(rightTime) && rightTime - leftTime >= 0 && rightTime - leftTime <= 5 * 60 * 1000;
+};
+
 const replyEstimateLabel = (minutes) => {
   if (!Number.isFinite(minutes) || minutes < 0) return "no reply history yet";
   if (minutes < 1) return "replies in under 1m";
@@ -340,6 +358,7 @@ function SharedContentMessageCard({ content, mine, onOpen }) {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const chatLanguage = user?.preferredLanguage || user?.language || navigator.language || "en";
   const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const creatorMode = user?.creatorApprovalStatus === "approved";
   const { startCall } = useCalls();
@@ -404,7 +423,6 @@ export default function MessagesPage() {
   const [presence, setPresence] = useState({});
   const [socketConnected, setSocketConnected] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
-  const [scrollDate, setScrollDate] = useState({ label: "", visible: false });
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
   const [chatInfoOpen, setChatInfoOpen] = useState(false);
   const [chatInfoTab, setChatInfoTab] = useState("media");
@@ -441,7 +459,6 @@ export default function MessagesPage() {
   const directAccessSettlementRef = useRef(null);
   const bottomRef = useRef(null);
   const threadRef = useRef(null);
-  const scrollDateTimerRef = useRef(null);
   const initialScrollRef = useRef(true);
   const mediaScrollFrameRef = useRef(null);
   const reactionHoldRef = useRef(null);
@@ -992,7 +1009,6 @@ export default function MessagesPage() {
     return () => window.clearTimeout(timer);
   }, [latestMessageId, scrollToLatest]);
   useEffect(() => () => {
-    window.clearTimeout(scrollDateTimerRef.current);
     window.cancelAnimationFrame(mediaScrollFrameRef.current);
     window.clearTimeout(reactionHoldRef.current?.timer);
   }, []);
@@ -1052,24 +1068,6 @@ export default function MessagesPage() {
     setGiftTipVisible(false);
     try { window.localStorage.setItem(CHAT_GIFT_TIP_KEY, "1"); } catch { /* storage can be unavailable */ }
   }, [giftOpen, giftTipVisible]);
-
-  const handleThreadScroll = (event) => {
-    const container = event.currentTarget;
-    const markerLine = container.getBoundingClientRect().top + 72;
-    const messageNodes = [...container.querySelectorAll("[data-chat-date-label]")];
-    let activeNode = messageNodes[0];
-    for (const node of messageNodes) {
-      if (node.getBoundingClientRect().top <= markerLine) activeNode = node;
-      else break;
-    }
-    const label = activeNode?.dataset.chatDateLabel || "";
-    if (!label) return;
-    setScrollDate({ label, visible: true });
-    window.clearTimeout(scrollDateTimerRef.current);
-    scrollDateTimerRef.current = window.setTimeout(() => {
-      setScrollDate((current) => ({ ...current, visible: false }));
-    }, 1100);
-  };
 
   const orderedPeople = useMemo(() => peopleQuery.data || [], [peopleQuery.data]);
   const shownConversations = useMemo(() => {
@@ -2063,10 +2061,9 @@ export default function MessagesPage() {
           </header>
           {awaitingFollowupCreatorReply ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>✦{directAccessWindow.priceStars} held</b> · awaiting creator reply · ⏳ {directAccessTimeLabel} · 0/3 used</div> : fanAwaitingFreeAskReply || creatorCanReplyToFreeFanAsk ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>Free follow-up pending</b> · no Stars charged yet</div> : hasActiveDirectAccessWindow ? <div className="shrink-0 border-b border-atseen-blue/15 bg-atseen-blue/[0.045] px-4 py-2 text-center text-[10px] text-atseen-blue"><b>✦ Direct Access</b> · ⏳ {directAccessTimeLabel} · {directAccessWindow.fanMessagesUsed}/{directAccessWindow.fanMessageLimit} used · {directAccessWindow.settlementStatus === "HELD" ? "Pending" : directAccessWindow.settlementStatus === "INCLUDED" ? "Premium" : "Answered"}</div> : creatorCanAnswerClosedPaidWindow ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>3/3 fan messages used</b> · You can still answer · ⏳ {directAccessTimeLabel}</div> : fanCanOpenNewWindow ? <div className="shrink-0 border-b border-atseen-blue/20 bg-atseen-blue/[0.04] px-4 py-2.5 text-center"><button className="rounded-full border border-atseen-blue/45 px-4 py-1.5 text-[11px] font-black text-atseen-blue transition hover:bg-atseen-blue/10 disabled:opacity-50" disabled={directAccessBusy} onClick={openDirectAccess} type="button">{directAccessBusy ? "Opening…" : `Open new Direct Access · ✦${selectedDirectAccessOfferQuery.data.priceStars}`}</button><p className="mt-1 text-[9px] text-atseen-muted">Continue in this conversation with 3 new messages</p></div> : directAccessEffectivelyClosed ? <div className="shrink-0 border-b border-atseen-line/70 px-4 py-2 text-center text-[10px] text-atseen-muted"><b>✦ Direct Access ended</b> · History remains readable</div> : selectedDirectAccessOfferQuery.data?.enabled ? <div className="shrink-0 border-b border-atseen-line/60 px-4 py-2.5 text-center"><button className="rounded-full border border-atseen-blue/45 bg-atseen-blue/[0.035] px-4 py-1.5 text-[11px] font-bold text-atseen-blue transition hover:bg-atseen-blue/10 disabled:opacity-50" disabled={directAccessBusy} onClick={openDirectAccess} type="button">{directAccessBusy ? "Opening…" : `Direct Access · ✦${selectedDirectAccessOfferQuery.data.priceStars}`}</button><p className="mt-1 text-[9px] text-atseen-muted">Guaranteed within 48 hours or fully refunded</p></div> : null}
           {selected.type !== "group" && messagesQuery.data?.requestReceived ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-2 text-center text-[11px] font-semibold text-atseen-warning">They won’t know you’ve seen it until you accept.</div> : null}
-          <section className="atseen-hide-scrollbar relative z-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-3 py-4 sm:px-8 sm:py-6" onLoadCapture={handleThreadMediaLoad} onScroll={handleThreadScroll} ref={threadRef}>
+          <section className="atseen-hide-scrollbar relative z-0 min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,rgba(94,155,255,0.07),transparent_36%)] px-3 py-4 sm:px-8 sm:py-6" onLoadCapture={handleThreadMediaLoad} ref={threadRef}>
             {selected.type !== "group" && (participant?.statusLine || participant?.personalLine) ? <div className="mx-auto mb-7 max-w-sm px-5 py-1 text-center"><span className="inline-flex items-center gap-1.5 rounded-full border border-atseen-blue/35 bg-atseen-blue/[0.035] px-3 py-1 text-[10px] font-black text-atseen-blue"><FiEye className="text-[11px]" />{participant.statusLine || "At seen"}</span>{participant.personalLine ? <p className="mt-2 line-clamp-2 text-xs italic leading-5 text-white/80">“{participant.personalLine}”</p> : null}<p className="mt-0.5 text-[10px] text-atseen-muted">{liveReplyLabel}</p></div> : null}
             {viewerIsDirectAccessCreator && directAccessWindow?.settlementStatus === "HELD" ? <div className="mx-auto mb-4 max-w-sm rounded-2xl border border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-3 text-center"><p className="text-xs font-black text-atseen-warning">Answer honestly · earn ${Number(directAccessWindow.creatorNetUsd || 0).toFixed(2)}</p><p className="mt-1 text-[10px] leading-4 text-atseen-muted">Your first reply completes this paid request and releases your net earnings.</p></div> : null}
-            <div className={`pointer-events-none sticky top-2 z-30 mx-auto -mb-7 flex h-7 w-fit items-center rounded-full border border-atseen-line bg-atseen-bg-2/95 px-3 text-[10px] font-bold text-atseen-muted shadow-lg backdrop-blur transition-all duration-200 ${scrollDate.visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>{scrollDate.label}</div>
             {messagesQuery.data?.pageInfo?.hasMore ? <div className="mb-4 text-center"><button className="inline-flex items-center gap-2 rounded-full border border-atseen-line px-4 py-2 text-xs font-bold text-atseen-muted hover:border-atseen-blue/40 hover:text-white disabled:opacity-50" disabled={loadingOlder} onClick={loadOlder} type="button"><FiRefreshCw className={loadingOlder ? "animate-spin" : ""} />{loadingOlder ? "Loading…" : "Load older messages"}</button></div> : null}
             <p className="mx-auto mb-7 max-w-sm text-center text-[11px] leading-5 text-atseen-dim">Text messages are private between you and this {participant?.role === "creator" ? "creator" : "fan"}.</p>
             {messagesQuery.isLoading ? <p className="text-center text-sm text-atseen-muted">Loading messages…</p> : null}
@@ -2076,16 +2073,18 @@ export default function MessagesPage() {
               const mine = message.senderId === myId;
               const dateLabel = chatDateLabel(message.createdAt);
               const startsDay = index === 0 || chatDateKey(messages[index - 1].createdAt) !== chatDateKey(message.createdAt);
+              const groupedWithPrevious = !startsDay && messagesAreGrouped(messages[index - 1], message);
+              const groupedWithNext = messagesAreGrouped(message, messages[index + 1]);
               const showReadAvatar = mine && message.id === lastReadOutgoingMessageId;
               const reactions = message.reactions || [];
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
               const canShareQuestionReply = Boolean(!mine && message.storyReply?.questionPrompt && message.body && !message.id.startsWith("pending:"));
               return <Fragment key={message.id}>
-                {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
-                <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
+                {startsDay ? <div className="sticky top-2 z-20 my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/95 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
+                <div className={`group flex rounded-2xl transition ${groupedWithNext ? "mb-0.5" : "mb-2"} ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
                 <div className={`relative flex max-w-[86%] flex-col sm:max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
-                  <div className={`min-w-[112px] touch-manipulation select-none rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} onPointerCancel={cancelReactionHold} onPointerDown={(event) => beginReactionHold(event, message)} onPointerMove={moveReactionHold} onPointerUp={(event) => endReactionHold(event, message)} title="Double-tap to react with ❤️; hold for more reactions">
-                    {selected.type === "group" && !mine && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
+                  <div className={`min-w-[112px] touch-manipulation select-none rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? `${groupedWithPrevious ? "rounded-tr-md" : ""} ${groupedWithNext ? "rounded-br-md" : "rounded-br-[19px]"} bg-atseen-blue font-medium text-atseen-bg` : `${groupedWithPrevious ? "rounded-tl-md" : ""} ${groupedWithNext ? "rounded-bl-md" : "rounded-bl-[19px]"} border border-atseen-line bg-atseen-surface-2 text-atseen-text`}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} onPointerCancel={cancelReactionHold} onPointerDown={(event) => beginReactionHold(event, message)} onPointerMove={moveReactionHold} onPointerUp={(event) => endReactionHold(event, message)} title="Double-tap to react with ❤️; hold for more reactions">
+                    {selected.type === "group" && !mine && !groupedWithPrevious && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
                     {message.forwarded ? <p className={`mb-1 text-[9px] italic ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>↪ Forwarded</p> : null}
@@ -2093,7 +2092,8 @@ export default function MessagesPage() {
                     {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>Free follow-up</p> : null}
                     {message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><div className="mx-auto grid h-24 w-24 place-items-center overflow-hidden"><img alt={message.gift.name} className="h-full w-full object-contain" src={message.gift.imageUrl} style={{ transform: `translate(${message.gift.imagePositionX || 0}%, ${message.gift.imagePositionY || 0}%) scale(${(message.gift.displayScale || 100) / 100})` }} /></div><p className="mt-1 font-black">{mine ? "You sent" : "You received"} {message.gift.name}</p><p className={`text-xs font-black ${mine ? "text-atseen-bg/75" : "text-atseen-warning"}`}><img alt="coins" className="mr-1 inline-block h-3.5 w-3.5 object-contain align-[-2px]" src="/brand/goldcoin.png" />{Number(message.gift.stars).toLocaleString()}</p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
-                      <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : selected.type !== "group" && mine && !message.readAt ? " · Sent" : ""}</span>
+                      <span>{chatTimeLabel(message.createdAt, chatLanguage)}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : ""}</span>
+                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some((receipt) => receipt.userId !== myId) ? "Read" : "Sent" : message.readAt ? "Read" : "Sent"} className="font-black">{selected.type === "group" ? (message.readBy || []).some((receipt) => receipt.userId !== myId) ? "✓✓" : "✓" : message.readAt ? "✓✓" : "✓"}</span> : null}
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}
                     </p>
                   </div>
@@ -2145,7 +2145,7 @@ export default function MessagesPage() {
                       });
                       setMessageMenu((current) => current === message.id ? null : message.id);
                     }} title="More" type="button"><FiMoreVertical /></button>
-                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "left-full" : "right-full"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}</div> : null}
+                    {reactionFor === message.id ? <div className={`absolute bottom-8 z-20 flex gap-1 rounded-full border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl ${mine ? "right-0" : "left-0"}`} data-chat-popover>{MESSAGE_REACTIONS.map((emoji) => <button className="grid h-8 w-8 place-items-center rounded-full text-lg transition hover:scale-110 hover:bg-white/10" key={emoji} onClick={() => reactToMessage(message, emoji)} type="button">{emoji}</button>)}<button aria-label="More message actions" className="grid h-8 w-8 place-items-center rounded-full border border-white/10 text-lg font-medium text-atseen-muted hover:bg-white/10 hover:text-white" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setReactionFor(null); setMessageMenuPosition({ left: Math.max(8, rect.right - 176), top: Math.min(window.innerHeight - 268, rect.bottom + 8) }); setMessageMenu(message.id); }} title="More" type="button">+</button></div> : null}
                     {messageMenu === message.id ? createPortal(<div className="fixed z-[240] w-44 overflow-hidden rounded-xl border border-atseen-line bg-atseen-bg-2 p-1 shadow-2xl" data-chat-popover style={messageMenuPosition || undefined}>
                       <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => { setMessageMenu(null); setReactionFor(null); setReplyTo(message); }} type="button"><FiCornerUpLeft /> Reply</button>
                       {message.body && !message.deletedAt ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-white/5" onClick={() => copyMessage(message)} type="button"><FiCopy /> Copy</button> : null}
