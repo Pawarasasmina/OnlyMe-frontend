@@ -1219,6 +1219,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       </div> : null}
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       {activeChapter < 0 ? <PreviewComment comment={item.previewComment} /> : null}
+      {activeChapter < 0 && item.moreFrom ? <Link className="seen-more-from-paid" to={`/seen/${encodeURIComponent(item.moreFrom.id)}`}><span>More from {item.creator?.name?.split(" ")?.[0] || item.creator?.username || "creator"}</span><b>{item.moreFrom.title}</b><strong>✦{Number(item.moreFrom.priceStars || 0).toLocaleString()} ›</strong></Link> : null}
       <EngagementBar commentsOpen={commentsOpen} isOwn={isOwn} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}

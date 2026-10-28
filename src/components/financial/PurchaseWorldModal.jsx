@@ -13,14 +13,15 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const paidSeen = publication?.kind === "SEEN";
   const experience = publication?.kind === "EXPERIENCE";
-  const noun = experience ? "Experience" : "World";
+  const noun = paidSeen ? "Seen" : experience ? "Experience" : "World";
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet), enabled: open, retry: false });
 
   useEffect(() => {
-    if (open && !key) setKey(createIdempotencyKey(experience ? "experience-purchase" : "world-purchase"));
+    if (open && !key) setKey(createIdempotencyKey(paidSeen ? "seen-purchase" : experience ? "experience-purchase" : "world-purchase"));
     if (!open) { setKey(""); setAccepted(false); setError(""); }
-  }, [experience, key, open]);
+  }, [experience, key, open, paidSeen]);
 
   const confirmPurchase = async () => {
     setBusy(true); setError("");

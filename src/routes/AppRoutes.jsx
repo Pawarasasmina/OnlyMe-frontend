@@ -64,7 +64,6 @@ const WalletPage = lazyPage("../pages/social/WalletPage");
 const WalletLedgerPage = lazyPage("../pages/social/WalletLedgerPage");
 const WithdrawPage = lazyPage("../pages/social/WithdrawPage");
 const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
-const MyExperiencesPage = lazyPage("../pages/social/MyExperiencesPage");
 const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
@@ -186,8 +185,8 @@ function AppRoutes() {
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
-          <Route path="/experiences" element={<MyExperiencesPage />} />
-          <Route path="/profile/:username/experiences" element={<MyExperiencesPage />} />
+          <Route path="/experiences" element={<Navigate replace to="/profile" />} />
+          <Route path="/profile/:username/experiences" element={<Navigate replace to="/profile" />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
           </Route>
@@ -202,8 +201,8 @@ function AppRoutes() {
             <Route path="/grow/fan-preview" element={<GrowFanPreviewPage />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
-            <Route path="/create/experience" element={<WorldComposerPage experience />} />
-            <Route path="/studio/experiences/:id/edit" element={<WorldComposerPage experience />} />
+            <Route path="/create/experience" element={<Navigate replace to="/create/seen" />} />
+            <Route path="/studio/experiences/:id/edit" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />

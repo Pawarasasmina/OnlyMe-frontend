@@ -38,7 +38,7 @@ import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import { resolveMediaUrl } from "../../utils/media";
 import { useAuth } from "../../hooks/useAuth";
 
-const empty = { allowDownload: false, attachedEntities: [], entityRefs: [], experienceLocation: "", kind: "SEEN", taggedPeople: [], title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
+const empty = { allowDownload: false, attachedEntities: [], entityRefs: [], experienceLocation: "", kind: "SEEN", pricing: { mode: "FREE", starsAmount: null, presetId: null }, taggedPeople: [], title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
 const fallbackCategories = ["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"];
 const audienceOptions = [
   { icon: FiGlobe, label: "Everyone", value: "PUBLIC" },
@@ -2437,6 +2437,7 @@ export default function SeenComposerPage() {
       ? "/profile"
       : "/profile";
   const replyToSeenId = id ? "" : searchParams.get("replyToSeenId") || "";
+  const requestedSeenType = id ? "" : searchParams.get("type") || "";
   const coverInput = useRef(null);
   const busy = useRef(false);
   const dirty = useRef(false);
@@ -2448,6 +2449,9 @@ export default function SeenComposerPage() {
   const initialChapterStarted = useRef(false);
   const [p, setP] = useState(() => ({
     ...empty,
+    pricing: requestedSeenType === "paid"
+      ? { mode: "ONE_TIME", starsAmount: 190, presetId: "paid-seen" }
+      : empty.pricing,
     replyToSeen: replyToSeenId || null,
   }));
   const [replySeen, setReplySeen] = useState(null);
@@ -2524,6 +2528,7 @@ export default function SeenComposerPage() {
       series: publication?.series || null,
       seriesId: publication?.seriesId || publication?.series?.id || null,
       visibility: publication?.visibility || "PUBLIC",
+      pricing: publication?.pricing || empty.pricing,
     };
     if (preserveLocalChanges) {
       setP((current) => {
@@ -2537,6 +2542,7 @@ export default function SeenComposerPage() {
           series: current.series,
           seriesId: current.seriesId,
           visibility: current.visibility,
+          pricing: current.pricing,
           allowDownload: current.allowDownload,
           experienceLocation: current.experienceLocation,
           taggedPeople: current.taggedPeople,
@@ -2648,6 +2654,7 @@ export default function SeenComposerPage() {
       category: p.category,
       seriesId: p.seriesId || p.series?.id || null,
       visibility: p.visibility || "PUBLIC",
+      pricing: p.pricing || empty.pricing,
       allowDownload: Boolean(p.allowDownload),
       experienceLocation: p.experienceLocation || "",
       taggedPeople: p.taggedPeople || [],
@@ -2685,6 +2692,7 @@ export default function SeenComposerPage() {
         category: p.category,
         seriesId: p.seriesId || p.series?.id || null,
         visibility: p.visibility || "PUBLIC",
+        pricing: p.pricing || empty.pricing,
         allowDownload: Boolean(p.allowDownload),
         experienceLocation: p.experienceLocation || "",
         taggedPeople: p.taggedPeople || [],
@@ -2699,7 +2707,7 @@ export default function SeenComposerPage() {
         await api.updateChapter(publication.id, chapter.stableChapterId, {
           title: (chapter.title || "").trim() || "Chapter name",
           blocks: chapter.blocks || [],
-          isPreview: true,
+          isPreview: p.pricing?.mode !== "ONE_TIME" || (p.chapters || []).findIndex((item) => item.stableChapterId === chapter.stableChapterId) === 0,
           releaseMode: chapter.releaseMode || "IMMEDIATE",
           statusVersion: publication.statusVersion,
         });
@@ -2733,7 +2741,7 @@ export default function SeenComposerPage() {
     window.clearTimeout(publicationAutoSaveTimer.current);
     publicationAutoSaveTimer.current = window.setTimeout(() => void save(), 850);
     return () => window.clearTimeout(publicationAutoSaveTimer.current);
-  }, [aboutStep, activeChapterId, p.allowDownload, p.category, p.description, p.experienceLocation, p.seriesId, p.summary, p.taggedPeople, p.title, p.visibility]);
+  }, [aboutStep, activeChapterId, p.allowDownload, p.category, p.description, p.experienceLocation, p.pricing, p.seriesId, p.summary, p.taggedPeople, p.title, p.visibility]);
 
   const cancelCreation = async () => {
     if (uploading || submitting || canceling) return;
@@ -2839,7 +2847,7 @@ export default function SeenComposerPage() {
         await readVideoDuration(url);
         setVideoToTrim((current) => {
           if (current?.url) URL.revokeObjectURL(current.url);
-          return { file, limitSeconds: pendingVideoLimit.current, url };
+          return { file, limitSeconds: pendingVideoLimit.current, target: "cover", url };
         });
       } catch (durationError) {
         URL.revokeObjectURL(url);
@@ -2865,8 +2873,9 @@ export default function SeenComposerPage() {
 
   const addChapter = async () => {
     if (chapterAdding) return;
-    if (p.chapters.length >= 5) {
-      setError("Maximum five chapters.");
+    const maxChapters = p.pricing?.mode === "ONE_TIME" ? 10 : 5;
+    if (p.chapters.length >= maxChapters) {
+      setError(`Maximum ${maxChapters} chapters.`);
       return;
     }
     const creatingDraft = !p.id;
@@ -2881,7 +2890,7 @@ export default function SeenComposerPage() {
       const response = await api.addChapter(publication.id, {
         title,
         blocks: [],
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || p.chapters.length === 0,
         releaseMode: "IMMEDIATE",
         statusVersion: publication.statusVersion,
       });
@@ -2922,6 +2931,7 @@ export default function SeenComposerPage() {
         category: p.category,
         seriesId: p.seriesId || p.series?.id || null,
         visibility: p.visibility || "PUBLIC",
+        pricing: p.pricing || empty.pricing,
         allowDownload: Boolean(p.allowDownload),
         experienceLocation: p.experienceLocation || "",
         taggedPeople: p.taggedPeople || [],
@@ -2999,7 +3009,7 @@ export default function SeenComposerPage() {
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
         blocks: chapterBlocksWithStory(activeChapter, chapterStory),
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || p.chapters.findIndex((item) => item.stableChapterId === activeChapter.stableChapterId) === 0,
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3031,7 +3041,7 @@ export default function SeenComposerPage() {
         await api.updateChapter(p.id, activeChapter.stableChapterId, {
           title: activeChapter.title?.trim() || "Chapter name",
           blocks: chapterBlocksWithStory(activeChapter, chapterStory),
-          isPreview: true,
+          isPreview: p.pricing?.mode !== "ONE_TIME" || p.chapters.findIndex((item) => item.stableChapterId === activeChapter.stableChapterId) === 0,
           releaseMode: activeChapter.releaseMode || "IMMEDIATE",
           statusVersion: p.statusVersion,
         });
@@ -3188,7 +3198,24 @@ export default function SeenComposerPage() {
     else await uploadChapterMedia("IMAGE", file);
   };
 
-  const requestChapterMedia = (mediaType, file, metadata = {}) => {
+  const requestChapterMedia = async (mediaType, file, metadata = {}) => {
+    if (mediaType === "VIDEO") {
+      const limitSeconds = p.pricing?.mode === "ONE_TIME" ? 120 : 60;
+      const url = URL.createObjectURL(file);
+      try {
+        const duration = await readVideoDuration(url);
+        if (duration > limitSeconds + 0.1) {
+          setVideoToTrim({ file, limitSeconds, metadata, target: "chapter", url });
+          return;
+        }
+      } catch (durationError) {
+        setError(durationError.message);
+        URL.revokeObjectURL(url);
+        return;
+      }
+      URL.revokeObjectURL(url);
+      return uploadChapterMedia(mediaType, file, metadata);
+    }
     if (mediaType !== "IMAGE") return uploadChapterMedia(mediaType, file, metadata);
     setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
   };
@@ -3461,6 +3488,8 @@ export default function SeenComposerPage() {
   const AudienceIcon = selectedAudience.icon;
   const creatorName = user?.name || user?.displayName || user?.username || "Creator";
   const creatorAvatar = resolveMediaUrl(user?.avatar || user?.avatarUrl || user?.profilePhoto || "");
+  const paidSeen = p.pricing?.mode === "ONE_TIME";
+  const maxChapters = paidSeen ? 10 : 5;
   const copyShareLink = async () => {
     if (!linkOnlyShare?.url) return;
     try {
@@ -3502,7 +3531,7 @@ export default function SeenComposerPage() {
           <button aria-label="Back" className="seen-compose-back" onClick={() => nav(backTarget)} type="button"><FiChevronLeft /></button>
           <div>
             <h1>New Seen</h1>
-            <p>A short story told in up to 5 chapters</p>
+            <p>{paidSeen ? "A paid Seen with a free first chapter" : "A free story told in up to 5 chapters"}</p>
           </div>
         </header>
 
@@ -3521,7 +3550,7 @@ export default function SeenComposerPage() {
               </button>
               <div className="seen-about-preview-copy">
                 <strong className={p.title.trim() ? "" : "is-placeholder"}>{p.title.trim() || "Your title"}</strong>
-                <small>up to 5 chapters</small>
+                <small>up to {maxChapters} chapters{paidSeen ? ` · ✦${p.pricing?.starsAmount || 190}` : ""}</small>
                 {description ? <p>{description}</p> : null}
               </div>
             </div>
@@ -3537,6 +3566,11 @@ export default function SeenComposerPage() {
             <span className="sr-only">Seen description</span>
             <textarea maxLength={220} onChange={(event) => change({ description: event.target.value, summary: event.target.value })} placeholder="What’s it about? A line or two — optional" rows={3} value={description} />
           </label>
+          <section className="seen-paid-type-picker" aria-label="Seen type">
+            <button className={!paidSeen ? "is-active" : ""} onClick={() => change({ pricing: { mode: "FREE", starsAmount: null, presetId: null } })} type="button"><b>Free</b><small>Up to 5 chapters · all open</small></button>
+            <button className={paidSeen ? "is-active" : ""} onClick={() => change({ pricing: { mode: "ONE_TIME", starsAmount: Number(p.pricing?.starsAmount) || 190, presetId: "paid-seen" } })} type="button"><b>Paid</b><small>Up to 10 · chapter 1 is free</small></button>
+          </section>
+          {paidSeen ? <label className="seen-paid-price"><span>One-time price</span><span><b>✦</b><input aria-label="Paid Seen price" min="10" onChange={(event) => change({ pricing: { mode: "ONE_TIME", starsAmount: Math.max(10, Math.round(Number(event.target.value) || 10)), presetId: "paid-seen" } })} type="number" value={p.pricing?.starsAmount || 190} /></span></label> : null}
           {replyToSeenId ? <p className="seen-compose-reply-context">Replying to {replySeen?.title ? `“${replySeen.title}”` : "this Seen"}</p> : null}
           <button className="seen-about-continue" disabled={!p.title.trim() || Boolean(uploading || continuingToChapter)} onClick={continueToFirstChapter} type="button">{continuingToChapter ? "Opening chapter..." : "Continue"}</button>
         </div>
@@ -3549,6 +3583,7 @@ export default function SeenComposerPage() {
   if (activeChapter) {
     return (
       <>
+        {videoToTrim?.target === "chapter" ? <VideoTrimSheet file={videoToTrim} limitSeconds={videoToTrim.limitSeconds} onCancel={() => setVideoToTrim((current) => { if (current?.url) URL.revokeObjectURL(current.url); return null; })} onUpload={(file) => { const metadata = videoToTrim.metadata || {}; setVideoToTrim(null); return uploadChapterMedia("VIDEO", file, metadata); }} /> : null}
         {cropTarget ? (
           <ProfileImageCropper
             kind="seen"
@@ -3563,10 +3598,10 @@ export default function SeenComposerPage() {
           chapter={activeChapter}
           error={error}
           flow={{
-            canAdd: p.chapters.length < 5,
+            canAdd: p.chapters.length < maxChapters,
             index: Math.max(0, p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId)),
-            max: 5,
-            nextLabel: p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId) < p.chapters.length - 1 ? "Next" : p.chapters.length < 5 ? "New chapter" : "Review",
+            max: maxChapters,
+            nextLabel: p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId) < p.chapters.length - 1 ? "Next" : p.chapters.length < maxChapters ? "New chapter" : "Review",
             onAdd: nextSeenChapter,
             onBack: previousSeenChapter,
             onFinish: previewSeen,
@@ -3683,7 +3718,7 @@ export default function SeenComposerPage() {
                 return null;
               })
             }
-            onUpload={(file) => uploadCoverFile(file, "VIDEO")}
+            onUpload={(file) => videoToTrim.target === "chapter" ? uploadChapterMedia("VIDEO", file, videoToTrim.metadata || {}) : uploadCoverFile(file, "VIDEO")}
           />
         ) : null}
 
@@ -3697,7 +3732,7 @@ export default function SeenComposerPage() {
         <div className="seen-compose-section-title">
           <span>CHAPTERS</span>
           <small>
-            {p.chapters.length}/5 {"\u00b7"} tap a page to edit
+            {p.chapters.length}/{maxChapters} {"\u00b7"} tap a page to edit
           </small>
         </div>
 
@@ -3708,6 +3743,7 @@ export default function SeenComposerPage() {
               key={chapter.stableChapterId || index}
             >
               <span>{String(index + 1).padStart(2, "0")}</span>
+              {paidSeen && index > 0 ? <span className="seen-compose-chapter-lock">🔒</span> : null}
               <button
                 aria-label={`Remove chapter ${index + 1}`}
                 onClick={() => removeChapter(chapter)}
@@ -3721,7 +3757,7 @@ export default function SeenComposerPage() {
               </button>
             </div>
           ))}
-          {p.chapters.length < 5 ? (
+          {p.chapters.length < maxChapters ? (
             <button
               className="seen-compose-add-chapter is-page"
               disabled={chapterAdding}

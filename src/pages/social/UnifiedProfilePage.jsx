@@ -38,7 +38,6 @@ import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
 import ProfileMediaSection from "../../components/profile/ProfileMediaSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
-import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryHighlights from "../../components/profile/StoryHighlights";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
@@ -254,9 +253,9 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
   const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
+  const worldTarget = worldCreateTarget(planets);
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
-  const worldTarget = worldCreateTarget(planets);
   const openCreate = () => {
     if (!viewerCapabilities.canCreate) return;
     setCreateOpen(true);
@@ -964,13 +963,11 @@ function ProfileNotes({ isOwner, posts = [] }) {
 
 function ProfileBody({ data, setConnectionsType }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   const [activeSeriesId, setActiveSeriesId] = useState("");
   const [activeSeenListId, setActiveSeenListId] = useState("");
-  const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
   const [profileStoryViewer, setProfileStoryViewer] = useState(null);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
@@ -992,8 +989,6 @@ function ProfileBody({ data, setConnectionsType }) {
       setProfileStoryViewer({ index: unseenIndex >= 0 ? unseenIndex : 0, stories });
     });
   };
-  const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
-  const canPostNote = canCreateFeedPost(user);
   useEffect(() => {
     setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   }, [requestedTab]);
@@ -1069,7 +1064,6 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} viewerId={user?.id || user?._id} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
-      <ProfileExperiences creatorUsername={profile.username} experiences={data.experiences || []} onCreate={() => setExperienceCreateOpen(true)} owner={isOwner} />
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel">
         {tab === "seens" ? (
@@ -1087,20 +1081,6 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <ProfileNotes isOwner={isOwner} posts={data.wallPosts || []} />
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
-      {isOwner ? <FanCreateSheet
-        canCreateSeen={viewerCapabilities.canCreate}
-        canCreateStoryNow={canCreateStoryNow}
-        canCreateWorld={viewerCapabilities.canAccessStudio}
-        canPostNote={canPostNote}
-        isOpen={experienceCreateOpen}
-        onClose={() => setExperienceCreateOpen(false)}
-        onNote={() => {
-          setExperienceCreateOpen(false);
-          navigate(`/wall?compose=note&composeRequest=${Date.now()}`);
-        }}
-        onStory={() => { setExperienceCreateOpen(false); setExperienceStoryOpen(true); }}
-        worldTarget={worldCreateTarget(data.planets || [])}
-      /> : null}
       <StoryCreator isOpen={experienceStoryOpen} onClose={() => setExperienceStoryOpen(false)} />
       <StoryViewer initialIndex={profileStoryViewer?.index || 0} isOpen={Boolean(profileStoryViewer?.stories?.length)} onClose={() => setProfileStoryViewer(null)} stories={profileStoryViewer?.stories || []} />
     </div>

@@ -32,12 +32,14 @@ import {
   FiSearch,
   FiSquare,
   FiUpload,
+  FiUsers,
   FiUserPlus,
   FiTrash2,
   FiX,
   FiZap,
 } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
+import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
@@ -161,7 +163,7 @@ function includedWorldExperiences(publication = {}) {
   if (hydrated.length) return hydrated;
   return (publication.includedExperienceIds || [])
     .filter((item) => item && typeof item !== "object")
-    .map((id, index) => ({ id: String(id), title: `Included Experience ${index + 1}`, included: true }));
+    .map((id, index) => ({ id: String(id), title: `Paid Seen ${index + 1}`, included: true }));
 }
 
 function privateStoryItems(chapters) {
@@ -221,14 +223,14 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
   const memberState = canViewMemberContent || activeMembership || publication?.viewer?.isMember;
   const storiesUnlocked = owner || memberState;
   const benefits = [
-    { icon: <FiZap />, text: `The whole of ${firstName}'s world opens to you - every corner`, show: hasIncludedExperiences },
-    { icon: <span>✦</span>, text: "Private experiences money can't buy - members only", show: hasIncludedExperiences },
+    { icon: <FiZap />, text: `Every Paid Seen in ${firstName}'s World`, show: hasIncludedExperiences },
+    { icon: <FiUsers />, text: "Your member number appears beside your name", show: true },
     { icon: <FiCheck />, text: `Stories ${firstName} does not post publicly`, show: stories.length > 0 },
-    { icon: <span className="world-preview-ring-icon" />, text: `One personal reply a month${publication?.directAccessIncluded ? " - included; more, first in line" : ""}`, show: publication?.directAccessIncluded },
+    { icon: <span className="world-preview-ring-icon" />, text: "Answers first · one Direct Access reply included each month", show: publication?.directAccessIncluded },
   ].filter((item) => item.show);
   const valueRows = [
     { title: "Your price is locked", detail: "while your membership remains active", show: publication?.memberPriceLocked !== false },
-    { title: "Everything future - already yours", detail: "new experiences added to this World are included automatically", show: true },
+    { title: "Everything future - already yours", detail: "new Paid Seens added to this World are included automatically", show: true },
     { title: `You become #${nextMemberNumber.toLocaleString()}`, detail: `first ${foundingCapacity.toLocaleString()} are the founding circle`, show: Boolean(foundingCapacity && nextMemberNumber <= foundingCapacity) },
   ].filter((item) => item.show);
 
@@ -273,17 +275,17 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
 
       <section className="world-preview-inside">
         <h2>What&apos;s inside</h2>
-        <div className="world-experience-preview-list">
+        <div className="world-experience-preview-list is-paid-seen-grid">
           {includedExperiences.length ? includedExperiences.map((item, index) => (
             <button className="world-experience-preview-card" key={item.id || item._id || `${item.title}-${index}`} onClick={memberState ? onOpenWorld : onJoin} type="button">
-              <b className="world-chapter-number">{index + 1}</b>
+              {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt="" className="world-paid-seen-cover" media={item.coverMedia} /> : <b className="world-chapter-number">{String(index + 1).padStart(2, "0")}</b>}
               <span className="world-chapter-copy">
-                <strong>{item.title || `Experience ${index + 1}`}</strong>
+                <strong>{item.title || `Paid Seen ${index + 1}`}</strong>
                 {item.summary ? <small>{item.summary}</small> : null}
               </span>
               {memberState ? <em className="world-chapter-action">Open ›</em> : <FiLock className="world-chapter-lock" />}
             </button>
-          )) : <p className="world-preview-inside-empty">No experiences have been added yet.</p>}
+          )) : <p className="world-preview-inside-empty">No Paid Seens have been added yet.</p>}
         </div>
       </section>
 
@@ -388,7 +390,7 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
             <span className="world-member-access-icon is-planet">{worldIcon}</span>
             <span className="world-member-access-copy">
               <b>&ldquo;{publication.title}&rdquo;</b>
-              <small>All {experienceCount.toLocaleString()} Experience{experienceCount === 1 ? "" : "s"} unlocked — and every new one lands first</small>
+              <small>All {experienceCount.toLocaleString()} Paid Seen{experienceCount === 1 ? "" : "s"} unlocked — and every new one lands first</small>
             </span>
             <span className="world-member-open">OPEN &gt;</span>
           </button>
@@ -689,9 +691,9 @@ function IncludeExperienceSheet({ busyId, experiences = [], included = [], onClo
         <h2 id="world-include-title">Include in your World</h2>
         <button className="world-include-create" onClick={onCreate} type="button">
           <span><FiPlus /></span>
-          <b>Create a new experience</b>
+          <b>Create a new Paid Seen</b>
         </button>
-        <p>Members get included experiences with their subscription.</p>
+        <p>Members get included Paid Seens with their subscription.</p>
         <div className="world-include-list">
           {experiences.length ? experiences.map((item) => {
           const itemId = String(item.id || item._id);
@@ -700,13 +702,13 @@ function IncludeExperienceSheet({ busyId, experiences = [], included = [], onClo
             <button className={selected ? "is-selected" : ""} disabled={busyId === itemId} key={itemId} onClick={() => onToggle(itemId, selected)} type="button">
               {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <span>{PLANET}</span>}
               <span className="world-include-copy">
-                <b>{item.title || "Untitled experience"}</b>
+                <b>{item.title || "Untitled Paid Seen"}</b>
                 <small className="world-include-meta-clean">{item.chapterCount || item.chapters?.length || 0} chapters{item.pricing?.starsAmount ? <>{" \u00b7 "}{STAR}{item.pricing.starsAmount}</> : ""}</small>
               </span>
               {selected ? <i aria-label="Included"><FiCheck /></i> : null}
             </button>
           );
-          }) : <p className="world-include-empty">No eligible experiences yet.</p>}
+          }) : <p className="world-include-empty">No eligible Paid Seens yet.</p>}
         </div>
       </section>
     </BottomSheet>
@@ -1858,7 +1860,7 @@ export default function WorldReaderPage() {
   });
   const ownerExperiences = useQuery({
     queryKey: ["world-owner-experiences", publicationId],
-    queryFn: () => api.listMyPublications({ kind: "EXPERIENCE", limit: 30 }).then((response) => response.data.data.items || []),
+    queryFn: () => api.listMyPublications({ kind: "SEEN", limit: 50 }).then((response) => (response.data.data.items || []).filter((item) => item.pricing?.mode === "ONE_TIME")),
     enabled: Boolean(owner && publicationId && !experience && sheet === "include"),
     retry: false,
   });
@@ -2691,7 +2693,7 @@ export default function WorldReaderPage() {
                 </Link>
                 <button className={`world-settings-item ${includedExperiences.length ? "is-complete" : "is-add"}`} onClick={() => setSheet("include")} type="button">
                   <span className="world-settings-status">{includedExperiences.length ? <FiCheck /> : <FiPlus />}</span>
-                  <span className="world-settings-copy"><b>Experiences included</b><small>{includedExperiences.length ? `${includedExperiences.length} · included for members` : "add one — “included” sells the World"}</small></span>
+                  <span className="world-settings-copy"><b>Paid Seens included</b><small>{includedExperiences.length ? `${includedExperiences.length} · included for members` : "add one — included Paid Seens add value"}</small></span>
                   {!includedExperiences.length ? <FiChevronRight className="world-settings-row-chevron" /> : null}
                 </button>
                 <span className="world-settings-item is-complete">
@@ -2720,16 +2722,16 @@ export default function WorldReaderPage() {
 
         {!experience ? (
           <section className="world-prototype-inside">
-            <h2>Experiences inside {includedExperiences.length ? <span>{includedExperiences.length}</span> : null}</h2>
+            <h2>Paid Seens inside {includedExperiences.length ? <span>{includedExperiences.length}</span> : null}</h2>
             {includedExperiences.length ? includedExperiences.map((item) => (
-              <Link className="world-prototype-inside-row" key={item.id} to={`/experience/${item.id}?returnTo=${encodeURIComponent(`/world/${publicationId}`)}`}>
+              <Link className="world-prototype-inside-row" key={item.id} to={`/seen/${item.id}?returnTo=${encodeURIComponent(`/world/${publicationId}`)}`}>
                 <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : PLANET}</span>
                 <b>{item.title}</b>
                 <small className="world-prototype-inside-meta-clean">{item.chapterCount || 0} chapters{" \u00b7 "}included for members</small>
                 <FiChevronRight aria-hidden="true" />
               </Link>
-            )) : <p>Attach an experience — members get it with the subscription.</p>}
-            {editingWorld ? <button className="world-prototype-include-experience" onClick={() => setSheet("include")} type="button"><FiPlus /> Include an experience</button> : null}
+            )) : <p>Attach a Paid Seen — members get it with the subscription.</p>}
+            {editingWorld ? <button className="world-prototype-include-experience" onClick={() => setSheet("include")} type="button"><FiPlus /> Include a Paid Seen</button> : null}
           </section>
         ) : null}
 
@@ -2836,7 +2838,7 @@ export default function WorldReaderPage() {
       {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
       {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} error={accessLinkQuery.error?.response?.data?.message || (accessLinkQuery.isError ? "The access-link service could not be reached." : "")} loading={accessLinkQuery.isLoading || accessLinkQuery.isFetching} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast("Access link copied."); } catch { showToast("Access link could not be copied."); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} onRetry={() => accessLinkQuery.refetch()} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
-      {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate(`/create/experience?returnTo=${encodeURIComponent(`/world/${publicationId}?edit=1&worldPanel=include`)}`)} onToggle={toggleExperience} /> : null}
+      {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate(`/create/seen?returnTo=${encodeURIComponent(`/world/${publicationId}?edit=1&worldPanel=include`)}`)} onToggle={toggleExperience} /> : null}
       {sheet === "moderators" ? (
         <ModeratorsSheet
           addError={moderatorAdd.error?.response?.data?.message}

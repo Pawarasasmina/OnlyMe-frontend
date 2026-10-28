@@ -20,7 +20,7 @@ function CreateHubPage() {
   const capabilities = socialCapabilitiesFor(user);
   const publicationsQuery = useQuery({
     queryKey: ["creation-capacity"],
-    queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD,EXPERIENCE", limit: 50 })
+    queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD", limit: 50 })
       .then((response) => response.data.data.items || []),
     enabled: capabilities.isApprovedCreator,
   });
@@ -28,8 +28,7 @@ function CreateHubPage() {
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
   const cards = [
-    ...(capabilities.isApprovedCreator ? [{ title: "Premium Experience", text: "Multi-chapter journey · first chapter free · one-time unlock · create as many as you need", to: "/create/experience" }] : []),
-    { title: "Seen", text: "Free public publication with 1–3 chapters", to: "/create/seen" },
+    { title: "Seen", text: "Choose Free or Paid before creating · Paid Seens include a free first chapter", to: "/create/seen" },
     ...(capabilities.isApprovedCreator ? [{ title: "World", text: `Monthly subscription · private ecosystem · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 

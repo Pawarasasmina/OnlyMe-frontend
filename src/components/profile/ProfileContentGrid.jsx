@@ -488,7 +488,7 @@ function ProfileContentGrid({
   if (kind === "seens") {
     if (!effectiveContent.length && !series.length) return <ContentEmptyState compact message={owner ? "Publish a Seen to start sharing your stories and ideas." : "Published Seens will appear here when this creator shares one."} primaryAction={owner ? { label: "Create a Seen", to: "/create/seen" } : { label: "Explore Seens", to: "/seen" }} secondaryAction={{ label: "Discover people", to: "/discover" }} title={owner ? "Create your first Seen" : (emptyText || "No Seens yet")} variant="seen" />;
     const drafts = owner ? effectiveContent.filter((item) => item.status === "DRAFT") : [];
-    const publishedContent = effectiveContent.filter((item) => item.status !== "DRAFT");
+    const publishedContent = effectiveContent.filter((item) => item.status !== "DRAFT").sort((left, right) => Number(right.pricing?.mode === "ONE_TIME") - Number(left.pricing?.mode === "ONE_TIME"));
     const seriesGroups = new Map(series.map((item) => [String(item.id), { ...item, seens: [] }]));
     publishedContent.forEach((item) => {
       const id = seriesIdFor(item);
@@ -501,7 +501,7 @@ function ProfileContentGrid({
     const activeSeries = selectedSeriesId ? seriesGroups.get(String(selectedSeriesId)) : null;
     const items = activeSeries ? (seriesGroups.get(String(activeSeries.id))?.seens || []) : publishedContent.filter((item) => !seriesIdFor(item));
     const pinnedSeens = publishedContent.filter((item) => item.isPinned);
-    const featuredSeens = reposted ? publishedContent : pinnedSeens;
+    const featuredSeens = reposted ? publishedContent : [...publishedContent.filter((item) => item.pricing?.mode === "ONE_TIME"), ...pinnedSeens.filter((item) => item.pricing?.mode !== "ONE_TIME")];
     const openSeries = (seriesItem) => {
       const nextId = String(seriesItem.id);
       setLocalActiveSeriesId(nextId);
@@ -602,11 +602,12 @@ function ProfileContentGrid({
           })}
           {featuredSeens.map((item) => {
             const chapters = item.chapters?.length || 0;
+            const paid = item.pricing?.mode === "ONE_TIME";
             const tile = (
               <>
                 {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
-                <span className="profile-seen-badge">{reposted ? <><FiRepeat /> REPOST</> : "PINNED"}</span>
+                <span className="profile-seen-badge">{paid ? <>🔒 PAID · ✦{Number(item.pricing?.starsAmount || 0).toLocaleString()}</> : reposted ? <><FiRepeat /> REPOST</> : "PINNED"}</span>
                 <span className="profile-seen-copy">
                   <strong>{item.title}</strong>
                   <small>{chapters} {chapters === 1 ? "chapter" : "chapters"}</small>
@@ -628,7 +629,7 @@ function ProfileContentGrid({
             }
 
             return (
-              <button className="profile-seen-tile" key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
+              <button className={`profile-seen-tile ${paid ? "is-paid" : ""}`} key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
                 {tile}
               </button>
             );

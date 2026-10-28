@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
+import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
@@ -823,6 +824,7 @@ export default function SeenReaderPage() {
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [chapterListOpen, setChapterListOpen] = useState(false);
   const [chapterSheetPosition, setChapterSheetPosition] = useState(null);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const originRef = useRef(location.state?.seenOrigin || null);
 
   useEffect(() => {
@@ -1122,6 +1124,10 @@ export default function SeenReaderPage() {
   };
   const changeChapter = (nextIndex) => {
     const next = Math.min(Math.max(nextIndex, 0), Math.max(chapters.length - 1, 0));
+    if (chapters[next]?.locked) {
+      setPurchaseOpen(true);
+      return;
+    }
     setChapterIndex(next);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("chapter", String(next));
@@ -1287,6 +1293,7 @@ export default function SeenReaderPage() {
     </article>
 
     <footer className="seen-reader-footer">
+      {publication.pricing?.mode === "ONE_TIME" ? <button className="seen-paid-unlock-row" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> <b>✦ {Number(publication.pricing?.starsAmount || 0).toLocaleString()} · one-time</b></span><small>{Number(publication.ownerCount || 0).toLocaleString()} own it{publication.paymentAvailable ? ` · chapter 1 is free` : " · owned"}</small><strong>{publication.paymentAvailable ? "Unlock ›" : "Yours"}</strong></button> : null}
       {safeChapterIndex === chapters.length - 1 && nextSeen ? <button className="seen-reader-up-next" onClick={openNextSeen} type="button">
         {mediaUrl(nextSeen.coverMedia) ? <PublicationCoverMedia alt="" autoPlay loop media={nextSeen.coverMedia} /> : <span aria-hidden="true"><FiEye /></span>}
         <span><small>Up next from {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || "Next Seen"}</strong><em>{nextSeen.chapters?.length || 0} chapters</em></span>
@@ -1312,7 +1319,7 @@ export default function SeenReaderPage() {
           <button aria-label="Close chapter list" onClick={() => setChapterListOpen(false)} type="button"><FiX /></button>
         </header>
         <nav aria-label="Seen chapters">
-          {(chapters.length ? chapters : [{ title: publication.title }]).map((item, index) => <button aria-current={index === safeChapterIndex ? "page" : undefined} className={index === safeChapterIndex ? "is-active" : ""} key={item.stableChapterId || index} onClick={() => { changeChapter(index); setChapterListOpen(false); }} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title || `Chapter ${index + 1}`}</strong>{index === safeChapterIndex ? <small>Reading</small> : <FiChevronRight />}</button>)}
+          {(chapters.length ? chapters : [{ title: publication.title }]).map((item, index) => <button aria-current={index === safeChapterIndex ? "page" : undefined} className={`${index === safeChapterIndex ? "is-active" : ""} ${item.locked ? "is-locked" : ""}`} key={item.stableChapterId || index} onClick={() => { changeChapter(index); if (!item.locked) setChapterListOpen(false); }} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title || `Chapter ${index + 1}`}</strong>{item.locked ? <FiLock /> : index === safeChapterIndex ? <small>Reading</small> : <FiChevronRight />}</button>)}
         </nav>
         {isOwner && detail.mediaCandidates.length ? <button className="seen-chapter-list-media-action" disabled={addSeenMediaMutation.isPending} onClick={() => { setChapterListOpen(false); openMediaAdd(); }} type="button"><FiPlus /> Add Seen media to profile</button> : null}
       </section>
@@ -1326,5 +1333,6 @@ export default function SeenReaderPage() {
       onSubmit={(mediaIds) => addSeenMediaMutation.mutate(mediaIds)}
     />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
+    <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => publicationQuery.refetch()} publication={publication} />
   </section>;
 }
