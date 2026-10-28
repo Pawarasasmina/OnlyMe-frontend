@@ -13,6 +13,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { analyticsService } from "../../services/analyticsService";
 import { publicationService } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
+import { repostService } from "../../services/repostService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const reactionEmoji = {
@@ -88,7 +89,7 @@ function creatorFirstName(creator = {}) {
   return creatorName(creator).split(" ")[0] || "Creator";
 }
 
-function SeenEngagementBar({ engagement, mutations, onCommentToggle, onCopyLink, saved, commentsOpen }) {
+function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentToggle, onCopyLink, saved, commentsOpen }) {
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [reactionFilter, setReactionFilter] = useState("ALL");
   const reactionKeys = engagement.topReactions?.length
@@ -104,7 +105,7 @@ function SeenEngagementBar({ engagement, mutations, onCommentToggle, onCopyLink,
   <div className="seen-compact-engagement" aria-label="Seen engagement">
     <button aria-expanded={reactionsOpen} aria-label="Open reactions" className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
     <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
-    <button aria-label={engagement.viewerShared ? "Remove repost" : "Repost Seen"} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button>
+    {!isOwn ? <button aria-label={engagement.viewerShared ? "Remove repost" : "Repost Seen"} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button> : null}
     <span aria-label={`${formatCount(engagement.viewCount || 0)} views`}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
     <span className="seen-compact-spacer" />
     <button aria-label={saved ? "Remove Seen from Saved" : "Save Seen"} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
@@ -136,6 +137,11 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   const [reactionTarget, setReactionTarget] = useState(null);
   const [sheetPosition, setSheetPosition] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  const [reposted, setReposted] = useState({});
+  const repostMutation = useMutation({
+    mutationFn: (item) => repostService.toggle("cm", item.id, "SeenEngagement").then((response) => ({ item, ...response.data.data })),
+    onSuccess: ({ item, reposted: value }) => setReposted((current) => ({ ...current, [item.id]: value })),
+  });
   useEffect(() => {
     if (!isOpen) return undefined;
     const updatePosition = () => {
@@ -165,7 +171,7 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
       <div className="seen-comment-copy">
         <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || "Fan"}</Link> : <strong>{item.author?.name || "Fan"}</strong>}{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label="Voice comment" /> : null}
-        <span><button aria-label={`React to ${item.author?.name || "comment"}`} className={item.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(reactionTarget === item.id ? null : item.id)} type="button"><b aria-hidden="true">{icons}</b>{formatCount(item.reactionCount || 0)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}</span>
+        <span><button aria-label={`React to ${item.author?.name || "comment"}`} className={item.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(reactionTarget === item.id ? null : item.id)} type="button"><b aria-hidden="true">{icons}</b>{formatCount(item.reactionCount || 0)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
         {reactionTarget === item.id ? <div className="seen-sheet-comment-reactions">{Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} disabled={reactionPending} key={key} onClick={() => { onReact(item, item.viewerReaction === key ? "" : key); setReactionTarget(null); }} type="button">{icon}</button>)}</div> : null}
       </div>
     </article>;
@@ -764,7 +770,7 @@ function SeenOverview({
 
       <footer className="seen-detail-engagement">
         <div className="seen-detail-start-meta"><span>{detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</span><span>Tap to start ›</span></div>
-        <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={mutations} onCommentToggle={onCommentToggle} onCopyLink={onCopyLink} saved={saved} />
+        <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={detail.access === "OWNER"} mutations={mutations} onCommentToggle={onCommentToggle} onCopyLink={onCopyLink} saved={saved} />
       </footer>
     </div>
   </section>
@@ -1292,7 +1298,7 @@ export default function SeenReaderPage() {
         </div>
         <div className="seen-reader-progress-meta"><span>Chapter {safeChapterIndex + 1} of {chapters.length || 1}</span><button onClick={continueReader} type="button">{safeChapterIndex < chapters.length - 1 ? "Tap to continue ›" : "Complete"}</button></div>
       </div>
-      <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
+      <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={isOwner} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
       {notice ? <p className="seen-reader-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
     </footer>
     <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />

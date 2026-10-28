@@ -23,6 +23,7 @@ import { atseenCreators, atseenReportReasons } from "../../../data/atseenMockDat
 import { useAuth } from "../../../hooks/useAuth";
 import { analyticsService } from "../../../services/analyticsService";
 import { profileService } from "../../../services/profileService";
+import { repostService } from "../../../services/repostService";
 import { postService } from "../../../services/postService";
 import {
   useSetPostResolution,
@@ -220,6 +221,7 @@ function normalizeFeedPost(post = {}) {
       author: comment.author || comment.user || null,
       creatorId: comment.creatorId,
       viewerSaved: Boolean(comment.viewerSaved || comment.saved),
+      viewerReposted: Boolean(comment.viewerReposted),
     }))
     : post.seededComments || [];
 
@@ -333,6 +335,20 @@ function FeedPost({ post, profileMenu = false }) {
   const [sendOpen, setSendOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  const [repostingCommentId, setRepostingCommentId] = useState("");
+  const toggleCommentRepost = async (comment) => {
+    if (!comment?.id || repostingCommentId) return;
+    setRepostingCommentId(comment.id);
+    try {
+      const response = await repostService.toggle("cm", comment.id, "FeedPost");
+      setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReposted: response.data.data.reposted } : item));
+      showToast(response.data.data.reposted ? "Reposted to your profile." : "Repost removed.");
+    } catch (error) {
+      showToast(error.response?.data?.message || "Could not update repost.");
+    } finally {
+      setRepostingCommentId("");
+    }
+  };
   const [moreOpen, setMoreOpen] = useState(false);
   const wallSheetPosition = useWallSheetPosition(moreOpen || reactionPickerOpen || reactionsSheetOpen);
   const [reportOpen, setReportOpen] = useState(false);
@@ -545,41 +561,31 @@ function FeedPost({ post, profileMenu = false }) {
   const toggleShare = () => {
     if (shareMutation.isPending) return;
     if (!requireDatabasePost()) return;
-
-    if (shared) {
-      shareMutation.mutate(
-        { postId: actionPostId },
-        {
-          onError: (error) => showToast(error?.response?.data?.message || "Post could not be unshared."),
-          onSuccess: (savedPost) => {
-            syncSavedPost(savedPost);
-            setShareOpen(false);
-            setShareCaption("");
-            showToast("Removed from your profile.");
-          },
-        }
-      );
-      return;
-    }
-
-    setShareOpen(true);
+    shareMutation.mutate(
+      { postId: actionPostId },
+      {
+        onError: (error) => showToast(error?.response?.data?.message || (shared ? "Post could not be unshared." : "Post could not be reposted.")),
+        onSuccess: (savedPost) => {
+          syncSavedPost(savedPost);
+          showToast(shared ? "Removed from your profile." : "Reposted to your profile.");
+        },
+      }
+    );
   };
 
   const submitShare = () => {
-    if (shareMutation.isPending) return;
-    if (!requireDatabasePost()) return;
-
+    if (shareMutation.isPending || !requireDatabasePost()) return;
     shareMutation.mutate(
       { caption: shareCaption.trim(), postId: actionPostId },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Post could not be shared."),
+        onError: (error) => showToast(error?.response?.data?.message || "Post could not be reposted."),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setShareOpen(false);
           setShareCaption("");
-          showToast("Shared to your profile.");
+          showToast("Reposted to your profile.");
         },
-      }
+      },
     );
   };
 
@@ -865,9 +871,9 @@ function FeedPost({ post, profileMenu = false }) {
           <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
             <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{normalized.topic === "Meet people" && !ownsPost && !normalized.isClosed && !resolvedAt ? <strong className="wall-join-label">I’m in</strong> : null}
           </button>
-          <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
+          {!ownsPost ? <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
-          </button>
+          </button> : null}
           <button
             aria-label={saved ? "Remove saved post" : "Save post"}
             className={`home-feed-action-button ml-auto ${saved ? "is-selected" : ""}`}
@@ -899,6 +905,7 @@ function FeedPost({ post, profileMenu = false }) {
                         {comment.text}
                       </p>
                       {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
+                      {String(commentCreator.id || commentCreator._id || "") !== String(user?.id || user?._id || "") ? <button aria-label="Repost reply" className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingCommentId === comment.id} onClick={() => toggleCommentRepost(comment)} type="button"><FiRepeat /></button> : null}
                     </div>
                   </article>
                 );
@@ -1034,7 +1041,6 @@ function FeedPost({ post, profileMenu = false }) {
           {(ownsPost
             ? [
               { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
-              { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
               ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen post" : closeLabels.action, subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
               { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },

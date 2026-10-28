@@ -926,6 +926,15 @@ function ProfileMixedContentPanel({ emptyText, owner = false, reposted = false, 
   </div>;
 }
 
+function UnifiedRepostGrid({ items = [], owner = false }) {
+  if (!items.length) return <ContentEmptyState compact message={owner ? "Repost a Seen, note, reply, or photo and it will appear here." : "There are no reposts yet."} primaryAction={owner ? { label: "Explore content", to: "/seen" } : { label: "Discover people", to: "/discover" }} title="No reposts yet" variant="profile" />;
+  return <div className="profile-repost-grid">{items.map((item) => <Link aria-label={`Open reposted ${item.kind} by ${item.author?.name || "author"}`} className="profile-repost-tile" key={item.id} to={item.route || "#"}>
+    {item.imageUrl ? <img alt="" src={item.imageUrl} /> : <span className="profile-repost-fallback">{item.kind === "cm" ? "“" : "↻"}</span>}
+    <span className="profile-repost-shade" /><span className="profile-repost-mark"><FiRepeat /></span>
+    <span className="profile-repost-author"><FanAvatar name={item.author?.name} size="h-6 w-6" src={item.author?.avatar} /><b>{item.author?.name || "Author"}</b></span><strong>{item.title}</strong>
+  </Link>)}</div>;
+}
+
 function ContentTabsPanel({ data, isOwner, tab }) {
   const saved = useQuery({
     queryKey: ["saved-content"],
@@ -934,7 +943,7 @@ function ContentTabsPanel({ data, isOwner, tab }) {
     retry: false,
   });
   if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
-  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
+  if (tab === "reposts") return data.reposts ? <UnifiedRepostGrid items={data.reposts} owner={isOwner} /> : <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
   if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
   if (saved.isError) return <div className="profile-empty-state">Saved items could not be loaded.</div>;

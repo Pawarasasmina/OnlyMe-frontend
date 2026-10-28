@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiFlag, FiHeart, FiImage, FiMoreHorizontal, FiPlay, FiPlus, FiRefreshCw, FiSend, FiTrash2, FiVideo, FiX } from "react-icons/fi";
+import { useSearchParams } from "react-router-dom";
+import { FiFlag, FiHeart, FiImage, FiMoreHorizontal, FiPlay, FiPlus, FiRefreshCw, FiRepeat, FiSend, FiTrash2, FiVideo, FiX } from "react-icons/fi";
 import LoadingSkeleton from "../fanWeb/shared/LoadingSkeleton";
 import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
+import { repostService } from "../../services/repostService";
 
 const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 const VIDEO_ACCEPT = "video/mp4,video/webm,video/quicktime";
@@ -284,6 +286,17 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
     },
     onError: (error) => setNotice(error.response?.data?.message || "Could not report Media."),
   });
+  const repostMutation = useMutation({
+    mutationFn: (item) => repostService.toggle("photo", item.id, "ProfileMedia").then((response) => response.data.data),
+    onSuccess: (result, item) => {
+      const patchItem = (entry) => entry.id === item.id ? { ...entry, viewerReposted: result.reposted } : entry;
+      onPatchActive?.((current) => current?.id === item.id ? patchItem(current) : current);
+      queryClient.setQueryData(queryKey, (current) => current?.media ? { ...current, media: current.media.map(patchItem) } : current);
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      setNotice(result.reposted ? "Reposted to your profile." : "Repost removed.");
+    },
+    onError: (error) => setNotice(error.response?.data?.message || "Could not update repost."),
+  });
   useEffect(() => {
     if (!active) return undefined;
     const onKeyDown = (event) => {
@@ -352,6 +365,14 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
         <FiHeart fill={active.viewerLiked ? "currentColor" : "none"} />
         {active.likeCount ? <span>{active.likeCount}</span> : null}
       </button>
+      {!isOwner && !video ? <button
+        aria-label={active.viewerReposted ? "Remove photo repost" : "Repost photo"}
+        aria-pressed={Boolean(active.viewerReposted)}
+        className={active.viewerReposted ? "profile-media-viewer-repost is-reposted" : "profile-media-viewer-repost"}
+        disabled={repostMutation.isPending}
+        onClick={() => repostMutation.mutate(active)}
+        type="button"
+      ><FiRepeat /></button> : null}
       {optionsOpen ? (
         <div className="profile-media-options">
           <button onClick={share} type="button"><FiSend /> Share</button>
@@ -390,6 +411,7 @@ function ProfileMediaGallery({ isOpen, isOwner, items, onClose, onOpen, onRemove
 
 export default function ProfileMediaSection({ initialMedia = [], isOwner, username }) {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [uploaderOpen, setUploaderOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [active, setActive] = useState(null);
@@ -402,7 +424,13 @@ export default function ProfileMediaSection({ initialMedia = [], isOwner, userna
     queryKey,
     retry: false,
   });
-  const items = mediaQuery.data?.media || [];
+  const items = useMemo(() => mediaQuery.data?.media || [], [mediaQuery.data?.media]);
+  useEffect(() => {
+    const requestedId = searchParams.get("media");
+    if (!requestedId || active || !items.length) return;
+    const requested = items.find((item) => item.id === requestedId);
+    if (requested) setActive(requested);
+  }, [active, items, searchParams]);
   const previewLimit = isOwner ? OWNER_PREVIEW_LIMIT : PREVIEW_LIMIT;
   const previewItems = items.slice(0, previewLimit);
   const hasOverflow = items.length > previewLimit;

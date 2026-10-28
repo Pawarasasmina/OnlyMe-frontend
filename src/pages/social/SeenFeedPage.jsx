@@ -21,6 +21,7 @@ import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
 import { analyticsService } from "../../services/analyticsService";
+import { repostService } from "../../services/repostService";
 import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
@@ -600,6 +601,11 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
   const [replyTo, setReplyTo] = useState(null);
   const [reactionTarget, setReactionTarget] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  const [reposted, setReposted] = useState({});
+  const repostCommentMutation = useMutation({
+    mutationFn: (comment) => repostService.toggle("cm", comment.id, "SeenEngagement").then((response) => ({ comment, ...response.data.data })),
+    onSuccess: ({ comment, reposted: value }) => setReposted((current) => ({ ...current, [comment.id]: value })),
+  });
   const voiceCommentMutation = useMutation({
     mutationFn: (recording) => publicationService.voiceCommentOnSeen(item.id, { audioBlob: recording.audioBlob, text: recording.text, waveform: recording.waveform }),
     onSuccess: (response) => {
@@ -631,7 +637,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
       <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link>{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
-        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}</span>
+        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
       </div>
     </article>;
   };
@@ -759,7 +765,7 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
   </div>;
 }
 
-function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepost, onSave, commentsOpen, pending }) {
+function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepost, onSave, commentsOpen, isOwn = false, pending }) {
   const selected = item.viewerState;
   return <div className="seen-engagement-bar">
     <div className="seen-engagement-left">
@@ -767,7 +773,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepos
         <span>{reactionCluster(item)}</span><b>{formatCount(item.engagement.reactions)}</b>
       </button>
       <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-selected" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><b>{formatCount(item.engagement.comments)}</b></button>
-      <button aria-label={selected.reposted ? "Remove repost" : "Repost Seen"} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat /><b>{formatCount(item.engagement.reposts)}</b></button>
+      {!isOwn ? <button aria-label={selected.reposted ? "Remove repost" : "Repost Seen"} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat /><b>{formatCount(item.engagement.reposts)}</b></button> : null}
     </div>
     <div className="seen-engagement-right">
       <button aria-label={selected.saved ? "Remove from Saved" : "Save Seen"} className={selected.saved ? "is-selected" : ""} disabled={pending} onClick={onSave} type="button"><FiBookmark fill={selected.saved ? "currentColor" : "none"} /></button>
@@ -1213,7 +1219,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       </div> : null}
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       {activeChapter < 0 ? <PreviewComment comment={item.previewComment} /> : null}
-      <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
+      <EngagementBar commentsOpen={commentsOpen} isOwn={isOwn} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}

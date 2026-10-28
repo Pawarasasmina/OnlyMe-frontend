@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
+import { FiChevronRight, FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
 import DiscoverMasonryCard from "../../components/discover/DiscoverMasonryCard";
 import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSections";
 import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
@@ -13,15 +13,10 @@ import {
 } from "../../hooks/useDiscoverQuery";
 import { firstUnseenStoryIndex } from "../../utils/discoverFriends";
 import { resolveMediaUrl } from "../../utils/media";
+import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 
 const DEFAULT_FILTER = "for_you";
 const SUPPORTED_FILTERS = new Set(["for_you", "nearby", "rising", "new", "creators"]);
-const PROTOTYPE_FILTERS = [
-  { id: "nearby", label: "Nearby" },
-  { id: "creators", label: "Creators" },
-  { id: "new", label: "New" },
-];
-
 function dedupeByProfile(items = []) {
   const seen = new Set();
   return items.filter((item) => {
@@ -73,11 +68,12 @@ function DiscoverPage() {
   const { showToast } = useFanToast();
   const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
   const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
+  const activeTopic = searchParams.get("topic") || "";
   const viewerId = user?.id || user?._id || "";
   const [refreshToken, setRefreshToken] = useState(() => `${Date.now()}-${Math.random()}`);
   const [pullDistance, setPullDistance] = useState(0);
   const pullStart = useRef(null);
-  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, refreshToken, view: "slides" }), [activeFilter, refreshToken, viewerId]);
+  const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, refreshToken, topic: activeTopic || undefined, view: "slides" }), [activeFilter, activeTopic, refreshToken, viewerId]);
   const discoverQuery = useDiscoverSlidesQuery(queryParams);
   const followMutation = useDiscoverFollowMutation(queryParams);
   const sentinelRef = useRef(null);
@@ -88,6 +84,8 @@ function DiscoverPage() {
 
   const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
   const firstPage = pages[0] || {};
+  const topicChips = firstPage.topicChips || [];
+  const localTonight = firstPage.localTonight || null;
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])).sort((left, right) => Number(String(right.creator?.status || right.status || "").toLowerCase() === "at seen") - Number(String(left.creator?.status || left.status || "").toLowerCase() === "at seen")), [pages]);
   const followingPeople = useMemo(
     () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))),
@@ -107,9 +105,20 @@ function DiscoverPage() {
       const next = new URLSearchParams(current);
       if (filterId === DEFAULT_FILTER) next.delete("filter");
       else next.set("filter", filterId);
+      next.delete("topic");
       return next;
     }, { replace: true });
   }, [setSearchParams]);
+
+  const changeTopic = useCallback((topicId) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("filter");
+      if (topicId && topicId !== activeTopic) next.set("topic", topicId);
+      else next.delete("topic");
+      return next;
+    }, { replace: true });
+  }, [activeTopic, setSearchParams]);
 
   const refresh = useCallback(() => {
     setRefreshToken(`${Date.now()}-${Math.random()}`);
@@ -300,20 +309,31 @@ function DiscoverPage() {
               onOpenFriendStories={openPersonStories}
             />
 
+            {localTonight ? (
+              <Link className="discover-dubai-today" to={localTonight.route || `/search?location=${encodeURIComponent(localTonight.city || "")}`}>
+                <span className="discover-dubai-avatars" aria-hidden="true">
+                  {(localTonight.avatars || []).map((person) => <FanAvatar key={person.id} name={person.name} size="h-10 w-10" src={person.avatar} />)}
+                </span>
+                <span className="discover-dubai-copy"><strong><i />{localTonight.title}</strong><small>{localTonight.subtitle}</small></span>
+                <FiChevronRight aria-hidden="true" />
+              </Link>
+            ) : null}
+
             <div className="discover-recommendation-heading">
               <h2>People worth seeing next</h2>
               <div className="discover-orb-filters" role="group" aria-label="Discover filters">
-                {PROTOTYPE_FILTERS.map((filter) => (
+                {[{ id: "for_you", label: "For you" }, { id: "nearby", label: "Nearby" }].map((filter) => (
                   <button
-                    aria-pressed={activeFilter === filter.id}
-                    className={`discover-orb-chip ${activeFilter === filter.id ? "is-selected" : ""}`}
+                    aria-pressed={!activeTopic && activeFilter === filter.id}
+                    className={`discover-orb-chip ${!activeTopic && activeFilter === filter.id ? "is-selected" : ""}`}
                     key={filter.id}
-                    onClick={() => changeFilter(activeFilter === filter.id ? DEFAULT_FILTER : filter.id)}
+                    onClick={() => changeFilter(filter.id)}
                     type="button"
                   >
                     {filter.label}
                   </button>
                 ))}
+                {topicChips.map((topic) => <button aria-pressed={activeTopic === topic.id} className={`discover-orb-chip ${activeTopic === topic.id ? "is-selected" : ""}`} key={topic.id} onClick={() => changeTopic(topic.id)} type="button">{topic.label}</button>)}
               </div>
             </div>
 
