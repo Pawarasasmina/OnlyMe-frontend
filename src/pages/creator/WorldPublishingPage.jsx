@@ -41,7 +41,7 @@ const SUBSCRIBER_STORY_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 const WORLD_CATEGORIES = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
-const MONTHLY_PRICES = [90, 190, 290, 390, 500, 1000];
+const MONTHLY_PRICES = [190, 490, 990];
 
 function planetFaceEmoji(planet = {}) {
   return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
@@ -283,13 +283,13 @@ function WorldCreatePriceSheet({ busy, currentPrice, onClose, onSave }) {
         <p className="world-sheet-copy">Monthly subscription. Everyone already inside keeps their price forever — the new price is for new residents only.</p>
         <div aria-label="World monthly price" className="world-price-options" role="radiogroup">
           {MONTHLY_PRICES.map((tierPrice) => {
-            const locked = tierPrice === 1000;
+            const locked = tierPrice === 990;
             const selected = price === tierPrice;
             return <button aria-checked={selected} aria-disabled={locked} className={`${selected ? "is-selected" : ""} ${locked ? "is-locked" : ""}`} disabled={locked || busy} key={tierPrice} onClick={() => setPrice(tierPrice)} role="radio" title={locked ? "Requires 100+ residents with steady renewals" : undefined} type="button">{locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString()}</button>;
           })}
         </div>
         <p className="world-price-payout"><b>{payout}</b> <span>to you · per resident · monthly</span></p>
-        <p className="world-price-helper">Top tier ✦1,000 — opens at 100+ residents with steady renewals. First month -50% for newcomers stays on. Change once every 30 days.</p>
+        <p className="world-price-helper">✦490 is recommended. The ✦990 top tier opens at 100+ members with steady renewals. First month is half price; change once every 30 days.</p>
         <button className="world-sheet-primary" disabled={busy} onClick={() => onSave(price)} type="button">{busy ? "Saving..." : "Save"}</button>
       </section>
     </div>
@@ -1808,7 +1808,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {experience ? <section className="planet-create-fieldset planet-price-section">
         <div className="world-prototype-section-head"><h2>{experience ? "Unlock price" : "Subscription price"}</h2><span>{experience ? "one-time, permanent access" : "one honest monthly price"}</span></div>
-        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: experience ? "ONE_TIME" : "MONTHLY", presetId: `${experience ? "ONE_TIME" : "MONTHLY"}_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>{experience ? "once" : "/month"}</small>{price === 190 ? <em>Most chosen</em> : null}</button>)}</div>
+        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: experience ? "ONE_TIME" : "MONTHLY", presetId: `${experience ? "ONE_TIME" : "MONTHLY"}_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>{experience ? "once" : "/month"}</small>{price === 490 ? <em>Recommended</em> : null}</button>)}</div>
         <div className="planet-price-preview"><span>10 {experience ? "unlocks" : "members"} <b>{STAR}{(world.pricing?.starsAmount || 190) * 10}{experience ? "" : "/mo"}</b></span><span>50 {experience ? "unlocks" : "members"} <b>{STAR}{(world.pricing?.starsAmount || 190) * 50}{experience ? "" : "/mo"}</b></span></div>
       </section> : null}
 
@@ -1823,7 +1823,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         </button>
         {worldCreateSheet === "settings" ? <div className="world-settings-list" id="world-create-settings-list">
           <p>INSIDE YOUR WORLD</p>
-          <button className="world-settings-item is-add" onClick={() => { setWorldCreateSheet(""); openWorldManagement("include"); }} type="button"><span className="world-settings-status"><FiPlus /></span><span className="world-settings-copy"><b>Experiences included</b><small>add one · included Experiences help sell the World</small></span><FiArrowUpRight className="world-settings-row-chevron" /></button>
+          <button className="world-settings-item is-add" onClick={() => { setWorldCreateSheet(""); openWorldManagement("include"); }} type="button"><span className="world-settings-status"><FiPlus /></span><span className="world-settings-copy"><b>Paid Seens included</b><small>add one · members get included Paid Seens</small></span><FiArrowUpRight className="world-settings-row-chevron" /></button>
           <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>Direct Access for members</b><small>1 free reply / month each · then first in line</small></span></span>
           <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>Price locked for members</b><small>early members keep their joining price forever</small></span></span>
           <button aria-pressed={Boolean(world.firstMonthOfferEnabled)} className="world-settings-item is-switch" onClick={() => updateWorld({ firstMonthOfferEnabled: !world.firstMonthOfferEnabled })} type="button"><span className="world-settings-status" /><span className="world-settings-copy"><b>First month -50%</b><small>converts the hesitant · smarter than refunds</small></span><i aria-hidden="true" className={world.firstMonthOfferEnabled ? "is-on" : ""}><u /></i></button>
@@ -1835,9 +1835,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       </button> : null}
 
       <section className="world-prototype-inside world-create-experiences">
-        <h2>Experiences inside</h2>
-        <p>Attach an Experience — members get it with the subscription.</p>
-        <button className="world-prototype-include-experience" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> Include an experience</button>
+        <h2>Paid Seens inside</h2>
+        <p>Attach a paid Seen — members get it with their World subscription.</p>
+        <button className="world-prototype-include-experience" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> Add a paid Seen</button>
       </section>
 
       {!experience ? <section className="world-prototype-comments world-create-comments-preview">

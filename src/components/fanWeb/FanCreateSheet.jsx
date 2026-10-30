@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiAperture, FiChevronRight, FiLock, FiMonitor } from "react-icons/fi";
+import { useLanguage } from "../../hooks/useLanguage";
 
 function ThinSeenEyeIcon() {
   return (
@@ -23,6 +24,7 @@ function FanCreateSheet({
   variant = "all",
   worldTarget = "",
 }) {
+  const { t } = useLanguage();
   const [position, setPosition] = useState(undefined);
   const [panel, setPanel] = useState("create");
   const primaryOptions = [
@@ -93,17 +95,17 @@ function FanCreateSheet({
       <section aria-label={variant === "seen" || panel === "seen" ? "Choose Seen type" : "Create"} className={`seen-create-sheet ${variant === "seen" || panel === "seen" ? "is-seen-type-picker" : ""}`}>
         <span className="seen-create-handle" aria-hidden="true" />
         {variant === "seen" || panel === "seen" ? <>
-          <h2>New Seen</h2>
+          <h2>{t("Seen")}</h2>
           <p className="seen-type-picker-intro">Pick the format first — they&apos;re built differently.</p>
           <div className="seen-type-picker-options">
             <Link className={`seen-type-picker-card ${!canCreateSeen ? "is-disabled" : ""}`} onClick={(event) => { if (!canCreateSeen) event.preventDefault(); else onClose(); }} to="/create/seen?type=free">
               <span className="seen-type-picker-icon"><ThinSeenEyeIcon /></span>
-              <span className="seen-type-picker-copy"><b>Free Seen</b><small>Up to 5 short chapters</small><small>Everyone reads every chapter</small><em>Grows your audience</em></span>
+              <span className="seen-type-picker-copy"><b>{t("Free Seen")}</b><small>Up to 5 short chapters</small><small>Everyone reads every chapter</small><em>Grows your audience</em></span>
               <FiChevronRight aria-hidden="true" />
             </Link>
             <Link className={`seen-type-picker-card ${!canCreateSeen ? "is-disabled" : ""}`} onClick={(event) => { if (!canCreateSeen) event.preventDefault(); else onClose(); }} to="/create/seen?type=paid">
               <span className="seen-type-picker-icon"><FiLock /></span>
-              <span className="seen-type-picker-copy"><b>Paid Seen</b><small>Up to 10 chapters — deeper, more detailed</small><small>Chapter 1 is a free preview, the rest unlock once</small><em>You get $19 per unlock at 190 coins</em></span>
+              <span className="seen-type-picker-copy"><b>{t("Paid Seen")}</b><small>Up to 5 chapters — deeper, more detailed</small><small>Chapter 1 is a free preview, the rest unlock once</small><em>You get $19 per unlock at 190 Stars</em></span>
               <FiChevronRight aria-hidden="true" />
             </Link>
           </div>

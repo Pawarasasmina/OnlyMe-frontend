@@ -50,6 +50,7 @@ import StoryViewer from "../../components/stories/StoryViewer";
 import AppShareSheet from "../../components/share/ShareSheet";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
 import { useSendSharedContent } from "../../hooks/share/useSendSharedContent";
 import { membershipService } from "../../services/membershipService";
@@ -336,6 +337,7 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
 }
 
 function WorldMemberInsidePage({ activeMembership, chapters, creator, experiences = [], modal = false, onClose, onOpenChapter, onOpenMessages, onOpenStories, publication }) {
+  const navigate = useNavigate();
   const [worldDoorOpen, setWorldDoorOpen] = useState(false);
   const firstName = creatorFirstName(creator);
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
@@ -372,7 +374,7 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
         <header className="world-member-welcome">
           <span className="world-member-planet" aria-hidden="true">{worldIcon}</span>
           <h1>You&apos;re inside</h1>
-          {memberNumber ? <span className="world-member-badge">Member #{Number(memberNumber).toLocaleString()}</span> : null}
+          {memberNumber ? <button className="world-member-badge" onClick={() => navigate("/memberships")} type="button">Member #{Number(memberNumber).toLocaleString()}</button> : null}
           <p>Welcome to {firstName}&apos;s World</p>
         </header>
 
@@ -689,27 +691,31 @@ function IncludeExperienceSheet({ busyId, experiences = [], included = [], onClo
     <BottomSheet labelledBy="world-include-title" onClose={onClose}>
       <section className="world-include-sheet">
         <h2 id="world-include-title">Include in your World</h2>
-        <button className="world-include-create" onClick={onCreate} type="button">
-          <span><FiPlus /></span>
-          <b>Create a new Paid Seen</b>
-        </button>
         <p>Members get included Paid Seens with their subscription.</p>
         <div className="world-include-list">
+          <button className="world-include-create" onClick={onCreate} type="button">
+            <span><FiPlus /></span>
+            <b>New paid Seen</b>
+          </button>
           {experiences.length ? experiences.map((item) => {
           const itemId = String(item.id || item._id);
           const selected = includedIds.has(itemId);
           return (
             <button className={selected ? "is-selected" : ""} disabled={busyId === itemId} key={itemId} onClick={() => onToggle(itemId, selected)} type="button">
-              {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <span>{PLANET}</span>}
+              <span className="world-include-cover">
+                {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <span>{PLANET}</span>}
+                {item.pricing?.starsAmount ? <small><FiLock /> {item.pricing.starsAmount}</small> : null}
+                <i aria-label={selected ? "Included" : "Not included"}>{selected ? <FiCheck /> : null}</i>
+              </span>
               <span className="world-include-copy">
                 <b>{item.title || "Untitled Paid Seen"}</b>
                 <small className="world-include-meta-clean">{item.chapterCount || item.chapters?.length || 0} chapters{item.pricing?.starsAmount ? <>{" \u00b7 "}{STAR}{item.pricing.starsAmount}</> : ""}</small>
               </span>
-              {selected ? <i aria-label="Included"><FiCheck /></i> : null}
             </button>
           );
           }) : <p className="world-include-empty">No eligible Paid Seens yet.</p>}
         </div>
+        <button className="world-include-done" onClick={onClose} type="button">Done</button>
       </section>
     </BottomSheet>
   );
@@ -1203,7 +1209,7 @@ function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, o
   );
 }
 
-function WorldInsideMoreSheet({ creator, onClose, onReport, onReportSpam, onShare, publication }) {
+function WorldInsideMoreSheet({ canManageMembership = false, creator, onClose, onGift, onManageMembership, onReport, onReportSpam, onShare, publication }) {
   return <BottomSheet labelledBy="world-inside-more-title" onClose={onClose}>
     <header className="world-inside-detail__sheet-head">
       <div>
@@ -1214,6 +1220,8 @@ function WorldInsideMoreSheet({ creator, onClose, onReport, onReportSpam, onShar
     </header>
     <div className="world-inside-detail__sheet-actions">
       <button onClick={onShare} type="button"><FiShare2 /><span>Share</span></button>
+      {onGift ? <button onClick={onGift} type="button"><FiGift /><span>Gift</span></button> : null}
+      {canManageMembership && onManageMembership ? <button onClick={onManageMembership} type="button"><FiSettings /><span><b>Manage membership</b><small>billing, renewal and cancellation</small></span></button> : null}
       <button className="is-danger" onClick={onReportSpam} type="button"><FiSlash /><span><b>Report spam</b><small>delete messages · reactions · ban</small></span></button>
       <button className="is-danger" onClick={onReport} type="button"><FiFlag /><span>Report</span></button>
     </div>
@@ -1317,6 +1325,7 @@ function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemov
 function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engagementQuery, experiences = [], onBack, onGift, onOpenChapter, onOpenStory, publication }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState("");
   const [replyTarget, setReplyTarget] = useState(null);
@@ -1537,7 +1546,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
             item.pricing?.mode === "FREE" ? "free" : price ? `${STAR}${price} included` : "included",
           ].filter(Boolean).join(" · ");
           return (
-            <Link className="world-inside-detail__experience" key={experienceId || item.title} to={experienceId ? `/experience/${experienceId}?returnTo=${encodeURIComponent(`/world/${publication.id || publication._id}/inside?view=detail`)}` : "#"}>
+            <Link className="world-inside-detail__experience" key={experienceId || item.title} to={experienceId ? `/seen/${experienceId}?returnTo=${encodeURIComponent(`/world/${publication.id || publication._id}/inside?view=detail`)}` : "#"}>
               <span className="world-inside-detail__experience-cover">
                 {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i aria-hidden="true">{STAR}</i>}
               </span>
@@ -1570,6 +1579,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
     {voiceCommentOpen ? <VoiceCommentRecorder busy={posting} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
 
     {moreOpen ? <WorldInsideMoreSheet
+      canManageMembership={canViewMemberContent}
       creator={creator}
       onClose={() => setMoreOpen(false)}
       onReport={() => {
@@ -1583,6 +1593,14 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
         setSpamOpen(true);
         setReportDone(false);
         setReportError("");
+      }}
+      onGift={() => {
+        setMoreOpen(false);
+        onGift?.();
+      }}
+      onManageMembership={() => {
+        setMoreOpen(false);
+        navigate("/memberships");
       }}
       onShare={() => {
         setMoreOpen(false);
@@ -1783,6 +1801,7 @@ function ShareSheet({ onClose, publication }) {
 export default function WorldReaderPage() {
   const { id } = useParams();
   const { loading: authLoading, user } = useAuth();
+  const { t } = useLanguage();
   const { showToast } = useFanToast();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -1839,7 +1858,11 @@ export default function WorldReaderPage() {
     enabled: Boolean(user && publicationId && premium && !owner),
     retry: false,
   });
-  const editingWorld = Boolean(owner && !experience && new URLSearchParams(location.search).get("edit") === "1");
+  // The creator's normal World page is the owner prototype: it stays a view
+  // page, but exposes inline story, settings, and Paid Seen management. Other
+  // viewers continue to receive the public World presentation.
+  const editingWorld = Boolean(owner && !experience);
+  const explicitWorldEdit = Boolean(editingWorld && new URLSearchParams(location.search).get("edit") === "1");
   const accessToken = new URLSearchParams(location.search).get("access") || "";
   const returnTo = new URLSearchParams(location.search).get("returnTo") || "";
   const returnFromExperience = () => returnTo
@@ -2550,19 +2573,19 @@ export default function WorldReaderPage() {
         {!experience ? (
           <section className="world-prototype-planet">
             {commentStatusToast ? <div className="world-comment-status-pill" role="status">{commentStatusToast}</div> : null}
-            <button aria-label={editingWorld ? "Change planet face" : "World icon"} onClick={() => editingWorld && setSheet("face")} type="button">
+            <button aria-label={explicitWorldEdit ? "Change planet face" : "World icon"} onClick={() => explicitWorldEdit && setSheet("face")} type="button">
               <span>{faceEmoji}</span>
               <span>{PLANET}</span>
             </button>
           </section>
         ) : null}
 
-        {!experience && (editingWorld || managedPublication.coverMedia?.secureUrl) ? (
+        {!experience && (explicitWorldEdit || (!owner && managedPublication.coverMedia?.secureUrl)) ? (
           <section className={`world-top-cover-preview ${managedPublication.coverMedia?.secureUrl ? "has-cover" : ""}`}>
             {managedPublication.coverMedia?.secureUrl
               ? (managedPublication.coverMedia.mediaType === "VIDEO" || managedPublication.coverMedia.resourceType === "video" ? <video controls playsInline preload="metadata" src={managedPublication.coverMedia.secureUrl} /> : <img alt={`${managedPublication.title || "World"} cover preview`} src={managedPublication.coverMedia.secureUrl} />)
               : <div><FiImage /><strong>Add a cover image</strong><small>Preview how your World will appear</small></div>}
-            {editingWorld ? <span className="world-top-cover-actions">
+            {explicitWorldEdit ? <span className="world-top-cover-actions">
               <button disabled={coverUpload.isPending || coverRemove.isPending} onClick={() => setSheet("cover")} type="button"><FiEdit3 /> {managedPublication.coverMedia?.secureUrl ? "Change" : "Add cover"}</button>
               {managedPublication.coverMedia?.secureUrl ? <button className="is-remove" disabled={coverRemove.isPending || coverUpload.isPending} onClick={() => coverRemove.mutate()} type="button"><FiTrash2 /> {coverRemove.isPending ? "Removing…" : "Remove"}</button> : null}
             </span> : null}
@@ -2590,7 +2613,7 @@ export default function WorldReaderPage() {
                   <button className="world-prototype-owner-story-thumb" onClick={() => setActiveStory({ index, stories })} type="button">
                     {story.resourceType === "video" ? <video muted playsInline src={story.secureUrl} /> : <img alt={story.title || "World story"} src={story.secureUrl} />}
                   </button>
-                  {editingWorld && story.chapterId && story.blockId ? <button aria-label="Remove story" className="world-prototype-owner-story-remove" disabled={storyRemove.isPending} onClick={() => storyRemove.mutate({ blockId: story.blockId, chapterId: story.chapterId })} type="button"><FiX /></button> : null}
+                  {explicitWorldEdit && story.chapterId && story.blockId ? <button aria-label="Remove story" className="world-prototype-owner-story-remove" disabled={storyRemove.isPending} onClick={() => storyRemove.mutate({ blockId: story.blockId, chapterId: story.chapterId })} type="button"><FiX /></button> : null}
                 </span>
               ))}
               {editingWorld && stories.length < 3 ? <button aria-label="Add a free preview story" className="world-prototype-owner-story-add" onClick={() => setStoryUploadSheetOpen(true)} type="button"><FiPlus /><span>add</span></button> : null}
@@ -2646,14 +2669,14 @@ export default function WorldReaderPage() {
         {experience ? <button className="world-prototype-premium-pill is-experience" type="button">{experiencePriceLabel}</button> : null}
 
         {!experience ? (
-          <button className="world-prototype-premium-pill" onClick={() => editingWorld && setSheet("price")} type="button">
+          <button className="world-prototype-premium-pill" onClick={() => explicitWorldEdit && setSheet("price")} type="button">
           {experience ? (managedPublication.pricing?.mode === "FREE" ? "Free Experience · every chapter is open" : `Premium Experience · all chapters unlock for ${STAR}${priceStars} once`) : `${PLANET} ${premium ? "Premium World" : "Free World"} · ${management.stories?.freePreviewCount || 1} free chapter${priceStars ? ` · ${STAR}${priceStars}/mo` : ""}`}
-          {editingWorld ? <FiEdit3 /> : null}
+          {explicitWorldEdit ? <FiEdit3 /> : null}
         </button>
         ) : null}
 
         <div className="world-prototype-title-row">
-          {editingWorld ? (
+          {explicitWorldEdit ? (
             <button aria-label="Edit world name" className="world-prototype-title-button" onClick={() => setSheet("name")} type="button">
               <span className="world-prototype-title">{managedPublication.title}</span>
               <FiEdit3 />
@@ -2714,7 +2737,7 @@ export default function WorldReaderPage() {
           </section>
         ) : null}
 
-        {!experience ? (editingWorld ? (
+        {!experience ? (explicitWorldEdit ? (
           <button aria-label="Edit World description" className="world-prototype-summary is-editable" onClick={() => setSheet("description")} type="button">
             <span>{managedPublication.description || managedPublication.summary || "Add a description for your World."}</span><FiEdit3 />
           </button>
@@ -2722,16 +2745,20 @@ export default function WorldReaderPage() {
 
         {!experience ? (
           <section className="world-prototype-inside">
-            <h2>Paid Seens inside {includedExperiences.length ? <span>{includedExperiences.length}</span> : null}</h2>
-            {includedExperiences.length ? includedExperiences.map((item) => (
-              <Link className="world-prototype-inside-row" key={item.id} to={`/seen/${item.id}?returnTo=${encodeURIComponent(`/world/${publicationId}`)}`}>
-                <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : PLANET}</span>
-                <b>{item.title}</b>
-                <small className="world-prototype-inside-meta-clean">{item.chapterCount || 0} chapters{" \u00b7 "}included for members</small>
-                <FiChevronRight aria-hidden="true" />
-              </Link>
-            )) : <p>Attach a Paid Seen — members get it with the subscription.</p>}
-            {editingWorld ? <button className="world-prototype-include-experience" onClick={() => setSheet("include")} type="button"><FiPlus /> Include a Paid Seen</button> : null}
+            <h2>{t("Paid Seens inside")} {includedExperiences.length ? <span>{includedExperiences.length}</span> : null}</h2>
+            {includedExperiences.length || editingWorld ? <div className="world-paid-seen-tiles">
+              {editingWorld ? <button className="world-paid-seen-add-tile" onClick={() => setSheet("include")} type="button"><span><FiPlus /></span><b>{t("Add a Seen")}</b></button> : null}
+              {includedExperiences.map((item) => (
+                <Link className="world-paid-seen-tile" key={item.id} to={`/seen/${item.id}?returnTo=${encodeURIComponent(`/world/${publicationId}`)}`}>
+                  <span className="world-paid-seen-tile-cover">
+                    {item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i aria-hidden="true">{PLANET}</i>}
+                    {item.pricing?.starsAmount ? <small className="world-paid-seen-price"><FiLock /> {item.pricing.starsAmount}</small> : null}
+                    <small className="world-paid-seen-chapters">{String(item.chapterCount || 0).padStart(2, "0")}</small>
+                  </span>
+                  <b>{item.title}</b>
+                </Link>
+              ))}
+            </div> : <p>Attach a Paid Seen — members get it with the subscription.</p>}
           </section>
         ) : null}
 
@@ -2779,7 +2806,7 @@ export default function WorldReaderPage() {
         ) : null}
 
         <section className="world-prototype-comments">
-          <h2>Comments</h2>
+          <h2>{t("Comments")}</h2>
           {commentsEnabled ? (
             <>
               {commentReplyTarget ? (
@@ -2808,7 +2835,7 @@ export default function WorldReaderPage() {
 
         </section>
 
-        {editingWorld ? (
+        {explicitWorldEdit ? (
           <div className="world-owner-save-actions">
             <button onClick={() => navigate(`/world/${publicationId}`, { replace: true })} type="button">Cancel</button>
             {["DRAFT", "CHANGES_REQUESTED"].includes(managedPublication.status) ? (

@@ -29,6 +29,7 @@ const GrowFanPreviewPage = lazyPage("../pages/creator/GrowFanPreviewPage");
 const ReferralLandingPage = lazyPage("../pages/public/ReferralLandingPage");
 const CreatorApplicationPage = lazyPage("../pages/creator/CreatorApplicationPage");
 const CreatorVerificationPage = lazyPage("../pages/creator/CreatorVerificationPage");
+const SellerVerificationPage = lazyPage("../pages/creator/SellerVerificationPage");
 const ContentManager = lazyPage("../pages/creator/ContentManager");
 const ContentComposerPage = lazyPage("../pages/creator/ContentComposerPage");
 const ContentDetailPage = lazyPage("../pages/creator/ContentDetailPage");
@@ -66,6 +67,7 @@ const WithdrawPage = lazyPage("../pages/social/WithdrawPage");
 const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
 const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
+const MembershipCancellationPage = lazyPage("../pages/social/MembershipCancellationPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
 const SavedPage = lazyPage("../pages/social/SavedPage");
 const ArchivePage = lazyPage("../pages/social/ArchivePage");
@@ -84,6 +86,7 @@ const AccountSettingsPage = lazyPage("../pages/settings/AccountSettingsPage");
 const PrivacySettingsPage = lazyPage("../pages/settings/PrivacySettingsPage");
 const NotificationSettingsPage = lazyPage("../pages/settings/NotificationSettingsPage");
 const ContentPreferencesPage = lazyPage("../pages/settings/ContentPreferencesPage");
+const AiSettingsPage = lazyPage("../pages/settings/AiSettingsPage");
 const SupportPage = lazyPage("../pages/settings/SupportPage");
 const GiftManagementPage = lazyPage("../pages/admin/GiftManagementPage");
 const VerifiedCreatorPage = lazyPage("../pages/creator/VerifiedCreatorPage");
@@ -176,6 +179,7 @@ function AppRoutes() {
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
           <Route path="/settings/content" element={<ContentPreferencesPage />} />
+          <Route path="/settings/ai" element={<AiSettingsPage />} />
           <Route path="/settings/support/:section" element={<SupportPage />} />
           <Route path="/creator/verified" element={<VerifiedCreatorPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
@@ -185,10 +189,12 @@ function AppRoutes() {
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
+          <Route path="/memberships/:id/cancel" element={<MembershipCancellationPage />} />
           <Route path="/experiences" element={<Navigate replace to="/profile" />} />
           <Route path="/profile/:username/experiences" element={<Navigate replace to="/profile" />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
+            <Route path="/creator/seller-verification" element={<SellerVerificationPage />} />
           </Route>
           <Route path="/create" element={<CreateHubPage />} />
           <Route path="/create/seen" element={<SeenComposerPage />} />

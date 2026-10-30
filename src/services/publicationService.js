@@ -1,6 +1,10 @@
 import axiosInstance from "../api/axiosInstance";
 
 export const publicationService = {
+  getAiSeenStatus: () => axiosInstance.get("/publications/ai-seen/status"),
+  startAiSeen: () => axiosInstance.post("/publications/ai-seen/start"),
+  generateAiSeenChapter: (sessionId, answer, sayAgain = false) => axiosInstance.post(`/publications/ai-seen/${encodeURIComponent(sessionId)}/generate`, { answer, sayAgain }),
+  linkAiSeenPublication: (sessionId, publicationId) => axiosInstance.post(`/publications/ai-seen/${encodeURIComponent(sessionId)}/link`, { publicationId }),
   listMyPublications: (params) => axiosInstance.get("/publications/mine", { params }),
   getMyPublication: (id) => axiosInstance.get(`/publications/mine/${id}`),
   getWorldManagement: (id) => axiosInstance.get(`/publications/mine/${id}/world-management`),

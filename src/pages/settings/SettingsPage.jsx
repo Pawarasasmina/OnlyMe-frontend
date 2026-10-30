@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBarChart2, FiBell, FiChevronRight, FiCreditCard, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiLogOut, FiMessageCircle, FiShield, FiTrash2, FiUserCheck, FiUserX, FiUsers, FiVolumeX } from "react-icons/fi";
+import { FiArrowLeft, FiBarChart2, FiBell, FiChevronRight, FiCreditCard, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiLogOut, FiMessageCircle, FiShield, FiTrash2, FiUserCheck, FiUserX, FiUsers, FiVolumeX, FiZap } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
 import NotificationSettingsSheet from "./NotificationSettingsSheet";
@@ -9,7 +9,6 @@ import PrivacyQuickSettingsSheet from "./PrivacyQuickSettingsSheet";
 import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
-import VerifiedCreatorPage from "../creator/VerifiedCreatorPage";
 import DeleteAccountSheet from "./DeleteAccountSheet";
 
 function SettingsRow({ onClick, subtitle, title, to, trailing }) {
@@ -30,7 +29,6 @@ export default function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [creatorApplyOpen, setCreatorApplyOpen] = useState(false);
-  const [verifiedApplyOpen, setVerifiedApplyOpen] = useState(false);
   const [privacySheet, setPrivacySheet] = useState(null);
   const [privacyError, setPrivacyError] = useState("");
   const [supportersSaved, setSupportersSaved] = useState(false);
@@ -89,10 +87,10 @@ export default function SettingsPage() {
       <SettingsRow icon={FiGlobe} subtitle="Language, time zone and password" title="Account preferences" to="/settings/account" />
     </SettingsGroup>
 
-    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiUserCheck} onClick={() => setVerifiedApplyOpen(true)} subtitle={user?.isVerified ? "Blue tick active · monthly plan" : "Apply separately for the blue tick"} title={user?.isVerified ? "Verified Creator" : "Apply for Verified Creator"} /><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
+    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiUserCheck} subtitle="Optional identity and seller verification" title="Apply for Verified Creator" to="/creator/seller-verification" /><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
 
     {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Preview"><SettingsRow icon={FiUsers} subtitle="See the onboarding and earning examples" title="Preview as a new creator" to="/studio?preview=new" /></SettingsGroup> : null}
-    <SettingsGroup title="Preferences"><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle="Comments, reactions, messages and income" title="Notifications" /><SettingsRow icon={FiGlobe} subtitle="Topics, people and what you see" title="Content preferences" to="/settings/content" /></SettingsGroup>
+    <SettingsGroup title="Preferences"><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle="Comments, reactions, messages and income" title="Notifications" /><SettingsRow icon={FiGlobe} subtitle="Topics, people and what you see" title="Content preferences" to="/settings/content" /><SettingsRow icon={FiZap} subtitle="Allowance, privacy and creation limits" title="AI" to="/settings/ai" /></SettingsGroup>
     <SettingsGroup title="Payments"><SettingsRow icon={FiCreditCard} subtitle="Stars and transaction history" title="Wallet" to="/wallet" /></SettingsGroup>
     <SettingsGroup title="Privacy & safety">
       <SettingsRow icon={FiUserX} onClick={() => setPrivacySheet("blocked")} subtitle={blockedQuery.isLoading ? "Loading..." : blockedQuery.data?.length ? `${blockedQuery.data.length} blocked` : "You haven't blocked anyone"} title="Blocked users" />
@@ -115,7 +113,6 @@ export default function SettingsPage() {
     <NotificationSettingsSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
-    {verifiedApplyOpen ? <><button aria-label="Close Verified Creator" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerifiedApplyOpen(false)} type="button" /><VerifiedCreatorPage embedded onClose={() => setVerifiedApplyOpen(false)} /></> : null}
     {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">Supporters {privacyQuery.data?.privacySettings?.showFollowers ? "shown" : "hidden"}</div> : null}
   </main>;
 }

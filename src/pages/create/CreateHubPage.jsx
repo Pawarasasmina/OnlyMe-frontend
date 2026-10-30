@@ -7,9 +7,11 @@ import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { socialCapabilitiesFor } from "../../utils/socialAccess";
+import { useLanguage } from "../../hooks/useLanguage";
 
 function CreateHubPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
@@ -28,7 +30,8 @@ function CreateHubPage() {
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
   const cards = [
-    { title: "Seen", text: "Choose Free or Paid before creating · Paid Seens include a free first chapter", to: "/create/seen" },
+    { title: t("Free Seen"), text: "Up to 5 chapters · every chapter is open to everyone", to: "/create/seen?type=free" },
+    { title: t("Paid Seen"), text: "Up to 5 chapters · chapter 1 is free and the rest unlock once", to: "/create/seen?type=paid" },
     ...(capabilities.isApprovedCreator ? [{ title: "World", text: `Monthly subscription · private ecosystem · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 

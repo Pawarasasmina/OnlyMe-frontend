@@ -1124,10 +1124,6 @@ export default function SeenReaderPage() {
   };
   const changeChapter = (nextIndex) => {
     const next = Math.min(Math.max(nextIndex, 0), Math.max(chapters.length - 1, 0));
-    if (chapters[next]?.locked) {
-      setPurchaseOpen(true);
-      return;
-    }
     setChapterIndex(next);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("chapter", String(next));
@@ -1249,11 +1245,53 @@ export default function SeenReaderPage() {
       });
       return;
     }
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
+    }
     navigate("/seen", { replace: true });
+  };
+
+  const openOverviewChapter = (index) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("overview");
+    nextParams.set("chapter", String(index));
+    setChapterIndex(index);
+    setSearchParams(nextParams, { replace: true, state: location.state });
   };
 
   if (publicationQuery.isLoading) return <ReaderSkeleton />;
   if (publicationQuery.isError || !publication) return <div className="seen-reader-page"><section className="seen-reader-error"><h1>This Seen is not available.</h1><Link to="/seen">Back to Seen</Link></section></div>;
+
+  if (searchParams.get("overview") === "1") {
+    const paid = publication.pricing?.mode === "ONE_TIME";
+    const creator = publication.creator || {};
+    return <section className="seen-paid-overview-page" ref={readerTopRef}>
+      <header className="seen-paid-overview-nav">
+        <button aria-label="Back to profile" onClick={closeReader} type="button"><FiChevronRight /></button>
+        <h1>{creatorFirstName(creator)} · Seen</h1>
+      </header>
+      <section className="seen-paid-overview-author">
+        <FanAvatar name={creatorName(creator)} size="h-9 w-9" src={creator.avatar} />
+        <span><b>{creatorName(creator)}</b><small>{publication.experienceLocation || publication.category || "Seen creator"}</small></span>
+        <em><FiEye /> {formatCount(engagement.viewCount || 0)}</em>
+      </section>
+      <section className="seen-paid-overview-hero">
+        <button aria-label="Open free preview" onClick={() => openOverviewChapter(0)} type="button">
+          {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={`${publication.title} cover`} autoPlay loop media={publication.coverMedia} /> : <span aria-hidden="true">@seen</span>}
+        </button>
+        <div><small>{publication.category || "Seen"}</small><h2>{publication.title}</h2><span>{chapters.length} chapters · ~{Math.max(1, chapters.length)} min</span><p>{publication.description || publication.summary}</p></div>
+      </section>
+      {paid ? <button className="seen-paid-overview-unlock" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> {Number(publication.pricing?.starsAmount || 0).toLocaleString()}</span><small>Chapter 1 free · {Number(publication.ownerCount || 0).toLocaleString()} own it</small><b>{publication.paymentAvailable ? "Unlock ›" : "Yours"}</b></button> : null}
+      <nav className="seen-paid-overview-chapters" aria-label="Seen chapters">
+        {chapters.map((item, index) => <button className={item.locked ? "is-locked" : ""} key={item.stableChapterId || index} onClick={() => openOverviewChapter(index)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><i>{item.locked ? <FiLock /> : null}</i><b>{item.title || `Chapter ${index + 1}`}</b><FiChevronRight /></button>)}
+      </nav>
+      <footer className="seen-paid-overview-engagement"><SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={isOwner} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen(true)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} /></footer>
+      <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
+      <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
+      <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => publicationQuery.refetch()} publication={publication} />
+    </section>;
+  }
 
   let renderedChecklist = false;
   const chapterContent = visibleBlocks.flatMap((block) => {
@@ -1281,8 +1319,17 @@ export default function SeenReaderPage() {
       <i aria-hidden="true" />
     </div>
 
-    <article className="seen-reader-content" onClick={handleReaderClick}>
-      {hasChapterContent ? <>
+    <article className={`seen-reader-content ${chapter?.locked ? "is-paid-locked" : ""}`} onClick={handleReaderClick}>
+      {chapter?.locked ? <section className="seen-paid-locked-chapter">
+        <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
+        <div className="seen-paid-locked-card">
+          <span><FiLock /></span>
+          <h2>Unlock the rest</h2>
+          <p>One-time · yours forever · {Number(publication.ownerCount || 0).toLocaleString()} own it</p>
+          <button onClick={(event) => { event.stopPropagation(); setPurchaseOpen(true); }} type="button">Unlock · ✦ {Number(publication.pricing?.starsAmount || 0).toLocaleString()}</button>
+        </div>
+        {chapters[safeChapterIndex + 1] ? <button className="seen-paid-locked-next" onClick={(event) => { event.stopPropagation(); changeChapter(safeChapterIndex + 1); }} type="button"><small>NEXT</small><b>{String(safeChapterIndex + 2).padStart(2, "0")} · <FiLock /> {chapters[safeChapterIndex + 1].title}</b><FiChevronRight /></button> : null}
+      </section> : hasChapterContent ? <>
         {chapterContent}
       </> : <section className="seen-reader-empty-chapter">
         {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={`${publication.title} cover`} className="seen-reader-media" controls media={publication.coverMedia} /> : null}

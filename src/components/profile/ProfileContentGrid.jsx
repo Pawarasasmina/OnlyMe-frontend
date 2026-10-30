@@ -501,8 +501,14 @@ function ProfileContentGrid({
     const selectedSeriesId = activeSeriesId || localActiveSeriesId;
     const activeSeries = selectedSeriesId ? seriesGroups.get(String(selectedSeriesId)) : null;
     const items = activeSeries ? (seriesGroups.get(String(activeSeries.id))?.seens || []) : publishedContent.filter((item) => !seriesIdFor(item));
-    const pinnedSeens = publishedContent.filter((item) => item.isPinned);
-    const featuredSeens = reposted ? publishedContent : [...publishedContent.filter((item) => item.pricing?.mode === "ONE_TIME"), ...pinnedSeens.filter((item) => item.pricing?.mode !== "ONE_TIME")];
+    // Paid Seens lead the grid, followed by the creator's normal Seens. The
+    // previous synthetic "All Seens" tile hid normal Seens one level deeper.
+    const featuredSeens = reposted
+      ? publishedContent
+      : [
+          ...publishedContent.filter((item) => item.pricing?.mode === "ONE_TIME"),
+          ...publishedContent.filter((item) => item.pricing?.mode !== "ONE_TIME"),
+        ];
     const openSeries = (seriesItem) => {
       const nextId = String(seriesItem.id);
       setLocalActiveSeriesId(nextId);
@@ -629,18 +635,25 @@ function ProfileContentGrid({
               );
             }
 
+            if (paid && !owner) {
+              return (
+                <Link
+                  aria-label={`Open Paid Seen ${item.title || "Untitled Seen"}`}
+                  className={`profile-seen-tile is-paid ${String(highlightSeenId) === String(item.id || item._id) ? "is-newly-published" : ""}`}
+                  key={item.id}
+                  to={`/seen/${item.id || item._id}`}
+                >
+                  {tile}
+                </Link>
+              );
+            }
+
             return (
               <button className={`profile-seen-tile ${paid ? "is-paid" : ""} ${String(highlightSeenId) === String(item.id || item._id) ? "is-newly-published" : ""}`} key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
                 {tile}
               </button>
             );
           })}
-          {!reposted && publishedContent.length ? <button className="profile-seen-tile profile-all-seens-tile" onClick={() => onActiveSeenListChange?.("all")} type="button">
-            {publishedContent[0]?.coverMedia?.secureUrl ? <PublicationCoverMedia alt="All Seens" autoPlay loop media={publishedContent[0].coverMedia} /> : <span className="profile-seen-fallback"><FiGrid /></span>}
-            <span className="profile-seen-shade" />
-            <span className="profile-draft-count">{publishedContent.length}</span>
-            <span className="profile-seen-copy"><strong>All Seens</strong><small>Open every Seen</small></span>
-          </button> : null}
         </div>
         {activeSeen ? <SeenPreviewSheet item={activeSeen} onClose={() => setActiveSeen(null)} onSeriesChanged={(updated) => {
           setLocalContent((current) => (current || effectiveContent).map((item) => item.id === updated.id ? updated : item));

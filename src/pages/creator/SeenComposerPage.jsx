@@ -40,6 +40,8 @@ import { normalizeTags, publicationError, seenCompleteness } from "../../utils/p
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import { resolveMediaUrl } from "../../utils/media";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
+import AiSeenGuide from "../../components/publication/AiSeenGuide";
 
 const empty = { allowDownload: false, captionsEnabled: true, ownerWelcomeNote: "", attachedEntities: [], entityRefs: [], experienceLocation: "", kind: "SEEN", pricing: { mode: "FREE", starsAmount: null, presetId: null }, taggedPeople: [], title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
 const fallbackCategories = ["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"];
@@ -96,6 +98,46 @@ function statusLabel(status, uploading) {
   if (uploading) return "Uploading media...";
   if (status === "Saved") return "";
   return status;
+}
+
+function PaidSeenBuyerView({ chapters = [], coverKind, coverUrl, creatorAvatar, creatorName, onClose, onUnlock, price, title }) {
+  const previews = chapters.filter((chapter) => chapter.isPreview);
+  const firstPreview = previews[0] || chapters[0];
+  const [selectedChapterId, setSelectedChapterId] = useState(firstPreview?.stableChapterId || firstPreview?.id || "");
+  const selectedChapter = chapters.find((chapter) => (chapter.stableChapterId || chapter.id) === selectedChapterId) || firstPreview;
+  useEffect(() => { const closeOnEscape = (event) => event.key === "Escape" && onClose(); window.addEventListener("keydown", closeOnEscape); return () => window.removeEventListener("keydown", closeOnEscape); }, [onClose]);
+  return <div className="seen-buyer-view-layer" role="presentation">
+    <button aria-label="Close buyer view" className="seen-buyer-view-scrim" onClick={onClose} type="button" />
+    <section aria-label="Paid Seen buyer view" aria-modal="true" className="seen-buyer-view-sheet" role="dialog">
+      <button aria-label="Close buyer view" className="seen-buyer-view-handle" onClick={onClose} type="button"><span /></button>
+      <p className="seen-buyer-view-label"><FiEye /> BUYER VIEW</p>
+      <div className="seen-buyer-view-card"><header><span className="seen-buyer-view-avatar">{creatorAvatar ? <img alt="" src={creatorAvatar} /> : creatorName.slice(0, 1).toUpperCase()}</span><strong>{creatorName}</strong><small>tap Preview / Locked</small></header><div className="seen-buyer-view-cover">{coverUrl ? coverKind === "VIDEO" ? <video autoPlay loop muted playsInline src={coverUrl} /> : <img alt="" src={coverUrl} /> : <span><FiEye /><small>Paid Seen</small></span>}<div><small>PAID SEEN</small><h2>{title || "Untitled Seen"}</h2><p>{chapters.length} {chapters.length === 1 ? "chapter" : "chapters"}</p></div></div></div>
+      <p className="seen-buyer-view-new"><i /> New — be one of the first owners</p>
+      <div className="seen-buyer-view-inside-head"><b>INSIDE</b><span>· chapter {chapters.length === 1 ? "1" : `1–${chapters.length}`}</span></div>
+      <div className="seen-buyer-view-chapters">{chapters.map((chapter, index) => { const preview = Boolean(chapter.isPreview); const chapterId = chapter.stableChapterId || chapter.id || String(index); return <button className={selectedChapter === chapter ? "is-active" : ""} key={chapterId} onClick={() => preview ? setSelectedChapterId(chapterId) : onUnlock()} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{chapter.title?.trim() || `Chapter ${index + 1}`}</strong><em className={preview ? "is-preview" : "is-locked"}>{preview ? "Free preview" : <><FiLock /> Locked</>}</em></button>; })}</div>
+      {selectedChapter ? <div className="seen-buyer-view-excerpt"><b>{selectedChapter.title || "Free preview"}</b><p>{chapterStoryText(selectedChapter) || "Open this free preview to see what is inside."}</p></div> : null}
+      <div className="seen-buyer-view-benefits"><span><FiCheck /><small>Yours forever</small></span><span><FiArrowRight /><small>New chapters included</small></span></div>
+      <button className="seen-buyer-view-unlock" onClick={onUnlock} type="button">Unlock <span>·</span> <b>✦ {Number(price || 0).toLocaleString()}</b></button>
+      <small className="seen-buyer-view-footnote">One-time · yours forever · refund within 24h if it’s not for you</small>
+    </section>
+  </div>;
+}
+
+function OwnerVoiceSheet({ busy, onClose, onSave }) {
+  const recorder = useRef(null);
+  const stream = useRef(null);
+  const chunks = useRef([]);
+  const fileInput = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const [voice, setVoice] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => { if (!recording) return undefined; const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000); return () => window.clearInterval(timer); }, [recording]);
+  useEffect(() => () => { stream.current?.getTracks().forEach((track) => track.stop()); if (voice?.url) URL.revokeObjectURL(voice.url); }, [voice?.url]);
+  const start = async () => { try { const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true }); const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm"; const next = new MediaRecorder(mediaStream, { mimeType }); stream.current = mediaStream; recorder.current = next; chunks.current = []; next.ondataavailable = ({ data }) => data.size && chunks.current.push(data); next.onstop = () => { const blob = new Blob(chunks.current, { type: mimeType }); setVoice({ file: new File([blob], `owner-welcome-${Date.now()}.webm`, { type: mimeType }), url: URL.createObjectURL(blob) }); mediaStream.getTracks().forEach((track) => track.stop()); }; next.start(250); setSeconds(0); setRecording(true); setError(""); } catch { setError("Microphone access is needed to record. You can upload audio instead."); } };
+  const stop = () => { if (recorder.current?.state === "recording") recorder.current.stop(); setRecording(false); };
+  const chooseFile = (event) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (voice?.url) URL.revokeObjectURL(voice.url); setVoice({ file, url: URL.createObjectURL(file) }); };
+  return <div className="owner-voice-layer"><button aria-label="Close voice recorder" className="owner-voice-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="owner-voice-sheet" role="dialog"><span className="owner-voice-handle" /><header><div><h2>Voice hello</h2><p>Welcome owners in your own voice.</p></div><button aria-label="Close" onClick={onClose} type="button"><FiX /></button></header>{voice ? <div className="owner-voice-preview"><audio controls src={voice.url} /><button onClick={() => { URL.revokeObjectURL(voice.url); setVoice(null); setSeconds(0); }} type="button">Record again</button></div> : <button className={`owner-voice-record ${recording ? "is-recording" : ""}`} onClick={recording ? stop : start} type="button"><FiMic /><b>{recording ? "Stop recording" : "Start recording"}</b><small>{recording ? `${seconds}s` : "Tap when you’re ready"}</small></button>}{error ? <p className="owner-voice-error">{error}</p> : null}<button className="owner-voice-upload" onClick={() => fileInput.current?.click()} type="button"><FiUpload /> Upload audio</button><input accept="audio/*" className="sr-only" onChange={chooseFile} ref={fileInput} type="file" /><button className="owner-voice-use" disabled={!voice?.file || busy} onClick={() => onSave(voice.file)} type="button">{busy ? "Adding voice…" : "Add voice hello"}</button></section></div>;
 }
 
 const tagsWithoutSeries = (tags = []) => normalizeTags(tags).filter((tag) => !String(tag).startsWith("series:"));
@@ -2427,14 +2469,20 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
 
 export default function SeenComposerPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { id } = useParams();
   const nav = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const fromDrafts = searchParams.get("from") === "drafts";
   const fromSeen = searchParams.get("from") === "seen";
-  const draftSuffix = fromDrafts ? "?from=drafts" : "";
-  const backTarget = id
+  const requestedReturnTo = searchParams.get("returnTo") || "";
+  const returnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//") ? requestedReturnTo : "";
+  const composerSearch = new URLSearchParams();
+  if (fromDrafts) composerSearch.set("from", "drafts");
+  if (returnTo) composerSearch.set("returnTo", returnTo);
+  const draftSuffix = composerSearch.size ? `?${composerSearch.toString()}` : "";
+  const backTarget = returnTo || (id
     ? fromSeen
       ? "/seen"
       : fromDrafts
@@ -2442,7 +2490,7 @@ export default function SeenComposerPage() {
         : "/profile"
     : fromDrafts
       ? "/profile"
-      : "/profile";
+      : "/profile");
   const replyToSeenId = id ? "" : searchParams.get("replyToSeenId") || "";
   const requestedSeenType = id ? "" : searchParams.get("type") || "";
   const coverInput = useRef(null);
@@ -2455,6 +2503,10 @@ export default function SeenComposerPage() {
   const chapterAutoSaveTimer = useRef(null);
   const publicationAutoSaveTimer = useRef(null);
   const initialChapterStarted = useRef(false);
+  const pageWasReloaded = useRef(
+    window.performance?.getEntriesByType?.("navigation")?.[0]?.type === "reload"
+      && !location.state?.composerStep,
+  );
   const [p, setP] = useState(() => ({
     ...empty,
     pricing: requestedSeenType === "paid"
@@ -2482,6 +2534,8 @@ export default function SeenComposerPage() {
   const [starsPerUsd, setStarsPerUsd] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [videoToTrim, setVideoToTrim] = useState(null);
+  const [buyerViewOpen, setBuyerViewOpen] = useState(false);
+  const [ownerVoiceOpen, setOwnerVoiceOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -2495,16 +2549,23 @@ export default function SeenComposerPage() {
       });
     return () => { active = false; };
   }, []);
-  const [activeChapterId, setActiveChapterId] = useState(() => location.state?.openChapterId || "");
+  const [activeChapterId, setActiveChapterId] = useState(() => pageWasReloaded.current ? "" : location.state?.openChapterId || "");
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
   const [chapterAdding, setChapterAdding] = useState(false);
-  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => location.state?.focusChapterId || "");
+  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => pageWasReloaded.current ? "" : location.state?.focusChapterId || "");
   const [chapterStatus, setChapterStatus] = useState("");
   const [cropTarget, setCropTarget] = useState(null);
   const [loadingPublication, setLoadingPublication] = useState(Boolean(id));
   const [aboutStep, setAboutStep] = useState(() => !id);
+  const [chaptersStep, setChaptersStep] = useState(() => !pageWasReloaded.current && location.state?.composerStep === "chapters");
   const [continuingToChapter, setContinuingToChapter] = useState(false);
+  const [aiSeenOpen, setAiSeenOpen] = useState(false);
+
+  useEffect(() => {
+    if (!location.state?.openChapterId && !location.state?.focusChapterId && !location.state?.composerStep) return;
+    nav(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -2728,12 +2789,12 @@ export default function SeenComposerPage() {
         statusVersion: publication.statusVersion,
       })).data.data.publication;
 
-      for (const chapter of p.chapters || []) {
+      for (const [chapterIndex, chapter] of (p.chapters || []).entries()) {
         if (!chapter.stableChapterId) continue;
         await api.updateChapter(publication.id, chapter.stableChapterId, {
           title: (chapter.title || "").trim() || "Chapter name",
           blocks: chapter.blocks || [],
-          isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(chapter.isPreview),
+          isPreview: p.pricing?.mode !== "ONE_TIME" || chapterIndex === 0,
           releaseMode: chapter.releaseMode || "IMMEDIATE",
           statusVersion: publication.statusVersion,
         });
@@ -2779,7 +2840,7 @@ export default function SeenComposerPage() {
         if (latest.status === "DRAFT") await api.deleteSeen(latest.id, latest.statusVersion);
       }
       sessionStorage.removeItem("atseen_new_seen_draft");
-      nav(fromSeen ? "/seen" : "/profile", { replace: true });
+      nav(returnTo || (fromSeen ? "/seen" : "/profile"), { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError, "Could not cancel this Seen"));
       setCanceling(false);
@@ -2893,9 +2954,9 @@ export default function SeenComposerPage() {
     setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
   };
 
-  const uploadOwnerVoice = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
+  const uploadOwnerVoice = async (source) => {
+    const file = source?.target?.files?.[0] || source;
+    if (source?.target) source.target.value = "";
     if (!file) return;
     setUploading("VOICE");
     setError("");
@@ -2904,11 +2965,20 @@ export default function SeenComposerPage() {
       await api.uploadMedia(publication.id, file, { mediaType: "VOICE", purpose: "INTRO", statusVersion: publication.statusVersion });
       await refresh(publication.id, { preserveLocalChanges: dirty.current });
       setToast("Voice hello added");
+      setOwnerVoiceOpen(false);
     } catch (requestError) {
       setError(publicationError(requestError, "Could not add the voice hello"));
     } finally {
       setUploading("");
     }
+  };
+
+  const removeOwnerVoice = async () => {
+    if (!p.id || !p.introMedia || uploading) return;
+    setUploading("VOICE");
+    try { await api.deleteMedia(p.id, "INTRO", p.statusVersion); await refresh(p.id, { preserveLocalChanges: dirty.current }); setToast("Voice hello removed"); }
+    catch (requestError) { setError(publicationError(requestError, "Could not remove the voice hello")); }
+    finally { setUploading(""); }
   };
 
   const chooseMedia = (kind, limitSeconds = 15) => {
@@ -2922,7 +2992,7 @@ export default function SeenComposerPage() {
 
   const addChapter = async () => {
     if (chapterAdding) return;
-    const maxChapters = p.pricing?.mode === "ONE_TIME" ? 10 : 5;
+    const maxChapters = 5;
     if (p.chapters.length >= maxChapters) {
       setError(`Maximum ${maxChapters} chapters.`);
       return;
@@ -2957,6 +3027,69 @@ export default function SeenComposerPage() {
       setError(publicationError(requestError));
     } finally {
       setChapterAdding(false);
+    }
+  };
+
+  const completeAiSeen = async ({ chapters, description, sessionId, title }) => {
+    if (!chapters?.length || continuingToChapter) {
+      if (!chapters?.length) setError("Answer at least one photo question to create your Seen");
+      return;
+    }
+    setContinuingToChapter(true);
+    setError("");
+    setStatus("Saving...");
+    try {
+      const lowerWords = `${title} ${description}`.toLowerCase();
+      const category = lowerWords.match(/travel|trip|city|beach|mountain/u) ? "Travel"
+        : lowerWords.match(/work|business|client|career/u) ? "Business"
+          : lowerWords.match(/food|cook|meal|coffee/u) ? "Food"
+            : lowerWords.match(/fitness|gym|run|health/u) ? "Fitness"
+              : "Lifestyle";
+      let publication = (await api.createPublicationDraft({
+        kind: "SEEN",
+        title,
+        summary: description || title,
+        description,
+        category,
+        visibility: p.visibility || "PUBLIC",
+        pricing: p.pricing || empty.pricing,
+        tags: [],
+      })).data.data.publication;
+      sessionStorage.setItem("atseen_new_seen_draft", publication.id);
+      await api.linkAiSeenPublication(sessionId, publication.id);
+      for (const [chapterIndex, prepared] of chapters.entries()) {
+        const added = await api.addChapter(publication.id, {
+          title: prepared.heading || `Chapter ${chapterIndex + 1}`,
+          blocks: [],
+          isPreview: publication.pricing?.mode !== "ONE_TIME" || chapterIndex === 0,
+          releaseMode: "IMMEDIATE",
+          statusVersion: publication.statusVersion,
+        });
+        const chapterId = added.data?.data?.chapter?.stableChapterId;
+        publication = await refresh(publication.id);
+        const blockId = globalThis.crypto?.randomUUID?.() || `ai-photo-${Date.now()}-${chapterIndex}`;
+        const uploaded = (await api.uploadMedia(publication.id, prepared.file, { chapterId, blockId, mediaType: "IMAGE" })).data?.data;
+        await api.updateChapter(publication.id, chapterId, {
+          title: prepared.heading || `Chapter ${chapterIndex + 1}`,
+          blocks: [
+            { id: blockId, type: "IMAGE", order: 0, media: uploaded, metadata: { label: prepared.caption || "", aiGeneratedCaption: true } },
+            { id: `${blockId}-text`, type: "TEXT", order: 1, text: prepared.text },
+          ],
+          isPreview: publication.pricing?.mode !== "ONE_TIME" || chapterIndex === 0,
+          releaseMode: "IMMEDIATE",
+          statusVersion: publication.statusVersion,
+        });
+        publication = await refresh(publication.id);
+      }
+      setAiSeenOpen(false);
+      setAboutStep(false);
+      setChaptersStep(true);
+      setStatus("Saved");
+      nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, { replace: true, state: { composerStep: "chapters", aiGenerated: true } });
+    } catch (requestError) {
+      setError(publicationError(requestError, "Could not create this AI Seen"));
+    } finally {
+      setContinuingToChapter(false);
     }
   };
 
@@ -3005,16 +3138,24 @@ export default function SeenComposerPage() {
       const firstChapter = latest.chapters.find((chapter) => chapter.stableChapterId === chapterId) || latest.chapters[0];
       initialChapterStarted.current = true;
       setAboutStep(false);
-      if (firstChapter?.stableChapterId) {
+      setChaptersStep(p.pricing?.mode === "ONE_TIME");
+      if (p.pricing?.mode !== "ONE_TIME" && firstChapter?.stableChapterId) {
         setActiveChapterId(firstChapter.stableChapterId);
         setChapterStory(chapterStoryText(firstChapter));
+      } else {
+        setActiveChapterId("");
+        setChapterStory("");
       }
       dirty.current = false;
       setStatus("Saved");
-      nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
-        replace: true,
-        state: { openChapterId: firstChapter?.stableChapterId || chapterId },
-      });
+      if (String(id || "") !== String(publication.id)) {
+        nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
+          replace: true,
+          state: p.pricing?.mode === "ONE_TIME"
+            ? { composerStep: "chapters" }
+            : { openChapterId: firstChapter?.stableChapterId || chapterId },
+        });
+      }
     } catch (requestError) {
       setStatus("Save failed");
       setError(publicationError(requestError, "Could not start the first chapter"));
@@ -3466,39 +3607,10 @@ export default function SeenComposerPage() {
     }
   };
 
-  const toggleChapterPreview = async (chapter) => {
-    if (!paidSeen || !p.id || !chapter?.stableChapterId || chapterSaving) return;
-    const nextPreview = !chapter.isPreview;
-    if (nextPreview && p.chapters.every((item) => item.stableChapterId === chapter.stableChapterId || item.isPreview)) {
-      setToast("Keep at least one chapter locked in a paid Seen");
-      return;
-    }
-    setChapterSaving(true);
-    setError("");
-    try {
-      await api.updateChapter(p.id, chapter.stableChapterId, {
-        title: chapter.title || "Chapter name",
-        blocks: chapter.blocks || [],
-        isPreview: nextPreview,
-        releaseMode: chapter.releaseMode || "IMMEDIATE",
-        statusVersion: p.statusVersion,
-      });
-      await refresh(p.id);
-      setToast(nextPreview ? "Chapter is now a free preview" : "Chapter is now locked");
-    } catch (requestError) {
-      setError(publicationError(requestError, "Could not change chapter access"));
-      if (requestError.response?.status === 409) await refresh(p.id).catch(() => {});
-    } finally {
-      setChapterSaving(false);
-    }
-  };
-
   const submit = async () => {
     const publication = await save();
     if (!publication) return;
-    const errors = seenCompleteness(!publication.coverMedia?.secureUrl
-      ? { ...publication, coverMedia: { secureUrl: "optional-free-seen-cover" } }
-      : publication);
+    const errors = seenCompleteness(publication);
     if (errors.length) {
       setError(errors.join(" \u00b7 "));
       return;
@@ -3515,9 +3627,9 @@ export default function SeenComposerPage() {
         setStatus("Link-only Seen published");
         return;
       }
-      nav(fromSeen ? "/seen" : "/profile", {
+      nav(returnTo || (fromSeen ? "/seen" : "/profile"), {
         replace: true,
-        state: fromSeen ? undefined : { publishedSeen: { id: published?.id || publication.id, title: published?.title || publication.title } },
+        state: returnTo || fromSeen ? undefined : { publishedSeen: { id: published?.id || publication.id, title: published?.title || publication.title } },
       });
     } catch (requestError) {
       setError(publicationError(requestError));
@@ -3586,7 +3698,7 @@ export default function SeenComposerPage() {
   const paidSeen = p.pricing?.mode === "ONE_TIME";
   const paidPriceStars = Number(p.pricing?.starsAmount) || 190;
   const paidPriceUsd = Number(starsPerUsd) > 0 ? paidPriceStars / Number(starsPerUsd) : null;
-  const maxChapters = paidSeen ? 10 : 5;
+  const maxChapters = 5;
   const copyShareLink = async () => {
     if (!linkOnlyShare?.url) return;
     try {
@@ -3625,7 +3737,7 @@ export default function SeenComposerPage() {
         ) : null}
 
         <header className="seen-about-header">
-          <button aria-label="Back" className="seen-compose-back" onClick={() => nav(backTarget)} type="button"><FiChevronLeft /></button>
+          <button aria-label="Back" className="seen-compose-back" onClick={() => p.id ? setAboutStep(false) : nav(backTarget)} type="button"><FiChevronLeft /></button>
           <div>
             <h1>{paidSeen ? "New paid Seen" : "New Seen"}</h1>
             <p>{paidSeen ? "A path you’ve walked — told in chapters" : "A short story told in up to 5 chapters"}</p>
@@ -3634,7 +3746,7 @@ export default function SeenComposerPage() {
         {paidSeen ? <div className="seen-paid-create-progress" aria-label="Step 1 of 3"><i /><i /><i /></div> : null}
 
         <div className="seen-about-body">
-          <button className="seen-create-from-photos" onClick={() => setToast("Create from photos is coming soon")} type="button"><span><FiEye /></span><span><b>Create from photos</b><small>Tell what happened — AI writes it up</small></span><FiChevronRight /></button>
+          <button className="seen-create-from-photos" onClick={() => setAiSeenOpen(true)} type="button"><span><FiEye /></span><span><b>Create from photos</b><small>Tell what happened — AI writes it up</small></span><FiChevronRight /></button>
           {!paidSeen ? <section className="seen-about-preview" aria-label="Live feed preview">
             <header>
               <span className="seen-about-avatar">{creatorAvatar ? <img alt="" src={creatorAvatar} /> : creatorName.slice(0, 1).toUpperCase()}</span>
@@ -3673,7 +3785,7 @@ export default function SeenComposerPage() {
             <textarea maxLength={220} onChange={(event) => change({ description: event.target.value, summary: event.target.value })} placeholder={paidSeen ? "The path — from where to where. “From office job to my own studio”" : "What’s it about? A line or two — optional"} rows={3} value={description} />
           </label>
           {replyToSeenId ? <p className="seen-compose-reply-context">Replying to {replySeen?.title ? `“${replySeen.title}”` : "this Seen"}</p> : null}
-          <button className="seen-about-continue" disabled={!p.title.trim() || Boolean(uploading || continuingToChapter)} onClick={continueToFirstChapter} type="button">{continuingToChapter ? "Opening chapter..." : "Continue"}</button>
+          <button className="seen-about-continue" disabled={!p.title.trim() || Boolean(uploading || continuingToChapter)} onClick={continueToFirstChapter} type="button">{continuingToChapter ? "Opening chapter..." : t("Continue")}</button>
         </div>
         <input accept={`${IMAGE_ACCEPT},${VIDEO_ACCEPT}`} className="sr-only" onChange={uploadCover} ref={coverInput} type="file" />
         {settingsSheet === "cover" ? <CoverSheet hasCover={Boolean(p.coverMedia || coverPreview)} onClose={() => setSettingsSheet("")} onUpload={(kind) => chooseMedia(kind, 15)} /> : null}
@@ -3729,6 +3841,29 @@ export default function SeenComposerPage() {
     );
   }
 
+  if (paidSeen && chaptersStep) {
+    return (
+      <section className="seen-compose-page seen-chapters-step">
+        {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
+        {error || statusText ? <div className="seen-compose-feedback-stack" aria-live="polite">{error ? <p className="seen-compose-feedback is-error" role="alert">{error}</p> : null}{statusText ? <p className="seen-compose-feedback is-status" role="status">{statusText}</p> : null}</div> : null}
+        <header className="seen-compose-header seen-flow-step-header">
+          <button aria-label="Back" className="seen-compose-back" onClick={() => setAboutStep(true)} type="button"><FiChevronLeft /></button>
+          <div className="seen-compose-heading"><h1>{t("Chapters")}</h1><p>{p.title || "Your paid Seen"}</p></div>
+        </header>
+        <div className="seen-paid-create-progress is-step-two" aria-label="Step 2 of 3"><i /><i /><i /></div>
+        <div className="seen-chapters-step-body">
+          <p className="seen-chapters-step-intro">Each chapter is one step of the path. Write it, add photos, a voice note — the same way people will read it.</p>
+          <div className="seen-compose-chapters is-page-grid">
+            {p.chapters.map((chapter, index) => <div className="seen-compose-chapter is-page" key={chapter.stableChapterId || index}><span>{String(index + 1).padStart(2, "0")}</span><button aria-label={`Remove chapter ${index + 1}`} onClick={() => removeChapter(chapter)} type="button"><FiX /></button><button className="seen-compose-chapter-page-copy" onClick={() => openChapterEditor(chapter)} type="button"><strong>{chapter.title?.trim() || `Chapter ${index + 1}`}{p.aiAssistance?.generated ? <FiEdit3 aria-label="AI suggestion — editable" /> : null}</strong>{chapterStoryText(chapter) ? <small>{chapterStoryText(chapter)}</small> : null}</button><span className={`seen-chapter-access-toggle ${index === 0 ? "is-preview" : "is-locked"}`}>{index === 0 ? <FiEye /> : <FiLock />}{t(index === 0 ? "Preview" : "Locked")}</span></div>)}
+            {p.chapters.length < maxChapters ? <button className="seen-compose-add-chapter is-page" disabled={chapterAdding} onClick={addChapter} type="button"><FiPlus /><span>{chapterAdding ? "Adding..." : `Chapter ${p.chapters.length + 1}`}</span></button> : null}
+          </div>
+          <p className="seen-chapters-step-count">{p.chapters.length}/{maxChapters} · you can add chapters after publishing — buyers get them free</p>
+          <button className="seen-about-continue" disabled={!p.chapters.length || Boolean(chapterAdding || chapterSaving)} onClick={() => setChaptersStep(false)} type="button">{t("Continue")}</button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="seen-compose-page">
       {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
@@ -3750,13 +3885,13 @@ export default function SeenComposerPage() {
         <button
           aria-label="Back"
           className="seen-compose-back"
-          onClick={() => p.chapters.length ? openChapterEditor(p.chapters[p.chapters.length - 1]) : setAboutStep(true)}
+          onClick={() => paidSeen ? setChaptersStep(true) : p.chapters.length ? openChapterEditor(p.chapters[p.chapters.length - 1]) : setAboutStep(true)}
           type="button"
         >
           <FiChevronLeft />
         </button>
         <div className="seen-compose-heading">
-          <h1>{paidSeen ? "Price & publish" : "Preview & publish"}</h1>
+          <h1>{paidSeen ? t("Price & publish") : "Preview & publish"}</h1>
           {introOpen && !p.chapters.length ? (
             <p>
               <span>
@@ -3776,10 +3911,11 @@ export default function SeenComposerPage() {
             </p>
           ) : null}
         </div>
-        <button className="seen-compose-save" onClick={() => paidSeen ? setToast("Buyer view uses chapter 1 as the free preview") : saveForLater()} type="button">
-          {paidSeen ? <><FiEye /> Buyer view</> : "Save for later"}
+        <button className="seen-compose-save" onClick={() => paidSeen ? setBuyerViewOpen(true) : saveForLater()} type="button">
+          {paidSeen ? <><FiEye /> {t("Buyer view")}</> : "Save for later"}
         </button>
       </header>
+      {paidSeen ? <div className="seen-paid-create-progress is-step-three" aria-label="Step 3 of 3"><i /><i /><i /></div> : null}
 
       <div className="seen-compose-body">
         <section className={`seen-review-feed-preview ${paidSeen ? "is-paid-publish" : ""}`} aria-label="Seen feed preview">
@@ -3833,7 +3969,7 @@ export default function SeenComposerPage() {
         <div className="seen-compose-section-title">
           <span>CHAPTERS</span>
           <small>
-            {paidSeen ? "tap Preview / Locked" : `${p.chapters.length}/${maxChapters} \u00b7 tap a page to edit`}
+            {paidSeen ? "Chapter 1 Preview / rest Locked" : `${p.chapters.length}/${maxChapters} \u00b7 tap a page to edit`}
           </small>
         </div>
 
@@ -3853,10 +3989,10 @@ export default function SeenComposerPage() {
                 <FiX />
               </button>
               <button className="seen-compose-chapter-page-copy" onClick={() => openChapterEditor(chapter)} type="button">
-                <strong>{chapter.title?.trim() || `Chapter ${index + 1}`}</strong>
+                <strong>{chapter.title?.trim() || `Chapter ${index + 1}`}{p.aiAssistance?.generated ? <FiEdit3 aria-label="AI suggestion — editable" /> : null}</strong>
                 {chapterStoryText(chapter) ? <small>{chapterStoryText(chapter)}</small> : null}
               </button>
-              {paidSeen ? <button aria-label={`${chapter.isPreview ? "Lock" : "Make a free preview of"} chapter ${index + 1}`} className={`seen-chapter-access-toggle ${chapter.isPreview ? "is-preview" : "is-locked"}`} disabled={chapterSaving} onClick={() => toggleChapterPreview(chapter)} type="button">{chapter.isPreview ? <FiEye /> : <FiLock />}{chapter.isPreview ? "Preview" : "Locked"}</button> : null}
+              {paidSeen ? <span className={`seen-chapter-access-toggle ${index === 0 ? "is-preview" : "is-locked"}`}>{index === 0 ? <FiEye /> : <FiLock />}{t(index === 0 ? "Preview" : "Locked")}</span> : null}
             </div>
           ))}
           {p.chapters.length < maxChapters ? (
@@ -3867,7 +4003,7 @@ export default function SeenComposerPage() {
               type="button"
             >
               <FiPlus aria-hidden="true" />
-              <span>{chapterAdding ? "Adding..." : p.chapters.length ? "Add chapter" : "Chapter 1"}</span>
+              <span>{chapterAdding ? "Adding..." : p.chapters.length ? t("Add chapter") : "Chapter 1"}</span>
             </button>
           ) : null}
         </div>
@@ -3884,8 +4020,8 @@ export default function SeenComposerPage() {
             <span>NOTE FOR OWNERS</span>
             <p>Everyone who unlocks gets this — on the “It’s yours” screen and in their chat with you.</p>
             <textarea maxLength={500} onChange={(event) => change({ ownerWelcomeNote: event.target.value })} placeholder="Welcome them in — where should they start?" value={p.ownerWelcomeNote || ""} />
-            <button disabled={uploading === "VOICE"} onClick={() => ownerVoiceInput.current?.click()} type="button"><FiMic /> {uploading === "VOICE" ? "Adding voice…" : p.introMedia ? "Replace voice hello" : "Add a voice hello"}</button>
-            <input accept="audio/mpeg,audio/wav,audio/aac,audio/flac,audio/webm,audio/ogg,audio/mp4" className="sr-only" onChange={uploadOwnerVoice} ref={ownerVoiceInput} type="file" />
+            {p.introMedia?.secureUrl || p.introMedia?.url ? <div className="seen-owner-voice-attached"><audio controls src={p.introMedia.secureUrl || p.introMedia.url} /><button disabled={uploading === "VOICE"} onClick={removeOwnerVoice} type="button">Remove</button></div> : null}
+            <button disabled={uploading === "VOICE"} onClick={() => setOwnerVoiceOpen(true)} type="button"><FiMic /> {uploading === "VOICE" ? "Adding voice…" : p.introMedia ? "Replace voice hello" : "Add a voice hello"}</button>
           </section>
         </> : null}
         <div className={`seen-compose-settings ${paidSeen ? "is-paid-publish" : ""}`} aria-label="Seen settings">
@@ -3910,6 +4046,9 @@ export default function SeenComposerPage() {
         <button className="seen-compose-publish" disabled={Boolean(uploading || submitting)} onClick={submit} type="button">{submitting ? "Publishing..." : p.publishedVersion ? "Republish" : "Publish"}</button>
         {paidSeen ? <small className="seen-paid-publish-footnote">Owners keep it forever — new chapters reach them free</small> : <button className="seen-compose-cancel" disabled={Boolean(uploading || submitting || canceling)} onClick={cancelCreation} type="button">{canceling ? "Canceling..." : "Cancel"}</button>}
       </div>
+      {ownerVoiceOpen ? <OwnerVoiceSheet busy={uploading === "VOICE"} onClose={() => !uploading && setOwnerVoiceOpen(false)} onSave={uploadOwnerVoice} /> : null}
+      {paidSeen && buyerViewOpen ? <PaidSeenBuyerView chapters={p.chapters} coverKind={mediaKind} coverUrl={mediaPreview} creatorAvatar={creatorAvatar} creatorName={creatorName.split(" ")[0]} onClose={() => setBuyerViewOpen(false)} onUnlock={() => setToast("Buyer preview only — publishing makes this unlock available to fans")} price={paidPriceStars} title={p.title} /> : null}
+      <AiSeenGuide onClose={() => setAiSeenOpen(false)} onComplete={completeAiSeen} open={aiSeenOpen} />
       {settingsSheet === "category" ? (
         <CategorySheet
           categories={categoryOptions}
