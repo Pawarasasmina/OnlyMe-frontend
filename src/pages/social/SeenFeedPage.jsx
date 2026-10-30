@@ -523,7 +523,7 @@ function CompactSeenMedia({ item, onOpen }) {
 
   return <div className="seen-media-wrap">
     <button aria-label={`Open ${item.title}`} className="seen-media" onClick={onOpen} type="button">
-      {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={{ mediaType: isVideo ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} muted={muted} /> : <span className="seen-media-fallback">@seen</span>}
+      {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop maxPlaybackSeconds={6} media={{ mediaType: isVideo ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} muted={muted} /> : <span className="seen-media-fallback">@seen</span>}
       {isVideo && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
     </button>
     {isVideo && item.media.url ? <button aria-label={muted ? "Unmute video" : "Mute video"} aria-pressed={!muted} className="seen-video-sound-toggle" onClick={() => setMuted((value) => !value)} title={muted ? "Unmute video" : "Mute video"} type="button">{muted ? <FiVolumeX aria-hidden="true" /> : <FiVolume2 aria-hidden="true" />}</button> : null}

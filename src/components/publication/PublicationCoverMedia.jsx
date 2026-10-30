@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { resolveMediaUrl } from "../../utils/media";
 
 function isVideoCover(media) {
@@ -12,12 +13,20 @@ function isVideoCover(media) {
     || Number(media?.durationSeconds ?? media?.duration) > 0;
 }
 
-export default function PublicationCoverMedia({ alt = "", autoPlay = false, className = "", controls = false, loading, loop = false, media, muted, preload = "metadata" }) {
+export default function PublicationCoverMedia({ alt = "", autoPlay = false, className = "", controls = false, loading, loop = false, maxPlaybackSeconds = 0, media, muted, preload = "metadata" }) {
+  const videoRef = useRef(null);
   const src = resolveMediaUrl(media?.secureUrl || media?.url || media?.playbackUrl || "");
   if (!src) return null;
   if (isVideoCover(media)) {
     const poster = resolveMediaUrl(media?.thumbnailUrl || media?.posterUrl || "") || undefined;
-    return <video aria-label={alt || undefined} autoPlay={autoPlay} className={className} controls={controls} loop={loop} muted={muted ?? (autoPlay || !controls)} playsInline poster={poster} preload={preload} src={src} />;
+    const onTimeUpdate = (event) => {
+      if (!maxPlaybackSeconds || event.currentTarget.currentTime < maxPlaybackSeconds) return;
+      if (loop) {
+        event.currentTarget.currentTime = 0;
+        void event.currentTarget.play().catch(() => {});
+      } else event.currentTarget.pause();
+    };
+    return <video aria-label={alt || undefined} autoPlay={autoPlay} className={className} controls={controls} loop={loop && !maxPlaybackSeconds} muted={muted ?? (autoPlay || !controls)} onTimeUpdate={onTimeUpdate} playsInline poster={poster} preload={preload} ref={videoRef} src={src} />;
   }
   return <img alt={alt} className={className} loading={loading} src={src} />;
 }

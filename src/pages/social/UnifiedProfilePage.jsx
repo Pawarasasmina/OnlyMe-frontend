@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
@@ -963,6 +963,7 @@ function ProfileNotes({ isOwner, posts = [] }) {
 
 function ProfileBody({ data, setConnectionsType }) {
   const { user } = useAuth();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
@@ -971,6 +972,7 @@ function ProfileBody({ data, setConnectionsType }) {
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
   const [profileStoryViewer, setProfileStoryViewer] = useState(null);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
+  const [publishedSeen, setPublishedSeen] = useState(() => location.state?.publishedSeen || null);
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
@@ -1002,6 +1004,11 @@ function ProfileBody({ data, setConnectionsType }) {
     const timer = window.setTimeout(() => setDraftSavedCount(0), 3200);
     return () => window.clearTimeout(timer);
   }, [draftSavedCount, setSearchParams]);
+  useEffect(() => {
+    if (!publishedSeen) return undefined;
+    const timer = window.setTimeout(() => setPublishedSeen(null), 4200);
+    return () => window.clearTimeout(timer);
+  }, [publishedSeen]);
   useEffect(() => {
     if (tab !== "seens") {
       setActiveSeriesId("");
@@ -1054,6 +1061,7 @@ function ProfileBody({ data, setConnectionsType }) {
   }
   return (
     <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-public-profile"}`}>
+      {publishedSeen ? <div className="profile-published-seen-banner" role="status"><span>Published</span><button onClick={async () => { const url = `${window.location.origin}/seen/${publishedSeen.id}`; if (navigator.share) await navigator.share({ title: publishedSeen.title || "Seen", url }).catch(() => {}); else await navigator.clipboard?.writeText(url); }} type="button">Share</button></div> : null}
       {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">Saved for later · {draftSavedCount}/3 ✍️</p> : null}
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
@@ -1070,6 +1078,7 @@ function ProfileBody({ data, setConnectionsType }) {
           <ProfileContentGrid
             content={data.seens || []}
             emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."}
+            highlightSeenId={publishedSeen?.id || ""}
             kind="seens"
             onActiveSeriesChange={setSeriesFocus}
             onActiveSeenListChange={setSeenListFocus}

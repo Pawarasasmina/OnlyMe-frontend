@@ -466,6 +466,7 @@ function ProfileContentGrid({
   activeSeenListId = "",
   content = [],
   emptyText = "",
+  highlightSeenId = "",
   kind = "content",
   onActiveSeriesChange,
   onActiveSeenListChange,
@@ -629,7 +630,7 @@ function ProfileContentGrid({
             }
 
             return (
-              <button className={`profile-seen-tile ${paid ? "is-paid" : ""}`} key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
+              <button className={`profile-seen-tile ${paid ? "is-paid" : ""} ${String(highlightSeenId) === String(item.id || item._id) ? "is-newly-published" : ""}`} key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
                 {tile}
               </button>
             );
