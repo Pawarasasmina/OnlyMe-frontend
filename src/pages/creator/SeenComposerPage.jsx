@@ -2789,12 +2789,25 @@ export default function SeenComposerPage() {
         statusVersion: publication.statusVersion,
       })).data.data.publication;
 
+      const comparableChapter = (chapter = {}) => JSON.stringify({
+        title: (chapter.title || "").trim() || "Chapter name",
+        isPreview: Boolean(chapter.isPreview),
+        worldBonus: Boolean(chapter.worldBonus),
+        releaseMode: chapter.releaseMode || "IMMEDIATE",
+        blocks: (chapter.blocks || []).map((block) => ({ id: block.id, type: block.type, order: block.order, text: block.text || "", url: block.url || "", label: block.label || "", metadata: block.metadata || null, assetId: block.media?.assetId || "" })),
+      });
+      const savedChapters = new Map((publication.chapters || []).map((chapter) => [chapter.stableChapterId, chapter]));
       for (const [chapterIndex, chapter] of (p.chapters || []).entries()) {
         if (!chapter.stableChapterId) continue;
+        const savedChapter = savedChapters.get(chapter.stableChapterId);
+        const expectedPreview = p.pricing?.mode !== "ONE_TIME" || chapterIndex === 0;
+        const nextChapter = { ...chapter, isPreview: expectedPreview };
+        if (savedChapter && comparableChapter(savedChapter) === comparableChapter(nextChapter)) continue;
         await api.updateChapter(publication.id, chapter.stableChapterId, {
           title: (chapter.title || "").trim() || "Chapter name",
           blocks: chapter.blocks || [],
-          isPreview: p.pricing?.mode !== "ONE_TIME" || chapterIndex === 0,
+          isPreview: expectedPreview,
+          worldBonus: Boolean(chapter.worldBonus),
           releaseMode: chapter.releaseMode || "IMMEDIATE",
           statusVersion: publication.statusVersion,
         });
@@ -3189,6 +3202,20 @@ export default function SeenComposerPage() {
     setError("");
   };
 
+  const toggleWorldBonusChapter = async (chapter) => {
+    if (!p.id || !chapter?.stableChapterId || p.pricing?.mode === "ONE_TIME") return;
+    setStatus(chapter.worldBonus ? "Removing World bonus…" : "Adding World bonus…");
+    setError("");
+    try {
+      await api.setWorldBonusChapter(p.id, chapter.stableChapterId, !chapter.worldBonus, p.statusVersion);
+      await refresh(p.id);
+      setStatus(chapter.worldBonus ? "Removed from World bonuses" : "World bonus chapter saved");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      if (requestError.response?.status === 409) await refresh(p.id).catch(() => {});
+    }
+  };
+
   const saveChapterStory = async ({ close = true } = {}) => {
     if (!activeChapter || !p.id || chapterSaving) return;
     window.clearTimeout(chapterAutoSaveTimer.current);
@@ -3200,6 +3227,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks: chapterBlocksWithStory(activeChapter, chapterStory),
         isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3232,6 +3260,7 @@ export default function SeenComposerPage() {
           title: activeChapter.title?.trim() || "Chapter name",
           blocks: chapterBlocksWithStory(activeChapter, chapterStory),
           isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+          worldBonus: Boolean(activeChapter.worldBonus),
           releaseMode: activeChapter.releaseMode || "IMMEDIATE",
           statusVersion: p.statusVersion,
         });
@@ -3375,6 +3404,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3448,6 +3478,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3478,6 +3509,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: activeChapter.isPreview,
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: activeChapter.releaseMode || "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3510,6 +3542,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: activeChapter.isPreview,
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: activeChapter.releaseMode || "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3539,6 +3572,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3581,6 +3615,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks: reordered.map((block, order) => ({ ...block, order })),
         isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3992,7 +4027,7 @@ export default function SeenComposerPage() {
                 <strong>{chapter.title?.trim() || `Chapter ${index + 1}`}{p.aiAssistance?.generated ? <FiEdit3 aria-label="AI suggestion — editable" /> : null}</strong>
                 {chapterStoryText(chapter) ? <small>{chapterStoryText(chapter)}</small> : null}
               </button>
-              {paidSeen ? <span className={`seen-chapter-access-toggle ${index === 0 ? "is-preview" : "is-locked"}`}>{index === 0 ? <FiEye /> : <FiLock />}{t(index === 0 ? "Preview" : "Locked")}</span> : null}
+              {paidSeen ? <span className={`seen-chapter-access-toggle ${index === 0 ? "is-preview" : "is-locked"}`}>{index === 0 ? <FiEye /> : <FiLock />}{t(index === 0 ? "Preview" : "Locked")}</span> : <button aria-pressed={Boolean(chapter.worldBonus)} className={`seen-world-bonus-toggle ${chapter.worldBonus ? "is-active" : ""}`} onClick={() => toggleWorldBonusChapter(chapter)} type="button"><FiUsers />{chapter.worldBonus ? "World bonus" : "Add to World"}</button>}
             </div>
           ))}
           {p.chapters.length < maxChapters ? (

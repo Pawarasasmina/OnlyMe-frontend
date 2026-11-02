@@ -64,6 +64,7 @@ export const messageService = {
   searchPeople: (q = "") => axiosInstance.get("/messages/people", { params: { q } }),
   getGroups: () => axiosInstance.get("/messages/groups"),
   createGroup: (name, memberIds, avatarUrl = "") => axiosInstance.post("/messages/groups", { name, memberIds, avatarUrl }),
+  createWorldCircle: (premiumWorldId, name, description = "") => axiosInstance.post("/messages/groups", { premiumWorldId, name, description, memberIds: [] }),
   getGroupMessages: (groupId, { cursor = null, limit = 50 } = {}) => axiosInstance.get(`/messages/groups/${groupId}`, { params: { limit, ...(cursor ? { cursor } : {}) } }),
   sendGroupMessage: (groupId, body, replyToId, clientMessageId) => axiosInstance.post(`/messages/groups/${groupId}`, { body, replyToId, clientMessageId }),
   sendGroupVoice: (groupId, blob, waveform, clientMessageId) => { const data = new FormData(); data.append("voice", blob, `voice-${Date.now()}.webm`); data.append("waveform", JSON.stringify(waveform)); data.append("clientMessageId", clientMessageId); return axiosInstance.post(`/messages/groups/${groupId}/voice`, data); },

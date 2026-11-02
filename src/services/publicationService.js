@@ -30,6 +30,7 @@ export const publicationService = {
   setCommentsEnabled: (id, enabled) => axiosInstance.put(`/publications/mine/${id}/comments-enabled`, { enabled }),
   addChapter: (id, payload) => axiosInstance.post(`/publications/mine/${id}/chapters`, payload),
   updateChapter: (id, chapterId, payload) => axiosInstance.put(`/publications/mine/${id}/chapters/${chapterId}`, payload),
+  setWorldBonusChapter: (id, chapterId, worldBonus, statusVersion) => axiosInstance.patch(`/publications/mine/${id}/chapters/${chapterId}/world-bonus`, { worldBonus, statusVersion }),
   deleteChapter: (id, chapterId, statusVersion) => axiosInstance.delete(`/publications/mine/${id}/chapters/${chapterId}`, { data: { statusVersion } }),
   reorderChapters: (id, chapterIds, statusVersion) => axiosInstance.post(`/publications/mine/${id}/reorder-chapters`, { chapterIds, statusVersion }),
   uploadMedia: (id, file, fields, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/media-upload`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },

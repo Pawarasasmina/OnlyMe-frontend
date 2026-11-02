@@ -71,6 +71,7 @@ function SocialAppShell({ children = null }) {
   const isSeenPage = location.pathname === "/seen"
     || location.pathname.startsWith("/seen/");
   const isSettingsPage = location.pathname === "/settings" || location.pathname.startsWith("/settings/");
+  const isWorldReaderPage = location.pathname.startsWith("/world/");
   const isWorldComposePage = location.pathname === "/create/premium-world" || location.pathname === "/create/experience" || location.pathname.startsWith("/studio/experiences/");
   const isFullWidthUtilityPage = location.pathname.startsWith("/create/")
     || location.pathname.startsWith("/settings")
@@ -149,6 +150,8 @@ function SocialAppShell({ children = null }) {
           <div className="social-center-scroll min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
+              : isWorldReaderPage
+              ? "world-reader-shell-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:pb-20"
               : isFullWidthUtilityPage
               ? `${isSettingsPage ? "settings-shell-main " : ""}mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:pb-0`
               : isSeenPage
