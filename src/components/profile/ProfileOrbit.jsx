@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { resolveMediaUrl } from "../../utils/media";
+import "./ProfileWorldCard.css";
 
 const PLANET = String.fromCodePoint(0x1FA90);
 const FLEX = String.fromCodePoint(0x1F4AA);
@@ -16,6 +17,7 @@ function numberLabel(value, fallback = 0) {
 }
 
 export default function ProfileOrbit({ capabilities, planets = [], profile, role }) {
+  if (profile?.profileAccountType === "personal") return null;
   const premiumPlanets = planets.filter((planet) => planet.kind === "PREMIUM_WORLD");
   if ((!profile?.isCreator && role !== "creator") || (!premiumPlanets.length && !capabilities.isOwner)) return null;
 
@@ -36,6 +38,29 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   const faceEmoji = planetFaceEmoji(primaryPlanet?.planet);
   const isInside = !owner && Boolean(primaryPlanet?.viewer?.isMember || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_WORLD"].includes(primaryPlanet?.access));
   const memberPreview = primaryPlanet?.memberPreview || [];
+
+  if (owner) {
+    const members = Number(primaryPlanet?.memberCount ?? primaryPlanet?.subscribers ?? 0);
+    const income = primaryPlanet?.monthlyIncomeUsd;
+    const incomeLabel = Number.isFinite(income)
+      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(income).replace(/\.00$/, "")
+      : null;
+    return <section className="profile-owner-world-section">
+      <Link aria-label={primaryPlanet ? `Open ${title}` : "Open your World"} className={`profile-owner-world-card ${primaryPlanet ? "" : "is-empty"}`} to={worldTarget}>
+        <span aria-hidden="true" className="profile-owner-world-planet"><span /><i /></span>
+        <span className="profile-owner-world-copy">
+          <strong>{primaryPlanet ? "Your World" : "Open your World"}</strong>
+          <small>{primaryPlanet ? title : "A monthly subscription to everything you share"}</small>
+          {primaryPlanet ? <span className="profile-owner-world-members">
+            {memberPreview.length ? <span className="profile-owner-world-faces">{memberPreview.slice(0, 3).map(member => <span key={member.id}>{member.avatar ? <img alt="" src={resolveMediaUrl(member.avatar)} /> : <span>{String(member.name || member.username || "?")[0]}</span>}</span>)}</span> : null}
+            <span>{numberLabel(members)} {members === 1 ? "member" : "members"}</span>
+            {incomeLabel ? <><span aria-hidden="true">·</span><b>{incomeLabel}</b><span>a month</span></> : null}
+          </span> : null}
+        </span>
+        <FiChevronRight aria-hidden="true" />
+      </Link>
+    </section>;
+  }
 
   if (isInside) {
     return (

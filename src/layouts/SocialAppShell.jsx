@@ -188,7 +188,7 @@ function SocialAppShell({ children = null }) {
         worldTarget={worldTarget}
       />
       <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
-      {verificationOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerificationOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
+      {verificationOpen ? <CreatorVerificationPage onClose={() => setVerificationOpen(false)} /> : null}
       </CallProvider>
     </FanToastProvider>
   );

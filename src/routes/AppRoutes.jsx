@@ -27,8 +27,10 @@ const CreatorStudio = lazyPage("../pages/creator/CreatorStudio");
 const GrowPage = lazyPage("../pages/creator/GrowPage");
 const GrowFanPreviewPage = lazyPage("../pages/creator/GrowFanPreviewPage");
 const ReferralLandingPage = lazyPage("../pages/public/ReferralLandingPage");
+const InvitationWorldPage = lazyPage("../pages/social/InvitationWorldPage");
 const CreatorApplicationPage = lazyPage("../pages/creator/CreatorApplicationPage");
 const CreatorVerificationPage = lazyPage("../pages/creator/CreatorVerificationPage");
+const IdentityVerificationManagement = lazyPage("../pages/admin/IdentityVerificationManagement");
 const ContentManager = lazyPage("../pages/creator/ContentManager");
 const ContentComposerPage = lazyPage("../pages/creator/ContentComposerPage");
 const ContentDetailPage = lazyPage("../pages/creator/ContentDetailPage");
@@ -39,7 +41,7 @@ const RecommendationSettingsPage = lazyPage("../pages/admin/RecommendationSettin
 const UserManagement = lazyPage("../pages/admin/UserManagement");
 const AdminProfilePage = lazyPage("../pages/admin/AdminProfilePage");
 const CreatorVerificationQueue = lazyPage("../pages/admin/CreatorVerificationQueue");
-const CreatorVerificationDetail = lazyPage("../pages/admin/SimpleCreatorVerificationDetail");
+const CreatorVerificationDetail = lazyPage("../pages/admin/CreatorVerificationDetail");
 const ProfileSettingsPage = lazyPage("../pages/settings/ProfileSettingsPage");
 const DirectAccessSettingsPage = lazyPage("../pages/settings/DirectAccessSettingsPage");
 const SettingsPage = lazyPage("../pages/settings/SettingsPage");
@@ -54,6 +56,7 @@ const SeenComposerPage = lazyPage("../pages/creator/SeenComposerPage");
 const SeenFeedPage = lazyPage("../pages/social/SeenFeedPage");
 const SeenPermalinkPage = lazyPage("../pages/social/SeenPermalinkPage");
 const ShareSeenAsStoryPage = lazyPage("../pages/social/ShareSeenAsStoryPage");
+const StoryPermalinkPage = lazyPage("../pages/social/StoryPermalinkPage");
 const PublicationModeration = lazyPage("../pages/admin/PublicationModeration");
 const PublicationModerationDetail = lazyPage("../pages/admin/PublicationModerationDetail");
 const WelcomeEmailSettingsPage = lazyPage("../pages/admin/WelcomeEmailSettingsPage");
@@ -69,6 +72,7 @@ const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
 const SavedPage = lazyPage("../pages/social/SavedPage");
+const JoinedInvitationsPage = lazyPage("../pages/social/JoinedInvitationsPage");
 const ArchivePage = lazyPage("../pages/social/ArchivePage");
 const AdminReportListPage = lazyPage("../pages/admin/AdminReportListPage");
 const AdminReportDetailPage = lazyPage("../pages/admin/AdminReportDetailPage");
@@ -88,7 +92,6 @@ const ContentPreferencesPage = lazyPage("../pages/settings/ContentPreferencesPag
 const SupportPage = lazyPage("../pages/settings/SupportPage");
 const GiftManagementPage = lazyPage("../pages/admin/GiftManagementPage");
 const VerifiedCreatorPage = lazyPage("../pages/creator/VerifiedCreatorPage");
-const VerifiedCreatorManagementPage = lazyPage("../pages/admin/VerifiedCreatorManagementPage");
 
 function RootRedirect() {
   const { loading, user } = useAuth();
@@ -160,9 +163,12 @@ function AppRoutes() {
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<ActivityPage />} />
+          <Route path="/stories/:id" element={<StoryPermalinkPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/saved/:category" element={<SavedPage />} />
           <Route path="/archive" element={<ArchivePage />} />
+          <Route path="/invitations" element={<JoinedInvitationsPage />} />
+          <Route path="/invitations/:code" element={<InvitationWorldPage />} />
           <Route path="/places/:id" element={<EntityDetailPage />} />
           <Route path="/books/:id" element={<EntityDetailPage />} />
           <Route path="/profile" element={<UnifiedProfilePage owner />} />
@@ -247,11 +253,12 @@ function AppRoutes() {
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/recommendations" element={<RecommendationSettingsPage />} />
           <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/identity-verifications" element={<IdentityVerificationManagement />} />
           <Route path="/admin/fans" element={<Navigate replace to="/admin/users" />} />
           <Route path="/admin/creators" element={<Navigate replace to="/admin/users" />} />
           <Route path="/admin/creator-verifications" element={<CreatorVerificationQueue />} />
           <Route path="/admin/creator-verifications/:id" element={<CreatorVerificationDetail />} />
-          <Route path="/admin/verified-creators" element={<VerifiedCreatorManagementPage />} />
+          <Route path="/admin/verified-creators" element={<Navigate replace to="/admin/identity-verifications" />} />
           <Route path="/admin/content-moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/content-moderation/:id" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/publication-moderation" element={<PublicationModeration />} />

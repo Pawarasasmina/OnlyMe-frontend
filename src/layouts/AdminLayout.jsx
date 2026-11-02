@@ -7,7 +7,7 @@ import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/C
 
 const navigation = [
   { title: "Overview", links: [{ label: "Dashboard", to: "/admin/dashboard", icon: FiHome }, { label: "Analytics", to: "/admin/analytics", icon: FiBarChart2 }, { label: "Recommendations", to: "/admin/recommendations", icon: FiSliders }] },
-  { title: "People", links: [{ label: "Users", to: "/admin/users", icon: FiUsers }, { label: "Creator applications", to: "/admin/creator-verifications", icon: FiShield }, { label: "Verified creators", to: "/admin/verified-creators", icon: FiStar }] },
+  { title: "People", links: [{ label: "Users", to: "/admin/users", icon: FiUsers }, { label: "Identity verification", to: "/admin/identity-verifications", icon: FiShield }, { label: "Creator applications", to: "/admin/creator-verifications", icon: FiShield }, { label: "Verified creators", to: "/admin/verified-creators", icon: FiStar }] },
   { title: "Trust & safety", links: [{ label: "Message reports", to: "/admin/message-reports", icon: FiAlertTriangle }, { label: "User reports", to: "/admin/user-reports", icon: FiAlertTriangle }, { label: "Post reports", to: "/admin/post-reports", icon: FiFileText }] },
   { title: "Commerce", links: [{ label: "Financial operations", to: "/admin/financial", icon: FiCreditCard }, { label: "Gift catalog", to: "/admin/gifts", icon: FiGift }] },
   { title: "Communication", links: [{ label: "Welcome email", to: "/admin/welcome-email", icon: FiMail }] },

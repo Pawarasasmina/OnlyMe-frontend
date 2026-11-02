@@ -3,6 +3,7 @@
 export const verificationService = {
   getMine: () => axiosInstance.get("/creator/verification"),
   saveDraft: (payload) => axiosInstance.put("/creator/verification/draft", payload),
+  saveIdentityDraft: (payload) => axiosInstance.put("/creator/verification/identity/draft", payload),
   uploadDocument: (documentType, file, onUploadProgress) => {
     const formData = new FormData();
     formData.append("document", file);

@@ -1,0 +1,4 @@
+.fan-archive-toast{position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:300;pointer-events:none;white-space:nowrap;max-width:78vw;overflow:hidden;text-overflow:ellipsis;background:rgba(24,29,38,.94);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);font-size:12px;font-weight:600;letter-spacing:.1px;padding:8px 15px;border-radius:999px;box-shadow:0 6px 22px rgba(0,0,0,.35);opacity:0;transition:opacity .2s,transform .3s}
+.fan-archive-toast.is-visible{opacity:1}
+
+.fan-archive-toast{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}

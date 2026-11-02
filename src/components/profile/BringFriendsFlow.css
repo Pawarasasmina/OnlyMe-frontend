@@ -1,0 +1,75 @@
+.bring-friends-home,.invite-landing-panel,.joined-invitations-page{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color:#fff}
+.bring-friends-home{text-align:center;padding:6px 4px 0;line-height:normal}
+.bring-friends-faces{display:flex;justify-content:center;align-items:flex-start;gap:10px}
+.bring-friends-faces>div>span{box-shadow:0 0 0 2px rgba(217,184,100,.6)}
+.bring-friends-faces small{display:block;margin-top:6px;font-size:11px;color:rgba(255,255,255,.62)}
+.bring-friends-placeholder{width:56px;height:56px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4)}
+.bring-friends-placeholder svg{width:18px;height:18px}
+.invite-text-link{color:#9ccbff;font-size:13px;font-weight:650}
+.invite-see-all{margin-top:12px}
+.bring-friends-home h2{font-size:21px!important;font-weight:800!important;letter-spacing:-.5px!important;margin:18px 0 0!important;line-height:normal!important}
+.bring-friends-home>p{font-size:13.5px;line-height:1.55;color:rgba(255,255,255,.62);margin:8px 0 0}
+.invite-primary{display:block;width:100%;border-radius:14px;padding:14px;background:#9ccbff;color:#0a0c0f;font-size:14.5px;font-weight:750;box-shadow:inset 0 1px 0 #ffffff22}
+.invite-primary:disabled{opacity:.5;cursor:wait}
+.bring-friends-home>.invite-primary{margin-top:20px;line-height:normal}
+.invite-privacy{display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;color:rgba(255,255,255,.4);margin-top:10px}
+.invite-privacy svg{width:10px;height:10px;opacity:.75}
+.invite-preview-button{margin-top:14px;padding:0;line-height:normal}
+.invite-state{padding:28px 12px;text-align:center;font-size:14px;color:rgba(255,255,255,.62)}
+.invite-state button{color:#9ccbff;margin-top:12px}
+.invite-landing-panel{background:#0a0c0f;min-height:100dvh;display:flex;flex-direction:column}
+.invite-landing-top{display:flex;justify-content:flex-end;padding:56px 16px 0}
+.invite-landing-top button{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);display:grid;place-items:center}
+.invite-landing-top svg{width:14px;height:14px}
+.invite-landing-body{flex:1;display:flex;align-items:center;flex-direction:column;text-align:center;padding:24px 28px 0}
+.invite-landing-body>.fan-avatar{box-shadow:0 0 0 2px rgba(156,203,255,.45)}
+.invite-landing-body>small{font-size:12px;font-weight:750;letter-spacing:1.3px;color:#9ccbff;margin-top:22px}
+.invite-landing-body>h1{font-size:27px;font-weight:800;letter-spacing:-.7px;line-height:1.15;margin:8px 0 0}
+.invite-landing-body>p{font-size:14px;line-height:1.55;color:rgba(255,255,255,.62);margin-top:10px}
+.invite-landing-actions{padding:18px 22px max(30px,env(safe-area-inset-bottom))}
+.invite-landing-actions .invite-primary{border-radius:16px;padding:16px;font-size:15.5px}
+.invite-landing-actions>p{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:rgba(255,255,255,.4);margin-top:12px}
+.invite-landing-actions>p svg{width:10px;height:10px}
+.invite-private-join{display:block;margin:10px auto 0;padding:8px 0;font-size:12.5px;color:rgba(255,255,255,.62)}
+.public-friend-invitation{max-width:550px;margin:auto;min-height:100dvh;background:#0a0c0f}
+.joined-invitations-page{min-height:100dvh;background:#0a0c0f;padding:0 20px 48px}
+.joined-invitations-page>header{display:flex;align-items:center;gap:12px;padding:56px 0 4px}
+.joined-invitations-page>header>button{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.07);flex:none}
+.joined-invitations-page>header h1{font-size:20px;font-weight:700;letter-spacing:-.4px}
+.invite-list-privacy{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.4);margin-top:6px}
+.invite-list-privacy svg{width:11px;height:11px}
+.invite-people-section>h2{font-size:11px;font-weight:750;letter-spacing:1.2px;color:rgba(255,255,255,.4);margin:26px 0 6px}
+.invite-person-row{display:flex;align-items:center;gap:12px;padding:11px 0}
+.invite-person-row+.invite-person-row{border-top:1px solid rgba(255,255,255,.05)}
+.invite-person-profile{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left}
+.invite-person-profile>span:last-child{flex:1;min-width:0}
+.invite-person-profile b{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.invite-person-profile small{display:block;font-size:12px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.invite-person-message,.invite-person-more{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;flex:none}
+.invite-person-message{background:rgba(255,255,255,.07)}
+.invite-person-message svg,.invite-person-more svg{width:18px;height:18px}
+.invite-person-more{width:30px;color:rgba(255,255,255,.4)}
+.invite-empty{padding:14px 0;font-size:13px;color:rgba(255,255,255,.4)}
+.invite-empty button{font-weight:650;color:#9ccbff}
+.invite-person-menu-layer{position:fixed;inset:0;z-index:260;display:flex;align-items:flex-end;justify-content:center}
+.invite-person-menu-dim{position:absolute;inset:0;background:#0009}
+.invite-person-menu{position:relative;width:min(100%,550px);padding:24px 20px 30px;background:#0a0c0f;border-radius:18px 18px 0 0}
+.invite-menu-person{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.invite-menu-person b{font-size:15px}
+.invite-menu-person small{display:block;font-size:12px;color:rgba(255,255,255,.4)}
+.invite-person-menu>button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;text-align:left;font-size:14px;font-weight:650}
+.invite-person-menu>button>svg{width:16px;height:16px;flex:none;color:rgba(255,255,255,.62)}
+.invite-person-menu>.is-danger{color:#ff8a80}
+.invite-person-menu>button:disabled{opacity:.5}
+.profile-prototype .profile-identity .profile-avatar-orbit-shell.has-invite-gold-ring .profile-avatar-ring{border-color:#d9b864;background:linear-gradient(45deg,#a88a3d,#e9cf86,#d9b864);box-shadow:0 0 0 2px rgba(217,184,100,.65),0 0 18px rgba(217,184,100,.22)}
+.bring-friends-home button:focus-visible,.joined-invitations-page button:focus-visible,.invite-landing-panel button:focus-visible{outline:2px solid #9ccbff;outline-offset:3px}
+
+.invite-block-confirm h2{font-size:20px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+.invite-block-confirm p{font-size:14px;line-height:1.6;color:rgba(255,255,255,.62);margin-bottom:14px}
+.invite-block-confirm>button{display:block;width:100%;padding:12px;border-radius:14px;background:rgba(255,255,255,.08);color:#f17878;font-size:14px;font-weight:650}
+.invite-block-confirm>button:last-child{margin:13px auto 0;padding:0;background:none;color:rgba(255,255,255,.4);font-size:12.5px;font-weight:400}
+
+.owner-things-layer.is-bring-friends>.owner-things-dim{background:transparent}
+.owner-things-layer.is-bring-friends>.owner-things-dim::before{content:"";position:absolute;inset-block:0;left:var(--owner-things-left,0);width:var(--owner-things-width,100%);background:rgba(4,6,10,.6)}
+.owner-things-layer.is-bring-friends>.owner-things-sheet:not(.library-full-screen){background:#0c0f14;max-height:88dvh}
+@media(max-width:880px){.owner-things-layer.is-bring-friends>.owner-things-dim::before{left:0;width:100%}}

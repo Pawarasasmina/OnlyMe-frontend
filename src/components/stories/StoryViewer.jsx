@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { FiBarChart2, FiEye, FiEyeOff, FiFlag, FiGift, FiHeart, FiLink, FiMessageCircle, FiMoreHorizontal, FiPause, FiPlay, FiPlusCircle, FiSend, FiSlash, FiUser, FiUsers, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { FiBarChart2, FiDownload, FiTrash2, FiEye, FiEyeOff, FiFlag, FiGift, FiHeart, FiLink, FiMessageCircle, FiMoreHorizontal, FiPause, FiPlay, FiSend, FiSlash, FiUser, FiUsers, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import FanModal from "../fanWeb/shared/FanModal";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
@@ -13,14 +13,16 @@ import { useStoryViewerPosition } from "../../hooks/useStoryViewerPosition";
 import { useDeleteStory, useMarkStoryViewed, useReactToStory, useStoryInsights } from "../../hooks/useStories";
 import { storyService } from "../../services/storyService";
 import { messageService } from "../../services/messageService";
-import { profileService } from "../../services/profileService";
 import { analyticsService } from "../../services/analyticsService";
-import { canCreateStory, canDeleteStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
+import { canCreateStory, canDeleteStory, canReactToStory, canReplyToStory, canViewStoryInsights } from "../../utils/storyPermissions";
 import StoryGiftPicker from "./StoryGiftPicker";
+import StoryReshareCard from "./StoryReshareCard";
+import StoryHighlightPicker from "./StoryHighlightPicker";
 import StoryReactionTray from "./StoryReactionTray";
 import ShareSheet from "../share/ShareSheet";
 import SharedSeenStoryCard from "./SharedSeenStoryCard";
 import { sharedSeenCardData } from "../../utils/sharedSeenStoryCard";
+import { storyTextStyle } from "../../utils/storyPresentation";
 
 const IMAGE_DURATION_MS = 5000;
 const VIEW_THRESHOLD_MS = 1000;
@@ -77,8 +79,9 @@ function StoryMedia({ muted, onDurationChange, onEnded, onPlay, story, videoRef 
         autoPlay
         className="h-full w-full object-cover"
         muted={muted}
-        onDurationChange={(event) => onDurationChange(Math.min(event.currentTarget.duration || story.duration || 60, 60))}
+        onDurationChange={(event) => onDurationChange(Math.min(event.currentTarget.duration || story.duration || 15, 15))}
         onEnded={onEnded}
+        onTimeUpdate={(event) => { if (event.currentTarget.currentTime >= Math.min(Number(story.duration) || 15, 15)) { event.currentTarget.pause(); onEnded(); } }}
         onPlay={onPlay}
         playsInline
         ref={videoRef}
@@ -101,7 +104,7 @@ function StoryOverlays({ canOpenQuestionAnswers = false, canReply = false, onQue
   const questionCountLabel = questionCount === 1 ? "1 answer already" : `${questionCount} answers already`;
   return (
     <>
-      {(metadata.textOverlays || []).map((overlay) => {
+      {(metadata.flattened ? [] : metadata.textOverlays || []).map((overlay) => {
         const plate = overlay.style === 2;
         const darkPlate = plate && overlay.color === "#0A0C0F";
         return (
@@ -114,21 +117,23 @@ function StoryOverlays({ canOpenQuestionAnswers = false, canReply = false, onQue
               backgroundColor: plate ? overlay.color || "#fff" : undefined,
               color: plate ? (darkPlate ? "#fff" : "#0A0C0F") : overlay.color || "#fff",
               fontFamily: overlay.style === 3 ? "Georgia, 'Times New Roman', serif" : overlay.style === 4 ? "Menlo, Consolas, monospace" : undefined,
-              fontSize: `${overlay.fontSize || 28}px`,
+              fontSize: `${(overlay.fontSize || 28) / 3.5}cqw`,
               fontStyle: overlay.style === 3 ? "italic" : undefined,
               fontWeight: overlay.fontWeight || (overlay.style === 1 || plate ? 800 : 650),
-              left: `${overlay.x || 50}%`,
+              left: `${overlay.x ?? 50}%`,
               letterSpacing: overlay.style === 4 ? ".5px" : undefined,
               textAlign: overlay.align || "center",
               textShadow: plate ? "none" : "0 2px 14px rgba(0,0,0,.55)",
-              top: `${overlay.y || 50}%`,
-              transform: "translate(-50%, -50%)",
+              top: `${overlay.y ?? 50}%`,
+              ...storyTextStyle(overlay),
+              transform: `translate(-50%, -50%) rotate(${overlay.rotation || 0}deg)`,
             }}
           >
             {overlay.text}
           </span>
         );
       })}
+{(metadata.mentions || []).map((mention) => <a aria-label={`View @${mention.username}`} className={`story-composer-mention ${mention.st === 1 ? "is-solid" : ""}`} href={`/profile/${encodeURIComponent(mention.username || "")}`} key={mention.userId} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} style={{ left: `${mention.x ?? 50}%`, top: `${mention.y ?? 50}%`, transform: `translate(-50%,-50%) scale(${mention.scale || 1}) rotate(${mention.rotation || 0}deg)` }}><span>@</span>{mention.username}</a>)}
       {(metadata.stickers || []).map((sticker) => (
         <span
           className="absolute rounded-2xl bg-black/25 px-3 py-1.5 text-2xl backdrop-blur"
@@ -156,6 +161,7 @@ function StoryOverlays({ canOpenQuestionAnswers = false, canReply = false, onQue
           style={{
             left: `${questionSticker.x || 50}%`,
             top: `${questionSticker.y || 63}%`,
+            transform: `translate(-50%,-50%) scale(${questionSticker.scale || 1}) rotate(${questionSticker.rotation || 0}deg)`,
           }}
         >
           <b>{questionSticker.prompt || "Ask me anything"}</b>
@@ -163,7 +169,7 @@ function StoryOverlays({ canOpenQuestionAnswers = false, canReply = false, onQue
         </button>
       ) : null}
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 177.777">
-        {(metadata.drawing || []).map((stroke) => (
+        {(metadata.flattened ? [] : metadata.drawing || []).map((stroke) => (
           <polyline
             fill="none"
             key={stroke.id}
@@ -457,7 +463,7 @@ function drawStoryOverlaysToCanvas(context, story) {
   const metadata = story.editorMetadata || {};
   drawStoryQuestionSticker(context, metadata.questionSticker, story.questionReplyCount);
 
-  (metadata.textOverlays || []).forEach((overlay) => {
+  (metadata.flattened ? [] : metadata.textOverlays || []).forEach((overlay) => {
     const text = String(overlay.text || "").trim();
     if (!text) return;
     const x = (Number(overlay.x) || 50) / 100 * STORY_EXPORT_WIDTH;
@@ -498,7 +504,7 @@ function drawStoryOverlaysToCanvas(context, story) {
     context.restore();
   });
 
-  (metadata.drawing || []).forEach((stroke) => {
+  (metadata.flattened ? [] : metadata.drawing || []).forEach((stroke) => {
     const points = stroke.points || [];
     if (points.length < 2) return;
     context.save();
@@ -563,34 +569,20 @@ function OwnStoryBottomBar({ count, onHighlight, onMore, onOpenViewers, onShare,
         <b>{compactCount(count)}</b>
       </button>
       <span className="story-owner-bottom-actions">
-        <button onClick={onHighlight} type="button"><FiPlusCircle /><small>Highlight</small></button>
+        <button onClick={onHighlight} type="button">
+          <span aria-hidden="true" style={{ height: 24, display: "flex", alignItems: "center" }}>
+            <svg style={{ width: 20, height: 20 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9.5" />
+              <path d="M12 16.5s-4-2.4-4-5.2A2.2 2.2 0 0 1 12 10a2.2 2.2 0 0 1 4 1.3c0 2.8-4 5.2-4 5.2z" />
+            </svg>
+          </span>
+          <small>Highlight</small>
+        </button>
         <button onClick={onShare} type="button"><FiSend /><small>Send</small></button>
         <button onClick={onMore} type="button"><FiMoreHorizontal /><small>More</small></button>
       </span>
     </div>
   );
-}
-
-function StoryHighlightPicker({ creatorId, onClose, story }) {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState("");
-  const [error, setError] = useState("");
-  const highlights = useQuery({ queryKey: ["story-highlights", creatorId], queryFn: () => storyService.getCreatorHighlights(creatorId), enabled: Boolean(creatorId), retry: false });
-  const add = async (highlightId) => {
-    setBusy(highlightId); setError("");
-    try { await storyService.addStoryToHighlight(highlightId, story.id); await queryClient.invalidateQueries({ queryKey: ["story-highlights", creatorId] }); onClose(); }
-    catch (cause) { setError(cause?.response?.data?.message || "Story could not be added."); }
-    finally { setBusy(""); }
-  };
-  const create = async () => {
-    if (!name.trim()) return;
-    setBusy("new"); setError("");
-    try { await storyService.createHighlight({ name: name.trim(), storyIds: [story.id], coverStoryId: story.id }); await queryClient.invalidateQueries({ queryKey: ["story-highlights", creatorId] }); onClose(); }
-    catch (cause) { setError(cause?.response?.data?.message || "Highlight could not be created."); }
-    finally { setBusy(""); }
-  };
-  return createPortal(<div className="story-highlight-picker-layer" onClick={onClose} role="presentation"><section className="story-highlight-picker-sheet" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Add to highlight"><i /><header><h2>Add to highlight</h2><button onClick={onClose} type="button"><FiX /></button></header><div className="story-highlight-picker-list">{highlights.data?.map((highlight) => <button disabled={Boolean(busy)} key={highlight.id} onClick={() => add(highlight.id)} type="button"><span>{highlight.coverUrl ? <img alt="" src={highlight.coverUrl} /> : null}</span><b>{highlight.name}</b>{busy === highlight.id ? <small>Adding…</small> : null}</button>)}</div><p>New highlight</p><div className="story-highlight-picker-new"><input maxLength={30} onChange={(event) => setName(event.target.value)} placeholder="Highlights" value={name} /><button disabled={!name.trim() || Boolean(busy)} onClick={create} type="button">{busy === "new" ? "Creating…" : "Create"}</button></div>{error ? <em>{error}</em> : null}<small>Highlights stay on your profile after the story is gone.</small></section></div>, document.body);
 }
 
 function OwnStoryViewersSheet({ insightsOpen, layerStyle, onActionMenu, onClose, onMessageViewer, onOpenProfile, story }) {
@@ -685,7 +677,7 @@ function StoryViewerActionsSheet({ layerStyle, onBlock, onClose, onHide, onMessa
   ), document.body);
 }
 
-function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, onClose, onComplete, onMore, onNextCreator, onPreviousComplete, onPreviousCreator, presentation = "modal", previewOnly = false, stories = [] }) {
+function StoryViewer({ highlightTitle, showHighlightViews = false, externalPaused = false, discover = false, initialIndex = 0, isOpen, onClose, onComplete, onMore, onNextCreator, onPreviousComplete, onPreviousCreator, presentation = "modal", previewOnly = false, stories = [] }) {
   const viewerPosition = useStoryViewerPosition(isOpen);
   const { user } = useAuth();
   const { showToast, showGiftSequence } = useFanToast();
@@ -693,6 +685,8 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
   const navigate = useNavigate();
   const replyInputRef = useRef(null);
   const reactionHoldRef = useRef(null);
+  const navigationTimer = useRef(null);
+  useEffect(() => () => { window.clearTimeout(navigationTimer.current); window.clearTimeout(reactionHoldRef.current); }, []);
   const storySwipe = useRef(null);
   const suppressStoryClick = useRef(false);
   const reactionHold = useRef(null);
@@ -708,6 +702,36 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
   const [systemPaused, setSystemPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
+  const [storyMenuToast, setStoryMenuToast] = useState(null);
+  const showStoryMenuToast = (message) => setStoryMenuToast({ message });
+  useEffect(() => {
+    if (!storyMenuToast) return undefined;
+    const timer = window.setTimeout(() => setStoryMenuToast(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [storyMenuToast]);
+  const [confirmStoryDelete, setConfirmStoryDelete] = useState(false);
+  useEffect(() => {
+    if (!ownerMenuOpen) return undefined;
+    const previous = document.activeElement;
+    const sheet = document.querySelector(confirmStoryDelete ? ".story-delete-confirm" : ".story-owner-prototype-menu .story-owner-actions-sheet");
+    sheet?.querySelector("button:not(:disabled)")?.focus();
+    const handleKey = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (confirmStoryDelete) setConfirmStoryDelete(false);
+        else setOwnerMenuOpen(false);
+      }
+      if (event.key === "Tab") {
+        const buttons = sheet?.querySelectorAll("button:not(:disabled)");
+        if (!buttons?.length) return;
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    window.addEventListener("keydown", handleKey, true);
+    return () => { window.removeEventListener("keydown", handleKey, true); previous?.focus?.(); };
+  }, [confirmStoryDelete, ownerMenuOpen]);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [activeQuestionPrompt, setActiveQuestionPrompt] = useState("");
@@ -728,18 +752,18 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
   const deleteMutation = useDeleteStory();
   const reactMutation = useReactToStory();
   const reactionMutation = reactMutation;
-  const paused = manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || Boolean(selectedViewer) || giftOpen || shareOpen || highlightOpen || reactionTrayOpen;
+  const paused = externalPaused || manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || Boolean(selectedViewer) || giftOpen || shareOpen || highlightOpen || reactionTrayOpen;
 
   const activeStory = stories[index] || null;
   const storyTopics = useMemo(() => [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title].filter(Boolean), [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title]);
   const storyTrackingRef = useRecommendationTracking({ creatorId: activeStory?.owner?.id || activeStory?.creatorId || "", enabled: isOpen && !previewOnly, entityId: activeStory?.id || "", entityType: "story", position: index, topics: storyTopics });
   const sharedCard = activeStory?.editorMetadata?.sharedCard || null;
   const canReply = !previewOnly && canReplyToStory(user, activeStory);
+  const canReact = !previewOnly && canReactToStory(user, activeStory);
   const canDelete = !previewOnly && canDeleteStory(user, activeStory);
   const canViewInsights = !previewOnly && canViewStoryInsights(user, activeStory);
   const canOpenQuestionAnswers = canViewInsights && Boolean(activeStory?.editorMetadata?.questionSticker);
   const canAdd = !previewOnly && canCreateStory(user);
-  const canAddToProfileMedia = canDelete && ["image", "video"].includes(activeStory?.mediaType);
   const canUseViewerMenu = Boolean(activeStory && !canDelete && !previewOnly);
   const hasStoryMenu = Boolean(onMore) || canDelete || canViewInsights || canAdd || canUseViewerMenu;
   const hasStoryAudio = activeStory?.mediaType === "video" && activeStory?.hasAudio !== false;
@@ -758,28 +782,6 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
     },
     onError: (error) => showToast(error?.response?.data?.message || "Story reply could not be sent."),
   });
-  const addToProfileMediaMutation = useMutation({
-    mutationFn: ({ storyId }) => profileService.addStoryToProfileMedia(storyId).then((response) => response.data?.data),
-    onSuccess: (_result, { storyId }) => {
-      queryClient.invalidateQueries({ queryKey: ["profile-media"] });
-      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      const markInCache = (current) => {
-        if (!current) return current;
-        const mark = (story) => story?.id === storyId ? { ...story, isInProfileMedia: true } : story;
-        if (Array.isArray(current)) return current.map(mark);
-        if (current.viewer?.stories) return { ...current, viewer: { ...current.viewer, stories: current.viewer.stories.map(mark) } };
-        if (current.items) return { ...current, items: current.items.map((group) => ({ ...group, stories: (group.stories || []).map(mark) })) };
-        return current;
-      };
-      queryClient.setQueriesData({ queryKey: ["stories"] }, markInCache);
-      queryClient.setQueriesData({ queryKey: ["wall-stories"] }, markInCache);
-      showToast("Added to Profile Media ✓");
-      setOwnerMenuOpen(false);
-      setReactionToast("");
-    },
-    onError: (error) => showToast(error?.response?.data?.message || "Story no longer available"),
-  });
-
   const boundedIndex = useMemo(() => Math.max(0, Math.min(stories.length - 1, initialIndex)), [initialIndex, stories.length]);
 
   useEffect(() => {
@@ -790,6 +792,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       setHoldPaused(false);
       setSystemPaused(false);
       setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
       setReplyText("");
       setActiveQuestionPrompt("");
       setGiftOpen(false);
@@ -820,6 +823,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       setHoldPaused(false);
       setSystemPaused(false);
       setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
       setReplyText("");
       setActiveQuestionPrompt("");
       setGiftOpen(false);
@@ -852,7 +856,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
 
     setSelectedReaction(activeStory.viewerReaction || "");
     setProgress(0);
-    setDurationMs(activeStory.mediaType === "video" ? Math.min(Number(activeStory.duration) || 15, 60) * 1000 : IMAGE_DURATION_MS);
+    setDurationMs(activeStory.mediaType === "video" ? Math.min(Number(activeStory.duration) || 15, 15) * 1000 : IMAGE_DURATION_MS);
     return undefined;
   }, [activeStory]);
 
@@ -862,6 +866,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
     }
 
     const onKeyDown = (event) => {
+      if (highlightOpen || externalPaused) return;
       if (event.key === "Escape") onClose();
       if (event.target?.closest?.("input,textarea,[contenteditable=true]")) return;
       if (event.key === "ArrowRight") goStory(1);
@@ -881,7 +886,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       window.removeEventListener("focus", resume);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [goStory, isOpen, onClose]);
+  }, [externalPaused, goStory, highlightOpen, isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen || !activeStory || paused) {
@@ -929,11 +934,6 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
     });
   };
 
-  const addToProfileMedia = () => {
-    if (!activeStory || !canAddToProfileMedia || activeStory.isInProfileMedia || addToProfileMediaMutation.isPending) return;
-    addToProfileMediaMutation.mutate({ storyId: activeStory.id });
-  };
-
   const submitReply = (event) => {
     event.preventDefault();
     const body = replyText.trim();
@@ -979,6 +979,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       return;
     }
     setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
     setGiftOpen(true);
   };
 
@@ -986,9 +987,10 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/stories/${activeStory.id}`);
       setOwnerMenuOpen(false);
-      showToast("Story link copied.");
+      setConfirmStoryDelete(false);
+      showStoryMenuToast("Link copied");
     } catch {
-      showToast("Story link could not be copied.");
+      showStoryMenuToast("Story link could not be copied.");
     }
   };
 
@@ -1006,6 +1008,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       download.remove();
       URL.revokeObjectURL(blobUrl);
       setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
       showToast("Saved");
     } catch {
       showToast("Story could not be saved.");
@@ -1014,23 +1017,18 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
     }
   };
 
-  const addAnotherStory = () => {
-    setOwnerMenuOpen(false);
-    onClose();
-    onAddStory?.();
-  };
-
   const sendStory = () => {
     setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
     setShareOpen(true);
   };
 
   const reactToStory = (reaction = "❤️") => {
-    if (!activeStory || reactMutation.isPending) return;
+    if (!activeStory || activeStory.allowReactions === false || previewOnly || reactMutation.isPending) return;
     setSelectedReaction(reaction);
-    setHeartBurstKey((current) => current + 1);
+    if (reaction) setHeartBurstKey((current) => current + 1);
     const floatingId = Date.now();
-    setFloatingReaction({ id: floatingId, value: reaction });
+    setFloatingReaction(reaction && reaction !== "❤️" ? { id: floatingId, value: reaction } : null);
     window.setTimeout(() => setFloatingReaction((current) => current?.id === floatingId ? null : current), 900);
     reactMutation.mutate({ storyId: activeStory.id, reaction }, {
       onSuccess: () => { setReactionTrayOpen(false); queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] }); },
@@ -1042,7 +1040,8 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
   };
   const startReactionHold = () => {
     window.clearTimeout(reactionHoldRef.current);
-    reactionHoldRef.current = window.setTimeout(() => setReactionTrayOpen(true), 420);
+    suppressReactionClick.current = false;
+    reactionHoldRef.current = window.setTimeout(() => { suppressReactionClick.current = true; setReactionTrayOpen(true); }, 420);
   };
   const cancelReactionHold = () => window.clearTimeout(reactionHoldRef.current);
 
@@ -1119,6 +1118,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       await storyService.reportStory(activeStory.id, reason);
       showToast("Report received. Thank you for helping keep @seen safe.");
       setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
     } catch (error) {
       showToast(error?.response?.data?.message || "Could not report this story.");
     } finally {
@@ -1150,6 +1150,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
   const openOwnerAbout = () => {
     if (!ownerProfilePath) return;
     setOwnerMenuOpen(false);
+      setConfirmStoryDelete(false);
     onClose();
     navigate(ownerProfilePath);
   };
@@ -1168,10 +1169,17 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
       >
         <div
           className={`story-viewer-surface relative h-[100dvh] overflow-hidden bg-black ${inline ? "discover-story-inline-surface" : ""}`}
-          onPointerDown={(event) => { setHoldPaused(true); if (discover) storySwipe.current = { x: event.clientX, y: event.clientY }; }}
-          onPointerLeave={() => setHoldPaused(false)}
-          onClickCapture={(event) => { if (suppressStoryClick.current) { event.preventDefault(); event.stopPropagation(); suppressStoryClick.current = false; } }}
+          onDoubleClick={(event) => {
+            if (event.target.closest("input,textarea,a,button:not([data-story-navigation])")) return;
+            window.clearTimeout(navigationTimer.current);
+            if (canReact) reactToStory("❤️");
+          }}
+          onPointerDown={(event) => { setHoldPaused(true); if (discover) storySwipe.current = { x: event.clientX, y: event.clientY }; if (canReact && !event.target.closest("input,textarea,a,button:not([data-story-navigation])")) startReactionHold(); }}
+          onPointerLeave={() => { setHoldPaused(false); cancelReactionHold(); }}
+          onPointerCancel={() => { setHoldPaused(false); cancelReactionHold(); }}
+          onClickCapture={(event) => { if (suppressStoryClick.current || suppressReactionClick.current && event.target.closest("[data-story-navigation]")) { event.preventDefault(); event.stopPropagation(); suppressStoryClick.current = false; suppressReactionClick.current = false; } }}
           onPointerUp={(event) => {
+            cancelReactionHold();
             setHoldPaused(false);
             const start = storySwipe.current;
             storySwipe.current = null;
@@ -1194,16 +1202,17 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
           />
           <div className={sharedCard ? "story-viewer-shared-shade" : "absolute inset-0 bg-gradient-to-b from-atseen-bg/80 via-transparent to-atseen-bg/95"} />
           <StoryOverlays canOpenQuestionAnswers={canOpenQuestionAnswers} canReply={canReply} onQuestionStickerClick={answerQuestionSticker} questionAnswerCount={activeStory.questionReplyCount} story={activeStory} />
+          {activeStory.allowSharing && activeStory.audience === "everyone" && !activeStory.editorMetadata?.sourceStoryId && activeStory.editorMetadata?.mentions?.some((item) => item.userId === String(user?.id || user?._id)) ? <button className="story-reshare-action" onClick={() => navigate(`/stories/${activeStory.id}?reshare=1`)} type="button"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" strokeDasharray="4 3" /><path d="M12 8.5v7M8.5 12h7" /></svg><span>Add to your story</span></button> : null}
           {discover && reactionToast ? <div aria-live="polite" className="discover-story-reaction-toast" key={reactionToastKey} role="status">{reactionToast}</div> : null}
           {sharedCard ? (
             <div
-              className="story-viewer-shared-card-wrap"
+              className={`story-viewer-shared-card-wrap ${sharedCard.kind === "story" ? "is-story-reshare-wrap" : ""}`}
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onPointerUp={(event) => event.stopPropagation()}
-              style={{ "--story-shared-card-x": `${sharedCard.x ?? 50}%`, "--story-shared-card-y": `${sharedCard.y ?? 50}%` }}
+              style={{ "--story-shared-card-x": `${sharedCard.x ?? 50}%`, "--story-shared-card-y": `${sharedCard.y ?? 50}%`, transform: `translate(-50%,-50%) scale(${sharedCard.scale || 1})` }}
             >
-              {activeStory.sourceType === "seen" || sharedCard.kind === "seen" ? (
+              {sharedCard.kind === "story" ? <a aria-label={`Open ${sharedCard.title} story`} className="is-story-reshare-card" href={sharedCard.destinationRoute}><StoryReshareCard card={sharedCard} /></a> : activeStory.sourceType === "seen" || sharedCard.kind === "seen" ? (
                 <SharedSeenStoryCard seen={activeStory.sourceSeen} sharedCard={sharedCard} unavailable={activeStory.sourceUnavailable} />
               ) : sharedCard.kind === "question_reply" ? (
                 <article className="story-viewer-shared-card is-question-response" aria-label="Shared question answer">
@@ -1233,7 +1242,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
                   className="story-viewer-shared-card"
                   href={sharedCard.destinationRoute || "/seen"}
                 >
-                  {sharedCard.imageUrl ? <img alt="" src={sharedCard.imageUrl} /> : sharedCard.kind === "post" ? null : <span className="story-shared-card-fallback" />}
+                  {sharedCard.imageUrl ? sharedCard.mediaType === "video" ? <video autoPlay loop muted onTimeUpdate={(event) => { if (event.currentTarget.currentTime >= 15) event.currentTarget.currentTime = 0; }} playsInline src={sharedCard.imageUrl} /> : <img alt="" src={sharedCard.imageUrl} /> : sharedCard.kind === "post" ? null : <span className="story-shared-card-fallback" />}
                   <span>{sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}<strong>{sharedCard.title}</strong><small>{sharedCard.subtitle || "Tap to open"}</small></span>
                 </a>
               )}
@@ -1259,7 +1268,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
               <FanAvatar brand={activeStory.brand} name={activeStory.owner.name} size="h-9 w-9" src={activeStory.owner.avatar} />
               <div className="story-viewer-owner-copy min-w-0 flex-1">
               <p className="flex items-center gap-1 truncate text-sm font-bold text-white">
-                <span className="truncate">{discover ? replyName : activeStory.owner.name}</span>
+                <span className="truncate">{highlightTitle || (canDelete ? "Your story" : discover ? replyName : activeStory.owner.name)}</span>
                 {activeStory.owner.verified && !discover ? <VerifiedBadge className="h-3.5 w-3.5 shrink-0" /> : null}
               </p>
               <p className="story-viewer-head-meta">{canDelete ? "now" : formatStoryTimeAgo(activeStory.createdAt)}<i aria-label={activeStory.audience || "everyone"} /></p>
@@ -1313,6 +1322,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
               <FiX aria-hidden="true" />
             </button>
           </div>
+          {storyMenuToast ? <div aria-live="polite" className="story-menu-toast" role="status">{storyMenuToast.message}</div> : null}
           {ownerMenuOpen && !canDelete ? (
             <div
               className="story-viewer-menu-layer"
@@ -1336,7 +1346,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
           ) : null}
           {ownerMenuOpen && canDelete ? (
             <div
-              className="story-owner-actions-layer"
+              className="story-owner-actions-layer story-owner-prototype-menu"
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onPointerUp={(event) => event.stopPropagation()}
@@ -1345,18 +1355,19 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
               <section aria-label="Story actions" aria-modal="true" className="story-owner-actions-sheet" role="dialog">
                 <span className="story-owner-actions-handle" aria-hidden="true" />
                 <div className="story-owner-actions-list">
-                  {canAddToProfileMedia ? <button disabled={activeStory.isInProfileMedia || addToProfileMediaMutation.isPending} onClick={addToProfileMedia} type="button">{activeStory.isInProfileMedia ? "Added to Profile Media ✓" : addToProfileMediaMutation.isPending ? "Adding..." : "Add to Profile Media"}</button> : null}
-                  {canAdd ? <button onClick={addAnotherStory} type="button">Add another Story</button> : null}
-                  <button className="is-danger" disabled={deleteMutation.isPending} onClick={deleteStory} type="button">{deleteMutation.isPending ? "Deleting..." : "Delete story"}</button>
-                  <button disabled={Boolean(menuBusy)} onClick={saveStoryMedia} type="button">{menuBusy === "save" ? "Saving..." : "Save story"}</button>
-                  <button disabled={Boolean(menuBusy)} onClick={copyStoryLink} type="button">Copy link</button>
-                  <button disabled={Boolean(menuBusy)} onClick={sendStory} type="button">Send</button>
+                  <button onClick={() => { setOwnerMenuOpen(false); setHighlightOpen(true); }} type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9.5" /><path d="M12 16.5s-4-2.4-4-5.2A2.2 2.2 0 0 1 12 10a2.2 2.2 0 0 1 4 1.3c0 2.8-4 5.2-4 5.2z" /></svg><span>Add to highlight</span></button>
+                  <button disabled={Boolean(menuBusy)} onClick={saveStoryMedia} type="button"><FiDownload /><span>{menuBusy === "save" ? "Saving..." : "Save to phone"}</span></button>
+                  <button disabled={Boolean(menuBusy)} onClick={sendStory} type="button"><FiSend /><span>Send to...</span></button>
+                  <button disabled={Boolean(menuBusy)} onClick={copyStoryLink} type="button"><FiLink /><span>Copy link</span></button>
+                  <button onClick={() => { setOwnerMenuOpen(false); showStoryMenuToast(["world", "members"].includes(activeStory.audience) ? "Only your World sees this" : activeStory.audience === "close_circle" ? "Only your friends see this" : ["fr", "followers"].includes(activeStory.audience) ? "Only followers see this" : "Everyone can see this"); }} type="button"><FiUsers /><span>Story audience</span></button>
+                  <button className="is-danger" disabled={deleteMutation.isPending} onClick={() => setConfirmStoryDelete(true)} type="button"><FiTrash2 /><span>Delete</span></button>
                 </div>
-                <button className="story-owner-actions-done" onClick={() => setOwnerMenuOpen(false)} type="button">Done</button>
               </section>
+              {confirmStoryDelete ? <div className="story-delete-confirm-scrim"><section className="story-delete-confirm" role="alertdialog" aria-modal="true" aria-label="Delete this story?"><h2>Delete this story?</h2><p>It disappears for everyone</p><div><button disabled={deleteMutation.isPending} onClick={() => setConfirmStoryDelete(false)} type="button">Cancel</button><button disabled={deleteMutation.isPending} onClick={deleteStory} type="button">{deleteMutation.isPending ? "Deleting..." : "Delete"}</button></div></section></div> : null}
             </div>
           ) : null}
           {(activeStory.activeStatus?.label || activeStory.caption) ? <p className="absolute bottom-32 left-5 right-5 z-30 text-left text-base font-bold leading-6 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,.6)]" dir="auto">{activeStory.activeStatus?.label || activeStory.caption}</p> : null}
+          {showHighlightViews ? <div className="story-highlight-view-count"><FiEye aria-hidden="true" /><span>{Number(activeStory.viewCount || 0).toLocaleString()} {Number(activeStory.viewCount || 0) === 1 ? "viewer" : "viewers"}</span></div> : null}
           {canViewInsights ? (
             <OwnStoryBottomBar
               count={ownViewCount}
@@ -1370,7 +1381,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
           ) : null}
           {discover && reactionTrayOpen === "hold" ? <button aria-label="Close reactions" className="discover-story-reaction-scrim" onClick={() => setReactionTrayOpen(false)} type="button" /> : null}
           {discover && reactionTrayOpen ? <div className="discover-story-reaction-tray" onPointerDown={(event) => event.preventDefault()}><StoryReactionTray canReact={activeStory.allowReactions !== false} selectedReaction={activeStory.viewerReaction} pending={reactionMutation.isPending} onReact={(reaction) => reactToActiveStory(reaction, true)} /></div> : null}
-          {canReply ? (
+          {canReply || canReact ? (
             <form
               className="absolute bottom-[max(22px,env(safe-area-inset-bottom))] left-5 right-5 z-40 flex items-center gap-2"
               onClick={(event) => event.stopPropagation()}
@@ -1379,6 +1390,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
             >
               <input
                 aria-label="Reply to story"
+                disabled={!canReply}
                 className="min-w-0 flex-1 rounded-full border border-white/40 bg-black/50 px-4 py-3 text-sm text-white outline-none backdrop-blur-md transition placeholder:text-white/60 focus:border-white/80 focus:bg-black/60 focus:ring-2 focus:ring-white/10"
                 maxLength={1000}
                 onBlur={() => { setSystemPaused(false); if (discover) window.setTimeout(() => setReactionTrayOpen((current) => current === "quick" ? false : current), 250); }}
@@ -1391,17 +1403,20 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
               {discover ? <button aria-label={activeStory.viewerReaction ? "Remove story reaction" : "React to story"} aria-pressed={Boolean(activeStory.viewerReaction)} className="discover-story-heart" onPointerCancel={() => window.clearTimeout(reactionHold.current)} onPointerDown={() => { suppressReactionClick.current = false; reactionHold.current = window.setTimeout(() => { suppressReactionClick.current = true; setReactionTrayOpen("hold"); }, 420); }} onPointerUp={() => window.clearTimeout(reactionHold.current)} onPointerLeave={() => window.clearTimeout(reactionHold.current)} disabled={activeStory.allowReactions === false || reactionMutation.isPending} onClick={() => { if (suppressReactionClick.current) { suppressReactionClick.current = false; return; } reactToActiveStory(activeStory.viewerReaction ? null : "\u2764\ufe0f"); }} type="button"><span className="discover-story-heart-face" key={`${activeStory.viewerReaction || "empty"}-${reactionAnimation}`}>{activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <span className="discover-story-heart-emoji">{activeStory.viewerReaction}</span> : <StoryHeartIcon active={activeStory.viewerReaction === "\u2764\ufe0f"} />}{reactionAnimation && activeStory.viewerReaction ? <i aria-hidden="true" className="discover-story-heart-ring" /> : null}{reactionAnimation && activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <i aria-hidden="true" className="discover-story-reaction-rise">{activeStory.viewerReaction}</i> : null}</span></button> : <>
               <button
                 aria-label="React with heart. Hold for more reactions."
+                aria-pressed={Boolean(selectedReaction)}
                 className={`story-viewer-heart ${selectedReaction ? "is-selected" : ""}`}
                 disabled={reactMutation.isPending}
-                onClick={() => reactToStory("❤️")}
+                onClick={() => { if (suppressReactionClick.current) { suppressReactionClick.current = false; return; } reactToStory(selectedReaction ? null : "❤️"); }}
                 onPointerCancel={cancelReactionHold}
                 onPointerDown={startReactionHold}
                 onPointerLeave={cancelReactionHold}
                 onPointerUp={cancelReactionHold}
                 type="button"
               >
-                {heartBurstKey ? <span className="story-viewer-heart-burst" key={heartBurstKey} aria-hidden="true" /> : null}
-                <FiHeart aria-hidden="true" />
+                <span className="discover-story-heart-face" key={`${selectedReaction || "empty"}-${heartBurstKey}`}>
+                  {selectedReaction && selectedReaction !== "❤️" ? <span className="discover-story-heart-emoji">{selectedReaction}</span> : <StoryHeartIcon active={selectedReaction === "❤️"} />}
+                  {heartBurstKey && selectedReaction ? <i aria-hidden="true" className="discover-story-heart-ring" /> : null}
+                </span>
               </button>
               </>}
               <button
@@ -1414,10 +1429,10 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
               </button>
             </form>
           ) : null}
-          {reactionTrayOpen && canReply ? <div className="story-reaction-tray" onClick={(event) => event.stopPropagation()}>{["❤️","👏","🔥","😍","😂","😮"].map((reaction) => <button aria-label={`React ${reaction}`} key={reaction} onClick={() => reactToStory(reaction)} type="button">{reaction}</button>)}</div> : null}
+          {!discover && reactionTrayOpen && canReact ? <div className="story-reaction-tray" onClick={(event) => event.stopPropagation()}><StoryReactionTray selectedReaction={selectedReaction} pending={reactMutation.isPending} onReact={reactToStory} /></div> : null}
           {floatingReaction ? <span className="story-floating-reaction" key={floatingReaction.id} aria-hidden="true">{floatingReaction.value}</span> : null}
-          <button aria-label="Previous story" className="absolute bottom-20 left-0 top-24 z-10 w-1/3 cursor-default opacity-0" disabled={index === 0 && !onPreviousComplete} onClick={() => goStory(-1)} type="button" />
-          <button aria-label="Next story" className="absolute bottom-20 right-0 top-24 z-10 w-2/3 cursor-default opacity-0" onClick={() => goStory(1)} type="button" />
+          <button aria-label="Previous story" data-story-navigation className="absolute bottom-20 left-0 top-24 z-10 w-1/3 cursor-default opacity-0" disabled={index === 0 && !onPreviousComplete} onClick={() => { window.clearTimeout(navigationTimer.current); navigationTimer.current = window.setTimeout(() => goStory(-1), 260); }} type="button" />
+          <button aria-label="Next story" data-story-navigation className="absolute bottom-20 right-0 top-24 z-10 w-2/3 cursor-default opacity-0" onClick={() => { window.clearTimeout(navigationTimer.current); navigationTimer.current = window.setTimeout(() => goStory(1), 260); }} type="button" />
         </div>
       </FanModal>
       <OwnStoryViewersSheet
@@ -1453,7 +1468,7 @@ function StoryViewer({ discover = false, initialIndex = 0, isOpen, onAddStory, o
         <ShareSheet isOpen onClose={() => setShareOpen(false)} payload={sharePayload} />,
         document.body
       ) : null}
-      {highlightOpen && canDelete ? <StoryHighlightPicker creatorId={activeStory.owner?.id || activeStory.ownerId} onClose={() => setHighlightOpen(false)} story={activeStory} /> : null}
+      {highlightOpen && canDelete ? <StoryHighlightPicker onOpenProfile={() => { onClose(); navigate("/profile"); }} creatorId={activeStory.owner?.id || activeStory.ownerId} onClose={() => setHighlightOpen(false)} story={activeStory} /> : null}
     </>
   );
 }

@@ -9,8 +9,9 @@ import PrivacyQuickSettingsSheet from "./PrivacyQuickSettingsSheet";
 import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
-import VerifiedCreatorPage from "../creator/VerifiedCreatorPage";
 import DeleteAccountSheet from "./DeleteAccountSheet";
+import MemberNumberSetting from "../../components/profile/MemberNumberSetting";
+import AccountTypeSetting from "../../components/profile/AccountTypeSetting";
 
 function SettingsRow({ onClick, subtitle, title, to, trailing }) {
   const content = <><span className="settings-index-row-copy"><b>{title}</b>{subtitle ? <small>{subtitle}</small> : null}</span>{trailing || <FiChevronRight />}</>;
@@ -29,8 +30,8 @@ export default function SettingsPage() {
   const settingsMainRef = useRef(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [creatorApplyOpen, setCreatorApplyOpen] = useState(false);
-  const [verifiedApplyOpen, setVerifiedApplyOpen] = useState(false);
+  const [creatorApplyOpen, setCreatorApplyOpen] = useState(new URLSearchParams(window.location.search).has("verification"));
+  const [verificationView, setVerificationView] = useState(new URLSearchParams(window.location.search).get("verification")?.startsWith("bank") ? "setup" : "verify");
   const [privacySheet, setPrivacySheet] = useState(null);
   const [privacyError, setPrivacyError] = useState("");
   const [supportersSaved, setSupportersSaved] = useState(false);
@@ -84,16 +85,18 @@ export default function SettingsPage() {
     <header className="settings-index-header"><button aria-label="Back to profile" onClick={() => navigate("/profile")} type="button"><FiArrowLeft /></button><h1>Settings</h1></header>
 
     <SettingsGroup title="Account">
-      {["fan", "creator"].includes(user?.role) ? user.creatorApprovalStatus === "approved" ? <SettingsRow icon={FiUserCheck} subtitle="Approved creator access" title="Creator tools" to="/studio" /> : <SettingsRow icon={FiUserCheck} onClick={() => setCreatorApplyOpen(true)} subtitle={user.creatorApprovalStatus === "pending" ? "Application under review" : "For people who want to publish and earn"} title={user.creatorApprovalStatus === "pending" ? "Creator application" : "Apply as a creator"} /> : null}
+      <AccountTypeSetting />
+      <SettingsRow icon={FiShield} onClick={() => { setVerificationView("verify"); setCreatorApplyOpen(true); }} subtitle={user?.isVerified ? "Verified · reviewed by @seen" : "Identity review by the @seen team"} title="Verification" />
       <SettingsRow icon={FiEdit3} subtitle="Identity, photos and contact options" title="Edit profile" to="/settings/profile?from=settings" />
       <SettingsRow icon={FiGlobe} subtitle="Language, time zone and password" title="Account preferences" to="/settings/account" />
+      <MemberNumberSetting />
     </SettingsGroup>
 
-    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiUserCheck} onClick={() => setVerifiedApplyOpen(true)} subtitle={user?.isVerified ? "Blue tick active · monthly plan" : "Apply separately for the blue tick"} title={user?.isVerified ? "Verified Creator" : "Apply for Verified Creator"} /><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
+    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
 
     {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Preview"><SettingsRow icon={FiUsers} subtitle="See the onboarding and earning examples" title="Preview as a new creator" to="/studio?preview=new" /></SettingsGroup> : null}
     <SettingsGroup title="Preferences"><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle="Comments, reactions, messages and income" title="Notifications" /><SettingsRow icon={FiGlobe} subtitle="Topics, people and what you see" title="Content preferences" to="/settings/content" /></SettingsGroup>
-    <SettingsGroup title="Payments"><SettingsRow icon={FiCreditCard} subtitle="Stars and transaction history" title="Wallet" to="/wallet" /></SettingsGroup>
+    <SettingsGroup title="Payments"><SettingsRow icon={FiCreditCard} subtitle="Coins and transaction history" title="Wallet" to="/wallet" /><SettingsRow icon={FiCreditCard} subtitle="Bank, automatic payouts and clearing" title="Payouts" onClick={() => { setVerificationView("payouts"); setCreatorApplyOpen(true); }} /></SettingsGroup>
     <SettingsGroup title="Privacy & safety">
       <SettingsRow icon={FiUserX} onClick={() => setPrivacySheet("blocked")} subtitle={blockedQuery.isLoading ? "Loading..." : blockedQuery.data?.length ? `${blockedQuery.data.length} blocked` : "You haven't blocked anyone"} title="Blocked users" />
       <SettingsRow icon={FiVolumeX} onClick={() => setPrivacySheet("muted")} subtitle={mutedQuery.isLoading ? "Loading..." : mutedQuery.data?.length ? `${mutedQuery.data.length} muted` : "No one muted"} title="Muted" />
@@ -114,8 +117,7 @@ export default function SettingsPage() {
     {deleteOpen ? <DeleteAccountSheet anchorRef={settingsMainRef} busy={busy} error={error} onClose={() => setDeleteOpen(false)} onConfirm={deleteAccount} /> : null}
     <NotificationSettingsSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
-    {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
-    {verifiedApplyOpen ? <><button aria-label="Close Verified Creator" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerifiedApplyOpen(false)} type="button" /><VerifiedCreatorPage embedded onClose={() => setVerifiedApplyOpen(false)} /></> : null}
+    {creatorApplyOpen ? <CreatorVerificationPage initialView={verificationView} onClose={() => { setCreatorApplyOpen(false); window.history.replaceState(null, "", "/settings"); }} /> : null}
     {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">Supporters {privacyQuery.data?.privacySettings?.showFollowers ? "shown" : "hidden"}</div> : null}
   </main>;
 }

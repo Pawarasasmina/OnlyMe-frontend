@@ -34,7 +34,12 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
             to={item.to}
           >
             <span className="fan-sidebar-icon relative shrink-0">
-              <item.icon aria-hidden="true" className="h-[23px] w-[23px]" />
+              {item.to === "/activity" ? (
+                <svg aria-hidden="true" className="h-[23px] w-[23px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+                  <path d="M12 2.5l1.9 6.3 6.6 1.7-6.6 1.8L12 18.6l-1.9-6.3-6.6-1.8 6.6-1.7z" />
+                  <path d="M18.5 16.5l.7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7z" />
+                </svg>
+              ) : <item.icon aria-hidden="true" className="h-[23px] w-[23px]" />}
               {item.to === "/messages" && unreadMessageCount > 0 ? (
                 <span aria-hidden="true" className="absolute -right-2 -top-2 hidden h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}

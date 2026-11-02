@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 343 210" style="display:block;width:100%;height:auto" aria-hidden="true"><defs><radialGradient id="vsGl"><stop offset="0" stop-color="#9CCBFF" stop-opacity=".45"/><stop offset="1" stop-color="#9CCBFF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="vsBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16233B"/><stop offset="1" stop-color="#0D1422"/></linearGradient></defs>
+    <rect width="343" height="210" rx="20" fill="url(#vsBg)"/>
+    <g><circle cx="250" cy="78" r="63" fill="url(#vsGl)"/>
+  <path d="M250.0 48.0L256.7 53.1L265.0 52.0L268.2 59.8L276.0 63.0L274.9 71.3L280.0 78.0L274.9 84.7L276.0 93.0L268.2 96.2L265.0 104.0L256.7 102.9L250.0 108.0L243.3 102.9L235.0 104.0L231.8 96.2L224.0 93.0L225.1 84.7L220.0 78.0L225.1 71.3L224.0 63.0L231.8 59.8L235.0 52.0L243.3 53.1Z" fill="#9CCBFF"/>
+  <path d="M239.2 78.6l7.199999999999999 7.5 14.399999999999999-15" stroke="#0A0C0F" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g><path d="M205 30Q205 36 211 36Q205 36 205 42Q205 36 199 36Q205 36 205 30Z" fill="#DDEEFF" opacity="0.8"/><path d="M300 35Q300 40 305 40Q300 40 300 45Q300 40 295 40Q300 40 300 35Z" fill="#DDEEFF" opacity="0.7"/><path d="M290 126Q290 130 294 130Q290 130 290 134Q290 130 286 130Q290 130 290 126Z" fill="#DDEEFF" opacity="0.6"/><path d="M60 45Q60 50 65 50Q60 50 60 55Q60 50 55 50Q60 50 60 45Z" fill="#DDEEFF" opacity="0.6"/><rect x="70" y="30" width="6" height="10" rx="2" fill="#FFB38A" transform="rotate(30 70 30)"/><rect x="95" y="58" width="6" height="10" rx="2" fill="#6ECF97" transform="rotate(15 95 58)"/><rect x="280" y="22" width="6" height="10" rx="2" fill="#F2C94C" transform="rotate(0 280 22)"/><rect x="312" y="96" width="6" height="10" rx="2" fill="#F58FB8" transform="rotate(32 312 96)"/>
+    <clipPath id="vsClip"><rect width="343" height="210" rx="20"/></clipPath><g clip-path="url(#vsClip)"><g transform="translate(150 92) scale(0.78)">
+  <defs><radialGradient id="vdf" cx="38%" cy="30%" r="78%"><stop offset="0" stop-color="#F0C4A0"/><stop offset=".55" stop-color="#D9A07A"/><stop offset="1" stop-color="#B97C57"/></radialGradient>
+    <linearGradient id="vdh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A5236"/><stop offset="1" stop-color="#4A2F22"/></linearGradient>
+    <linearGradient id="vds" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3F5680"/><stop offset="1" stop-color="#2B3A57"/></linearGradient>
+    <linearGradient id="vdscr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BFE3FF"/><stop offset="1" stop-color="#6FA9E8"/></linearGradient></defs>
+  <ellipse cx="0" cy="182" rx="80" ry="10" fill="#000" opacity=".25"/>
+  
+  <path d="M-72 190C-72 100-50 74 0 72C50 74 72 100 72 190Z" fill="url(#vds)"/>
+  <path d="M-14 30L-14 64Q0 76 14 64L14 30Z" fill="#B97C57"/>
+  <path d="M-20 70Q0 88 20 70" fill="none" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+  <ellipse cx="-38" cy="5" rx="7" ry="10" fill="#B97C57"/><ellipse cx="38" cy="5" rx="7" ry="10" fill="#B97C57"/>
+  <ellipse cx="0" cy="0" rx="38" ry="43" fill="url(#vdf)"/>
+  <path d="M-40 2C-47-38-22-62 4-60C24-68 47-52 42-28C44-16 42-6 40 2C35-18 25-25 10-25C-4-31-26-24-40 2Z" fill="url(#vdh)"/>
+  <path d="M-23-12q8-6 16-1" stroke="#4A2F22" stroke-width="3.6" stroke-linecap="round" fill="none"/><path d="M7-13q8-5 16 1" stroke="#4A2F22" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+  <ellipse cx="-13" cy="3" rx="4.8" ry="6" fill="#1A1E28"/><ellipse cx="13" cy="3" rx="4.8" ry="6" fill="#1A1E28"/>
+  <circle cx="-11.4" cy="1" r="1.7" fill="#fff"/><circle cx="14.6" cy="1" r="1.7" fill="#fff"/>
+  <path d="M0 8q4 6-1 9" stroke="#B97C57" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-12 21q12 13 24 0q-12 4-24 0Z" fill="#5A2424"/><path d="M-10 21.8q10 3 20 0l-.6 2q-9.4 2.6-18.8 0Z" fill="#fff"/>
+  <ellipse cx="-23" cy="16" rx="6.5" ry="4" fill="#FF7E95" opacity=".25"/><ellipse cx="23" cy="16" rx="6.5" ry="4" fill="#FF7E95" opacity=".25"/>
+  <path d="M-54 96C-52 112-36 116-20 112" stroke="#3F5680" stroke-width="20" stroke-linecap="round" fill="none"/><path d="M54 96C52 112 36 116 20 112" stroke="#3F5680" stroke-width="20" stroke-linecap="round" fill="none"/><circle cx="-20" cy="110" r="10" fill="#D9A07A"/><circle cx="20" cy="110" r="10" fill="#D9A07A"/></g></g></svg>

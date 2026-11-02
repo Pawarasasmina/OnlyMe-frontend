@@ -6,4 +6,6 @@ export const creatorService = {
   getDashboard: () => axiosInstance.get("/creator/dashboard"),
   getGrow: () => axiosInstance.get("/creator/grow"),
   getInvitation: (code) => axiosInstance.get(`/creator/referrals/${encodeURIComponent(code)}`),
+  getInvitationLanding: (code) => axiosInstance.get(`/creator/referrals/${encodeURIComponent(code)}/landing`),
+  joinInvitation: (code) => axiosInstance.post(`/creator/referrals/${encodeURIComponent(code)}/join`),
 };

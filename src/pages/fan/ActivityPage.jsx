@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiArrowLeft,
   FiBookmark,
-  FiCheck,
   FiChevronRight,
   FiClock,
   FiCornerUpLeft,
@@ -20,15 +19,23 @@ import {
   FiZap,
 } from "react-icons/fi";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import ProfileConnectionsModal from "../../components/profile/ProfileConnectionsModal";
+import { useAuth } from "../../hooks/useAuth";
 import { fanService } from "../../services/fanService";
 import { walletService } from "../../services/walletService";
 import { getMessageSocket } from "../../services/messageSocket";
 import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
 import { isGiftActivity, mergeActivitySources } from "../../utils/activitySources";
 import { relativeTime } from "../../utils/relativeTime";
+import { GIFT_THANKS_OPEN_EVENT } from "../../components/fanWeb/shared/giftThanksEvent";
+import { storyActivityRoute } from "../../utils/storyPresentation";
+import ActivityContentPreview from "../../components/activity/ActivityContentPreview";
+import ActivityFollowAction from "../../components/activity/ActivityFollowAction";
+import StoryMentionSheet from "../../components/activity/StoryMentionSheet";
 
 const RECEIVED_FILTERS = [
   ["All", "all"],
+  ["Mentions", "mentions"],
   ["Support", "support"],
   ["Saves", "saves"],
   ["Comments", "comments"],
@@ -38,6 +45,7 @@ const RECEIVED_FILTERS = [
 
 const SENT_FILTERS = [
   ["All", "all"],
+  ["Mentions", "mentions"],
   ["Support", "support"],
   ["Saves", "saves"],
   ["Comments", "comments"],
@@ -45,7 +53,7 @@ const SENT_FILTERS = [
   ["Purchases", "purchases"],
 ];
 
-const FILTER_VALUES = ["seen", "support", "saves", "comments", "follows", "earnings", "purchases"];
+const FILTER_VALUES = ["seen", "mentions", "support", "saves", "comments", "follows", "earnings", "purchases"];
 const ACK_KEY = "atseen_activity_acknowledged";
 const PAGE_SIZE = 30;
 
@@ -131,6 +139,11 @@ function saveAcknowledged(values) {
   }
 }
 
+function readActivityView(key) {
+  try { const value = JSON.parse(sessionStorage.getItem(key) || "{}"); return { page: Math.max(1, Math.min(10, Number(value.page) || 1)), scroll: Math.max(0, Number(value.scroll) || 0) }; }
+  catch { return { page: 1, scroll: 0 }; }
+}
+
 function titleCase(value = "") {
   return String(value)
     .replace(/_/g, " ")
@@ -147,6 +160,10 @@ function cleanText(value = "") {
   if (text === "CALL HOLD DEBIT") return "Paid call request";
   if (/^[A-Z0-9_ -]+$/.test(text) && /[A-Z]/.test(text)) return titleCase(text);
   return text;
+}
+
+function isGiftThanksActivity(item) {
+  return /gift.*thank|thank.*gift/i.test(`${item?.type || ""} ${item?.title || ""} ${item?.description || ""}`);
 }
 
 function creatorName(creator, fallback = "Someone") {
@@ -219,7 +236,7 @@ function ledgerTitle(entry) {
 function inferDirection(item) {
   if (item.direction === "received" || item.direction === "sent") return item.direction;
 
-  const text = `${item.type || ""} ${item.description || ""}`.toLowerCase();
+  const text = `${item.type || ""} ${item.description || ""} ${item.title || ""}`.toLowerCase();
   const sent =
     Number(item.starsChange) < 0 ||
     item.type === "wallet_debit" ||
@@ -228,6 +245,7 @@ function inferDirection(item) {
     text.includes("you saved") ||
     text.includes("you followed") ||
     text.includes("you commented") ||
+    text.includes("you mentioned") ||
     text.includes("you unlocked") ||
     text.includes("you opened") ||
     text.includes("you requested");
@@ -252,6 +270,7 @@ function inferFilterKeys(item, direction) {
     text.includes("credit");
 
   if (dreamGift) keys.add("support");
+  if (text.includes("mention") || text.includes("tagged")) keys.add("mentions");
   if (text.includes("reaction") || text.includes("reacted") || text.includes("liked")) keys.add("support");
   if (text.includes("follow")) keys.add("follows");
   if (text.includes("comment") || text.includes("reply") || text.includes("message")) keys.add("comments");
@@ -264,6 +283,8 @@ function inferFilterKeys(item, direction) {
 }
 
 function routeFor(item) {
+  const storyRoute = storyActivityRoute(item);
+  if (storyRoute) return storyRoute;
   if (item.route) return item.route;
   if (item.actionPath) return LEGACY_ROUTES[item.actionPath] || item.actionPath;
   if (item.relatedCreator?.username) return `/profile/${encodeURIComponent(item.relatedCreator.username)}`;
@@ -279,8 +300,10 @@ function normalizeLegacyActivity(item) {
   const filterKeys = inferFilterKeys(item, direction);
   const warning = item.type === "moderation_warning";
   const actor = item.relatedCreator || item.actor || null;
-  const description = warning ? (item.title || "Account warning") : cleanText(item.title || item.description || item.type || "Activity");
-  const preview = cleanText(item.preview || item.relatedContent?.title || item.target?.preview || item.message || "");
+  const originalDescription = warning ? (item.title || "Account warning") : cleanText(item.title || item.description || item.type || "Activity");
+  const actorName = actor?.displayName || actor?.name || actor?.username || originalDescription.match(/^(.+?) thanked you/i)?.[1] || "Someone";
+  const description = isGiftThanksActivity(item) ? `${actorName} thanked you for your gift` : originalDescription;
+  const preview = cleanText(item.preview || item.relatedContent?.title || item.target?.preview || item.message || (item.type === "story_mention" && direction === "received" ? "Tap to add it to your story" : ""));
 
   return {
     ...item,
@@ -340,6 +363,7 @@ function aggregateAction(item) {
 
 function aggregateTargetLabel(item) {
   const type = String(item.target?.type || item.relatedContent?.type || "").toUpperCase();
+  if (type === "STORY") return "story";
   if (type.includes("SEEN") || type.includes("WORLD")) return "Seen";
   return "note";
 }
@@ -373,8 +397,8 @@ function aggregateReceivedActivity(items) {
       relatedCreator: null,
       relatedCreators: people,
       actor: null,
-      route: "/orbit",
-      actionPath: "/orbit",
+      route: null,
+      actionPath: null,
       aggregate: { count: group.length, ids: group.map((item) => item.id), kind: "profile_seen" },
       canAcknowledge: false,
       acknowledged: group.every((item) => item.acknowledged || item.read),
@@ -394,7 +418,7 @@ function aggregateReceivedActivity(items) {
       return;
     }
 
-    const key = `${action}:${targetId}`;
+    const key = `${action}:${item.target?.type || item.relatedContent?.type || ""}:${targetId}:${action === "reaction" ? item.metadata?.reaction || "" : ""}`;
     const group = groups.get(key) || [];
     group.push(item);
     groups.set(key, group);
@@ -409,6 +433,9 @@ function aggregateReceivedActivity(items) {
     const latest = [...group].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
     const action = aggregateAction(latest);
     const targetLabel = aggregateTargetLabel(latest);
+    const people = group.map((item) => item.relatedCreator).filter(Boolean);
+    const names = people.slice(0, 2).map((person) => person.displayName || person.name || person.username).filter(Boolean);
+    const lead = names.length ? `${names.join(", ")}${group.length > 2 ? ` and ${group.length - 2} others` : ""}` : `${group.length} people`;
     const verbs = {
       save: `saved your ${targetLabel}`,
       reaction: `reacted to your ${targetLabel}`,
@@ -419,7 +446,8 @@ function aggregateReceivedActivity(items) {
     passthrough.push({
       ...latest,
       id: `activity-group-${key}`,
-      title: `${group.length} people ${verbs[action]}`,
+      title: `${lead} ${verbs[action]}`,
+      relatedCreators: people,
       relatedCreator: null,
       actor: null,
       aggregate: { count: group.length, ids: group.map((item) => item.id) },
@@ -483,22 +511,13 @@ function toneFor(item) {
 
 function reactionEmojiFor(item) {
   const key = String(item.metadata?.reaction || "").trim().toUpperCase();
-  return ACTIVITY_REACTION_EMOJI[key] || "";
+  return ACTIVITY_REACTION_EMOJI[key] || (/\p{Extended_Pictographic}/u.test(key) ? key : "");
 }
 
 function titleMarkFor(item) {
   if (item.type === "profile_seen_group") return "";
   const reaction = reactionEmojiFor(item);
   if (reaction) return reaction;
-  const text = `${item.event || ""} ${item.type || ""} ${item.title || ""} ${item.description || ""}`.toLowerCase();
-  if (text.includes("see each other") || text.includes("sees you") || text.includes("see you") || text.includes("said ‘i see you’") || text.includes("said 'i see you'")) return "👁️";
-  if (text.includes("follow")) return "👋";
-  if (text.includes("supported") && !text.includes("gift")) return "🤝";
-  if (text.includes("replied") || text.includes("refund")) return "↩";
-  if (text.includes("commented")) return "💬";
-  if (text.includes("joined your world")) return "🪐";
-  if (text.includes("repost")) return "↻";
-  if (text.includes("direct access")) return "✦";
   return "";
 }
 
@@ -527,7 +546,7 @@ function ActivityAvatar({ item }) {
   if (item.relatedCreators?.length) {
     return (
       <span className="activity-avatar-stack" aria-label={`${item.relatedCreators.length} people`}>
-        {item.relatedCreators.slice(0, 3).map((person, index) => (
+        {item.relatedCreators.slice(0, item.type === "profile_seen_group" ? 3 : 2).map((person, index) => (
           <FanAvatar
             className="activity-person-avatar"
             key={person.id || person.username || index}
@@ -562,13 +581,13 @@ function ActivityTitle({ item }) {
   const title = item.title || "Activity";
   const actorName = item.relatedCreator?.displayName || item.relatedCreator?.name || item.relatedCreator?.username || "";
   const titleMark = titleMarkFor(item);
-  const actionIcon = titleMark ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
+  const actionIcon = titleMark && !title.includes(titleMark) ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
 
   if (item.type === "profile_seen_group" && item.relatedCreators?.length) {
     const names = item.relatedCreators.map((person) => person.displayName || person.name || person.username || "Someone");
     const leadNames = names.slice(0, 2).join(", ");
     const more = Math.max(0, Number(item.aggregate?.count || names.length) - 2);
-    return <p><b>{leadNames}</b>{more ? <> and <b>{more} more</b></> : null} said “I see you” <span aria-hidden="true">🔁</span></p>;
+    return <p><b>{leadNames}</b>{more ? <> and <b>{more} more</b></> : null} said “I see you”</p>;
   }
 
   if (actorName && title.startsWith(actorName)) {
@@ -582,12 +601,13 @@ function ActivityTitle({ item }) {
   }
 
   if (title.startsWith("You ")) {
+    const giftName = item.metadata?.giftName || item.gift?.name || title.match(/^You sent (.+?) to /)?.[1];
+    const contentTitle = item.relatedContent?.title || item.target?.title;
+    const emphasis = [giftName, contentTitle, actorName].filter(Boolean).find((label) => title.includes(label));
+    const offset = emphasis ? title.indexOf(emphasis) : -1;
     return (
       <p>
-        <b>You</b>
-        {" "}
-        {title.slice(3)}
-        {actionIcon}
+        {offset >= 0 ? <>{title.slice(0, offset)}<b>{emphasis}</b>{title.slice(offset + emphasis.length)}</> : title}
       </p>
     );
   }
@@ -595,8 +615,8 @@ function ActivityTitle({ item }) {
   return <p>{title}{actionIcon}</p>;
 }
 
-function ActivityItem({ acknowledged, item, onAcknowledge, onOpen, starsPerUsd }) {
-  const amount = displayAmount(item, starsPerUsd);
+function ActivityItem({ item, onOpen, starsPerUsd }) {
+  const amount = item.direction === "received" ? displayAmount(item, starsPerUsd) : null;
   const route = routeFor(item);
   const interactive = isGiftActivity(item) || Boolean(route);
   const tone = toneFor(item);
@@ -604,7 +624,6 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen, starsPerUsd }
 
   const openItem = () => {
     if (!interactive) return;
-    if (item.direction === "received" && item.canAcknowledge && !acknowledged) onAcknowledge(item.id);
     onOpen(item);
   };
 
@@ -627,26 +646,16 @@ function ActivityItem({ acknowledged, item, onAcknowledge, onOpen, starsPerUsd }
       <div className="activity-prototype-copy">
         {item.warning ? <strong>{"HIGH PRIORITY \u00b7 ACCOUNT WARNING"}</strong> : null}
         <ActivityTitle item={item} />
-        {item.preview ? <span className="activity-prototype-preview">&quot;{item.preview}&quot;</span> : null}
+        {item.preview && !isGiftThanksActivity(item) ? <span className="activity-prototype-preview">&quot;{item.preview}&quot;</span> : null}
         <time dateTime={item.createdAt ? new Date(item.createdAt).toISOString() : undefined}>{relativeTime(item.createdAt)}{item.type === "profile_seen_group" ? ` · ${item.aggregate?.count || 0}` : ""}</time>
       </div>
 
       <div className="activity-prototype-right">
-        {giftImageUrl ? <img alt={item.metadata?.giftName || "Gift"} className="activity-prototype-gift" src={giftImageUrl} /> : null}
+        {item.type === "follow" && item.direction === "received" && item.relatedCreator?.username ? <ActivityFollowAction username={item.relatedCreator.username} /> : null}
+        <ActivityContentPreview item={item} />
+        {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || "Gift"} className="activity-prototype-gift" src={giftImageUrl} /> : null}
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
-        {item.direction === "received" && item.canAcknowledge ? (
-          <button
-            aria-label={acknowledged ? "Marked as seen" : "Mark activity as seen"}
-            className={acknowledged ? "is-seen" : ""}
-            onClick={(event) => {
-              event.stopPropagation();
-              onAcknowledge(item.id);
-            }}
-            type="button"
-          >
-            {acknowledged ? <><span>Seen</span><FiCheck aria-hidden="true" /></> : <ActivityEyeMark />}
-          </button>
-        ) : item.direction === "sent" && acknowledged ? <span className="is-seen" aria-label="Seen"><span>Seen</span><FiCheck aria-hidden="true" /></span> : null}
+        {item.direction === "received" && (/mutual/i.test(item.type || "") || /see each other/i.test(item.title || "")) ? <span className="activity-mutual-eye" aria-label="You see each other"><ActivityEyeMark /></span> : null}
       </div>
     </article>
   );
@@ -662,7 +671,9 @@ function ActivitySkeleton() {
 }
 
 function ActivityEmptyState({ direction, filter, onOpenOrbit }) {
-  const [title, description] = direction === "sent" && filter !== "all"
+  const [title, description] = filter === "mentions"
+    ? ["No mentions yet", direction === "sent" ? "People you mention in your stories will appear here." : "When someone mentions you, it will appear here."]
+    : direction === "sent" && filter !== "all"
     ? EMPTY_COPY.purchases
     : EMPTY_COPY[filter] || EMPTY_COPY.all;
 
@@ -704,27 +715,34 @@ function FilterChips({ filter, filters, onChange }) {
 
 export default function ActivityPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const queryDirection = searchParams.get("direction") === "sent" ? "sent" : "received";
   const queryFilter = searchParams.get("filter") || "all";
   const [acknowledged, setAcknowledged] = useState(readAcknowledged);
   const [previewGift, setPreviewGift] = useState(null);
+  const [previewMention, setPreviewMention] = useState(null);
+  const [seenByOpen, setSeenByOpen] = useState(false);
   const closeGiftPreview = useCallback(() => setPreviewGift(null), []);
-  const [page, setPage] = useState(1);
+  const viewKey = `atseen_activity_view:${user?.id || user?._id}:${queryDirection}:${queryFilter}`;
+  const [page, setPage] = useState(() => readActivityView(viewKey).page);
+  const viewState = useRef({ key: viewKey, ...readActivityView(viewKey), restored: false });
+  viewState.current.page = page;
   const [introOpen, setIntroOpen] = useState(() => {
     try { return localStorage.getItem("atseen_activity_intro_dismissed") !== "1"; }
     catch { return true; }
   });
-  const acknowledgedOnOpenRef = useRef(false);
   const direction = queryDirection;
   const allowedFilters = direction === "received" ? RECEIVED_FILTERS : SENT_FILTERS;
   const allowedFilterValues = new Set(allowedFilters.map(([, value]) => value));
   const filter = allowedFilterValues.has(queryFilter) ? queryFilter : "all";
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
   const activityQuery = useQuery({
-    queryKey: ["fan", "activity", { direction, filter, limit: PAGE_SIZE, page }],
-    queryFn: () => fanService.getActivity({ direction, filter, limit: PAGE_SIZE, page }).then((response) => response.data.data),
+    queryKey: ["fan", "activity", { direction, filter, limit: PAGE_SIZE, page, todayStart }],
+    queryFn: () => fanService.getActivity({ direction, filter, limit: PAGE_SIZE, page, ...(direction === "received" && filter === "all" ? { todayStart } : {}) }).then((response) => response.data.data),
     refetchInterval: 5000,
     refetchIntervalInBackground: false,
     retry: false,
@@ -743,8 +761,24 @@ export default function ActivityPage() {
   });
 
   useEffect(() => {
+    if (viewState.current.key === viewKey) return;
+    viewState.current = { key: viewKey, page: 1, scroll: 0, restored: true };
     setPage(1);
-  }, [direction, filter]);
+  }, [viewKey]);
+  useEffect(() => {
+    if (!activityQuery.data || viewState.current.restored) return undefined;
+    const frame = requestAnimationFrame(() => { const element = document.querySelector(".social-center-scroll"); if (element) element.scrollTop = viewState.current.scroll; viewState.current.restored = true; });
+    return () => cancelAnimationFrame(frame);
+  }, [activityQuery.data]);
+  useEffect(() => {
+    const element = document.querySelector(".social-center-scroll");
+    const remember = () => { viewState.current.scroll = element?.scrollTop || 0; };
+    element?.addEventListener("scroll", remember, { passive: true });
+    return () => {
+      element?.removeEventListener("scroll", remember);
+      try { sessionStorage.setItem(viewState.current.key, JSON.stringify({ page: viewState.current.page, scroll: viewState.current.scroll })); } catch { /* View restoration is best effort. */ }
+    };
+  }, []);
 
   useEffect(() => {
     const socket = getMessageSocket();
@@ -755,27 +789,28 @@ export default function ActivityPage() {
     return () => socket.off("activity:updated", refreshActivity);
   }, [queryClient]);
 
-  useEffect(() => {
-    if (acknowledgedOnOpenRef.current) return undefined;
-    acknowledgedOnOpenRef.current = true;
-    queryClient.setQueryData(["fan", "activity", "unread-count"], 0);
-    let active = true;
-    fanService.acknowledgeAllActivity()
-      .catch(() => undefined)
-      .finally(() => {
-        if (active) queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
-      });
-    return () => {
-      active = false;
-    };
-  }, [queryClient]);
-
   const items = useMemo(() => {
     const apiActivity = activityQuery.data?.items || activityQuery.data?.activity || [];
     const ledgerItems = ledgerQuery.data?.items || [];
     return normalizeActivity(apiActivity, ledgerItems);
   }, [activityQuery.data, ledgerQuery.data]);
   const visible = items.filter((item) => item.direction === direction && (filter === "all" || item.filterKeys?.includes(filter) || item.filter === filter));
+  const sentSeen = direction === "sent" && filter === "all"
+    ? visible.filter((item) => item.type === "profile_seen" && item.relatedCreator)
+    : [];
+  const sentSeenPeople = [...new Map(sentSeen.map((item) => [item.relatedCreator.id || item.relatedCreator.username || creatorName(item.relatedCreator), item.relatedCreator])).values()];
+  const todaySeen = direction === "received" && filter === "all" ? activityQuery.data?.todaySeen : null;
+  const todaySeenPeople = todaySeen?.people || [];
+  const todaySeenCount = Number(todaySeen?.count) || 0;
+  const listItems = visible.filter((item) => {
+    if (item.direction === "received" && (
+      ["profile_view", "profile_viewed"].includes(item.type)
+      || /\bsaw you\s*[.!]?$/i.test(item.title || item.description || "")
+    )) return false;
+    if (sentSeenPeople.length && sentSeen.includes(item)) return false;
+    if (todaySeenCount && ["profile_seen", "profile_seen_group"].includes(item.type) && new Date(item.createdAt).getTime() >= new Date(todayStart).getTime()) return false;
+    return true;
+  });
   const filters = allowedFilters;
   const loading = activityQuery.isLoading || ledgerQuery.isLoading;
   const failed = activityQuery.isError && ledgerQuery.isError;
@@ -819,7 +854,9 @@ export default function ActivityPage() {
 
   return (
     <main className="activity-prototype-page">
+      {seenByOpen && user?.username ? <ProfileConnectionsModal counts={{ "seen-by": todaySeenCount }} displayName={user.name} isOwn onClose={() => setSeenByOpen(false)} type="seen-by" username={user.username} /> : null}
       {previewGift ? <ActivityGiftPreview activity={previewGift} key={previewGift.id} onClose={closeGiftPreview} /> : null}
+      {previewMention ? <StoryMentionSheet item={previewMention} key={previewMention.id} onClose={() => setPreviewMention(null)} /> : null}
       <header className="activity-prototype-header">
         <button className="activity-prototype-back" aria-label="Go back" onClick={goBack} type="button">
           <FiArrowLeft aria-hidden="true" />
@@ -866,6 +903,27 @@ export default function ActivityPage() {
       ) : null}
 
       <section className="activity-prototype-list">
+        {!loading && !failed && todaySeenCount > 0 && todaySeenPeople.length ? (
+          <button className="activity-today-seen" onClick={() => setSeenByOpen(true)} type="button">
+            <span className="activity-today-seen-avatars">
+              {todaySeenPeople.slice(0, 3).map((person, index) => <FanAvatar key={person.id || person.username || index} name={creatorName(person)} size="h-[26px] w-[26px]" src={person.avatarUrl || person.avatar} />)}
+            </span>
+            <span className="activity-today-seen-copy">
+              <span><b>{todaySeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(", ")}</b>{todaySeenCount > 2 ? ` and ${todaySeenCount - 2} more` : ""} said &ldquo;I see you&rdquo; <span aria-hidden="true">💫</span></span>
+              <small>today &middot; {todaySeenCount}</small>
+            </span>
+            <FiChevronRight aria-hidden="true" />
+          </button>
+        ) : null}
+        {!loading && sentSeenPeople.length ? (
+          <article className="activity-prototype-row">
+            <ActivityAvatar item={{ relatedCreators: sentSeenPeople }} />
+            <div className="activity-prototype-copy">
+              <p>You said &ldquo;I see you&rdquo; &mdash; <b>{sentSeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(" and ")}</b>{sentSeenPeople.length > 2 ? ` and ${sentSeenPeople.length - 2} more` : ""}</p>
+              <span className="activity-sent-seen-meta">they see it in their activity &middot; {sentSeenPeople.length}</span>
+            </div>
+          </article>
+        ) : null}
         {loading ? <ActivitySkeleton /> : null}
         {failed ? (
           <div className="activity-prototype-state">
@@ -883,17 +941,36 @@ export default function ActivityPage() {
             </button>
           </div>
         ) : null}
-        {!loading && !failed ? visible.map((item) => (
+        {!loading && !failed ? listItems.map((item) => (
           <ActivityItem
-            acknowledged={item.acknowledged || acknowledged.has(String(item.id))}
+            acknowledged={isGiftThanksActivity(item)
+              ? acknowledged.has(String(item.id))
+              : item.acknowledged || acknowledged.has(String(item.id))}
             item={item}
             key={item.id}
             onAcknowledge={acknowledge}
-            onOpen={(entry) => isGiftActivity(entry) ? setPreviewGift(entry) : navigate(routeFor(entry))}
+            onOpen={(entry) => {
+              if (entry.canAcknowledge && !entry.acknowledged) acknowledge(entry.id);
+              if (entry.target?.type === "STORY" && entry.aggregate?.ids?.length && !entry.acknowledged) {
+                setAcknowledged((current) => { const next = new Set([...current, entry.id, ...entry.aggregate.ids].map(String)); saveAcknowledged(next); return next; });
+                for (const id of entry.aggregate.ids) activityAcknowledge.mutate(id);
+              }
+              if (entry.direction === "received" && ["profile_seen", "profile_seen_group"].includes(entry.type)) {
+                setSeenByOpen(true);
+              } else if (entry.type === "story_mention" && entry.direction === "received" && entry.target?.type === "STORY") {
+                setPreviewMention(entry);
+              } else if (isGiftThanksActivity(entry)) {
+                window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, { detail: entry }));
+              } else if (isGiftActivity(entry)) {
+                setPreviewGift(entry);
+              } else {
+                navigate(routeFor(entry));
+              }
+            }}
             starsPerUsd={walletQuery.data?.starsPerUsd}
           />
         )) : null}
-        {!loading && !failed && !visible.length ? (
+        {!loading && !failed && !listItems.length && !todaySeenCount && !sentSeenPeople.length ? (
           <ActivityEmptyState direction={direction} filter={filter} onOpenOrbit={() => navigate("/orbit")} />
         ) : null}
         {!loading && !failed && visible.length && hasMore ? (

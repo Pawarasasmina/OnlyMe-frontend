@@ -5,7 +5,7 @@ function StoryPresenceLabel({ status }) {
     .trim();
   if (!label) return null;
   return (
-    <span className="wall-story-presence-label" style={{ color: status.color || "#9CCBFF" }}>
+    <span className="wall-story-presence-label">
       {label}
     </span>
   );

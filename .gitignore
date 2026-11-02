@@ -8,3 +8,4 @@ playwright-report/
 
 # Local PDF inspection dependency
 .codex-pdf-tools/
+.codex-tmp/

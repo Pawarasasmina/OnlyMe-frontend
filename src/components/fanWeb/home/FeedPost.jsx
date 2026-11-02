@@ -759,7 +759,7 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: () => {
           setMoreBusy("");
           setMoreOpen(false);
-          showToast("Note archived. Its statistics are preserved.");
+          showToast("In archive \u2014 restore anytime", { variant: "archive", duration: 1600 });
         },
       });
     } else if (action === "block") {

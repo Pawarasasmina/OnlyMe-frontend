@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCheck, FiChevronRight, FiEdit2, FiEye, FiMoreHorizontal, FiRefreshCw, FiShare2, FiTrash2, FiUpload, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiChevronRight, FiEdit2, FiEye, FiMoreHorizontal, FiRefreshCw, FiTrash2, FiUpload, FiX } from "react-icons/fi";
 import { dreamService } from "../../services/dreamService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
+import "./ProfileGiftCopy.css";
+import "./ProfileDreamCard.css";
+import { resolveMediaUrl } from "../../utils/media";
+import FanAvatar from "../fanWeb/shared/FanAvatar";
 
 const GOALS = [500, 900, 1500, 2500, 5000];
 const SPARKLE = String.fromCharCode(10024);
@@ -21,8 +26,8 @@ async function croppedDreamPhoto(file, url, crop) {
   return new File([blob], "dream-photo.jpg", { type: "image/jpeg" });
 }
 
-export function GiftCelebration({ caption = "", detail, gift, message = "You're part of this Dream now", recipientName = "", showSuccessToast = true, variant = "" }) {
-  return <div aria-live="polite" className="gift-celebration-layer">
+export function GiftCelebration({ caption = "", detail, gift, message = "You're part of this Dream now", recipientName = "", senderName = "", note = "", showSuccessToast = true, variant = "" }) {
+  return <div aria-live="polite" className={`gift-celebration-layer ${variant}`}>
     <div className="gift-celebration-veil" />
     <div className={variant ? `gift-celebration-scene ${variant}` : "gift-celebration-scene"} />
     {showSuccessToast ? <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>{message}</strong><small>{detail || `${gift.name} · ${STAR}${gift.stars.toLocaleString()} sent`}</small></span></div> : null}
@@ -32,9 +37,13 @@ export function GiftCelebration({ caption = "", detail, gift, message = "You're 
       <i className="gift-celebration-ring is-inner" />
       {celebrationParticles.map((particle, index) => <i className="gift-celebration-particle" key={index} style={{ "--angle": `${particle.angle}deg`, "--delay": `${particle.delay}ms`, "--distance": `${particle.distance}px`, "--size": `${particle.size}px` }} />)}
       <div className="gift-celebration-image"><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></div>
+      <div className="gift-celebration-copy">
       <strong className="gift-celebration-name">{gift.name}</strong>
       {caption ? <span className="gift-celebration-caption">“{caption}”</span> : null}
       {recipientName ? <small className="gift-celebration-recipient">for {recipientName} · {STAR}{Number(gift.stars || 0).toLocaleString()}</small> : null}
+      {senderName ? <small className="gift-celebration-sender">from {senderName}</small> : null}
+      {note ? <span className="gift-celebration-note">&ldquo;{note}&rdquo;</span> : null}
+      </div>
     </div>
   </div>;
 }
@@ -355,28 +364,30 @@ export function GiftPicker({ creatorName, dream, gifts, onClose, onSent }) {
   );
 }
 
-function DreamEntryRow({ dream, isOwner, onCreate, onMenu }) {
+function DreamEntryRow({ dream, isOwner, onCreate, onMenu, onSupport, progress }) {
   if (!dream) {
     return (
       <button className="profile-dream-entry" onClick={onCreate} type="button">
-        <span aria-hidden="true">{SPARKLE}</span>
-        <b>Dream Experience</b>
-        <strong>Create <FiChevronRight /></strong>
+        <span aria-hidden="true" className="dream-compact-add">+</span>
+        <span><b>Add a dream</b><small>People can help it happen</small></span>
       </button>
     );
   }
 
   return (
-    <div className={`profile-dream-live ${isOwner ? "is-owner" : "is-supportable"}`}>
-      <div className="profile-dream-story">
-        <div className="profile-dream-story-copy">
-          <div className="profile-dream-main">
-            <h2><span aria-hidden="true">{dream.emoji || SPARKLE}</span>{dream.title}</h2>
-            {isOwner ? <button aria-label="Open Dream menu" className="profile-dream-menu-trigger" onClick={onMenu} type="button"><FiMoreHorizontal /></button> : null}
-          </div>
-          <p className="profile-dream-reason">“{dream.reason}”</p>
-        </div>
-      </div>
+    <div className="dream-compact-row">
+      <button aria-label={isOwner ? "Edit Dream" : `Open Dream: ${dream.title}`} className="dream-compact-content" disabled={!isOwner && dream.status !== "ACTIVE"} onClick={isOwner ? onCreate : onSupport} type="button">
+        <span className="dream-compact-cover">{dream.photo?.url ? <img alt="" src={resolveMediaUrl(dream.photo.url)} /> : <span aria-hidden="true">{dream.emoji || SPARKLE}</span>}</span>
+        <span className="dream-compact-copy">
+          <span className="dream-compact-title"><b title={dream.title}>{dream.title}</b><strong className={dream.status === "COMPLETED" ? "is-complete" : ""}>{dream.status === "COMPLETED" ? "Came true" : `${progress}%`}</strong></span>
+          {dream.status === "COMPLETED" ? <small className="dream-compact-supporters">Thanks to {dream.supporterCount || 0} people</small> : <>
+            <span aria-label="Dream progress" aria-valuemax={100} aria-valuemin={0} aria-valuenow={progress} className="dream-compact-progress" role="progressbar"><i style={{ width: `${progress}%` }} /></span>
+            <span className="dream-compact-supporters"><span className="dream-compact-faces">{(dream.supporters || []).filter((person, index, all) => all.findIndex(other => other.username === person.username) === index).slice(0, 3).map(person => <FanAvatar key={person.username} name={person.name} size="h-[15px] w-[15px]" src={resolveMediaUrl(person.avatar)} />)}</span>{dream.supporterCount || 0} in this story</span>
+          </>}
+        </span>
+      </button>
+      {dream.status !== "COMPLETED" ? <button className="dream-compact-action" onClick={isOwner ? onCreate : onSupport} type="button">{isOwner ? "Edit" : "Help"} ›</button> : null}
+      {isOwner ? <button aria-label="Open Dream menu" className="dream-compact-menu" onClick={onMenu} type="button"><FiMoreHorizontal /></button> : null}
     </div>
   );
 }
@@ -393,6 +404,17 @@ export default function ProfileDream({ capabilities, profile, role }) {
     enabled: creatorEnabled && Boolean(profile?.username),
     retry: false,
   });
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = event => { if (event.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    const focusFrame = requestAnimationFrame(() => document.querySelector('.profile-dream-menu-sheet button')?.focus());
+    return () => { cancelAnimationFrame(focusFrame); window.removeEventListener("keydown", onKey); document.body.style.overflow = previousOverflow; previousFocus?.focus(); };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -422,7 +444,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
 
   if (!dream && !capabilities.isOwner) return null;
 
-  const progress = dream ? Math.min(100, Math.round((dream.receivedStars / dream.goalStars) * 100)) : 0;
+  const progress = dream ? Math.max(0, Math.min(100, Math.round((Number(dream.receivedStars || 0) / Math.max(1, Number(dream.goalStars || 0))) * 100))) : 0;
   const update = () => {
     query.refetch();
     setPicker(false);
@@ -451,40 +473,26 @@ export default function ProfileDream({ capabilities, profile, role }) {
   };
 
   return (
-    <section className={`profile-dream-card ${dream ? "" : "is-empty"}`}>
+    <section className={`profile-dream-card profile-dream-compact ${dream ? "" : "is-empty"}`}>
       <div className="profile-dream-section-head">
         <h2>Dream</h2>
+        {dream?.cameTrueCount > 0 ? <span className="dream-came-true-count">{dream.cameTrueCount} CAME TRUE</span> : null}
       </div>
       <div className="profile-dream-panel">
-        <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onMenu={() => setMenuOpen(true)} />
-
-        {dream ? (
-          <>
-            <div className="profile-dream-progress-row"><div className="profile-dream-progress"><i style={{ width: `${progress}%` }} /></div><b>{progress}%</b></div>
-            <div className="profile-dream-meta">
-              <span>{dream.supporterCount} in this story</span>
-              {capabilities.isOwner
-                ? <button aria-label="Edit Dream" onClick={() => navigate("/profile/dream")} type="button">Help make it happen <FiChevronRight /></button>
-                : dream.status === "ACTIVE" ? <button onClick={() => setPicker(true)} type="button">Help make it happen <FiChevronRight /></button> : null}
-            </div>
-            {dream.status === "COMPLETED" && capabilities.isOwner ? (
-              <p className="profile-dream-complete"><FiCheck /> Dream completed</p>
-            ) : null}
-          </>
-        ) : null}
+        <DreamEntryRow dream={dream} isOwner={capabilities.isOwner} onCreate={() => navigate("/profile/dream")} onMenu={() => setMenuOpen(true)} onSupport={() => setPicker(true)} progress={progress} />
       </div>
 
       {picker ? <GiftPicker creatorName={profile?.displayName || profile?.username || "This creator"} dream={dream} gifts={gifts} onClose={() => setPicker(false)} onSent={() => query.refetch()} /> : null}
-      {menuOpen && dream ? (
+      {menuOpen && dream ? createPortal(
         <div className="profile-dream-menu-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setMenuOpen(false)} style={menuPosition}>
           <section aria-label="Dream actions" aria-modal="true" className="profile-dream-menu-sheet" role="dialog">
             <span className="profile-dream-menu-handle" />
-            <button onClick={shareDream} type="button"><FiShare2 /><span>Share</span></button>
+            <button onClick={shareDream} type="button"><FiUpload /><span>Share</span></button>
             <button onClick={() => { setMenuOpen(false); navigate("/profile/dream"); }} type="button"><FiEdit2 /><span>Edit</span></button>
             {dream.status !== "COMPLETED" ? <button onClick={() => { setMenuOpen(false); status("complete"); }} type="button"><FiCheck className="is-success" /><span>Mark as done</span></button> : null}
             <button className="is-danger" onClick={() => { setMenuOpen(false); status("remove"); }} type="button"><FiTrash2 /><span>Delete</span></button>
           </section>
-        </div>
+        </div>, document.body
       ) : null}
     </section>
   );

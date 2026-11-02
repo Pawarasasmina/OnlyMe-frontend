@@ -1,11 +1,5 @@
-const QUICK_REACTIONS = [
-  { label: "love", value: "\u2764\ufe0f" },
-  { label: "fire", value: "\ud83d\udd25" },
-  { label: "laugh", value: "\ud83d\ude02" },
-  { label: "wow", value: "\ud83d\ude2e" },
-  { label: "sad", value: "\ud83d\ude22" },
-  { label: "applause", value: "\ud83d\udc4f" },
-];
+import { useState } from "react";
+import { STORY_QUICK_REACTIONS, STORY_REACTIONS } from "../../constants/storyReactions";
 
 function SeenEyeIcon() {
   return (
@@ -17,13 +11,14 @@ function SeenEyeIcon() {
 }
 
 function StoryReactionTray({ canReact = true, canSeeYou = false, onReact, onSeeYou, pending = false, seeYouPending = false, selectedReaction }) {
-  const reactions = canReact ? QUICK_REACTIONS : [];
+  const [expanded, setExpanded] = useState(false);
+  const reactions = canReact ? (expanded ? STORY_REACTIONS : STORY_QUICK_REACTIONS).map((value) => ({ label: value, value })) : [];
 
   return (
     <div className="px-1">
       <div className="flex items-center justify-between gap-4">
         {reactions.length ? (
-          <div aria-label="Story reactions" className="flex min-w-0 flex-1 items-center justify-between gap-3" role="group">
+          <div aria-label="Story reactions" className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-1" role="group">
             {reactions.map(({ label, value }) => (
               <button
                 aria-label={`React with ${label}`}
@@ -33,12 +28,13 @@ function StoryReactionTray({ canReact = true, canSeeYou = false, onReact, onSeeY
                 } ${pending ? "cursor-wait opacity-70" : ""}`}
                 disabled={pending || !canReact}
                 key={value}
-                onClick={() => onReact?.(value)}
+                onClick={() => onReact?.(selectedReaction === value ? null : value)}
                 type="button"
               >
                 {value}
               </button>
             ))}
+            <button aria-label={expanded ? "Fewer reactions" : "More reactions"} aria-expanded={expanded} onClick={() => setExpanded((current) => !current)} type="button">{expanded ? "−" : "+"}</button>
           </div>
         ) : null}
         {canSeeYou ? (

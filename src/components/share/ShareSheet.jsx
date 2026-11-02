@@ -1,7 +1,8 @@
+import "./InvitationShare.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
-import { FiCheck, FiLink, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
+import { FiCheck, FiCopy, FiLink, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiSearch, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -80,7 +81,7 @@ function ShareContentPreview({ payload, canonicalUrl }) {
       </div>
       <div className="share-chat-copy">
         <strong>{payload.title || payload.textPreview || "Shared on @seen"}</strong>
-        <span>a {typeLabel} by {firstName(authorName)}</span>
+        <span>{payload.contentType === "invitation" ? "Real stories from real people. Join me there." : <>a {typeLabel} by {firstName(authorName)}</>}</span>
         <small>⌁&nbsp; {shortUrl || "@seen.com"}</small>
       </div>
     </div>
@@ -126,7 +127,8 @@ function useShareSheetPosition(isOpen) {
 
 function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const { user } = useAuth();
-  const { showToast } = useFanToast();
+  const { showToast: notify } = useFanToast();
+  const showToast = message => notify(message, payload?.contentType === "invitation" ? { variant: "archive", duration: 1600 } : {});
   const location = useLocation();
   const navigate = useNavigate();
   const inputRef = useRef(null);
@@ -226,12 +228,13 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     });
   };
 
-  const copyLink = async (toast = "Link copied \u2713") => {
+  const copyLink = async (toast = "Link copied \u2713", value = canonicalUrl) => {
     setExternalBusy("copy");
     try {
-      await copyText(canonicalUrl);
+      await copyText(value);
       setCopyNotice("Link copied");
       showToast(toast);
+      if (payload?.contentType === "invitation") close();
     } catch {
       setCopyNotice("Couldn't copy link");
       showToast("Couldn't copy the link");
@@ -268,7 +271,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
 
   const shareWhatsApp = () => {
     const title = payload?.title || payload?.textPreview || "this";
-    const text = `Check this out on @seen: ${title} ${canonicalUrl}`;
+    const text = payload?.contentType === "invitation" ? `${title}. Real stories from real people. Join me there. ${canonicalUrl}` : `Check this out on @seen: ${title} ${canonicalUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     showToast("Opening WhatsApp...");
   };
@@ -280,13 +283,18 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   };
 
   const openMessages = () => {
+    if (payload?.contentType === "invitation") {
+      window.location.href = `sms:?&body=${encodeURIComponent(`${payload.title}. ${payload.previewText || "Real stories from real people. Join me there."} ${canonicalUrl}`)}`;
+      return;
+    }
     close();
     navigate("/messages", { state: { sharePayload: payload } });
   };
 
   const nativeShare = async () => {
     if (!navigator.share) {
-      await copyLink("Link copied \u2713");
+      if (payload?.contentType === "invitation") await copyLink("Copied with a message \u2014 paste it anywhere", `${payload.title}. Real stories from real people. Join me there.\n${canonicalUrl}`);
+      else await copyLink("Link copied \u2713");
       return;
     }
     setExternalBusy("native");
@@ -326,7 +334,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     <div
       aria-labelledby="share-sheet-title"
       aria-modal="true"
-      className={isSeenVariant ? "is-seen-share share-sheet-overlay" : "share-sheet-overlay"}
+      className={`${isSeenVariant ? "is-seen-share " : ""}${payload.contentType === "invitation" ? "is-invitation " : ""}share-sheet-overlay`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
@@ -400,8 +408,8 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         ) : (
           <section className="share-external-row" aria-label="External share actions">
             {copyNotice ? <p className="share-copy-notice" role="status">{copyNotice}</p> : null}
-            <ExternalAction Icon={FiPlusCircle} label="Story" onClick={shareToStory} />
-            <ExternalAction Icon={externalBusy === "copy" ? FiCheck : FiLink} label="Copy link" onClick={() => copyLink()} />
+            {payload.contentType !== "invitation" ? <ExternalAction Icon={FiPlusCircle} label="Story" onClick={shareToStory} /> : null}
+            <ExternalAction Icon={externalBusy === "copy" ? FiCheck : payload.contentType === "invitation" ? FiCopy : FiLink} label="Copy link" onClick={() => copyLink()} />
             <ExternalAction Icon={FaWhatsapp} label="WhatsApp" onClick={shareWhatsApp} />
             <ExternalAction Icon={FaTelegramPlane} label="Telegram" onClick={shareTelegram} />
             <ExternalAction Icon={FiMessageCircle} label="Messages" onClick={openMessages} />

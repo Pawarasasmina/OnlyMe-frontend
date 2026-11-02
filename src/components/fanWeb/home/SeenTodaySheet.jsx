@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { relativeTime } from "../../../utils/relativeTime";
 import FanAvatar from "../shared/FanAvatar";
+import { useStoryViewerPosition } from "../../../hooks/useStoryViewerPosition";
 
 function SeenTodaySheet({ isOpen, people = [], count = 0, onClose }) {
   const navigate = useNavigate();
   const firstRowRef = useRef(null);
+  const columnPosition = useStoryViewerPosition(isOpen);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -46,7 +48,7 @@ function SeenTodaySheet({ isOpen, people = [], count = 0, onClose }) {
       onClick={handleBackdropClick}
       role="dialog"
     >
-      <section aria-label={`${count} ${count === 1 ? "person" : "people"} said I see you today`} className="seen-today-sheet">
+      <section aria-label={`${count} ${count === 1 ? "person" : "people"} said I see you today`} className="seen-today-sheet" style={columnPosition}>
         <div className="seen-today-handle" aria-hidden="true" />
         <header className="seen-today-header">
           <strong>{count}</strong>

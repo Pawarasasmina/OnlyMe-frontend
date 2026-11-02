@@ -117,6 +117,7 @@ function StoriesRow({ currentUser }) {
           <OwnStoryItem
             activeStatus={me.activeStatus}
             hasStories={ownStories.length > 0}
+            hasUnseen={ownStories.some((story) => !story.viewed)}
             onAdd={openCreator}
             onOpen={openOwnStory}
             onStatus={() => navigate("/profile/status")}

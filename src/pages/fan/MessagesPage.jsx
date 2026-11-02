@@ -1,3 +1,5 @@
+import InvitationMessageCard from "../../components/messages/InvitationMessageCard";
+import { invitationLinkPreview, isDefaultInvitationMessage } from "../../utils/invitationMessage";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
@@ -22,7 +24,6 @@ import { messageService } from "../../services/messageService";
 import { callService } from "../../services/callService";
 import { postService } from "../../services/postService";
 import { getMessageSocket } from "../../services/messageSocket";
-import { storyService } from "../../services/storyService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const relative = (value) => {
@@ -238,6 +239,7 @@ function sharedContentLabel(type = "") {
   if (type === "seen") return "SEEN";
   if (type === "world") return "WORLD";
   if (type === "experience") return "EXPERIENCE";
+  if (type === "invitation") return "INVITATION";
   if (type === "profile") return "PROFILE";
   if (type === "story") return "STORY";
   return "CONTENT";
@@ -248,6 +250,7 @@ function sharedContentBodyLabel(type = "") {
   if (type === "seen") return "Seen";
   if (type === "world") return "World";
   if (type === "experience") return "experience";
+  if (type === "invitation") return "invitation";
   if (type === "profile") return "profile";
   if (type === "story") return "story";
   return "content";
@@ -278,6 +281,7 @@ function questionReplyStoryContent(message) {
 
 function SharedContentMessageCard({ content, mine, onOpen }) {
   if (!content) return null;
+  if (content.contentType === "invitation") return <InvitationMessageCard content={content} mine={mine} onOpen={onOpen} />;
   const author = content.author || {};
   const image = resolveMediaUrl(content.imageUrl || author.avatarUrl);
   return (
@@ -362,7 +366,7 @@ export default function MessagesPage() {
   const [requestBusy, setRequestBusy] = useState(false);
   const [storyViewer, setStoryViewer] = useState(null);
   const [storyShareContent, setStoryShareContent] = useState(null);
-  const [expiredStoryIds, setExpiredStoryIds] = useState(() => new Set());
+  const [expiredStoryIds] = useState(() => new Set());
   const [search, setSearch] = useState("");
   const [presence, setPresence] = useState({});
   const [socketConnected, setSocketConnected] = useState(false);
@@ -447,7 +451,7 @@ export default function MessagesPage() {
     queryKey: selected?.type === "group" ? ["messages", "group", selected?.id] : ["messages", selected?.id],
     queryFn: async () => {
       if (selected.type === "group") return messageService.getGroupMessages(selected.id).then((response) => response.data.data);
-      const fresh = await messageService.getMessages(selected.id, { directAccessWindowId: selected.directAccessWindowId || null }).then((response) => response.data.data);
+      const fresh = await messageService.getMessages(selected.id, { directAccessWindowId: selected.directAccessWindowId || null, focusMessageId: searchParams.get("message") }).then((response) => response.data.data);
       const current = queryClient.getQueryData(["messages", selected.id]);
       const currentWindowId = current?.directAccessWindow?.id || null;
       if (currentWindowId !== (selected.directAccessWindowId || null)) return fresh;
@@ -567,6 +571,23 @@ export default function MessagesPage() {
       : []
   ), [messagesQuery.data?.group?.members, selected?.members, selected?.type]);
   const messages = useMemo(() => messagesQuery.data?.messages || [], [messagesQuery.data?.messages]);
+  const notificationFocus = searchParams.get("message");
+  const focusedNotification = useRef(null);
+  useEffect(() => {
+    if (!/^[a-f\d]{24}$/i.test(notificationFocus || "") || focusedNotification.current === notificationFocus) return undefined;
+    let element;
+    const frame = requestAnimationFrame(() => { element = document.querySelector(`[data-message-id="${notificationFocus}"]`); if (element) { element.scrollIntoView({ block: "center", behavior: "instant" }); element.classList.add("message-notification-focus"); focusedNotification.current = notificationFocus; } });
+    return () => { cancelAnimationFrame(frame); element?.classList.remove("message-notification-focus"); };
+  }, [notificationFocus, messages]);
+  useEffect(() => {
+    const updated = ({ participantId }) => {
+      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] });
+      if (participantId) queryClient.invalidateQueries({ queryKey: ["messages", participantId] });
+    };
+    const socket = getMessageSocket();
+    socket?.on("message:updated", updated);
+    return () => socket?.off("message:updated", updated);
+  }, [queryClient]);
   useEffect(() => {
     if (!pendingShare) return;
     if (!selected?.id) {
@@ -883,7 +904,7 @@ export default function MessagesPage() {
   }, [conversations, groupPresenceIds, myId, selected?.id, selected?.type]);
 
   const latestMessageId = messages[messages.length - 1]?.id || null;
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [latestMessageId]);
+  useEffect(() => { if (!notificationFocus) bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [latestMessageId, notificationFocus]);
   useEffect(() => () => window.clearTimeout(scrollDateTimerRef.current), []);
 
   const handleThreadScroll = (event) => {
@@ -1141,6 +1162,10 @@ export default function MessagesPage() {
     finally { setActionBusy(false); }
   };
   const openSharedContent = (content) => {
+    if (content?.contentType === "invitation" && content.route?.startsWith("/invite/")) {
+      navigate(content.route.replace("/invite/", "/invitations/"), { state: { returnTo: `/messages?with=${selected?.id || ""}` } });
+      return;
+    }
     if (content?.route) navigate(content.route);
   };
   const closeDisappearingViewer = useCallback(async () => {
@@ -1193,7 +1218,7 @@ export default function MessagesPage() {
         messages: [
           ...older.messages.filter((incoming) => !current.messages.some((item) => item.id === incoming.id)),
           ...current.messages,
-        ],
+        ].sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt) || String(left.id).localeCompare(String(right.id))),
         pageInfo: older.pageInfo,
       } : older);
     } catch (requestError) {
@@ -1702,12 +1727,7 @@ export default function MessagesPage() {
       setImageBusy(false);
     }
   };
-  const openStoryReply = async (reply, knownExpired = false) => {
-    if (knownExpired) return setStoryViewer({ expired: true });
-    setStoryViewer({ loading: true });
-    try { setStoryViewer({ story: await storyService.getStory(reply.storyId) }); }
-    catch (requestError) { const expired = [404, 410].includes(requestError.response?.status); if (expired) setExpiredStoryIds((current) => new Set(current).add(reply.storyId)); setStoryViewer({ expired, error: !expired }); }
-  };
+  const openStoryReply = (reply) => navigate(`/stories/${encodeURIComponent(reply.storyId)}`);
 
   return <div className="messages-page relative h-full min-h-0 min-w-0 overflow-hidden bg-atseen-bg-2">
     <div className="flex h-full min-h-0">
@@ -1717,7 +1737,7 @@ export default function MessagesPage() {
         <div className="mb-3 flex shrink-0 items-center justify-between"><div><h2 className="text-lg font-black">Send in message</h2><p className="mt-1 text-[11px] text-atseen-muted">Choose a recent chat, group, or another person.</p></div><button aria-label="Close share picker" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={closeSharePicker} type="button"><FiX /></button></div>
         <label className="mb-3 flex shrink-0 items-center gap-2 rounded-xl border border-atseen-line bg-atseen-surface-2 px-3"><FiSearch className="text-atseen-muted" /><input autoFocus className="w-full bg-transparent py-2.5 text-sm outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search chats and people" value={search} /></label>
         <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto">
-          {filteredRecentShareTargets.length ? <><h3 className="sticky top-0 z-10 bg-[#1b212c] pb-2 pt-1 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Recent</h3>{filteredRecentShareTargets.map((target) => { const isGroup = target.type === "group"; const person = isGroup ? { displayName: target.name, avatarUrl: target.avatarUrl } : target.participant; return <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`${isGroup ? "group" : "direct"}:${target.id}`} onClick={() => chooseShareTarget(target)} type="button"><Identity compact person={person} presence={isGroup ? null : presence[target.id]} subtitle={isGroup ? `${target.members?.length || 0} members` : target.lastMessage?.body || "Recent chat"} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>; })}</> : null}
+          {filteredRecentShareTargets.length ? <><h3 className="sticky top-0 z-10 bg-[#1b212c] pb-2 pt-1 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Recent</h3>{filteredRecentShareTargets.map((target) => { const isGroup = target.type === "group"; const person = isGroup ? { displayName: target.name, avatarUrl: target.avatarUrl } : target.participant; return <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`${isGroup ? "group" : "direct"}:${target.id}`} onClick={() => chooseShareTarget(target)} type="button"><Identity compact person={person} presence={isGroup ? null : presence[target.id]} subtitle={isGroup ? `${target.members?.length || 0} members` : target.lastMessage?.sharedContent?.contentType === "invitation" ? invitationLinkPreview(target.lastMessage) : target.lastMessage?.body || "Recent chat"} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>; })}</> : null}
           {remainingSharePeople.length ? <><h3 className="sticky top-0 z-10 mt-3 border-t border-white/[0.07] bg-[#1b212c] pb-2 pt-3 text-[10px] font-black uppercase tracking-[0.16em] text-atseen-muted">Other people</h3>{remainingSharePeople.map((person) => <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={`person:${person.id}`} onClick={() => chooseShareTarget({ id: person.id, participant: person, type: "direct" })} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiSend className="ml-auto shrink-0 text-atseen-blue" /></button>)}</> : null}
           {peopleQuery.isLoading ? <p className="p-5 text-center text-sm text-atseen-muted">Loading people…</p> : null}
           {!peopleQuery.isLoading && !filteredRecentShareTargets.length && !remainingSharePeople.length ? <p className="p-8 text-center text-sm text-atseen-muted">No chats or people found.</p> : null}
@@ -1781,7 +1801,7 @@ export default function MessagesPage() {
             const person = conversation.participant;
             const last = conversation.lastMessage;
             return <article className="flex flex-col items-stretch gap-3 px-3 py-4 min-[480px]:flex-row min-[480px]:items-center sm:px-5" key={`request:${conversation.id}`}>
-              <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={person} presence={presence[conversation.id]} subtitle={last?.body || "Message request"} /></button>
+              <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={person} presence={presence[conversation.id]} subtitle={last?.sharedContent?.contentType === "invitation" ? invitationLinkPreview(last) : last?.body || "Message request"} /></button>
               <div className="flex shrink-0 items-center gap-2 max-[479px]:pl-12">
                 <span className="mr-auto text-[10px] text-atseen-muted min-[480px]:mr-1">{inboxTime(last?.createdAt)}</span>
                 <button className="min-h-10 rounded-full bg-atseen-blue px-4 py-2 text-xs font-black text-atseen-bg shadow-[0_7px_18px_rgba(112,169,255,0.25)] disabled:opacity-50" disabled={requestBusy} onClick={() => handleInboxRequest(conversation, true)} type="button">Accept</button>
@@ -1792,7 +1812,7 @@ export default function MessagesPage() {
             const isGroup = conversation.type === "group";
             const rowPerson = isGroup ? { displayName: conversation.name, avatarUrl: conversation.avatarUrl } : conversation.participant;
             const last = conversation.lastMessage;
-            const subtitle = !last ? "No messages yet" : last.deletedAt ? last.senderId === myId ? "You deleted this message" : "This message was deleted" : `${last.senderId === myId ? "You: " : isGroup && last.sender?.displayName ? `${last.sender.displayName.split(" ")[0]}: ` : ""}${last.body}`;
+            const subtitle = !last ? "No messages yet" : last.deletedAt ? last.senderId === myId ? "You deleted this message" : "This message was deleted" : `${last.senderId === myId ? "You: " : isGroup && last.sender?.displayName ? `${last.sender.displayName.split(" ")[0]}: ` : ""}${last.sharedContent?.contentType === "invitation" ? invitationLinkPreview(last) : last.body}`;
             const requestPending = conversation.status === "REQUEST";
             return <div className={`relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-2 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={rowPerson} presence={isGroup ? null : presence[conversation.id]} subtitle={subtitle} /><span className="ml-auto flex max-w-[95px] flex-col items-end gap-1"><span className="message-inbox-time text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>{requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">Pending</span> : conversation.unreadCount ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-atseen-blue px-1 text-[10px] font-black text-atseen-bg">{conversation.unreadCount}</span> : null}</span></button>
@@ -1850,15 +1870,15 @@ export default function MessagesPage() {
                 {startsDay ? <div className="my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/90 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
                 <div className={`group mb-2 flex rounded-2xl transition ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
                 <div className={`relative flex max-w-[86%] flex-col sm:max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
-                  <div className={`min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
+                  <div className={`${message.sharedContent?.contentType === "invitation" && !message.deletedAt ? "has-invitation-card " : ""}min-w-[112px] rounded-[19px] px-4 py-2 text-sm leading-5 sm:min-w-[128px] ${mine ? "rounded-br-md bg-atseen-blue font-medium text-atseen-bg" : "rounded-bl-md border border-atseen-line bg-atseen-surface-2 text-atseen-text"}`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} title="Double-click to react with ❤️">
                     {selected.type === "group" && !mine && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
                     {message.forwarded ? <p className={`mb-1 text-[9px] italic ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>↪ Forwarded</p> : null}
                     {message.messageKind === "CREATOR_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Asks you</p> : null}
                     {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>Free follow-up</p> : null}
-                    {message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><div className="mx-auto grid h-24 w-24 place-items-center overflow-hidden"><img alt={message.gift.name} className="h-full w-full object-contain" src={message.gift.imageUrl} style={{ transform: `translate(${message.gift.imagePositionX || 0}%, ${message.gift.imagePositionY || 0}%) scale(${(message.gift.displayScale || 100) / 100})` }} /></div><p className="mt-1 font-black">{mine ? "You sent" : "You received"} {message.gift.name}</p><p className={`text-xs font-black ${mine ? "text-atseen-bg/75" : "text-atseen-warning"}`}>✦{Number(message.gift.stars).toLocaleString()}</p></div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
-                    <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
+                    {message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><div className="mx-auto grid h-24 w-24 place-items-center overflow-hidden"><img alt={message.gift.name} className="h-full w-full object-contain" src={message.gift.imageUrl} style={{ transform: `translate(${message.gift.imagePositionX || 0}%, ${message.gift.imagePositionY || 0}%) scale(${(message.gift.displayScale || 100) / 100})` }} /></div><p className="mt-1 font-black">{mine ? "You sent" : "You received"} {message.gift.name}</p><p className={`text-xs font-black ${mine ? "text-atseen-bg/75" : "text-atseen-warning"}`}>✦{Number(message.gift.stars).toLocaleString()}</p></div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) && !(message.sharedContent.contentType === "invitation" && isDefaultInvitationMessage(message)) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt="Shared in chat" className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
+                    <p className={`message-time-status mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : selected.type !== "group" && mine && !message.readAt ? " · Sent" : ""}</span>
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> Retry</button> : null}
                     </p>

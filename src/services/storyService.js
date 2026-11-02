@@ -142,6 +142,7 @@ function normalizeStory(story = {}) {
 
   return {
     id,
+    originalStoryId: story.originalStoryId || story.storyId || id,
     owner,
     name: story.name || owner.name,
     username: story.username || owner.username,
@@ -309,6 +310,7 @@ export const storyService = {
     const response = await axiosInstance.get(`/stories/${storyId}`);
     return normalizeStory(response.data?.data?.story || response.data?.data || response.data);
   },
+  searchPeople: (q, signal) => axiosInstance.get("/stories/people", { params: { q }, signal }).then((response) => response.data?.data?.people || []),
 
   getActiveStories: async () => {
     if (STORY_API_ENABLED) {

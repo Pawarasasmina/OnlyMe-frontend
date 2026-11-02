@@ -1,3 +1,4 @@
+import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -200,7 +201,7 @@ function ProfileSeenEngagementBar({ item }) {
   );
 }
 
-function ProfileSeenActionRow({ danger = false, icon: Icon, onClick, subtitle = "", title, to = "" }) {
+function ProfileSeenActionRow({ disabled = false, danger = false, icon: Icon, onClick, subtitle = "", title, to = "" }) {
   const content = (
     <>
       <Icon aria-hidden="true" />
@@ -213,10 +214,20 @@ function ProfileSeenActionRow({ danger = false, icon: Icon, onClick, subtitle = 
   if (to) {
     return <Link className={danger ? "is-danger seen-owner-action-row" : "seen-owner-action-row"} onClick={onClick} to={to}>{content}</Link>;
   }
-  return <button className={danger ? "is-danger seen-owner-action-row" : "seen-owner-action-row"} onClick={onClick} type="button">{content}</button>;
+  return <button disabled={disabled} className={danger ? "is-danger seen-owner-action-row" : "seen-owner-action-row"} onClick={onClick} type="button">{content}</button>;
 }
 
 function ProfileSeenActionsSheet({ item, onClose }) {
+  const client = useQueryClient();
+  const { showToast } = useFanToast();
+  const archive = useMutation({ mutationFn: async () => {
+    const response = await publicationService.getMyPublication(item.id);
+    return publicationService.archivePublication(item.id, response.data.data.publication.statusVersion);
+  }, onSuccess: () => {
+    onClose();
+    for (const key of ["profile-archive", "unified-profile", "seen-feed", "my-publications", "series"]) client.invalidateQueries({ queryKey: [key] });
+    showToast("In archive \u2014 restore anytime", { variant: "archive", duration: 1600 });
+  }, onError: error => showToast(error?.response?.data?.message || "Could not archive this Seen.", { variant: "archive" }) });
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -254,7 +265,7 @@ function ProfileSeenActionsSheet({ item, onClose }) {
           <ProfileSeenActionRow icon={FiImage} onClick={onClose} title="Change cover" to={`${editTarget}&focus=cover`} />
           <ProfileSeenActionRow icon={FiZap} onClick={onClose} title={isPinnedSeen(item) ? "Unpin" : "Pin to profile"} to={`/seen/${item.id}`} />
           <ProfileSeenActionRow icon={FiGrid} onClick={onClose} title={seriesName ? `Series: ${seriesName}` : "Add to a series"} to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow icon={FiArchive} onClick={onClose} subtitle="hidden from profile, stats stay" title="Archive" to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow disabled={archive.isPending} icon={FiArchive} onClick={() => archive.mutate()} subtitle="hidden from profile, stats stay" title={archive.isPending ? "Archiving..." : "Archive"} />
           <ProfileSeenActionRow danger icon={FiTrash2} onClick={onClose} subtitle="gone for everyone" title="Delete" to={`/seen/${item.id}`} />
         </div>
       </section>

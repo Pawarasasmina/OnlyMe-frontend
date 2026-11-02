@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiAperture, FiChevronRight, FiLock, FiMonitor } from "react-icons/fi";
+import { FiChevronRight, FiMonitor } from "react-icons/fi";
+import "./FanCreateSheet.css";
+
+function StoryRingIcon() {
+  return <svg aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" strokeDasharray="4 3" /><circle cx="12" cy="12" r="3.6" /></svg>;
+}
+
+function WorldOrbitIcon() {
+  return <svg aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" /><ellipse cx="12" cy="12" rx="10" ry="3.6" transform="rotate(-18 12 12)" /></svg>;
+}
 
 function ThinSeenEyeIcon() {
   return (
@@ -24,13 +33,12 @@ function FanCreateSheet({
 }) {
   const [position, setPosition] = useState(undefined);
   const primaryOptions = [
-    { description: "Gone in 24 hours", disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
-    { description: "A story in chapters", disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
+    { description: "Gone in 24 hours", disabled: !canCreateStoryNow, icon: StoryRingIcon, label: "Story", onClick: onStory },
+    { description: "Chapters · free or paid", disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
     { description: "Ask, offer, recommend", disabled: !canPostNote, icon: FiMonitor, label: "Wall post", onClick: onNote },
   ];
   const creatorOptions = [
-    { description: "Premium content, unlocked with coins", disabled: !canCreateWorld, icon: FiLock, label: "Experience", to: "/create/experience" },
-    { description: "Your subscription — everything you share", disabled: !canCreateWorld, icon: ThinSeenEyeIcon, label: "Open my World", to: worldTarget || "/create/premium-world" },
+    { description: worldTarget ? "Your subscription — everything you share" : "A monthly subscription to your whole world", disabled: !canCreateWorld, icon: WorldOrbitIcon, label: worldTarget ? "Open my World" : "World", to: worldTarget || "/create/premium-world" },
   ];
 
   useEffect(() => {
@@ -83,7 +91,7 @@ function FanCreateSheet({
   };
 
   return (
-    <div aria-modal="true" className="seen-create-layer" role="dialog" style={position}>
+    <div aria-label="Create" aria-modal="true" className="seen-create-layer seen-create-prototype" role="dialog" style={position}>
       <button aria-label="Close create menu" className="seen-create-dim" onClick={onClose} type="button" />
       <section aria-label="Create" className="seen-create-sheet">
         <span className="seen-create-handle" aria-hidden="true" />

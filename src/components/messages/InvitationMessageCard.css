@@ -1,0 +1,12 @@
+.invitation-message-card{display:block;width:244px;max-width:100%;margin:2px 0 12px;overflow:hidden;border:0;text-align:left;color:#fff;background:#1e2a3d;border-radius:20px 20px 6px 20px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+.invitation-message-card.is-incoming{background:#1b2230;border-radius:20px 20px 20px 6px}
+.invitation-message-hero{display:flex;align-items:center;justify-content:center;aspect-ratio:1.91/1;background:radial-gradient(120% 120% at 50% 0%,#24344f,#0e141e)}
+.invitation-message-hero>.fan-avatar{width:64px;height:64px;box-shadow:0 0 0 3px rgba(156,203,255,.45)}
+.invitation-message-copy{padding:10px 13px 11px}
+.invitation-message-copy>b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13.5px;font-weight:700;line-height:1.3}
+.invitation-message-copy>p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:3px 0 0;font-size:11.5px;line-height:1.4;color:rgba(255,255,255,.62)}
+.invitation-message-copy>small{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px;font-weight:400;line-height:normal;color:rgba(255,255,255,.4)}
+.invitation-message-copy>small>svg{width:13px;height:13px;flex:none}
+.invitation-message-card:focus-visible{outline:2px solid #9ccbff;outline-offset:3px}
+[data-message-id].has-invitation-card{padding:0!important;border:0!important;background:transparent!important;box-shadow:none;color:#fff;min-width:0}
+[data-message-id].has-invitation-card>.message-time-status{display:none}

@@ -1,6 +1,6 @@
 import axiosInstance from "../api/axiosInstance";
 
-export const SHARE_CONTENT_TYPES = ["feed_post", "seen", "world", "experience", "profile", "story"];
+export const SHARE_CONTENT_TYPES = ["feed_post", "seen", "world", "experience", "profile", "story", "invitation"];
 
 export function canonicalShareUrl(payload = {}) {
   const route = payload.destinationRoute || payload.route || "";

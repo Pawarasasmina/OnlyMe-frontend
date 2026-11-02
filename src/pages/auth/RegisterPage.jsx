@@ -64,7 +64,7 @@ function RegisterPage() {
     }
     setSubmitting(true);
     try {
-      await register({ ...form, referralCode: searchParams.get("ref") || undefined });
+      await register({ ...form, referralCode: searchParams.get("ref") || undefined, referralShareIdentity: searchParams.get("private") !== "1" });
       navigate("/seen", { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to create your account. Please try again.");

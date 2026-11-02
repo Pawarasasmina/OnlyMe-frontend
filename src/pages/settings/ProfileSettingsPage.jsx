@@ -1,4 +1,5 @@
 import ProfileLanguagesField from "../../components/profile/ProfileLanguagesField";
+import "../../styles/profileCategory.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

@@ -1,5 +1,7 @@
+import "./ArchiveToast.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FanToastContext } from "./FanToastContext";
+import { GIFT_THANKS_OPEN_EVENT } from "./giftThanksEvent";
 
 export function FanToastProvider({ children }) {
   const [toast, setToast] = useState({ message: "", placement: "bottom" });
@@ -32,9 +34,23 @@ export function FanToastProvider({ children }) {
       giftImage: gift.imageUrl, action: "View", onAction: onProfile, duration: 4400,
     });
     // Match the reference: celebration, shelf banner, then creator thanks at 12s.
-    sequenceTimerRef.current = window.setTimeout(() => showToast("This means more than you think. Thank you.", {
+    const thanksMessage = "This means more than you think. Thank you.";
+    const openThanks = () => window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, {
+      detail: {
+        gift,
+        metadata: { giftImageUrl: gift.imageUrl, giftName: gift.name },
+        openProfile: onProfile,
+        preview: thanksMessage,
+        relatedCreator: {
+          ...recipient,
+          avatarUrl: recipient.avatarUrl || recipient.avatar,
+          displayName: recipient.displayName || recipient.name,
+        },
+      },
+    }));
+    sequenceTimerRef.current = window.setTimeout(() => showToast(thanksMessage, {
       variant: "gift-thanks", title: `${firstName} thanked you`, avatar,
-      onAction: onProfile, duration: 6000,
+      giftImage: gift.imageUrl, giftName: gift.name, onAction: openThanks, duration: 6000,
     }), 7800);
   }, [showToast]);
 
@@ -44,12 +60,12 @@ export function FanToastProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!["gift-thanks", "gift-shelf"].includes(toast.variant)) return undefined;
+    if (!["gift-thanks", "gift-shelf", "archive"].includes(toast.variant)) return undefined;
     const column = document.querySelector(".social-center-scroll");
     if (!column) return undefined;
     const update = () => {
       const bounds = column.getBoundingClientRect();
-      setThanksPosition({ left: `${bounds.left + bounds.width / 2}px`, width: `${Math.min(520, bounds.width - 28)}px` });
+      setThanksPosition({ ...(toast.variant === "archive" ? { top: `${bounds.top + 60}px` } : {}), left: `${bounds.left + bounds.width / 2}px`, width: `${Math.min(520, bounds.width - 28)}px` });
     };
     update();
     window.addEventListener("resize", update);
@@ -63,7 +79,7 @@ export function FanToastProvider({ children }) {
   return (
     <FanToastContext.Provider value={value}>
       {children}
-      {toast.variant === "gift-thanks" ? <div
+      {toast.variant === "archive" ? <div aria-live="polite" role="status" className={`fan-archive-toast ${toast.message ? "is-visible" : ""}`} style={{ left: thanksPosition.left, top: thanksPosition.top }}>{toast.message}</div> : toast.variant === "gift-thanks" ? <div
         aria-live="polite"
         className={`fan-gift-thanks-toast ${toast.message ? "is-visible" : ""}`}
         role="status"

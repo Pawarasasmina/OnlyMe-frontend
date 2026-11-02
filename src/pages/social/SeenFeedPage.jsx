@@ -960,8 +960,9 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
         queryClient.invalidateQueries({ queryKey: ["seen-feed"] }),
         queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
         queryClient.invalidateQueries({ queryKey: ["series"] }),
+        queryClient.invalidateQueries({ queryKey: ["profile-archive"] }),
       ]);
-      showToast("In archive - restore anytime");
+      showToast("In archive \u2014 restore anytime", { variant: "archive", duration: 1600 });
     },
     onError: (error) => showToast(actionError(error)),
     onSettled: () => setBusyOwnerAction(""),
