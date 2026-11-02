@@ -590,14 +590,14 @@ function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onOverview, 
     <h2>{chapter.title || item.title}</h2><i className="seen-inline-accent" />
     <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
     <div className="seen-paid-locked-card"><span><FiLock /></span><h2>Unlock the rest</h2><p>One-time · yours forever · {item.ownerCount.toLocaleString()} own it</p><button onClick={onPurchase} type="button">Unlock · ✦ {Number(item.pricing?.starsAmount || 0).toLocaleString()}</button></div>
-    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} · 🔒 {nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
+    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label="Locked chapter" /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
   </section>;
   return <section className="seen-inline-chapter" aria-live="polite">
     <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>Chapter {chapterIndex + 1} of {chapters.length}</span></div>
     <h2>{chapter?.title || item.title}</h2>
     <i className="seen-inline-accent" />
     <div className="seen-inline-blocks">{blocks.length ? blocks.map((block, index) => <InlineChapterBlock block={block} key={block.id || `${chapter.id}-${index}`} />) : <p>This chapter has no content yet.</p>}</div>
-    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} Â· {nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
+    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label="Locked chapter" /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
   </section>;
 }
 

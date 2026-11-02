@@ -32,6 +32,7 @@ const reactionEmoji = {
 };
 
 const DEFAULT_ENGAGEMENT = { reactionCount: 0, commentCount: 0, shareCount: 0, viewCount: 0, viewerReaction: null, viewerShared: false, viewerSaved: false, comments: [] };
+const STAR = "\u2726";
 const SEEN_REPORT_REASONS = [
   { label: "Spam", value: "SPAM" },
   { label: "False information", value: "FALSE_INFORMATION" },
@@ -1325,10 +1326,10 @@ export default function SeenReaderPage() {
         <div className="seen-paid-locked-card">
           <span><FiLock /></span>
           <h2>Unlock the rest</h2>
-          <p>One-time · yours forever · {Number(publication.ownerCount || 0).toLocaleString()} own it</p>
-          <button onClick={(event) => { event.stopPropagation(); setPurchaseOpen(true); }} type="button">Unlock · ✦ {Number(publication.pricing?.starsAmount || 0).toLocaleString()}</button>
+          <p>One-time &middot; yours forever &middot; {Number(publication.ownerCount || 0).toLocaleString()} own it</p>
+          <button onClick={(event) => { event.stopPropagation(); setPurchaseOpen(true); }} type="button">Unlock &middot; {STAR} {Number(publication.pricing?.starsAmount || 0).toLocaleString()}</button>
         </div>
-        {chapters[safeChapterIndex + 1] ? <button className="seen-paid-locked-next" onClick={(event) => { event.stopPropagation(); changeChapter(safeChapterIndex + 1); }} type="button"><small>NEXT</small><b>{String(safeChapterIndex + 2).padStart(2, "0")} · <FiLock /> {chapters[safeChapterIndex + 1].title}</b><FiChevronRight /></button> : null}
+        {chapters[safeChapterIndex + 1] ? <button className="seen-paid-locked-next" onClick={(event) => { event.stopPropagation(); changeChapter(safeChapterIndex + 1); }} type="button"><small>NEXT</small><b>{String(safeChapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> <FiLock /> {chapters[safeChapterIndex + 1].title}</b><FiChevronRight /></button> : null}
       </section> : hasChapterContent ? <>
         {chapterContent}
       </> : <section className="seen-reader-empty-chapter">

@@ -51,6 +51,7 @@ import AppShareSheet from "../../components/share/ShareSheet";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
+import { formatVoiceTime, useVoiceRecorder } from "../../hooks/useVoiceRecorder";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
 import { useSendSharedContent } from "../../hooks/share/useSendSharedContent";
 import { membershipService } from "../../services/membershipService";
@@ -378,6 +379,13 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
           <p>Welcome to {firstName}&apos;s World</p>
         </header>
 
+        {publication?.ownerWelcomeNote || publication?.worldWelcomeVoiceMedia?.secureUrl ? <blockquote className="world-member-owner-welcome">
+          <FiMessageCircle aria-hidden="true" />
+          {publication?.ownerWelcomeNote ? <p>{publication.ownerWelcomeNote}</p> : null}
+          {publication?.worldWelcomeVoiceMedia?.secureUrl ? <audio controls preload="metadata" src={publication.worldWelcomeVoiceMedia.secureUrl} /> : null}
+          <small>— {firstName}</small>
+        </blockquote> : null}
+
         <div className="world-member-access-list">
           <button className="world-member-access-row" onClick={openMessages} type="button">
             <span className="world-member-access-icon is-chat"><FiMessageSquare /></span>
@@ -528,6 +536,45 @@ function DescriptionSheet({ busy, error, onClose, onSave, publication }) {
       <textarea aria-label="World description" maxLength={1000} onChange={(event) => setDescription(event.target.value)} rows={4} value={description} />
       {error ? <p className="world-sheet-error">{error}</p> : null}
       <button className="world-sheet-primary" disabled={busy || !trimmed} onClick={() => onSave({ description: trimmed })} type="button">{busy ? "Saving..." : "Save"}</button>
+    </BottomSheet>
+  );
+}
+
+function WelcomeMessageSheet({ busy, error, onClose, onRemoveVoice, onSave, onUploadVoice, publication, voiceBusy }) {
+  const [message, setMessage] = useState(publication?.ownerWelcomeNote || "");
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const fileInput = useRef(null);
+  const recorder = useVoiceRecorder({ maxDurationSeconds: 120 });
+  const trimmed = message.trim();
+  const unchanged = trimmed === String(publication?.ownerWelcomeNote || "").trim();
+  const attachedVoice = publication?.worldWelcomeVoiceMedia?.secureUrl;
+  const saveRecording = () => {
+    if (!recorder.audioBlob) return;
+    const extension = recorder.audioBlob.type.includes("mp4") ? "m4a" : recorder.audioBlob.type.includes("ogg") ? "ogg" : "webm";
+    onUploadVoice(new File([recorder.audioBlob], `world-welcome-${Date.now()}.${extension}`, { type: recorder.audioBlob.type || "audio/webm" }));
+  };
+  return (
+    <BottomSheet labelledBy="world-welcome-message-title" onClose={onClose} sheetClassName="is-description-sheet world-welcome-message-sheet">
+      <h2 id="world-welcome-message-title">Welcome message</h2>
+      <p className="world-sheet-copy">Every new member gets it the moment they join. Write it once.</p>
+      <label className="world-welcome-message-field"><span className="sr-only">Welcome message</span><textarea autoFocus maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder="Hi, welcome inside! Start with my Food Map, and say hi in the Cafés circle." rows={5} value={message} /><small>{message.length}/500</small></label>
+      <button aria-pressed={Boolean(attachedVoice || voiceOpen)} className="world-welcome-voice-toggle" disabled={voiceBusy} onClick={() => setVoiceOpen((open) => !open)} type="button"><FiMic /><b>{attachedVoice ? "Voice hello added" : "Add a voice hello — it feels personal"}</b><i className={attachedVoice || voiceOpen ? "is-on" : ""}><u /></i></button>
+      {voiceOpen ? <div className="world-welcome-recorder">
+        {attachedVoice ? <><audio controls src={attachedVoice} /><button className="is-remove" disabled={voiceBusy} onClick={onRemoveVoice} type="button">Remove voice hello</button></> : null}
+        {!attachedVoice && recorder.audioUrl ? <audio controls src={recorder.audioUrl} /> : null}
+        {!attachedVoice ? <div className="world-welcome-recorder-actions">
+          {recorder.status === "idle" || recorder.status === "error" ? <button disabled={voiceBusy} onClick={recorder.startRecording} type="button"><FiMic /> Start recording</button> : null}
+          {recorder.status === "requesting-permission" ? <button disabled type="button">Allow microphone…</button> : null}
+          {recorder.status === "recording" ? <button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> Stop · {formatVoiceTime(recorder.elapsedMs / 1000)}</button> : null}
+          {recorder.status === "paused" ? <button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> Finish</button> : null}
+          {recorder.status === "preview" ? <><button disabled={voiceBusy} onClick={recorder.resetRecording} type="button">Record again</button><button className="is-use" disabled={voiceBusy} onClick={saveRecording} type="button">{voiceBusy ? "Adding…" : "Use recording"}</button></> : null}
+          <button disabled={voiceBusy || recorder.status === "recording"} onClick={() => fileInput.current?.click()} type="button"><FiUpload /> Upload audio</button>
+          <input accept="audio/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) onUploadVoice(file); }} ref={fileInput} type="file" />
+        </div> : null}
+        {recorder.error ? <p className="world-sheet-error">{recorder.error}</p> : null}
+      </div> : null}
+      {error ? <p className="world-sheet-error">{error}</p> : null}
+      <button className="world-sheet-primary" disabled={busy || unchanged} onClick={() => onSave({ ownerWelcomeNote: trimmed })} type="button">{busy ? "Saving..." : "Save"}</button>
     </BottomSheet>
   );
 }
@@ -2064,6 +2111,22 @@ export default function WorldReaderPage() {
     },
     onError: (error) => showToast(error?.response?.data?.message || `${experience ? "Experience" : "World"} cover could not be removed.`),
   });
+  const welcomeVoiceUpload = useMutation({
+    mutationFn: (file) => api.uploadWorldWelcomeVoice(publicationId, file),
+    onSuccess: async () => {
+      await Promise.all([query.refetch(), managementQuery.refetch(), queryClient.invalidateQueries({ queryKey: ["member-world", publicationId] })]);
+      showToast("Voice hello added.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Voice hello could not be added."),
+  });
+  const welcomeVoiceRemove = useMutation({
+    mutationFn: () => api.removeWorldWelcomeVoice(publicationId),
+    onSuccess: async () => {
+      await Promise.all([query.refetch(), managementQuery.refetch(), queryClient.invalidateQueries({ queryKey: ["member-world", publicationId] })]);
+      showToast("Voice hello removed.");
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "Voice hello could not be removed."),
+  });
   const waveMutation = useMutation({
     mutationFn: () => api.openWorldWave(publicationId),
     onSuccess: async () => {
@@ -2694,6 +2757,11 @@ export default function WorldReaderPage() {
               <small>members first · {management.directAccess?.includedReplies || 0} free reply included</small>
               <i><FiChevronRight /></i>
             </button>
+            {editingWorld ? <button className="world-create-welcome-row" onClick={() => setSheet("welcome")} type="button">
+              <span className="world-create-welcome-icon" aria-hidden="true">∞</span>
+              <span><b>Welcome message</b><small>{managedPublication.ownerWelcomeNote ? "Saved — every new member gets it" : "Write once — every new member gets it"}</small></span>
+              <strong>{managedPublication.ownerWelcomeNote ? "Edit" : "Add"} <FiChevronRight /></strong>
+            </button> : null}
             {editingWorld ? <button
               aria-controls="world-settings-list"
               aria-expanded={worldSettingsOpen}
@@ -2850,6 +2918,7 @@ export default function WorldReaderPage() {
 
       {sheet === "name" ? <NameSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={managedPublication} /> : null}
       {sheet === "description" ? <DescriptionSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={managedPublication} /> : null}
+      {sheet === "welcome" ? <WelcomeMessageSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message || welcomeVoiceUpload.error?.response?.data?.message || welcomeVoiceRemove.error?.response?.data?.message} onClose={() => setSheet("")} onRemoveVoice={() => welcomeVoiceRemove.mutate()} onSave={(payload) => updateWorld.mutate(payload)} onUploadVoice={(file) => welcomeVoiceUpload.mutate(file)} publication={managedPublication} voiceBusy={welcomeVoiceUpload.isPending || welcomeVoiceRemove.isPending} /> : null}
       {sheet === "price" ? (
         <PriceSheet
           busy={updateWorldPrice.isPending}

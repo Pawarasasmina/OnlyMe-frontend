@@ -55,6 +55,7 @@ function freshWorld(experience = false) {
     description: "",
     commentsEnabled: true,
     firstMonthOfferEnabled: false,
+    ownerWelcomeNote: "",
     includedInWorld: false,
     allowDownload: false,
     experiencePath: "",
@@ -270,6 +271,20 @@ function WorldCreateTextSheet({ busy, description, label, maxLength, onClose, on
       </section>
     </div>
   );
+}
+
+function WorldWelcomeMessageSheet({ busy, onClose, onSave, value }) {
+  const [message, setMessage] = useState(value || "");
+  const cleanMessage = message.trim();
+  return <div className="world-create-sheet-layer">
+    <button aria-label="Close welcome message" className="world-create-sheet-scrim" disabled={busy} onClick={onClose} type="button" />
+    <section aria-labelledby="world-welcome-message-title" aria-modal="true" className="world-create-option-sheet world-welcome-message-sheet" role="dialog">
+      <span className="world-create-sheet-handle" aria-hidden="true" />
+      <header><div><h2 id="world-welcome-message-title">Welcome message</h2><p>Every new member gets it the moment they join. Write it once.</p></div><button aria-label="Close" disabled={busy} onClick={onClose} type="button"><FiX /></button></header>
+      <label className="world-welcome-message-field"><span className="sr-only">Welcome message</span><textarea autoFocus maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder="Hi, welcome inside! Start with my Food Map, and say hi in the Cafés circle." rows={5} value={message} /><small>{message.length}/500</small></label>
+      <button className="world-create-sheet-done" disabled={busy || cleanMessage === (value || "").trim()} onClick={() => onSave(cleanMessage)} type="button">{busy ? "Saving…" : "Save"}</button>
+    </section>
+  </div>;
 }
 
 function WorldCreatePriceSheet({ busy, currentPrice, onClose, onSave }) {
@@ -558,6 +573,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       description: current.description,
       commentsEnabled: current.commentsEnabled,
       firstMonthOfferEnabled: current.firstMonthOfferEnabled,
+      ownerWelcomeNote: current.ownerWelcomeNote,
       experienceLocation: current.experienceLocation,
       experiencePath: current.experiencePath,
       includedInWorld: current.includedInWorld,
@@ -576,6 +592,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       description: snapshot.description,
       commentsEnabled: snapshot.commentsEnabled !== false,
       firstMonthOfferEnabled: Boolean(snapshot.firstMonthOfferEnabled),
+      ownerWelcomeNote: snapshot.ownerWelcomeNote || "",
       includedInWorld: Boolean(snapshot.includedInWorld),
       allowDownload: Boolean(snapshot.allowDownload),
       experiencePath: snapshot.experiencePath || "",
@@ -596,6 +613,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       description: snapshot.description,
       commentsEnabled: snapshot.commentsEnabled !== false,
       firstMonthOfferEnabled: Boolean(snapshot.firstMonthOfferEnabled),
+      ownerWelcomeNote: snapshot.ownerWelcomeNote || "",
       experienceLocation: snapshot.experienceLocation,
       experiencePath: snapshot.experiencePath,
       includedInWorld: snapshot.includedInWorld,
@@ -706,6 +724,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         commentsEnabled: snapshot.commentsEnabled !== false,
         description: snapshot.description,
         firstMonthOfferEnabled: Boolean(snapshot.firstMonthOfferEnabled),
+        ownerWelcomeNote: snapshot.ownerWelcomeNote || "",
         includedInWorld: Boolean(snapshot.includedInWorld),
         allowDownload: Boolean(snapshot.allowDownload),
         experiencePath: snapshot.experiencePath || "",
@@ -1818,6 +1837,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <span className="world-prototype-direct-access world-create-direct-access">
           <span><FiZap /></span><b>Direct Access</b><small>members first · 1 free reply included</small><i><FiArrowUpRight /></i>
         </span>
+        <button className="world-create-welcome-row" onClick={() => setWorldCreateSheet("welcome")} type="button">
+          <span className="world-create-welcome-icon" aria-hidden="true">∞</span>
+          <span><b>Welcome message</b><small>{world.ownerWelcomeNote ? "Saved — every new member gets it" : "Write once — every new member gets it"}</small></span>
+          <strong>{world.ownerWelcomeNote ? "Edit" : "Add"} <FiArrowUpRight /></strong>
+        </button>
         <button aria-controls="world-create-settings-list" aria-expanded={worldCreateSheet === "settings"} className={`world-prototype-settings-row ${worldCreateSheet === "settings" ? "is-expanded" : ""}`} onClick={() => setWorldCreateSheet((current) => current === "settings" ? "" : "settings")} type="button">
           <FiSettings /><b>World settings</b><FiArrowUpRight className="world-settings-chevron" />
         </button>
@@ -1847,6 +1871,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {worldCreateSheet === "name" ? <WorldCreateTextSheet busy={saving} description="One World per creator. The name carries your stories, experiences, and private access." label="name" maxLength={30} onClose={() => setWorldCreateSheet("")} onSave={(title) => { updateWorld({ title }); setWorldCreateSheet(""); }} placeholder="Name your World" title="Name your World" value={world.title} /> : null}
       {worldCreateSheet === "description" ? <WorldCreateTextSheet busy={saving} description="One honest paragraph. People see it right under your World settings." label="description" maxLength={300} onClose={() => setWorldCreateSheet("")} onSave={(description) => { updateWorld({ description, summary: description }); setWorldCreateSheet(""); }} placeholder="Describe what members will experience" title="Describe your World" value={world.description} /> : null}
+      {worldCreateSheet === "welcome" ? <WorldWelcomeMessageSheet busy={saving} onClose={() => setWorldCreateSheet("")} onSave={(ownerWelcomeNote) => { updateWorld({ ownerWelcomeNote }); setWorldCreateSheet(""); }} value={world.ownerWelcomeNote} /> : null}
       {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
 
       {worldCreateSheet === "price" ? (
