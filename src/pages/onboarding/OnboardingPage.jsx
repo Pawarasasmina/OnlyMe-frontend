@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { FiChevronRight, FiLoader, FiSearch, FiUsers } from "react-icons/fi";
 import OnboardingLayout from "../../layouts/OnboardingLayout";
-import InterestGrid from "../../components/onboarding/InterestGrid";
 import SuggestedPeopleGrid from "../../components/onboarding/SuggestedPeopleGrid";
 import AccountTypePicker from "../../components/onboarding/AccountTypePicker";
 import OnboardingTicket from "../../components/onboarding/OnboardingTicket";
+import PrototypeInterestPicker from "../../components/onboarding/PrototypeInterestPicker";
 import { useAuth } from "../../hooks/useAuth";
 import { useOnboarding, useOnboardingSuggestions } from "../../hooks/useOnboarding";
 import { defaultDestinationFor, isOnboardingComplete } from "../../utils/socialAccess";
@@ -74,8 +74,9 @@ export default function OnboardingPage() {
   const ticketContinue = () => run(() => onboarding.acknowledgeTicket.mutateAsync(), "complete", "Couldn’t continue from your ticket.");
   const finish = async () => { try { await onboarding.complete.mutateAsync(); navigate(home, { replace: true }); } catch (reason) { fail(reason, "Couldn’t open your feed."); } };
 
+  if (stage === "interests") return <PrototypeInterestPicker busy={onboarding.saveInterests.isPending} categories={state.categories} error={error} onBack={() => go("welcome")} onContinue={saveInterests} onToggle={toggleInterest} selected={interests} />;
+
   return <OnboardingLayout backDisabled={stage === "welcome"} currentStep={Math.max(0, steps.indexOf(stage))} onBack={() => go(routes[Math.max(0, routes.indexOf(stage) - 1)])} steps={steps}>
-    {stage === "interests" ? <Panel eyebrow="Step 2 of 5" title="What pulls you in?" subtitle="Every tap is a signal. Choose at least three topics; swipe through the stories that feel like you."><div className="mt-5 flex items-center justify-between"><b className="text-sm">{interests.length} selected</b><span className="text-xs font-bold text-[#9CCBFF]">Minimum 3</span></div><div className="mt-4 max-h-[52dvh] overflow-y-auto pr-1"><InterestGrid categories={state.categories} max={18} onToggle={toggleInterest} selected={interests} /></div><Cta busy={onboarding.saveInterests.isPending} disabled={interests.length < 3} error={error} note="You can change this later in Settings." onClick={saveInterests}>Continue</Cta></Panel> : null}
     {stage === "account-type" ? <Panel eyebrow="Step 3 of 5" title="How will you use @seen?" subtitle="Everyone can earn. Your account type only changes the tools you see, and you can switch later in Settings."><div className="mt-5"><AccountTypePicker onChange={setProfileType} value={profileType} /></div><Cta busy={onboarding.saveProfileType.isPending} error={error} onClick={saveType}>Continue</Cta></Panel> : null}
     {stage === "fill-feed" ? <Panel eyebrow="Step 4 of 5" title="Fill your feed" subtitle="Follow 5 people to start. Your interests choose who appears here."><button className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[.05] p-4 text-left active:scale-[.97]" type="button"><span className="grid h-11 w-11 place-items-center rounded-full bg-[#9CCBFF]/15 text-[#BFE3FF]"><FiUsers /></span><span className="flex-1"><b className="block text-sm">Friends from your contacts</b><small className="text-white/45">See who’s here · nothing is posted</small></span><FiSearch /></button><div className="mt-5 flex gap-1">{Array.from({ length: 5 }, (_, index) => <i className={`h-1 flex-1 rounded ${index < selectedPeople.length ? "bg-[#9CCBFF]" : "bg-white/15"}`} key={index} />)}</div><div className="mt-5 max-h-[48dvh] overflow-y-auto">{suggestions.isLoading ? <Loading label="Finding people for you…" /> : <SuggestedPeopleGrid onToggle={togglePerson} people={list} selected={selectedPeople} />}</div><Cta busy={onboarding.savePeople.isPending} disabled={suggestions.isLoading} error={error} note={selectedPeople.length < 5 ? `${5 - selectedPeople.length} more to reach 5 · you can also continue now` : "Your feed is ready."} onClick={savePeople}>{selectedPeople.length >= 5 ? "Continue" : "Not now"}</Cta></Panel> : null}
     {stage === "ticket" ? <OnboardingTicket memberNumber={state.user?.memberNumber || user.memberNumber} name={user.name} onContinue={ticketContinue} /> : null}
