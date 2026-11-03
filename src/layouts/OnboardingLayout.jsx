@@ -1,6 +1,10 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import AtseenLogo from "../components/branding/AtseenLogo";
 
 function OnboardingLayout({ backDisabled = false, children, currentStep = 0, onBack, onSkip, saving = false, steps = [] }) {
+  __useUiLanguage();
   return (
     <div className="user-app-shell min-h-[100dvh] overflow-x-hidden bg-[#050608] text-white">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(900px_500px_at_70%_18%,rgba(156,203,255,0.12),transparent_60%),radial-gradient(640px_420px_at_20%_85%,rgba(111,169,232,0.08),transparent_62%)]" />
@@ -9,19 +13,17 @@ function OnboardingLayout({ backDisabled = false, children, currentStep = 0, onB
           <AtseenLogo size={34} />
           <div className="flex items-center gap-2">
             {!backDisabled ? (
-              <button className="rounded-full border border-white/10 px-4 py-2 text-sm font-bold text-white/70 transition hover:bg-white/5 hover:text-white" onClick={onBack} type="button">
-                Back
-              </button>
+              <button className="rounded-full border border-white/10 px-4 py-2 text-sm font-bold text-white/70 transition hover:bg-white/5 hover:text-white" onClick={onBack} type="button">{__msg("discover.back")}</button>
             ) : null}
             {onSkip ? (
               <button className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-bold text-white/55 transition hover:border-[#9CCBFF]/35 hover:text-[#9CCBFF]" disabled={saving} onClick={onSkip} type="button">
-                {saving ? "Saving..." : "Skip"}
+                {saving ? __msg("admin.saving") : __msg("layouts.skip")}
               </button>
             ) : null}
           </div>
         </header>
         {steps.length ? (
-          <div className="mx-auto mt-2 flex w-full max-w-[680px] items-center gap-2" aria-label={`Onboarding step ${currentStep + 1} of ${steps.length}`}>
+          <div className="mx-auto mt-2 flex w-full max-w-[680px] items-center gap-2" aria-label={__msg("layouts.onboardingStepOf", { value0: currentStep + 1, value1: steps.length })}>
             {steps.map((step, index) => (
               <span className={`h-1.5 rounded-full transition-all ${index <= currentStep ? "bg-[#9CCBFF]" : "bg-white/10"} ${index === currentStep ? "flex-[1.7]" : "flex-1"}`} key={step} />
             ))}

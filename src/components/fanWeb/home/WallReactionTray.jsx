@@ -1,8 +1,12 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiEye, FiPlus } from "react-icons/fi";
 const QUICK = ["like", "love", "fire", "clap", "laugh", "see_you"];
 export default function WallReactionTray({ anchorRef, options, selected, busy, onSelect, onMore, onClose }) {
+  __useUiLanguage();
   const tray = useRef(null);
   const close = useRef(onClose); close.current = onClose;
   const [position, setPosition] = useState({ visibility: "hidden" });
@@ -39,5 +43,5 @@ export default function WallReactionTray({ anchorRef, options, selected, busy, o
     window.addEventListener("scroll", update, true);
     return () => { window.removeEventListener("keydown", key); window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); if(restore?.isConnected) restore.focus({ preventScroll: true }); };
   }, [anchorRef]);
-  return createPortal(<div className="wall-reaction-tray-layer"><button aria-label="Close reactions" className="wall-reaction-tray-dismiss" onClick={onClose} tabIndex={-1} type="button" /><section aria-label="Choose a Wall note reaction" aria-modal="true" className="wall-reaction-tray" ref={tray} role="dialog" style={position}>{QUICK.map(key => options.find(option => option.key === key)).filter(Boolean).map(option => <button aria-label={`${selected === option.key ? "Remove" : "Send"} ${option.label} reaction`} aria-pressed={selected === option.key} disabled={busy} key={option.key} onClick={() => onSelect(selected === option.key ? "" : option.key)} title={option.label} type="button"><span aria-hidden="true">{option.key === "see_you" ? <FiEye className="wall-reaction-eye" /> : option.icon}</span></button>)}<button aria-label="More reactions" className="wall-reaction-more" onClick={onMore} type="button"><FiPlus aria-hidden="true" /></button></section></div>, document.body);
+  return createPortal(<div className="wall-reaction-tray-layer"><button aria-label={__msg("fanWeb.closeReactions")} className="wall-reaction-tray-dismiss" onClick={onClose} tabIndex={-1} type="button" /><section aria-label={__msg("fanWeb.chooseAWallNoteReaction")} aria-modal="true" className="wall-reaction-tray" ref={tray} role="dialog" style={position}>{QUICK.map(key => options.find(option => option.key === key)).filter(Boolean).map(option => <button aria-label={__msg("fanWeb.reaction_bfb553", { value0: selected === option.key ? __msg("profile.remove") : __msg("fanWeb.send"), value1: option.label })} aria-pressed={selected === option.key} disabled={busy} key={option.key} onClick={() => onSelect(selected === option.key ? "" : option.key)} title={option.label} type="button"><span aria-hidden="true">{option.key === "see_you" ? <FiEye className="wall-reaction-eye" /> : option.icon}</span></button>)}<button aria-label={__msg("fanWeb.moreReactions")} className="wall-reaction-more" onClick={onMore} type="button"><FiPlus aria-hidden="true" /></button></section></div>, document.body);
 }

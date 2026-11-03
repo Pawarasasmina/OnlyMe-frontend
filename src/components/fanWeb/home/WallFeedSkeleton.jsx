@@ -1,10 +1,15 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 function SkeletonLine({ className = "" }) {
+  __useUiLanguage();
   return <span aria-hidden="true" className={`wall-feed-skeleton__line ${className}`} />;
 }
 
 function WallFeedSkeleton() {
+  __useUiLanguage();
   return (
-    <div aria-label="Loading Wall posts" className="wall-feed-skeleton" role="status">
+    <div aria-label={__msg("fanWeb.loadingWallPosts")} className="wall-feed-skeleton" role="status">
       {["media", "text"].map((kind) => (
         <article className="wall-feed-skeleton__post" key={kind}>
           <header className="wall-feed-skeleton__head">
@@ -27,7 +32,7 @@ function WallFeedSkeleton() {
           </footer>
         </article>
       ))}
-      <span className="sr-only">Loading</span>
+      <span className="sr-only">{__msg("fanWeb.loading")}</span>
     </div>
   );
 }

@@ -1,3 +1,9 @@
+import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +45,7 @@ const STORY_PREVIEW_LIMIT = 3;
 const SUBSCRIBER_STORY_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
-const WORLD_CATEGORIES = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
+const WORLD_CATEGORIES = __uiTuple(["Places", { __uiMessage: "creator.moving" }, { __uiMessage: "profile.business" }, { __uiMessage: "admin.growth" }, { __uiMessage: "profile.lifestyle" }]);
 const MONTHLY_PRICES = [90, 190, 290, 390, 500, 1000];
 
 function planetFaceEmoji(planet = {}) {
@@ -90,7 +96,7 @@ function blockPayload(block = {}, order) {
 
   if (type === "LINK") {
     payload.url = block.url || "";
-    payload.label = block.label || "Open link";
+    payload.label = block.label || __msg("creator.openLink");
     return payload;
   }
 
@@ -132,9 +138,9 @@ function inputClass(extra = "") {
 }
 
 function statusLabel(world, experience = false) {
-  if (!world?.id) return "New draft";
-  if (experience && world.status === "CHANGES_REQUESTED") return "Editing published Experience";
-  if (experience && world.status === "PUBLISHED") return "Published";
+  if (!world?.id) return __msg("creator.newDraft");
+  if (experience && world.status === "CHANGES_REQUESTED") return __msg("creator.editingPublishedExperience");
+  if (experience && world.status === "PUBLISHED") return __msg("admin.published");
   return String(world.status || "DRAFT").replaceAll("_", " ");
 }
 
@@ -154,7 +160,7 @@ function storyPreviewsFromWorld(publication = {}) {
         blockId: block.id,
         chapterId: chapter.stableChapterId,
         id: block.media.assetId || `${chapter.stableChapterId}-${block.id}`,
-        label: block.metadata?.label || chapter.title || "Story",
+        label: block.metadata?.label || chapter.title || __msg("activity.story"),
         caption: block.metadata?.caption || "",
         editorMetadata: block.metadata?.editorMetadata || null,
         media: block.media,
@@ -173,6 +179,7 @@ function revokePreviewUrl(story) {
 }
 
 function ExperienceVoiceSheet({ onClose, onSave, onUploadFile }) {
+  __useUiLanguage();
   const recorder = useVoiceRecorder({ maxDurationSeconds: 120 });
   const [saving, setSaving] = useState(false);
   const isRecording = recorder.status === "recording";
@@ -193,28 +200,29 @@ function ExperienceVoiceSheet({ onClose, onSave, onUploadFile }) {
   };
 
   return <div aria-modal="true" className="experience-voice-layer" role="dialog">
-    <button aria-label="Close voice recorder" className="experience-voice-dim" disabled={saving} onClick={onClose} type="button" />
+    <button aria-label={__msg("voice.closeVoiceRecorder")} className="experience-voice-dim" disabled={saving} onClick={onClose} type="button" />
     <section className="experience-voice-sheet">
-      <header><div><strong>Voice hello</strong><small>Record live or choose an audio file</small></div><button aria-label="Close voice recorder" disabled={saving} onClick={onClose} type="button"><FiX /></button></header>
+      <header><div><strong>{__msg("creator.voiceHello")}</strong><small>{__msg("creator.recordLiveOrChooseAnAudioFile")}</small></div><button aria-label={__msg("voice.closeVoiceRecorder")} disabled={saving} onClick={onClose} type="button"><FiX /></button></header>
       <div className={`experience-voice-timer ${isRecording ? "is-live" : ""}`}><i />{formatVoiceTime(recorder.elapsedMs / 1000)}<small>/ 02:00</small></div>
       {recorder.levels.length ? <div aria-hidden="true" className="experience-voice-levels">{recorder.levels.slice(-32).map((level, index) => <i key={index} style={{ height: `${Math.max(12, level * 100)}%` }} />)}</div> : null}
       {recorder.audioUrl ? <audio controls src={recorder.audioUrl} /> : null}
       {recorder.error ? <p className="experience-voice-error" role="alert">{recorder.error}</p> : null}
       <div className="experience-voice-record-actions">
-        {recorder.status === "idle" || recorder.status === "error" ? <button disabled={saving} onClick={recorder.startRecording} type="button"><FiMic /> Start recording</button> : null}
-        {isStarting ? <button disabled type="button"><FiLoader className="world-story-upload-spinner" /> Allow microphone…</button> : null}
-        {isRecording ? <><button onClick={recorder.pauseRecording} type="button"><FiPause /> Pause</button><button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> Stop</button></> : null}
-        {isPaused ? <><button onClick={recorder.resumeRecording} type="button"><FiPlay /> Resume</button><button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> Finish</button></> : null}
-        {recorder.status === "preview" ? <><button disabled={saving} onClick={recorder.resetRecording} type="button"><FiMic /> Record again</button><button className="is-save" disabled={saving} onClick={saveRecording} type="button">{saving ? <FiLoader className="world-story-upload-spinner" /> : <FiCheck />} Use recording</button></> : null}
+        {recorder.status === "idle" || recorder.status === "error" ? <button disabled={saving} onClick={recorder.startRecording} type="button"><FiMic /> {__msg("messaging.startRecording")}</button> : null}
+        {isStarting ? <button disabled type="button"><FiLoader className="world-story-upload-spinner" /> {__msg("creator.allowMicrophone")}</button> : null}
+        {isRecording ? <><button onClick={recorder.pauseRecording} type="button"><FiPause /> {__msg("creator.pause")}</button><button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("voice.stop")}</button></> : null}
+        {isPaused ? <><button onClick={recorder.resumeRecording} type="button"><FiPlay /> {__msg("creator.resume")}</button><button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("creator.finish")}</button></> : null}
+        {recorder.status === "preview" ? <><button disabled={saving} onClick={recorder.resetRecording} type="button"><FiMic /> {__msg("creator.recordAgain")}</button><button className="is-save" disabled={saving} onClick={saveRecording} type="button">{saving ? <FiLoader className="world-story-upload-spinner" /> : <FiCheck />} {__msg("publication.useRecording")}</button></> : null}
       </div>
-      <div className="experience-voice-divider"><span>or</span></div>
-      <button className="experience-voice-upload" disabled={isRecording || isPaused || isStarting || saving} onClick={onUploadFile} type="button"><FiArrowUpRight /> Upload audio file</button>
-      <small className="experience-voice-hint">MP3, WAV, M4A, OGG or WebM · maximum 2 minutes recommended</small>
+      <div className="experience-voice-divider"><span>{__msg("creator.or")}</span></div>
+      <button className="experience-voice-upload" disabled={isRecording || isPaused || isStarting || saving} onClick={onUploadFile} type="button"><FiArrowUpRight /> {__msg("creator.uploadAudioFile")}</button>
+      <small className="experience-voice-hint">{__msg("creator.mp3WavM4aOggOrWebmMaximum2Minutes")}</small>
     </section>
   </div>;
 }
 
 function PlanetFaceSheet({ busy, onClose, onSave, planet }) {
+  __useUiLanguage();
   const [selected, setSelected] = useState(planetFaceEmoji(planet));
   const [custom, setCustom] = useState("");
   const value = custom.trim() || selected;
@@ -222,12 +230,12 @@ function PlanetFaceSheet({ busy, onClose, onSave, planet }) {
     <div aria-labelledby="world-editor-face-title" aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
       <section className="world-bottom-sheet" onMouseDown={(event) => event.stopPropagation()}>
         <span className="world-sheet-grab" />
-        <h2 id="world-editor-face-title">The face of your planet</h2>
-        <p className="world-sheet-copy">One emoji on top — the topic people see from orbit.</p>
-        <div aria-label="Planet face options" className="world-face-grid" role="listbox">
+        <h2 id="world-editor-face-title">{__msg("creator.theFaceOfYourPlanet")}</h2>
+        <p className="world-sheet-copy">{__msg("creator.oneEmojiOnTopTheTopicPeopleSeeFrom")}</p>
+        <div aria-label={__msg("creator.planetFaceOptions")} className="world-face-grid" role="listbox">
           {PLANET_FACE_OPTIONS.map((emoji) => (
             <button
-              aria-label={`Use ${emoji} as planet face`}
+              aria-label={__msg("creator.useAsPlanetFace", { value0: emoji })}
               aria-selected={value === emoji}
               className={value === emoji ? "is-selected" : ""}
               key={emoji}
@@ -242,8 +250,8 @@ function PlanetFaceSheet({ busy, onClose, onSave, planet }) {
           ))}
         </div>
         <div className="world-face-custom">
-          <input aria-label="Custom planet face emoji" maxLength={16} onChange={(event) => setCustom(event.target.value)} placeholder="Or any emoji..." value={custom} />
-          <button disabled={busy || !value} onClick={() => onSave(value)} type="button">{busy ? "Saving..." : "OK"}</button>
+          <input aria-label={__msg("creator.customPlanetFaceEmoji")} maxLength={16} onChange={(event) => setCustom(event.target.value)} placeholder={__msg("creator.orAnyEmoji")} value={custom} />
+          <button disabled={busy || !value} onClick={() => onSave(value)} type="button">{busy ? __msg("admin.saving") : __msg("creator.ok")}</button>
         </div>
       </section>
     </div>
@@ -251,6 +259,7 @@ function PlanetFaceSheet({ busy, onClose, onSave, planet }) {
 }
 
 function WorldCreateTextSheet({ busy, description, label, maxLength, onClose, onSave, placeholder, title, value }) {
+  __useUiLanguage();
   const [draft, setDraft] = useState(value || "");
   const trimmed = draft.trim();
   return (
@@ -265,44 +274,47 @@ function WorldCreateTextSheet({ busy, description, label, maxLength, onClose, on
           <label className="world-sheet-input"><input autoFocus maxLength={maxLength} onChange={(event) => setDraft(event.target.value)} placeholder={placeholder} value={draft} /></label>
         )}
         <small className="world-sheet-counter">{draft.length}/{maxLength}</small>
-        <button className="world-sheet-primary" disabled={busy || !trimmed} onClick={() => onSave(trimmed)} type="button">{busy ? "Saving..." : "Save"}</button>
+        <button className="world-sheet-primary" disabled={busy || !trimmed} onClick={() => onSave(trimmed)} type="button">{busy ? __msg("admin.saving") : __msg("contentEntities.save_efc007")}</button>
       </section>
     </div>
   );
 }
 
 function WorldCreatePriceSheet({ busy, currentPrice, onClose, onSave }) {
+  __useUiLanguage();
   const [price, setPrice] = useState(Number(currentPrice || 190));
-  const payout = new Intl.NumberFormat("en-US", { currency: "USD", style: "currency" }).format((price / 1000) * 0.68);
+  const payout = new Intl.NumberFormat(__uiLocale(), { currency: "USD", style: "currency" }).format((price / 1000) * 0.68);
   return (
     <div aria-labelledby="world-create-price-title" aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
       <section className="world-bottom-sheet is-price-sheet" onMouseDown={(event) => event.stopPropagation()}>
         <span className="world-sheet-grab" />
-        <h2 id="world-create-price-title">World price</h2>
-        <p className="world-sheet-copy">Monthly subscription. Everyone already inside keeps their price forever — the new price is for new residents only.</p>
-        <div aria-label="World monthly price" className="world-price-options" role="radiogroup">
+        <h2 id="world-create-price-title">{__msg("creator.worldPrice")}</h2>
+        <p className="world-sheet-copy">{__msg("creator.monthlySubscriptionEveryoneAlreadyInsideKeepsTheirPriceForever")}</p>
+        <div aria-label={__msg("creator.worldMonthlyPrice")} className="world-price-options" role="radiogroup">
           {MONTHLY_PRICES.map((tierPrice) => {
             const locked = tierPrice === 1000;
             const selected = price === tierPrice;
-            return <button aria-checked={selected} aria-disabled={locked} className={`${selected ? "is-selected" : ""} ${locked ? "is-locked" : ""}`} disabled={locked || busy} key={tierPrice} onClick={() => setPrice(tierPrice)} role="radio" title={locked ? "Requires 100+ residents with steady renewals" : undefined} type="button">{locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString()}</button>;
+            return <button aria-checked={selected} aria-disabled={locked} className={`${selected ? "is-selected" : ""} ${locked ? "is-locked" : ""}`} disabled={locked || busy} key={tierPrice} onClick={() => setPrice(tierPrice)} role="radio" title={locked ? __msg("creator.requires100ResidentsWithSteadyRenewals") : undefined} type="button">{locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString(__uiLocale())}</button>;
           })}
         </div>
-        <p className="world-price-payout"><b>{payout}</b> <span>to you · per resident · monthly</span></p>
-        <p className="world-price-helper">Top tier ✦1,000 — opens at 100+ residents with steady renewals. First month -50% for newcomers stays on. Change once every 30 days.</p>
-        <button className="world-sheet-primary" disabled={busy} onClick={() => onSave(price)} type="button">{busy ? "Saving..." : "Save"}</button>
+        <p className="world-price-payout"><b>{payout}</b> <span>{__msg("creator.toYouPerResidentMonthly")}</span></p>
+        <p className="world-price-helper">{__msg("creator.topTier1000OpensAt100ResidentsWith")}</p>
+        <button className="world-sheet-primary" disabled={busy} onClick={() => onSave(price)} type="button">{busy ? __msg("admin.saving") : __msg("contentEntities.save_efc007")}</button>
       </section>
     </div>
   );
 }
 
 function ExperienceProgress({ step }) {
+  __useUiLanguage();
   const stages = ["Experience", "Chapters", "Publish"];
-  return <div aria-label={`Step ${step} of 3: ${stages[step - 1]}`} className="experience-progress" role="progressbar" aria-valuemax="3" aria-valuemin="1" aria-valuenow={step}>
+  return <div aria-label={__msg("creator.stepOf3", { value0: step, value1: stages[step - 1] })} className="experience-progress" role="progressbar" aria-valuemax="3" aria-valuemin="1" aria-valuenow={step}>
     {stages.map((label, index) => { const stage = index + 1; return <i aria-hidden="true" className={stage < step ? "is-complete" : stage === step ? "is-active" : ""} key={label} />; })}
   </div>;
 }
 
 function ExperienceDraftPreview({ chapters, coverUrl, onClose, storyPreviews, world }) {
+  __useUiLanguage();
   const [chapterIndex, setChapterIndex] = useState(null);
   const [activePhoto, setActivePhoto] = useState(null);
   const video = storyPreviews.find((item) => item.file?.type?.startsWith("video/") || item.media?.mediaType === "VIDEO");
@@ -315,54 +327,55 @@ function ExperienceDraftPreview({ chapters, coverUrl, onClose, storyPreviews, wo
     const next = chapters[chapterIndex + 1];
     return <article className="experience-chapter-preview">
       <header>
-        <button aria-label="Close chapter preview" onClick={onClose} type="button"><FiX /></button>
-        <div><small>CHAPTER {chapterIndex + 1} OF {chapters.length} {"\u00b7"} {world.title}</small><h1>{chapter.title || `Chapter ${chapterIndex + 1}`}</h1></div>
-        <span>PREVIEW</span>
+        <button aria-label={__msg("admin.closeChapterPreview")} onClick={onClose} type="button"><FiX /></button>
+        <div><small dir="auto">{__msg("creator.chapter")} {chapterIndex + 1} {__msg("creator.of_0cf81c")} {chapters.length} {"\u00b7"} {world.title}</small><h1>{chapter.title || __msg("profile.chapter_7c635d", { value0: chapterIndex + 1 })}</h1></div>
+        <span>{__msg("creator.preview_eb2264")}</span>
       </header>
       <div className="experience-chapter-preview-progress">{chapters.map((item, index) => <i className={index <= chapterIndex ? "is-active" : ""} key={item.stableChapterId || item.localId || index} />)}</div>
       <main>
         <section className="experience-chapter-preview-content">
           {blocks.map((block, index) => {
-            if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt="Chapter preview" key={block.id || index} src={block.media.secureUrl} />;
+            if (block.type === "IMAGE" && block.media?.secureUrl) return <img alt={__msg("publication.chapterPreview")} key={block.id || index} src={block.media.secureUrl} />;
             if (block.type === "VIDEO" && block.media?.secureUrl) return <video controls key={block.id || index} src={block.media.secureUrl} />;
             if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) return <audio controls key={block.id || index} src={block.media.secureUrl} />;
-            if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type) && block.text) return <p className={block.type === "HIGHLIGHT" ? "is-highlight" : ""} key={block.id || index}>{block.text}</p>;
+            if (["TEXT", "HIGHLIGHT", "KEY_POINT"].includes(block.type) && block.text) return <p dir="auto" className={block.type === "HIGHLIGHT" ? "is-highlight" : ""} key={block.id || index}>{block.text}</p>;
             return null;
           })}
         </section>
         <div className="experience-chapter-preview-adjacent">
           <button disabled={!previous} onClick={() => previous && setChapterIndex(chapterIndex - 1)} type="button">{previous ? `‹ ${previous.title}` : ""}</button>
-          <button disabled={!next} onClick={() => next && setChapterIndex(chapterIndex + 1)} type="button">{next ? `${next.title} ›` : "Experience complete"}</button>
+          <button disabled={!next} onClick={() => next && setChapterIndex(chapterIndex + 1)} type="button">{next ? `${next.title} ›` : __msg("creator.experienceComplete")}</button>
         </div>
-        <div className="experience-chapter-preview-engagement"><span>🤝 Useful&nbsp; 0</span><span>◯&nbsp; 0</span><span>↗</span></div>
-        <div className="experience-chapter-preview-actions"><button aria-label="Back to Experience preview" onClick={() => setChapterIndex(null)} type="button">←</button><button onClick={() => next ? setChapterIndex(chapterIndex + 1) : setChapterIndex(null)} type="button">{next ? "Next →" : "Back to overview"}</button></div>
+        <div className="experience-chapter-preview-engagement"><span>{__msg("creator.useful0")}</span><span>◯&nbsp; 0</span><span>↗</span></div>
+        <div className="experience-chapter-preview-actions"><button aria-label={__msg("creator.backToExperiencePreview")} onClick={() => setChapterIndex(null)} type="button">←</button><button onClick={() => next ? setChapterIndex(chapterIndex + 1) : setChapterIndex(null)} type="button">{next ? __msg("creator.next") : __msg("creator.backToOverview")}</button></div>
       </main>
     </article>;
   }
   return <article className="experience-viewer-page">
-    <header className="experience-viewer-head"><button aria-label="Close preview" onClick={onClose} type="button"><FiX /></button><span>PREVIEW</span></header>
+    <header className="experience-viewer-head"><button aria-label={__msg("admin.closePreview")} onClick={onClose} type="button"><FiX /></button><span>{__msg("creator.preview_eb2264")}</span></header>
     <main>
       <div className="experience-viewer-media">
-        {coverUrl ? <img alt="Experience cover preview" src={coverUrl} /> : <span aria-hidden="true">✦</span>}
+        {coverUrl ? <img alt={__msg("creator.experienceCoverPreview")} src={coverUrl} /> : <span aria-hidden="true">✦</span>}
       </div>
-      <h1>{world.title || "Untitled Experience"}</h1>
-      <p>{world.experiencePath || world.description || "Add a short description for this Experience."}</p>
-      <span className="experience-viewer-category">{world.category || "Category"}</span>
+      <h1>{world.title || __msg("profile.untitledExperience")}</h1>
+      <p>{world.experiencePath || world.description || __msg("creator.addAShortDescriptionForThisExperience")}</p>
+      <span className="experience-viewer-category">{world.category || __msg("content.category")}</span>
       <div className="experience-viewer-chapters">
-        {chapters.length ? chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => setChapterIndex(index)} type="button"><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong>{index === 0 ? <em>PREVIEW</em> : <FiLock />}<b>›</b></button>) : <p>No chapters added yet.</p>}
+        {chapters.length ? chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => setChapterIndex(index)} type="button"><i>{index + 1}</i><strong>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong>{index === 0 ? <em>{__msg("creator.preview_eb2264")}</em> : <FiLock />}<b>›</b></button>) : <p>{__msg("creator.noChaptersAddedYet")}</p>}
       </div>
       {storyPreviews.length ? <section className="experience-public-previews">
-        <header><span>PREVIEW</span><h2>Meet the Experience</h2><p>This is what people see before purchasing.</p></header>
-        {video?.url ? <div className="experience-public-preview-video"><video controls playsInline preload="metadata" src={video.url} /><span>{video.label || "Preview video"}</span></div> : null}
-        {photos.length ? <div className="experience-public-preview-photos">{photos.map((photo, index) => <button aria-label={`Open preview photo ${index + 1}`} key={photo.id} onClick={() => setActivePhoto(photo)} type="button"><img alt={photo.label || `Preview photo ${index + 1}`} src={photo.url} /></button>)}</div> : null}
-        {voice?.url ? <div className="experience-public-preview-voice"><span><FiPlay /></span><div><b>{voice.label || "Voice hello"}</b><small>A voice introduction</small></div><audio controls preload="metadata" src={voice.url} /></div> : null}
+        <header><span>{__msg("creator.preview_eb2264")}</span><h2>{__msg("creator.meetTheExperience")}</h2><p>{__msg("creator.thisIsWhatPeopleSeeBeforePurchasing")}</p></header>
+        {video?.url ? <div className="experience-public-preview-video"><video controls playsInline preload="metadata" src={video.url} /><span>{video.label || __msg("creator.previewVideo")}</span></div> : null}
+        {photos.length ? <div className="experience-public-preview-photos">{photos.map((photo, index) => <button aria-label={__msg("creator.openPreviewPhoto", { value0: index + 1 })} key={photo.id} onClick={() => setActivePhoto(photo)} type="button"><img alt={photo.label || __msg("creator.previewPhoto", { value0: index + 1 })} src={photo.url} /></button>)}</div> : null}
+        {voice?.url ? <div className="experience-public-preview-voice"><span><FiPlay /></span><div><b>{voice.label || __msg("creator.voiceHello")}</b><small>{__msg("creator.aVoiceIntroduction")}</small></div><audio controls preload="metadata" src={voice.url} /></div> : null}
       </section> : null}
     </main>
-    {activePhoto ? <div aria-label="Experience photo preview" aria-modal="true" className="experience-public-preview-lightbox" onClick={() => setActivePhoto(null)} role="dialog"><button aria-label="Close preview" onClick={() => setActivePhoto(null)} type="button"><FiX /></button><img alt={activePhoto.label || "Experience preview"} src={activePhoto.url} /></div> : null}
+    {activePhoto ? <div aria-label={__msg("creator.experiencePhotoPreview")} aria-modal="true" className="experience-public-preview-lightbox" onClick={() => setActivePhoto(null)} role="dialog"><button aria-label={__msg("admin.closePreview")} onClick={() => setActivePhoto(null)} type="button"><FiX /></button><img alt={activePhoto.label || __msg("creator.experiencePreview")} src={activePhoto.url} /></div> : null}
   </article>;
 }
 
 export default function WorldPublishingPage({ experience = false, publicationId = "" }) {
+  __useUiLanguage();
   const nav = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -419,7 +432,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const [worldCreateSheet, setWorldCreateSheet] = useState("");
   const chapters = world.chapters || [];
-  const ownerName = user?.name || user?.displayName || user?.username || "Max";
+  const ownerName = user?.name || user?.displayName || user?.username || __msg("creator.max");
   const coverUrl = coverPreviewUrl || world.coverMedia?.secureUrl;
   const validation = useMemo(() => worldCompletenessBySection(world), [world]);
   const validationMessages = Object.values(validation).flat();
@@ -447,7 +460,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           current.forEach(revokePreviewUrl);
           return [];
         });
-        setNotice("Start creating your Premium Experience.");
+        setNotice(__msg("creator.startCreatingYourPremiumExperience"));
         setCreationStarted(true);
         return;
       } else {
@@ -460,7 +473,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           current.forEach(revokePreviewUrl);
           return [];
         });
-        setNotice("Start creating your premium world.");
+        setNotice(__msg("creator.startCreatingYourPremiumWorld"));
         setCreationStarted(true);
         return;
       }
@@ -478,7 +491,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         current.forEach(revokePreviewUrl);
         return storyPreviewsFromWorld(publication);
       });
-      setNotice(`${statusLabel(publication, experience)} opened.`);
+      setNotice(__msg("creator.opened", { value0: statusLabel(publication, experience) }));
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
@@ -540,7 +553,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const updateWorld = (patch) => {
     worldEditVersionRef.current += 1;
     setWorld((current) => ({ ...current, ...patch }));
-    setNotice("Saving...");
+    setNotice(__msg("admin.saving"));
     setError("");
     scheduleDraftSave();
   };
@@ -636,19 +649,19 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           isPreview: experience ? next.pricing?.mode === "FREE" : audience === "FREE",
           releaseMode: "IMMEDIATE",
           statusVersion: next.statusVersion,
-          title: audience === "FREE" ? "Chapter 1" : "Subscriber stories",
+          title: audience === "FREE" ? __msg("profile.chapter1") : __msg("creator.subscriberStories"),
         });
         next = await refreshWorld(next.id, requestEditVersion);
         targetChapter = experience ? next.chapters?.[0] : next.chapters?.find((chapter) => audience === "FREE" ? chapter.isPreview : !chapter.isPreview);
       }
-      if (!targetChapter?.stableChapterId) throw new Error("A story chapter could not be prepared.");
+      if (!targetChapter?.stableChapterId) throw new Error(__msg("creator.aStoryChapterCouldNotBePrepared"));
 
       const limit = experience ? 5 : audience === "FREE" ? STORY_PREVIEW_LIMIT : SUBSCRIBER_STORY_LIMIT;
       const existingStoryCount = (targetChapter.blocks || []).filter(isStoryPreviewBlock).length;
       const uploadQueue = audienceStories.slice(0, Math.max(0, limit - existingStoryCount));
       if (!uploadQueue.length) continue;
 
-      setNotice(audience === "FREE" ? "Saving free preview stories..." : "Saving subscriber stories...");
+      setNotice(audience === "FREE" ? __msg("creator.savingFreePreviewStories") : __msg("creator.savingSubscriberStories"));
       const uploadedBlocks = [];
       for (const preview of uploadQueue) {
         const blockId = preview.blockId || crypto.randomUUID();
@@ -674,7 +687,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         isPreview: experience ? next.pricing?.mode === "FREE" : audience === "FREE",
         releaseMode: targetChapter.releaseMode || "IMMEDIATE",
         statusVersion: next.statusVersion,
-        title: targetChapter.title || (audience === "FREE" ? "Chapter 1" : "Subscriber stories"),
+        title: targetChapter.title || (audience === "FREE" ? __msg("profile.chapter1") : __msg("creator.subscriberStories")),
       });
       next = await refreshWorld(next.id, requestEditVersion);
     }
@@ -694,7 +707,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     savingRef.current = true;
     setSaving(true);
     setError("");
-    setNotice("Saving...");
+    setNotice(__msg("admin.saving"));
     const snapshot = snapshotOverride || world;
     const requestEditVersion = worldEditVersionRef.current;
     try {
@@ -737,13 +750,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           isPreview: experience ? snapshot.pricing?.mode === "FREE" : true,
           releaseMode: "IMMEDIATE",
           statusVersion: draft.statusVersion,
-          title: "Chapter 1",
+          title: __msg("profile.chapter1"),
         });
         draft = await refreshWorld(draft.id, requestEditVersion);
       }
 
       draft = await attachStoryPreviews(draft, storyPreviews, requestEditVersion);
-      setNotice("Draft saved");
+      setNotice(__msg("creator.draftSaved"));
       if (pendingExperienceContinueRef.current) {
         pendingExperienceContinueRef.current = false;
         setExperienceStep(2);
@@ -753,7 +766,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       pendingExperienceContinueRef.current = false;
       if (!retryingConflict && snapshot.id && isPublicationConflict(requestError)) {
         try {
-          setNotice("Refreshing latest draft...");
+          setNotice(__msg("creator.refreshingLatestDraft"));
           const latest = await refreshWorld(snapshot.id, requestEditVersion);
           const retrySnapshot = {
             ...latest,
@@ -771,12 +784,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           return await saveDraft(true, retrySnapshot);
         } catch (retryError) {
           setError(publicationError(retryError));
-          setNotice("Save paused");
+          setNotice(__msg("creator.savePaused"));
           return null;
         }
       }
       setError(publicationError(requestError));
-      setNotice("Save paused");
+      setNotice(__msg("creator.savePaused"));
       return null;
     } finally {
       savingRef.current = false;
@@ -804,7 +817,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       const saved = await saveDraft();
       if (saved) setExperienceStep(2);
       if (saved && !(saved.chapters || []).length) {
-        const response = await api.addChapter(saved.id, { blocks: [], isPreview: false, releaseMode: "IMMEDIATE", statusVersion: saved.statusVersion, title: "Chapter 1" });
+        const response = await api.addChapter(saved.id, { blocks: [], isPreview: false, releaseMode: "IMMEDIATE", statusVersion: saved.statusVersion, title: __msg("profile.chapter1") });
         const createdId = response.data.data.chapter?.stableChapterId;
         const next = await refreshWorld(saved.id);
         const nextIndex = next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId);
@@ -813,7 +826,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       } else if (saved?.chapters?.length) {
         setActiveChapter(0);
         setChapterStory(chapterStoryText(saved.chapters[0]));
-        setChapterStatus("Draft saved");
+        setChapterStatus(__msg("creator.draftSaved"));
       }
       return;
     }
@@ -823,7 +836,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       pendingExperienceContinueRef.current = false;
       setExperienceStep(2);
       if (!(saved.chapters || []).length) {
-        const response = await api.addChapter(saved.id, { blocks: [], isPreview: false, releaseMode: "IMMEDIATE", statusVersion: saved.statusVersion, title: "Chapter 1" });
+        const response = await api.addChapter(saved.id, { blocks: [], isPreview: false, releaseMode: "IMMEDIATE", statusVersion: saved.statusVersion, title: __msg("profile.chapter1") });
         const createdId = response.data.data.chapter?.stableChapterId;
         const next = await refreshWorld(saved.id);
         const nextIndex = next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId);
@@ -832,7 +845,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       } else {
         setActiveChapter(0);
         setChapterStory(chapterStoryText(saved.chapters[0]));
-        setChapterStatus("Draft saved");
+        setChapterStatus(__msg("creator.draftSaved"));
       }
     }
   };
@@ -857,7 +870,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       pendingIds.forEach((storyId) => {
         const resolver = storySaveResolvers.current.get(storyId);
         if (saved) resolver?.resolve(saved);
-        else resolver?.reject(new Error("Preview media could not be saved. Check the Experience details and try again."));
+        else resolver?.reject(new Error(__msg("creator.previewMediaCouldNotBeSavedCheckThe")));
         storySaveResolvers.current.delete(storyId);
       });
       setStoryAutoSaving(false);
@@ -872,7 +885,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (localPreview) setCoverPreviewUrl(localPreview);
     setUploading(true);
     setError("");
-    setNotice("Uploading cover...");
+    setNotice(__msg("creator.uploadingCover"));
     try {
       const draft = await ensureDraft(world, requestEditVersion);
       const response = experience
@@ -883,10 +896,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         setWorld((current) => ({ ...current, id: current.id || draft.id, coverMedia: uploadedPublication.coverMedia, statusVersion: uploadedPublication.statusVersion, draftVersion: uploadedPublication.draftVersion }));
       }
       await refreshWorld(draft.id, requestEditVersion);
-      setNotice("Cover saved");
+      setNotice(__msg("creator.coverSaved"));
     } catch (requestError) {
       setError(publicationError(requestError));
-      setNotice("Cover upload failed");
+      setNotice(__msg("creator.coverUploadFailed"));
     } finally {
       setUploading(false);
       setCoverPreviewUrl("");
@@ -904,7 +917,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     const replacedStory = replaceId ? storyPreviews.find((story) => story.id === replaceId) : null;
     const remaining = Math.max(0, limit - audienceStories.length + (replacedStory ? 1 : 0));
     if (!remaining) {
-      setNotice(`Only ${limit} ${storyAudience === "SUBSCRIBER" ? "subscriber" : "free preview"} stories can be shown.`);
+      setNotice(__msg("creator.onlyStoriesCanBeShown", { value0: limit, value1: storyAudience === "SUBSCRIBER" ? "subscriber" : __msg("social.freePreview") }));
       return;
     }
     const nextStory = {
@@ -932,7 +945,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     setStoryPreviews((current) => {
       const replaced = current.find((story) => story.id === replaceId);
       revokePreviewUrl(replaced);
-      setNotice(`Uploading ${storyAudience === "SUBSCRIBER" ? "subscriber" : "free preview"} story...`);
+      setNotice(__msg("creator.uploadingStory", { value0: storyAudience === "SUBSCRIBER" ? "subscriber" : __msg("social.freePreview") }));
       return [...current.filter((story) => story.id !== replaceId), nextStory];
     });
     setActiveStoryId(nextStory.id);
@@ -944,7 +957,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   const removeCover = async () => {
     if (!world.id || !world.coverMedia || uploading) return;
-    if (!window.confirm("Remove this cover image?")) return;
+    if (!window.confirm(__msg("creator.removeThisCoverImage"))) return;
     setUploading(true);
     setError("");
     try {
@@ -990,11 +1003,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             : chapter
         )),
       }));
-      setNotice("Removing story...");
+      setNotice(__msg("creator.removingStory"));
       scheduleDraftSave();
     }
     if (activeStoryId === storyId) setActiveStoryId("");
-    setNotice("Story preview removed.");
+    setNotice(__msg("creator.storyPreviewRemoved"));
   };
 
   const activePlanetChapter = activeChapter == null ? null : chapters[activeChapter];
@@ -1008,7 +1021,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (!saved) return;
     const chapter = saved.chapters?.[index];
     if (!chapter?.stableChapterId) {
-      setError("This chapter could not be opened yet. Please try again.");
+      setError(__msg("creator.thisChapterCouldNotBeOpenedYetPleaseTry"));
       return;
     }
     setActiveChapter(index);
@@ -1027,7 +1040,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     const response = await api.getMyPublication(world.id);
     const publication = response.data.data.publication;
     const chapter = publication.chapters?.[activeChapter];
-    if (!chapter?.stableChapterId) throw new Error("Chapter is no longer available.");
+    if (!chapter?.stableChapterId) throw new Error(__msg("creator.chapterIsNoLongerAvailable"));
     setWorld((current) => ({ ...current, ...publication }));
     return { chapter, publication };
   };
@@ -1049,11 +1062,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         title: activePlanetChapter?.title || chapter.title || `Chapter ${activeChapter + 1}`,
       });
       await refreshChapterEditor();
-      setChapterStatus("Chapter saved");
+      setChapterStatus(__msg("creator.chapterSaved"));
       return true;
     } catch (requestError) {
       setError(publicationError(requestError));
-      setChapterStatus("Chapter update failed");
+      setChapterStatus(__msg("creator.chapterUpdateFailed"));
       return false;
     } finally {
       setChapterSaving(false);
@@ -1063,11 +1076,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const saveChapterStory = async ({ close = true } = {}) => {
     if (!activePlanetEditorChapter) return;
     window.clearTimeout(chapterAutoSaveTimer.current);
-    const saved = await updateActiveChapterBlocks(chapterBlocksWithStory(activePlanetEditorChapter, chapterStory), "Saving chapter...");
+    const saved = await updateActiveChapterBlocks(chapterBlocksWithStory(activePlanetEditorChapter, chapterStory), __msg("creator.savingChapter"));
     if (saved && close) {
       const openedDirectly = new URLSearchParams(location.search).has("chapter");
       setActiveChapter(null);
-      setChapterStatus("Draft saved");
+      setChapterStatus(__msg("creator.draftSaved"));
       if (openedDirectly && world.id) nav(`/experience/${world.id}`, { replace: true });
     }
     return saved;
@@ -1088,7 +1101,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     if (!saved || !chapters[index]) return;
     setActiveChapter(index);
     setChapterStory(chapterStoryText(chapters[index]));
-    setChapterStatus("Draft saved");
+    setChapterStatus(__msg("creator.draftSaved"));
   };
 
   const previousExperienceChapter = async () => {
@@ -1110,7 +1123,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       return;
     }
     setChapterSaving(true);
-    setChapterStatus("Creating next chapter...");
+    setChapterStatus(__msg("creator.creatingNextChapter"));
     try {
       const latest = (await api.getMyPublication(world.id)).data.data.publication;
       const response = await api.addChapter(latest.id, {
@@ -1125,7 +1138,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       const nextIndex = next.chapters.findIndex((chapter) => chapter.stableChapterId === createdId);
       setActiveChapter(Math.max(0, nextIndex));
       setChapterStory("");
-      setChapterStatus("Draft saved");
+      setChapterStatus(__msg("creator.draftSaved"));
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
@@ -1135,7 +1148,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
   const finishExperienceChapters = async () => {
     if (chapters.length < 2) {
-      setChapterStatus("Premium Experiences need at least 2 chapters");
+      setChapterStatus(__msg("creator.premiumExperiencesNeedAtLeast2Chapters"));
       await nextExperienceChapter();
       return;
     }
@@ -1170,9 +1183,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         title: chapter.title || `Chapter ${activeChapter + 1}`,
       });
       await refreshChapterEditor();
-      setChapterStatus(`${mediaType === "IMAGE" ? "Photo" : "Voice"} added`);
+      setChapterStatus(`${mediaType === "IMAGE" ? __msg("fanWeb.photo") : __msg("fanWeb.voice")} added`);
     } catch (requestError) {
-      const message = publicationError(requestError, "Media upload failed");
+      const message = publicationError(requestError, __msg("creator.mediaUploadFailed"));
       setError(message);
       setChapterStatus(message);
     } finally {
@@ -1201,7 +1214,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     const locationLabel = String(label || "").trim().slice(0, 120);
     if (!locationLabel || !activePlanetEditorChapter) return;
     const blocks = chapterBlocksWithStory(activePlanetEditorChapter, chapterStory);
-    updateActiveChapterBlocks([...blocks, { id: crypto.randomUUID(), metadata: { location: { label: locationLabel } }, order: blocks.length, text: locationLabel, type: "KEY_POINT" }], "Adding place...");
+    updateActiveChapterBlocks([...blocks, { id: crypto.randomUUID(), metadata: { location: { label: locationLabel } }, order: blocks.length, text: locationLabel, type: "KEY_POINT" }], __msg("creator.addingPlace"));
   };
 
   const addStructuredBlocks = (newBlocks) => {
@@ -1258,17 +1271,17 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       return;
     }
     setSubmitting(true);
-    setNotice("Publishing...");
+    setNotice(__msg("creator.publishing"));
     try {
       const response = await api[saved.status === "CHANGES_REQUESTED" ? "resubmitPublication" : "submitPublication"](saved.id, saved.statusVersion);
       const submitted = response.data.data.publication;
       setWorld((current) => ({ ...current, ...submitted }));
-      setNotice(experience ? "Experience published" : "World published");
+      setNotice(experience ? __msg("creator.experiencePublished") : __msg("creator.worldPublished"));
       await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       nav(experience && returnTo ? returnTo : experience ? `/experience/${submitted.id}` : `/world/${submitted.id}`, { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError));
-      setNotice("Publish failed");
+      setNotice(__msg("creator.publishFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -1277,7 +1290,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const addChapter = () => {
     const chapterLimit = experience ? null : 5;
     if (chapterLimit && chapters.length >= chapterLimit) {
-      setError(`${experience ? "Premium Experience" : "Premium World"} can have up to ${chapterLimit} chapters.`);
+      setError(__msg("creator.canHaveUpToChapters", { value0: experience ? __msg("create.premiumExperience") : __msg("financial.premiumWorld"), value1: chapterLimit }));
       return;
     }
     updateWorld({
@@ -1291,7 +1304,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         },
       ],
     });
-    setNotice("New chapter added. Open it to start writing.");
+    setNotice(__msg("creator.newChapterAddedOpenItToStartWriting"));
   };
 
   const previewExperience = () => {
@@ -1322,7 +1335,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       });
       await refreshWorld(draft.id);
       setNewChapterTitle("");
-      setNotice("Chapter added. Tap it to start writing.");
+      setNotice(__msg("creator.chapterAddedTapItToStartWriting"));
     } catch (requestError) {
       setError(publicationError(requestError));
     } finally {
@@ -1333,7 +1346,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const createExperienceChapterAndWrite = async () => {
     const title = newChapterTitle.trim();
     if (!title) {
-      setChapterCreateError("Name this chapter first.");
+      setChapterCreateError(__msg("creator.nameThisChapterFirst"));
       return;
     }
     if (saving || chapterSaving) return;
@@ -1368,17 +1381,17 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     const chapter = chapters[index];
     if (!chapter || removingChapterId) return;
     const label = chapter.title || `Chapter ${index + 1}`;
-    if (!window.confirm(`Remove “${label}”? This also removes everything saved inside this chapter.`)) return;
+    if (!window.confirm(__msg("creator.removeValue0ThisAlsoRemovesEverythingSavedInside", { value0: label }))) return;
 
     if (!chapter.stableChapterId) {
       updateWorld({ chapters: chapters.filter((_, chapterIndex) => chapterIndex !== index) });
-      setNotice("Chapter removed.");
+      setNotice(__msg("creator.chapterRemoved"));
       return;
     }
 
     setRemovingChapterId(chapter.stableChapterId);
     setError("");
-    setNotice("Removing chapter...");
+    setNotice(__msg("creator.removingChapter"));
     try {
       const saved = await saveDraft();
       if (!saved) return;
@@ -1388,25 +1401,25 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         current.forEach(revokePreviewUrl);
         return storyPreviewsFromWorld(next);
       });
-      setNotice("Chapter removed.");
+      setNotice(__msg("creator.chapterRemoved"));
     } catch (requestError) {
       setError(publicationError(requestError));
-      setNotice("Chapter removal failed");
+      setNotice(__msg("creator.chapterRemovalFailed"));
     } finally {
       setRemovingChapterId("");
     }
   };
 
   const draftExperienceWithAi = () => {
-    const prompt = aiPrompt.trim() || "8 week home workout plan for beginners";
+    const prompt = aiPrompt.trim() || __msg("creator.8WeekHomeWorkoutPlanForBeginners");
     setAiPrompt(prompt);
     setAiBusy(true);
     window.setTimeout(() => {
       const fitness = /workout|fitness|gym|training/i.test(prompt);
       updateWorld({
         title: fitness ? "8-Week Home Fitness Kickstart" : prompt.replace(/^\w/, (letter) => letter.toUpperCase()),
-        description: fitness ? "A structured 8-week program for people starting their fitness journey at home — no gym required. Weekly goals, form guidance, and progress check-ins to keep you accountable." : `A structured Experience built around ${prompt}, with a clear beginning, practical chapters, and a result people can carry forward.`,
-        summary: fitness ? "A structured 8-week program for people starting their fitness journey at home — no gym required." : `A structured Experience built around ${prompt}.`,
+        description: fitness ? __msg("creator.aStructured8WeekProgramForPeopleStarting") : `A structured Experience built around ${prompt}, with a clear beginning, practical chapters, and a result people can carry forward.`,
+        summary: fitness ? __msg("creator.aStructured8WeekProgramForPeopleStarting_350c66") : `A structured Experience built around ${prompt}.`,
         pricing: { mode: "ONE_TIME", presetId: "ONE_TIME_450", starsAmount: 450 },
       });
       setAiDrafted(true);
@@ -1421,13 +1434,13 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     const gradient = context.createLinearGradient(0, 0, 1280, 720);
     gradient.addColorStop(0, "#203753"); gradient.addColorStop(1, "#090d13");
     context.fillStyle = gradient; context.fillRect(0, 0, 1280, 720);
-    context.fillStyle = "rgba(156,203,255,.9)"; context.font = "700 30px sans-serif"; context.fillText("@seen · EXPERIENCE", 70, 90);
+    context.fillStyle = "rgba(156,203,255,.9)"; context.font = "700 30px sans-serif"; context.fillText(__msg("creator.seenExperience"), 70, 90);
     context.fillStyle = "white"; context.font = "800 68px sans-serif";
-    context.fillText((world.title || "Untitled Experience").slice(0, 28), 70, 570);
+    context.fillText((world.title || __msg("profile.untitledExperience")).slice(0, 28), 70, 570);
     canvas.toBlob((blob) => blob && uploadCover(new File([blob], "generated-experience-cover.jpg", { type: "image/jpeg" })), "image/jpeg", .86);
   };
 
-  if (loading) return <div className="world-prototype-state">Opening {experience ? "experience" : "world"}...</div>;
+  if (loading) return <div className="world-prototype-state">{__msg("creator.opening")} {experience ? __msg("creator.experience") : __msg("creator.world")}...</div>;
 
   if (experience && experiencePreviewOpen) return <ExperienceDraftPreview chapters={chapters} coverUrl={coverUrl} onClose={() => setExperiencePreviewOpen(false)} storyPreviews={storyPreviews} world={world} />;
 
@@ -1438,7 +1451,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         key={activePlanetEditorChapter.stableChapterId || activeChapter}
         busy={chapterSaving}
         chapter={activePlanetEditorChapter}
-        error={error}
+        error={__systemMessage(error)}
         flow={{
           canAdd: true,
           index: activeChapter,
@@ -1472,42 +1485,42 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (experience && creationStarted && experienceStep === 1) return (
     <article className="experience-first-step">
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
-      {videoTrimFile ? <VideoTrimSheet enableCrop file={videoTrimFile} limitSeconds={30} onCancel={() => { URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} onUpload={async (file) => { await addStoryPreview({ file, caption: "Preview video", replaceId: videoTrimFile.replaceId }); URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} /> : null}
-      {voiceSheetOpen ? <ExperienceVoiceSheet onClose={() => setVoiceSheetOpen(false)} onSave={(file) => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return addStoryPreview({ file, caption: "Voice hello", replaceId: voice?.id || "" }); }} onUploadFile={() => voiceInputRef.current?.click()} /> : null}
-      <header><button aria-label="Back" onClick={leaveComposer} type="button"><FiArrowLeft /></button><div><h1>Name your Experience</h1><p>A stage of life — with a beginning and a result</p></div><button className="experience-first-preview" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
+      {videoTrimFile ? <VideoTrimSheet enableCrop file={videoTrimFile} limitSeconds={30} onCancel={() => { URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} onUpload={async (file) => { await addStoryPreview({ file, caption: __msg("creator.previewVideo"), replaceId: videoTrimFile.replaceId }); URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} /> : null}
+      {voiceSheetOpen ? <ExperienceVoiceSheet onClose={() => setVoiceSheetOpen(false)} onSave={(file) => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return addStoryPreview({ file, caption: __msg("creator.voiceHello"), replaceId: voice?.id || "" }); }} onUploadFile={() => voiceInputRef.current?.click()} /> : null}
+      <header><button aria-label={__msg("discover.back")} onClick={leaveComposer} type="button"><FiArrowLeft data-ui-directional="true" /></button><div><h1>{__msg("creator.nameYourExperience")}</h1><p>{__msg("creator.aStageOfLifeWithABeginningAndA")}</p></div><button className="experience-first-preview" onClick={previewExperience} type="button"><FiEye /> {__msg("admin.preview")}</button></header>
       <ExperienceProgress step={1} />
       <main>
-        <input className="experience-step-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={'Title — e.g. “Moving to Dubai”'} value={world.title} />
-        <input className="experience-step-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, experiencePath: event.target.value, summary: event.target.value })} placeholder={'The path: from → to — “From office to my own business”'} value={world.experiencePath || ""} />
+        <input className="experience-step-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={__msg("creator.titleEGMovingToDubai")} value={world.title} />
+        <input className="experience-step-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, experiencePath: event.target.value, summary: event.target.value })} placeholder={__msg("creator.thePathFromToFromOfficeToMyOwn")} value={world.experiencePath || ""} />
 
-        <p className="experience-field-label">PREMIUM PRICE</p>
+        <p className="experience-field-label">{__msg("creator.premiumPrice")}</p>
         <div className="experience-premium-price">
-          <div className="experience-premium-price-entry"><span>✦</span><input aria-label="One-time Experience price" min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /><small>one-time unlock · all chapters included after purchase</small></div>
+          <div className="experience-premium-price-entry"><span>✦</span><input aria-label={__msg("creator.oneTimeExperiencePrice")} min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /><small>{__msg("creator.oneTimeUnlockAllChaptersIncludedAfterPurchase")}</small></div>
           <div className="experience-premium-presets">{[150, 300, 500, 900].map((amount) => <button className={Number(world.pricing?.starsAmount) === amount ? "is-selected" : ""} key={amount} onClick={() => updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } })} type="button">🪙{amount}</button>)}</div>
-          <p>≈ ${(Number(world.pricing?.starsAmount || 190) * .068).toFixed(2)} to you</p>
+          <p>≈ ${(Number(world.pricing?.starsAmount || 190) * .068).toFixed(2)} {__msg("messages.toYou")}</p>
         </div>
-        <button className={`experience-download-row ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span>↥</span><span><strong>Allow download</strong><small>Watermarked PDF · text and photos only</small></span><em>{world.allowDownload ? "On" : "Off"}</em></button>
+        <button className={`experience-download-row ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span>↥</span><span><strong>{__msg("creator.allowDownload")}</strong><small>{__msg("creator.watermarkedPdfTextAndPhotosOnly")}</small></span><em>{world.allowDownload ? __msg("fanWeb.on") : __msg("fanWeb.off")}</em></button>
 
-        <p className="experience-field-label">CATEGORY</p>
+        <p className="experience-field-label">{__msg("creator.category")}</p>
         <div className="experience-category-chips">{["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"].map((category) => <button className={world.category === category ? "is-selected" : ""} key={category} onClick={() => updateWorld({ category })} type="button">{category}</button>)}</div>
 
-        <p className="experience-field-label">COVER</p>
-        <div className="experience-cover-line"><div className="experience-cover-wrap"><button className="experience-cover-preview" onClick={() => coverInputRef.current?.click()} type="button">{coverUrl ? <img alt="Experience cover" src={coverUrl} /> : uploading ? <FiLoader className="world-story-upload-spinner" /> : <FiPlus />}</button>{coverUrl ? <button aria-label="Remove cover image" className="experience-media-remove" disabled={uploading} onClick={removeCover} type="button"><FiX /></button> : null}</div><div><button className="experience-outline-pill" disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">{uploading ? "Uploading…" : coverUrl ? "↥ Replace" : "↥ Upload"}</button><small>{coverUrl ? "Cover added ✓ · shown on the card and inside" : "16:9 · 1280px+ · shown on the card and inside"}</small></div></div>
-        <button className="experience-generate-cover" disabled={uploading} onClick={generateExperienceCover} type="button">↻ &nbsp; Generate from title</button><small className="experience-another-look">another tap — another look</small>
+        <p className="experience-field-label">{__msg("creator.cover_183bb4")}</p>
+        <div className="experience-cover-line"><div className="experience-cover-wrap"><button className="experience-cover-preview" onClick={() => coverInputRef.current?.click()} type="button">{coverUrl ? <img alt={__msg("creator.experienceCover")} src={coverUrl} /> : uploading ? <FiLoader className="world-story-upload-spinner" /> : <FiPlus />}</button>{coverUrl ? <button aria-label={__msg("creator.removeCoverImage")} className="experience-media-remove" disabled={uploading} onClick={removeCover} type="button"><FiX /></button> : null}</div><div><button className="experience-outline-pill" disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">{uploading ? __msg("creator.uploading") : coverUrl ? __msg("creator.replace") : __msg("creator.upload_630cc6")}</button><small>{coverUrl ? __msg("creator.coverAddedShownOnTheCardAndInside") : __msg("creator.1691280pxShownOnTheCardAndInside")}</small></div></div>
+        <button className="experience-generate-cover" disabled={uploading} onClick={generateExperienceCover} type="button">{__msg("creator.generateFromTitle")}</button><small className="experience-another-look">{__msg("creator.anotherTapAnotherLook")}</small>
         <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
 
-        <p className="experience-field-label">PREVIEW — THE TRUST LAYER</p>
-        <p className="experience-trust-copy">One short video of you + real photos. Worlds with a video get stepped into 3× more.</p>
-        {(() => { const video = storyPreviews.find((item) => item.file?.type?.startsWith("video/") || item.media?.mediaType === "VIDEO"); return <div className="experience-media-wrap"><button className={`experience-video-drop ${video ? "has-media" : ""}`} onClick={() => videoInputRef.current?.click()} type="button">{video?.url ? <><video muted playsInline preload="metadata" src={video.url} /><span>▶ Short video added · tap to replace</span></> : <span>🎞 &nbsp; Add a video · maximum 30 seconds</span>}</button>{video ? <button aria-label="Remove preview video" className="experience-media-remove" onClick={() => removeStoryPreview(video.id)} type="button"><FiX /></button> : null}</div>; })()}
-        <div className="experience-photo-slots">{[0, 1, 2].map((index) => { const preview = storyPreviews.filter((item) => item.file?.type?.startsWith("image/") || item.media?.mediaType === "IMAGE")[index]; return <div className="experience-photo-slot" key={index}><button onClick={() => { previewPhotoSlotRef.current = { index, replaceId: preview?.id || "" }; previewInputRef.current?.click(); }} type="button">{preview?.url ? <img alt={`Preview ${index + 1}`} src={preview.url} /> : "▣"}</button>{preview ? <button aria-label={`Remove preview photo ${index + 1}`} className="experience-media-remove" onClick={() => removeStoryPreview(preview.id)} type="button"><FiX /></button> : null}</div>; })}</div>
-        {(() => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return <div className="experience-media-wrap"><button className={`experience-voice-drop ${voice ? "has-media" : ""}`} onClick={() => setVoiceSheetOpen(true)} type="button">🎙 {voice ? "Voice hello added ✓ · tap to review or replace" : "Add a voice hello · record live or upload audio"}</button>{voice ? <button aria-label="Remove voice hello" className="experience-media-remove" onClick={() => removeStoryPreview(voice.id)} type="button"><FiX /></button> : null}</div>; })()}
+        <p className="experience-field-label">{__msg("creator.previewTheTrustLayer")}</p>
+        <p className="experience-trust-copy">{__msg("creator.oneShortVideoOfYouRealPhotosWorldsWith")}</p>
+        {(() => { const video = storyPreviews.find((item) => item.file?.type?.startsWith("video/") || item.media?.mediaType === "VIDEO"); return <div className="experience-media-wrap"><button className={`experience-video-drop ${video ? "has-media" : ""}`} onClick={() => videoInputRef.current?.click()} type="button">{video?.url ? <><video muted playsInline preload="metadata" src={video.url} /><span>{__msg("creator.shortVideoAddedTapToReplace")}</span></> : <span>{__msg("creator.addAVideoMaximum30Seconds")}</span>}</button>{video ? <button aria-label={__msg("creator.removePreviewVideo")} className="experience-media-remove" onClick={() => removeStoryPreview(video.id)} type="button"><FiX /></button> : null}</div>; })()}
+        <div className="experience-photo-slots">{[0, 1, 2].map((index) => { const preview = storyPreviews.filter((item) => item.file?.type?.startsWith("image/") || item.media?.mediaType === "IMAGE")[index]; return <div className="experience-photo-slot" key={index}><button onClick={() => { previewPhotoSlotRef.current = { index, replaceId: preview?.id || "" }; previewInputRef.current?.click(); }} type="button">{preview?.url ? <img alt={__msg("financial.preview", { value0: index + 1 })} src={preview.url} /> : "▣"}</button>{preview ? <button aria-label={__msg("creator.removePreviewPhoto", { value0: index + 1 })} className="experience-media-remove" onClick={() => removeStoryPreview(preview.id)} type="button"><FiX /></button> : null}</div>; })}</div>
+        {(() => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return <div className="experience-media-wrap"><button className={`experience-voice-drop ${voice ? "has-media" : ""}`} onClick={() => setVoiceSheetOpen(true)} type="button">🎙 {voice ? __msg("creator.voiceHelloAddedTapToReviewOrReplace") : __msg("creator.addAVoiceHelloRecordLiveOrUploadAudio")}</button>{voice ? <button aria-label={__msg("creator.removeVoiceHello")} className="experience-media-remove" onClick={() => removeStoryPreview(voice.id)} type="button"><FiX /></button> : null}</div>; })()}
         <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; const selection = previewPhotoSlotRef.current; event.target.value = ""; previewPhotoSlotRef.current = null; if (file) addStoryPreview({ file, caption: `Preview photo ${(selection?.index ?? 0) + 1}`, replaceId: selection?.replaceId || "" }); }} ref={previewInputRef} type="file" />
         <input accept="video/mp4,video/quicktime,video/webm" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; const video = storyPreviews.find((item) => item.file?.type?.startsWith("video/") || item.media?.mediaType === "VIDEO"); event.target.value = ""; if (file) setVideoTrimFile({ file, replaceId: video?.id || "", url: URL.createObjectURL(file) }); }} ref={videoInputRef} type="file" />
-        <input accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,audio/webm" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); event.target.value = ""; if (file) { addStoryPreview({ file, caption: "Voice hello", replaceId: voice?.id || "" }); setVoiceSheetOpen(false); } }} ref={voiceInputRef} type="file" />
+        <input accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,audio/webm" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); event.target.value = ""; if (file) { addStoryPreview({ file, caption: __msg("creator.voiceHello"), replaceId: voice?.id || "" }); setVoiceSheetOpen(false); } }} ref={voiceInputRef} type="file" />
         <StoryCreator isOpen={storyComposerOpen} mode="compose" onClose={() => setStoryComposerOpen(false)} onSave={addStoryPreview} />
-        {storyAutoSaving ? <p className="experience-media-status"><FiLoader className="world-story-upload-spinner" /> Saving preview media…</p> : storyPreviews.length ? <p className="experience-media-status is-saved"><FiCheck /> {storyPreviews.length} preview {storyPreviews.length === 1 ? "item" : "items"} saved</p> : null}
-        {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
-        <button className="experience-first-continue" disabled={!world.title.trim() || !world.experiencePath?.trim() || !world.category || !coverUrl || uploading} onClick={continueExperienceDetails} type="button">Continue</button>
+        {storyAutoSaving ? <p className="experience-media-status"><FiLoader className="world-story-upload-spinner" /> {__msg("creator.savingPreviewMedia")}</p> : storyPreviews.length ? <p className="experience-media-status is-saved"><FiCheck /> {storyPreviews.length} {__msg("creator.preview")} {storyPreviews.length === 1 ? __msg("creator.item") : __msg("admin.items")} {__msg("creator.saved")}</p> : null}
+        {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
+        <button className="experience-first-continue" disabled={!world.title.trim() || !world.experiencePath?.trim() || !world.category || !coverUrl || uploading} onClick={continueExperienceDetails} type="button">{__msg("profile.continue")}</button>
       </main>
     </article>
   );
@@ -1515,15 +1528,15 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (experience && creationStarted && experienceStep === 2) return (
     <article className="experience-chapters-step">
       <header>
-        <button aria-label="Back to Experience details" onClick={() => setExperienceStep(1)} type="button"><FiArrowLeft /></button>
-        <div><h1>Build the chapters</h1><p>{world.title}</p></div>
-        <div className="experience-chapters-head-actions"><button disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></div>
+        <button aria-label={__msg("creator.backToExperienceDetails")} onClick={() => setExperienceStep(1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+        <div><h1>{__msg("creator.buildTheChapters")}</h1><p dir="auto">{world.title}</p></div>
+        <div className="experience-chapters-head-actions"><button disabled={saving} onClick={saveDraft} type="button">{saving ? __msg("financial.saving") : __msg("creator.saveForLater")}</button></div>
       </header>
       <ExperienceProgress step={2} />
       <main>
-        <p className="experience-chapters-intro">Photos, places, stories, lessons — each chapter is one step deeper into your world.</p>
-        {!chapters.length ? <p className="experience-chapters-guidance">Start with one chapter — you can publish from a single one and add more anytime. It grows with you.</p> : null}
-        <small className="experience-chapters-tip">Tap a chapter to write inside: text, color, marker, photo and voice.</small>
+        <p className="experience-chapters-intro">{__msg("creator.photosPlacesStoriesLessonsEachChapterIsOneStep")}</p>
+        {!chapters.length ? <p className="experience-chapters-guidance">{__msg("creator.startWithOneChapterYouCanPublishFromA")}</p> : null}
+        <small className="experience-chapters-tip">{__msg("creator.tapAChapterToWriteInsideTextColorMarker")}</small>
         <div className="experience-builder-list">
           {chapters.map((chapter, index) => {
             const thumbnail = (chapter.blocks || []).find((block) => block.type === "IMAGE" && block.media?.secureUrl)?.media?.secureUrl || (index === 0 ? coverUrl : "");
@@ -1531,24 +1544,24 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             return <div className="experience-builder-chapter" key={chapter.stableChapterId || chapter.localId || index}>
               <button className="experience-builder-open" onClick={() => openChapterEditor(index)} type="button">
                 <span className="experience-builder-thumb">{thumbnail ? <img alt="" src={thumbnail} /> : <b>{index + 1}</b>}</span>
-                <span><strong>{chapter.title || `Chapter ${index + 1}`}</strong><small>{storyText ? storyText.slice(0, 70) : "Write about your story"}</small></span><i>›</i>
+                <span><strong>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong><small>{storyText ? storyText.slice(0, 70) : __msg("creator.writeAboutYourStory")}</small></span><i>›</i>
               </button>
-              <button aria-label={`Remove ${chapter.title || `chapter ${index + 1}`}`} className="experience-builder-remove" disabled={Boolean(removingChapterId)} onClick={() => removeChapter(index)} type="button"><FiX /></button>
+              <button aria-label={__msg("contentEntities.remove", { value0: chapter.title || `chapter ${index + 1}` })} className="experience-builder-remove" disabled={Boolean(removingChapterId)} onClick={() => removeChapter(index)} type="button"><FiX /></button>
             </div>;
           })}
         </div>
-        <div className="experience-new-chapter"><input maxLength={120} onChange={(event) => setNewChapterTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addNamedExperienceChapter(); } }} placeholder="Next chapter…" value={newChapterTitle} /><button disabled={saving || !newChapterTitle.trim()} onClick={addNamedExperienceChapter} type="button">{saving ? "Adding…" : "Add"}</button></div>
-        <button className="experience-add-from-notes" type="button">+ &nbsp;Add from my notes <small>optional</small><span>▾</span></button>
-        {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
-        <button className="experience-chapters-continue" disabled={!chapters.length || saving} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(3); }} type="button">{saving ? "Saving…" : "Continue"}</button>
+        <div className="experience-new-chapter"><input maxLength={120} onChange={(event) => setNewChapterTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addNamedExperienceChapter(); } }} placeholder={__msg("creator.nextChapter")} value={newChapterTitle} /><button disabled={saving || !newChapterTitle.trim()} onClick={addNamedExperienceChapter} type="button">{saving ? __msg("stories.adding_ffb2e6") : __msg("publication.add")}</button></div>
+        <button className="experience-add-from-notes" type="button">{__msg("creator.addFromMyNotes")} <small>{__msg("creator.optional")}</small><span>▾</span></button>
+        {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
+        <button className="experience-chapters-continue" disabled={!chapters.length || saving} onClick={async () => { const saved = await saveDraft(); if (saved) setExperienceStep(3); }} type="button">{saving ? __msg("financial.saving") : __msg("profile.continue")}</button>
       </main>
       {chapterCreateOpen ? (
         <div className="experience-chapter-create-layer" role="presentation">
-          <button aria-label="Close chapter creator" className="experience-chapter-create-dim" onClick={() => setChapterCreateOpen(false)} type="button" />
+          <button aria-label={__msg("creator.closeChapterCreator")} className="experience-chapter-create-dim" onClick={() => setChapterCreateOpen(false)} type="button" />
           <section aria-labelledby="experience-chapter-create-title" aria-modal="true" className="experience-chapter-create-sheet" role="dialog">
             <span />
-            <h2 id="experience-chapter-create-title">Chapter {chapters.length + 1}</h2>
-            <p>Name it — then write the page. Up to 2,000 characters each.</p>
+            <h2 id="experience-chapter-create-title">{__msg("profile.chapter")} {chapters.length + 1}</h2>
+            <p>{__msg("creator.nameItThenWriteThePageUpTo2")}</p>
             <input
               autoFocus
               maxLength={120}
@@ -1560,11 +1573,11 @@ export default function WorldPublishingPage({ experience = false, publicationId 
                 if (event.key === "Escape") setChapterCreateOpen(false);
                 if (event.key === "Enter") createExperienceChapterAndWrite();
               }}
-              placeholder="Chapter title"
+              placeholder={__msg("publication.chapterTitle")}
               value={newChapterTitle}
             />
             {chapterCreateError ? <p className="experience-chapter-create-error" role="alert">{chapterCreateError}</p> : null}
-            <button disabled={saving || !newChapterTitle.trim()} onClick={createExperienceChapterAndWrite} type="button">{saving ? "Creating..." : "Create & write ✍"}</button>
+            <button disabled={saving || !newChapterTitle.trim()} onClick={createExperienceChapterAndWrite} type="button">{saving ? __msg("creator.creating") : __msg("creator.createWrite")}</button>
           </section>
         </div>
       ) : null}
@@ -1574,35 +1587,35 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (experience && creationStarted && experienceStep === 3) return (
     <article className="experience-final-preview experience-final-review">
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
-      <header><button aria-label="Back to chapters" onClick={() => { const index = Math.max(0, chapters.length - 1); setExperienceStep(2); setActiveChapter(index); setChapterStory(chapterStoryText(chapters[index])); setChapterStatus("Draft saved"); }} type="button"><FiArrowLeft /></button><div><h1>One last look</h1><p>Exactly what people will see</p></div><aside><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> Preview</button><button className="experience-final-save-later" disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save for later"}</button></aside></header>
+      <header><button aria-label={__msg("creator.backToChapters")} onClick={() => { const index = Math.max(0, chapters.length - 1); setExperienceStep(2); setActiveChapter(index); setChapterStory(chapterStoryText(chapters[index])); setChapterStatus("Draft saved"); }} type="button"><FiArrowLeft data-ui-directional="true" /></button><div><h1>{__msg("creator.oneLastLook")}</h1><p>{__msg("creator.exactlyWhatPeopleWillSee")}</p></div><aside><button className="experience-final-preview-button" onClick={previewExperience} type="button"><FiEye /> {__msg("admin.preview")}</button><button className="experience-final-save-later" disabled={saving} onClick={saveDraft} type="button">{saving ? __msg("financial.saving") : __msg("creator.saveForLater")}</button></aside></header>
       <ExperienceProgress step={3} />
       <main>
         <section className="experience-review-card">
-          <div className="experience-review-cover">{coverUrl ? <img alt={`${world.title} cover`} src={coverUrl} /> : null}<FiEye /></div>
-          <div className="experience-review-summary"><h2>{world.title}</h2><p>{world.category || "Experience"} · {chapters.length} chapters · {STAR}{world.pricing?.starsAmount} one-time</p></div>
-          <div className="experience-review-creator">{user?.avatar ? <img alt="" src={user.avatar} /> : <span>{(user?.name || user?.username || "C").slice(0, 1).toUpperCase()}</span>}<strong>{user?.name || user?.username || "Creator"}</strong><FiCheck /></div>
+          <div className="experience-review-cover">{coverUrl ? <img alt={__msg("discover.cover", { value0: world.title })} src={coverUrl} /> : null}<FiEye /></div>
+          <div className="experience-review-summary"><h2 dir="auto">{world.title}</h2><p>{world.category || __msg("contentEntities.experience")} · {chapters.length} {__msg("profile.chapters_7790c6")} {STAR}{world.pricing?.starsAmount} {__msg("creator.oneTime")}</p></div>
+          <div className="experience-review-creator">{user?.avatar ? <img alt="" src={user.avatar} /> : <span>{(user?.name || user?.username || "C").slice(0, 1).toUpperCase()}</span>}<strong>{user?.name || user?.username || __msg("discover.creator")}</strong><FiCheck /></div>
           <div className="experience-review-chapters">
-            {chapters.map((chapter, index) => <div key={chapter.stableChapterId || chapter.localId || index}><i>{index + 1}</i><strong>{chapter.title || `Chapter ${index + 1}`}</strong><em><FiLock /></em></div>)}
+            {chapters.map((chapter, index) => <div key={chapter.stableChapterId || chapter.localId || index}><i>{index + 1}</i><strong>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong><em><FiLock /></em></div>)}
           </div>
         </section>
         <section className="experience-final-settings">
-          <header><span>FINAL DETAILS</span><small>Autosaved</small></header>
+          <header><span>{__msg("creator.finalDetails")}</span><small>{__msg("creator.autosaved")}</small></header>
           <button className={`experience-final-cover ${coverUrl ? "has-cover" : ""}`} disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">
-            {coverUrl ? <img alt="Experience cover" src={coverUrl} /> : <FiPlus />}
-            <span>{uploading ? "Uploading…" : coverUrl ? "Change cover" : "Add cover"}</span>
+            {coverUrl ? <img alt={__msg("creator.experienceCover")} src={coverUrl} /> : <FiPlus />}
+            <span>{uploading ? __msg("creator.uploading") : coverUrl ? __msg("profile.changeCover") : __msg("creator.addCover")}</span>
           </button>
           <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
-          <label><span>Title</span><input maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder="Name your Experience" value={world.title} /></label>
-          <label><span>Description</span><textarea maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, experiencePath: event.target.value, summary: event.target.value })} placeholder="What journey will people take?" rows={3} value={world.experiencePath || ""} /></label>
+          <label><span>{__msg("content.title")}</span><input maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={__msg("creator.nameYourExperience")} value={world.title} /></label>
+          <label><span>{__msg("content.description")}</span><textarea maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, experiencePath: event.target.value, summary: event.target.value })} placeholder={__msg("creator.whatJourneyWillPeopleTake")} rows={3} value={world.experiencePath || ""} /></label>
           <div className="experience-final-settings-grid">
-            <label><span>Category</span><select onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Choose</option>{["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"].map((category) => <option key={category}>{category}</option>)}</select></label>
-            <label><span>Price</span><div className="experience-final-price"><b>{STAR}</b><input aria-label="One-time Experience price" min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /></div></label>
+            <label><span>{__msg("content.category")}</span><select onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">{__msg("creator.choose")}</option>{["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"].map((category) => <option key={category}>{category}</option>)}</select></label>
+            <label><span>{__msg("fan.price")}</span><div className="experience-final-price"><b>{STAR}</b><input aria-label={__msg("creator.oneTimeExperiencePrice")} min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /></div></label>
           </div>
-          <label><span>Location <em>optional</em></span><div className="experience-final-location"><FiMapPin /><input onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Add a location" value={world.experienceLocation || ""} /></div></label>
-          <button aria-pressed={world.allowDownload} className={`experience-final-toggle ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span><strong>Allow download</strong><small>Watermarked text and photos</small></span><i><b /></i></button>
+          <label><span>{__msg("fanWeb.location")} <em>{__msg("creator.optional")}</em></span><div className="experience-final-location"><FiMapPin /><input onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder={__msg("creator.addALocation")} value={world.experienceLocation || ""} /></div></label>
+          <button aria-pressed={world.allowDownload} className={`experience-final-toggle ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span><strong>{__msg("creator.allowDownload")}</strong><small>{__msg("creator.watermarkedTextAndPhotos")}</small></span><i><b /></i></button>
         </section>
-        <button className="experience-review-save" disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Publishing…</> : "Publish Experience"}</button>
-        {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
+        <button className="experience-review-save" disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> {__msg("creator.publishing_74f811")}</> : __msg("creator.publishExperience")}</button>
+        {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
       </main>
     </article>
   );
@@ -1610,68 +1623,68 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (experience && creationStarted) return (
     <article className="experience-create-page">
       <header className="experience-create-head">
-        <button aria-label="Back" onClick={leaveComposer} type="button"><FiArrowLeft /></button>
-        <h1>New Experience</h1>
-        {world.id ? <button className="experience-save-later" disabled={saving} onClick={saveDraft} type="button">Save for later</button> : <span />}
+        <button aria-label={__msg("discover.back")} onClick={leaveComposer} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+        <h1>{__msg("creator.newExperience")}</h1>
+        {world.id ? <button className="experience-save-later" disabled={saving} onClick={saveDraft} type="button">{__msg("creator.saveForLater")}</button> : <span />}
       </header>
       <main className="experience-create-body">
         <section className="experience-ai-builder">
-          <h2><span>✦</span> AI Experience Builder</h2>
-          <input onChange={(event) => setAiPrompt(event.target.value)} placeholder="Describe your Experience in a few words" value={aiPrompt} />
-          <button disabled={aiBusy} onClick={draftExperienceWithAi} type="button">{aiBusy ? "Drafting…" : "Draft it for me"}</button>
-          {aiDrafted ? <p>AI draft — edit as needed · <button onClick={draftExperienceWithAi} type="button">Try again</button></p> : null}
+          <h2><span>✦</span> {__msg("creator.aiExperienceBuilder")}</h2>
+          <input onChange={(event) => setAiPrompt(event.target.value)} placeholder={__msg("creator.describeYourExperienceInAFewWords")} value={aiPrompt} />
+          <button disabled={aiBusy} onClick={draftExperienceWithAi} type="button">{aiBusy ? __msg("creator.drafting") : __msg("creator.draftItForMe")}</button>
+          {aiDrafted ? <p>{__msg("creator.aiDraftEditAsNeeded")} <button onClick={draftExperienceWithAi} type="button">{__msg("discover.tryAgain")}</button></p> : null}
         </section>
 
         {aiDrafted ? <div className="experience-title-chips">
           {["8-Week Home Fitness Kickstart", "Beginner’s 8-Week Home Plan", "Home Fitness Foundations"].map((title) => <button className={world.title === title ? "is-selected" : ""} key={title} onClick={() => updateWorld({ title })} type="button">{title}</button>)}
         </div> : null}
 
-        <p className="experience-field-label">DETAILS</p>
+        <p className="experience-field-label">{__msg("creator.details")}</p>
         <button className={`experience-cover-drop ${coverUrl ? "has-cover" : ""}`} disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button">
-          {coverUrl ? <img alt="Experience cover" src={coverUrl} /> : <><FiPlus /><span>Add cover · square crop recommended</span></>}
+          {coverUrl ? <img alt={__msg("creator.experienceCover")} src={coverUrl} /> : <><FiPlus /><span>{__msg("creator.addCoverSquareCropRecommended")}</span></>}
           {uploading ? <FiLoader className="world-story-upload-spinner" /> : null}
         </button>
         <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
-        <input className="experience-form-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder="Title" value={world.title} />
-        <textarea className="experience-form-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, summary: event.target.value.slice(0, 300) })} placeholder="Description" value={world.description} />
+        <input className="experience-form-input" maxLength={120} onChange={(event) => updateWorld({ title: event.target.value })} placeholder={__msg("content.title")} value={world.title} />
+        <textarea className="experience-form-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, summary: event.target.value.slice(0, 300) })} placeholder={__msg("content.description")} value={world.description} />
         <div className="experience-inline-fields">
-          <select className="experience-form-input" onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Category</option>{WORLD_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select>
-          <input className="experience-form-input" onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Location" value={world.experienceLocation || ""} />
+          <select className="experience-form-input" onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">{__msg("content.category")}</option>{WORLD_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select>
+          <input className="experience-form-input" onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder={__msg("fanWeb.location")} value={world.experienceLocation || ""} />
         </div>
 
-        <p className="experience-field-label">CONTENT</p>
+        <p className="experience-field-label">{__msg("creator.content")}</p>
         <div className="experience-content-cards">
-          <button onClick={addChapter} type="button"><strong>Chapters</strong><small>{chapters.length} added</small></button>
-          <button onClick={() => coverInputRef.current?.click()} type="button"><strong>Photos</strong><small>{coverUrl ? "1 / 20" : "0 / 20"}</small></button>
-          <button onClick={() => coverInputRef.current?.click()} type="button"><strong>Video</strong><small>{world.coverMedia?.mediaType === "VIDEO" ? "1 / 1 · 60s" : "0 / 1 · 60s"}</small></button>
+          <button onClick={addChapter} type="button"><strong>{__msg("creator.chapters")}</strong><small>{chapters.length} {__msg("creator.added")}</small></button>
+          <button onClick={() => coverInputRef.current?.click()} type="button"><strong>{__msg("profile.photos")}</strong><small>{coverUrl ? "1 / 20" : "0 / 20"}</small></button>
+          <button onClick={() => coverInputRef.current?.click()} type="button"><strong>{__msg("profile.video")}</strong><small>{world.coverMedia?.mediaType === "VIDEO" ? __msg("creator.1160s") : __msg("creator.0160s")}</small></button>
         </div>
         <div className="experience-chapter-list">
-          {chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button"><span>{index + 1}</span><strong>{chapter.title || `Chapter ${index + 1}`}</strong><small>LOCKED UNTIL PURCHASE</small><i>›</i></button>)}
+          {chapters.map((chapter, index) => <button key={chapter.stableChapterId || chapter.localId || index} onClick={() => openChapterEditor(index)} type="button"><span>{index + 1}</span><strong>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong><small>{__msg("creator.lockedUntilPurchase")}</small><i>›</i></button>)}
         </div>
-        <p className="experience-preview-note">Every chapter unlocks after the one-time purchase.</p>
+        <p className="experience-preview-note">{__msg("creator.everyChapterUnlocksAfterTheOneTimePurchase")}</p>
 
-        <p className="experience-field-label">PRICE</p>
-        <div className="experience-price-input"><span>✦</span><input min="10" onChange={(event) => { const price = Math.max(10, Number(event.target.value) || 10); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${price}`, starsAmount: price } }); }} placeholder="Price in coins" type="number" value={world.pricing?.starsAmount || 190} /></div>
-        <p className="experience-price-hint">Suggested: <strong>✦190–500</strong> · based on similar Experiences</p>
-        <label className="experience-world-toggle"><span><strong>Include in my World</strong><small>Optional access for active World members. This Experience remains separate.</small></span><input checked={Boolean(world.includedInWorld)} onChange={(event) => updateWorld({ includedInWorld: event.target.checked })} type="checkbox" /></label>
-        {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
-        <div className="experience-create-actions"><button disabled={saving} onClick={saveDraft} type="button">{saving ? "Saving…" : "Save draft"}</button><button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? "Publishing…" : "Publish"}</button></div>
+        <p className="experience-field-label">{__msg("creator.price")}</p>
+        <div className="experience-price-input"><span>✦</span><input min="10" onChange={(event) => { const price = Math.max(10, Number(event.target.value) || 10); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${price}`, starsAmount: price } }); }} placeholder={__msg("creator.priceInCoins")} type="number" value={world.pricing?.starsAmount || 190} /></div>
+        <p className="experience-price-hint">{__msg("creator.suggested")} <strong>✦190–500</strong> {__msg("creator.basedOnSimilarExperiences")}</p>
+        <label className="experience-world-toggle"><span><strong>{__msg("creator.includeInMyWorld")}</strong><small>{__msg("creator.optionalAccessForActiveWorldMembersThisExperienceRemains")}</small></span><input checked={Boolean(world.includedInWorld)} onChange={(event) => updateWorld({ includedInWorld: event.target.checked })} type="checkbox" /></label>
+        {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
+        <div className="experience-create-actions"><button disabled={saving} onClick={saveDraft} type="button">{saving ? __msg("financial.saving") : __msg("publication.saveDraft")}</button><button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? __msg("creator.publishing_74f811") : __msg("posts.publish")}</button></div>
       </main>
     </article>
   );
 
   if (!creationStarted) return (
     <article className="planet-create-entry">
-      <header><button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><span>{experience ? "Experience creation" : "World creation"}</span><h1>Create {experience ? "an experience" : "a world"}</h1></div></header>
-      <p className="planet-create-intro">{experience ? "Experiences are premium structured journeys made of chapters, unlocked with one permanent one-time purchase." : "A World is your private space on your profile. Members subscribe to step into your chapters, preview stories, and everything you share inside."}</p>
+      <header><button aria-label={__msg("discover.back")} onClick={() => nav(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button><div><span>{experience ? __msg("creator.experienceCreation") : __msg("creator.worldCreation")}</span><h1>{__msg("fanWeb.create")} {experience ? __msg("creator.anExperience") : __msg("creator.aWorld")}</h1></div></header>
+      <p className="planet-create-intro">{experience ? __msg("creator.experiencesArePremiumStructuredJourneysMadeOfChaptersUnlocked") : __msg("creator.aWorldIsYourPrivateSpaceOnYourProfile")}</p>
       <button className="planet-choice-card is-selected" onClick={() => setCreationStarted(true)} type="button">
         <span className="planet-choice-orbit"><i>{FLEX}</i><b>{experience ? STAR : PLANET}</b></span>
-        <span><strong>{experience ? "Experience" : "Your World"}</strong><small>{experience ? "Unlimited premium Experiences · one-time unlock" : "One per creator · monthly subscription · profile only"}</small><em>{experience ? "A focused premium journey that unlocks permanently after purchase." : "Premium chapters, private stories and closer access—all together."}</em></span>
+        <span><strong>{experience ? __msg("contentEntities.experience") : __msg("profile.yourWorld")}</strong><small>{experience ? __msg("creator.unlimitedPremiumExperiencesOneTimeUnlock") : __msg("creator.onePerCreatorMonthlySubscriptionProfileOnly")}</small><em>{experience ? __msg("creator.aFocusedPremiumJourneyThatUnlocksPermanentlyAfterPurchase") : __msg("creator.premiumChaptersPrivateStoriesAndCloserAccessAllTogether")}</em></span>
         <FiArrowUpRight />
       </button>
-      <div className="planet-create-principles"><span><FiCheck /> {experience ? "Publishes immediately" : "One clear monthly price"}</span><span><FiCheck /> {experience ? "One-time premium unlock" : "1 free preview chapter"}</span><span><FiCheck /> {experience ? "You choose the price" : "Up to 3 preview stories"}</span></div>
-      <button className="planet-create-continue" onClick={() => setCreationStarted(true)} type="button">Build my {experience ? "Experience" : "World"} <FiArrowUpRight /></button>
-      <small className="planet-create-footnote">{experience ? "Experiences live in their own profile section. World inclusion is optional access, never ownership or placement." : "Worlds live on your profile only—they never appear as ordinary feed posts."}</small>
+      <div className="planet-create-principles"><span><FiCheck /> {experience ? __msg("creator.publishesImmediately") : __msg("creator.oneClearMonthlyPrice")}</span><span><FiCheck /> {experience ? __msg("creator.oneTimePremiumUnlock") : __msg("creator.1FreePreviewChapter")}</span><span><FiCheck /> {experience ? __msg("creator.youChooseThePrice") : __msg("creator.upTo3PreviewStories")}</span></div>
+      <button className="planet-create-continue" onClick={() => setCreationStarted(true)} type="button">{__msg("creator.buildMy")} {experience ? __msg("contentEntities.experience") : __msg("admin.world")} <FiArrowUpRight /></button>
+      <small className="planet-create-footnote">{experience ? __msg("creator.experiencesLiveInTheirOwnProfileSectionWorldInclusion") : __msg("creator.worldsLiveOnYourProfileOnlyTheyNeverAppear")}</small>
     </article>
   );
 
@@ -1680,31 +1693,31 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
     <article className="world-prototype-page world-publish-page">
       <header className="world-prototype-top">
-        <button aria-label="Back" onClick={() => nav(-1)} type="button"><FiArrowLeft /></button>
+        <button aria-label={__msg("discover.back")} onClick={() => nav(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
         <div>
-        {world.id ? <button aria-label={`Open public ${experience ? "experience" : "world"}`} onClick={() => window.open(`/${experience ? "experience" : "world"}/${world.id}`, "_blank", "noopener,noreferrer")} type="button"><FiExternalLink /></button> : null}
-          <button aria-label="More world actions" type="button"><FiMoreHorizontal /></button>
+        {world.id ? <button aria-label={__msg("creator.openPublic", { value0: experience ? "experience" : "world" })} onClick={() => window.open(`/${experience ? "experience" : "world"}/${world.id}`, "_blank", "noopener,noreferrer")} type="button"><FiExternalLink /></button> : null}
+          <button aria-label={__msg("creator.moreWorldActions")} type="button"><FiMoreHorizontal /></button>
         </div>
       </header>
 
       {!experience ? (
         <section className="world-prototype-planet world-publish-planet world-create-brand">
-          <button aria-label="Change planet face" onClick={() => setFaceSheetOpen(true)} type="button">
+          <button aria-label={__msg("creator.changePlanetFace")} onClick={() => setFaceSheetOpen(true)} type="button">
             <span>{planetFaceEmoji(world.planet)}</span>
             <span>{PLANET}</span>
           </button>
-          <p>Your World</p>
+          <p>{__msg("profile.yourWorld")}</p>
         </section>
       ) : null}
 
       {!experience ? (
         <section className={`world-top-cover-preview ${coverUrl ? "has-cover" : ""}`}>
           {coverUrl
-            ? (world.coverMedia?.mediaType === "VIDEO" || world.coverMedia?.resourceType === "video" ? <video controls playsInline preload="metadata" src={coverUrl} /> : <img alt={`${world.title || "World"} cover preview`} src={coverUrl} />)
-            : <div><FiPlus /><strong>Add a cover image</strong><small>Preview how your World will appear</small></div>}
+            ? (world.coverMedia?.mediaType === "VIDEO" || world.coverMedia?.resourceType === "video" ? <video controls playsInline preload="metadata" src={coverUrl} /> : <img alt={__msg("creator.coverPreview", { value0: world.title || __msg("admin.world") })} src={coverUrl} />)
+            : <div><FiPlus /><strong>{__msg("creator.addACoverImage")}</strong><small>{__msg("creator.previewHowYourWorldWillAppear")}</small></div>}
           <span className="world-top-cover-actions">
-            <button disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button"><FiEdit3 /> {coverUrl ? "Change" : "Add cover"}</button>
-            {coverUrl ? <button className="is-remove" disabled={uploading} onClick={removeCover} type="button"><FiTrash2 /> Remove</button> : null}
+            <button disabled={uploading} onClick={() => coverInputRef.current?.click()} type="button"><FiEdit3 /> {coverUrl ? __msg("creator.change") : __msg("creator.addCover")}</button>
+            {coverUrl ? <button className="is-remove" disabled={uploading} onClick={removeCover} type="button"><FiTrash2 /> {__msg("profile.remove")}</button> : null}
           </span>
         </section>
       ) : null}
@@ -1714,79 +1727,79 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       <section className="world-prototype-story-previews" id="world-preview-stories">
         <div className="world-prototype-section-head is-compact">
-          <h2>Stories</h2>
-          <span>up to 3 · seen before purchase</span>
+          <h2>{__msg("admin.stories")}</h2>
+          <span>{__msg("creator.upTo3SeenBeforePurchase")}</span>
         </div>
         <div>
           {freeStories.map((story) => (
             <span className="world-prototype-story-thumb" key={story.id}>
-              <button aria-label="Open story preview" className="world-prototype-story-open" onClick={() => setActiveStoryId(story.id)} type="button">
-                <img alt="World story preview" src={story.url} />
+              <button aria-label={__msg("creator.openStoryPreview")} className="world-prototype-story-open" onClick={() => setActiveStoryId(story.id)} type="button">
+                <img alt={__msg("creator.worldStoryPreview")} src={story.url} />
                 <small>{story.label}</small>
               </button>
-              <button aria-label="Remove story preview" onClick={() => removeStoryPreview(story.id)} type="button"><FiX /></button>
+              <button aria-label={__msg("creator.removeStoryPreview")} onClick={() => removeStoryPreview(story.id)} type="button"><FiX /></button>
             </span>
           ))}
           {freeStories.length < STORY_PREVIEW_LIMIT ? (
           <button className="world-prototype-story-add" onClick={() => { setStoryAudience("FREE"); setStoryComposerOpen(true); }} type="button">
             <FiPlus />
-            <span>add</span>
+            <span>{__msg("creator.add_58d1bb")}</span>
           </button>
           ) : null}
         </div>
       </section>
 
       <section className="world-prototype-story-rings world-create-legacy-stories" hidden>
-        <h2><FiLock /> Subscriber stories</h2>
-        <p className="world-prototype-story-access-note">Only active subscribers can open these stories.</p>
+        <h2><FiLock /> {__msg("creator.subscriberStories")}</h2>
+        <p className="world-prototype-story-access-note">{__msg("creator.onlyActiveSubscribersCanOpenTheseStories")}</p>
         <div>
           {subscriberStories.map((story) => (
             <span className="world-prototype-story-ring-item" key={story.id}>
               <button className="is-active" onClick={() => setActiveStoryId(story.id)} type="button"><FiLock /><span>{story.label}</span></button>
-              <button aria-label={`Remove subscriber story ${story.label}`} className="world-prototype-story-ring-remove" onClick={() => removeStoryPreview(story.id)} type="button"><FiX /></button>
+              <button aria-label={__msg("creator.removeSubscriberStory", { value0: story.label })} className="world-prototype-story-ring-remove" onClick={() => removeStoryPreview(story.id)} type="button"><FiX /></button>
             </span>
           ))}
-          {subscriberStories.length < SUBSCRIBER_STORY_LIMIT ? <button onClick={() => { setStoryAudience("SUBSCRIBER"); setStoryComposerOpen(true); }} type="button"><FiPlus /><span>New</span></button> : null}
+          {subscriberStories.length < SUBSCRIBER_STORY_LIMIT ? <button onClick={() => { setStoryAudience("SUBSCRIBER"); setStoryComposerOpen(true); }} type="button"><FiPlus /><span>{__msg("discover.new")}</span></button> : null}
         </div>
       </section>
 
       <StoryCreator isOpen={storyComposerOpen} mode="compose" onClose={() => setStoryComposerOpen(false)} onSave={addStoryPreview} />
 
       {activeStory ? (
-        <div aria-label="World story preview" aria-modal="true" className="world-story-preview-viewer" onClick={() => setActiveStoryId("")} role="dialog">
-          <button aria-label="Close story preview" onClick={() => setActiveStoryId("")} type="button"><FiX /></button>
-          <img alt="Selected world story preview" src={activeStory.url} />
+        <div aria-label={__msg("creator.worldStoryPreview")} aria-modal="true" className="world-story-preview-viewer" onClick={() => setActiveStoryId("")} role="dialog">
+          <button aria-label={__msg("creator.closeStoryPreview")} onClick={() => setActiveStoryId("")} type="button"><FiX /></button>
+          <img alt={__msg("creator.selectedWorldStoryPreview")} src={activeStory.url} />
           <span>{activeStory.label}</span>
         </div>
       ) : null}</> : null}
 
       <section className="world-prototype-creator">
-        <span>{ownerName.split(" ")[0]} <b>✓</b> - <strong>{Number(world.steppedInside || world.viewCount || 0).toLocaleString()}</strong> stepped inside</span>
+        <span>{ownerName.split(" ")[0]} <b>✓</b> - <strong>{Number(world.steppedInside || world.viewCount || 0).toLocaleString(__uiLocale())}</strong> {__msg("discover.steppedInside")}</span>
         {!experience ? <>
-          <span>{ownerName.split(" ")[0]} <b>✓</b> · <strong>0</strong> residents</span>
+          <span>{ownerName.split(" ")[0]} <b>✓</b> · <strong>0</strong> {__msg("creator.residents_f012b0")}</span>
           <span className="world-prototype-seat-row is-create-preview">
             <i><u style={{ width: "0%" }} /></i>
-            <small>0 / 250 seats · {STAR}{world.pricing?.starsAmount || 190}/mo</small>
+            <small>{__msg("creator.0250Seats")} {STAR}{world.pricing?.starsAmount || 190}{__msg("common.perMonth")}</small>
           </span>
         </> : null}
       </section>
 
-      {experience ? <div className="world-prototype-premium-pill">Premium Experience - all chapters unlock for {STAR}{world.pricing?.starsAmount || 190} once</div> : (
+      {experience ? <div className="world-prototype-premium-pill">{__msg("creator.premiumExperienceAllChaptersUnlockFor")} {STAR}{world.pricing?.starsAmount || 190} {__msg("profile.once")}</div> : (
         <button className="world-prototype-premium-pill world-create-price-trigger" onClick={() => setWorldCreateSheet("price")} type="button">
-          {PLANET} Premium World · up to 3 preview stories · {STAR}{world.pricing?.starsAmount || 190}/mo <FiEdit3 />
+          {PLANET} {__msg("creator.premiumWorldUpTo3PreviewStories")} {STAR}{world.pricing?.starsAmount || 190}{__msg("common.perMonth")}<FiEdit3 />
         </button>
       )}
 
       {experience ? <input
-        aria-label="Experience title"
+        aria-label={__msg("creator.experienceTitle")}
         className={inputClass("world-publish-title")}
         maxLength={120}
         onChange={(event) => updateWorld({ title: event.target.value })}
-        placeholder="Name your premium experience"
+        placeholder={__msg("creator.nameYourPremiumExperience")}
         value={world.title}
       /> : <div className="world-prototype-title-row">
-        <button aria-label="Name your World" className="world-prototype-title-button world-create-title-button" onClick={() => setWorldCreateSheet("name")} type="button">
-          <span className={`world-prototype-title ${world.title ? "" : "is-placeholder"}`}>{world.title || "Name your World"}</span>
+        <button aria-label={__msg("creator.nameYourWorld")} className="world-prototype-title-button world-create-title-button" onClick={() => setWorldCreateSheet("name")} type="button">
+          <span className={`world-prototype-title ${world.title ? "" : "is-placeholder"}`}>{world.title || __msg("creator.nameYourWorld")}</span>
           <FiEdit3 />
         </button>
       </div>}
@@ -1794,65 +1807,65 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       <input accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={requestCoverUpload} ref={coverInputRef} type="file" />
 
       {experience ? <textarea
-        aria-label="Experience description"
+        aria-label={__msg("creator.experienceDescription")}
         className={inputClass("world-publish-summary")}
         maxLength={300}
         onChange={(event) => updateWorld({ description: event.target.value, summary: event.target.value.slice(0, 300) })}
-        placeholder={experience ? "Describe the journey from beginning to outcome" : "Describe what members will experience"}
+        placeholder={experience ? __msg("creator.describeTheJourneyFromBeginningToOutcome") : __msg("creator.describeWhatMembersWillExperience")}
         value={world.description}
       /> : null}
 
       {experience ? <section className="planet-create-fieldset planet-price-section">
-        <div className="world-prototype-section-head"><h2>{experience ? "Unlock price" : "Subscription price"}</h2><span>{experience ? "one-time, permanent access" : "one honest monthly price"}</span></div>
-        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: experience ? "ONE_TIME" : "MONTHLY", presetId: `${experience ? "ONE_TIME" : "MONTHLY"}_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>{experience ? "once" : "/month"}</small>{price === 190 ? <em>Most chosen</em> : null}</button>)}</div>
-        <div className="planet-price-preview"><span>10 {experience ? "unlocks" : "members"} <b>{STAR}{(world.pricing?.starsAmount || 190) * 10}{experience ? "" : "/mo"}</b></span><span>50 {experience ? "unlocks" : "members"} <b>{STAR}{(world.pricing?.starsAmount || 190) * 50}{experience ? "" : "/mo"}</b></span></div>
+        <div className="world-prototype-section-head"><h2>{experience ? __msg("creator.unlockPrice") : __msg("creator.subscriptionPrice")}</h2><span>{experience ? __msg("creator.oneTimePermanentAccess") : __msg("creator.oneHonestMonthlyPrice")}</span></div>
+        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: experience ? "ONE_TIME" : "MONTHLY", presetId: `${experience ? "ONE_TIME" : "MONTHLY"}_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>{experience ? __msg("profile.once") : "/month"}</small>{price === 190 ? <em>{__msg("creator.mostChosen")}</em> : null}</button>)}</div>
+        <div className="planet-price-preview"><span>10 {experience ? __msg("creator.unlocks") : __msg("discover.members")} <b>{STAR}{(world.pricing?.starsAmount || 190) * 10}{experience ? "" : "/mo"}</b></span><span>50 {experience ? __msg("creator.unlocks") : __msg("discover.members")} <b>{STAR}{(world.pricing?.starsAmount || 190) * 50}{experience ? "" : "/mo"}</b></span></div>
       </section> : null}
 
-      {experience ? <label className="experience-world-toggle"><span><strong>Include in my World</strong><small>World members can access this while subscribed. Separate buyers keep it permanently.</small></span><input checked={Boolean(world.includedInWorld)} onChange={(event) => updateWorld({ includedInWorld: event.target.checked })} type="checkbox" /></label> : null}
+      {experience ? <label className="experience-world-toggle"><span><strong>{__msg("creator.includeInMyWorld")}</strong><small>{__msg("creator.worldMembersCanAccessThisWhileSubscribedSeparateBuyers")}</small></span><input checked={Boolean(world.includedInWorld)} onChange={(event) => updateWorld({ includedInWorld: event.target.checked })} type="checkbox" /></label> : null}
 
       {!experience ? <section className="world-prototype-owner-settings">
         <span className="world-prototype-direct-access world-create-direct-access">
-          <span><FiZap /></span><b>Direct Access</b><small>members first · 1 free reply included</small><i><FiArrowUpRight /></i>
+          <span><FiZap /></span><b>{__msg("language.directAccess")}</b><small>{__msg("creator.membersFirst1FreeReplyIncluded")}</small><i><FiArrowUpRight /></i>
         </span>
         <button aria-controls="world-create-settings-list" aria-expanded={worldCreateSheet === "settings"} className={`world-prototype-settings-row ${worldCreateSheet === "settings" ? "is-expanded" : ""}`} onClick={() => setWorldCreateSheet((current) => current === "settings" ? "" : "settings")} type="button">
-          <FiSettings /><b>World settings</b><FiArrowUpRight className="world-settings-chevron" />
+          <FiSettings /><b>{__msg("creator.worldSettings")}</b><FiArrowUpRight className="world-settings-chevron" />
         </button>
         {worldCreateSheet === "settings" ? <div className="world-settings-list" id="world-create-settings-list">
-          <p>INSIDE YOUR WORLD</p>
-          <button className="world-settings-item is-add" onClick={() => { setWorldCreateSheet(""); openWorldManagement("include"); }} type="button"><span className="world-settings-status"><FiPlus /></span><span className="world-settings-copy"><b>Experiences included</b><small>add one · included Experiences help sell the World</small></span><FiArrowUpRight className="world-settings-row-chevron" /></button>
-          <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>Direct Access for members</b><small>1 free reply / month each · then first in line</small></span></span>
-          <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>Price locked for members</b><small>early members keep their joining price forever</small></span></span>
-          <button aria-pressed={Boolean(world.firstMonthOfferEnabled)} className="world-settings-item is-switch" onClick={() => updateWorld({ firstMonthOfferEnabled: !world.firstMonthOfferEnabled })} type="button"><span className="world-settings-status" /><span className="world-settings-copy"><b>First month -50%</b><small>converts the hesitant · smarter than refunds</small></span><i aria-hidden="true" className={world.firstMonthOfferEnabled ? "is-on" : ""}><u /></i></button>
+          <p>{__msg("creator.insideYourWorld")}</p>
+          <button className="world-settings-item is-add" onClick={() => { setWorldCreateSheet(""); openWorldManagement("include"); }} type="button"><span className="world-settings-status"><FiPlus /></span><span className="world-settings-copy"><b>{__msg("creator.experiencesIncluded")}</b><small>{__msg("creator.addOneIncludedExperiencesHelpSellTheWorld")}</small></span><FiArrowUpRight className="world-settings-row-chevron" /></button>
+          <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>{__msg("creator.directAccessForMembers")}</b><small>{__msg("creator.1FreeReplyMonthEachThenFirstInLine")}</small></span></span>
+          <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>{__msg("creator.priceLockedForMembers")}</b><small>{__msg("creator.earlyMembersKeepTheirJoiningPriceForever")}</small></span></span>
+          <button aria-pressed={Boolean(world.firstMonthOfferEnabled)} className="world-settings-item is-switch" onClick={() => updateWorld({ firstMonthOfferEnabled: !world.firstMonthOfferEnabled })} type="button"><span className="world-settings-status" /><span className="world-settings-copy"><b>{__msg("creator.firstMonth50")}</b><small>{__msg("creator.convertsTheHesitantSmarterThanRefunds")}</small></span><i aria-hidden="true" className={world.firstMonthOfferEnabled ? "is-on" : ""}><u /></i></button>
         </div> : null}
       </section> : null}
 
-      {!experience ? <button aria-label="Add World description" className="world-prototype-summary is-editable world-create-summary" onClick={() => setWorldCreateSheet("description")} type="button">
-        <span className={world.description ? "" : "is-placeholder"}>{world.description || "Add a description for your World."}</span><FiEdit3 />
+      {!experience ? <button aria-label={__msg("creator.addWorldDescription")} className="world-prototype-summary is-editable world-create-summary" onClick={() => setWorldCreateSheet("description")} type="button">
+        <span className={world.description ? "" : "is-placeholder"}>{world.description || __msg("creator.addADescriptionForYourWorld")}</span><FiEdit3 />
       </button> : null}
 
       <section className="world-prototype-inside world-create-experiences">
-        <h2>Experiences inside</h2>
-        <p>Attach an Experience — members get it with the subscription.</p>
-        <button className="world-prototype-include-experience" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> Include an experience</button>
+        <h2>{__msg("creator.experiencesInside")}</h2>
+        <p>{__msg("creator.attachAnExperienceMembersGetItWithTheSubscription")}</p>
+        <button className="world-prototype-include-experience" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> {__msg("creator.includeAnExperience")}</button>
       </section>
 
       {!experience ? <section className="world-prototype-comments world-create-comments-preview">
-        <h2>Comments</h2>
-        {world.commentsEnabled !== false ? <form onSubmit={(event) => event.preventDefault()}><input disabled placeholder="Comments become available after publishing" /><button aria-label="Post comment" disabled type="button"><FiArrowUpRight /></button></form> : <p className="world-prototype-empty-comments">Comments are turned off.</p>}
+        <h2>{__msg("admin.comments")}</h2>
+        {world.commentsEnabled !== false ? <form onSubmit={(event) => event.preventDefault()}><input disabled placeholder={__msg("creator.commentsBecomeAvailableAfterPublishing")} /><button aria-label={__msg("creator.postComment")} disabled type="button"><FiArrowUpRight /></button></form> : <p className="world-prototype-empty-comments">{__msg("creator.commentsAreTurnedOff")}</p>}
       </section> : null}
 
-      {worldCreateSheet === "name" ? <WorldCreateTextSheet busy={saving} description="One World per creator. The name carries your stories, experiences, and private access." label="name" maxLength={30} onClose={() => setWorldCreateSheet("")} onSave={(title) => { updateWorld({ title }); setWorldCreateSheet(""); }} placeholder="Name your World" title="Name your World" value={world.title} /> : null}
-      {worldCreateSheet === "description" ? <WorldCreateTextSheet busy={saving} description="One honest paragraph. People see it right under your World settings." label="description" maxLength={300} onClose={() => setWorldCreateSheet("")} onSave={(description) => { updateWorld({ description, summary: description }); setWorldCreateSheet(""); }} placeholder="Describe what members will experience" title="Describe your World" value={world.description} /> : null}
+      {worldCreateSheet === "name" ? <WorldCreateTextSheet busy={saving} description={__msg("creator.oneWorldPerCreatorTheNameCarriesYourStories")} label={__msg("creator.name")} maxLength={30} onClose={() => setWorldCreateSheet("")} onSave={(title) => { updateWorld({ title }); setWorldCreateSheet(""); }} placeholder={__msg("creator.nameYourWorld")} title={__msg("creator.nameYourWorld")} value={world.title} /> : null}
+      {worldCreateSheet === "description" ? <WorldCreateTextSheet busy={saving} description={__msg("creator.oneHonestParagraphPeopleSeeItRightUnderYour")} label={__msg("creator.description")} maxLength={300} onClose={() => setWorldCreateSheet("")} onSave={(description) => { updateWorld({ description, summary: description }); setWorldCreateSheet(""); }} placeholder={__msg("creator.describeWhatMembersWillExperience")} title={__msg("creator.describeYourWorld")} value={world.description} /> : null}
 
       {worldCreateSheet === "price" ? (
         <WorldCreatePriceSheet busy={saving} currentPrice={world.pricing?.starsAmount} onClose={() => setWorldCreateSheet("")} onSave={(price) => { updateWorld({ pricing: { mode: "MONTHLY", presetId: `MONTHLY_${price}`, starsAmount: price } }); setWorldCreateSheet(""); }} />
       ) : null}
 
       <div className="world-publish-actionbar">
-        {error ? <p aria-live="assertive" className="world-publish-error">{error}</p> : null}
-        <button disabled={saving || submitting} onClick={leaveComposer} type="button">Cancel</button>
-        <button disabled={saving || uploading || submitting} onClick={() => saveDraft()} type="button">{saving ? "Saving…" : "Save draft"}</button>
-        <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? "Publishing…" : "Publish World"}</button>
+        {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
+        <button disabled={saving || submitting} onClick={leaveComposer} type="button">{__msg("admin.cancel")}</button>
+        <button disabled={saving || uploading || submitting} onClick={() => saveDraft()} type="button">{saving ? __msg("financial.saving") : __msg("publication.saveDraft")}</button>
+        <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? __msg("creator.publishing_74f811") : __msg("creator.publishWorld")}</button>
       </div>
     </article>
     </>

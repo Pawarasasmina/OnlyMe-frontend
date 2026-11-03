@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -88,28 +92,28 @@ const LEGACY_ROUTES = {
 };
 
 const LEDGER_COPY = {
-  OPENING_BALANCE: "Opening balance",
-  CREDIT_ADMIN: "Wallet credit",
-  CREDIT_TEST: "Test wallet credit",
-  WORLD_PURCHASE_DEBIT: "You unlocked a World",
-  WORLD_CREATOR_EARNING: "World earning",
-  PREMIUM_JOIN_DEBIT: "You unlocked a Premium World",
-  PREMIUM_CREATOR_EARNING: "Premium World earning",
-  PREMIUM_RENEWAL_DEBIT: "Premium World renewal",
-  VERIFIED_CREATOR_DEBIT: "Verified Creator activation",
-  DREAM_GIFT_DEBIT: "Dream support sent",
-  DREAM_CREATOR_EARNING: "Dream support received",
-  CHAT_GIFT_DEBIT: "Gift sent",
-  CHAT_GIFT_EARNING: "Gift received",
-  DA_HOLD_DEBIT: "You opened Direct Access",
-  DA_CREATOR_EARNING: "Direct Access earning",
-  DA_REFUND_CREDIT: "Direct Access refund",
-  CALL_HOLD_DEBIT: "You requested a paid call",
-  CALL_CREATOR_EARNING: "Call earning",
-  CALL_REFUND_CREDIT: "Call refund",
-  REFUND_CREDIT: "Refund received",
-  CREATOR_EARNING_REVERSAL: "Creator earning reversal",
-  MANUAL_ADJUSTMENT: "Wallet adjustment",
+  get OPENING_BALANCE() { return __msg("fan.openingBalance"); },
+  get CREDIT_ADMIN() { return __msg("fan.walletCredit"); },
+  get CREDIT_TEST() { return __msg("fan.testWalletCredit"); },
+  get WORLD_PURCHASE_DEBIT() { return __msg("fan.youUnlockedAWorld"); },
+  get WORLD_CREATOR_EARNING() { return __msg("fan.worldEarning"); },
+  get PREMIUM_JOIN_DEBIT() { return __msg("fan.youUnlockedAPremiumWorld"); },
+  get PREMIUM_CREATOR_EARNING() { return __msg("fan.premiumWorldEarning"); },
+  get PREMIUM_RENEWAL_DEBIT() { return __msg("fan.premiumWorldRenewal"); },
+  get VERIFIED_CREATOR_DEBIT() { return __msg("fan.verifiedCreatorActivation"); },
+  get DREAM_GIFT_DEBIT() { return __msg("fan.dreamSupportSent"); },
+  get DREAM_CREATOR_EARNING() { return __msg("fan.dreamSupportReceived"); },
+  get CHAT_GIFT_DEBIT() { return __msg("fan.giftSent"); },
+  get CHAT_GIFT_EARNING() { return __msg("social.giftReceived"); },
+  get DA_HOLD_DEBIT() { return __msg("fan.youOpenedDirectAccess"); },
+  get DA_CREATOR_EARNING() { return __msg("fan.directAccessEarning"); },
+  get DA_REFUND_CREDIT() { return __msg("fan.directAccessRefund"); },
+  get CALL_HOLD_DEBIT() { return __msg("fan.youRequestedAPaidCall"); },
+  get CALL_CREATOR_EARNING() { return __msg("fan.callEarning"); },
+  get CALL_REFUND_CREDIT() { return __msg("fan.callRefund"); },
+  get REFUND_CREDIT() { return __msg("fan.refundReceived"); },
+  get CREATOR_EARNING_REVERSAL() { return __msg("fan.creatorEarningReversal"); },
+  get MANUAL_ADJUSTMENT() { return __msg("fan.walletAdjustment"); },
 };
 
 const EMPTY_COPY = {
@@ -154,10 +158,10 @@ function titleCase(value = "") {
 function cleanText(value = "") {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (!text) return "";
-  if (text === "DA CREATOR EARNING") return "Direct Access earning";
-  if (text === "DA HOLD DEBIT") return "Direct Access purchase";
-  if (text === "CALL CREATOR EARNING") return "Call earning";
-  if (text === "CALL HOLD DEBIT") return "Paid call request";
+  if (text === "DA CREATOR EARNING") return __msg("fan.directAccessEarning");
+  if (text === "DA HOLD DEBIT") return __msg("fan.directAccessPurchase");
+  if (text === "CALL CREATOR EARNING") return __msg("fan.callEarning");
+  if (text === "CALL HOLD DEBIT") return __msg("fan.paidCallRequest");
   if (/^[A-Z0-9_ -]+$/.test(text) && /[A-Z]/.test(text)) return titleCase(text);
   return text;
 }
@@ -166,7 +170,7 @@ function isGiftThanksActivity(item) {
   return /gift.*thank|thank.*gift/i.test(`${item?.type || ""} ${item?.title || ""} ${item?.description || ""}`);
 }
 
-function creatorName(creator, fallback = "Someone") {
+function creatorName(creator, fallback = __msg("fan.someone")) {
   return creator?.displayName || creator?.name || creator?.username || fallback;
 }
 
@@ -191,45 +195,45 @@ function previewForLedger(entry) {
 
 function ledgerTitle(entry) {
   const event = entry.event || "";
-  const counterparty = creatorName(entry.counterparty, Number(entry.starsChange) < 0 ? "a creator" : "Someone");
+  const counterparty = creatorName(entry.counterparty, Number(entry.starsChange) < 0 ? __msg("fan.aCreator") : __msg("fan.someone"));
   const publicationTitle = previewForLedger(entry);
-  const giftName = entry.metadata?.giftName || "a gift";
+  const giftName = entry.metadata?.giftName || __msg("stories.aGift");
 
   switch (event) {
     case "WORLD_PURCHASE_DEBIT":
-      return publicationTitle ? `You unlocked ${counterparty}'s World` : "You unlocked a World";
+      return publicationTitle ? __msg("fan.youUnlockedValue0SWorld", { value0: counterparty }) : __msg("fan.youUnlockedAWorld");
     case "WORLD_CREATOR_EARNING":
-      return entry.counterparty ? `${counterparty} unlocked your World` : "World earning";
+      return entry.counterparty ? __msg("fan.value0UnlockedYourWorld", { value0: counterparty }) : __msg("fan.worldEarning");
     case "PREMIUM_JOIN_DEBIT":
-      return `You unlocked ${counterparty}'s Premium World`;
+      return __msg("fan.youUnlockedValue0SPremiumWorld", { value0: counterparty });
     case "PREMIUM_RENEWAL_DEBIT":
-      return `You renewed ${counterparty}'s Premium World`;
+      return __msg("fan.youRenewedValue0SPremiumWorld", { value0: counterparty });
     case "PREMIUM_CREATOR_EARNING":
-      return entry.counterparty ? `${counterparty} unlocked your Premium World` : "Premium World earning";
+      return entry.counterparty ? __msg("fan.value0UnlockedYourPremiumWorld", { value0: counterparty }) : __msg("fan.premiumWorldEarning");
     case "DREAM_GIFT_DEBIT":
-      return `You sent ${giftName} toward ${counterparty}'s Dream`;
+      return __msg("fan.youSentValue0TowardValue1SDream", { value0: giftName, value1: counterparty });
     case "DREAM_CREATOR_EARNING":
-      return `${counterparty} sent ${giftName} toward your Dream`;
+      return __msg("fan.value0SentValue1TowardYourDream", { value0: counterparty, value1: giftName });
     case "CHAT_GIFT_DEBIT":
-      return `You sent a gift to ${counterparty}`;
+      return __msg("fan.youSentAGiftToValue0", { value0: counterparty });
     case "CHAT_GIFT_EARNING":
-      return `${counterparty} sent you a gift`;
+      return __msg("fan.value0SentYouAGift", { value0: counterparty });
     case "DA_HOLD_DEBIT":
-      return `You opened Direct Access with ${counterparty}`;
+      return __msg("fan.youOpenedDirectAccessWithValue0", { value0: counterparty });
     case "DA_CREATOR_EARNING":
-      return entry.counterparty ? `${counterparty} booked Direct Access` : "Direct Access earning";
+      return entry.counterparty ? __msg("fan.value0BookedDirectAccess", { value0: counterparty }) : __msg("fan.directAccessEarning");
     case "DA_REFUND_CREDIT":
-      return "Direct Access refund";
+      return __msg("fan.directAccessRefund");
     case "CALL_HOLD_DEBIT":
-      return `You requested a paid call with ${counterparty}`;
+      return __msg("fan.youRequestedAPaidCallWithValue0", { value0: counterparty });
     case "CALL_CREATOR_EARNING":
-      return entry.counterparty ? `${counterparty} completed a paid call` : "Call earning";
+      return entry.counterparty ? __msg("fan.value0CompletedAPaidCall", { value0: counterparty }) : __msg("fan.callEarning");
     case "CALL_REFUND_CREDIT":
-      return "Call refund";
+      return __msg("fan.callRefund");
     case "VERIFIED_CREATOR_DEBIT":
-      return "Verified Creator activation";
+      return __msg("fan.verifiedCreatorActivation");
     default:
-      return LEDGER_COPY[event] || titleCase(event || "Stars activity");
+      return LEDGER_COPY[event] || titleCase(event || __msg("fan.starsActivity"));
   }
 }
 
@@ -300,10 +304,10 @@ function normalizeLegacyActivity(item) {
   const filterKeys = inferFilterKeys(item, direction);
   const warning = item.type === "moderation_warning";
   const actor = item.relatedCreator || item.actor || null;
-  const originalDescription = warning ? (item.title || "Account warning") : cleanText(item.title || item.description || item.type || "Activity");
-  const actorName = actor?.displayName || actor?.name || actor?.username || originalDescription.match(/^(.+?) thanked you/i)?.[1] || "Someone";
-  const description = isGiftThanksActivity(item) ? `${actorName} thanked you for your gift` : originalDescription;
-  const preview = cleanText(item.preview || item.relatedContent?.title || item.target?.preview || item.message || (item.type === "story_mention" && direction === "received" ? "Tap to add it to your story" : ""));
+  const originalDescription = warning ? (item.title || __msg("layouts.accountWarning")) : cleanText(item.title || item.description || item.type || __msg("social.activity"));
+  const actorName = actor?.displayName || actor?.name || actor?.username || originalDescription.match(/^(.+?) thanked you/i)?.[1] || __msg("fan.someone");
+  const description = isGiftThanksActivity(item) ? __msg("fan.value0ThankedYouForYourGift", { value0: actorName }) : originalDescription;
+  const preview = cleanText(item.preview || item.relatedContent?.title || item.target?.preview || item.message || (item.type === "story_mention" && direction === "received" ? __msg("fan.tapToAddItToYourStory") : ""));
 
   return {
     ...item,
@@ -386,14 +390,14 @@ function aggregateReceivedActivity(items) {
     if (group.length < 2) return;
     const latest = [...group].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
     const people = group.map((item) => item.relatedCreator).filter(Boolean);
-    const names = people.map((person) => person.displayName || person.name || person.username || "Someone");
+    const names = people.map((person) => person.displayName || person.name || person.username || __msg("fan.someone"));
     const leadNames = names.slice(0, 2).join(", ");
     const more = Math.max(0, group.length - 2);
     passthrough.push({
       ...latest,
       id: `profile-seen-group-${dayKey}`,
       type: "profile_seen_group",
-      title: `${leadNames}${more ? ` and ${more} more` : ""} said “I see you” 🔁`,
+      title: __msg("fan.value0Value1SaidISeeYou", { value0: leadNames, value1: more ? ` and ${more} more` : "" }),
       relatedCreator: null,
       relatedCreators: people,
       actor: null,
@@ -437,10 +441,10 @@ function aggregateReceivedActivity(items) {
     const names = people.slice(0, 2).map((person) => person.displayName || person.name || person.username).filter(Boolean);
     const lead = names.length ? `${names.join(", ")}${group.length > 2 ? ` and ${group.length - 2} others` : ""}` : `${group.length} people`;
     const verbs = {
-      save: `saved your ${targetLabel}`,
-      reaction: `reacted to your ${targetLabel}`,
-      comment: `commented on your ${targetLabel}`,
-      share: `reposted your ${targetLabel}`,
+      save: __msg("fan.savedYourValue0", { value0: targetLabel }),
+      reaction: __msg("fan.reactedToYourValue0", { value0: targetLabel }),
+      comment: __msg("fan.commentedOnYourValue0", { value0: targetLabel }),
+      share: __msg("fan.repostedYourValue0", { value0: targetLabel }),
     };
 
     passthrough.push({
@@ -531,7 +535,7 @@ function displayAmount(item, starsPerUsd) {
     : Math.abs(value) / (rate > 0 ? rate : 10);
   return {
     className: value < 0 ? "is-sent" : "",
-    label: `${value > 0 ? "+" : "-"}${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usd)}`,
+    label: `${value > 0 ? "+" : "-"}${new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usd)}`,
   };
 }
 
@@ -540,12 +544,13 @@ function canPersistAcknowledge(item) {
 }
 
 function ActivityAvatar({ item }) {
+  __useUiLanguage();
   const creator = item.relatedCreator;
   const Icon = iconFor(item);
 
   if (item.relatedCreators?.length) {
     return (
-      <span className="activity-avatar-stack" aria-label={`${item.relatedCreators.length} people`}>
+      <span className="activity-avatar-stack" aria-label={__msg("fan.people", { value0: item.relatedCreators.length })}>
         {item.relatedCreators.slice(0, item.type === "profile_seen_group" ? 3 : 2).map((person, index) => (
           <FanAvatar
             className="activity-person-avatar"
@@ -578,16 +583,17 @@ function ActivityAvatar({ item }) {
 }
 
 function ActivityTitle({ item }) {
-  const title = item.title || "Activity";
+  __useUiLanguage();
+  const title = item.title || __msg("social.activity");
   const actorName = item.relatedCreator?.displayName || item.relatedCreator?.name || item.relatedCreator?.username || "";
   const titleMark = titleMarkFor(item);
   const actionIcon = titleMark && !title.includes(titleMark) ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
 
   if (item.type === "profile_seen_group" && item.relatedCreators?.length) {
-    const names = item.relatedCreators.map((person) => person.displayName || person.name || person.username || "Someone");
+    const names = item.relatedCreators.map((person) => person.displayName || person.name || person.username || __msg("fan.someone"));
     const leadNames = names.slice(0, 2).join(", ");
     const more = Math.max(0, Number(item.aggregate?.count || names.length) - 2);
-    return <p><b>{leadNames}</b>{more ? <> and <b>{more} more</b></> : null} said “I see you”</p>;
+    return <p><b>{leadNames}</b>{more ? <> {__msg("fan.and")} <b>{more} {__msg("fan.more")}</b></> : null} {__msg("profile.saidISeeYou")}</p>;
   }
 
   if (actorName && title.startsWith(actorName)) {
@@ -616,6 +622,7 @@ function ActivityTitle({ item }) {
 }
 
 function ActivityItem({ item, onOpen, starsPerUsd }) {
+  __useUiLanguage();
   const amount = item.direction === "received" ? displayAmount(item, starsPerUsd) : null;
   const route = routeFor(item);
   const interactive = isGiftActivity(item) || Boolean(route);
@@ -644,7 +651,7 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
       <ActivityAvatar item={item} />
 
       <div className="activity-prototype-copy">
-        {item.warning ? <strong>{"HIGH PRIORITY \u00b7 ACCOUNT WARNING"}</strong> : null}
+        {item.warning ? <strong>{__msg("fan.highPriorityAccountWarning")}</strong> : null}
         <ActivityTitle item={item} />
         {item.preview && !isGiftThanksActivity(item) ? <span className="activity-prototype-preview">&quot;{item.preview}&quot;</span> : null}
         <time dateTime={item.createdAt ? new Date(item.createdAt).toISOString() : undefined}>{relativeTime(item.createdAt)}{item.type === "profile_seen_group" ? ` · ${item.aggregate?.count || 0}` : ""}</time>
@@ -653,26 +660,28 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
       <div className="activity-prototype-right">
         {item.type === "follow" && item.direction === "received" && item.relatedCreator?.username ? <ActivityFollowAction username={item.relatedCreator.username} /> : null}
         <ActivityContentPreview item={item} />
-        {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || "Gift"} className="activity-prototype-gift" src={giftImageUrl} /> : null}
+        {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || __msg("fan.gift")} className="activity-prototype-gift" src={giftImageUrl} /> : null}
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
-        {item.direction === "received" && (/mutual/i.test(item.type || "") || /see each other/i.test(item.title || "")) ? <span className="activity-mutual-eye" aria-label="You see each other"><ActivityEyeMark /></span> : null}
+        {item.direction === "received" && (/mutual/i.test(item.type || "") || /see each other/i.test(item.title || "")) ? <span className="activity-mutual-eye" aria-label={__msg("fan.youSeeEachOther")}><ActivityEyeMark /></span> : null}
       </div>
     </article>
   );
 }
 
 function ActivitySkeleton() {
+  __useUiLanguage();
   return (
     <div className="activity-prototype-skeleton" role="status">
       {Array.from({ length: 8 }).map((_, index) => <span key={index} />)}
-      <span className="sr-only">Loading activity</span>
+      <span className="sr-only">{__msg("fan.loadingActivity")}</span>
     </div>
   );
 }
 
 function ActivityEmptyState({ direction, filter, onOpenOrbit }) {
+  __useUiLanguage();
   const [title, description] = filter === "mentions"
-    ? ["No mentions yet", direction === "sent" ? "People you mention in your stories will appear here." : "When someone mentions you, it will appear here."]
+    ? ["No mentions yet", direction === "sent" ? __msg("fan.peopleYouMentionInYourStoriesWillAppear") : __msg("fan.whenSomeoneMentionsYouItWillAppearHere")]
     : direction === "sent" && filter !== "all"
     ? EMPTY_COPY.purchases
     : EMPTY_COPY[filter] || EMPTY_COPY.all;
@@ -682,12 +691,13 @@ function ActivityEmptyState({ direction, filter, onOpenOrbit }) {
       <FiClock aria-hidden="true" />
       <strong>{title}</strong>
       <p>{description}</p>
-      {filter === "seen" ? <button onClick={onOpenOrbit} type="button">Open your Orbit</button> : null}
+      {filter === "seen" ? <button onClick={onOpenOrbit} type="button">{__msg("fan.openYourOrbit")}</button> : null}
     </div>
   );
 }
 
 function ActivityEyeMark() {
+  __useUiLanguage();
   return <svg aria-hidden="true" className="activity-eye-mark" viewBox="0 0 64 40">
     <path d="M2 20C14 3 50 3 62 20C50 37 14 37 2 20Z" fill="currentColor" />
     <circle cx="32" cy="20" r="8.5" fill="#0A0C0F" />
@@ -695,8 +705,9 @@ function ActivityEyeMark() {
 }
 
 function FilterChips({ filter, filters, onChange }) {
+  __useUiLanguage();
   return (
-    <div className="activity-prototype-filters" aria-label="Activity filters">
+    <div className="activity-prototype-filters" aria-label={__msg("fan.activityFilters")}>
       {filters.map(([label, value]) => (
         <button
           aria-pressed={filter === value}
@@ -714,6 +725,7 @@ function FilterChips({ filter, filters, onChange }) {
 }
 
 export default function ActivityPage() {
+  __useUiLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -858,35 +870,31 @@ export default function ActivityPage() {
       {previewGift ? <ActivityGiftPreview activity={previewGift} key={previewGift.id} onClose={closeGiftPreview} /> : null}
       {previewMention ? <StoryMentionSheet item={previewMention} key={previewMention.id} onClose={() => setPreviewMention(null)} /> : null}
       <header className="activity-prototype-header">
-        <button className="activity-prototype-back" aria-label="Go back" onClick={goBack} type="button">
-          <FiArrowLeft aria-hidden="true" />
+        <button className="activity-prototype-back" aria-label={__msg("profile.goBack")} onClick={goBack} type="button">
+          <FiArrowLeft data-ui-directional="true" aria-hidden="true" />
         </button>
-        {introOpen ? <><p>Reactions, people and earnings &mdash; everything that found you</p><button className="activity-prototype-dismiss" aria-label="Dismiss Activity introduction" onClick={() => { try { localStorage.setItem("atseen_activity_intro_dismissed", "1"); } catch { /* best effort */ } setIntroOpen(false); }} type="button">&times;</button></> : null}
+        {introOpen ? <><p>{__msg("fan.reactionsPeopleAndEarningsEverythingThatFoundYou")}</p><button className="activity-prototype-dismiss" aria-label={__msg("fan.dismissActivityIntroduction")} onClick={() => { try { localStorage.setItem("atseen_activity_intro_dismissed", "1"); } catch { /* best effort */ } setIntroOpen(false); }} type="button">&times;</button></> : null}
       </header>
 
-      <div className="activity-prototype-segment" aria-label="Activity direction" role="tablist">
+      <div className="activity-prototype-segment" aria-label={__msg("fan.activityDirection")} role="tablist">
         <button
           aria-selected={direction === "received"}
           className={direction === "received" ? "is-active" : ""}
           onClick={() => updateSearch("received")}
           role="tab"
           type="button"
-        >
-          Received
-        </button>
+        >{__msg("fan.received")}</button>
         <button
           aria-selected={direction === "sent"}
           className={direction === "sent" ? "is-active" : ""}
           onClick={() => updateSearch("sent")}
           role="tab"
           type="button"
-        >
-          Sent
-        </button>
+        >{__msg("fan.sent")}</button>
       </div>
 
       <p className="activity-prototype-direction-help">
-        {direction === "received" ? "What reached you — others did this" : "What you did — this is what they receive"}
+        {direction === "received" ? __msg("fan.whatReachedYouOthersDidThis") : __msg("fan.whatYouDidThisIsWhatTheyReceive")}
       </p>
 
       <FilterChips filter={filter} filters={filters} onChange={(nextFilter) => updateSearch(direction, nextFilter)} />
@@ -895,10 +903,10 @@ export default function ActivityPage() {
         <button className="activity-wallet-card" onClick={() => navigate("/wallet")} type="button">
           <FiZap aria-hidden="true" />
           <span>
-            <strong>{Number(walletQuery.data?.balance || 0).toLocaleString()} Stars</strong>
-            <small>Wallet balance</small>
+            <strong>{Number(walletQuery.data?.balance || 0).toLocaleString(__uiLocale())} {__msg("admin.stars")}</strong>
+            <small>{__msg("fan.walletBalance")}</small>
           </span>
-          <FiChevronRight aria-hidden="true" />
+          <FiChevronRight data-ui-directional="true" aria-hidden="true" />
         </button>
       ) : null}
 
@@ -909,18 +917,18 @@ export default function ActivityPage() {
               {todaySeenPeople.slice(0, 3).map((person, index) => <FanAvatar key={person.id || person.username || index} name={creatorName(person)} size="h-[26px] w-[26px]" src={person.avatarUrl || person.avatar} />)}
             </span>
             <span className="activity-today-seen-copy">
-              <span><b>{todaySeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(", ")}</b>{todaySeenCount > 2 ? ` and ${todaySeenCount - 2} more` : ""} said &ldquo;I see you&rdquo; <span aria-hidden="true">💫</span></span>
-              <small>today &middot; {todaySeenCount}</small>
+              <span><b>{todaySeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(", ")}</b>{todaySeenCount > 2 ? __msg("fan.andMore", { value0: todaySeenCount - 2 }) : ""} {__msg("profile.saidISeeYou")} <span aria-hidden="true">💫</span></span>
+              <small>{__msg("fan.today")} {todaySeenCount}</small>
             </span>
-            <FiChevronRight aria-hidden="true" />
+            <FiChevronRight data-ui-directional="true" aria-hidden="true" />
           </button>
         ) : null}
         {!loading && sentSeenPeople.length ? (
           <article className="activity-prototype-row">
             <ActivityAvatar item={{ relatedCreators: sentSeenPeople }} />
             <div className="activity-prototype-copy">
-              <p>You said &ldquo;I see you&rdquo; &mdash; <b>{sentSeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(" and ")}</b>{sentSeenPeople.length > 2 ? ` and ${sentSeenPeople.length - 2} more` : ""}</p>
-              <span className="activity-sent-seen-meta">they see it in their activity &middot; {sentSeenPeople.length}</span>
+              <p>{__msg("fan.youSaidISeeYou")} <b>{sentSeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(" and ")}</b>{sentSeenPeople.length > 2 ? __msg("fan.andMore", { value0: sentSeenPeople.length - 2 }) : ""}</p>
+              <span className="activity-sent-seen-meta">{__msg("fan.theySeeItInTheirActivity")} {sentSeenPeople.length}</span>
             </div>
           </article>
         ) : null}
@@ -928,17 +936,15 @@ export default function ActivityPage() {
         {failed ? (
           <div className="activity-prototype-state">
             <FiRefreshCw aria-hidden="true" />
-            <strong>Could not load activity.</strong>
-            <p>Try again when the connection settles.</p>
+            <strong>{__msg("fan.couldNotLoadActivity")}</strong>
+            <p>{__msg("fan.tryAgainWhenTheConnectionSettles")}</p>
             <button
               onClick={() => {
                 activityQuery.refetch();
                 ledgerQuery.refetch();
               }}
               type="button"
-            >
-              Try again
-            </button>
+            >{__msg("discover.tryAgain")}</button>
           </div>
         ) : null}
         {!loading && !failed ? listItems.map((item) => (
@@ -974,9 +980,7 @@ export default function ActivityPage() {
           <ActivityEmptyState direction={direction} filter={filter} onOpenOrbit={() => navigate("/orbit")} />
         ) : null}
         {!loading && !failed && visible.length && hasMore ? (
-          <button className="activity-load-more" onClick={() => setPage((current) => current + 1)} type="button">
-            Load more
-          </button>
+          <button className="activity-load-more" onClick={() => setPage((current) => current + 1)} type="button">{__msg("fan.loadMore")}</button>
         ) : null}
       </section>
     </main>

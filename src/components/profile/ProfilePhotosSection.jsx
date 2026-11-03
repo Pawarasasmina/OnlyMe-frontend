@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -9,6 +13,7 @@ import ProfilePhotoViewer from "./ProfilePhotoViewer";
 import "./ProfilePhotos.css";
 
 export default function ProfilePhotosSection({ initialMedia = [], isOwner, username, profile = {} }) {
+  __useUiLanguage();
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [file, setFile] = useState(null);
@@ -21,25 +26,25 @@ export default function ProfilePhotosSection({ initialMedia = [], isOwner, usern
   const items = useMemo(() => (query.data?.media || []).filter(item => (item.type || item.mediaType || "image") !== "video").sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)), [query.data]);
   useEffect(() => { const photo = params.get("photo"); if (!photo) openedLink.current = ""; else if (openedLink.current !== photo && items.some(item => item.id === photo)) { openedLink.current = photo; setActiveId(photo); } }, [params, items]);
   const refresh = () => { client.invalidateQueries({ queryKey: key }); client.invalidateQueries({ queryKey: ["unified-profile"] }); };
-  const upload = useMutation({ mutationFn: nextFile => profileService.addProfileMedia(nextFile), onSuccess: () => { setFile(null); setError(""); refresh(); }, onError: failure => setError(failure.response?.data?.message || "Could not add your photo. Please try again.") });
+  const upload = useMutation({ mutationFn: nextFile => profileService.addProfileMedia(nextFile), onSuccess: () => { setFile(null); setError(""); refresh(); }, onError: failure => setError(failure.response?.data?.message || __msg("profile.couldNotAddYourPhotoPleaseTryAgain")) });
   const remove = useMutation({ mutationFn: photo => profileService.removeProfileMedia(photo.id), onSuccess: (_response, photo) => {
     const index = items.findIndex(item => item.id === photo.id);
     const remaining = items.filter(item => item.id !== photo.id);
     client.setQueryData(key, current => ({ ...current, media: (current?.media || []).filter(item => item.id !== photo.id) }));
     setActiveId(remaining[Math.min(index, remaining.length - 1)]?.id || ""); refresh();
-  }, onError: failure => setError(failure.response?.data?.message || "Could not delete the photo.") });
+  }, onError: failure => setError(failure.response?.data?.message || __msg("profile.couldNotDeleteThePhoto")) });
   const close = () => { setActiveId(""); if (params.has("photo")) { const next = new URLSearchParams(params); next.delete("photo"); setParams(next, { replace: true }); } };
   if (!isOwner && !items.length && !query.isError) return null;
   return <section className="profile-photos-prototype">
-    <h2>Photos</h2>
-    <input accept="image/jpeg,image/png,image/webp" aria-label="Upload profile photo" className="sr-only" onChange={event => { const next = event.target.files?.[0]; event.target.value = ""; if (!next) return; if (!["image/jpeg", "image/png", "image/webp"].includes(next.type)) { setError("Choose a JPEG, PNG, or WebP photo."); return; } setError(""); setFile(next); }} ref={input} type="file" />
+    <h2>{__msg("profile.photos")}</h2>
+    <input accept="image/jpeg,image/png,image/webp" aria-label={__msg("profile.uploadProfilePhoto")} className="sr-only" onChange={event => { const next = event.target.files?.[0]; event.target.value = ""; if (!next) return; if (!["image/jpeg", "image/png", "image/webp"].includes(next.type)) { setError(__msg("profile.chooseAJpegPngOrWebpPhoto")); return; } setError(""); setFile(next); }} ref={input} type="file" />
     <div className="profile-photos-strip">
-      {isOwner ? <button aria-label="Add photo" className="profile-photos-add" onClick={() => input.current?.click()} type="button"><FiPlus /></button> : null}
-      {items.map((item, index) => <button aria-label={`Open photo ${index + 1}`} className="profile-photos-tile" key={item.id} onClick={() => setActiveId(item.id)} type="button"><img alt={item.caption || "Profile photo"} loading="lazy" src={resolveMediaUrl(item.thumbnailUrl || item.url || item.mediaUrl)} /></button>)}
+      {isOwner ? <button aria-label={__msg("profile.addPhoto")} className="profile-photos-add" onClick={() => input.current?.click()} type="button"><FiPlus /></button> : null}
+      {items.map((item, index) => <button aria-label={__msg("profile.openPhoto", { value0: index + 1 })} className="profile-photos-tile" key={item.id} onClick={() => setActiveId(item.id)} type="button"><img alt={item.caption || __msg("profile.profilePhoto_33f385")} loading="lazy" src={resolveMediaUrl(item.thumbnailUrl || item.url || item.mediaUrl)} /></button>)}
     </div>
-    {query.isError ? <p className="photo-error">Unable to load photos. <button onClick={() => query.refetch()} type="button">Retry</button></p> : null}
-    {error && !file ? <p className="photo-error" role="alert">{error}</p> : null}
-    {file ? <PhotoCropSheet error={error} file={file} onClose={() => { if (!upload.isPending) { setFile(null); setError(""); } }} onSave={nextFile => upload.mutateAsync(nextFile)} saving={upload.isPending} /> : null}
-    <ProfilePhotoViewer active={items.find(item => item.id === activeId)} error={error} isOwner={isOwner} items={items} onClose={close} onRemove={photo => remove.mutate(photo)} onSelect={photo => setActiveId(photo.id)} profile={{ ...profile, username }} />
+    {query.isError ? <p className="photo-error">{__msg("profile.unableToLoadPhotos")} <button onClick={() => query.refetch()} type="button">{__msg("activity.retry")}</button></p> : null}
+    {error && !file ? <p className="photo-error" role="alert">{__systemMessage(error)}</p> : null}
+    {file ? <PhotoCropSheet error={__systemMessage(error)} file={file} onClose={() => { if (!upload.isPending) { setFile(null); setError(""); } }} onSave={nextFile => upload.mutateAsync(nextFile)} saving={upload.isPending} /> : null}
+    <ProfilePhotoViewer active={items.find(item => item.id === activeId)} error={__systemMessage(error)} isOwner={isOwner} items={items} onClose={close} onRemove={photo => remove.mutate(photo)} onSelect={photo => setActiveId(photo.id)} profile={{ ...profile, username }} />
   </section>;
 }

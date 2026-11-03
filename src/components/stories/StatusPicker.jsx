@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import { FiArrowLeft, FiCheck, FiTrash2 } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
@@ -17,6 +20,7 @@ const FEATURED_PRESETS = [
 ];
 
 function StatusPicker({ activeStatus, isOpen, onClose, onStatusChange, profile }) {
+  __useUiLanguage();
   const { showToast } = useFanToast();
   const updateStatus = useUpdateStatus();
   const [customEmoji, setCustomEmoji] = useState(activeStatus?.isCustom ? activeStatus.emoji : "\uD83D\uDC41");
@@ -63,7 +67,7 @@ function StatusPicker({ activeStatus, isOpen, onClose, onStatusChange, profile }
 
   if (!isOpen) return null;
   const previewEmoji = selectedPreset === CUSTOM_STATUS_PRESET_KEY ? customEmoji : selectedPresetData?.emoji || activeStatus?.emoji || "\uD83D\uDC41";
-  const previewLabel = selectedPreset === CUSTOM_STATUS_PRESET_KEY ? customLabel : selectedPresetData?.label || activeStatus?.label || "Right now";
+  const previewLabel = selectedPreset === CUSTOM_STATUS_PRESET_KEY ? customLabel : selectedPresetData?.label || activeStatus?.label || __msg("constants.rightNow");
   const previewColor = selectedPreset === CUSTOM_STATUS_PRESET_KEY ? "#9CCBFF" : selectedPresetData?.color || activeStatus?.color || "#9CCBFF";
   const displayPresets = STATUS_PRESET_OPTIONS.filter((preset) => FEATURED_PRESETS.includes(preset.presetKey));
 
@@ -71,8 +75,8 @@ function StatusPicker({ activeStatus, isOpen, onClose, onStatusChange, profile }
     <div aria-modal="true" className="status-picker-page" onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="dialog">
       <section className="status-picker-panel" style={{ "--status-preview-color": previewColor }}>
         <header className="status-picker-header">
-          <button aria-label="Back to profile" disabled={updateStatus.isPending} onClick={onClose} type="button"><FiArrowLeft /></button>
-          <h2>Status</h2>
+          <button aria-label={__msg("profile.backToProfile")} disabled={updateStatus.isPending} onClick={onClose} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+          <h2>{__msg("financial.status")}</h2>
         </header>
 
         <div className="status-picker-preview">
@@ -81,24 +85,24 @@ function StatusPicker({ activeStatus, isOpen, onClose, onStatusChange, profile }
             <i aria-hidden="true">{previewEmoji || "\uD83D\uDC41"}</i>
           </span>
           <label className="status-picker-compose">
-            <span>Right now...</span>
+            <span>{__msg("stories.rightNow")}</span>
             <input
-              aria-label="Write status"
+              aria-label={__msg("stories.writeStatus")}
               maxLength={STATUS_LABEL_MAX_LENGTH}
               onChange={(event) => {
                 setCustomLabel(event.target.value.replace(/[<>]/g, ""));
                 setSelectedPreset(CUSTOM_STATUS_PRESET_KEY);
               }}
-              placeholder="Write a status"
+              placeholder={__msg("stories.writeAStatus")}
               value={customLabel}
             />
           </label>
-          <p>seen by people who open your profile</p>
+          <p>{__msg("stories.seenByPeopleWhoOpenYourProfile")}</p>
         </div>
 
         <div className="status-picker-custom-line">
-          <input aria-label="Status emoji" maxLength={4} onChange={(event) => { setCustomEmoji(event.target.value); setSelectedPreset(CUSTOM_STATUS_PRESET_KEY); }} value={customEmoji} />
-          <span>{previewLabel || "Add your status above"}</span>
+          <input aria-label={__msg("stories.statusEmoji")} maxLength={4} onChange={(event) => { setCustomEmoji(event.target.value); setSelectedPreset(CUSTOM_STATUS_PRESET_KEY); }} value={customEmoji} />
+          <span>{previewLabel || __msg("stories.addYourStatusAbove")}</span>
         </div>
 
         <div className="status-picker-grid">
@@ -129,14 +133,12 @@ function StatusPicker({ activeStatus, isOpen, onClose, onStatusChange, profile }
         <div className="status-picker-actions">
           {activeStatus ? (
             <button className="status-picker-clear" disabled={updateStatus.isPending} onClick={() => saveStatus({ clear: true })} type="button">
-              <FiTrash2 aria-hidden="true" />
-              Clear status
-            </button>
+              <FiTrash2 aria-hidden="true" />{__msg("stories.clearStatus")}</button>
           ) : null}
         </div>
 
         <button className="status-picker-show" disabled={!canPublish || updateStatus.isPending} onClick={publish} type="button">
-          {updateStatus.isPending ? "Showing..." : "Show"}
+          {updateStatus.isPending ? __msg("stories.showing") : __msg("stories.show")}
         </button>
       </section>
     </div>

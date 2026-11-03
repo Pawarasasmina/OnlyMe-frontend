@@ -1,4 +1,4 @@
-.invitation-message-card{display:block;width:244px;max-width:100%;margin:2px 0 12px;overflow:hidden;border:0;text-align:left;color:#fff;background:#1e2a3d;border-radius:20px 20px 6px 20px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+.invitation-message-card{display:block;width:244px;max-width:100%;margin:2px 0 12px;overflow:hidden;border:0;text-align:start;color:#fff;background:#1e2a3d;border-radius:20px 20px 6px 20px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
 .invitation-message-card.is-incoming{background:#1b2230;border-radius:20px 20px 20px 6px}
 .invitation-message-hero{display:flex;align-items:center;justify-content:center;aspect-ratio:1.91/1;background:radial-gradient(120% 120% at 50% 0%,#24344f,#0e141e)}
 .invitation-message-hero>.fan-avatar{width:64px;height:64px;box-shadow:0 0 0 3px rgba(156,203,255,.45)}

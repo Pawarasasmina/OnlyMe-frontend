@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiCheck, FiMapPin } from "react-icons/fi";
@@ -5,6 +9,7 @@ import { WALL_LOCATIONS } from "../../../data/wallLocations";
 import { searchService } from "../../../services/searchService";
 
 export default function WallLocationPicker({ anchorRef, location, onClose, onSelect }) {
+  __useUiLanguage();
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -64,7 +69,7 @@ export default function WallLocationPicker({ anchorRef, location, onClose, onSel
     const timer = window.setTimeout(() => {
       searchService.searchLocations({ q: search.trim(), language: navigator.language || "en" }, controller.signal)
         .then((items) => { if (!controller.signal.aborted) setResults(items); })
-        .catch((failure) => { if (!controller.signal.aborted) setError(failure?.response?.data?.message || "Could not search locations. Try again."); })
+        .catch((failure) => { if (!controller.signal.aborted) setError(failure?.response?.data?.message || __msg("fanWeb.couldNotSearchLocationsTryAgain")); })
         .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     }, 350);
     return () => { window.clearTimeout(timer); controller.abort(); };
@@ -76,22 +81,22 @@ export default function WallLocationPicker({ anchorRef, location, onClose, onSel
   const extras = results.filter((item) => !knownNames.has(item.name.toLowerCase()));
 
   return createPortal(<div className="wall-location-layer" style={position}>
-    <button aria-label="Close location picker" className="wall-location-scrim" tabIndex={-1} onClick={onClose} type="button" />
+    <button aria-label={__msg("fanWeb.closeLocationPicker")} className="wall-location-scrim" tabIndex={-1} onClick={onClose} type="button" />
     <section aria-labelledby="wall-location-title" aria-modal="true" className="wall-location-sheet" ref={sheet} role="dialog" tabIndex={-1}>
       <div aria-hidden="true" className="wall-location-handle" />
-      <h2 id="wall-location-title">Location</h2>
-      <p className="wall-location-subtitle">See what’s happening where you are.</p>
-      <label className="wall-location-search"><span className="sr-only">Search a country or city</span><input placeholder="Search a country or city" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+      <h2 id="wall-location-title">{__msg("fanWeb.location")}</h2>
+      <p className="wall-location-subtitle">{__msg("fanWeb.seeWhatSHappeningWhereYouAre")}</p>
+      <label className="wall-location-search"><span className="sr-only">{__msg("fanWeb.searchACountryOrCity")}</span><input placeholder={__msg("fanWeb.searchACountryOrCity")} value={search} onChange={(event) => setSearch(event.target.value)} /></label>
       <div className="wall-location-list" key={query}>
-        {showWorld ? <button aria-pressed={!selected} className="wall-location-row" onClick={() => choose("")} type="button"><span aria-hidden="true" className="wall-location-symbol">🌍</span><strong>Worldwide</strong>{check("")}</button> : null}
+        {showWorld ? <button aria-pressed={!selected} className="wall-location-row" onClick={() => choose("")} type="button"><span aria-hidden="true" className="wall-location-symbol">🌍</span><strong>{__msg("fanWeb.worldwide")}</strong>{check("")}</button> : null}
         {groups.map(({ code, name, cities }) => <div className="wall-location-group" key={code}>
           <button aria-pressed={selected === name.toLowerCase()} className="wall-location-row" onClick={() => choose(name, code)} type="button"><span aria-hidden="true" className="wall-location-symbol wall-location-code">{code}</span><strong>{name}</strong>{check(name)}</button>
           {cities.map((city) => <button aria-pressed={selected === city.toLowerCase()} className="wall-location-row wall-location-city" key={city} onClick={() => choose(`${city}, ${name}`, code)} type="button"><strong>{city}</strong>{check(city)}</button>)}
         </div>)}
-        {extras.map((item) => <button aria-pressed={location === item.label} className="wall-location-row" key={item.id || item.label} onClick={() => choose(item.label, item.code)} type="button"><span aria-hidden="true" className="wall-location-symbol wall-location-code">{item.code || <FiMapPin />}</span><span className="wall-location-live"><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>{location === item.label ? <FiCheck aria-hidden="true" className="wall-location-check" /> : null}</button>)}
-        {loading ? <p className="wall-location-status" role="status">Searching locations…</p> : null}
-        {!loading && error ? <p className="wall-location-status" role="alert">{error}</p> : null}
-        {!loading && !error && !showWorld && !groups.length && !extras.length ? <p className="wall-location-status">No locations found.</p> : null}
+        {extras.map((item) => <button aria-pressed={location === item.label} className="wall-location-row" key={item.id || item.label} onClick={() => choose(item.label, item.code)} type="button"><span aria-hidden="true" className="wall-location-symbol wall-location-code">{item.code || <FiMapPin />}</span><span className="wall-location-live"><strong dir="auto">{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>{location === item.label ? <FiCheck aria-hidden="true" className="wall-location-check" /> : null}</button>)}
+        {loading ? <p className="wall-location-status" role="status">{__msg("fanWeb.searchingLocations_2afc8c")}</p> : null}
+        {!loading && error ? <p className="wall-location-status" role="alert">{__systemMessage(error)}</p> : null}
+        {!loading && !error && !showWorld && !groups.length && !extras.length ? <p className="wall-location-status">{__msg("fanWeb.noLocationsFound")}</p> : null}
       </div>
     </section>
   </div>, document.body);

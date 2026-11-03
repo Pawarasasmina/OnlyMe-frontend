@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
@@ -11,6 +14,7 @@ import { GIFT_THANKS_OPEN_EVENT } from "./giftThanksEvent";
 
 // The prototype's timed reply is a demo. Announce real creator activity only.
 export default function GiftThanksNotice() {
+  __useUiLanguage();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const navigate = useNavigate();
@@ -59,10 +63,10 @@ export default function GiftThanksNotice() {
     setToastBusy(true);
     toastTimer.current = window.setTimeout(() => setToastBusy(false), 6500);
     const creator = item.relatedCreator || item.actor || {};
-    const name = String(creator.displayName || creator.name || creator.username || "The creator").split(" ")[0];
-    showToast(item.preview || item.message || item.title || "Thank you for your gift.", {
+    const name = String(creator.displayName || creator.name || creator.username || __msg("fanWeb.theCreator")).split(" ")[0];
+    showToast(item.preview || item.message || item.title || __msg("fanWeb.thankYouForYourGift"), {
       variant: "gift-thanks",
-      title: `${name} thanked you`,
+      title: __msg("fanWeb.value0ThankedYou", { value0: name }),
       avatar: creator.avatarUrl || creator.avatar,
       duration: 6000,
       onAction: () => setSelected(item),
@@ -97,12 +101,12 @@ export default function GiftThanksNotice() {
   }, [selected]);
 
   const creator = selected?.relatedCreator || selected?.actor || {};
-  const name = creator.displayName || creator.name || creator.username || "The creator";
+  const name = creator.displayName || creator.name || creator.username || __msg("fanWeb.theCreator");
   if (!selected) return null;
 
   const firstName = String(name).split(" ")[0];
-  const message = selected.preview || selected.message || selected.title || "Thank you for your gift.";
-  const giftName = selected.metadata?.giftName || selected.gift?.name || "your gift";
+  const message = selected.preview || selected.message || selected.title || __msg("fanWeb.thankYouForYourGift");
+  const giftName = selected.metadata?.giftName || selected.gift?.name || __msg("fanWeb.yourGift");
   const giftImage = resolveMediaUrl(selected.metadata?.giftImageUrl || selected.giftImageUrl || selected.gift?.imageUrl);
   const profileRoute = creator.username
     ? `/profile/${encodeURIComponent(creator.username)}`
@@ -115,9 +119,9 @@ export default function GiftThanksNotice() {
 
   return createPortal(
     <div className="gift-thanks-card-layer" style={sheetPosition}>
-      <button aria-label="Close thank-you" className="gift-thanks-card-scrim" onClick={() => setSelected(null)} type="button" />
+      <button aria-label={__msg("fanWeb.closeThankYou")} className="gift-thanks-card-scrim" onClick={() => setSelected(null)} type="button" />
       <section
-        aria-label={`${firstName}'s thank-you`}
+        aria-label={__msg("fanWeb.sThankYou", { value0: firstName })}
         aria-modal="true"
         className="gift-thanks-card-sheet-prototype"
         ref={sheetRef}
@@ -130,15 +134,14 @@ export default function GiftThanksNotice() {
           {giftImage ? <img alt={giftName} className="gift-thanks-card-gift" src={giftImage} /> : null}
         </div>
         <blockquote>{String(message).replace(/^[“"]|[”"]$/g, "")}</blockquote>
-        <p className="gift-thanks-card-byline">&mdash; {firstName} &middot; for {giftName}</p>
+        <p className="gift-thanks-card-byline">&mdash; {firstName} {__msg("fanWeb.for")} {giftName}</p>
         <button
           className="gift-thanks-card-visit"
           onClick={visitCreator}
           type="button"
-        >
-          Visit {firstName}
+        >{__msg("fanWeb.visit")}{firstName}
         </button>
-        <p className="gift-thanks-card-kept">Kept in Your things &rsaquo; Thanks</p>
+        <p className="gift-thanks-card-kept">{__msg("fanWeb.keptInYourThingsThanks")}</p>
       </section>
     </div>,
     document.body,

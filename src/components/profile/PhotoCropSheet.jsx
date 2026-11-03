@@ -1,9 +1,13 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePhotoSurface } from "./usePhotoSurface";
 
 const clamp = value => Math.max(.4, Math.min(4, value));
 export default function PhotoCropSheet({ file, onClose, onSave, saving, error }) {
+  __useUiLanguage();
   const [url, setUrl] = useState("");
   const [crop, setCrop] = useState({ x: 0, y: 0, scale: 1 });
   const [dragging, setDragging] = useState(false);
@@ -52,26 +56,26 @@ export default function PhotoCropSheet({ file, onClose, onSave, saving, error })
       ctx.filter = "blur(24px) brightness(.55)"; ctx.drawImage(image, (1080 - width * 1.15) / 2, (1350 - height * 1.15) / 2, width * 1.15, height * 1.15); ctx.filter = "none";
       ctx.drawImage(image, (1080 - width * crop.scale) / 2 + crop.x * 1080, (1350 - height * crop.scale) / 2 + crop.y * 1350, width * crop.scale, height * crop.scale);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .9));
-      if (!blob) throw new Error("Could not prepare the photo");
+      if (!blob) throw new Error(__msg("profile.couldNotPrepareThePhoto"));
       await onSave(new File([blob], "profile-photo.jpg", { type: "image/jpeg" }));
-    } catch (failure) { setLocalError(failure.message || "Could not prepare this photo."); }
+    } catch (failure) { setLocalError(failure.message || __msg("profile.couldNotPrepareThisPhoto")); }
     finally { setPreparing(false); }
   };
   return createPortal(<div className="photo-modal-layer" style={position}>
-    <button aria-label="Close photo framing" className="photo-modal-dim" disabled={busy} onClick={onClose} type="button" />
-    <section aria-label="Photo framing" aria-modal="true" className="photo-crop-sheet" role="dialog">
-      <span className="photo-sheet-handle" /><h2>Photo · 4:5</h2><p>Move it with your fingers in any direction · two fingers to zoom</p>
-      <div aria-label="Reposition photo" className={`photo-crop-frame ${dragging ? "is-dragging" : ""}`} onDoubleClick={() => setCrop(current => ({ x: 0, y: 0, scale: current.scale === 1 ? .6 : 1 }))} onKeyDown={event => {
+    <button aria-label={__msg("profile.closePhotoFraming")} className="photo-modal-dim" disabled={busy} onClick={onClose} type="button" />
+    <section aria-label={__msg("profile.photoFraming")} aria-modal="true" className="photo-crop-sheet" role="dialog">
+      <span className="photo-sheet-handle" /><h2>{__msg("profile.photo45")}</h2><p>{__msg("profile.moveItWithYourFingersInAnyDirectionTwo")}</p>
+      <div aria-label={__msg("profile.repositionPhoto")} className={`photo-crop-frame ${dragging ? "is-dragging" : ""}`} onDoubleClick={() => setCrop(current => ({ x: 0, y: 0, scale: current.scale === 1 ? .6 : 1 }))} onKeyDown={event => {
         const step = event.shiftKey ? .05 : .01;
         const offset = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[event.key];
         if (offset) { event.preventDefault(); setCrop(current => ({ ...current, x: current.x + offset[0], y: current.y + offset[1] })); }
       }} onPointerCancel={end} onPointerDown={start} onPointerMove={move} onPointerUp={end} onWheel={wheel} ref={frame} role="img" style={{ backgroundImage: `url("${url}")` }} tabIndex={0}>
-        <img alt="Selected photo preview" draggable="false" src={url} style={{ transform: `translate(${crop.x * 100}%,${crop.y * 100}%) scale(${crop.scale})` }} />
+        <img alt={__msg("profile.selectedPhotoPreview")} draggable="false" src={url} style={{ transform: `translate(${crop.x * 100}%,${crop.y * 100}%) scale(${crop.scale})` }} />
         {dragging ? <span aria-hidden="true" className={`photo-crop-grid ${crop.x === 0 ? "center-x" : ""} ${crop.y === 0 ? "center-y" : ""}`} /> : null}
       </div>
       {error || localError ? <p className="photo-error" role="alert">{error || localError}</p> : null}
-      <button className="photo-primary" disabled={busy || !url} onClick={save} type="button">{busy ? "Saving…" : "Done"}</button>
-      <button className="photo-cancel" disabled={busy} onClick={onClose} type="button">Cancel</button>
+      <button className="photo-primary" disabled={busy || !url} onClick={save} type="button">{busy ? __msg("financial.saving") : __msg("comments.done")}</button>
+      <button className="photo-cancel" disabled={busy} onClick={onClose} type="button">{__msg("admin.cancel")}</button>
     </section>
   </div>, document.body);
 }

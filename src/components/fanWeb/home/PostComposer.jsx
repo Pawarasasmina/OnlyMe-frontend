@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { voiceService } from "../../../services/voiceService";
 import { inferWallTopic as autoTopic } from "../../../utils/wallTopic";
 import { readWallDraft, saveWallDraft, clearWallDraft } from "../../../services/wallDraftStore";
@@ -23,25 +27,26 @@ import ProfileImageCropper from "../../profile/ProfileImageCropper";
 import { searchService } from "../../../services/searchService";
 
 const POST_TYPES = [
-  { value: "Buy & Sell", context: "Buy/Sell", icon: FiShoppingBag, color: "blue", description: "Sell or find something second-hand" },
-  { value: "Looking for", context: "Looking for", icon: FiLink, color: "blue", description: "Find people, places or recommendations" },
-  { value: "Offering", context: "Buy/Sell", icon: FiBriefcase, color: "amber", description: "Share what you offer: services, items or help" },
-  { value: "Need Help", context: "Need help", icon: FiHeart, color: "rose", description: "Ask your community for a helping hand" },
-  { value: "Question", context: "Advice", icon: FiHelpCircle, color: "purple", description: "Get advice from the community" },
-  { value: "Recommendation", context: "Recommendation", icon: FiStar, color: "green", description: "Recommend a place, service or person" },
-  { value: "Right Now", context: "Right now", icon: FiZap, color: "amber", description: "Share something useful happening nearby" },
-  { value: "Event", context: "Events", icon: FiCalendar, color: "rose", description: "Create or share a community event" },
+  { value: "Buy & Sell", context: "Buy & Sell", icon: FiShoppingBag, color: "blue", get description() { return __msg("fanWeb.sellOrFindSomethingSecondHand"); } },
+  { value: "Looking for", context: "Looking for", icon: FiLink, color: "blue", get description() { return __msg("fanWeb.findPeoplePlacesOrRecommendations"); } },
+  { value: "Offering", context: "Buy & Sell", icon: FiBriefcase, color: "amber", get description() { return __msg("fanWeb.shareWhatYouOfferServicesItemsOrHelp"); } },
+  { value: "Need Help", context: "Need help", icon: FiHeart, color: "rose", get description() { return __msg("fanWeb.askYourCommunityForAHelpingHand"); } },
+  { value: "Question", context: "Advice", icon: FiHelpCircle, color: "purple", get description() { return __msg("fanWeb.getAdviceFromTheCommunity"); } },
+  { value: "Recommendation", context: "Recommendation", icon: FiStar, color: "green", get description() { return __msg("fanWeb.recommendAPlaceServiceOrPerson"); } },
+  { value: "Right Now", context: "Right now", icon: FiZap, color: "amber", get description() { return __msg("fanWeb.shareSomethingUsefulHappeningNearby"); } },
+  { value: "Event", context: "Events", icon: FiCalendar, color: "rose", get description() { return __msg("fanWeb.createOrShareACommunityEvent"); } },
 ];
 const NEED_PLACEHOLDERS = {
-  "Need Help": "What happened — and how can people help?",
-  "Looking for": "What are you looking for? What, where, when",
-  Offering: "What are you offering? Price, condition, where",
-  Question: "Ask it — the more detail, the better the answers",
-  Recommendation: "What do you recommend — and why?",
-  Event: "What, where, when — and who should come",
+  get "Need Help"() { return __msg("fanWeb.whatHappenedAndHowCanPeopleHelp"); },
+  get "Looking for"() { return __msg("fanWeb.whatAreYouLookingForWhatWhereWhen"); },
+  get Offering() { return __msg("fanWeb.whatAreYouOfferingPriceConditionWhere"); },
+  get Question() { return __msg("fanWeb.askItTheMoreDetailTheBetterThe"); },
+  get Recommendation() { return __msg("fanWeb.whatDoYouRecommendAndWhy"); },
+  get Event() { return __msg("fanWeb.whatWhereWhenAndWhoShouldCome"); },
 };
 
 function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = [] }) {
+  __useUiLanguage();
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -87,7 +92,7 @@ function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = 
         .catch((error) => {
           if (error?.code !== "ERR_CANCELED") {
             setResults([]);
-            setSearchError(error?.response?.data?.message || "Could not search locations. Try again.");
+            setSearchError(error?.response?.data?.message || __msg("fanWeb.couldNotSearchLocationsTryAgain"));
           }
         })
         .finally(() => {
@@ -102,7 +107,7 @@ function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = 
 
   const useCurrentArea = () => {
     if (!navigator.geolocation) {
-      setSearchError("Location access is not supported by this browser.");
+      setSearchError(__msg("fanWeb.locationAccessIsNotSupportedByThisBrowser"));
       return;
     }
     setResults([]);
@@ -125,30 +130,30 @@ function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = 
   };
 
   return (
-    <WallSheetFrame anchorRef={anchorRef} title="Location" onClose={onClose}>
+    <WallSheetFrame anchorRef={anchorRef} title={__msg("fanWeb.location")} onClose={onClose}>
       <section className="home-note-location-sheet">
         <div className="home-note-location-handle" aria-hidden="true" />
-        <header><h2>Location</h2><button aria-label="Close location picker" onClick={onClose} type="button"><FiX /></button></header>
+        <header><h2>{__msg("fanWeb.location")}</h2><button aria-label={__msg("fanWeb.closeLocationPicker")} onClick={onClose} type="button"><FiX /></button></header>
         <label className="home-note-location-search">
           <FiSearch aria-hidden="true" />
-          <span className="sr-only">Search a country or city</span>
-          <input onChange={(event) => setSearch(event.target.value)} placeholder="Search a country or city" ref={inputRef} value={search} />
+          <span className="sr-only">{__msg("fanWeb.searchACountryOrCity")}</span>
+          <input onChange={(event) => setSearch(event.target.value)} placeholder={__msg("fanWeb.searchACountryOrCity")} ref={inputRef} value={search} />
         </label>
         <button className={`home-note-location-nearby ${position ? "is-active" : ""}`} disabled={positioning || (loading && !search.trim())} onClick={useCurrentArea} type="button">
-          <FiNavigation aria-hidden="true" />{positioning || (loading && !search.trim()) ? "Finding your area..." : position ? "Refresh current area" : "Use my current area"}
+          <FiNavigation aria-hidden="true" />{positioning || (loading && !search.trim()) ? __msg("fanWeb.findingYourArea") : position ? __msg("fanWeb.refreshCurrentArea") : __msg("fanWeb.useMyCurrentArea")}
         </button>
-        {selected ? <button className="home-note-location-clear" onClick={() => { onSelect(""); onClose(); }} type="button">Remove location</button> : null}
+        {selected ? <button className="home-note-location-clear" onClick={() => { onSelect(""); onClose(); }} type="button">{__msg("fanWeb.removeLocation")}</button> : null}
         <div className="home-note-location-results">
-          {loading ? <p aria-live="polite">Searching locations...</p> : null}
-          {!loading && searchError ? <p role="alert">{searchError} <button onClick={() => setRetry((value) => value + 1)} type="button">Retry</button></p> : null}
+          {loading ? <p aria-live="polite">{__msg("fanWeb.searchingLocations")}</p> : null}
+          {!loading && searchError ? <p role="alert">{searchError} <button onClick={() => setRetry((value) => value + 1)} type="button">{__msg("activity.retry")}</button></p> : null}
           {!positioning && !loading && !searchError && !position && search.trim().length < 2 ? [...new Set(suggestions.filter(Boolean))].map((value) => <button key={value} onClick={() => { onSelect(value); onClose(); }} type="button"><FiMapPin /><strong>{value}</strong></button>) : null}
-          {!positioning && !loading && !searchError && !position && search.trim().length < 2 ? <p>Type at least 2 letters to find any city, country, address, landmark, or venue.</p> : null}
+          {!positioning && !loading && !searchError && !position && search.trim().length < 2 ? <p>{__msg("fanWeb.typeAtLeast2LettersToFindAnyCity")}</p> : null}
           {!loading && results.map((item) => (
             <button aria-pressed={selected === item.label} className={selected === item.label ? "is-selected" : ""} key={item.code + item.label} onClick={() => { onSelect(item.label); onClose(); }} type="button">
-              <span>{item.code || <FiMapPin aria-hidden="true" />}</span><span className="home-note-location-result-copy"><strong>{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>
+              <span>{item.code || <FiMapPin aria-hidden="true" />}</span><span className="home-note-location-result-copy"><strong dir="auto">{item.name}</strong>{item.subtitle ? <small>{item.subtitle}</small> : null}</span>
             </button>
           ))}
-          {!positioning && !loading && !searchError && canLookupLocation(search, position) && !results.length ? <p>No locations found.</p> : null}
+          {!positioning && !loading && !searchError && canLookupLocation(search, position) && !results.length ? <p>{__msg("fanWeb.noLocationsFound")}</p> : null}
         </div>
       </section>
     </WallSheetFrame>
@@ -156,8 +161,8 @@ function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = 
 }
 
 function fileError(file) {
-  if (!POST_IMAGE_TYPES.includes(file.type)) return "Only JPEG, PNG, or WebP images are allowed.";
-  if (file.size > POST_MAX_IMAGE_SIZE) return "Images must be 15 MB or smaller.";
+  if (!POST_IMAGE_TYPES.includes(file.type)) return __msg("fanWeb.onlyJpegPngOrWebpImagesAreAllowed");
+  if (file.size > POST_MAX_IMAGE_SIZE) return __msg("fanWeb.imagesMustBe15MbOrSmaller");
   return "";
 }
 
@@ -170,6 +175,7 @@ function previewFile(file) {
 }
 
 function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, openSignal = "", defaultLocation = "", onPublished }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const owner = String(user?.id || user?._id || "");
@@ -266,7 +272,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
 
   const openComposer = () => {
     if (!canPostToHome) {
-      showToast("Home note creation is only available for creator accounts.");
+      showToast(__msg("fanWeb.homeNoteCreationIsOnlyAvailableForCreatorAccounts"));
       return;
     }
     setScreen((needLabel || text.trim() || files.length || voiceAttachment) ? "compose" : "needs");
@@ -328,7 +334,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
       else accepted.push({ file, url: URL.createObjectURL(file) });
     });
 
-    if (next.length > remaining) nextError = `You can attach up to 3 images.`;
+    if (next.length > remaining) nextError = __msg("fanWeb.youCanAttachUpTo3Images");
     setError(nextError);
     if (accepted.length) { cropQueueRef.current = [...cropQueueRef.current, ...accepted]; setCropQueue(cropQueueRef.current); }
   };
@@ -373,7 +379,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
         setVoiceAttachment((current) => current?.id === id ? { ...current, transcript: result.transcript || "", transcriptLanguage: result.detectedLanguage || "", transcriptStatus: "ready" } : current);
       }).catch((error) => {
         if (controller.signal.aborted) return;
-        setVoiceAttachment((current) => current?.id === id ? { ...current, transcriptStatus: "error", transcriptError: error?.response?.data?.message || "Text unavailable. Your recording is kept." } : current);
+        setVoiceAttachment((current) => current?.id === id ? { ...current, transcriptStatus: "error", transcriptError: error?.response?.data?.message || __msg("fanWeb.textUnavailableYourRecordingIsKept") } : current);
       });
     }
   };
@@ -389,7 +395,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
   const publish = () => {
     if (publishingRef.current) return;
     if (!canPublish) {
-      setError(trimmedText ? "This note is too long." : "Write something or attach a voice note before publishing.");
+      setError(trimmedText ? __msg("fanWeb.thisNoteIsTooLong") : __msg("fanWeb.writeSomethingOrAttachAVoiceNoteBefore"));
       return;
     }
 
@@ -414,7 +420,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
     if (attemptRef.current?.signature !== signature) attemptRef.current = { signature, key: crypto.randomUUID() };
     publishingRef.current = true;
     setError("");
-    setUploadLabel("Publishing");
+    setUploadLabel(__msg("fanWeb.publishing"));
 
     createMutation.mutate(
       {
@@ -436,7 +442,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
           publishingRef.current = false;
           attemptRef.current = null;
           clearWallDraft();
-          showToast("Note published.");
+          showToast(__msg("fanWeb.notePublished"));
           resetComposer();
           setComposerOpen(false);
           onPublished?.();
@@ -460,7 +466,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
       ) : composerOpen ? (
         <section
           aria-busy={createMutation.isPending}
-          aria-label="Create a wall note"
+          aria-label={__msg("fanWeb.createAWallNote")}
           className={`home-note-composer wall-create-screen ${screen === "compose" ? "wall-prototype-compose" : ""}`}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
@@ -469,34 +475,34 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
           }}
         >
           <header className="wall-create-header">
-            <button aria-label="Back to needs" disabled={createMutation.isPending} onClick={() => setScreen("needs")} type="button"><FiArrowLeft /></button>
+            <button aria-label={__msg("fanWeb.backToNeeds")} disabled={createMutation.isPending} onClick={() => setScreen("needs")} type="button"><FiArrowLeft data-ui-directional="true" /></button>
             <h1>{categoryLabel}</h1>
-            <button className="wall-prototype-post" disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? "Posting..." : "Post"}</button>
+            <button className="wall-prototype-post" disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? __msg("comments.posting") : __msg("fanWeb.post")}</button>
           </header>
           <fieldset disabled={createMutation.isPending} className="wall-create-body">
-          <div className="wall-compose-author"><FanAvatar name={currentUser.name} src={currentUser.avatar} size="h-[38px] w-[38px]" /><div><strong>{currentUser.name}</strong><small><b>{categoryLabel}</b> · {location || "Worldwide"}</small></div></div>
-          {effectiveTopic === "Meet people" ? <p className="wall-meet-safety">Meet in public places · get to know each other in replies first</p> : null}
+          <div className="wall-compose-author"><FanAvatar name={currentUser.name} src={currentUser.avatar} size="h-[38px] w-[38px]" /><div><strong dir="auto">{currentUser.name}</strong><small><b>{categoryLabel}</b> · {location || __msg("fanWeb.worldwide")}</small></div></div>
+          {effectiveTopic === "Meet people" ? <p className="wall-meet-safety">{__msg("fanWeb.meetInPublicPlacesGetToKnowEachOther")}</p> : null}
           <textarea
-            aria-label="Note text"
+            aria-label={__msg("fanWeb.noteText")}
             maxLength={POST_TEXT_MAX_LENGTH}
             onChange={(event) => {
               setText(event.target.value);
               setError("");
             }}
-            placeholder={categoryLabel === "Buy & Sell" ? "What are you selling or looking to buy? Price, condition, area" : NEED_PLACEHOLDERS[selectedType.value] || "What do you want to share?"}
+            placeholder={categoryLabel === "Buy & Sell" ? __msg("fanWeb.whatAreYouSellingOrLookingToBuyPrice") : NEED_PLACEHOLDERS[selectedType.value] || __msg("fanWeb.whatDoYouWantToShare")}
             ref={textRef}
             value={text}
           />
           {voiceAttachment ? <div className="wall-composer-voice-chip">
-            <VoiceMessageBubble compact variant="chip" audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label="Voice note" />
-            <button aria-label="Review voice text and translations" onClick={() => { setVoiceReview(true); setVoiceRecorderOpen(true); }} type="button"><FiMoreHorizontal /></button>
-            <button aria-label="Remove voice note" onClick={removeVoiceNote} type="button"><FiX /></button>
-            <span className="sr-only" role="status">{voiceAttachment.transcriptStatus === "loading" ? "Generating transcript" : voiceAttachment.transcriptStatus === "error" ? voiceAttachment.transcriptError : "Voice added. Text is available behind show text after publishing."}</span>
+            <VoiceMessageBubble compact variant="chip" audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label={__msg("fanWeb.voiceNote")} />
+            <button aria-label={__msg("fanWeb.reviewVoiceTextAndTranslations")} onClick={() => { setVoiceReview(true); setVoiceRecorderOpen(true); }} type="button"><FiMoreHorizontal /></button>
+            <button aria-label={__msg("fanWeb.removeVoiceNote")} onClick={removeVoiceNote} type="button"><FiX /></button>
+            <span className="sr-only" role="status">{voiceAttachment.transcriptStatus === "loading" ? __msg("fanWeb.generatingTranscript") : voiceAttachment.transcriptStatus === "error" ? voiceAttachment.transcriptError : __msg("fanWeb.voiceAddedTextIsAvailableBehindShowTextAfter")}</span>
           </div> : null}
 
           <div className="wall-create-attachments home-note-tools">
-            <button aria-label="Attach image" onClick={() => fileInputRef.current?.click()} type="button"><FiImage /><span>Photo</span></button>
-            {!voiceAttachment ? <button aria-label="Record voice note" onClick={() => { setVoiceReview(false); setVoiceRecorderOpen(true); }} type="button"><FiMic /><span>Voice</span></button> : null}
+            <button aria-label={__msg("fanWeb.attachImage")} onClick={() => fileInputRef.current?.click()} type="button"><FiImage /><span>{__msg("fanWeb.photo")}</span></button>
+            {!voiceAttachment ? <button aria-label={__msg("fanWeb.recordVoiceNote")} onClick={() => { setVoiceReview(false); setVoiceRecorderOpen(true); }} type="button"><FiMic /><span>{__msg("fanWeb.voice")}</span></button> : null}
             <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => { addFiles(event.target.files || []); event.target.value = ""; }} ref={fileInputRef} type="file" />
           </div>
 
@@ -505,19 +511,19 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
               {files.map((item) => (
                 <span key={item.id}>
                   <img alt="" src={item.url} />
-                  <button aria-label="Remove image" onClick={() => removeFile(item.id)} type="button"><FiX /></button>
+                  <button aria-label={__msg("fanWeb.removeImage")} onClick={() => removeFile(item.id)} type="button"><FiX /></button>
                 </span>
               ))}
             </div>
           ) : null}
 
           <div className="wall-compose-settings">
-            <button onClick={() => setTopicPickerOpen(true)} type="button"><span>TOPIC</span><strong>{!topic ? <FiStar aria-hidden="true" /> : null}{effectiveTopic || "Auto"}</strong></button>
-            <button onClick={() => setLocationPickerOpen(true)} type="button"><span>PLACE</span><strong>{location || "Worldwide"}</strong></button>
-            <button aria-pressed={rightNow} onClick={() => setRightNow((value) => !value)} type="button"><span>RIGHT NOW</span><strong className={rightNow ? "is-on" : "is-off"}><i aria-hidden="true" />{rightNow ? "On" : "Off"}</strong></button>
+            <button onClick={() => setTopicPickerOpen(true)} type="button"><span>{__msg("fanWeb.topic")}</span><strong>{!topic ? <FiStar aria-hidden="true" /> : null}{effectiveTopic || __msg("fanWeb.auto")}</strong></button>
+            <button onClick={() => setLocationPickerOpen(true)} type="button"><span>{__msg("fanWeb.place")}</span><strong>{location || __msg("fanWeb.worldwide")}</strong></button>
+            <button aria-pressed={rightNow} onClick={() => setRightNow((value) => !value)} type="button"><span>{__msg("fanWeb.rightNow")}</span><strong className={rightNow ? "is-on" : "is-off"}><i aria-hidden="true" />{rightNow ? __msg("fanWeb.on") : __msg("fanWeb.off")}</strong></button>
           </div>
           <div className="wall-create-submit">
-            {error ? <p role="alert">{error}</p> : uploadLabel ? <p role="status">{uploadLabel}</p> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
+            {error ? <p role="alert">{__systemMessage(error)}</p> : uploadLabel ? <p role="status">{uploadLabel}</p> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
 
           </div>
           </fieldset>
@@ -525,12 +531,12 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
       ) : (
         <div className="home-composer-trigger">
           <button
-            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            className="flex min-w-0 flex-1 items-center gap-3 text-start"
             onClick={openComposer}
             type="button"
           >
             <FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} />
-            <span className="truncate">What do you need today?</span><span aria-hidden="true" className="wall-need-trigger-plus">+</span>
+            <span className="truncate">{__msg("fanWeb.whatDoYouNeedToday")}</span><span aria-hidden="true" className="wall-need-trigger-plus">+</span>
           </button>
         </div>
       )}

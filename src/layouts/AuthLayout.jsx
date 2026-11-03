@@ -1,6 +1,8 @@
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { Outlet } from "react-router-dom";
 
 function AuthLayout() {
+  __useUiLanguage();
   return (
     <div className="user-app-shell flex min-h-screen items-center justify-center bg-hero px-4 py-10">
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-brand-slate/90 p-8 shadow-glow backdrop-blur">

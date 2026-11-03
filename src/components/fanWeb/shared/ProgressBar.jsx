@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 function ProgressBar({ className = "", label, value }) {
+  __useUiLanguage();
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
 
   return (

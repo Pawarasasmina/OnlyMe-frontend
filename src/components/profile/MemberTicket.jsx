@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiDownload, FiShare, FiX } from "react-icons/fi";
@@ -8,6 +12,7 @@ import StoryCreator from "../stories/StoryCreator";
 import "./MemberTicket.css";
 
 export default function MemberTicket({ profile }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const ticket = memberTicketData(profile, user || {});
   const [open, setOpen] = useState(false);
@@ -46,29 +51,29 @@ export default function MemberTicket({ profile }) {
     try {
       const blob = await (await fetch(image)).blob();
       const file = new File([blob], `seen-ticket-${ticket.number}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: "My @seen ticket" });
-      else { download(); setError("Ticket saved. You can upload it to Instagram."); }
-    } catch (failure) { if (failure.name !== "AbortError") setError("Unable to share. Try saving the image instead."); }
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: __msg("profile.mySeenTicket") });
+      else { download(); setError(__msg("profile.ticketSavedYouCanUploadItToInstagram")); }
+    } catch (failure) { if (failure.name !== "AbortError") setError(__msg("profile.unableToShareTrySavingTheImageInstead")); }
   };
   const close = () => { setOpen(false); setSharing(false); setError(""); };
 
   return <>
-    <button aria-label={`Open your member ticket ${ticket.label}`} className="member-ticket-badge" onClick={() => { setOpen(true); setError(""); }} type="button">{ticket.label}</button>
-    {createPortal(<>{open ? <section aria-label="Your ticket" aria-modal="true" className="member-ticket-screen" role="dialog" style={position}>
-      <p className="member-ticket-heading">Your ticket</p>
+    <button aria-label={__msg("profile.openYourMemberTicket", { value0: ticket.label })} className="member-ticket-badge" onClick={() => { setOpen(true); setError(""); }} type="button">{ticket.label}</button>
+    {createPortal(<>{open ? <section aria-label={__msg("profile.yourTicket")} aria-modal="true" className="member-ticket-screen" role="dialog" style={position}>
+      <p className="member-ticket-heading">{__msg("profile.yourTicket")}</p>
       <div className="member-ticket-card">
-        <header><b><em>@</em>seen</b><span>{ticket.city}</span></header>
-        <div className="member-ticket-identity"><span>Member</span><strong>{ticket.label}</strong>{ticket.date ? <time>{ticket.date}</time> : null}</div>
-        <footer>{ticket.city ? `One of the first in ${ticket.city}.` : "One of the first on @seen."}</footer>
+        <header><b><em>@</em>{__msg("branding.seen")}</b><span>{ticket.city}</span></header>
+        <div className="member-ticket-identity"><span>{__msg("fanWeb.member")}</span><strong>{ticket.label}</strong>{ticket.date ? <time>{ticket.date}</time> : null}</div>
+        <footer>{ticket.city ? __msg("profile.oneOfTheFirstIn", { value0: ticket.city }) : __msg("profile.oneOfTheFirstOnSeen")}</footer>
       </div>
-      <button className="member-ticket-share" onClick={() => { setImage(ticketImage(ticket)); setSharing(true); }} type="button"><FiShare /> Share</button>
-      <button className="member-ticket-close" onClick={close} type="button">Close</button>
-      {sharing ? <div className="member-ticket-share-menu" aria-label="Share ticket">
-        <header><b>Share your ticket</b><button aria-label="Close sharing" onClick={() => setSharing(false)} type="button"><FiX /></button></header>
-        <button onClick={() => { setStoryDraft({ imageUrl: image }); close(); }} type="button"><FiShare /> Story</button>
-        <button onClick={externalShare} type="button"><FaInstagram /> Instagram / More</button>
-        <button onClick={download} type="button"><FiDownload /> Save image</button>
-        {error ? <p role="status">{error}</p> : null}
+      <button className="member-ticket-share" onClick={() => { setImage(ticketImage(ticket)); setSharing(true); }} type="button"><FiShare /> {__msg("admin.share")}</button>
+      <button className="member-ticket-close" onClick={close} type="button">{__msg("activity.close")}</button>
+      {sharing ? <div className="member-ticket-share-menu" aria-label={__msg("profile.shareTicket")}>
+        <header><b>{__msg("profile.shareYourTicket")}</b><button aria-label={__msg("profile.closeSharing")} onClick={() => setSharing(false)} type="button"><FiX /></button></header>
+        <button onClick={() => { setStoryDraft({ imageUrl: image }); close(); }} type="button"><FiShare /> {__msg("activity.story")}</button>
+        <button onClick={externalShare} type="button"><FaInstagram /> {__msg("profile.instagramMore")}</button>
+        <button onClick={download} type="button"><FiDownload /> {__msg("profile.saveImage")}</button>
+        {error ? <p role="status">{__systemMessage(error)}</p> : null}
       </div> : null}
     </section> : null}
     <StoryCreator initialContent={storyDraft} isOpen={Boolean(storyDraft)} onClose={() => setStoryDraft(null)} />

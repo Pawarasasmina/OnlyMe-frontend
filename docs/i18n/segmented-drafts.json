@@ -1,0 +1,327 @@
+[
+  {
+    "language": "ar",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "stories.sentToValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "auth.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "creator.removeValue0ItWillDisappearFromYourProfile",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "creator.removeValue0ThisAlsoRemovesEverythingSavedInside",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "fan.lastSeenValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "settings.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ar",
+    "key": "social.value0OriginalStory",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "discover.alsoInValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "stories.sentToValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "stories.storyFromValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "auth.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "fan.value0SentYouAGift",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "fan.lastSeenValue0HAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "fan.lastSeenValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "ru",
+    "key": "social.value0OriginalStory",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "discover.dreamsOfValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "discover.alsoInValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "messages.value0InvitedYouToSeen",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "stories.value0AnswersAlready",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "stories.sentToValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "auth.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "fan.value0SentYouAGift",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "fan.value0ThankedYouForYourGift",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "fan.lastSeenValue0HAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "fan.lastSeenValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "settings.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "uk",
+    "key": "social.value0OriginalStory",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "es",
+    "key": "discover.alsoInValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "es",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "es",
+    "key": "stories.sentToValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "es",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "es",
+    "key": "fan.lastSeenValue0HAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "discover.alsoInValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "stories.sentToValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "CallContext.paidCallValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "auth.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "fan.lastSeenValue0HAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "settings.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "pt",
+    "key": "social.value0OriginalStory",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "discover.alsoInValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "share.value0RealStoriesFromRealPeopleJoinMe",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "share.value0RealStoriesFromRealPeopleJoinMe_fa38cf",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "stories.sentToValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "stories.storyFromValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "auth.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "fan.value0ThankedYouForYourGift",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "fan.lastSeenValue0HAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "fan.lastSeenValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "settings.value0IsAvailable",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "social.value0OriginalStory",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "fr",
+    "key": "social.onePersonalReplyAMonthValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "de",
+    "key": "discover.alsoInValue0",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "de",
+    "key": "fanWeb.value0ThankedYou",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "de",
+    "key": "fan.lastSeenValue0MAgo",
+    "method": "segmented draft; linguistic review required"
+  },
+  {
+    "language": "de",
+    "key": "fan.lastSeenValue0HAgo",
+    "method": "segmented draft; linguistic review required"
+  }
+]

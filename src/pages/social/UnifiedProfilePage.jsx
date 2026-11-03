@@ -1,3 +1,9 @@
+import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import OwnerThingsSheet from "../../components/profile/OwnerThingsSheet";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -13,6 +19,7 @@ import {
   FiGift,
   FiGrid,
   FiMail,
+  FiMessageCircle,
   FiMoreHorizontal,
   FiPlus,
   FiRefreshCw,
@@ -21,7 +28,6 @@ import {
   FiSettings,
   FiSlash,
   FiX,
-  FiZap,
 } from "react-icons/fi";
 import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferModal";
 import AppShareSheet from "../../components/share/ShareSheet";
@@ -33,10 +39,12 @@ import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import ProfileConnectionsModal from "../../components/profile/ProfileConnectionsModal";
 import MemberTicket from "../../components/profile/MemberTicket";
 import "../../styles/profileCategory.css";
+import "../../styles/publicProfile.css";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
 import ProfileMediaSection from "../../components/profile/ProfilePhotosSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
+import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
 import StoryHighlights from "../../components/profile/StoryHighlights";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
@@ -60,6 +68,7 @@ import { canCreateStory } from "../../utils/storyPermissions";
 import { atseenReportReasons } from "../../data/atseenMockData";
 
 function ReportDoneEyeIcon() {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className="profile-gift-report-eye" viewBox="0 0 64 40">
       <path d="M2 20 C14 3 50 3 62 20 C50 37 14 37 2 20 Z" fill="currentColor" />
@@ -83,7 +92,7 @@ function compact(value) {
   const number = Number(value) || 0;
   if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`;
   if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`;
-  return number.toLocaleString();
+  return number.toLocaleString(__uiLocale());
 }
 
 function groupedProfileGifts(gifts) {
@@ -140,6 +149,7 @@ function invalidateFollowSurfaces(queryClient) {
 }
 
 function ProfileViewersSheet({ isOpen, onClose }) {
+  __useUiLanguage();
   const viewersQuery = useQuery({
     queryKey: ["profile", "me", "viewers"],
     queryFn: () => profileService.getOwnViewers({ limit: 30 }).then((response) => response.data.data),
@@ -159,18 +169,18 @@ function ProfileViewersSheet({ isOpen, onClose }) {
     <div aria-modal="true" className="profile-viewers-backdrop" onClick={onClose} role="dialog">
       <section className="profile-viewers-sheet" onClick={(event) => event.stopPropagation()}>
         <span className="profile-viewers-handle" />
-        <button aria-label="Close who saw you" className="profile-viewers-close" onClick={onClose} type="button"><FiX /></button>
+        <button aria-label={__msg("social.closeWhoSawYou")} className="profile-viewers-close" onClick={onClose} type="button"><FiX /></button>
         <div className="profile-viewers-summary">
           {viewersQuery.isLoading ? <LoadingSkeleton className="h-16" count={1} /> : (
             <>
               <strong>{compact(count)}</strong>
-              <span>saw you today</span>
-              <small>Who exactly stays private</small>
+              <span>{__msg("fanWeb.sawYouToday")}</span>
+              <small>{__msg("social.whoExactlyStaysPrivate")}</small>
             </>
           )}
         </div>
         {viewersQuery.isError ? (
-          <button className="profile-viewers-retry" onClick={() => viewersQuery.refetch()} type="button"><FiRefreshCw /> Unable to load activity. Retry</button>
+          <button className="profile-viewers-retry" onClick={() => viewersQuery.refetch()} type="button"><FiRefreshCw /> {__msg("social.unableToLoadActivityRetry")}</button>
         ) : null}
         {!viewersQuery.isLoading && !viewersQuery.isError ? (
           <div className="profile-viewers-list">
@@ -180,26 +190,26 @@ function ProfileViewersSheet({ isOpen, onClose }) {
                 <Link className="profile-viewers-row" key={item.id} to={actor?.username ? `/profile/${actor.username}` : "/activity"}>
                   <FanAvatar name={actor?.displayName || "Activity"} size="h-[42px] w-[42px]" src={actor?.avatarUrl} />
                   <span>
-                    <b>{actor?.displayName || "Recent activity"}</b>
-                    <small>{item.description || "saw your profile"} {relativeTime(item.createdAt) ? `- ${relativeTime(item.createdAt)}` : ""}</small>
+                    <b>{actor?.displayName || __msg("creator.recentActivity")}</b>
+                    <small>{item.description || __msg("social.sawYourProfile")} {relativeTime(item.createdAt) ? `- ${relativeTime(item.createdAt)}` : ""}</small>
                   </span>
-                  <FiChevronRight />
+                  <FiChevronRight data-ui-directional="true" />
                 </Link>
               );
             })}
             {hiddenCount > 0 ? (
               <Link className="profile-viewers-row is-aggregate" to="/activity">
-                <span>{compact(hiddenCount)} stepped inside your worlds</span>
-                <FiChevronRight />
+                <span>{compact(hiddenCount)} {__msg("social.steppedInsideYourWorlds")}</span>
+                <FiChevronRight data-ui-directional="true" />
               </Link>
             ) : null}
             {worldVisitorCount > 0 ? (
               <Link className="profile-viewers-row is-aggregate" to="/activity">
-                <span>{compact(worldVisitorCount)} stepped inside your worlds</span>
-                <FiChevronRight />
+                <span>{compact(worldVisitorCount)} {__msg("social.steppedInsideYourWorlds")}</span>
+                <FiChevronRight data-ui-directional="true" />
               </Link>
             ) : null}
-            {!count ? <p className="profile-viewers-empty">No one is At seen right now.</p> : null}
+            {!count ? <p className="profile-viewers-empty">{__msg("social.noOneIsAtSeenRightNow")}</p> : null}
           </div>
         ) : null}
       </section>
@@ -208,7 +218,8 @@ function ProfileViewersSheet({ isOpen, onClose }) {
 }
 
 function ProfileShareSheet({ isOpen, onClose, profile, shareUrl }) {
-  const firstName = String(profile.displayName || profile.username || "Profile").trim().split(/\s+/)[0] || "Profile";
+  __useUiLanguage();
+  const firstName = String(profile.displayName || profile.username || __msg("social.profile")).trim().split(/\s+/)[0] || __msg("social.profile");
 
   if (!isOpen) return null;
   return <AppShareSheet
@@ -228,6 +239,7 @@ function ProfileShareSheet({ isOpen, onClose, profile, shareUrl }) {
 }
 
 function ProfileSkeleton() {
+  __useUiLanguage();
   return (
     <div className="profile-prototype">
       <LoadingSkeleton className="h-10" count={1} />
@@ -242,10 +254,12 @@ function ProfileSkeleton() {
 }
 
 function ProfileCreateSheet({ canCreateSeen, canCreateStoryNow, canCreateWorld, canPostNote, isOpen, onClose, onNote, onStory, worldTarget = "" }) {
+  __useUiLanguage();
   return <FanCreateSheet canCreateSeen={canCreateSeen} canCreateStoryNow={canCreateStoryNow} canCreateWorld={canCreateWorld} canPostNote={canPostNote} isOpen={isOpen} onClose={onClose} onNote={onNote} onStory={onStory} worldTarget={worldTarget} />;
 }
 
 function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const unread = useUnreadActivityCount(Boolean(user));
@@ -273,14 +287,14 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
   return (
     <>
       <header className="profile-prototype-topbar">
-        <span><b>@</b>{profile.username}</span>
+        <span dir="auto"><b>@</b>{profile.username}</span>
         <div>
           {viewerCapabilities.canCreate ? (
-            <button aria-expanded={createOpen} aria-label="Create" className="profile-top-icon" onClick={openCreate} type="button"><FiPlus /></button>
+            <button aria-expanded={createOpen} aria-label={__msg("fanWeb.create")} className="profile-top-icon" onClick={openCreate} type="button"><FiPlus /></button>
           ) : (
-            <Link aria-label="Wall" to={createTarget}><FiPlus /></Link>
+            <Link aria-label={__msg("fanWeb.wall")} to={createTarget}><FiPlus /></Link>
           )}
-          <Link aria-label="Activity" className="is-activity" to="/activity">
+          <Link aria-label={__msg("social.activity")} className="is-activity" to="/activity">
             <ActivitySparkMark className="h-5 w-5" />
             {unread ? <i className="activity-count-badge">{unread > 99 ? "99+" : unread}</i> : null}
           </Link>
@@ -303,11 +317,14 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
 }
 
 function OwnerQuickActionsSheet(props) {
+  __useUiLanguage();
   return <OwnerThingsSheet {...props} />;
 }
 
-function VisitorMoreSheet({ isOpen, onClose, profile }) {
+export function VisitorMoreSheet({ isOpen, onClose, profile }) {
+  __useUiLanguage();
   const client = useQueryClient();
+  const { showToast } = useFanToast();
   const [busy, setBusy] = useState("");
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState("");
@@ -320,7 +337,7 @@ function VisitorMoreSheet({ isOpen, onClose, profile }) {
     const updatePosition = () => {
       if (!centerColumn) return;
       const bounds = centerColumn.getBoundingClientRect();
-      setSheetPosition({ "--visitor-menu-center-x": `${bounds.left + (bounds.width / 2)}px` });
+      setSheetPosition({ "--visitor-menu-center-x": `${bounds.left + (bounds.width / 2)}px`, "--visitor-menu-column-width": `${bounds.width}px` });
     };
     const closeOnEscape = (event) => event.key === "Escape" && onClose();
     updatePosition();
@@ -337,29 +354,28 @@ function VisitorMoreSheet({ isOpen, onClose, profile }) {
   if (!isOpen) return null;
   const publicPath = `/profile/${encodeURIComponent(profile.username)}`;
   const shareTarget = `${window.location.origin}${publicPath}`;
-  const firstName = String(profile.displayName || profile.username || "Profile").trim().split(/\s+/)[0];
+  const firstName = String(profile.displayName || profile.username || __msg("social.profile")).trim().split(/\s+/)[0];
 
   const run = async (name, action) => {
     setBusy(name);
     setError("");
-    try { await action(); } catch (requestError) { setError(requestError.response?.data?.message || `Could not ${name.toLowerCase()}.`); } finally { setBusy(""); }
+    try { await action(); } catch (requestError) { setError(requestError.response?.data?.message || __msg("social.couldNotValue0", { value0: name.toLowerCase() })); } finally { setBusy(""); }
   };
-  const share = () => run("Share profile", async () => {
-    if (navigator.share) await navigator.share({ title: `${profile.displayName} on @seen`, url: shareTarget });
-    else await copyText(shareTarget);
+  const share = () => run(__msg("profile.shareProfile"), async () => {
+    await copyText(shareTarget);
+    showToast(__msg("profile.linkCopied"));
     onClose();
   });
-  const report = (reason) => run("Report", async () => {
+  const report = (reason) => run(__msg("discover.report"), async () => {
     await profileService.reportProfile(profile.username, { reason });
     setReporting(false);
     setReportDone(true);
   });
   const block = () => {
-    if (!blocked && !window.confirm(`Block ${profile.displayName}? They will not be able to message or interact with you.`)) return;
-    run(blocked ? "Unblock" : "Block", async () => {
+    run(blocked ? __msg("fan.unblock") : __msg("profile.block"), async () => {
       if (blocked) await messageService.unblock(profile.ownerUserId); else await messageService.block(profile.ownerUserId);
       setBlocked((value) => !value);
-      await client.invalidateQueries({ queryKey: ["unified-profile"] });
+      await Promise.all([client.invalidateQueries({ queryKey: ["unified-profile"] }), client.invalidateQueries({ queryKey: ["settings", "blocked-accounts"] }), client.invalidateQueries({ queryKey: ["messages"] })]);
       onClose();
     });
   };
@@ -367,18 +383,20 @@ function VisitorMoreSheet({ isOpen, onClose, profile }) {
     <div aria-modal="true" className="profile-quick-actions-backdrop is-visitor-menu" onClick={() => { setReporting(false); setReportDone(false); onClose(); }} role="dialog" style={sheetPosition}>
       <section className={`profile-quick-actions-sheet is-visitor ${reportDone ? "is-report-done" : !reporting ? "is-main" : ""}`} onClick={(event) => event.stopPropagation()}>
         <span className="profile-quick-actions-handle" />
-        {reportDone ? <div className="profile-report-done-panel"><FiEye aria-hidden="true" /><h2>Thank you</h2><p>Our team will review this shortly.</p><button onClick={() => { setReportDone(false); onClose(); }} type="button">Done</button></div> : reporting ? <><h2>{`Report ${firstName}`}</h2><div className="profile-quick-actions-list"><p className="px-4 py-2 text-xs text-white/50">Why are you reporting this profile?</p>{atseenReportReasons.map((reason) => <button className="profile-quick-action-row" disabled={Boolean(busy)} key={reason} onClick={() => report(reason)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{reason}</b></span></button>)}<button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(false)} type="button"><span className="profile-quick-action-copy"><b>Back</b></span></button></div></> : <><h2>{firstName}</h2><div className="profile-quick-actions-list">
-          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiSend /></span><span className="profile-quick-action-copy"><b>Share profile</b></span></button>
-          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(true)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>Report</b></span></button>
-          <button className="profile-quick-action-row is-danger" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? `Unblock ${firstName}` : `Block ${firstName}`}</b><small>{blocked ? "allow them to find and message you" : "they won’t find you or message you"}</small></span></button>
+        {reportDone ? <div className="profile-report-done-panel"><FiEye aria-hidden="true" /><h2>{__msg("social.thankYou")}</h2><p>{__msg("social.ourTeamWillReviewThisShortly")}</p><button onClick={() => { setReportDone(false); onClose(); }} type="button">{__msg("comments.done")}</button></div> : reporting ? <><h2>{__msg("profile.report", { value0: firstName })}</h2><div className="profile-quick-actions-list"><p className="px-4 py-2 text-xs text-white/50">{__msg("social.whyAreYouReportingThisProfile")}</p>{atseenReportReasons.map((reason) => <button className="profile-quick-action-row" disabled={Boolean(busy)} key={reason} onClick={() => report(reason)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{reason}</b></span></button>)}<button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(false)} type="button"><span className="profile-quick-action-copy"><b>{__msg("discover.back")}</b></span></button></div></> : <><h2>{firstName}</h2><div className="profile-quick-actions-list">
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={share} type="button"><span className="profile-quick-action-icon"><FiSend /></span><span className="profile-quick-action-copy"><b>{__msg("profile.shareProfile")}</b></span></button>
+
+          <button className="profile-quick-action-row" disabled={Boolean(busy)} onClick={() => setReporting(true)} type="button"><span className="profile-quick-action-icon"><FiFlag /></span><span className="profile-quick-action-copy"><b>{__msg("discover.report")}</b></span></button>
+            <button className="profile-quick-action-row is-danger has-description" disabled={Boolean(busy)} onClick={block} type="button"><span className="profile-quick-action-icon"><FiSlash /></span><span className="profile-quick-action-copy"><b>{blocked ? __msg("social.unblock", { value0: firstName }) : __msg("social.block", { value0: firstName })}</b><small>{blocked ? __msg("social.allowThemToFindAndMessageYou") : __msg("social.theyWonTFindYouOrMessageYou")}</small></span></button>
         </div></>}
-        {error ? <p className="profile-visitor-action-error" role="alert">{error}</p> : null}
+        {error ? <p className="profile-visitor-action-error" role="alert">{__systemMessage(error)}</p> : null}
       </section>
     </div>
   );
 }
 
 function MoreMenu({ isOwner, profile, relationship = {} }) {
+  __useUiLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const bringFriends = searchParams.get("bringFriends") === "1";
   const [open, setOpen] = useState(false);
@@ -386,7 +404,7 @@ function MoreMenu({ isOwner, profile, relationship = {} }) {
   const closeOwner = () => { setOpen(false); if (bringFriends) { const params = new URLSearchParams(searchParams); params.delete("bringFriends"); setSearchParams(params, { replace: true }); } };
   return (
     <span className="profile-more-wrap">
-      <button aria-expanded={open} aria-label="More profile actions" className="profile-action-chip is-icon" onClick={() => setOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
+      <button aria-expanded={open} aria-label={__msg("social.moreProfileActions")} className="profile-action-chip is-icon" onClick={() => setOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
       {isOwner ? (
         <OwnerQuickActionsSheet initialView={bringFriends ? "friends" : "menu"} isOpen={open} onClose={closeOwner} />
       ) : (
@@ -397,11 +415,12 @@ function MoreMenu({ isOwner, profile, relationship = {} }) {
 }
 
 function VisitorProfileBar({ profile, relationship, viewerCapabilities }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   return (
     <header className="profile-prototype-topbar profile-visitor-topbar">
-      <button aria-label="Go back" className="profile-visitor-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button>
-      <div><span className="profile-visitor-username"><b>@</b>{profile.username}</span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
+      <button aria-label={__msg("profile.goBack")} className="profile-visitor-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+      <div><span dir="auto" className="profile-visitor-username"><b>@</b>{profile.username}</span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
     </header>
   );
 }
@@ -411,6 +430,7 @@ function metricValue(metrics = {}, key, fallback = 0) {
 }
 
 function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, onStoriesCreate, onStoriesOpen, planets = [], profile, relationship = {}, viewerCapabilities }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [viewersOpen, setViewersOpen] = useState(false);
@@ -456,24 +476,24 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
 
   return (
     <section className="profile-identity is-owner">
-      {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> Only {profile.displayName?.split(" ")[0] || "they"} sees this</div> : null}
+      {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> {__msg("social.only")} {profile.displayName?.split(" ")[0] || __msg("stories.they_f1fdd4")} {__msg("social.seesThis")}</div> : null}
       <div className="profile-identity-row">
         <div className={`profile-avatar-orbit-shell ${profile.friendInviteRingEarned ? "has-invite-gold-ring" : ""} ${world ? "has-world" : ""}`}>
           {world ? <span aria-hidden="true" className="profile-avatar-world-orbit-ring" /> : null}
-          <button aria-label={hasStories ? `View ${profile.displayName}'s stories` : `Check ${profile.displayName}'s stories`} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
+          <button aria-label={hasStories ? __msg("social.viewSStories", { value0: profile.displayName }) : __msg("social.checkSStories", { value0: profile.displayName })} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
             <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
           </button>
-          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={`Open ${world.title || `${profile.displayName}'s World`}`} className="profile-avatar-world-planet" to={worldTarget} title={world.title || "Open World"}>{world.planet?.emoji || "🪐"}</Link></span> : null}
-          {activeStatus ? <span aria-label="Online now" className="profile-avatar-now-dot" role="img" /> : null}
-          {isOwner ? <button aria-label="Create a story" className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
+          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={__msg("contentEntities.open", { value0: world.title || `${profile.displayName}'s World` })} className="profile-avatar-world-planet" to={worldTarget} title={world.title || __msg("financial.openWorld")}>{world.planet?.emoji || "🪐"}</Link></span> : null}
+          {activeStatus ? <span aria-label={__msg("social.onlineNow")} className="profile-avatar-now-dot" role="img" /> : null}
+          {isOwner ? <button aria-label={__msg("social.createAStory")} className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
         </div>
         <div className="profile-copy">
-          <h1>
+          <h1 dir="auto">
             {profile.displayName}
             {isOwner ? <MemberTicket profile={profile} /> : null}
             {profile.verified ? <ProfileVerifiedSeal isOwner={isOwner} name={profile.displayName} /> : null}
           </h1>
-          <div className="profile-identity-metrics" aria-label="Profile metrics">
+          <div className="profile-identity-metrics" aria-label={__msg("social.profileMetrics")}>
             {identityMetrics.map(([key, label, value, onClick]) => (
               <button aria-label={label} key={key} onClick={onClick} type="button">
                 <strong>{compact(value)}</strong>
@@ -481,24 +501,24 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
               </button>
             ))}
           </div>
-          {profile.bio?.trim() ? <p className="profile-identity-bio">{profile.bio}</p> : null}
-          {isOwner && profile.email?.trim() ? <p className="profile-identity-email"><FiMail aria-hidden="true" />{profile.email}</p> : null}
+          {profile.bio?.trim() ? <p dir="auto" className="profile-identity-bio">{profile.bio}</p> : null}
+          {isOwner && profile.email?.trim() ? <p dir="auto" className="profile-identity-email"><FiMail aria-hidden="true" />{profile.email}</p> : null}
         </div>
       </div>
       {isOwner || statusText ? (
         <button className={`profile-status-pill ${statusText ? "has-status" : "is-empty"}`} disabled={!isOwner} onClick={editStatus} style={{ "--profile-status-color": statusColor }} type="button">
-          {statusText ? statusText : "Right now..."}
-          {isOwner ? <FiChevronRight aria-hidden="true" /> : null}
+          {statusText ? statusText : __msg("stories.rightNow")}
+          {isOwner ? <FiChevronRight data-ui-directional="true" aria-hidden="true" /> : null}
         </button>
       ) : null}
       {profile.profileCategory ? <p className="profile-account-category">{profile.profileCategory}</p> : null}
       <div className={`profile-action-row ${isOwner ? "is-owner-actions" : ""}`}>
-        {isOwner ? <Link className="profile-action-chip" to="/settings/profile">Edit</Link> : null}
-        {!isOwner ? <button aria-label={`Let ${profile.displayName} know you saw them`} className={`profile-visitor-eye ${relationship.seeSignalSent ? "is-seen" : ""}`} disabled={seeSignal.isPending} onClick={markProfileSeen} type="button"><FiEye /></button> : null}
+        {isOwner ? <Link className="profile-action-chip" to="/settings/profile">{__msg("profile.edit")}</Link> : null}
+        {!isOwner ? <button aria-label={__msg("social.letKnowYouSawThem", { value0: profile.displayName })} className={`profile-visitor-eye ${relationship.seeSignalSent ? "is-seen" : ""}`} disabled={seeSignal.isPending} onClick={markProfileSeen} type="button"><ShowMoreEyeIcon /></button> : null}
         {!isOwner && viewerCapabilities.canFollow ? <VisitorFollowButton profile={profile} relationship={relationship} /> : null}
-        {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button">Message</button> : null}
-        {!isOwner && viewerCapabilities.canMessage ? <button aria-label={`Send ${profile.displayName} a gift`} className="profile-visitor-gifts" onClick={() => setDirectGiftOpen(true)} type="button"><FiGift /></button> : null}
-        {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button">Share</button> : null}
+        {!isOwner && viewerCapabilities.canMessage ? <button className="profile-action-chip" onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`)} type="button">{__msg("discover.message")}</button> : null}
+        {!isOwner && viewerCapabilities.canMessage ? <button aria-label={__msg("social.sendAGift", { value0: profile.displayName })} className="profile-visitor-gifts" onClick={() => setDirectGiftOpen(true)} type="button"><FiGift /></button> : null}
+        {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button">{__msg("admin.share")}</button> : null}
         {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
       </div>
       <ProfileViewersSheet isOpen={viewersOpen} onClose={() => setViewersOpen(false)} />
@@ -509,16 +529,18 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
 }
 
 function VisitorFollowButton({ profile, relationship = {} }) {
+  __useUiLanguage();
   const client = useQueryClient();
   const follow = useMutation({
     mutationFn: () => profileService.toggleFollow(profile.username),
     onSuccess: () => invalidateFollowSurfaces(client),
   });
   const following = Boolean(relationship.following);
-  return <button className={`profile-action-chip profile-follow-action ${following ? "is-following" : ""}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? "Following" : "Follow"}</button>;
+  return <button className={`profile-action-chip profile-follow-action ${following ? "is-following" : ""}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? __msg("activity.following") : __msg("discover.follow")}</button>;
 }
 
 function DirectAccessRow({ profile, viewerCapabilities }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const [offerOpen, setOfferOpen] = useState(false);
   const windows = useQuery({
@@ -542,13 +564,13 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
   return (
     <>
       <button className="profile-row profile-direct-row" onClick={open} type="button">
-        <span className="profile-row-orb"><FiZap /></span>
+        <span className="profile-row-orb"><FiMessageCircle /></span>
         <span className="min-w-0 flex-1">
-          <b>Direct Access {waiting ? <i> - {waiting} waiting</i> : null}</b>
+          <b>Direct Access {waiting ? <i> - {waiting} {__msg("profile.waiting")}</i> : null}</b>
           <small>{meta}</small>
         </span>
-        {viewerCapabilities.isOwner ? <Link aria-label="Direct Access settings" onClick={(event) => event.stopPropagation()} state={{ returnTo: "/profile" }} to="/settings/direct-access"><FiSettings /></Link> : null}
-        <FiChevronRight />
+        {viewerCapabilities.isOwner ? <Link aria-label={__msg("settings.directAccessSettings")} onClick={(event) => event.stopPropagation()} state={{ returnTo: "/profile" }} to="/settings/direct-access"><FiSettings /></Link> : null}
+        <FiChevronRight data-ui-directional="true" />
       </button>
       {offerOpen ? <DirectAccessOfferModal onClose={() => setOfferOpen(false)} profile={profile} /> : null}
     </>
@@ -556,6 +578,7 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
 }
 
 function ProfileAccessGroup({ profile, viewerCapabilities }) {
+  __useUiLanguage();
   const canShowDashboard = profile.isCreator && viewerCapabilities.isOwner && viewerCapabilities.canAccessStudio;
   const canShowDirect = profile.profileAccountType !== "personal" && profile.isCreator && (viewerCapabilities.isOwner || viewerCapabilities.canMessage) && (viewerCapabilities.isOwner || profile.directAccess?.enabled || profile.directAccess?.callEnabled);
   if (!canShowDashboard && !canShowDirect) return null;
@@ -564,7 +587,7 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
       {canShowDirect ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       {canShowDashboard ? (
         <>
-          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>{profile.profileAccountType === "business" ? "Business dashboard" : profile.profileAccountType === "personal" ? "Earnings" : "Creator dashboard"}</span><FiChevronRight /></Link>
+          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>{profile.profileAccountType === "business" ? __msg("social.businessDashboard") : profile.profileAccountType === "personal" ? __msg("layouts.earnings") : __msg("social.creatorDashboard")}</span><FiChevronRight data-ui-directional="true" /></Link>
         </>
       ) : null}
     </section>
@@ -572,6 +595,7 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
 }
 
 function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
+  __useUiLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const shouldOpenGiftPicker = searchParams.get("sendGift") === "1" && !viewerCapabilities.isOwner && Boolean(profile?.ownerUserId);
   const [giftsOpen, setGiftsOpen] = useState(false);
@@ -609,7 +633,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
   if (!gifts.length && !viewerCapabilities.isOwner) return directGiftPicker;
   return (
     <>
-    <button aria-label={`View ${profile.displayName?.split(" ")[0] || "creator"}\u2019s gifts`} className="profile-gift-strip" id="profile-gifts" onClick={() => setGiftsOpen(true)} type="button">
+    <button aria-label={__msg("social.viewSGifts", { value0: profile.displayName?.split(" ")[0] || "creator" })} className="profile-gift-strip" id="profile-gifts" onClick={() => setGiftsOpen(true)} type="button">
       <span className="profile-gift-art" aria-hidden="true">
         {gifts.filter((gift, index, all) => all.findIndex((item) => (item.giftId || item.name) === (gift.giftId || gift.name)) === index).slice(0, 3).map((gift) => gift.imageUrl ? <img alt="" key={gift.key || gift.id || gift.name} src={gift.imageUrl} /> : <i key={gift.key || gift.id || gift.name}><FiGift /></i>)}
         {!gifts.length ? <i><FiGift /></i> : null}
@@ -617,7 +641,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
       <span className="profile-gift-copy">
         <b>{viewerCapabilities.isOwner ? `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}` : `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}`}</b>
       </span>
-      <FiChevronRight />
+      <FiChevronRight data-ui-directional="true" />
     </button>
     <ReceivedGiftsSheet isOpen={giftsOpen} isOwner={viewerCapabilities.isOwner} onClose={() => setGiftsOpen(false)} onSendGift={(recipient = null) => { setGiftRecipient(recipient || { id: profile.ownerUserId, name: profile.displayName, avatar: resolveMediaUrl(profile.avatar), username: profile.username }); setGiftsOpen(false); setSendGiftOpen(true); }} profile={profile} viewerId={viewerId} />
     {directGiftPicker}
@@ -626,6 +650,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
 }
 
 function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, viewerId }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const backdropRef = useRef(null);
   const [sheetPosition, setSheetPosition] = useState(undefined);
@@ -699,7 +724,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
   const giftValue = Number(detailGift?.stars || 0);
   const profileStateMutation = useMutation({
     mutationFn: ({ giftId, payload }) => profileService.updateReceivedGiftProfileState(giftId, payload).then((response) => response.data.data.gift),
-    onError: (error) => setThankNotice(error.response?.data?.message || "Gift setting could not be saved"),
+    onError: (error) => setThankNotice(error.response?.data?.message || __msg("social.giftSettingCouldNotBeSaved")),
     onSuccess: async (gift) => {
       setDetailGift((current) => current?.id === gift.id ? { ...current, ...gift } : current);
       await query.refetch();
@@ -712,10 +737,10 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
       setReportingReason(reason);
       setReportError("");
     },
-    onError: (error) => setReportError(error.response?.data?.message || "Report could not be submitted."),
+    onError: (error) => setReportError(error.response?.data?.message || __msg("social.reportCouldNotBeSubmitted")),
     onSuccess: () => {
       setReportDone(true);
-      setThankNotice("Report submitted.");
+      setThankNotice(__msg("fanWeb.reportSubmitted"));
     },
     onSettled: () => setReportingReason(""),
   });
@@ -726,10 +751,10 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
       const response = await profileService.thankReceivedGift(detailGift.id);
       const thankedAt = response.data.data.thankedAt;
       setDetailGift((current) => current ? { ...current, thankedAt } : current);
-      setThankNotice("They’ll know you appreciated it ✦");
+      setThankNotice(__msg("social.theyLlKnowYouAppreciatedIt"));
       await query.refetch();
     } catch (requestError) {
-      setThankNotice(requestError.response?.data?.message || "Could not send your thanks");
+      setThankNotice(requestError.response?.data?.message || __msg("social.couldNotSendYourThanks"));
     } finally {
       setThanking(false);
     }
@@ -747,7 +772,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
     if (gift.visibility === "RECIPIENT_ONLY" && !isOwner && !fromViewer) return "";
     const from = fromViewer
       ? "you"
-      : gift.sender?.username ? `@${gift.sender.username}` : gift.sender?.name || "a supporter";
+      : gift.sender?.username ? `@${gift.sender.username}` : gift.sender?.name || __msg("social.aSupporter");
     const parts = [`from ${from}`];
     if (gift.quantity > 1) parts.push(`×${gift.quantity}`);
     if (gift.visibility === "RECIPIENT_ONLY") parts.push("private");
@@ -755,24 +780,24 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
     return parts.join(" · ");
   };
   const reportSheet = reportOpen && detailGift ? (
-    <section aria-label="Report Gift" className={reportDone ? "profile-gift-report-sheet is-done" : "profile-gift-report-sheet"}>
-      <button aria-label="Back to gift details" className="profile-gift-detail-handle" onClick={() => { setReportOpen(false); setReportDone(false); }} type="button" />
+    <section aria-label={__msg("social.reportGift")} className={reportDone ? "profile-gift-report-sheet is-done" : "profile-gift-report-sheet"}>
+      <button aria-label={__msg("social.backToGiftDetails")} className="profile-gift-detail-handle" onClick={() => { setReportOpen(false); setReportDone(false); }} type="button" />
       {reportDone ? (
         <div className="profile-gift-report-done">
           <ReportDoneEyeIcon />
-          <h2>Thank you</h2>
-          <p>Our team will review this shortly.</p>
-          <button onClick={() => { setReportOpen(false); setReportDone(false); }} type="button">Done</button>
+          <h2>{__msg("social.thankYou")}</h2>
+          <p>{__msg("social.ourTeamWillReviewThisShortly")}</p>
+          <button onClick={() => { setReportOpen(false); setReportDone(false); }} type="button">{__msg("comments.done")}</button>
         </div>
       ) : (
         <>
-          <h2>Report Gift</h2>
-          <p>Why are you reporting this?</p>
+          <h2>{__msg("social.reportGift")}</h2>
+          <p>{__msg("fanWeb.whyAreYouReportingThis")}</p>
           <div className="profile-gift-report-reasons">
             {atseenReportReasons.map((reason) => (
               <button disabled={reportMutation.isPending} key={reason} onClick={() => reportMutation.mutate({ giftId: detailGift.id, reason })} type="button">
-                <span>{reportingReason === reason ? "Reporting..." : reason}</span>
-                <FiChevronRight aria-hidden="true" />
+                <span>{reportingReason === reason ? __msg("profile.reporting") : reason}</span>
+                <FiChevronRight data-ui-directional="true" aria-hidden="true" />
               </button>
             ))}
           </div>
@@ -784,38 +809,38 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
   if (!isOpen) return null;
   return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} ref={backdropRef} role="dialog" style={sheetPosition}>
     {thankNotice ? <div aria-live="polite" className="profile-gift-thank-toast">{thankNotice}</div> : null}
-    {previewGift ? <GiftCelebration {...profileGiftCopy(previewGift, { isOwner, viewerId })} detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message="Gift received" variant="is-profile-gift" /> : null}
-    {reportSheet || (detailGift ? <section aria-label={`${detailGift.name} gift details`} className="profile-gift-detail-sheet">
-      <button aria-label="Back to received gifts" className="profile-gift-detail-handle" onClick={() => setDetailGift(null)} type="button" />
-      <button aria-label="Replay gift animation" className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><span aria-hidden="true" /><img alt={detailGift.name} src={detailGift.imageUrl} /></button>
-      <h2>{detailGift.name}</h2>
-      {profileGiftCopy(detailGift, { isOwner, viewerId }).caption ? <p className="profile-gift-detail-tagline">&ldquo;{profileGiftCopy(detailGift, { isOwner, viewerId }).caption}&rdquo;</p> : null}
+    {previewGift ? <GiftCelebration {...profileGiftCopy(previewGift, { isOwner, viewerId })} detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message={__msg("social.giftReceived")} variant="is-profile-gift" /> : null}
+    {reportSheet || (detailGift ? <section aria-label={__msg("social.giftDetails", { value0: detailGift.name })} className="profile-gift-detail-sheet">
+      <button aria-label={__msg("social.backToReceivedGifts")} className="profile-gift-detail-handle" onClick={() => setDetailGift(null)} type="button" />
+      <button aria-label={__msg("social.replayGiftAnimation")} className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><span aria-hidden="true" /><img alt={detailGift.name} src={detailGift.imageUrl} /></button>
+      <h2 dir="auto">{detailGift.name}</h2>
+      {profileGiftCopy(detailGift, { isOwner, viewerId }).caption ? <p dir="auto" className="profile-gift-detail-tagline">&ldquo;{profileGiftCopy(detailGift, { isOwner, viewerId }).caption}&rdquo;</p> : null}
       {detailGift.message ? <blockquote>&ldquo;{detailGift.message}&rdquo;</blockquote> : null}
-      <button className="profile-gift-detail-replay" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button">▶ Replay</button>
-      <p className="profile-gift-detail-sender">from {selectedSender.name || detailGift.source || "a supporter"}{relativeTime(detailGift.createdAt) ? ` · ${relativeTime(detailGift.createdAt)}` : ""}</p>
-      {giftValue > 0 ? <p className="profile-gift-detail-balance">+✦{giftValue.toLocaleString()} <span>{isOwner ? "already on your balance" : "gift value"}</span></p> : null}
-      <p className="profile-gift-detail-source">{detailGift.visibility === "RECIPIENT_ONLY" ? "Sender visible only to you" : detailGift.hiddenFromProfile ? "Only you can see this gift" : "Sender visible on your profile"}<br />{detailGift.hiddenFromProfile ? "hidden from profile" : "on your profile"}</p>
-      {selectedSender.avatar || selectedSender.name ? (selectedSender.username ? <Link className="profile-gift-detail-person" onClick={onClose} to={`/profile/${encodeURIComponent(selectedSender.username)}`}><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || "Supporter").split(" ")[0]} ›</span></Link> : <div className="profile-gift-detail-person"><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || "Supporter").split(" ")[0]} ›</span></div>) : null}
+      <button className="profile-gift-detail-replay" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button">{__msg("social.replay")}</button>
+      <p className="profile-gift-detail-sender">{__msg("activity.from")} {selectedSender.name || detailGift.source || __msg("social.aSupporter")}{relativeTime(detailGift.createdAt) ? ` · ${relativeTime(detailGift.createdAt)}` : ""}</p>
+      {giftValue > 0 ? <p className="profile-gift-detail-balance">+✦{giftValue.toLocaleString(__uiLocale())} <span>{isOwner ? __msg("social.alreadyOnYourBalance") : __msg("social.giftValue")}</span></p> : null}
+      <p className="profile-gift-detail-source">{detailGift.visibility === "RECIPIENT_ONLY" ? __msg("social.senderVisibleOnlyToYou") : detailGift.hiddenFromProfile ? __msg("social.onlyYouCanSeeThisGift") : __msg("social.senderVisibleOnYourProfile")}<br />{detailGift.hiddenFromProfile ? __msg("social.hiddenFromProfile") : __msg("social.onYourProfile")}</p>
+      {selectedSender.avatar || selectedSender.name ? (selectedSender.username ? <Link className="profile-gift-detail-person" onClick={onClose} to={`/profile/${encodeURIComponent(selectedSender.username)}`}><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || __msg("social.supporter")).split(" ")[0]} ›</span></Link> : <div className="profile-gift-detail-person"><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || __msg("social.supporter")).split(" ")[0]} ›</span></div>) : null}
       <div className="profile-gift-detail-actions">
-        {isOwner && selectedSender.id ? <button className={detailGift.thankedAt ? "is-thanked" : ""} disabled={Boolean(detailGift.thankedAt) || thanking} onClick={thankGift} type="button">{detailGift.thankedAt ? "Thanked ✓" : thanking ? "Thanking..." : "Thank them"}</button> : null}
-        {isOwner ? (selectedSender.id ? <button onClick={() => { onSendGift({ id: selectedSender.id, name: selectedSender.name, avatar: selectedSender.avatar }); }} type="button">Send one back</button> : null) : <button onClick={() => onSendGift()} type="button">Send a gift</button>}
+        {isOwner && selectedSender.id ? <button className={detailGift.thankedAt ? "is-thanked" : ""} disabled={Boolean(detailGift.thankedAt) || thanking} onClick={thankGift} type="button">{detailGift.thankedAt ? __msg("social.thanked") : thanking ? __msg("social.thanking") : __msg("social.thankThem")}</button> : null}
+        {isOwner ? (selectedSender.id ? <button onClick={() => { onSendGift({ id: selectedSender.id, name: selectedSender.name, avatar: selectedSender.avatar }); }} type="button">{__msg("social.sendOneBack")}</button> : null) : <button onClick={() => onSendGift()} type="button">{__msg("profile.sendAGift")}</button>}
       </div>
-      {isOwner ? <div className="profile-gift-detail-controls"><button className={detailGift.featuredOnProfile ? "is-featured" : ""} disabled={profileStateMutation.isPending} onClick={toggleFeatured} type="button">{detailGift.featuredOnProfile ? "✦ Featured" : "Pin to profile"}</button><button disabled={profileStateMutation.isPending} onClick={toggleHidden} type="button">{detailGift.hiddenFromProfile ? "Show on profile" : "Hide from profile"}</button></div> : null}
-      {detailGift.hiddenFromProfile ? <p className="profile-gift-detail-private-note">Only you can see this gift</p> : null}
-      {isOwner ? <button className="profile-gift-detail-report" onClick={() => setReportOpen(true)} type="button">Report this gift or note</button> : null}
+      {isOwner ? <div className="profile-gift-detail-controls"><button className={detailGift.featuredOnProfile ? "is-featured" : ""} disabled={profileStateMutation.isPending} onClick={toggleFeatured} type="button">{detailGift.featuredOnProfile ? __msg("social.featured") : __msg("profile.pinToProfile")}</button><button disabled={profileStateMutation.isPending} onClick={toggleHidden} type="button">{detailGift.hiddenFromProfile ? __msg("social.showOnProfile") : __msg("social.hideFromProfile")}</button></div> : null}
+      {detailGift.hiddenFromProfile ? <p className="profile-gift-detail-private-note">{__msg("social.onlyYouCanSeeThisGift")}</p> : null}
+      {isOwner ? <button className="profile-gift-detail-report" onClick={() => setReportOpen(true)} type="button">{__msg("social.reportThisGiftOrNote")}</button> : null}
     </section> : <section className="profile-received-gifts-sheet">
       <span className="profile-received-gifts-handle" />
-      <header className="profile-received-gifts-head"><FanAvatar name={profile.displayName} src={resolveMediaUrl(profile.avatar)} size="h-8 w-8" /><div><h2 id="received-gifts-title">{isOwner ? "My Gifts" : `${profile?.displayName?.split(" ")[0] || "Creator"}\u2019s Gifts`}</h2><p>{query.isLoading ? "Loading..." : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={() => onSendGift()} type="button">Send a gift</button> : null}</header>
-      {query.isError ? <p className="py-16 text-center text-sm text-red-300">Gifts could not be loaded.</p> : null}
-      {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">No gifts received yet.</p> : null}
+      <header className="profile-received-gifts-head"><FanAvatar name={profile.displayName} src={resolveMediaUrl(profile.avatar)} size="h-8 w-8" /><div><h2 id="received-gifts-title">{isOwner ? __msg("social.myGifts") : __msg("social.sGifts", { value0: profile?.displayName?.split(" ")[0] || __msg("discover.creator") })}</h2><p>{query.isLoading ? __msg("admin.loading") : `${total} ${total === 1 ? "gift" : "gifts"}`}</p></div>{!isOwner ? <button className="profile-send-gift-action" onClick={() => onSendGift()} type="button">{__msg("profile.sendAGift")}</button> : null}</header>
+      {query.isError ? <p className="py-16 text-center text-sm text-red-300">{__msg("stories.giftsCouldNotBeLoaded")}</p> : null}
+      {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">{__msg("social.noGiftsReceivedYet")}</p> : null}
       <div className="profile-received-gifts-grid">
-        {displayGifts.map((gift) => <button aria-label={`Play ${gift.name} gift animation`} className={gift.featuredOnProfile ? "profile-received-gift is-featured" : "profile-received-gift"} key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
+        {displayGifts.map((gift) => <button aria-label={__msg("social.playGiftAnimation", { value0: gift.name })} className={gift.featuredOnProfile ? "profile-received-gift is-featured" : "profile-received-gift"} key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
           <span><img alt={gift.name} onLoad={(event) => {
             const image = event.currentTarget;
             const ratio = image.naturalWidth / image.naturalHeight;
             image.style.setProperty("--profile-gift-art-height", ratio < .85 ? "78px" : ratio > 1.15 ? "60px" : "68px");
           }} src={resolveMediaUrl(gift.imageUrl)} style={{ transform: `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})` }} /></span>
-          <strong>{gift.name}</strong>
+          <strong dir="auto">{gift.name}</strong>
           <small>{senderLine(gift)}</small>
         </button>)}
       </div>
@@ -824,33 +849,36 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
 }
 
 function ProfileTabs({ tab, setTab }) {
+  __useUiLanguage();
   const tabs = [
     ["seens", "Seens", FiGrid],
     ["reposts", "Reposts", FiRepeat],
     ["saved", "Saved", FiBookmark],
   ];
   return (
-    <nav className="profile-icon-tabs" aria-label="Profile content">
+    <nav className="profile-icon-tabs" aria-label={__msg("social.profileContent")}>
       {tabs.map(([value, label, Icon]) => <button aria-label={label} className={tab === value ? "is-active" : ""} key={value} onClick={() => setTab(value)} type="button"><Icon /></button>)}
     </nav>
   );
 }
 
 function ProfileMixedContentPanel({ emptyText, owner = false, reposted = false, seens = [], wallPosts = [] }) {
-  if (!seens.length && !wallPosts.length) return <ContentEmptyState compact message={owner ? "Items you save or share will be collected here." : "There is nothing in this section yet."} primaryAction={owner ? { label: "Explore content", to: "/seen" } : { label: "Discover people", to: "/discover" }} title={emptyText} variant="profile" />;
+  __useUiLanguage();
+  if (!seens.length && !wallPosts.length) return <ContentEmptyState compact message={owner ? __msg("social.itemsYouSaveOrShareWillBeCollectedHere") : __msg("social.thereIsNothingInThisSectionYet")} primaryAction={owner ? { label: __msg("social.exploreContent"), to: "/seen" } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={emptyText} variant="profile" />;
   return <div className="profile-mixed-content">
     {seens.length ? <section className="profile-mixed-section is-seens">
-      <header><h2>Seens</h2><span>{seens.length}</span></header>
+      <header><h2>{__msg("profile.seens")}</h2><span>{seens.length}</span></header>
       <ProfileContentGrid content={seens} kind="seens" reposted={reposted} />
     </section> : null}
     {wallPosts.length ? <section className="profile-mixed-section is-wall-notes">
-      <header><h2>Wall notes</h2><span>{wallPosts.length}</span></header>
+      <header><h2>{__msg("social.wallNotes")}</h2><span>{wallPosts.length}</span></header>
       <div className="profile-notes-list">{wallPosts.map((post) => <FeedPost key={post.feedId || post.shareId || post.id} post={post} />)}</div>
     </section> : null}
   </div>;
 }
 
 function ContentTabsPanel({ data, isOwner, tab }) {
+  __useUiLanguage();
   const saved = useQuery({
     queryKey: ["saved-content"],
     queryFn: () => savedService.list().then((response) => response.data.data),
@@ -859,25 +887,27 @@ function ContentTabsPanel({ data, isOwner, tab }) {
   });
   if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
   if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
-  if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
+  if (!isOwner) return <div className="profile-empty-state">{__msg("social.savedItemsArePrivate")}</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
-  if (saved.isError) return <div className="profile-empty-state">Saved items could not be loaded.</div>;
+  if (saved.isError) return <div className="profile-empty-state">{__msg("social.savedItemsCouldNotBeLoaded")}</div>;
   return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." owner seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
 }
 
 function ProfileNotes({ isOwner, posts = [] }) {
+  __useUiLanguage();
   return (
     <section className="profile-section profile-wall-section">
       <header className="profile-section-head">
-        <h2>Notes</h2>
-        <span>{compact(posts.length)} {posts.length === 1 ? "note" : "notes"}</span>
+        <h2>{__msg("social.notes")}</h2>
+        <span>{compact(posts.length)} {posts.length === 1 ? __msg("social.note") : __msg("social.notes_3add7b")}</span>
       </header>
-      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <ContentEmptyState compact message={isOwner ? "Write a Wall note and it will appear here." : "This creator has not posted a Wall note yet."} primaryAction={isOwner ? { label: "Create a post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} title={isOwner ? "Create your first post" : "No posts yet"} variant="wall" />}
+      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <ContentEmptyState compact message={isOwner ? __msg("social.writeAWallNoteAndItWillAppearHere") : __msg("social.thisCreatorHasNotPostedAWallNoteYet")} primaryAction={isOwner ? { label: __msg("social.createAPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={isOwner ? __msg("fan.createYourFirstPost") : __msg("social.noPostsYet")} variant="wall" />}
     </section>
   );
 }
 
 function ProfileBody({ data, setConnectionsType }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -891,6 +921,14 @@ function ProfileBody({ data, setConnectionsType }) {
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
+  const previewNewCreator = isOwner && searchParams.get("preview") === "new";
+  const [creatorPreviewToast, setCreatorPreviewToast] = useState(false);
+  useEffect(() => {
+    if (!previewNewCreator) return undefined;
+    setCreatorPreviewToast(true);
+    const timer = window.setTimeout(() => setCreatorPreviewToast(false), 2800);
+    return () => window.clearTimeout(timer);
+  }, [previewNewCreator]);
   const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
   const profileStories = storiesQuery.data?.length ? storiesQuery.data : data.profileStories || [];
   const hasProfileStories = profile.hasActiveStories || profileStories.length > 0;
@@ -974,10 +1012,11 @@ function ProfileBody({ data, setConnectionsType }) {
   }
   return (
     <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-public-profile"}`}>
-      {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">Saved for later · {draftSavedCount}/3 ✍️</p> : null}
+      {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">{__msg("social.savedForLater")} {draftSavedCount}/3 ✍️</p> : null}
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
+      {creatorPreviewToast ? <div className="profile-creator-preview-return" role="status">{__msg("profile.backToYourAccount")}</div> : null}
       <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesCreate={() => setExperienceStoryOpen(true)} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <StoryHighlights creatorUsername={profile.username} creatorId={profile.ownerUserId} isOwner={isOwner} />
       <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
@@ -1000,7 +1039,7 @@ function ProfileBody({ data, setConnectionsType }) {
       </section>
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <ProfileNotes isOwner={isOwner} posts={data.wallPosts || []} />
-      {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
+      {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> {__msg("fan.joined")} {new Date(profile.joinedAt).toLocaleDateString(__uiLocale())}</p> : null}
       {isOwner ? <FanCreateSheet
         canCreateSeen={viewerCapabilities.canCreate}
         canCreateStoryNow={canCreateStoryNow}
@@ -1022,6 +1061,7 @@ function ProfileBody({ data, setConnectionsType }) {
 }
 
 function UnifiedProfilePage({ embedded = false, owner = false }) {
+  __useUiLanguage();
   const { username } = useParams();
   const [connectionsType, setConnectionsType] = useState("");
   const profileQuery = useQuery({
@@ -1030,6 +1070,13 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     enabled: owner || Boolean(username),
     retry: false,
   });
+
+  const refetchProfile = profileQuery.refetch;
+  useEffect(() => {
+    const refresh = () => { void refetchProfile(); };
+    window.addEventListener("onlyme-verification-updated", refresh);
+    return () => window.removeEventListener("onlyme-verification-updated", refresh);
+  }, [refetchProfile]);
 
   useEffect(() => {
     const profileUserId = profileQuery.data?.profile?.ownerUserId;
@@ -1041,7 +1088,7 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
   if (profileQuery.isLoading) body = <ProfileSkeleton />;
   else if (profileQuery.isError) {
     const status = profileQuery.error?.response?.status;
-    body = <FanCard className="border-atseen-danger/25 bg-atseen-danger/10 text-center"><h1 className="text-lg font-bold">{status === 404 ? "Profile not found" : status === 403 ? "Profile is unavailable" : "Unable to load profile"}</h1><p className="mt-2 text-sm text-atseen-muted">{status === 404 ? "This profile may be private, inactive, or unavailable." : "Please try again when the service is available."}</p><button className="mt-4 text-sm font-bold text-atseen-blue" onClick={() => profileQuery.refetch()} type="button"><FiRefreshCw className="mr-2 inline" />Retry</button></FanCard>;
+    body = <FanCard className="border-atseen-danger/25 bg-atseen-danger/10 text-center"><h1 className="text-lg font-bold">{status === 404 ? __msg("social.profileNotFound") : status === 403 ? __msg("social.profileIsUnavailable") : __msg("social.unableToLoadProfile")}</h1><p className="mt-2 text-sm text-atseen-muted">{status === 404 ? __msg("social.thisProfileMayBePrivateInactiveOrUnavailable") : __msg("social.pleaseTryAgainWhenTheServiceIsAvailable")}</p><button className="mt-4 text-sm font-bold text-atseen-blue" onClick={() => profileQuery.refetch()} type="button"><FiRefreshCw className="me-2 inline" />{__msg("activity.retry")}</button></FanCard>;
   } else {
     body = (
       <>

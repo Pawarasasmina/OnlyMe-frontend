@@ -9,8 +9,8 @@
 .profile-owner-world-members { display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:5px;color:rgba(255,255,255,.4);font-size:11px;line-height:16px; }
 .profile-owner-world-members > b { color:#bfe3ff;font-size:11px;font-weight:700; }
 .profile-owner-world-faces { display:flex;flex:none; }
-.profile-owner-world-faces > span { display:grid;place-items:center;width:16px;height:16px;overflow:hidden;margin-left:-6px;border-radius:50%;background:#283342;box-shadow:0 0 0 1.5px #0a0c0f;color:#d6eaff;font-size:8px; }
-.profile-owner-world-faces > span:first-child { margin-left:0; }.profile-owner-world-faces img { width:100%;height:100%;object-fit:cover; }
+.profile-owner-world-faces > span { display:grid;place-items:center;width:16px;height:16px;overflow:hidden;margin-inline-start:-6px;border-radius:50%;background:#283342;box-shadow:0 0 0 1.5px #0a0c0f;color:#d6eaff;font-size:8px; }
+.profile-owner-world-faces > span:first-child { margin-inline-start:0; }.profile-owner-world-faces img { width:100%;height:100%;object-fit:cover; }
 .profile-owner-world-card > svg { width:12px;height:12px;flex:none;color:rgba(255,255,255,.4); }
 .profile-owner-world-card:focus-visible { outline:2px solid #9ccbff;outline-offset:3px; }
 .profile-owner-world-card.is-empty { background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06); }.profile-owner-world-card.is-empty .profile-owner-world-planet > span { background:radial-gradient(circle at 35% 30%,#3a4a63,#1c2738 60%,#0e141e); }

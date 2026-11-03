@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
@@ -44,6 +47,7 @@ const CreatorVerificationQueue = lazyPage("../pages/admin/CreatorVerificationQue
 const CreatorVerificationDetail = lazyPage("../pages/admin/CreatorVerificationDetail");
 const ProfileSettingsPage = lazyPage("../pages/settings/ProfileSettingsPage");
 const DirectAccessSettingsPage = lazyPage("../pages/settings/DirectAccessSettingsPage");
+const MonetizationPage = lazyPage("../pages/settings/MonetizationPage");
 const SettingsPage = lazyPage("../pages/settings/SettingsPage");
 const CreatorSettingsPage = lazyPage("../pages/creator/CreatorSettingsPage");
 const CreatorSecurityPage = lazyPage("../pages/creator/CreatorSecurityPage");
@@ -70,6 +74,7 @@ const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
 const MyExperiencesPage = lazyPage("../pages/social/MyExperiencesPage");
 const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
+const BankReviewPage = lazyPage("../pages/admin/BankReviewPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
 const SavedPage = lazyPage("../pages/social/SavedPage");
 const JoinedInvitationsPage = lazyPage("../pages/social/JoinedInvitationsPage");
@@ -94,6 +99,7 @@ const GiftManagementPage = lazyPage("../pages/admin/GiftManagementPage");
 const VerifiedCreatorPage = lazyPage("../pages/creator/VerifiedCreatorPage");
 
 function RootRedirect() {
+  __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
   if (user?.role === ROLES.ADMIN) return <Navigate replace to="/admin/dashboard" />;
@@ -101,11 +107,13 @@ function RootRedirect() {
 }
 
 function LegacyCreatorProfileRedirect() {
+  __useUiLanguage();
   const { username } = useParams();
   return <Navigate replace to={`/profile/${encodeURIComponent(username)}`} />;
 }
 
 function ProfileRoute() {
+  __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
   if (user && user.role !== ROLES.ADMIN) return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
@@ -113,6 +121,7 @@ function ProfileRoute() {
 }
 
 function WorldRoute() {
+  __useUiLanguage();
   const { id } = useParams();
   const { loading, user } = useAuth();
   if (loading) return null;
@@ -121,13 +130,15 @@ function WorldRoute() {
 }
 
 function WallRoute() {
+  __useUiLanguage();
   const [params] = useSearchParams();
   const post = params.get("post");
   return post ? <Navigate replace to={`/posts/${encodeURIComponent(post)}`} /> : <FanHomePage />;
 }
 
 function AppRoutes() {
-  return <Suspense fallback={<div className="grid min-h-[50vh] place-items-center"><Loader label="Loading page..." /></div>}><Routes>
+  __useUiLanguage();
+  return <Suspense fallback={<div className="grid min-h-[50vh] place-items-center"><Loader label={__msg("routes.loadingPage")} /></div>}><Routes>
     <Route element={<MainLayout />}>
       <Route index element={<RootRedirect />} />
       <Route path="/explore" element={<ExplorePage />} />
@@ -175,6 +186,7 @@ function AppRoutes() {
           <Route path="/profile/status" element={<ProfileStatusPage />} />
           <Route path="/profile/dream" element={<DreamEditorPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/monetization" element={<MonetizationPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
           <Route element={<ApprovedCreatorRoute />}>
             <Route path="/settings/direct-access" element={<DirectAccessSettingsPage />} />
@@ -267,6 +279,7 @@ function AppRoutes() {
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/financial" element={<FinancialAdminPage />} />
+          <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
           <Route path="/admin/message-reports" element={<AdminReportListPage type="message" />} />
           <Route path="/admin/message-reports/:reportId" element={<AdminReportDetailPage type="message" />} />
           <Route path="/admin/user-reports" element={<AdminReportListPage type="user" />} />

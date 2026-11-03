@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
@@ -8,7 +12,7 @@ function formatCount(value = 0) {
   const count = Number(value) || 0;
   if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
   if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString();
+  return count.toLocaleString(__uiLocale());
 }
 
 function profileRoute(person = {}) {
@@ -16,6 +20,7 @@ function profileRoute(person = {}) {
 }
 
 function DiscoverFollowButton({ disabled, onToggle, person }) {
+  __useUiLanguage();
   const handleClick = useCallback((event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -29,12 +34,13 @@ function DiscoverFollowButton({ disabled, onToggle, person }) {
       onClick={handleClick}
       type="button"
     >
-      {person.isFollowing || person.following ? "Following" : "Follow"}
+      {person.isFollowing || person.following ? __msg("activity.following") : __msg("discover.follow")}
     </button>
   );
 }
 
 function DiscoverActivityCard({ activity }) {
+  __useUiLanguage();
   if (!activity?.actor) return null;
   const actor = activity.actor;
 
@@ -42,20 +48,21 @@ function DiscoverActivityCard({ activity }) {
     <Link className="discover-live-card" to={profileRoute(actor)}>
       <FanAvatar className="ring-2 ring-atseen-blue" name={actor.displayName || actor.name} size="h-[54px] w-[54px]" src={actor.avatar} />
       <span className="min-w-0 flex-1">
-        <strong>Being seen right now</strong>
-        <small>{activity.text || `${actor.displayName || actor.name} is At seen`}</small>
+        <strong>{__msg("discover.beingSeenRightNow")}</strong>
+        <small>{activity.text || __msg("discover.isAtSeen", { value0: actor.displayName || actor.name })}</small>
       </span>
-      {activity.online ? <i aria-label="Online" /> : null}
+      {activity.online ? <i aria-label={__msg("discover.online")} /> : null}
     </Link>
   );
 }
 
 function SuggestedForYou({ disabled, onFollowToggle, people = [] }) {
+  __useUiLanguage();
   if (!people.length) return null;
 
   return (
     <section className="discover-rail-card" aria-labelledby="discover-suggested-title">
-      <h2 id="discover-suggested-title">Suggested for you</h2>
+      <h2 id="discover-suggested-title">{__msg("discover.suggestedForYou")}</h2>
       <div className="discover-suggestion-list">
         {people.map((person) => (
           <Link className="discover-suggestion-row" key={person.id || person.username} to={profileRoute(person)}>
@@ -76,37 +83,39 @@ function SuggestedForYou({ disabled, onFollowToggle, people = [] }) {
 }
 
 function TrendingSeen({ seen }) {
+  __useUiLanguage();
   if (!seen) return null;
   const cover = seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover;
 
   return (
     <Link className="discover-seen-feature" to={seen.route || `/seen/${seen.id}`}>
-      {cover ? <PublicationCoverMedia autoPlay loop alt={`${seen.title} cover`} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
+      {cover ? <PublicationCoverMedia autoPlay loop alt={__msg("discover.cover", { value0: seen.title })} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
       <span className="discover-seen-shade" aria-hidden="true" />
       <span className="discover-seen-copy">
-        <small>TRENDING SEEN</small>
-        <strong>{seen.title}</strong>
-        <em>{seen.creator?.name || seen.creator?.displayName || "Creator"}{" \u00b7 "}{formatCount(seen.engagementCount ?? seen.viewCount)} interactions</em>
+        <small>{__msg("discover.trendingSeen")}</small>
+        <strong dir="auto">{seen.title}</strong>
+        <em>{seen.creator?.name || seen.creator?.displayName || __msg("discover.creator")}{" \u00b7 "}{formatCount(seen.engagementCount ?? seen.viewCount)} {__msg("discover.interactions")}</em>
       </span>
     </Link>
   );
 }
 
 function FreshSeens({ seens = [] }) {
+  __useUiLanguage();
   if (!seens.length) return null;
 
   return (
     <section className="discover-rail-card discover-fresh-card" aria-labelledby="discover-fresh-title">
-      <h2 id="discover-fresh-title">Fresh Seens</h2>
+      <h2 id="discover-fresh-title">{__msg("discover.freshSeens")}</h2>
       <div className="discover-fresh-list">
         {seens.map((seen) => {
           const cover = seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover;
           return (
             <Link className="discover-fresh-row" key={seen.id} to={seen.route || `/seen/${seen.id}`}>
-              {cover ? <PublicationCoverMedia autoPlay loop alt={`${seen.title} cover`} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
+              {cover ? <PublicationCoverMedia autoPlay loop alt={__msg("discover.cover", { value0: seen.title })} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
               <span className="min-w-0">
-                <strong>{seen.title}</strong>
-                <small>{seen.creator?.name || seen.creator?.displayName || "Creator"}{" \u00b7 "}{seen.chapterCount} chapters</small>
+                <strong dir="auto">{seen.title}</strong>
+                <small>{seen.creator?.name || seen.creator?.displayName || __msg("discover.creator")}{" \u00b7 "}{seen.chapterCount} {__msg("discover.chapters")}</small>
               </span>
             </Link>
           );
@@ -117,19 +126,21 @@ function FreshSeens({ seens = [] }) {
 }
 
 function DiscoverRailFooter() {
+  __useUiLanguage();
   return (
-    <footer className="discover-rail-footer" aria-label="Discover links">
-      <nav aria-label="About @seen">
+    <footer className="discover-rail-footer" aria-label={__msg("discover.discoverLinks")}>
+      <nav aria-label={__msg("discover.aboutSeen")}>
         {["About", "Creators", "Terms", "Privacy", "Help"].map((item) => <span key={item}>{item}</span>)}
       </nav>
-      <p>@seen - We see you. Every day.</p>
+      <p>{__msg("discover.seenWeSeeYouEveryDay")}</p>
     </footer>
   );
 }
 
 function DiscoverRightSidebar({ activity, followPending = false, freshSeens, onFollowToggle, suggestedUsers, trendingSeen }) {
+  __useUiLanguage();
   return (
-    <aside className="discover-right-rail" aria-label="Discover sidebar">
+    <aside className="discover-right-rail" aria-label={__msg("discover.discoverSidebar")}>
       <DiscoverActivityCard activity={activity} />
       <SuggestedForYou disabled={followPending} onFollowToggle={onFollowToggle} people={suggestedUsers} />
       <TrendingSeen seen={trendingSeen} />

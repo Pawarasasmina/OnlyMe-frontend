@@ -1,11 +1,13 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useMemo } from "react";
 import { useDiscoverFollowMutation, useDiscoverQuery } from "../../hooks/useDiscoverQuery";
 import HomeRightRail from "./home/HomeRightRail";
 
 function FanWebRightRail({ user }) {
+  __useUiLanguage();
   const viewerId = user?.id || user?._id || "";
   const queryParams = useMemo(
-    () => ({ _viewerId: viewerId, filter: "for_you", limit: 8 }),
+    () => ({ _viewerId: viewerId, view: "sidebar", limit: 8 }),
     [viewerId],
   );
   const discoverQuery = useDiscoverQuery(queryParams);
@@ -33,6 +35,9 @@ function FanWebRightRail({ user }) {
   return (
     <HomeRightRail
       activity={discoverQuery.data?.activity}
+      loading={discoverQuery.isPending}
+      failed={discoverQuery.isError}
+      onRetry={() => discoverQuery.refetch()}
       className="social-fixed-rail social-shared-right-rail hidden min-[1240px]:grid"
       followPending={followMutation.isPending}
       freshSeens={discoverQuery.data?.freshSeens || []}

@@ -1,7 +1,21 @@
 .share-sheet-overlay.is-invitation{z-index:280}
+.share-sheet-overlay.is-dream-share{z-index:280}
+.share-sheet-overlay.is-dream-share .share-sheet-panel{background:#0a0c0f}
+.share-sheet-overlay.is-dream-share{inset:0 auto 0 calc(var(--share-sheet-center-x,50vw) - var(--share-sheet-column-width,100vw)/2);width:var(--share-sheet-column-width,100vw);overflow:hidden;overscroll-behavior:none;align-items:flex-end;padding:0;background:rgba(0,0,0,.4);backdrop-filter:none}
+.share-sheet-overlay.is-dream-share .share-sheet-panel{width:100%;max-width:100%;border:0;border-radius:16px 16px 0 0;box-shadow:none}
+.share-sheet-overlay.is-dream-share .share-chat-avatar{display:none}
+.share-sheet-overlay.is-dream-share .share-external-row{display:flex;overflow-x:auto;gap:16px;scrollbar-width:none}
+.share-sheet-overlay.is-dream-share .share-external-action{flex:0 0 44px;min-width:44px}
+.share-sheet-overlay.instagram-save-overlay{align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:none;padding:20px}
+.instagram-save-content{display:flex;flex-direction:column;align-items:center;max-width:100%;text-align:center;color:#fff}
+.instagram-save-content > img{width:auto;max-width:min(250px,64vw);max-height:58dvh;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);object-fit:contain}
+.instagram-save-content h2{margin:18px 0 0;font-size:14.5px;font-weight:700;line-height:1.4}
+.instagram-save-content p{margin:6px 0 0;color:rgba(255,255,255,.4);font-size:12.5px;line-height:1.5}
+.instagram-save-content button{margin-top:20px;padding:10px 24px;border-radius:999px;background:rgba(255,255,255,.08);font-size:13px;font-weight:650}
+.share-sheet-overlay.is-dream-share .share-sheet-panel{height:auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:max(22px,env(safe-area-inset-bottom))}
 .share-sheet-overlay.is-invitation .share-sheet-panel{background:#0a0c0f}
 .share-sheet-overlay.is-invitation .share-external-row{grid-template-columns:repeat(5,minmax(0,1fr))}
-.share-sheet-overlay.is-invitation .share-chat-card{background:#1c2330;box-shadow:none;width:84%;margin-right:0;border-radius:20px 20px 6px 20px}
+.share-sheet-overlay.is-invitation .share-chat-card{background:#1c2330;box-shadow:none;width:84%;margin-inline-end:0;border-radius:20px 20px 6px 20px}
 .share-sheet-overlay.is-invitation .share-chat-media{height:168px;background:linear-gradient(#202e45,#111924)}
 .share-sheet-overlay.is-invitation .share-chat-avatar{position:relative;inset:auto;transform:none}
 .share-sheet-overlay.is-invitation .share-chat-avatar>.fan-avatar{width:70px!important;height:70px!important;box-shadow:0 0 0 2px #9ccbff77}

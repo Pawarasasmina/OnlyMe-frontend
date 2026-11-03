@@ -1,9 +1,10 @@
+import { msg as __msg } from "../i18n/runtime.js";
 export function friendDisplayName(friend = {}) {
-  return friend.displayName || friend.name || friend.username || "Friend";
+  return friend.displayName || friend.name || friend.username || __msg("discoverFriends.friend");
 }
 
 export function friendFirstName(friend = {}) {
-  return friend.firstName || friendDisplayName(friend).split(" ").filter(Boolean)[0] || "Friend";
+  return friend.firstName || friendDisplayName(friend).split(" ").filter(Boolean)[0] || __msg("discoverFriends.friend");
 }
 
 export function friendProfileRoute(friend = {}) {

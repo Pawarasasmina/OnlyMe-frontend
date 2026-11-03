@@ -1,3 +1,4 @@
+import { msg as __msg } from "../i18n/runtime.js";
 import axiosInstance from "../api/axiosInstance";
 
 export const contentService = {
@@ -13,7 +14,7 @@ export const contentService = {
   archiveContent: (id) => axiosInstance.post(`/content/${id}/archive`),
   uploadDraftMedia: async (file, upload, onProgress) => {
     if (upload.maxFileSize && file.size > upload.maxFileSize) {
-      const error = new Error(`File exceeds the ${Math.round(upload.maxFileSize / 1024 / 1024)} MB upload limit`);
+      const error = new Error(__msg("contentService.fileExceedsTheValue0MbUploadLimit", { value0: Math.round(upload.maxFileSize / 1024 / 1024) }));
       error.code = "FILE_TOO_LARGE";
       throw error;
     }

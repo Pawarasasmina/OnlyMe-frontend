@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { Buffer } from "node:buffer";
 async function fixture(page, initialStatus = "NOT_STARTED") {
   const calls = [];
   let verification = { id: "application", purpose: "IDENTITY", status: initialStatus, creatorVisibleMessage: "Please upload a clearer selfie" };
@@ -40,12 +41,13 @@ test("verification stays inside the app and submits ID plus selfie for admin rev
   await page.reload();
   await expect(page.getByRole("heading", { name: "Under review" })).toBeVisible();
 });
-test("approved users see an admin-reviewed badge without bank or Stripe claims", async ({ page }) => {
+test("approved users can continue to bank setup without losing their badge", async ({ page }) => {
   await fixture(page, "APPROVED");
   await expect(page.getByRole("heading", { name: /verified/ })).toBeVisible();
-  await expect(page.getByText("The @seen team has reviewed and approved your identity. Your verified badge is on.")).toBeVisible();
+  await expect(page.getByText("Your badge is on. Add a bank to withdraw.")).toBeVisible();
   await expect(page.getByText(/Stripe/)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add a bank for payouts", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Later", exact: true })).toBeVisible();
 });
 test("requested changes display the admin reason and allow correction", async ({ page }) => {
   await fixture(page, "CHANGES_REQUESTED");

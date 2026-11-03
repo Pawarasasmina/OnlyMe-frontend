@@ -1,6 +1,10 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef } from "react";
 
 export default function ActivityContentPreview({ item }) {
+  __useUiLanguage();
   const video = useRef(null);
   const wrapper = useRef(null);
   const image = item.metadata?.imageUrl || item.target?.imageUrl || item.relatedContent?.thumbnailUrl;
@@ -23,6 +27,6 @@ export default function ActivityContentPreview({ item }) {
   const note = /NOTE|POST/i.test(item.target?.type || "") && (item.target?.preview || item.preview);
   if (!image && !videoUrl && !note) return null;
   return <span className="activity-content-tile" ref={wrapper}>
-    {videoUrl ? <video aria-label="Content preview" loop muted playsInline poster={image || undefined} preload="metadata" ref={video} src={videoUrl} /> : image ? <img alt="Content preview" loading="lazy" src={image} /> : <small className="activity-note-tile">{note}</small>}
+    {videoUrl ? <video aria-label={__msg("activity.contentPreview")} loop muted playsInline poster={image || undefined} preload="metadata" ref={video} src={videoUrl} /> : image ? <img alt={__msg("activity.contentPreview")} loading="lazy" src={image} /> : <small className="activity-note-tile">{note}</small>}
   </span>;
 }

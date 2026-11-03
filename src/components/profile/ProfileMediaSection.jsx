@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiFlag, FiHeart, FiImage, FiMoreHorizontal, FiPlay, FiPlus, FiRefreshCw, FiSend, FiTrash2, FiVideo, FiX } from "react-icons/fi";
@@ -40,7 +44,7 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not read selected photo."));
+    image.onerror = () => reject(new Error(__msg("profile.couldNotReadSelectedPhoto")));
     image.src = src;
   });
 }
@@ -61,29 +65,31 @@ async function cropImageFile(file, previewUrl, crop) {
   context.fillRect(0, 0, CROP_WIDTH, CROP_HEIGHT);
   context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
-  if (!blob) throw new Error("Could not prepare selected photo.");
+  if (!blob) throw new Error(__msg("profile.couldNotPrepareSelectedPhoto"));
   return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg") || "profile-media.jpg", { type: "image/jpeg" });
 }
 
 function ProfileMediaTile({ item, isOwner, onOpen, onRemove }) {
+  __useUiLanguage();
   const video = isVideo(item);
   const duration = formatDuration(item.duration);
   return (
     <span className="profile-media-tile-wrap">
-      <button aria-label={`Open ${video ? "video" : "photo"} in Media`} className="profile-photo-tile profile-media-tile" onClick={() => onOpen(item)} type="button">
+      <button aria-label={__msg("profile.openInMedia", { value0: video ? "video" : "photo" })} className="profile-photo-tile profile-media-tile" onClick={() => onOpen(item)} type="button">
         {video ? (
-          thumbSrc(item) ? <img alt={item.caption || "Profile video"} loading="lazy" src={thumbSrc(item)} /> : <span className="profile-media-video-fallback"><FiVideo /></span>
+          thumbSrc(item) ? <img alt={item.caption || __msg("profile.profileVideo")} loading="lazy" src={thumbSrc(item)} /> : <span className="profile-media-video-fallback"><FiVideo /></span>
         ) : (
-          <img alt={item.caption || "Profile photo"} loading="lazy" src={mediaSrc(item)} />
+          <img alt={item.caption || __msg("profile.profilePhoto_33f385")} loading="lazy" src={mediaSrc(item)} />
         )}
-        {video ? <small className="profile-media-video-badge"><FiPlay />{duration || "Video"}</small> : null}
+        {video ? <small className="profile-media-video-badge"><FiPlay />{duration || __msg("profile.video")}</small> : null}
       </button>
-      {isOwner ? <button aria-label="Remove from Profile Media" className="profile-media-remove" onClick={() => onRemove(item)} type="button"><FiTrash2 /></button> : null}
+      {isOwner ? <button aria-label={__msg("profile.removeFromProfileMedia")} className="profile-media-remove" onClick={() => onRemove(item)} type="button"><FiTrash2 /></button> : null}
     </span>
   );
 }
 
 function ProfileMediaUploader({ isOpen, onClose, onUpload, status }) {
+  __useUiLanguage();
   const inputRef = useRef(null);
   const dragRef = useRef(null);
   const pinchRef = useRef(null);
@@ -194,7 +200,7 @@ function ProfileMediaUploader({ isOpen, onClose, onUpload, status }) {
       const uploadFile = isSelectedImage ? await cropImageFile(file, previewUrl, crop) : file;
       onUpload({ caption, file: uploadFile });
     } catch (error) {
-      setLocalError(error.message || "Could not prepare Media.");
+      setLocalError(error.message || __msg("profile.couldNotPrepareMedia"));
     } finally {
       setPreparing(false);
     }
@@ -206,23 +212,23 @@ function ProfileMediaUploader({ isOpen, onClose, onUpload, status }) {
         <span className="profile-share-handle" />
         <div className="profile-media-sheet-head">
           <div>
-            <h2>{isSelectedVideo ? "Video — choose what shows" : "Photo — choose what shows"}</h2>
-            <p>{isSelectedImage ? "Drag with a finger, pinch to zoom — the frame is what people will see" : file ? "Preview the video before it becomes permanent on your profile" : "Choose a photo or short video for your permanent Media"}</p>
+            <h2>{isSelectedVideo ? __msg("profile.videoChooseWhatShows") : __msg("profile.photoChooseWhatShows")}</h2>
+            <p>{isSelectedImage ? __msg("profile.dragWithAFingerPinchToZoomTheFrame") : file ? __msg("profile.previewTheVideoBeforeItBecomesPermanentOnYour") : __msg("profile.chooseAPhotoOrShortVideoForYourPermanent")}</p>
           </div>
-          <button aria-label="Close Add Media" disabled={working} onClick={onClose} type="button"><FiX /></button>
+          <button aria-label={__msg("profile.closeAddMedia")} disabled={working} onClick={onClose} type="button"><FiX /></button>
         </div>
         <input accept={accept} className="sr-only" disabled={working} onChange={selectFile} ref={inputRef} type="file" />
         {!file ? (
           <div className="profile-media-picker-actions">
-            <button disabled={working} onClick={() => choose(IMAGE_ACCEPT)} type="button"><FiImage /><span>Photo</span></button>
-            <button disabled={working} onClick={() => choose(VIDEO_ACCEPT)} type="button"><FiVideo /><span>Video</span></button>
+            <button disabled={working} onClick={() => choose(IMAGE_ACCEPT)} type="button"><FiImage /><span>{__msg("fanWeb.photo")}</span></button>
+            <button disabled={working} onClick={() => choose(VIDEO_ACCEPT)} type="button"><FiVideo /><span>{__msg("profile.video")}</span></button>
           </div>
         ) : null}
         {file ? (
           <div className={isSelectedImage ? "profile-media-crop-stage" : "profile-media-video-stage"}>
             {isSelectedImage ? (
               <div
-                aria-label="Reposition selected photo"
+                aria-label={__msg("profile.repositionSelectedPhoto")}
                 className="profile-media-crop-frame"
                 onPointerCancel={endDrag}
                 onPointerDown={beginDrag}
@@ -232,7 +238,7 @@ function ProfileMediaUploader({ isOpen, onClose, onUpload, status }) {
                 role="img"
               >
                 <img
-                  alt="Selected Media preview"
+                  alt={__msg("profile.selectedMediaPreview")}
                   draggable="false"
                   src={previewUrl}
                   style={{ transform: `translate(${crop.x * 100}%, ${crop.y * 100}%) scale(${crop.scale})` }}
@@ -243,12 +249,12 @@ function ProfileMediaUploader({ isOpen, onClose, onUpload, status }) {
             )}
           </div>
         ) : null}
-        {file ? <button className="profile-media-change-file" disabled={working} onClick={() => choose(ALL_ACCEPT)} type="button">Choose another</button> : null}
+        {file ? <button className="profile-media-change-file" disabled={working} onClick={() => choose(ALL_ACCEPT)} type="button">{__msg("profile.chooseAnother")}</button> : null}
         {localError ? <p className="profile-media-notice is-error" role="alert">{localError}</p> : null}
-        <input aria-label="Media caption" className="profile-media-caption sr-only" disabled={working} maxLength={160} onChange={(event) => setCaption(event.target.value)} value={caption} />
+        <input aria-label={__msg("profile.mediaCaption")} className="profile-media-caption sr-only" disabled={working} maxLength={160} onChange={(event) => setCaption(event.target.value)} value={caption} />
         <button className="profile-media-submit" disabled={!file || working} type="submit">
           {working ? <FiRefreshCw className="animate-spin" /> : null}
-          {preparing ? "Preparing..." : status === "saving" ? "Saving..." : status === "uploading" ? "Uploading..." : "Done"}
+          {preparing ? __msg("profile.preparing") : status === "saving" ? __msg("admin.saving") : status === "uploading" ? __msg("profile.uploading") : __msg("comments.done")}
         </button>
       </form>
     </div>
@@ -256,6 +262,7 @@ function ProfileMediaUploader({ isOpen, onClose, onUpload, status }) {
 }
 
 function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, onRemove, onSelect, queryKey, username }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [notice, setNotice] = useState("");
@@ -274,15 +281,15 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
       queryClient.setQueriesData({ queryKey: ["profile-media"] }, apply);
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
     },
-    onError: (error) => setNotice(error.response?.data?.message || "Could not update like."),
+    onError: (error) => setNotice(error.response?.data?.message || __msg("profile.couldNotUpdateLike")),
   });
   const reportMutation = useMutation({
     mutationFn: (item) => profileService.reportProfileMedia(username, item.id, { reason: "OTHER" }),
     onSuccess: () => {
       setOptionsOpen(false);
-      setNotice("Report received.");
+      setNotice(__msg("profile.reportReceived"));
     },
-    onError: (error) => setNotice(error.response?.data?.message || "Could not report Media."),
+    onError: (error) => setNotice(error.response?.data?.message || __msg("profile.couldNotReportMedia")),
   });
   useEffect(() => {
     if (!active) return undefined;
@@ -317,32 +324,32 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
   const share = async () => {
     const url = typeof window === "undefined" ? src : `${window.location.origin}/profile/${encodeURIComponent(username || "")}`;
     try {
-      if (navigator.share) await navigator.share({ title: "Profile Media", url });
+      if (navigator.share) await navigator.share({ title: __msg("profile.profileMedia"), url });
       else await navigator.clipboard?.writeText(url);
       setOptionsOpen(false);
-      setNotice("Share link copied.");
+      setNotice(__msg("profile.shareLinkCopied"));
     } catch {
-      setNotice("Share cancelled.");
+      setNotice(__msg("profile.shareCancelled"));
     }
   };
   const report = () => {
     if (!active || reportMutation.isPending) return;
-    if (!window.confirm(`Report this ${video ? "video" : "photo"}?\n\nA human reviewer will look at it.`)) return;
+    if (!window.confirm(__msg("profile.reportThisValue0AHumanReviewerWillLook", { value0: video ? "video" : "photo" }))) return;
     reportMutation.mutate(active);
   };
   return (
     <div aria-modal="true" className="profile-media-viewer" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} role="dialog">
-      <button aria-label="Close Media viewer" className="profile-media-viewer-close" onClick={onClose} type="button"><FiX /></button>
-      <button aria-expanded={optionsOpen} aria-label="Open Media options" className="profile-media-viewer-more" onClick={() => setOptionsOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
-      {items.length > 1 && index > 0 ? <button aria-label="Previous Media item" className="profile-media-viewer-nav is-prev" onClick={() => onSelect(items[index - 1])} type="button">‹</button> : null}
+      <button aria-label={__msg("profile.closeMediaViewer")} className="profile-media-viewer-close" onClick={onClose} type="button"><FiX /></button>
+      <button aria-expanded={optionsOpen} aria-label={__msg("profile.openMediaOptions")} className="profile-media-viewer-more" onClick={() => setOptionsOpen((value) => !value)} type="button"><FiMoreHorizontal /></button>
+      {items.length > 1 && index > 0 ? <button aria-label={__msg("profile.previousMediaItem")} className="profile-media-viewer-nav is-prev" onClick={() => onSelect(items[index - 1])} type="button">‹</button> : null}
       {video ? (
         <video className="profile-media-viewer-video" controls playsInline preload="metadata" src={src} />
       ) : (
-        <img alt={active.caption || "Profile Media"} className="profile-media-viewer-image" src={src} />
+        <img alt={active.caption || __msg("profile.profileMedia")} className="profile-media-viewer-image" src={src} />
       )}
-      {items.length > 1 && index < items.length - 1 ? <button aria-label="Next Media item" className="profile-media-viewer-nav is-next" onClick={() => onSelect(items[index + 1])} type="button">›</button> : null}
+      {items.length > 1 && index < items.length - 1 ? <button aria-label={__msg("profile.nextMediaItem")} className="profile-media-viewer-nav is-next" onClick={() => onSelect(items[index + 1])} type="button">›</button> : null}
       <button
-        aria-label={active.viewerLiked ? "Unlike Media" : "Like Media"}
+        aria-label={active.viewerLiked ? __msg("profile.unlikeMedia") : __msg("profile.likeMedia")}
         aria-pressed={Boolean(active.viewerLiked)}
         className={active.viewerLiked ? "profile-media-viewer-like is-liked" : "profile-media-viewer-like"}
         disabled={likeMutation.isPending || !username}
@@ -354,31 +361,32 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
       </button>
       {optionsOpen ? (
         <div className="profile-media-options">
-          <button onClick={share} type="button"><FiSend /> Share</button>
+          <button onClick={share} type="button"><FiSend /> {__msg("admin.share")}</button>
           {isOwner ? (
-            <button className="is-danger" onClick={() => { setOptionsOpen(false); onRemove(active); }} type="button"><FiTrash2 /> Delete {video ? "video" : "photo"}</button>
+            <button className="is-danger" onClick={() => { setOptionsOpen(false); onRemove(active); }} type="button"><FiTrash2 /> {__msg("posts.delete")} {video ? __msg("profile.video_ffbaf5") : __msg("profile.photo")}</button>
           ) : (
-            <button className="is-danger" disabled={reportMutation.isPending} onClick={report} type="button"><FiFlag /> {reportMutation.isPending ? "Reporting..." : `Report ${video ? "video" : "photo"}`}</button>
+            <button className="is-danger" disabled={reportMutation.isPending} onClick={report} type="button"><FiFlag /> {reportMutation.isPending ? __msg("profile.reporting") : __msg("profile.report", { value0: video ? "video" : "photo" })}</button>
           )}
         </div>
       ) : null}
-      {notice ? <p className="profile-media-viewer-notice" role="status">{notice}</p> : null}
+      {notice ? <p className="profile-media-viewer-notice" role="status">{__systemMessage(notice)}</p> : null}
       <div className="profile-media-viewer-footer">
-        {active.caption ? <p>{active.caption}</p> : <span />}
+        {active.caption ? <p dir="auto">{active.caption}</p> : <span />}
       </div>
     </div>
   );
 }
 
 function ProfileMediaGallery({ isOpen, isOwner, items, onClose, onOpen, onRemove }) {
+  __useUiLanguage();
   if (!isOpen) return null;
   return (
     <div aria-modal="true" className="profile-media-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} role="dialog">
       <section className="profile-media-sheet profile-media-gallery-sheet">
         <span className="profile-share-handle" />
         <div className="profile-media-sheet-head">
-          <h2>Media</h2>
-          <button aria-label="Close Media gallery" onClick={onClose} type="button"><FiX /></button>
+          <h2>{__msg("content.media")}</h2>
+          <button aria-label={__msg("profile.closeMediaGallery")} onClick={onClose} type="button"><FiX /></button>
         </div>
         <div className="profile-media-gallery-grid">
           {items.map((item) => <ProfileMediaTile isOwner={isOwner} item={item} key={item.id} onOpen={onOpen} onRemove={onRemove} />)}
@@ -389,6 +397,7 @@ function ProfileMediaGallery({ isOpen, isOwner, items, onClose, onOpen, onRemove
 }
 
 export default function ProfileMediaSection({ initialMedia = [], isOwner, username }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [uploaderOpen, setUploaderOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -408,32 +417,32 @@ export default function ProfileMediaSection({ initialMedia = [], isOwner, userna
   const hasOverflow = items.length > previewLimit;
   const uploadMutation = useMutation({
     mutationFn: ({ caption, file }) => profileService.addProfileMedia(file, caption).then((response) => response.data.data.media),
-    onMutate: () => setNotice("Uploading..."),
+    onMutate: () => setNotice(__msg("profile.uploading")),
     onSuccess: async () => {
-      setNotice("Media added.");
+      setNotice(__msg("profile.mediaAdded"));
       setUploaderOpen(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey }),
         queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
       ]);
     },
-    onError: (error) => setNotice(error.response?.data?.message || "Could not add Media."),
+    onError: (error) => setNotice(error.response?.data?.message || __msg("profile.couldNotAddMedia")),
   });
   const removeMutation = useMutation({
     mutationFn: (item) => profileService.removeProfileMedia(item.id),
     onSuccess: async (_response, item) => {
-      setNotice("Removed from Media.");
+      setNotice(__msg("profile.removedFromMedia"));
       if (active?.id === item.id) setActive(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey }),
         queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
       ]);
     },
-    onError: (error) => setNotice(error.response?.data?.message || "Could not remove Media."),
+    onError: (error) => setNotice(error.response?.data?.message || __msg("profile.couldNotRemoveMedia")),
   });
 
   const remove = (item) => {
-    if (!window.confirm(`Remove from Media?\n\nThis ${isVideo(item) ? "video" : "photo"} will no longer appear in your profile Media.`)) return;
+    if (!window.confirm(__msg("profile.removeFromMediaThisValue0WillNoLonger", { value0: isVideo(item) ? "video" : "photo" }))) return;
     removeMutation.mutate(item);
   };
 
@@ -442,21 +451,21 @@ export default function ProfileMediaSection({ initialMedia = [], isOwner, userna
   return (
     <section className="profile-section profile-photos-section profile-media-section">
       <div className="profile-media-heading">
-        <h2>Photos</h2>
+        <h2>{__msg("profile.photos")}</h2>
         <span>
-          {hasOverflow ? <button className="profile-media-see-all" onClick={() => setGalleryOpen(true)} type="button">See all</button> : null}
+          {hasOverflow ? <button className="profile-media-see-all" onClick={() => setGalleryOpen(true)} type="button">{__msg("profile.seeAll_2941c5")}</button> : null}
         </span>
       </div>
       {mediaQuery.isLoading ? <LoadingSkeleton className="h-[108px]" count={1} /> : null}
-      {mediaQuery.isError ? <p className="profile-media-state">Media could not load. <button onClick={() => mediaQuery.refetch()} type="button">Retry</button></p> : null}
+      {mediaQuery.isError ? <p className="profile-media-state">{__msg("profile.mediaCouldNotLoad")} <button onClick={() => mediaQuery.refetch()} type="button">{__msg("activity.retry")}</button></p> : null}
       {!mediaQuery.isLoading && !mediaQuery.isError && (items.length || isOwner) ? (
         <div className="profile-photo-row">
           {previewItems.map((item) => <ProfileMediaTile isOwner={isOwner} item={item} key={item.id} onOpen={setActive} onRemove={remove} />)}
-          {isOwner ? <button aria-label="Add Media" className="profile-photo-add profile-media-inline-add" onClick={() => setUploaderOpen(true)} type="button"><FiPlus /></button> : null}
+          {isOwner ? <button aria-label={__msg("profile.addMedia")} className="profile-photo-add profile-media-inline-add" onClick={() => setUploaderOpen(true)} type="button"><FiPlus /></button> : null}
           {hasOverflow ? <button className="profile-photo-add profile-media-overflow" onClick={() => setGalleryOpen(true)} type="button">+{items.length - previewLimit}</button> : null}
         </div>
       ) : null}
-      {notice ? <p className="profile-media-notice" role="status">{notice}</p> : null}
+      {notice ? <p className="profile-media-notice" role="status">{__systemMessage(notice)}</p> : null}
       <ProfileMediaUploader isOpen={uploaderOpen} onClose={() => setUploaderOpen(false)} onUpload={(payload) => uploadMutation.mutate(payload)} status={uploadMutation.isPending ? "uploading" : ""} />
       <ProfileMediaGallery isOpen={galleryOpen} isOwner={isOwner} items={items} onClose={() => setGalleryOpen(false)} onOpen={setActive} onRemove={remove} />
       <ProfileMediaViewer active={active} isOwner={isOwner} items={items} onClose={() => setActive(null)} onPatchActive={setActive} onRemove={remove} onSelect={setActive} queryKey={queryKey} username={username} />

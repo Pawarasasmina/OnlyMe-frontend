@@ -1,0 +1,19 @@
+.language-layer{position:fixed;inset:0;z-index:210}
+.language-dim{position:absolute;inset:0;width:100%;height:100%;background:rgba(0,0,0,.6);cursor:default}
+.language-sheet{position:absolute;bottom:0;left:0;width:100%;max-height:88dvh;overflow-y:auto;padding:8px 20px calc(36px + env(safe-area-inset-bottom));border-radius:16px 16px 0 0;background:#0a0c0f;color:#fff;outline:none;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;line-height:normal}
+.language-handle{display:block;width:32px;height:4px;margin:4px auto 16px;border-radius:8px;background:rgba(255,255,255,.28)}
+.language-sheet h2{margin:0 0 4px;font-size:20px;font-weight:700;letter-spacing:-.3px;color:#fff}
+.language-sheet p{margin:4px 0 12px;font-size:14px;line-height:1.55;color:rgba(255,255,255,.62)}
+.language-sheet h3{margin:10px 0 2px;font-size:11px;letter-spacing:1.6px;font-weight:600;color:rgba(255,255,255,.4)}
+.language-sheet h3#language-suggested{margin-top:4px}
+.language-choice{display:flex;align-items:center;gap:14px;width:100%;padding:12px 0;text-align:start;border-bottom:1px solid rgba(255,255,255,.055);background:transparent;color:rgba(255,255,255,.4)}
+.language-choice-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.language-choice b{font-size:15px;font-weight:700;line-height:normal;align-self:flex-start}
+.language-choice small{font-size:12px;font-weight:400;line-height:normal;color:rgba(255,255,255,.4)}
+.language-radio{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
+.language-choice[aria-checked=true] .language-radio{background:#9ccbff;color:#0a0c0f;box-shadow:none}
+.language-radio svg{width:12px;height:12px;stroke-width:3}
+.language-choice:focus-visible{outline:2px solid #9ccbff;outline-offset:-2px;border-radius:4px}
+.language-choice:disabled{cursor:wait;opacity:.65}
+.language-sheet .language-error{color:#ff9696}
+.language-saved{font-size:12px;color:#9ccbff}

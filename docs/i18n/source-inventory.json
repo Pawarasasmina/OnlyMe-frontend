@@ -1,0 +1,3433 @@
+{
+  "files": [
+    {
+      "file": "src/api/axiosInstance.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/App.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/activity/ActivityContentPreview.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/activity/ActivityFollowAction.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/activity/ActivityGiftPreview.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/activity/ActivitySparkMark.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/activity/StoryMentionSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/AdminContentMediaPreview.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/AdminContentStatusBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/AdminProtectedDocumentViewer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/AdminVerificationStatusBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/ContentDecisionModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/ContentHistoryTimeline.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/ModerationChecklist.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/PostReportPreview.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/admin/PostReportPreview.jsx",
+          "line": 49,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/components/admin/VerificationDecisionModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/admin/VerificationHistoryTimeline.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/branding/AtseenLogo.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/branding/SeenEyeMark.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/branding/ShowMoreEyeIcon.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/comments/VoiceCommentRecorder.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/common/Button.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/common/CenterRouteLoading.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/common/Input.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/common/Loader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/common/Modal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/AccessLevelSelector.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/ContentReviewSummary.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/ContentStatusBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/ContentTypeSelector.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/CreatorContentCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/MediaUploader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/content/ModerationFeedbackPanel.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/contentEntities/AttachedEntityPreview.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/contentEntities/contentEntityCache.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/contentEntities/ContentEntityChip.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/contentEntities/ContentEntityList.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/contentEntities/EntityAttachmentPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverActionRail.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/discover/DiscoverActionRail.jsx",
+          "line": 37,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/components/discover/DiscoverCards.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverContextStack.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverCreatorIdentity.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverEmptyState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverErrorState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverFeaturedOffer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverFilterPills.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/discoverFormat.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverMasonryCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverMediaBackground.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverMoreMenu.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverPeopleSections.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverPersonSlide.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverReason.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverRecommendationStory.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverRightSidebar.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverSettingsModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverSlideSkeleton.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/discover/DiscoverViewport.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fan/FanDashboardWidgets.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/FanCreateSheet.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/fanWeb/FanCreateSheet.jsx",
+          "line": 44,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/components/fanWeb/FanMobileNav.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/fanWebNavItems.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/FanWebRightRail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/FanWebSidebar.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/FeedPost.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/HomeHeader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/HomeRightRail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/LegacyWallNoteDetail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/PostComposer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/SeenTodaySheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/StoriesRow.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallExploreNeeds.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallFeedSkeleton.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallFilterSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallLocationPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallNeedPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallPostContent.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallPostTypeBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallReactionTray.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallSeenTodayNotice.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallSheetFrame.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallTopicSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/orbit/OrbitMap.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/orbit/TodayEncounterCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/OrbitIcon.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/EmptyState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/FanAvatar.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/FanCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/FanModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/FanToast.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/FanToastContext.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/giftThanksEvent.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/GiftThanksNotice.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/LoadingSkeleton.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/ProgressBar.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/userDisplay.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/shared/VerifiedBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/worlds/WorldCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/worlds/WorldReaderModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/AdminMonetizationPolicy.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/FinancialConfirmDialog.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/JoinPremiumModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/LedgerList.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/MembershipCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/PremiumWelcomeSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/PurchaseWorldModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/WalletBalance.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/layout/Footer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/layout/Navbar.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/layout/Sidebar.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/messages/DirectAccessSettingsSheet.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/components/messages/DirectAccessSettingsSheet.jsx",
+          "line": 35,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/messages/InvitationMessageCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/messaging/VideoNoteBubble.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/messaging/VideoNoteRecorder.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/messaging/VoiceMessageBubble.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/messaging/VoiceRecorder.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/AtseenEyeMark.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/InstinctTuning.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/InterestGrid.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/LightYourWorldChecklist.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/SuggestedPeopleGrid.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/WelcomeCarousel.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitCanvas.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitEmptyState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/orbitFormat.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitHeader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitIntroOverlay.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitNode.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitProfilePreview.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitReasonBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitRings.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitSkeleton.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitTunePanel.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/OrbitWorldBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/orbit/SeeYouButton.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/orbit/SeeYouButton.jsx",
+          "line": 41,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/components/orbit/TodayEncounterCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/posts/FeedPostComposer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/AccountTypeSetting.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/BringFriendsFlow.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/DirectAccessOfferModal.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/components/profile/DirectAccessOfferModal.jsx",
+          "line": 81,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/profile/ImageUploader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/LanguageSetting.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/MemberNumberSetting.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/MemberTicket.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/OwnerLibrary.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/OwnerThingsSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/PhotoCropSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/PlanetSlot.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "/month",
+          "file": "src/components/profile/PlanetSlot.jsx",
+          "line": 22,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/components/profile/ProfileCompletionCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileConnectionsModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileContentGrid.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/profile/ProfileContentGrid.jsx",
+          "line": 623,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/components/profile/ProfileDream.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileExperiences.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileHeader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileImageCropper.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileLanguagesField.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileMediaSection.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileOrbit.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileOwnerActions.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfilePhotosSection.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfilePhotoViewer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileSocialActions.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/components/profile/ProfileSocialActions.jsx",
+          "line": 53,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/profile/ProfileVerificationSummary.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/ProfileVerifiedSeal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/StoryHighlights.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/profile/usePhotoSurface.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/ChapterVoicePlayer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/LockedChapterCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/PlanetAppearanceSelector.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/PreviewChapterSelector.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/PricingSelector.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/PublicationComposerShell.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "https://",
+          "file": "src/components/publication/PublicationComposerShell.jsx",
+          "line": 1089,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/components/publication/PublicationCoverMedia.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/SeenCard.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "@seen",
+          "file": "src/components/publication/SeenCard.jsx",
+          "line": 48,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/publication/SeriesPickerSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/WorldCard.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "/month",
+          "file": "src/components/publication/WorldCard.jsx",
+          "line": 5,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/components/saved/SavedCategoryCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/saved/SavedEmptyState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/searchConfig.js",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/search/searchConfig.js",
+          "line": 6,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/components/search/SearchDefaultState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/SearchFilters.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/SearchInput.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/SearchResults.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/SearchStates.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/SearchSuggestionList.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/search/SearchTabs.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/share/ShareSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/shared/ContentEmptyState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/social/socialNavItems.js",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/components/social/socialNavItems.js",
+          "line": 32,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/components/stories/OfficialSeenStoryViewer.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/components/stories/OfficialSeenStoryViewer.jsx",
+          "line": 146,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/stories/OwnSeenPresenceItem.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/OwnStoryItem.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/SharedSeenStoryCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StatusPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoriesRow.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryCreator.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryGiftPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryHighlightPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryInsightsModal.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryItem.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryMentionPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryPresenceLabel.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryReactionTray.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryReshareCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryStatusBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryStripSkeleton.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/StoryViewer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/stories/WallStoryPersonItem.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/IdentityVerificationFlow.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/ManualBankApplication.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/ManualIdentityApplication.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/ProtectedDocumentPreview.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/VerificationDocumentUploader.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/VerificationReviewSummary.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/VerificationStatusBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/VerificationStatusCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/verification/VerificationStepIndicator.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/voice/WallVoiceRecorder.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/constants/contentEntityTypes.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/constants/statusPresets.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/constants/storyReactions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/context/AuthContext.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/context/AuthContext.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/context/CallContext.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/context/callContextBase.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/context/LanguageContext.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/context/LanguageContext.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/data/atseenMockData.js",
+      "count": 18,
+      "strings": [
+        {
+          "text": "Real people. Real worlds.",
+          "file": "src/data/atseenMockData.js",
+          "line": 97,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Golden hour in Le Marais. Come find me.",
+          "file": "src/data/atseenMockData.js",
+          "line": 105,
+          "kind": "copy-property"
+        },
+        {
+          "text": "5:47 AM. Empty gym. Day 214.",
+          "file": "src/data/atseenMockData.js",
+          "line": 113,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Tokyo, week one. No regrets.",
+          "file": "src/data/atseenMockData.js",
+          "line": 121,
+          "kind": "copy-property"
+        },
+        {
+          "text": "8-Week Transformation",
+          "file": "src/data/atseenMockData.js",
+          "line": 194,
+          "kind": "copy-property"
+        },
+        {
+          "text": "A structured 8-week program to transform your body — no gym required. Weekly goals, form guidance and the exact meals.",
+          "file": "src/data/atseenMockData.js",
+          "line": 195,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Paris Like a Local",
+          "file": "src/data/atseenMockData.js",
+          "line": 214,
+          "kind": "copy-property"
+        },
+        {
+          "text": "My complete personal map: cafes, restaurants, neighborhoods and hidden gems.",
+          "file": "src/data/atseenMockData.js",
+          "line": 215,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Books That Rebuilt Me",
+          "file": "src/data/atseenMockData.js",
+          "line": 234,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Twelve books, one per month, in the exact order that changed how I think. With my margin notes.",
+          "file": "src/data/atseenMockData.js",
+          "line": 235,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Tokyo, One Way",
+          "file": "src/data/atseenMockData.js",
+          "line": 254,
+          "kind": "copy-property"
+        },
+        {
+          "text": "How I moved across the world with one suitcase — visas, apartments, first friends, real numbers.",
+          "file": "src/data/atseenMockData.js",
+          "line": 255,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Lina has seen you",
+          "file": "src/data/atseenMockData.js",
+          "line": 325,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Omar shook hands on your note",
+          "file": "src/data/atseenMockData.js",
+          "line": 326,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Sofia sent a gift on your dream",
+          "file": "src/data/atseenMockData.js",
+          "line": 327,
+          "kind": "copy-property"
+        },
+        {
+          "text": "James stepped inside a World",
+          "file": "src/data/atseenMockData.js",
+          "line": 328,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Anna replied to your comment",
+          "file": "src/data/atseenMockData.js",
+          "line": 329,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Ethan answered Direct Access",
+          "file": "src/data/atseenMockData.js",
+          "line": 330,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/data/giftCaptions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/data/postOptions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/data/sampleCreators.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/data/wallFilters.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/data/wallLocations.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/data/wallNeeds.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/share/useSendSharedContent.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/share/useShareRecipients.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useAuth.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useDiscoverQuery.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useFeedPosts.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useLanguage.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useOnboarding.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useOnboardingChecklist.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useOrbit.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useProfileLanguageOptions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useRecommendationTracking.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useSocialCapabilities.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useSocialScrollRestoration.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useStories.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useStoryViewerPosition.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useUnreadActivityCount.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useUnreadMessageCount.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useVoiceRecorder.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useWallTranslation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/AdminLayout.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/AuthLayout.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/CreatorAppShell.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/DashboardLayout.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/FanWebLayout.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/MainLayout.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/OnboardingLayout.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/layouts/SocialAppShell.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/main.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminDashboard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminProfilePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminReportDetailPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminReportListPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/BankReviewPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/ContentModeration.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/ContentModerationDetail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/CreatorVerificationDetail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/CreatorVerificationQueue.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/FinancialAdminPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/GiftManagementPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/IdentityVerificationManagement.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/MessageReportsOnlyPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/MessageReportsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/PublicationModeration.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/PublicationModerationDetail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/SimpleCreatorVerificationDetail.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/UserManagement.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/VerifiedCreatorManagementPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/WelcomeEmailSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/auth/ForgotPasswordPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/auth/LoginPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/auth/RegisterPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Choose your unique username",
+          "file": "src/pages/auth/RegisterPage.jsx",
+          "line": 19,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/create/CreateHubPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/pages/create/CreateHubPage.jsx",
+          "line": 36,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/create/PlanetComingSoonPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/ContentComposerPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/ContentDetailPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/ContentManager.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/CreatorApplicationPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/CreatorDashboard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/CreatorSecurityPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/CreatorSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/CreatorStudio.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/pages/creator/CreatorStudio.jsx",
+          "line": 230,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/creator/CreatorVerificationPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/EarningsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/GrowFanPreviewPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/GrowPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/SeenComposerPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/VerifiedCreatorPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/WorldComposerPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/WorldManagerPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "/month",
+          "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
+          "line": 26,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/creator/WorldPublishingPage.jsx",
+      "count": 3,
+      "strings": [
+        {
+          "text": "/month",
+          "file": "src/pages/creator/WorldPublishingPage.jsx",
+          "line": 1820,
+          "kind": "render-expression"
+        },
+        {
+          "text": "/mo",
+          "file": "src/pages/creator/WorldPublishingPage.jsx",
+          "line": 1821,
+          "kind": "render-expression"
+        },
+        {
+          "text": "/mo",
+          "file": "src/pages/creator/WorldPublishingPage.jsx",
+          "line": 1821,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/fan/ActivityPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/FanDashboard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/FanHomePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/FanProfilePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/MessagesPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1767,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/fan/OrbitPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/PurchasesPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/SubscriptionsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/WalletPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/fan/WorldsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/onboarding/OnboardingPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/onboarding/WelcomePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/public/CreatorProfilePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/public/ExplorePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/public/HomePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/public/ReferralLandingPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/AccountSecurityPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/AccountSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/ContentPreferencesPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/DeleteAccountSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/DirectAccessSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/MonetizationPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/pages/settings/MonetizationPage.jsx",
+          "line": 87,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/settings/NotificationSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/NotificationSettingsSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/PrivacyQuickSettingsSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/PrivacySettingsPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/pages/settings/PrivacySettingsPage.jsx",
+          "line": 306,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/settings/ProfileSettingsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/SettingsNav.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/settings/SettingsPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/pages/settings/SettingsPage.jsx",
+          "line": 128,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/settings/SupportPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/ArchivePage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/pages/social/ArchivePage.jsx",
+          "line": 49,
+          "kind": "render-expression"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/social/DiscoverPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/DreamEditorPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/EntityDetailPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/FanBackedSocialPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/IncomeToCoinsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/InvitationWorldPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/JoinedInvitationsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/MembershipsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/MyExperiencesPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/OfficialSeenPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/pages/social/OfficialSeenPage.jsx",
+          "line": 55,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/social/OrbitPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/PostDetailPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/ProfileStatusPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/PurchasesPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/SavedPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/SearchPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/SeenFeedPage.jsx",
+      "count": 2,
+      "strings": [
+        {
+          "text": "Seen",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 223,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "@seen",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 541,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/social/SeenPermalinkPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/SeenReaderPage.jsx",
+      "count": 4,
+      "strings": [
+        {
+          "text": "@seen",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 329,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Spam",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 714,
+          "kind": "copy-property"
+        },
+        {
+          "text": "@seen",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 754,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Seen",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1324,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/social/ShareSeenAsStoryPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/StoryPermalinkPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/UnavailableFeaturePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/UnifiedProfilePage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/pages/social/UnifiedProfilePage.jsx",
+          "line": 565,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/social/WalletLedgerPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/WalletPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/WallExplorePage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/WallSearchPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/WithdrawPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/WorldReaderPage.jsx",
+      "count": 2,
+      "strings": [
+        {
+          "text": "Spam",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 447,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Spam",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1487,
+          "kind": "copy-property"
+        }
+      ]
+    },
+    {
+      "file": "src/routes/AppRoutes.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/routes/ApprovedCreatorRoute.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/routes/ProtectedRoute.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/routes/RoleProtectedRoute.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminAnalyticsService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminContentService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminEmailTemplateService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminFinancialService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminPublicationService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminVerificationService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/analyticsService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/analyticsSession.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/authService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/callService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/contentEntityService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/contentService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/creatorService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/discoverService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/dreamService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/fanService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/membershipService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/messageService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/messageSocket.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/moderationWarningService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/onboardingService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/orbitService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/postService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/profileService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/publicationService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/purchaseService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/savedService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/searchService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/shareService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/storyService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/userService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/verificationService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/verifiedCreatorService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/voiceService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/wallDraftStore.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/walletService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/wallService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/activitySources.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/apiErrors.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/constants.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/content.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/discoverFriends.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/fanDashboardFormatters.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/financialAccess.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/financialErrorMessages.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/formatCurrency.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/idempotencyKey.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/invitationMessage.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/locationLookup.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/media.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/memberTicket.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/moderationReview.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/officialPortrait.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/postPermissions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/profileCapabilities.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/profileGiftCopy.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/profileGifts.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/profileLanguages.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/publicationValidation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/relativeTime.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/savedPeople.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/seenFeedPagination.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/seenOwnership.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/sharedSeenStoryCard.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/socialAccess.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/socialScrollRestoration.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/storyPermissions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/storyPresentation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/uiLanguages.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/validators.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallCreatedPosts.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallFilters.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallResolution.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallTopic.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallVoiceDisplay.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/worldValidation.js",
+      "count": 0,
+      "strings": []
+    }
+  ],
+  "routes": [
+    {
+      "path": "/explore",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creators/:username",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/invite/:code",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/login",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/register",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/forgot-password",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/welcome",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/onboarding",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/onboarding/:step",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wall",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wall/notes/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/home",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/posts/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/discover",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/search",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/profile/seen",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wall/search",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wall/explore",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/seen",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/seen/:id/share/story",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/seen/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/orbit",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/messages",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/activity",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/stories/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/saved",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/saved/:category",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/archive",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/invitations",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/invitations/:code",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/places/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/books/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/profile",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/profile/status",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/profile/dream",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/monetization",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/profile",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/direct-access",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/account",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/privacy",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/notifications",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/content",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/support/:section",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/verified",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/settings/security",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wallet",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wallet/withdraw",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wallet/to-coins",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/wallet/ledger",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/purchases",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/memberships",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/experiences",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/profile/:username/experiences",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/verification",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/create",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/create/seen",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/seens",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/seens/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/seens/:id/edit",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/grow",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/grow/fan-preview",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/create/world",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/create/premium-world",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/create/experience",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/experiences/:id/edit",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/worlds",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/worlds/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/studio/worlds/:id/edit",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/dashboard",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/home",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/orbit",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/messages",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/activity",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/profile",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/worlds",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/wallet",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/subscriptions",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/fan/purchases",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/dashboard",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/application",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/profile",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/settings",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/settings/security",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/studio",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/content",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/content/new",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/content/:id/edit",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/content/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/creator/earnings",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/dashboard",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/analytics",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/recommendations",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/users",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/identity-verifications",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/fans",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/creators",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/creator-verifications",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/creator-verifications/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/verified-creators",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/content-moderation",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/content-moderation/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/publication-moderation",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/publication-moderation/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/moderation",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/welcome-email",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/profile",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/financial",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/bank-reviews",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/message-reports",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/message-reports/:reportId",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/user-reports",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/user-reports/:reportId",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/post-reports",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/post-reports/:reportId",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/gifts",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/profile/:username",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/world/:id/inside",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/world/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/experience/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/planet/:id",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "*",
+      "file": "src\\routes\\AppRoutes.jsx"
+    }
+  ],
+  "strings": {
+    "Seen": [
+      {
+        "file": "src/components/admin/PostReportPreview.jsx",
+        "line": 49,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/components/discover/DiscoverActionRail.jsx",
+        "line": 37,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/components/fanWeb/FanCreateSheet.jsx",
+        "line": 44,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/components/orbit/SeeYouButton.jsx",
+        "line": 41,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/components/profile/ProfileContentGrid.jsx",
+        "line": 623,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/components/search/searchConfig.js",
+        "line": 6,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/components/social/socialNavItems.js",
+        "line": 32,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/create/CreateHubPage.jsx",
+        "line": 36,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/creator/CreatorStudio.jsx",
+        "line": 230,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/settings/PrivacySettingsPage.jsx",
+        "line": 306,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/ArchivePage.jsx",
+        "line": 49,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/social/OfficialSeenPage.jsx",
+        "line": 55,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 223,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1324,
+        "kind": "jsx-text"
+      }
+    ],
+    "Direct Access": [
+      {
+        "file": "src/components/messages/DirectAccessSettingsSheet.jsx",
+        "line": 35,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/profile/DirectAccessOfferModal.jsx",
+        "line": 81,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/profile/ProfileSocialActions.jsx",
+        "line": 53,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/stories/OfficialSeenStoryViewer.jsx",
+        "line": 146,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1767,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/settings/MonetizationPage.jsx",
+        "line": 87,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/settings/SettingsPage.jsx",
+        "line": 128,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/UnifiedProfilePage.jsx",
+        "line": 565,
+        "kind": "jsx-text"
+      }
+    ],
+    "/month": [
+      {
+        "file": "src/components/profile/PlanetSlot.jsx",
+        "line": 22,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/components/publication/WorldCard.jsx",
+        "line": 5,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
+        "line": 26,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1820,
+        "kind": "render-expression"
+      }
+    ],
+    "https://": [
+      {
+        "file": "src/components/publication/PublicationComposerShell.jsx",
+        "line": 1089,
+        "kind": "attribute"
+      }
+    ],
+    "@seen": [
+      {
+        "file": "src/components/publication/SeenCard.jsx",
+        "line": 48,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 541,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 329,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 754,
+        "kind": "jsx-text"
+      }
+    ],
+    "Real people. Real worlds.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 97,
+        "kind": "copy-property"
+      }
+    ],
+    "Golden hour in Le Marais. Come find me.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 105,
+        "kind": "copy-property"
+      }
+    ],
+    "5:47 AM. Empty gym. Day 214.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 113,
+        "kind": "copy-property"
+      }
+    ],
+    "Tokyo, week one. No regrets.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 121,
+        "kind": "copy-property"
+      }
+    ],
+    "8-Week Transformation": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 194,
+        "kind": "copy-property"
+      }
+    ],
+    "A structured 8-week program to transform your body — no gym required. Weekly goals, form guidance and the exact meals.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 195,
+        "kind": "copy-property"
+      }
+    ],
+    "Paris Like a Local": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 214,
+        "kind": "copy-property"
+      }
+    ],
+    "My complete personal map: cafes, restaurants, neighborhoods and hidden gems.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 215,
+        "kind": "copy-property"
+      }
+    ],
+    "Books That Rebuilt Me": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 234,
+        "kind": "copy-property"
+      }
+    ],
+    "Twelve books, one per month, in the exact order that changed how I think. With my margin notes.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 235,
+        "kind": "copy-property"
+      }
+    ],
+    "Tokyo, One Way": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 254,
+        "kind": "copy-property"
+      }
+    ],
+    "How I moved across the world with one suitcase — visas, apartments, first friends, real numbers.": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 255,
+        "kind": "copy-property"
+      }
+    ],
+    "Lina has seen you": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 325,
+        "kind": "copy-property"
+      }
+    ],
+    "Omar shook hands on your note": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 326,
+        "kind": "copy-property"
+      }
+    ],
+    "Sofia sent a gift on your dream": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 327,
+        "kind": "copy-property"
+      }
+    ],
+    "James stepped inside a World": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 328,
+        "kind": "copy-property"
+      }
+    ],
+    "Anna replied to your comment": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 329,
+        "kind": "copy-property"
+      }
+    ],
+    "Ethan answered Direct Access": [
+      {
+        "file": "src/data/atseenMockData.js",
+        "line": 330,
+        "kind": "copy-property"
+      }
+    ],
+    "Choose your unique username": [
+      {
+        "file": "src/pages/auth/RegisterPage.jsx",
+        "line": 19,
+        "kind": "copy-property"
+      }
+    ],
+    "/mo": [
+      {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1821,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1821,
+        "kind": "render-expression"
+      }
+    ],
+    "Spam": [
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 714,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 447,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1487,
+        "kind": "copy-property"
+      }
+    ]
+  },
+  "references": [
+    "design/web.html",
+    "seen-prototype-changes-oct17-19.pdf",
+    "atseen-dev-changes-oct20-26.pdf"
+  ]
+}

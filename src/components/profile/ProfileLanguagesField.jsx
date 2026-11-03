@@ -1,15 +1,19 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useProfileLanguageOptions } from "../../hooks/useProfileLanguageOptions";
 import { profileLanguageCode } from "../../utils/profileLanguages";
 
 export default function ProfileLanguagesField({ preferredLanguage, onChange }) {
+  __useUiLanguage();
   const options = useProfileLanguageOptions();
   const selected = options.find((option) => option.code === profileLanguageCode(preferredLanguage, options));
   const [text, setText] = useState(selected?.name || preferredLanguage || "English");
-  useEffect(() => { setText(selected?.name || preferredLanguage || "English"); }, [selected?.name, preferredLanguage]);
+  useEffect(() => { setText(selected?.name || preferredLanguage || __msg("profile.english")); }, [selected?.name, preferredLanguage]);
   return <label className="edit-profile-field">
-    <span>Languages</span>
-    <input aria-label="Languages" autoComplete="off" name="preferredLanguage" placeholder="English" required value={text} onChange={(event) => {
+    <span>{__msg("discover.languages")}</span>
+    <input aria-label={__msg("discover.languages")} autoComplete="off" name="preferredLanguage" placeholder={__msg("profile.english")} required value={text} onChange={(event) => {
       const value = event.target.value;
       setText(value);
       const match = options.find((option) => option.name.toLowerCase() === value.trim().toLowerCase() || option.code.toLowerCase() === value.trim().toLowerCase());

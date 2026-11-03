@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import { FiEye, FiMessageCircle, FiPause, FiPlay, FiRepeat, FiX } from "react-icons/fi";
 import { atseenCreators } from "../../data/atseenMockData";
@@ -5,6 +8,7 @@ import { useStoryViewerPosition } from "../../hooks/useStoryViewerPosition";
 import { officialPortrait } from "../../utils/officialPortrait";
 
 function BrandEye({ className = "" }) {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className={className} viewBox="0 0 64 40" xmlns="http://www.w3.org/2000/svg">
       <path d="M2 20 C14 3 50 3 62 20 C50 37 14 37 2 20 Z" fill="currentColor" />
@@ -14,6 +18,7 @@ function BrandEye({ className = "" }) {
 }
 
 function SeenAvatar({ size = 34 }) {
+  __useUiLanguage();
   return (
     <span className="official-seen-avatar" style={{ "--seen-avatar-size": `${size}px` }}>
       <BrandEye />
@@ -22,6 +27,7 @@ function SeenAvatar({ size = 34 }) {
 }
 
 function MiniAvatar({ creatorId, label, muted = false }) {
+  __useUiLanguage();
   const creator = atseenCreators[creatorId];
   return (
     <div className="official-seen-mini">
@@ -34,50 +40,51 @@ function MiniAvatar({ creatorId, label, muted = false }) {
 }
 
 function ChapterCard() {
+  __useUiLanguage();
   return (
     <div className="official-seen-card official-seen-chapter-card">
       <div className="official-seen-card-author">
         <img alt="" src={officialPortrait("ethan")} />
-        <strong>Ethan Brooks</strong>
+        <strong>{__msg("stories.ethanBrooks")}</strong>
       </div>
-      <strong className="official-seen-card-title">8-Week Transformation</strong>
-      <span className="official-seen-card-meta">5 chapters</span>
+      <strong className="official-seen-card-title">{__msg("stories.8WeekTransformation")}</strong>
+      <span className="official-seen-card-meta">{__msg("stories.5Chapters")}</span>
       <div className="official-seen-card-stats">
         <span className="official-seen-reactions">🤝 ❤️ 🔥 <b>90</b></span>
         <span>
           <FiRepeat aria-hidden="true" /> 126
         </span>
         <span>
-          <FiEye aria-hidden="true" /> 7.2K
-        </span>
+          <FiEye aria-hidden="true" />{__msg("stories.72k")}</span>
       </div>
     </div>
   );
 }
 
 function WallNoteCard() {
+  __useUiLanguage();
   return (
     <div className="official-seen-card official-seen-wall-card">
       <div className="official-seen-card-author">
         <img alt="" src={officialPortrait("omar")} />
-        <strong>Omar</strong>
-        <span>· Dubai · now</span>
+        <strong>{__msg("search.omar")}</strong>
+        <span>{__msg("stories.dubaiNow")}</span>
       </div>
-      <p>Need help: Lost a grey cat at Marina. If you see her, reply here.</p>
+      <p>{__msg("stories.needHelpLostAGreyCatAtMarinaIf")}</p>
       <div className="official-seen-wall-stats">
         <span>🤝 ❤️ 🔥 57</span>
         <span>
           <FiMessageCircle aria-hidden="true" /> 1
         </span>
         <span>
-          <FiEye aria-hidden="true" /> 2K
-        </span>
+          <FiEye aria-hidden="true" />{__msg("stories.2k")}</span>
       </div>
     </div>
   );
 }
 
 function DiscoverPreview() {
+  __useUiLanguage();
   return (
     <div className="official-seen-discover-art">
       <div className="official-seen-discover-minis">
@@ -85,22 +92,22 @@ function DiscoverPreview() {
         <MiniAvatar creatorId="mia" />
         <div className="official-seen-mini">
           <span className="official-seen-add-mini">+</span>
-          <span>friends</span>
+          <span>{__msg("stories.friends")}</span>
         </div>
       </div>
       <div className="official-seen-discover-cards">
         <div className="official-seen-discover-card">
           <img alt="" src={officialPortrait("ethan")} />
           <span>
-            <strong>Ethan</strong>
-            <small>trains at 5am · near you</small>
+            <strong>{__msg("search.ethan")}</strong>
+            <small>{__msg("stories.trainsAt5amNearYou")}</small>
           </span>
         </div>
         <div className="official-seen-discover-card is-offset">
           <img alt="" src={officialPortrait("anna")} />
           <span>
-            <strong>Anna</strong>
-            <small>3 mutual friends</small>
+            <strong>{__msg("search.anna")}</strong>
+            <small>{__msg("stories.3MutualFriends")}</small>
           </span>
         </div>
       </div>
@@ -109,6 +116,7 @@ function DiscoverPreview() {
 }
 
 function StoriesPreview() {
+  __useUiLanguage();
   return (
     <div className="official-seen-stories-art">
       <div className="official-seen-story-mini-row">
@@ -116,33 +124,34 @@ function StoriesPreview() {
         <MiniAvatar creatorId="ethan" />
         <MiniAvatar creatorId="mia" muted />
       </div>
-      <span className="official-seen-hours-pill">✦ 24 hours — then it’s gone</span>
+      <span className="official-seen-hours-pill">{__msg("stories.24HoursThenItSGone")}</span>
     </div>
   );
 }
 
 function CloserCard() {
+  __useUiLanguage();
   return (
     <div className="official-seen-card official-seen-closer-card">
       <div className="official-seen-feature-row">
         <span className="official-seen-feature-icon">🪐</span>
         <span>
-          <strong>Premium World</strong>
-          <small>private · for the closest</small>
+          <strong>{__msg("financial.premiumWorld")}</strong>
+          <small>{__msg("stories.privateForTheClosest")}</small>
         </span>
       </div>
       <div className="official-seen-feature-row">
         <span className="official-seen-feature-dot">✦</span>
         <span>
           <strong>Direct Access</strong>
-          <small>answered in 48h — or refunded</small>
+          <small>{__msg("stories.answeredIn48hOrRefunded")}</small>
         </span>
       </div>
       <div className="official-seen-feature-row">
         <span className="official-seen-preview-ring" />
         <span>
-          <strong>Preview stories</strong>
-          <small>a free look — before you join</small>
+          <strong>{__msg("stories.previewStories")}</strong>
+          <small>{__msg("stories.aFreeLookBeforeYouJoin")}</small>
         </span>
       </div>
     </div>
@@ -150,6 +159,7 @@ function CloserCard() {
 }
 
 function MoneyCard() {
+  __useUiLanguage();
   return (
     <div className="official-seen-card official-seen-money-card">
       <div className="official-seen-money-row">
@@ -157,7 +167,7 @@ function MoneyCard() {
         <span className="official-seen-money-arrow">→</span>
         <span className="official-seen-dollar-pill">+$6.80</span>
       </div>
-      <p>fan pays coins · creator earns dollars · bank payout from $20</p>
+      <p>{__msg("stories.fanPaysCoinsCreatorEarnsDollarsBankPayoutFrom")}</p>
     </div>
   );
 }
@@ -165,8 +175,8 @@ function MoneyCard() {
 function getSlides() {
   return [
     {
-      title: "You’ve been seen.",
-      body: "@seen is where being seen matters more than being scrolled.",
+      title: __msg("stories.youVeBeenSeen"),
+      body: __msg("stories.seenIsWhereBeingSeenMattersMoreThan"),
       art: (
         <div className="official-seen-large-eye">
           <BrandEye />
@@ -174,39 +184,40 @@ function getSlides() {
       ),
     },
     {
-      title: "Seens — life in chapters",
-      body: "People post what they really live: short chapters you can walk through. React, repost, save — one tap.",
+      title: __msg("stories.seensLifeInChapters"),
+      body: __msg("stories.peoplePostWhatTheyReallyLiveShortChapters"),
       art: <ChapterCard />,
     },
     {
-      title: "The wall hears you",
-      body: "Say what you see right now — one honest note. Your city reads it, reacts, and answers.",
+      title: __msg("stories.theWallHearsYou"),
+      body: __msg("stories.sayWhatYouSeeRightNowOneHonest"),
       art: <WallNoteCard />,
     },
     {
-      title: "Meet Discover",
-      body: "People drift closer for real reasons — and we always tell you why.",
+      title: __msg("stories.meetDiscover"),
+      body: __msg("stories.peopleDriftCloserForRealReasonsAndWe"),
       art: <DiscoverPreview />,
     },
     {
-      title: "Stories live on people",
-      body: "A ring on the avatar means there’s something to see. Your day lives 24 hours — write on it, color it, drop a photo.",
+      title: __msg("stories.storiesLiveOnPeople"),
+      body: __msg("stories.aRingOnTheAvatarMeansThereS"),
       art: <StoriesPreview />,
     },
     {
-      title: "Closer — when you’re ready",
-      body: "Creators open their World: a monthly subscription to everything they share. Premium experiences unlock once.",
+      title: __msg("stories.closerWhenYouReReady"),
+      body: __msg("stories.creatorsOpenTheirWorldAMonthlySubscriptionTo"),
       art: <CloserCard />,
     },
     {
-      title: "Money — honest by design",
-      body: "Fans pay with coins. The moment they do, the creator gets dollars — real, withdrawable, instant. Coins never turn back into money.",
+      title: __msg("stories.moneyHonestByDesign"),
+      body: __msg("stories.fansPayWithCoinsTheMomentTheyDo"),
       art: <MoneyCard />,
     },
   ];
 }
 
 function OfficialSeenStoryViewer({ initialIndex = 0, isOpen, onClose, onComplete }) {
+  __useUiLanguage();
   const slides = useMemo(getSlides, []);
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -306,20 +317,20 @@ function OfficialSeenStoryViewer({ initialIndex = 0, isOpen, onClose, onComplete
   };
 
   return (
-    <div aria-label="@seen story" aria-modal="true" className="official-seen-story-overlay story-viewer-overlay" role="dialog" style={viewerPosition}>
+    <div aria-label={__msg("stories.seenStory")} aria-modal="true" className="official-seen-story-overlay story-viewer-overlay" role="dialog" style={viewerPosition}>
       <div className="official-seen-story-surface story-viewer-surface" onPointerCancel={() => setHoldPaused(false)} onPointerDown={() => setHoldPaused(true)} onPointerLeave={() => setHoldPaused(false)} onPointerUp={() => setHoldPaused(false)}>
         <div className="official-seen-story-bg" />
         <header className="official-seen-story-head">
           <span className="official-seen-story-brand">
             <SeenAvatar size={36} />
-            <span className="official-seen-story-owner"><b>seen <i>✓</i></b><small>About the project</small></span>
+            <span className="official-seen-story-owner"><b>{__msg("branding.seen")} <i>✓</i></b><small>{__msg("stories.aboutTheProject")}</small></span>
             <span>✓</span>
           </span>
-          <span className="official-seen-story-kicker">About the project</span>
-          <button aria-label={paused ? "Resume story" : "Pause story"} className="official-seen-story-control" onClick={(event) => { event.stopPropagation(); setManualPaused((current) => !current); }} onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} type="button">
+          <span className="official-seen-story-kicker">{__msg("stories.aboutTheProject")}</span>
+          <button aria-label={paused ? __msg("stories.resumeStory") : __msg("stories.pauseStory")} className="official-seen-story-control" onClick={(event) => { event.stopPropagation(); setManualPaused((current) => !current); }} onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} type="button">
             {paused ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}
           </button>
-          <button aria-label="Close @seen story" className="official-seen-story-close" onClick={onClose} type="button">
+          <button aria-label={__msg("stories.closeSeenStory")} className="official-seen-story-close" onClick={onClose} type="button">
             <FiX aria-hidden="true" />
           </button>
         </header>
@@ -330,11 +341,11 @@ function OfficialSeenStoryViewer({ initialIndex = 0, isOpen, onClose, onComplete
         </div>
         <main className="official-seen-story-body" key={slide.title}>
           <div className="official-seen-story-art">{slide.art}</div>
-          <h2>{slide.title}</h2>
-          <p>{slide.body}</p>
+          <h2 dir="auto">{slide.title}</h2>
+          <p dir="auto">{slide.body}</p>
         </main>
-        <button aria-label="Previous @seen story" className="official-seen-story-zone is-left" onClick={() => step(-1)} type="button" />
-        <button aria-label="Next @seen story" className="official-seen-story-zone is-right" onClick={() => step(1)} type="button" />
+        <button aria-label={__msg("stories.previousSeenStory")} className="official-seen-story-zone is-left" onClick={() => step(-1)} type="button" />
+        <button aria-label={__msg("stories.nextSeenStory")} className="official-seen-story-zone is-right" onClick={() => step(1)} type="button" />
       </div>
     </div>
   );

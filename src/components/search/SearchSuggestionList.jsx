@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { FiClock, FiGrid, FiMapPin, FiSearch, FiTag, FiUser } from "react-icons/fi";
 
 const icons = {
@@ -9,6 +10,7 @@ const icons = {
 };
 
 function SearchSuggestionList({ activeIndex, onPick, open, suggestions = [] }) {
+  __useUiLanguage();
   if (!open || !suggestions.length) return null;
 
   return (
@@ -19,7 +21,7 @@ function SearchSuggestionList({ activeIndex, onPick, open, suggestions = [] }) {
           return (
             <button
               aria-selected={activeIndex === index}
-              className={`flex min-h-12 w-full items-center gap-3 px-4 text-left text-sm transition ${activeIndex === index ? "bg-atseen-blue/15 text-white" : "text-atseen-muted hover:bg-white/[0.04] hover:text-white"}`}
+              className={`flex min-h-12 w-full items-center gap-3 px-4 text-start text-sm transition ${activeIndex === index ? "bg-atseen-blue/15 text-white" : "text-atseen-muted hover:bg-white/[0.04] hover:text-white"}`}
               id={`search-suggestion-${index}`}
               key={`${item.type}-${item.id}-${item.label}`}
               onMouseDown={(event) => {

@@ -1,9 +1,10 @@
+import { msg as __msg } from "../i18n/runtime.js";
 export const sampleCreators = [
   {
     username: "maya.moves",
     name: "Maya Chen",
-    category: "Fitness & wellness",
-    bio: "Movement coach sharing energizing workouts, practical routines, and a calmer way to feel strong.",
+    get category() { return __msg("sampleCreators.fitnessWellness"); },
+    get bio() { return __msg("sampleCreators.movementCoachSharingEnergizingWorkoutsPracticalRoutinesAnd"); },
     members: "18.4K",
     posts: 142,
     price: 12,
@@ -13,8 +14,8 @@ export const sampleCreators = [
   {
     username: "noahframes",
     name: "Noah Williams",
-    category: "Photography",
-    bio: "Behind the scenes, lighting breakdowns, and honest lessons from life as a full-time photographer.",
+    get category() { return __msg("sampleCreators.photography"); },
+    get bio() { return __msg("sampleCreators.behindTheScenesLightingBreakdownsAndHonestLessons"); },
     members: "9.7K",
     posts: 86,
     price: 9,
@@ -24,8 +25,8 @@ export const sampleCreators = [
   {
     username: "luna.afterdark",
     name: "Luna Rivera",
-    category: "Lifestyle",
-    bio: "Exclusive vlogs, personal stories, and weekly live hangouts from my little corner of the internet.",
+    get category() { return __msg("profile.lifestyle"); },
+    get bio() { return __msg("sampleCreators.exclusiveVlogsPersonalStoriesAndWeeklyLiveHangouts"); },
     members: "31.2K",
     posts: 219,
     price: 15,
@@ -35,8 +36,8 @@ export const sampleCreators = [
   {
     username: "chef.eli",
     name: "Eli Bennett",
-    category: "Food & cooking",
-    bio: "Restaurant-level recipes made approachable, plus monthly cook-alongs and members-only menus.",
+    get category() { return __msg("sampleCreators.foodCooking"); },
+    get bio() { return __msg("sampleCreators.restaurantLevelRecipesMadeApproachablePlusMonthlyCook"); },
     members: "12.1K",
     posts: 104,
     price: 8,
@@ -46,8 +47,8 @@ export const sampleCreators = [
   {
     username: "sora.sounds",
     name: "Sora Kim",
-    category: "Music",
-    bio: "Demos, production sessions, unreleased tracks, and the stories behind every song.",
+    get category() { return __msg("sampleCreators.music"); },
+    get bio() { return __msg("sampleCreators.demosProductionSessionsUnreleasedTracksAndTheStories"); },
     members: "22.6K",
     posts: 167,
     price: 11,
@@ -57,8 +58,8 @@ export const sampleCreators = [
   {
     username: "jules.draws",
     name: "Jules Martin",
-    category: "Art & illustration",
-    bio: "Sketchbook tours, brushes, process videos, and creative prompts to keep you making art.",
+    get category() { return __msg("sampleCreators.artIllustration"); },
+    get bio() { return __msg("sampleCreators.sketchbookToursBrushesProcessVideosAndCreativePrompts"); },
     members: "7.9K",
     posts: 93,
     price: 7,

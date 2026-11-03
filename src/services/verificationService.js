@@ -1,4 +1,4 @@
-﻿import axiosInstance from "../api/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
 
 export const verificationService = {
   getMine: () => axiosInstance.get("/creator/verification"),

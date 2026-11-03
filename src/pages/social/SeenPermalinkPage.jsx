@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +10,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { publicationService } from "../../services/publicationService";
 
 export default function SeenPermalinkPage() {
+  __useUiLanguage();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -16,7 +20,7 @@ export default function SeenPermalinkPage() {
   const origin = location.state?.seenOrigin;
   const searchOrigin = origin?.pathname === "/search" ? origin : null;
   const originQuery = searchOrigin ? new URLSearchParams(searchOrigin.search || "") : null;
-  const searchLabel = originQuery?.get("q")?.trim() || "Search";
+  const searchLabel = originQuery?.get("q")?.trim() || __msg("discover.search");
   const query = useQuery({
     queryKey: ["seen-permalink", id, accessToken],
     queryFn: () => publicationService.getPublicPublication(id, accessToken ? { access: accessToken } : undefined).then((response) => response.data.data.publication),
@@ -27,8 +31,8 @@ export default function SeenPermalinkPage() {
     ? localPublication
     : query.data;
 
-  if (query.isLoading) return <section className="seen-permalink-status" aria-label="Loading Seen"><span /><span /><span /></section>;
-  if (query.isError || !publication) return <section className="seen-permalink-error"><h1>This Seen is not available.</h1><Link to="/seen">Back to Seen</Link></section>;
+  if (query.isLoading) return <section className="seen-permalink-status" aria-label={__msg("social.loadingSeen")}><span /><span /><span /></section>;
+  if (query.isError || !publication) return <section className="seen-permalink-error"><h1>{__msg("social.thisSeenIsNotAvailable")}</h1><Link to="/seen">{__msg("social.backToSeen")}</Link></section>;
 
   const replacePublication = (_seenId, nextPublication) => {
     setLocalPublication((current) => ({ ...(current || publication), ...nextPublication }));
@@ -63,7 +67,7 @@ export default function SeenPermalinkPage() {
 
   return <section className={`seen-prototype-page seen-permalink-page ${searchOrigin ? "has-search-origin" : ""}`}>
     {searchOrigin ? <header className="seen-permalink-origin-header">
-      <button aria-label={`Back to search for ${searchLabel}`} onClick={returnToSearch} type="button"><FiChevronLeft /></button>
+      <button aria-label={__msg("social.backToSearchFor", { value0: searchLabel })} onClick={returnToSearch} type="button"><FiChevronLeft data-ui-directional="true" /></button>
       <strong>{searchLabel === "Search" ? searchLabel : `“${searchLabel}”`}</strong>
     </header> : null}
     <div className="seen-feed-list">

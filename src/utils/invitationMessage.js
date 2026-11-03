@@ -1,5 +1,6 @@
+import { msg as __msg } from "../i18n/runtime.js";
 export function invitationLinkPreview(message) {
-  return `↪ Link — ${message.sharedContent?.title || "Invitation to @seen"}`;
+  return `↪ Link — ${message.sharedContent?.title || __msg("invitationMessage.invitationToSeen")}`;
 }
 
 export function isDefaultInvitationMessage(message) {

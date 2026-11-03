@@ -41,7 +41,7 @@
 .invite-people-section>h2{font-size:11px;font-weight:750;letter-spacing:1.2px;color:rgba(255,255,255,.4);margin:26px 0 6px}
 .invite-person-row{display:flex;align-items:center;gap:12px;padding:11px 0}
 .invite-person-row+.invite-person-row{border-top:1px solid rgba(255,255,255,.05)}
-.invite-person-profile{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left}
+.invite-person-profile{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:start}
 .invite-person-profile>span:last-child{flex:1;min-width:0}
 .invite-person-profile b{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .invite-person-profile small{display:block;font-size:12px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -57,7 +57,7 @@
 .invite-menu-person{display:flex;align-items:center;gap:12px;margin-bottom:8px}
 .invite-menu-person b{font-size:15px}
 .invite-menu-person small{display:block;font-size:12px;color:rgba(255,255,255,.4)}
-.invite-person-menu>button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;text-align:left;font-size:14px;font-weight:650}
+.invite-person-menu>button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;text-align:start;font-size:14px;font-weight:650}
 .invite-person-menu>button>svg{width:16px;height:16px;flex:none;color:rgba(255,255,255,.62)}
 .invite-person-menu>.is-danger{color:#ff8a80}
 .invite-person-menu>button:disabled{opacity:.5}

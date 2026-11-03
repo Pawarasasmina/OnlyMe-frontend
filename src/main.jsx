@@ -8,6 +8,7 @@ import "./index.css";
 import "./styles/storyEnhancements.css";
 import "./styles/storyHighlights.css";
 import "./styles/profileSeenBy.css";
+import "./styles/localization.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,0 +1,6 @@
+.settings-notification-sheet.is-blocked-users { width:100%;max-width:none;min-height:0;height:auto;padding:8px 20px 36px;border:0;border-radius:16px 16px 0 0;background:#0c0f14;box-shadow:none; }
+.settings-notification-sheet.is-blocked-users > h2 { margin:0;color:#fff;font-family:inherit;font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:1.2; }
+.settings-notification-sheet.is-blocked-users .profile-notification-grab { width:32px;height:4px;margin:4px auto 20px;border-radius:999px;background:rgba(255,255,255,.3); }
+.settings-notification-sheet.is-blocked-users .blocked-users-empty { margin:10px 0 0;color:rgba(255,255,255,.6);font-family:inherit;font-size:14px;font-weight:400;line-height:1.45;text-align:start; }
+.settings-notification-sheet.is-blocked-users > h2 + p:not(.blocked-users-empty) { margin-top:6px;color:rgba(255,255,255,.6);font-size:14px;line-height:1.45;font-weight:400; }
+.settings-notification-sheet.is-blocked-users .muted-users-empty { margin-top:12px; }

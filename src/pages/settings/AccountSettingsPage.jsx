@@ -1,3 +1,8 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useProfileLanguageOptions } from "../../hooks/useProfileLanguageOptions";
 import { profileLanguageCode } from "../../utils/profileLanguages";
 import { useEffect, useState } from "react";
@@ -18,7 +23,7 @@ const TIME_ZONES = (() => {
 
 function timezoneLabel(zone) {
   try {
-    const offset = new Intl.DateTimeFormat("en", { timeZone: zone, timeZoneName: "shortOffset" }).formatToParts().find((part) => part.type === "timeZoneName")?.value || "";
+    const offset = new Intl.DateTimeFormat(__uiLocale(), { timeZone: zone, timeZoneName: "shortOffset" }).formatToParts().find((part) => part.type === "timeZoneName")?.value || "";
     return `${zone.replaceAll("_", " ")} · ${offset}`;
   } catch {
     return zone;
@@ -26,16 +31,18 @@ function timezoneLabel(zone) {
 }
 
 function TimezoneSelector({ label, onChange, value }) {
+  __useUiLanguage();
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30000);
     return () => window.clearInterval(timer);
   }, []);
-  const preview = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short", timeZone: value || "UTC" }).format(now);
-  return <label className="block text-sm font-medium text-brand-mist/80"><span className="flex items-center gap-2"><FiGlobe className="text-atseen-blue" />{label}</span><span className="relative mt-2 block"><select className="w-full appearance-none rounded-xl border border-white/10 bg-brand-dark px-4 py-3 pr-11 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="timezone" onChange={onChange} value={value || "UTC"}>{TIME_ZONES.map((zone) => <option className="bg-atseen-bg text-white" key={zone} value={zone}>{timezoneLabel(zone)}</option>)}</select><span aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-atseen-muted">⌄</span></span><small className="mt-2 flex items-center gap-2 rounded-lg bg-atseen-blue/[0.06] px-3 py-2 text-xs font-medium text-atseen-muted"><FiClock className="text-atseen-blue" />Local time: <b className="text-white">{preview}</b></small></label>;
+  const preview = new Intl.DateTimeFormat(__uiLocale(), { dateStyle: "medium", timeStyle: "short", timeZone: value || "UTC" }).format(now);
+  return <label className="block text-sm font-medium text-brand-mist/80"><span className="flex items-center gap-2"><FiGlobe className="text-atseen-blue" />{label}</span><span className="relative mt-2 block"><select className="w-full appearance-none rounded-xl border border-white/10 bg-brand-dark px-4 py-3 pe-11 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="timezone" onChange={onChange} value={value || "UTC"}>{TIME_ZONES.map((zone) => <option className="bg-atseen-bg text-white" key={zone} value={zone}>{timezoneLabel(zone)}</option>)}</select><span aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-atseen-muted">⌄</span></span><small className="mt-2 flex items-center gap-2 rounded-lg bg-atseen-blue/[0.06] px-3 py-2 text-xs font-medium text-atseen-muted"><FiClock className="text-atseen-blue" />{__msg("settings.localTime")} <b className="text-white">{preview}</b></small></label>;
 }
 
 function AccountSettingsPage() {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const { setLanguage, t } = useLanguage();
   const languageOptions = useProfileLanguageOptions();
@@ -53,9 +60,8 @@ function AccountSettingsPage() {
   useEffect(() => {
     if (query.data && !dirty) {
       setPreferences((current) => ({ ...current, ...(query.data.preferences || {}) }));
-      setLanguage((query.data.preferences?.preferredLanguage || "en").split("-")[0]);
     }
-  }, [dirty, query.data, setLanguage]);
+  }, [dirty, query.data]);
 
   const accountMutation = useMutation({
     mutationFn: (payload) => profileService.updateAccountSettings(payload),
@@ -69,7 +75,7 @@ function AccountSettingsPage() {
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Your settings could not be saved. Please try again.").message);
+      setError(normalizeApiError(err, __msg("settings.yourSettingsCouldNotBeSavedPleaseTryAgain")).message);
     },
   });
 
@@ -82,7 +88,7 @@ function AccountSettingsPage() {
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Unable to change password.").message);
+      setError(normalizeApiError(err, __msg("settings.unableToChangePassword")).message);
     },
   });
 
@@ -108,11 +114,11 @@ function AccountSettingsPage() {
     setError("");
     setMessage("");
     if (passwords.newPassword.length < 8) {
-      setError("New password must be at least 8 characters.");
+      setError(__msg("creator.newPasswordMustBeAtLeast8Characters"));
       return;
     }
     if (passwords.newPassword !== passwords.confirmPassword) {
-      setError("New passwords do not match.");
+      setError(__msg("creator.newPasswordsDoNotMatch"));
       return;
     }
     passwordMutation.mutate({ currentPassword: passwords.currentPassword, newPassword: passwords.newPassword });
@@ -122,7 +128,7 @@ function AccountSettingsPage() {
     <div className="space-y-6">
       <SettingsNav showTabs={false} />
       {message ? <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
-      {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p> : null}
+      {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__systemMessage(error)}</p> : null}
       <form className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5" onSubmit={saveAccount}>
         <div>
           <h1 className="text-2xl font-semibold">{t("Account settings")}</h1>

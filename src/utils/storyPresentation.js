@@ -1,3 +1,4 @@
+import { msg as __msg } from "../i18n/runtime.js";
 export function storyTextStyle(item = {}) {
   const style = Number(item.style) || 0;
   const background = Number(item.backgroundMode ?? (style === 2 ? 1 : 0));
@@ -7,7 +8,7 @@ export function storyTextStyle(item = {}) {
     backgroundColor: background === 1 ? color : background === 2 ? `${color}66` : undefined,
     padding: background ? "6px 13px" : undefined,
     borderRadius: background ? "12px" : undefined,
-    fontFamily: style === 3 ? "Georgia, serif" : style === 4 ? "Consolas, monospace" : undefined,
+    fontFamily: style === 3 ? __msg("storyPresentation.georgiaSerif") : style === 4 ? __msg("storyPresentation.consolasMonospace") : undefined,
     fontWeight: style === 1 || style === 2 ? 800 : 650,
     fontStyle: style === 3 ? "italic" : undefined,
     textAlign: item.align || "center",

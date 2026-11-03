@@ -1,3 +1,8 @@
+import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -43,6 +48,7 @@ const formatRecordingTime = (seconds) =>
   `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 
 function VoiceRecorder({ block, busy, onRemove, onUpload }) {
+  __useUiLanguage();
   const input = useRef(null);
   const recorder = useRef(null);
   const stream = useRef(null);
@@ -93,7 +99,7 @@ function VoiceRecorder({ block, busy, onRemove, onUpload }) {
   const startRecording = async () => {
     setRecordingError("");
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setRecordingError("Live recording is not supported by this browser. You can upload a voice file instead.");
+      setRecordingError(__msg("publication.liveRecordingIsNotSupportedByThisBrowser"));
       return;
     }
     try {
@@ -125,7 +131,7 @@ function VoiceRecorder({ block, busy, onRemove, onUpload }) {
         releaseStream();
       };
       nextRecorder.onerror = () => {
-        setRecordingError("The recording stopped unexpectedly. Please try again.");
+        setRecordingError(__msg("publication.theRecordingStoppedUnexpectedlyPleaseTryAgain"));
         setIsRecording(false);
         releaseStream();
       };
@@ -138,7 +144,7 @@ function VoiceRecorder({ block, busy, onRemove, onUpload }) {
       setRecordingError(
         error?.name === "NotAllowedError"
           ? "Microphone access was blocked. Allow microphone access or upload a voice file."
-          : "The microphone could not be started. Please try again or upload a file.",
+          : __msg("publication.theMicrophoneCouldNotBeStartedPleaseTry"),
       );
     }
   };
@@ -151,45 +157,45 @@ function VoiceRecorder({ block, busy, onRemove, onUpload }) {
     <div className="chapter-media-editor chapter-voice-recorder mt-3">
       <div className={`voice-recording-panel${isRecording ? " is-recording" : ""}`}>
         <div className="voice-recording-status">
-          <span className="voice-recording-icon" aria-hidden="true">{isRecording ? "●" : "MIC"}</span>
+          <span className="voice-recording-icon" aria-hidden="true">{isRecording ? "●" : __msg("publication.mic")}</span>
           <div>
-            <strong>{isRecording ? "Recording voice" : "Record your voice"}</strong>
-            <small>{isRecording ? `${formatRecordingTime(elapsed)} / 05:00` : "Record, listen to the preview, then save it."}</small>
+            <strong>{isRecording ? __msg("publication.recordingVoice") : __msg("publication.recordYourVoice")}</strong>
+            <small>{isRecording ? `${formatRecordingTime(elapsed)} / 05:00` : __msg("publication.recordListenToThePreviewThenSaveIt")}</small>
           </div>
         </div>
 
         {isRecording ? (
-          <button className="voice-action voice-action-stop" onClick={() => recorder.current?.stop()} type="button">Stop recording</button>
+          <button className="voice-action voice-action-stop" onClick={() => recorder.current?.stop()} type="button">{__msg("publication.stopRecording")}</button>
         ) : (
-          <button className="voice-action voice-action-primary" disabled={busy} onClick={startRecording} type="button">Start recording</button>
+          <button className="voice-action voice-action-primary" disabled={busy} onClick={startRecording} type="button">{__msg("messaging.startRecording")}</button>
         )}
       </div>
 
       {preview ? (
         <div className="voice-preview-panel">
-          <div><strong>Recording preview</strong><small>Listen before adding it to this chapter.</small></div>
+          <div><strong>{__msg("publication.recordingPreview")}</strong><small>{__msg("publication.listenBeforeAddingItToThisChapter")}</small></div>
           <audio controls preload="metadata" src={preview.url} />
           <div className="voice-preview-actions">
-            <button className="voice-action" disabled={busy} onClick={startRecording} type="button">Retake</button>
-            <button className="voice-action voice-action-primary" disabled={busy} onClick={() => onUpload(preview.file)} type="button">{busy ? "Uploading..." : "Use recording"}</button>
+            <button className="voice-action" disabled={busy} onClick={startRecording} type="button">{__msg("publication.retake")}</button>
+            <button className="voice-action voice-action-primary" disabled={busy} onClick={() => onUpload(preview.file)} type="button">{busy ? __msg("profile.uploading") : __msg("publication.useRecording")}</button>
           </div>
         </div>
       ) : block.media?.secureUrl ? (
         <div className="voice-preview-panel">
-          <div><strong>Saved voice</strong><small>Your uploaded voice is ready to play.</small></div>
+          <div><strong>{__msg("publication.savedVoice")}</strong><small>{__msg("publication.yourUploadedVoiceIsReadyToPlay")}</small></div>
           <audio controls preload="metadata" src={block.media.secureUrl} />
           <div className="chapter-media-meta">
-            <span>{block.media.format?.toUpperCase() || "VOICE"}</span>
-            {block.media.duration ? <span>{Math.round(block.media.duration)} sec</span> : null}
+            <span>{block.media.format?.toUpperCase() || __msg("publication.voice")}</span>
+            {block.media.duration ? <span>{Math.round(block.media.duration)} {__msg("publication.sec")}</span> : null}
           </div>
         </div>
       ) : null}
 
       {recordingError ? <p className="voice-recording-error" role="alert">{recordingError}</p> : null}
       <div className="voice-upload-row">
-        <span>Or choose an existing recording</span>
-        <button className="voice-action" disabled={busy || isRecording} onClick={() => input.current?.click()} type="button">Upload voice file</button>
-        {(block.media || preview) ? <button className="voice-action voice-action-danger" disabled={busy || isRecording} onClick={() => { clearPreview(); onRemove(); }} type="button">Remove</button> : null}
+        <span>{__msg("publication.orChooseAnExistingRecording")}</span>
+        <button className="voice-action" disabled={busy || isRecording} onClick={() => input.current?.click()} type="button">{__msg("publication.uploadVoiceFile")}</button>
+        {(block.media || preview) ? <button className="voice-action voice-action-danger" disabled={busy || isRecording} onClick={() => { clearPreview(); onRemove(); }} type="button">{__msg("profile.remove")}</button> : null}
       </div>
       <input accept="audio/mpeg,audio/wav,audio/aac,audio/flac,audio/webm,audio/ogg,audio/mp4,audio/x-m4a" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) { clearPreview(); onUpload(file); } event.target.value = ""; }} ref={input} type="file" />
     </div>
@@ -197,6 +203,7 @@ function VoiceRecorder({ block, busy, onRemove, onUpload }) {
 }
 
 function MediaPreview({ block, busy, onRemove, onUpload }) {
+  __useUiLanguage();
   const input = useRef(null);
   const media = block.media;
   const accept =
@@ -210,7 +217,7 @@ function MediaPreview({ block, busy, onRemove, onUpload }) {
       {media?.secureUrl ? (
         <div className="chapter-media-preview">
           {block.type === "IMAGE" ? (
-            <img alt="Uploaded chapter preview" src={media.secureUrl} />
+            <img alt={__msg("publication.uploadedChapterPreview")} src={media.secureUrl} />
           ) : block.type === "VIDEO" ? (
             <video controls preload="metadata" src={media.secureUrl} />
           ) : (
@@ -219,10 +226,10 @@ function MediaPreview({ block, busy, onRemove, onUpload }) {
           <div className="chapter-media-meta">
             <span>{media.format?.toUpperCase() || block.type}</span>
             {media.bytes ? (
-              <span>{(media.bytes / 1024 / 1024).toFixed(1)} MB</span>
+              <span>{(media.bytes / 1024 / 1024).toFixed(1)} {__msg("admin.mb_6e979f")}</span>
             ) : null}
             {media.duration ? (
-              <span>{Math.round(media.duration)} sec</span>
+              <span>{Math.round(media.duration)} {__msg("publication.sec")}</span>
             ) : null}
           </div>
         </div>
@@ -240,8 +247,8 @@ function MediaPreview({ block, busy, onRemove, onUpload }) {
                 ? "🎬"
                 : "🎙️"}
           </span>
-          <strong>Add {block.type.toLowerCase()}</strong>
-          <small>The uploaded file will appear here before you submit.</small>
+          <strong>{__msg("publication.add")} {block.type.toLowerCase()}</strong>
+          <small>{__msg("publication.theUploadedFileWillAppearHereBeforeYouSubmit")}</small>
         </button>
       )}
       <input
@@ -260,15 +267,13 @@ function MediaPreview({ block, busy, onRemove, onUpload }) {
             onClick={() => input.current?.click()}
             type="button"
           >
-            {busy ? "Uploading..." : "Replace"}
+            {busy ? __msg("profile.uploading") : __msg("profile.replace")}
           </button>
           <button
             className="rounded-full border border-red-300/20 px-3 py-2 text-xs text-red-300"
             onClick={onRemove}
             type="button"
-          >
-            Remove
-          </button>
+          >{__msg("profile.remove")}</button>
         </div>
       ) : null}
     </div>
@@ -276,6 +281,7 @@ function MediaPreview({ block, busy, onRemove, onUpload }) {
 }
 
 function FanWorldPreview({ publication, onClose }) {
+  __useUiLanguage();
   const [entered, setEntered] = useState(false);
   const [active, setActive] = useState(0);
   const chapters = publication.chapters || [];
@@ -290,22 +296,22 @@ function FanWorldPreview({ publication, onClose }) {
     if (["TEXT", "KEY_POINT", "HIGHLIGHT"].includes(block.type))
       return (
         <p className="whitespace-pre-wrap text-sm leading-6 text-white/85">
-          {block.text || "Empty text block"}
+          {block.text || __msg("publication.emptyTextBlock")}
         </p>
       );
     if (block.type === "LINK")
       return (
         <span className="inline-flex rounded-full border border-atseen-blue/30 px-4 py-2 text-sm font-bold text-atseen-blue">
-          {block.label || block.url || "Link"}
+          {block.label || block.url || __msg("publication.link")}
         </span>
       );
     if (block.type === "POLL") return <div className="rounded-2xl border border-atseen-blue/20 bg-atseen-blue/5 p-4"><b>{block.metadata?.question}</b><div className="mt-3 grid gap-2">{(block.metadata?.options || []).map((option) => <span className="rounded-xl border border-atseen-line px-3 py-2 text-sm" key={option}>{option}</span>)}</div></div>;
     if (!block.media?.secureUrl)
-      return <p className="text-sm text-atseen-muted">Media not added yet</p>;
+      return <p className="text-sm text-atseen-muted">{__msg("publication.mediaNotAddedYet")}</p>;
     if (block.type === "IMAGE")
       return (
         <img
-          alt="Chapter preview"
+          alt={__msg("publication.chapterPreview")}
           className="w-full rounded-2xl"
           src={block.media.secureUrl}
         />
@@ -323,7 +329,7 @@ function FanWorldPreview({ publication, onClose }) {
 
   return (
     <div
-      aria-label="Fan preview"
+      aria-label={__msg("publication.fanPreview")}
       aria-modal="true"
       className="fixed inset-0 z-[100] overflow-y-auto bg-[#03070c]/95 p-4 backdrop-blur-md sm:p-8"
       role="dialog"
@@ -331,20 +337,14 @@ function FanWorldPreview({ publication, onClose }) {
       <div className="mx-auto max-w-3xl">
         <header className="sticky top-0 z-10 mb-5 flex items-center justify-between rounded-2xl border border-atseen-line bg-atseen-surface/95 px-4 py-3 shadow-xl backdrop-blur">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-atseen-blue">
-              Preview as fan
-            </p>
-            <p className="text-xs text-atseen-muted">
-              Draft preview only · purchases are disabled
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-atseen-blue">{__msg("publication.previewAsFan")}</p>
+            <p className="text-xs text-atseen-muted">{__msg("publication.draftPreviewOnlyPurchasesAreDisabled")}</p>
           </div>
           <button
             className="rounded-full border border-atseen-line px-4 py-2 text-xs font-bold"
             onClick={onClose}
             type="button"
-          >
-            Close preview
-          </button>
+          >{__msg("admin.closePreview")}</button>
         </header>
 
         {!entered ? (
@@ -354,25 +354,21 @@ function FanWorldPreview({ publication, onClose }) {
                 {publication.planet?.emoji || "🪐"}
               </span>
               <h1 className="mt-7 text-4xl font-black">
-                {publication.title || "Untitled world"}
+                {publication.title || __msg("publication.untitledWorld")}
               </h1>
-              <p className="mt-2 text-sm text-atseen-muted">
-                This is how your planet entrance appears to fans.
-              </p>
+              <p className="mt-2 text-sm text-atseen-muted">{__msg("publication.thisIsHowYourPlanetEntranceAppearsToFans")}</p>
               <button
                 className="mt-8 min-h-12 rounded-full border border-atseen-blue/50 px-8 text-sm font-black text-atseen-blue"
                 onClick={() => setEntered(true)}
                 type="button"
-              >
-                Step inside
-              </button>
+              >{__msg("publication.stepInside")}</button>
             </div>
           </section>
         ) : (
           <main className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-black/20 p-5 sm:p-8">
             <div className="flex items-center gap-3 border-b border-atseen-line pb-4">
               <button
-                aria-label="Back to planet entrance"
+                aria-label={__msg("publication.backToPlanetEntrance")}
                 className="grid h-10 w-10 place-items-center rounded-full border border-atseen-line"
                 onClick={() => setEntered(false)}
                 type="button"
@@ -380,11 +376,10 @@ function FanWorldPreview({ publication, onClose }) {
                 ←
               </button>
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-black uppercase tracking-wider text-atseen-muted">
-                  Chapter {chapters.length ? active + 1 : 0} of {chapters.length}
+                <p className="text-[9px] font-black uppercase tracking-wider text-atseen-muted">{__msg("profile.chapter")}{chapters.length ? active + 1 : 0} {__msg("onboarding.of")} {chapters.length}
                 </p>
                 <h2 className="truncate text-xl font-black">
-                  {chapter?.title || "No chapters added"}
+                  {chapter?.title || __msg("publication.noChaptersAdded")}
                 </h2>
               </div>
               <span className="text-3xl">{publication.planet?.emoji || "🪐"}</span>
@@ -403,7 +398,7 @@ function FanWorldPreview({ publication, onClose }) {
 
             {active === 0 && publication.coverMedia?.secureUrl ? (
               <img
-                alt="World cover"
+                alt={__msg("publication.worldCover")}
                 className="mt-6 aspect-video w-full rounded-3xl object-cover"
                 src={publication.coverMedia.secureUrl}
               />
@@ -417,12 +412,10 @@ function FanWorldPreview({ publication, onClose }) {
             {locked ? (
               <section className="mt-8 rounded-3xl border border-atseen-line bg-atseen-surface p-8 text-center">
                 <span className="text-3xl">🔒</span>
-                <h3 className="mt-4 font-black">{chapter.title}</h3>
-                <p className="mt-2 text-sm text-atseen-muted">
-                  Fans must unlock this world to continue the journey.
-                </p>
+                <h3 dir="auto" className="mt-4 font-black">{chapter.title}</h3>
+                <p className="mt-2 text-sm text-atseen-muted">{__msg("publication.fansMustUnlockThisWorldToContinueTheJourney")}</p>
                 <span className="mt-5 inline-flex rounded-full bg-atseen-blue px-6 py-3 text-sm font-black text-atseen-bg">
-                  {publication.kind === "PREMIUM_WORLD" ? "Join" : "Unlock once"} · ✦
+                  {publication.kind === "PREMIUM_WORLD" ? __msg("profile.join") : __msg("publication.unlockOnce")} · ✦
                   {publication.pricing?.starsAmount || 0}
                 </span>
               </section>
@@ -433,9 +426,7 @@ function FanWorldPreview({ publication, onClose }) {
                 ))}
               </section>
             ) : (
-              <p className="mt-10 text-center text-sm text-atseen-muted">
-                Add a chapter to preview the fan journey.
-              </p>
+              <p className="mt-10 text-center text-sm text-atseen-muted">{__msg("publication.addAChapterToPreviewTheFanJourney")}</p>
             )}
 
             {chapters.length ? (
@@ -445,17 +436,13 @@ function FanWorldPreview({ publication, onClose }) {
                   disabled={active === 0}
                   onClick={() => setActive((current) => current - 1)}
                   type="button"
-                >
-                  ← Back
-                </button>
+                >{__msg("publication.back")}</button>
                 <button
                   className="min-h-12 flex-1 rounded-2xl bg-atseen-blue px-5 text-sm font-black text-atseen-bg disabled:opacity-40"
                   disabled={active === chapters.length - 1}
                   onClick={() => setActive((current) => current + 1)}
                   type="button"
-                >
-                  Next chapter →
-                </button>
+                >{__msg("publication.nextChapter")}</button>
               </nav>
             ) : null}
           </main>
@@ -466,6 +453,7 @@ function FanWorldPreview({ publication, onClose }) {
 }
 
 export default function PublicationComposerShell({ kind }) {
+  __useUiLanguage();
   const { id } = useParams();
   const nav = useNavigate();
   const cfg = WORLD_CONFIG[kind];
@@ -540,14 +528,14 @@ export default function PublicationComposerShell({ kind }) {
         ),
       )
     ) {
-      setSaveState("Media required");
+      setSaveState(__msg("publication.mediaRequired"));
       setError(
-        "Choose a file for every media block, or delete the empty media block before saving.",
+        __msg("publication.chooseAFileForEveryMediaBlockOrDelete"),
       );
       return null;
     }
     busy.current = true;
-    setSaveState("Saving…");
+    setSaveState(__msg("financial.saving"));
     try {
       let publication = await ensure();
       publication = (
@@ -567,7 +555,7 @@ export default function PublicationComposerShell({ kind }) {
       ).data.data.publication;
       for (const [chapterIndex, chapter] of snapshot.chapters.entries()) {
         await api.updateChapter(publication.id, chapter.stableChapterId, {
-          title: chapter.title || "Untitled",
+          title: chapter.title || __msg("social.untitled"),
           blocks: chapter.blocks,
           isPreview: kind === "WORLD" || chapterIndex === 0,
           releaseMode: "IMMEDIATE",
@@ -583,7 +571,7 @@ export default function PublicationComposerShell({ kind }) {
           : publication,
       );
       setSaveState(
-        hasNewerEdits ? "Newer changes waiting to save…" : "Saved",
+        hasNewerEdits ? __msg("publication.newerChangesWaitingToSave") : __msg("contentEntities.saved"),
       );
       conflictRetries.current = 0;
       setError("");
@@ -598,20 +586,20 @@ export default function PublicationComposerShell({ kind }) {
             ...current,
             statusVersion: latest.statusVersion,
           }));
-          setSaveState("Changes queued with the latest version…");
+          setSaveState(__msg("publication.changesQueuedWithTheLatestVersion"));
           if (conflictRetries.current < 3) setError("");
           else
             setError(
-              "Autosave could not synchronize after several attempts. Your local changes are still preserved; pause editing and try Save draft again.",
+              __msg("publication.autosaveCouldNotSynchronizeAfterSeveralAttemptsYourLocal"),
             );
         } else {
-          setSaveState("Save paused");
+          setSaveState(__msg("creator.savePaused"));
           setError(
-            "Unable to refresh the latest draft version. Your local changes are still preserved.",
+            __msg("publication.unableToRefreshTheLatestDraftVersionYourLocal"),
           );
         }
       } else {
-        setSaveState("Save failed");
+        setSaveState(__msg("publication.saveFailed"));
         setError(publicationError(requestError));
       }
       return null;
@@ -632,7 +620,7 @@ export default function PublicationComposerShell({ kind }) {
   const change = (values) => {
     editRevision.current += 1;
     dirty.current = true;
-    setSaveState("Unsaved changes · autosaving after you pause");
+    setSaveState(__msg("publication.unsavedChangesAutosavingAfterYouPause"));
     setP((current) => ({ ...current, ...values }));
   };
   const waitUntilIdle = async () => {
@@ -641,12 +629,12 @@ export default function PublicationComposerShell({ kind }) {
   };
   const addChapter = async () => {
     if (p.chapters.length >= cfg.max)
-      return setError(`Maximum ${cfg.max} chapters.`);
+      return setError(__msg("publication.maximumChapters", { value0: cfg.max }));
     if (hasPendingMedia)
       return setError(
-        "Upload or remove the empty media block before adding another chapter.",
+        __msg("publication.uploadOrRemoveTheEmptyMediaBlockBeforeAdding"),
       );
-    setSaveState("Preparing new chapter…");
+    setSaveState(__msg("publication.preparingNewChapter"));
     try {
       await waitUntilIdle();
       if (dirty.current && p.id) {
@@ -665,9 +653,9 @@ export default function PublicationComposerShell({ kind }) {
       });
       const next = await refresh(publication.id);
       setActive(next.chapters.length - 1);
-      setSaveState("New chapter added · draft saved");
+      setSaveState(__msg("publication.newChapterAddedDraftSaved"));
     } catch (requestError) {
-      setSaveState("Could not add chapter");
+      setSaveState(__msg("publication.couldNotAddChapter"));
       setError(publicationError(requestError));
     }
   };
@@ -682,9 +670,9 @@ export default function PublicationComposerShell({ kind }) {
     if (!confirm(`Delete ${chapter.title}?`)) return;
     if (hasPendingMedia)
       return setError(
-        "Upload or remove the empty media block before deleting a chapter.",
+        __msg("publication.uploadOrRemoveTheEmptyMediaBlockBeforeDeleting"),
       );
-    setSaveState("Deleting chapter…");
+    setSaveState(__msg("publication.deletingChapter"));
     try {
       await waitUntilIdle();
       if (dirty.current) {
@@ -699,9 +687,9 @@ export default function PublicationComposerShell({ kind }) {
       );
       await refresh();
       setActive(0);
-      setSaveState("Chapter deleted · draft saved");
+      setSaveState(__msg("publication.chapterDeletedDraftSaved"));
     } catch (requestError) {
-      setSaveState("Could not delete chapter");
+      setSaveState(__msg("publication.couldNotDeleteChapter"));
       setError(publicationError(requestError));
     }
   };
@@ -710,9 +698,9 @@ export default function PublicationComposerShell({ kind }) {
     if (target < 0 || target >= p.chapters.length) return;
     if (hasPendingMedia)
       return setError(
-        "Upload or remove the empty media block before moving chapters.",
+        __msg("publication.uploadOrRemoveTheEmptyMediaBlockBeforeMoving"),
       );
-    setSaveState("Moving chapter…");
+    setSaveState(__msg("publication.movingChapter"));
     try {
       await waitUntilIdle();
       if (dirty.current) {
@@ -737,22 +725,22 @@ export default function PublicationComposerShell({ kind }) {
       );
       await refresh();
       setActive(destination);
-      setSaveState("Chapter moved · draft saved");
+      setSaveState(__msg("publication.chapterMovedDraftSaved"));
     } catch (requestError) {
-      setSaveState("Could not move chapter");
+      setSaveState(__msg("publication.couldNotMoveChapter"));
       setError(publicationError(requestError));
     }
   };
   const uploadBlock = async (block, file) => {
     if (busy.current) {
       setError(
-        "A save is finishing. Wait a moment, then choose the file again.",
+        __msg("publication.aSaveIsFinishingWaitAMomentThenChoose"),
       );
       return;
     }
     busy.current = true;
     setUploading(block.id);
-    setSaveState("Uploading media…");
+    setSaveState(__msg("publication.uploadingMedia"));
     setError("");
     try {
       const targetChapterId = chapter.stableChapterId;
@@ -793,7 +781,7 @@ export default function PublicationComposerShell({ kind }) {
         ),
       };
       await api.updateChapter(server.id, targetChapterId, {
-        title: updatedTarget.title || "Untitled",
+        title: updatedTarget.title || __msg("social.untitled"),
         blocks: updatedTarget.blocks,
         isPreview: Boolean(updatedTarget.isPreview),
         releaseMode: "IMMEDIATE",
@@ -809,7 +797,7 @@ export default function PublicationComposerShell({ kind }) {
       );
       const comparable = (item) =>
         JSON.stringify({
-          title: item.title || "Untitled",
+          title: item.title || __msg("social.untitled"),
           blocks: item.blocks,
           isPreview: Boolean(item.isPreview),
         });
@@ -827,10 +815,10 @@ export default function PublicationComposerShell({ kind }) {
       setP({ ...p, ...server, chapters });
       dirty.current = hasOtherChanges;
       setSaveState(
-        hasOtherChanges ? "Media saved - other changes pending" : "Media saved",
+        hasOtherChanges ? __msg("publication.mediaSavedOtherChangesPending") : __msg("publication.mediaSaved"),
       );
     } catch (requestError) {
-      setSaveState("Upload not saved");
+      setSaveState(__msg("publication.uploadNotSaved"));
       setError(publicationError(requestError));
     } finally {
       busy.current = false;
@@ -860,7 +848,7 @@ export default function PublicationComposerShell({ kind }) {
       setError("");
       return;
     }
-    if (!confirm(`Submit ${cfg.label} for moderation?`)) return;
+    if (!confirm(__msg("publication.submitValue0ForModeration", { value0: cfg.label }))) return;
     try {
       await api[
         publication.status === "CHANGES_REQUESTED"
@@ -874,10 +862,10 @@ export default function PublicationComposerShell({ kind }) {
   };
   const cancelRevision = async () => {
     if (busy.current || uploading) {
-      setError("Wait for the current save or upload to finish before canceling.");
+      setError(__msg("publication.waitForTheCurrentSaveOrUploadToFinish"));
       return;
     }
-    if (!confirm("Discard every change in this revision and keep the currently published planet? This cannot be undone.")) return;
+    if (!confirm(__msg("publication.discardEveryChangeInThisRevisionAndKeepThe"))) return;
     setCancelingRevision(true);
     setError("");
     dirty.current = false;
@@ -901,7 +889,7 @@ export default function PublicationComposerShell({ kind }) {
         pricing: [],
       };
   const ValidationMessages = ({ messages }) =>
-    messages.length ? (
+    { __useUiLanguage(); return (messages.length ? (
       <ul
         className="mt-3 space-y-1 text-xs font-semibold text-red-300"
         role="alert"
@@ -910,12 +898,11 @@ export default function PublicationComposerShell({ kind }) {
           <li key={message}>• {message}</li>
         ))}
       </ul>
-    ) : null;
+    ) : null); };
   if (p.id && !["DRAFT", "CHANGES_REQUESTED"].includes(p.status))
     return (
-      <p>
-        This {cfg.label} is read-only while{" "}
-        {p.status.replaceAll("_", " ").toLowerCase()}.
+      <p>{__msg("publication.this")}{cfg.label} {__msg("publication.isReadOnlyWhile")}{" "}
+        {__enumLabel(p.status.replaceAll("_", " ").toLowerCase())}.
       </p>
     );
   return (
@@ -923,11 +910,11 @@ export default function PublicationComposerShell({ kind }) {
       <header className="flex flex-wrap justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-widest text-atseen-blue">
-            {kind === "PREMIUM_WORLD" ? "Premium planet" : "Planet"}
+            {kind === "PREMIUM_WORLD" ? __msg("profile.premiumPlanet") : __msg("publication.planet")}
           </p>
-          <h1 className="text-3xl font-black">{cfg.label} composer</h1>
+          <h1 className="text-3xl font-black">{cfg.label} {__msg("publication.composer")}</h1>
           <p aria-live="polite" className="text-xs text-atseen-muted">
-            {uploading ? "Uploading chapter media…" : saveState}
+            {uploading ? __msg("publication.uploadingChapterMedia") : saveState}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -935,16 +922,12 @@ export default function PublicationComposerShell({ kind }) {
             className="rounded-full border border-atseen-blue/40 px-4 py-2 font-bold text-atseen-blue"
             onClick={() => setFanPreviewOpen(true)}
             type="button"
-          >
-            Preview as fan
-          </button>
+          >{__msg("publication.previewAsFan")}</button>
           <button
             className="rounded-full bg-atseen-blue px-4 py-2 font-bold text-atseen-bg"
             onClick={save}
             type="button"
-          >
-            Save draft
-          </button>
+          >{__msg("publication.saveDraft")}</button>
         </div>
       </header>
       {fanPreviewOpen ? (
@@ -955,13 +938,13 @@ export default function PublicationComposerShell({ kind }) {
       ) : null}
       {error ? (
         <p className="rounded-xl bg-red-400/10 p-4 text-red-200" role="alert">
-          {error}
+          {__systemMessage(error)}
         </p>
       ) : null}
       <ValidationMessages messages={validation.general} />
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="space-y-3 rounded-2xl border border-atseen-line p-5">
-          <h2 className="font-black">Publication details</h2>
+          <h2 className="font-black">{__msg("publication.publicationDetails")}</h2>
           {[
             ["title", 120],
             ["summary", 300],
@@ -981,9 +964,7 @@ export default function PublicationComposerShell({ kind }) {
               </small>
             </label>
           ))}
-          <label>
-            Tags
-            <input
+          <label>{__msg("content.tags")}<input
               className="w-full rounded-xl border border-atseen-line bg-atseen-bg p-3"
               onChange={(event) =>
                 change({ tags: event.target.value.split(",") })
@@ -1010,14 +991,14 @@ export default function PublicationComposerShell({ kind }) {
             <ValidationMessages messages={validation.pricing} />
           </section>
           <section className="rounded-2xl border border-atseen-line p-5">
-            <h2 className="font-black">Verified cover</h2>
-            {p.coverMedia?.secureUrl ? (p.coverMedia.resourceType === "video" ? <video className="my-3 aspect-video w-full rounded-2xl object-cover" controls playsInline src={p.coverMedia.secureUrl} /> : <img alt={`${cfg.label} cover`} className="my-3 aspect-video w-full rounded-2xl object-cover" src={p.coverMedia.secureUrl} />) : null}
+            <h2 className="font-black">{__msg("publication.verifiedCover")}</h2>
+            {p.coverMedia?.secureUrl ? (p.coverMedia.resourceType === "video" ? <video className="my-3 aspect-video w-full rounded-2xl object-cover" controls playsInline src={p.coverMedia.secureUrl} /> : <img alt={__msg("discover.cover", { value0: cfg.label })} className="my-3 aspect-video w-full rounded-2xl object-cover" src={p.coverMedia.secureUrl} />) : null}
             <input
               accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
               onChange={uploadCover}
               type="file"
             />
-            <p className="mt-2 text-[10px] text-atseen-muted">Photo cover or a 15–30 second preview video.</p>
+            <p className="mt-2 text-[10px] text-atseen-muted">{__msg("publication.photoCoverOrA1530SecondPreviewVideo")}</p>
             <ValidationMessages messages={validation.cover} />
           </section>
         </div>
@@ -1037,32 +1018,24 @@ export default function PublicationComposerShell({ kind }) {
             key={item.stableChapterId}
             onClick={() => setActive(index)}
           >
-            {index + 1}. {item.title} {item.isPreview ? "Preview" : "🔒"}
+            {index + 1}. {item.title} {item.isPreview ? __msg("admin.preview") : "🔒"}
           </button>
         ))}
-        <button disabled={p.chapters.length >= cfg.max} onClick={addChapter}>
-          + Add chapter
-        </button>
+        <button disabled={p.chapters.length >= cfg.max} onClick={addChapter}>{__msg("publication.addChapter")}</button>
       </nav>
       <ValidationMessages messages={validation.chapters} />
       {chapter ? (
         <section className="rounded-2xl border border-atseen-line p-5">
           <div className="flex flex-wrap gap-3">
-            <button disabled={!active} onClick={() => move(-1)}>
-              Move up
-            </button>
+            <button disabled={!active} onClick={() => move(-1)}>{__msg("publication.moveUp")}</button>
             <button
               disabled={active === p.chapters.length - 1}
               onClick={() => move(1)}
-            >
-              Move down
-            </button>
-            <button className="text-red-300" onClick={removeChapter}>
-              Delete chapter
-            </button>
+            >{__msg("publication.moveDown")}</button>
+            <button className="text-red-300" onClick={removeChapter}>{__msg("publication.deleteChapter")}</button>
           </div>
           <input
-            aria-label="Chapter title"
+            aria-label={__msg("publication.chapterTitle")}
             className="mt-4 w-full border p-3"
             onChange={(event) =>
               update({ ...chapter, title: event.target.value })
@@ -1070,8 +1043,8 @@ export default function PublicationComposerShell({ kind }) {
             value={chapter.title}
           />
           <p className="mt-2 text-xs text-atseen-muted">
-            {chapterTextCount(chapter)}/2000 characters ·{" "}
-            {chapter.isPreview ? "Free preview" : "Locked"}
+            {chapterTextCount(chapter)}{__msg("common.maxCharacters")}{" "}
+            {chapter.isPreview ? __msg("publication.freePreview") : __msg("fanWeb.locked")}
           </p>
           {chapter.blocks.map((block) => (
             <article
@@ -1092,9 +1065,7 @@ export default function PublicationComposerShell({ kind }) {
                       ),
                     })
                   }
-                >
-                  Delete block
-                </button>
+                >{__msg("publication.deleteBlock")}</button>
               </div>
               {["TEXT", "KEY_POINT", "HIGHLIGHT", "LIST"].includes(block.type) ? (
                 <><textarea
@@ -1110,7 +1081,7 @@ export default function PublicationComposerShell({ kind }) {
                     })
                   }
                   value={block.text}
-                />{block.type === "HIGHLIGHT" ? <div className="mt-3"><p className="text-[10px] font-black uppercase tracking-wider text-atseen-muted">Marker pen · 6 brand colors</p><div className="mt-2 flex flex-wrap gap-2">{PENCOLORS.map(([color, hex]) => <button aria-label={`${color.replaceAll("_", " ")} marker`} className={`h-8 w-8 rounded-full border-2 ${block.metadata?.color === color || (!block.metadata?.color && color === "ICE_BLUE") ? "border-white" : "border-transparent"}`} key={color} onClick={() => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { color } } : item) })} style={{ backgroundColor: hex }} type="button" />)}</div></div> : null}</>
+                />{block.type === "HIGHLIGHT" ? <div className="mt-3"><p className="text-[10px] font-black uppercase tracking-wider text-atseen-muted">{__msg("publication.markerPen6BrandColors")}</p><div className="mt-2 flex flex-wrap gap-2">{PENCOLORS.map(([color, hex]) => <button aria-label={__msg("publication.marker", { value0: color.replaceAll("_", " ") })} className={`h-8 w-8 rounded-full border-2 ${block.metadata?.color === color || (!block.metadata?.color && color === "ICE_BLUE") ? "border-white" : "border-transparent"}`} key={color} onClick={() => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { color } } : item) })} style={{ backgroundColor: hex }} type="button" />)}</div></div> : null}</>
               ) : block.type === "LINK" ? (
                 <div>
                   <input
@@ -1130,7 +1101,7 @@ export default function PublicationComposerShell({ kind }) {
                   />
                   <input
                     className="mt-2 w-full border p-3"
-                    placeholder="Link label"
+                    placeholder={__msg("publication.linkLabel")}
                     onChange={(event) =>
                       update({
                         ...chapter,
@@ -1146,9 +1117,9 @@ export default function PublicationComposerShell({ kind }) {
                 </div>
               ) : block.type === "POLL" ? (
                 <div className="mt-3 grid gap-2">
-                  <input className="w-full border p-3" maxLength={180} onChange={(event) => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, question: event.target.value } } : item) })} placeholder="Poll question" value={block.metadata?.question || ""} />
-                  {(block.metadata?.options || ["", ""]).map((option, index) => <input className="w-full border p-3" key={index} maxLength={80} onChange={(event) => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, options: (item.metadata?.options || ["", ""]).map((value, optionIndex) => optionIndex === index ? event.target.value : value) } } : item) })} placeholder={`Choice ${index + 1}`} value={option} />)}
-                  {(block.metadata?.options?.length || 2) < 4 ? <button onClick={() => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, options: [...(item.metadata?.options || ["", ""]), ""] } } : item) })} type="button">+ Add choice</button> : null}
+                  <input className="w-full border p-3" maxLength={180} onChange={(event) => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, question: event.target.value } } : item) })} placeholder={__msg("publication.pollQuestion")} value={block.metadata?.question || ""} />
+                  {(block.metadata?.options || ["", ""]).map((option, index) => <input className="w-full border p-3" key={index} maxLength={80} onChange={(event) => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, options: (item.metadata?.options || ["", ""]).map((value, optionIndex) => optionIndex === index ? event.target.value : value) } } : item) })} placeholder={__msg("publication.choice", { value0: index + 1 })} value={option} />)}
+                  {(block.metadata?.options?.length || 2) < 4 ? <button onClick={() => update({ ...chapter, blocks: chapter.blocks.map((item) => item.id === block.id ? { ...item, metadata: { ...item.metadata, options: [...(item.metadata?.options || ["", ""]), ""] } } : item) })} type="button">{__msg("publication.addChoice")}</button> : null}
                 </div>
               ) : block.type === "VOICE" ? (
                   <VoiceRecorder
@@ -1213,7 +1184,7 @@ export default function PublicationComposerShell({ kind }) {
             onClick={cancelRevision}
             type="button"
           >
-            {cancelingRevision ? "Canceling…" : "Cancel revision"}
+            {cancelingRevision ? __msg("publication.canceling") : __msg("publication.cancelRevision")}
           </button>
         ) : null}
         <button
@@ -1222,7 +1193,7 @@ export default function PublicationComposerShell({ kind }) {
           onClick={submit}
           type="button"
         >
-          {p.status === "CHANGES_REQUESTED" ? "Resubmit" : "Submit for review"}
+          {p.status === "CHANGES_REQUESTED" ? __msg("publication.resubmit") : __msg("publication.submitForReview")}
         </button>
       </div>
     </div>

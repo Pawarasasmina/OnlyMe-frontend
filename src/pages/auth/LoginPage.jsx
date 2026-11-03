@@ -1,4 +1,8 @@
-﻿import { useState } from "react";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
@@ -26,6 +30,7 @@ const destinationAfterLogin = (user, fromPath) => {
 };
 
 function LoginPage() {
+  __useUiLanguage();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,12 +51,12 @@ function LoginPage() {
     } catch (requestError) {
       const status = requestError.response?.status;
       setError(status === 429
-        ? "Too many sign-in attempts. Please wait a few minutes and try again."
+        ? __msg("auth.tooManySignInAttemptsPleaseWaitA")
         : [502, 503, 504].includes(status)
-          ? "The service is temporarily unavailable. Please try again shortly."
+          ? __msg("auth.theServiceIsTemporarilyUnavailablePleaseTryAgain")
           : !requestError.response
-            ? "Unable to reach the server. Check your connection and try again."
-            : requestError.response.data?.message || "Unable to sign in. Please try again.");
+            ? __msg("auth.unableToReachTheServerCheckYourConnection")
+            : requestError.response.data?.message || __msg("auth.unableToSignInPleaseTryAgain"));
     } finally {
       setSubmitting(false);
     }
@@ -59,18 +64,14 @@ function LoginPage() {
 
   return (
     <div>
-      <Link className="mb-8 inline-block text-sm text-brand-mist/60" to="/">
-        Back to creators
-      </Link>
-      <h1 className="text-3xl font-bold">Welcome back</h1>
-      <p className="mt-2 text-sm text-brand-mist/70">
-        One secure login for fans, creators, and admins. We will take you to the right place.
-      </p>
+      <Link className="mb-8 inline-block text-sm text-brand-mist/60" to="/">{__msg("auth.backToCreators")}</Link>
+      <h1 className="text-3xl font-bold">{__msg("auth.welcomeBack")}</h1>
+      <p className="mt-2 text-sm text-brand-mist/70">{__msg("auth.oneSecureLoginForFansCreatorsAndAdminsWe")}</p>
       <form className="mt-8 space-y-4" onSubmit={submit}>
-        <Input autoComplete="email" label="Email" name="email" onChange={update} required type="email" value={form.email} />
+        <Input autoComplete="email" label={__msg("auth.email")} name="email" onChange={update} required type="email" value={form.email} />
         <Input
           autoComplete="current-password"
-          label="Password"
+          label={__msg("auth.password")}
           minLength={8}
           name="password"
           onChange={update}
@@ -78,14 +79,14 @@ function LoginPage() {
           type="password"
           value={form.password}
         />
-        {error ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p> : null}
+        {error ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{__systemMessage(error)}</p> : null}
         <Button className="w-full disabled:opacity-60" disabled={submitting} type="submit">
-          {submitting ? "Signing in..." : "Sign in"}
+          {submitting ? __msg("auth.signingIn") : __msg("layout.signIn")}
         </Button>
       </form>
       <div className="mt-6 flex justify-between text-sm text-brand-mist/70">
-        <Link to="/forgot-password">Forgot password?</Link>
-        <Link to="/register">Create account</Link>
+        <Link to="/forgot-password">{__msg("auth.forgotPassword")}</Link>
+        <Link to="/register">{__msg("auth.createAccount")}</Link>
       </div>
     </div>
   );

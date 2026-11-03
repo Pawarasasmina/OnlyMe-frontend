@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { clearWallDraft } from "../services/wallDraftStore";
 import { useEffect, useMemo, useState } from "react";
 import { authService } from "../services/authService";
@@ -26,6 +27,7 @@ function clearStoredAuth() {
 }
 
 export function AuthProvider({ children }) {
+  __useUiLanguage();
   const [user, setUser] = useState(readCachedUser);
   const [loading, setLoading] = useState(() => Boolean(localStorage.getItem(ACCESS_TOKEN_KEY)) && !readCachedUser());
 
@@ -52,6 +54,19 @@ export function AuthProvider({ children }) {
     if (!loading) disconnectMessageSocket();
     return undefined;
   }, [loading, user]);
+
+  useEffect(() => {
+    const userId = user?.id || user?._id;
+    if (!userId || !localStorage.getItem(ACCESS_TOKEN_KEY)) return undefined;
+    const socket = getMessageSocket();
+    const changed = (event) => {
+      if (String(event.userId) !== String(userId) || typeof event.isVerified !== "boolean") return;
+      setUser(current => current ? { ...current, isVerified: event.isVerified } : current);
+      window.dispatchEvent(new CustomEvent("onlyme-verification-updated"));
+    };
+    socket.on("verification:updated", changed);
+    return () => socket.off("verification:updated", changed);
+  }, [user?.id, user?._id]);
 
   useEffect(() => {
     let mounted = true;

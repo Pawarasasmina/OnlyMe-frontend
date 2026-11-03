@@ -10,6 +10,7 @@ function withAnalytics(payload = {}) {
 }
 
 export const authService = {
+  getMonetization: () => axiosInstance.get("/settings/monetization"),
   register: (payload) => {
     const request = withAnalytics(payload);
     return axiosInstance.post("/auth/register", request.payload, request.config);
@@ -19,6 +20,8 @@ export const authService = {
     return axiosInstance.post("/auth/login", request.payload, request.config);
   },
   logout: () => axiosInstance.post("/auth/logout"),
-  deleteAccount: () => axiosInstance.delete("/auth/account"),
+  getAccountOwnership: () => axiosInstance.get("/auth/account/ownership"),
+  deactivateAccount: () => axiosInstance.post("/auth/account/deactivate"),
+  deleteAccount: (payload) => axiosInstance.delete("/auth/account", { data: payload }),
   getProfile: () => axiosInstance.get("/auth/me"),
 };

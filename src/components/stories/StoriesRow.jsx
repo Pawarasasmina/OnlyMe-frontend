@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useMemo, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -18,13 +21,14 @@ function ownUser(currentUser, user, viewer) {
     activeStatus: viewer?.activeStatus || user?.activeStatus || null,
     avatar: viewer?.avatar || viewer?.avatarUrl || currentUser?.avatar || user?.avatar || user?.profileImage || "",
     id: viewer?.id || getUserId(user) || "me",
-    name: viewer?.name || currentUser?.name || user?.name || user?.displayName || "You",
+    name: viewer?.name || currentUser?.name || user?.name || user?.displayName || __msg("fanWeb.you"),
     username: viewer?.username || user?.username || "you",
     verified: Boolean(viewer?.verified || user?.verified || user?.isVerified),
   };
 }
 
 function StoriesRow({ currentUser }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -53,7 +57,7 @@ function StoriesRow({ currentUser }) {
 
   const openCreator = () => {
     if (!canCreate) {
-      showToast("Story publishing is not available for this account.");
+      showToast(__msg("stories.storyPublishingIsNotAvailableForThisAccount"));
       return;
     }
     setCreatorOpen(true);
@@ -111,7 +115,7 @@ function StoriesRow({ currentUser }) {
 
   return (
     <>
-      <div className="wall-story-strip atseen-hide-scrollbar" aria-label="Home stories and statuses">
+      <div className="wall-story-strip atseen-hide-scrollbar" aria-label={__msg("stories.homeStoriesAndStatuses")}>
         <OwnSeenPresenceItem activeStatus={me.activeStatus} onOpen={() => setSeenStoryOpen(true)} />
         {showStoryPublishing ? (
           <OwnStoryItem
@@ -127,9 +131,7 @@ function StoriesRow({ currentUser }) {
         ) : null}
         {storiesQuery.isError ? (
           <button className="wall-story-error" onClick={() => storiesQuery.refetch()} type="button">
-            <FiRefreshCw aria-hidden="true" />
-            Retry
-          </button>
+            <FiRefreshCw aria-hidden="true" />{__msg("activity.retry")}</button>
         ) : null}
         {!storiesQuery.isError && peopleGroups.map((group) => {
           const firstUnseenIndex = group.stories.findIndex((story) => !story.viewed);

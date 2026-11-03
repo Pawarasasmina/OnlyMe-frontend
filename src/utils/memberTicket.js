@@ -1,3 +1,5 @@
+import { getLocale as __uiLocale } from "../i18n/runtime.js";
+import { msg as __msg } from "../i18n/runtime.js";
 export function memberTicketData(profile = {}, user = {}) {
   const raw = profile.memberNumber ?? profile.joinNumber ?? profile.ticket?.memberNumber
     ?? user.memberNumber ?? user.joinNumber ?? user.ticket?.memberNumber;
@@ -7,9 +9,9 @@ export function memberTicketData(profile = {}, user = {}) {
   const date = joinedAt ? new Date(joinedAt) : null;
   return {
     number,
-    label: `№${number.toLocaleString("en-US")}`,
+    label: `№${number.toLocaleString(__uiLocale())}`,
     city: profile.city || user.city || "",
-    date: date && Number.isFinite(date.getTime()) ? date.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "",
+    date: date && Number.isFinite(date.getTime()) ? date.toLocaleDateString(__uiLocale(), { day: "numeric", month: "long", year: "numeric" }) : "",
     badgeEligible: number <= 10000,
   };
 }
@@ -60,7 +62,7 @@ export function ticketImage(ticket) {
   ctx.setLineDash([7, 7]);
   ctx.beginPath(); ctx.moveTo(0, 1500); ctx.lineTo(1080, 1500); ctx.stroke();
   ctx.fillStyle = "#c9cdd3";
-  ctx.fillText(ticket.city ? `One of the first in ${ticket.city}.` : "One of the first on @seen.", 84, 1610, 910);
+  ctx.fillText(ticket.city ? __msg("profile.oneOfTheFirstIn", { value0: ticket.city }) : __msg("profile.oneOfTheFirstOnSeen"), 84, 1610, 910);
   ctx.globalCompositeOperation = "destination-out";
   for (const x of [0, 1080]) {
     ctx.beginPath(); ctx.arc(x, 1500, 32, 0, Math.PI * 2); ctx.fill();

@@ -1,4 +1,8 @@
-﻿function Row({ label, value }) {
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+function Row({ label, value }) {
+  __useUiLanguage();
   return <div className="grid gap-1 border-b border-white/5 py-3 sm:grid-cols-[180px_1fr]"><dt className="text-sm text-brand-mist/45">{label}</dt><dd className="break-words text-sm text-white">{value || "—"}</dd></div>;
 }
 
@@ -9,11 +13,12 @@ function maskNumber(value) {
 }
 
 function VerificationReviewSummary({ form, verification, backRequired }) {
+  __useUiLanguage();
   return <div className="space-y-6">
-    <section><h3 className="text-lg font-bold">Personal information</h3><dl className="mt-2"><Row label="Legal full name" value={form.legalFullName} /><Row label="Date of birth" value={form.dateOfBirth} /><Row label="Country" value={form.country} /><Row label="Nationality" value={form.nationality} /><Row label="Address" value={[form.address, form.city].filter(Boolean).join(", ")} /><Row label="Phone" value={form.phoneNumber} /></dl></section>
-    <section><h3 className="text-lg font-bold">Identity</h3><dl className="mt-2"><Row label="Document type" value={form.documentType?.replaceAll("_", " ")} /><Row label="Document number" value={maskNumber(form.documentNumber)} /><Row label="Issuing country" value={form.issuingCountry} /><Row label="Expiry date" value={form.expiryDate || "Not provided"} /></dl></section>
-    <section><h3 className="text-lg font-bold">Documents</h3><dl className="mt-2"><Row label="Front document" value={verification.documentFront?.originalName} />{backRequired ? <Row label="Back document" value={verification.documentBack?.originalName} /> : null}<Row label="Selfie with ID" value={verification.selfieWithDocument?.originalName} /></dl></section>
-    <section><h3 className="text-lg font-bold">Declarations</h3><ul className="mt-3 space-y-2 text-sm text-brand-mist/70"><li>{form.ageConfirmed ? "✓" : "✕"} Age 18 or older confirmed</li><li>{form.informationConfirmed ? "✓" : "✕"} Information accuracy confirmed</li><li>{form.policyAccepted ? "✓" : "✕"} Terms and Content Policy accepted ({form.policyVersion})</li></ul></section>
+    <section><h3 className="text-lg font-bold">{__msg("verification.personalInformation")}</h3><dl className="mt-2"><Row label={__msg("verification.legalFullName")} value={form.legalFullName} /><Row label={__msg("verification.dateOfBirth")} value={form.dateOfBirth} /><Row label={__msg("verification.country")} value={form.country} /><Row label={__msg("verification.nationality")} value={form.nationality} /><Row label={__msg("verification.address")} value={[form.address, form.city].filter(Boolean).join(", ")} /><Row label={__msg("verification.phone")} value={form.phoneNumber} /></dl></section>
+    <section><h3 className="text-lg font-bold">{__msg("verification.identity")}</h3><dl className="mt-2"><Row label={__msg("verification.documentType")} value={form.documentType?.replaceAll("_", " ")} /><Row label={__msg("verification.documentNumber")} value={maskNumber(form.documentNumber)} /><Row label={__msg("verification.issuingCountry")} value={form.issuingCountry} /><Row label={__msg("verification.expiryDate")} value={form.expiryDate || "Not provided"} /></dl></section>
+    <section><h3 className="text-lg font-bold">{__msg("verification.documents")}</h3><dl className="mt-2"><Row label={__msg("verification.frontDocument")} value={verification.documentFront?.originalName} />{backRequired ? <Row label={__msg("verification.backDocument")} value={verification.documentBack?.originalName} /> : null}<Row label={__msg("verification.selfieWithId")} value={verification.selfieWithDocument?.originalName} /></dl></section>
+    <section><h3 className="text-lg font-bold">{__msg("verification.declarations")}</h3><ul className="mt-3 space-y-2 text-sm text-brand-mist/70"><li>{form.ageConfirmed ? "✓" : "✕"} {__msg("verification.age18OrOlderConfirmed")}</li><li>{form.informationConfirmed ? "✓" : "✕"} {__msg("verification.informationAccuracyConfirmed")}</li><li>{form.policyAccepted ? "✓" : "✕"} {__msg("verification.termsAndContentPolicyAccepted")}{form.policyVersion})</li></ul></section>
   </div>;
 }
 

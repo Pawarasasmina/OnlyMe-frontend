@@ -1,50 +1,56 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { FiAlertCircle, FiEye, FiRefreshCw, FiSearch } from "react-icons/fi";
 
 export function SearchSkeleton({ count = 5 }) {
+  __useUiLanguage();
   return (
     <div className="mt-4 space-y-3" role="status">
       {Array.from({ length: count }).map((_, index) => (
         <div className="h-24 animate-pulse rounded-2xl border border-atseen-line bg-atseen-surface-2" key={index} />
       ))}
-      <span className="sr-only">Loading search results</span>
+      <span className="sr-only">{__msg("search.loadingSearchResults")}</span>
     </div>
   );
 }
 
 export function SearchEmptyState({ onClearFilters, onExploreWorlds, onSearchAll, query, typeLabel = "results" }) {
+  __useUiLanguage();
   return (
     <div className="mt-8 rounded-[22px] border border-atseen-line bg-atseen-surface p-8 text-center" role="status">
       <FiEye aria-hidden="true" className="mx-auto text-4xl text-white/15" />
-      <h2 className="mt-4 text-lg font-extrabold text-atseen-text">No {typeLabel} for &quot;{query}&quot;</h2>
-      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-atseen-muted">Try a different name, category, place, or idea.</p>
+      <h2 className="mt-4 text-lg font-extrabold text-atseen-text">{__msg("search.no")} {typeLabel} {__msg("search.for")}{query}&quot;</h2>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-atseen-muted">{__msg("search.tryADifferentNameCategoryPlaceOrIdea")}</p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <button className="rounded-full border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={onClearFilters} type="button">Clear filters</button>
-        <button className="rounded-full border border-atseen-blue/50 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={onSearchAll} type="button">Search all</button>
-        <button className="rounded-full border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={onExploreWorlds} type="button">Explore Worlds</button>
+        <button className="rounded-full border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={onClearFilters} type="button">{__msg("search.clearFilters")}</button>
+        <button className="rounded-full border border-atseen-blue/50 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={onSearchAll} type="button">{__msg("search.searchAll")}</button>
+        <button className="rounded-full border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={onExploreWorlds} type="button">{__msg("discover.exploreWorlds")}</button>
       </div>
     </div>
   );
 }
 
 export function SearchErrorState({ error, onRetry }) {
+  __useUiLanguage();
   const status = error?.response?.status;
-  const message = status === 429 ? "Search is moving too quickly. Please wait a moment and try again." : "We couldn't complete your search.";
+  const message = status === 429 ? __msg("search.searchIsMovingTooQuicklyPleaseWaitA") : __msg("search.weCouldnTCompleteYourSearch");
   return (
     <div className="mt-8 rounded-[22px] border border-red-300/20 bg-red-500/10 p-6 text-center" role="alert">
       <FiAlertCircle aria-hidden="true" className="mx-auto text-2xl text-red-200" />
       <h2 className="mt-3 text-lg font-extrabold text-red-100">{message}</h2>
       <button className="mt-5 inline-flex items-center gap-2 rounded-full border border-red-200/30 px-4 py-2 text-sm font-bold text-red-100" onClick={onRetry} type="button">
-        <FiRefreshCw aria-hidden="true" /> Try again
-      </button>
+        <FiRefreshCw aria-hidden="true" />{__msg("discover.tryAgain")}</button>
     </div>
   );
 }
 
 export function SearchPromptState() {
+  __useUiLanguage();
   return (
     <div className="py-8 text-center">
       <FiSearch aria-hidden="true" className="mx-auto text-2xl text-white/20" />
-      <p className="mt-3 text-sm text-[#78869b]">Type one more character to search.</p>
+      <p className="mt-3 text-sm text-[#78869b]">{__msg("search.typeOneMoreCharacterToSearch")}</p>
     </div>
   );
 }

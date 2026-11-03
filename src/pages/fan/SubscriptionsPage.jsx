@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -16,14 +19,15 @@ import {
 import { fanService } from "../../services/fanService";
 
 const filters = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Expiring Soon", value: "expiringSoon" },
-  { label: "Cancelled", value: "cancelled" },
-  { label: "Expired", value: "expired" },
+  { get label() { return __msg("fanWeb.all"); }, value: "all" },
+  { get label() { return __msg("fan.active"); }, value: "active" },
+  { get label() { return __msg("fan.expiringSoon_50b61e"); }, value: "expiringSoon" },
+  { get label() { return __msg("fan.cancelled"); }, value: "cancelled" },
+  { get label() { return __msg("fan.expired"); }, value: "expired" },
 ];
 
 function SubscriptionsPage() {
+  __useUiLanguage();
   const [activeFilter, setActiveFilter] = useState("all");
   const subscriptionsQuery = useQuery({
     queryKey: ["fan", "subscriptions", activeFilter],
@@ -42,13 +46,11 @@ function SubscriptionsPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Subscriptions"
-        title="Creator Subscriptions"
-        description="Review active, cancelled, expired, and expiring subscriptions tied to your fan account."
+        title={__msg("fan.creatorSubscriptions")}
+        description={__msg("fan.reviewActiveCancelledExpiredAndExpiringSubscriptionsTiedTo")}
         action={
           <Link to="/">
-            <Button type="button" variant="secondary">
-              Discover Creators
-            </Button>
+            <Button type="button" variant="secondary">{__msg("fan.discoverCreators")}</Button>
           </Link>
         }
       />
@@ -61,7 +63,7 @@ function SubscriptionsPage() {
           help="Current creator memberships."
           icon={FiUsers}
           loading={subscriptionsQuery.isLoading}
-          title="Active Subscriptions"
+          title={__msg("fan.activeSubscriptions")}
           value={summary.active ?? 0}
         />
         <StatCard
@@ -71,7 +73,7 @@ function SubscriptionsPage() {
           help="Renewals or access ending in the next seven days when dates exist."
           icon={FiClock}
           loading={subscriptionsQuery.isLoading}
-          title="Expiring Soon"
+          title={__msg("fan.expiringSoon_50b61e")}
           value={summary.expiringSoon ?? 0}
         />
         <StatCard
@@ -81,7 +83,7 @@ function SubscriptionsPage() {
           help="Subscriptions no longer active."
           icon={FiXCircle}
           loading={subscriptionsQuery.isLoading}
-          title="Cancelled or Expired"
+          title={__msg("fan.cancelledOrExpired")}
           value={summary.cancelledOrExpired ?? 0}
         />
         <StatCard
@@ -89,17 +91,17 @@ function SubscriptionsPage() {
           help="Not shown because subscription pricing is not reliably stored on current records."
           icon={FiSearch}
           loading={subscriptionsQuery.isLoading}
-          title="Monthly Spend"
+          title={__msg("fan.monthlySpend")}
           value="Not available"
         />
       </div>
 
-      <SectionPanel title="All Subscriptions" description="Use filters to narrow the visible subscription records.">
+      <SectionPanel title={__msg("fan.allSubscriptions")} description={__msg("fan.useFiltersToNarrowTheVisibleSubscriptionRecords")}>
         <FilterPills active={activeFilter} filters={filters} onChange={setActiveFilter} />
         <div className="mt-5">
           {subscriptionsQuery.isLoading ? <ListSkeleton count={4} /> : null}
           {subscriptionsQuery.isError ? (
-            <DashboardErrorState message="Unable to load subscriptions." onRetry={() => subscriptionsQuery.refetch()} />
+            <DashboardErrorState message={__msg("fan.unableToLoadSubscriptions")} onRetry={() => subscriptionsQuery.refetch()} />
           ) : null}
           {!subscriptionsQuery.isLoading && !subscriptionsQuery.isError && subscriptions.length ? (
             <div className="space-y-4">
@@ -110,10 +112,10 @@ function SubscriptionsPage() {
           ) : null}
           {!subscriptionsQuery.isLoading && !subscriptionsQuery.isError && !subscriptions.length ? (
             <DashboardEmptyState
-              message="You are not subscribed to any creators yet."
+              message={__msg("fan.youAreNotSubscribedToAnyCreatorsYet")}
               action={
                 <Link to="/">
-                  <Button type="button">Discover Creators</Button>
+                  <Button type="button">{__msg("fan.discoverCreators")}</Button>
                 </Link>
               }
             />

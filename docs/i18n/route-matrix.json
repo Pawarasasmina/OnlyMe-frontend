@@ -1,0 +1,734 @@
+[
+  {
+    "path": "/explore",
+    "component": "ExplorePage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/creators/:username",
+    "component": "LegacyCreatorProfileRedirect",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/invite/:code",
+    "component": "ReferralLandingPage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/login",
+    "component": "LoginPage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/register",
+    "component": "RegisterPage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/forgot-password",
+    "component": "ForgotPasswordPage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/welcome",
+    "component": "WelcomePage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/onboarding",
+    "component": "OnboardingPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/onboarding/:step",
+    "component": "OnboardingPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wall",
+    "component": "WallRoute",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wall/notes/:id",
+    "component": "PostDetailPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/home",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/posts/:id",
+    "component": "PostDetailPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/discover",
+    "component": "DiscoverPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/search",
+    "component": "SearchPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/profile/seen",
+    "component": "OfficialSeenPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wall/search",
+    "component": "WallSearchPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wall/explore",
+    "component": "WallExplorePage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/seen",
+    "component": "SeenFeedPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/seen/:id/share/story",
+    "component": "ShareSeenAsStoryPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/seen/:id",
+    "component": "SeenPermalinkPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/orbit",
+    "component": "OrbitPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/messages",
+    "component": "MessagesPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/activity",
+    "component": "ActivityPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/stories/:id",
+    "component": "StoryPermalinkPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/saved",
+    "component": "SavedPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/saved/:category",
+    "component": "SavedPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/archive",
+    "component": "ArchivePage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/invitations",
+    "component": "JoinedInvitationsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/invitations/:code",
+    "component": "InvitationWorldPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/places/:id",
+    "component": "EntityDetailPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/books/:id",
+    "component": "EntityDetailPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/profile",
+    "component": "UnifiedProfilePage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/profile/status",
+    "component": "ProfileStatusPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/profile/dream",
+    "component": "DreamEditorPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings",
+    "component": "SettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/monetization",
+    "component": "MonetizationPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/profile",
+    "component": "ProfileSettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/direct-access",
+    "component": "DirectAccessSettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/account",
+    "component": "AccountSettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/privacy",
+    "component": "PrivacySettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/notifications",
+    "component": "NotificationSettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/content",
+    "component": "ContentPreferencesPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/support/:section",
+    "component": "SupportPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/verified",
+    "component": "VerifiedCreatorPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/settings/security",
+    "component": "AccountSecurityPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wallet",
+    "component": "WalletPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wallet/withdraw",
+    "component": "WithdrawPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wallet/to-coins",
+    "component": "IncomeToCoinsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/wallet/ledger",
+    "component": "WalletLedgerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/purchases",
+    "component": "PurchasesPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/memberships",
+    "component": "MembershipsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/experiences",
+    "component": "MyExperiencesPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/profile/:username/experiences",
+    "component": "MyExperiencesPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/verification",
+    "component": "CreatorVerificationPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/create",
+    "component": "CreateHubPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/create/seen",
+    "component": "SeenComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/studio/seens",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/studio/seens/:id",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/studio/seens/:id/edit",
+    "component": "SeenComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/studio",
+    "component": "CreatorStudio",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/grow",
+    "component": "GrowPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/grow/fan-preview",
+    "component": "GrowFanPreviewPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/create/world",
+    "component": "WorldComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/create/premium-world",
+    "component": "WorldComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/create/experience",
+    "component": "WorldComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/studio/experiences/:id/edit",
+    "component": "WorldComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/studio/worlds",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/studio/worlds/:id",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/studio/worlds/:id/edit",
+    "component": "WorldComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/fan/dashboard",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/home",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/orbit",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/messages",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/activity",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/profile",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/worlds",
+    "component": "WorldsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/fan/wallet",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/subscriptions",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/fan/purchases",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/creator/dashboard",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/creator/application",
+    "component": "CreatorApplicationPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/profile",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/creator/settings",
+    "component": "CreatorSettingsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/settings/security",
+    "component": "CreatorSecurityPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/studio",
+    "component": "Navigate",
+    "role": "creator",
+    "redirect": true
+  },
+  {
+    "path": "/creator/content",
+    "component": "ContentManager",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/content/new",
+    "component": "ContentComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/content/:id/edit",
+    "component": "ContentComposerPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/content/:id",
+    "component": "ContentDetailPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/creator/earnings",
+    "component": "EarningsPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/admin/dashboard",
+    "component": "AdminDashboard",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/analytics",
+    "component": "AdminAnalyticsPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/recommendations",
+    "component": "RecommendationSettingsPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/users",
+    "component": "UserManagement",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/identity-verifications",
+    "component": "IdentityVerificationManagement",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/fans",
+    "component": "Navigate",
+    "role": "admin",
+    "redirect": true
+  },
+  {
+    "path": "/admin/creators",
+    "component": "Navigate",
+    "role": "admin",
+    "redirect": true
+  },
+  {
+    "path": "/admin/creator-verifications",
+    "component": "CreatorVerificationQueue",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/creator-verifications/:id",
+    "component": "CreatorVerificationDetail",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/verified-creators",
+    "component": "Navigate",
+    "role": "admin",
+    "redirect": true
+  },
+  {
+    "path": "/admin/content-moderation",
+    "component": "Navigate",
+    "role": "admin",
+    "redirect": true
+  },
+  {
+    "path": "/admin/content-moderation/:id",
+    "component": "Navigate",
+    "role": "admin",
+    "redirect": true
+  },
+  {
+    "path": "/admin/publication-moderation",
+    "component": "PublicationModeration",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/publication-moderation/:id",
+    "component": "PublicationModerationDetail",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/moderation",
+    "component": "Navigate",
+    "role": "admin",
+    "redirect": true
+  },
+  {
+    "path": "/admin/welcome-email",
+    "component": "WelcomeEmailSettingsPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/profile",
+    "component": "AdminProfilePage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/financial",
+    "component": "FinancialAdminPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/bank-reviews",
+    "component": "BankReviewPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/message-reports",
+    "component": "AdminReportListPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/message-reports/:reportId",
+    "component": "AdminReportDetailPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/user-reports",
+    "component": "AdminReportListPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/user-reports/:reportId",
+    "component": "AdminReportDetailPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/post-reports",
+    "component": "AdminReportListPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/post-reports/:reportId",
+    "component": "AdminReportDetailPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/gifts",
+    "component": "GiftManagementPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/profile/:username",
+    "component": "ProfileRoute",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/world/:id/inside",
+    "component": "WorldRoute",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/world/:id",
+    "component": "WorldRoute",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/experience/:id",
+    "component": "WorldRoute",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/planet/:id",
+    "component": "WorldRoute",
+    "role": "creator",
+    "redirect": false
+  }
+]

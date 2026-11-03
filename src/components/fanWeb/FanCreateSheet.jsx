@@ -1,17 +1,23 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiChevronRight, FiMonitor } from "react-icons/fi";
 import "./FanCreateSheet.css";
 
 function StoryRingIcon() {
+  __useUiLanguage();
   return <svg aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" strokeDasharray="4 3" /><circle cx="12" cy="12" r="3.6" /></svg>;
 }
 
 function WorldOrbitIcon() {
+  __useUiLanguage();
   return <svg aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" /><ellipse cx="12" cy="12" rx="10" ry="3.6" transform="rotate(-18 12 12)" /></svg>;
 }
 
 function ThinSeenEyeIcon() {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className="seen-create-eye-mark" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 64 40">
       <path d="M4 20C12.5 10.6 22.2 7 32 7s19.5 3.6 28 13c-8.5 9.4-18.2 13-28 13S12.5 29.4 4 20Z" />
@@ -31,14 +37,15 @@ function FanCreateSheet({
   onStory,
   worldTarget = "",
 }) {
+  __useUiLanguage();
   const [position, setPosition] = useState(undefined);
   const primaryOptions = [
-    { description: "Gone in 24 hours", disabled: !canCreateStoryNow, icon: StoryRingIcon, label: "Story", onClick: onStory },
-    { description: "Chapters · free or paid", disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
-    { description: "Ask, offer, recommend", disabled: !canPostNote, icon: FiMonitor, label: "Wall post", onClick: onNote },
+    { description: __msg("fanWeb.goneIn24Hours"), disabled: !canCreateStoryNow, icon: StoryRingIcon, label: __msg("activity.story"), onClick: onStory },
+    { description: __msg("fanWeb.chaptersFreeOrPaid"), disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", to: "/create/seen" },
+    { description: __msg("fanWeb.askOfferRecommend"), disabled: !canPostNote, icon: FiMonitor, label: __msg("fanWeb.wallPost"), onClick: onNote },
   ];
   const creatorOptions = [
-    { description: worldTarget ? "Your subscription — everything you share" : "A monthly subscription to your whole world", disabled: !canCreateWorld, icon: WorldOrbitIcon, label: worldTarget ? "Open my World" : "World", to: worldTarget || "/create/premium-world" },
+    { description: worldTarget ? __msg("fanWeb.yourSubscriptionEverythingYouShare") : __msg("fanWeb.aMonthlySubscriptionToYourWholeWorld"), disabled: !canCreateWorld, icon: WorldOrbitIcon, label: worldTarget ? __msg("fanWeb.openMyWorld") : __msg("admin.world"), to: worldTarget || "/create/premium-world" },
   ];
 
   useEffect(() => {
@@ -91,11 +98,11 @@ function FanCreateSheet({
   };
 
   return (
-    <div aria-label="Create" aria-modal="true" className="seen-create-layer seen-create-prototype" role="dialog" style={position}>
-      <button aria-label="Close create menu" className="seen-create-dim" onClick={onClose} type="button" />
-      <section aria-label="Create" className="seen-create-sheet">
+    <div aria-label={__msg("fanWeb.create")} aria-modal="true" className="seen-create-layer seen-create-prototype" role="dialog" style={position}>
+      <button aria-label={__msg("fanWeb.closeCreateMenu")} className="seen-create-dim" onClick={onClose} type="button" />
+      <section aria-label={__msg("fanWeb.create")} className="seen-create-sheet">
         <span className="seen-create-handle" aria-hidden="true" />
-        <h2>Create</h2>
+        <h2>{__msg("fanWeb.create")}</h2>
         <div className="seen-create-primary">
           {primaryOptions.map((option) => {
             const Icon = option.icon;
@@ -133,14 +140,14 @@ function FanCreateSheet({
             );
           })}
         </div>
-        <p className="seen-create-section-label">For creators</p>
+        <p className="seen-create-section-label">{__msg("fanWeb.forCreators")}</p>
         <div className="seen-create-creator-list">
           {creatorOptions.map((option) => {
             const Icon = option.icon;
             return <Link aria-disabled={option.disabled} className={`seen-create-creator-option ${option.disabled ? "is-disabled" : ""}`} key={option.label} onClick={(event) => { if (option.disabled) event.preventDefault(); else onClose(); }} to={option.to}>
               <span className="seen-create-option-icon"><Icon aria-hidden="true" /></span>
               <span className="seen-create-option-copy"><b>{option.label}</b><small>{option.description}</small></span>
-              <FiChevronRight aria-hidden="true" />
+              <FiChevronRight data-ui-directional="true" aria-hidden="true" />
             </Link>;
           })}
         </div>

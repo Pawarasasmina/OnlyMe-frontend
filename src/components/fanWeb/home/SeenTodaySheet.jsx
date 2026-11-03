@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
@@ -6,6 +9,7 @@ import FanAvatar from "../shared/FanAvatar";
 import { useStoryViewerPosition } from "../../../hooks/useStoryViewerPosition";
 
 function SeenTodaySheet({ isOpen, people = [], count = 0, onClose }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const firstRowRef = useRef(null);
   const columnPosition = useStoryViewerPosition(isOpen);
@@ -48,16 +52,16 @@ function SeenTodaySheet({ isOpen, people = [], count = 0, onClose }) {
       onClick={handleBackdropClick}
       role="dialog"
     >
-      <section aria-label={`${count} ${count === 1 ? "person" : "people"} said I see you today`} className="seen-today-sheet" style={columnPosition}>
+      <section aria-label={__msg("fanWeb.saidISeeYouToday", { value0: count, value1: count === 1 ? "person" : "people" })} className="seen-today-sheet" style={columnPosition}>
         <div className="seen-today-handle" aria-hidden="true" />
         <header className="seen-today-header">
           <strong>{count}</strong>
-          <span>said &ldquo;I see you&rdquo; today</span>
+          <span>{__msg("fanWeb.saidISeeYouToday_c1913a")}</span>
         </header>
 
         <div className="seen-today-list">
           {people.map((person, index) => {
-            const name = person.user?.displayName || person.user?.username || "Profile";
+            const name = person.user?.displayName || person.user?.username || __msg("social.profile");
             return (
               <button
                 className="seen-today-person"
@@ -69,9 +73,9 @@ function SeenTodaySheet({ isOpen, people = [], count = 0, onClose }) {
                 <FanAvatar name={name} size="h-[38px] w-[38px]" src={person.user?.avatarUrl} />
                 <span className="seen-today-person-copy">
                   <strong>{name}</strong>
-                  <span>said &ldquo;I see you&rdquo; &middot; {relativeTime(person.occurredAt)}</span>
+                  <span>{__msg("fanWeb.saidISeeYou")} {relativeTime(person.occurredAt)}</span>
                 </span>
-                <FiChevronRight aria-hidden="true" />
+                <FiChevronRight data-ui-directional="true" aria-hidden="true" />
               </button>
             );
           })}

@@ -1,6 +1,10 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 export default function WallSheetFrame({ anchorRef, title, onClose, children }) {
+  __useUiLanguage();
   const sheet = useRef(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -31,5 +35,5 @@ export default function WallSheetFrame({ anchorRef, title, onClose, children }) 
     window.addEventListener("keydown",key,true);
     return () => { if(host) host.inert=inert; if(center) center.style.overflow=overflow; observer.disconnect(); window.removeEventListener("resize",update); window.removeEventListener("keydown",key,true); if(restore?.isConnected) restore.focus(); };
   }, [anchorRef]);
-  return createPortal(<div className="wall-topic-layer" style={position}><button aria-label="Close picker" tabIndex={-1} className="wall-topic-scrim" onClick={onClose} type="button"/><section role="dialog" aria-modal="true" aria-label={title} className="wall-topic-sheet wall-place-sheet" ref={sheet}><span className="wall-topic-handle" aria-hidden="true"/>{children}</section></div>, document.body);
+  return createPortal(<div className="wall-topic-layer" style={position}><button aria-label={__msg("fanWeb.closePicker")} tabIndex={-1} className="wall-topic-scrim" onClick={onClose} type="button"/><section role="dialog" aria-modal="true" aria-label={title} className="wall-topic-sheet wall-place-sheet" ref={sheet}><span className="wall-topic-handle" aria-hidden="true"/>{children}</section></div>, document.body);
 }

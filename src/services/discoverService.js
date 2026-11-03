@@ -1,3 +1,4 @@
+import { msg as __msg } from "../i18n/runtime.js";
 import axiosInstance from "../api/axiosInstance";
 import { resolveMediaUrl } from "../utils/media";
 
@@ -6,7 +7,7 @@ function unpack(response) {
 }
 
 function normalizeCreator(raw = {}) {
-  const displayName = raw.displayName || raw.name || raw.username || "Creator";
+  const displayName = raw.displayName || raw.name || raw.username || __msg("discover.creator");
   return {
     ...raw,
     id: raw.id || raw._id || raw.username,
@@ -48,7 +49,7 @@ function normalizeDiscoverStory(raw = {}) {
     owner: {
       ...owner,
       id: owner.id || owner._id || raw.ownerId || raw.creatorId || "",
-      name: owner.name || raw.name || "Creator",
+      name: owner.name || raw.name || __msg("discover.creator"),
       username: owner.username || raw.username || "",
       avatar: owner.avatar || raw.avatar || "",
       verified: Boolean(owner.verified || raw.verified),
@@ -95,7 +96,7 @@ function normalizeSlide(raw = {}) {
   const creator = raw.creator || {};
   const offer = raw.featuredOffer || null;
   const creatorUserId = creator.id || creator._id || raw.creatorId || raw.ownerUserId || raw.userId || "";
-  const displayName = raw.displayName || creator.name || creator.username || "Creator";
+  const displayName = raw.displayName || creator.name || creator.username || __msg("discover.creator");
   const city = raw.city || creator.location?.city || "";
   const country = raw.country || creator.location?.country || "";
   return {
@@ -134,7 +135,7 @@ function normalizeSlide(raw = {}) {
       type: raw.media?.type || "fallback",
       url: raw.media?.url || "",
       poster: raw.media?.poster || null,
-      alt: raw.media?.alt || `${creator.name || "Creator"} public media`,
+      alt: raw.media?.alt || __msg("discover.publicMedia", { value0: creator.name || __msg("discover.creator") }),
     },
     reason: {
       code: raw.reason?.code || "RECOMMENDED",
@@ -175,7 +176,7 @@ function normalizeSeen(raw = {}) {
   return {
     ...raw,
     id,
-    title: raw.title || "Untitled Seen",
+    title: raw.title || __msg("profile.untitledSeen"),
     cover: coverUrl,
     coverImage: coverUrl,
     coverMedia: { ...raw.coverMedia, secureUrl: coverUrl, mediaType: String(coverType).toUpperCase() },

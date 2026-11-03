@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useRef } from "react";
 import DiscoverEmptyState from "./DiscoverEmptyState";
 import DiscoverErrorState from "./DiscoverErrorState";
@@ -34,6 +38,7 @@ function DiscoverViewport({
   fetchNextPage,
   slides,
 }) {
+  __useUiLanguage();
   const scrollerRef = useRef(null);
   const slideRefs = useRef([]);
   const visibleSlides = useMemo(() => slides.filter(Boolean), [slides]);
@@ -94,7 +99,7 @@ function DiscoverViewport({
       />
       <div className="discover-snap-container atseen-hide-scrollbar" ref={scrollerRef} tabIndex={0}>
         {isLoading ? <DiscoverSlideSkeleton /> : null}
-        {!isLoading && isError ? <DiscoverErrorState error={error} onRetry={onRefresh} /> : null}
+        {!isLoading && isError ? <DiscoverErrorState error={__systemMessage(error)} onRetry={onRefresh} /> : null}
         {!isLoading && !isError && !visibleSlides.length ? <DiscoverEmptyState onRefresh={onRefresh} onSettings={onSettings} /> : null}
         {!isLoading && !isError ? visibleSlides.map((slide, index) => (
           <div className="discover-slide-frame" data-index={index} key={slide.id} ref={(node) => { slideRefs.current[index] = node; }}>
@@ -110,8 +115,8 @@ function DiscoverViewport({
             />
           </div>
         )) : null}
-        {isFetchingNextPage ? <div className="discover-next-loader"><span /> Loading more</div> : null}
-        {!hasNextPage && visibleSlides.length ? <div className="discover-end-slide"><b>You are caught up.</b><button onClick={onRefresh} type="button">Refresh lights</button></div> : null}
+        {isFetchingNextPage ? <div className="discover-next-loader"><span /> {__msg("discover.loadingMore")}</div> : null}
+        {!hasNextPage && visibleSlides.length ? <div className="discover-end-slide"><b>{__msg("discover.youAreCaughtUp")}</b><button onClick={onRefresh} type="button">{__msg("discover.refreshLights")}</button></div> : null}
       </div>
     </section>
   );

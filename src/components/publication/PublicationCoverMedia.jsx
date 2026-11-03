@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { resolveMediaUrl } from "../../utils/media";
 
 function isVideoCover(media) {
@@ -13,6 +14,7 @@ function isVideoCover(media) {
 }
 
 export default function PublicationCoverMedia({ alt = "", autoPlay = false, className = "", controls = false, loading, loop = false, media, muted, preload = "metadata" }) {
+  __useUiLanguage();
   const src = resolveMediaUrl(media?.secureUrl || media?.url || media?.playbackUrl || "");
   if (!src) return null;
   if (isVideoCover(media)) {

@@ -4,7 +4,7 @@
 .story-owner-prototype-menu .story-owner-actions-sheet { border-radius:22px 22px 0 0;background:#1C222D;padding:8px 0 calc(26px + env(safe-area-inset-bottom,0px));animation:storyOwnerActionsIn .3s cubic-bezier(.32,.72,0,1); }
 .story-owner-prototype-menu .story-owner-actions-handle { width:38px;height:4px;margin:2px auto 10px;border-radius:2px;background:rgba(255,255,255,.22); }
 .story-owner-prototype-menu .story-owner-actions-list { gap:0; }
-.story-owner-prototype-menu .story-owner-actions-list button { display:flex;align-items:center;gap:15px;width:100%;min-height:49px;border:0;border-radius:0;background:transparent;padding:14px 22px;color:#EDEFF3;font-size:15.5px;font-weight:500;letter-spacing:-.15px;line-height:21px;box-shadow:none;backdrop-filter:none;text-align:left; }
+.story-owner-prototype-menu .story-owner-actions-list button { display:flex;align-items:center;gap:15px;width:100%;min-height:49px;border:0;border-radius:0;background:transparent;padding:14px 22px;color:#EDEFF3;font-size:15.5px;font-weight:500;letter-spacing:-.15px;line-height:21px;box-shadow:none;backdrop-filter:none;text-align:start; }
 .story-owner-prototype-menu .story-owner-actions-list button svg { width:20px;height:20px;flex:0 0 22px;stroke-width:1.7;opacity:.9; }
 .story-owner-prototype-menu .story-owner-actions-list button.is-danger { color:#FF6B7A; }
 .story-owner-prototype-menu .story-owner-actions-list button:hover { background:rgba(255,255,255,.04); }
@@ -44,7 +44,7 @@
 .story-highlight-status button { color:#9CCBFF; }
 .story-highlight-error { color:#ff8990; }
 .story-highlight-success-layer { position:fixed;inset:0;z-index:1500;pointer-events:none; }
-.story-highlight-success { position:absolute;top:50px;left:10px;right:10px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:#191e29;padding:12px 10px;text-align:left;color:#fff;pointer-events:auto; }
+.story-highlight-success { position:absolute;top:50px;left:10px;right:10px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:#191e29;padding:12px 10px;text-align:start;color:#fff;pointer-events:auto; }
 .story-highlight-success > span:first-child { display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:50%;background:#9CCBFF;color:#0A0C0F; }
 .story-highlight-success svg { width:16px;height:16px; }
 .story-highlight-success b { display:block;font-size:13.5px;font-weight:700; }

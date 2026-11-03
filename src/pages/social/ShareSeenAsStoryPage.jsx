@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,18 +13,18 @@ import { publicationService } from "../../services/publicationService";
 import { sharedSeenCardData } from "../../utils/sharedSeenStoryCard";
 
 const AUDIENCES = [
-  { icon: FiGlobe, key: "everyone", label: "Everyone", value: "everyone" },
-  { icon: FiUsers, key: "friends", label: "Friends", value: "followers" },
-  { icon: FiGlobe, key: "world", label: "My World", value: "close_circle" },
+  { icon: FiGlobe, key: "everyone", get label() { return __msg("onboarding.everyone"); }, value: "everyone" },
+  { icon: FiUsers, key: "friends", get label() { return __msg("stories.friends_c11d5e"); }, value: "followers" },
+  { icon: FiGlobe, key: "world", get label() { return __msg("stories.myWorld"); }, value: "close_circle" },
 ];
 
 const EDIT_COLORS = ["#FFFFFF", "#D6EAFF", "#9CCBFF", "#0A0C0F", "#6ECF97", "#F17878"];
 const TEXT_STYLES = [
-  { label: "Classic", value: 0 },
-  { label: "Strong", value: 1 },
-  { label: "Plate", value: 2 },
-  { label: "Serif", value: 3 },
-  { label: "Mono", value: 4 },
+  { get label() { return __msg("stories.classic"); }, value: 0 },
+  { get label() { return __msg("fanWeb.strong"); }, value: 1 },
+  { get label() { return __msg("social.plate"); }, value: 2 },
+  { get label() { return __msg("stories.serif"); }, value: 3 },
+  { get label() { return __msg("stories.mono"); }, value: 4 },
 ];
 
 function normalizeSeenResponse(response) {
@@ -36,6 +40,7 @@ function contrastColor(hex) {
 }
 
 function ShareSeenAsStoryPage() {
+  __useUiLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useFanToast();
@@ -115,7 +120,7 @@ function ShareSeenAsStoryPage() {
     setSelectedStyle(0);
     setSelectedTextId("");
     setTextOverlays([]);
-    setNotice("Reset");
+    setNotice(__msg("social.reset"));
     window.setTimeout(() => setNotice(""), 1200);
   };
 
@@ -131,13 +136,13 @@ function ShareSeenAsStoryPage() {
     event.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      showToast("Choose an image file.");
+      showToast(__msg("social.chooseAnImageFile"));
       return;
     }
     if (backgroundPreview) URL.revokeObjectURL(backgroundPreview);
     setBackgroundFile(file);
     setBackgroundPreview(URL.createObjectURL(file));
-    setNotice("Background added");
+    setNotice(__msg("social.backgroundAdded"));
     window.setTimeout(() => setNotice(""), 1200);
   };
 
@@ -150,7 +155,7 @@ function ShareSeenAsStoryPage() {
       setCardColorIndex(index);
     }
     setPaletteOpen(false);
-    setNotice("Color changed");
+    setNotice(__msg("social.colorChanged"));
     window.setTimeout(() => setNotice(""), 900);
   };
 
@@ -159,7 +164,7 @@ function ShareSeenAsStoryPage() {
     setEditMode(false);
     setSelectedTextId("");
     setPaletteOpen(false);
-    setNotice(drawingMode ? "Drawing off" : "Draw with your finger or pointer");
+    setNotice(drawingMode ? __msg("social.drawingOff") : __msg("social.drawWithYourFingerOrPointer"));
     window.setTimeout(() => setNotice(""), 1400);
   };
 
@@ -167,7 +172,7 @@ function ShareSeenAsStoryPage() {
     event.stopPropagation();
     setQuestionSticker((current) => current || {
       id: `question-${Date.now()}`,
-      prompt: "Ask me anything",
+      prompt: __msg("stories.askMeAnything"),
       x: 50,
       y: 63,
     });
@@ -353,7 +358,7 @@ function ShareSeenAsStoryPage() {
     return {
       backgroundColor: plate ? overlay.color : undefined,
       color: plate ? (darkPlate ? "#FFFFFF" : "#0A0C0F") : overlay.color,
-      fontFamily: overlay.style === 3 ? "Georgia, 'Times New Roman', serif" : overlay.style === 4 ? "Menlo, Consolas, monospace" : undefined,
+      fontFamily: overlay.style === 3 ? __msg("social.georgiaTimesNewRomanSerif") : overlay.style === 4 ? __msg("social.menloConsolasMonospace") : undefined,
       fontSize: `${overlay.fontSize}px`,
       fontStyle: overlay.style === 3 ? "italic" : undefined,
       fontWeight: overlay.style === 1 || plate ? 800 : 650,
@@ -385,7 +390,7 @@ function ShareSeenAsStoryPage() {
       },
     }, {
       onSuccess: () => {
-        showToast("Your story is live - 24h");
+        showToast(__msg("stories.yourStoryIsLive24h"));
         navigate("/wall");
       },
       onError: (error) => {
@@ -395,16 +400,16 @@ function ShareSeenAsStoryPage() {
   };
 
   return (
-    <section className="share-seen-story-page" aria-label="Share Seen as Story">
+    <section className="share-seen-story-page" aria-label={__msg("social.shareSeenAsStory")}>
       <header className="share-seen-story-topbar">
         <div>
-          <button aria-label="Close Share as Story" onClick={close} type="button"><FiX aria-hidden="true" /></button>
-          <span className="share-seen-story-lifetime">24h</span>
+          <button aria-label={__msg("social.closeShareAsStory")} onClick={close} type="button"><FiX aria-hidden="true" /></button>
+          <span className="share-seen-story-lifetime">{__msg("stories.24h")}</span>
         </div>
         <div>
-          <button aria-label={drawingMode ? "Stop drawing" : "Draw on story"} className={drawingMode ? "is-active" : ""} onClick={toggleEditMode} type="button"><FiEdit3 aria-hidden="true" /></button>
-          <button aria-label="Add question sticker" className={questionSticker ? "is-active" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle aria-hidden="true" /></button>
-          <button aria-label="Reset Story customizations" onClick={reset} type="button"><FiRefreshCw aria-hidden="true" /></button>
+          <button aria-label={drawingMode ? __msg("stories.stopDrawing") : __msg("stories.drawOnStory")} className={drawingMode ? "is-active" : ""} onClick={toggleEditMode} type="button"><FiEdit3 aria-hidden="true" /></button>
+          <button aria-label={__msg("stories.addQuestionSticker")} className={questionSticker ? "is-active" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle aria-hidden="true" /></button>
+          <button aria-label={__msg("social.resetStoryCustomizations")} onClick={reset} type="button"><FiRefreshCw aria-hidden="true" /></button>
         </div>
       </header>
 
@@ -417,11 +422,11 @@ function ShareSeenAsStoryPage() {
         ref={canvasRef}
       >
         {backgroundPreview ? <img alt="" className="share-seen-story-background-preview" src={backgroundPreview} /> : null}
-        {drawing.length || drawingMode ? <svg aria-label="Story drawing canvas" className={`story-composer-drawing ${drawingMode ? "is-active" : ""}`} onPointerDown={beginDrawing} viewBox="0 0 100 177.777">
+        {drawing.length || drawingMode ? <svg aria-label={__msg("stories.storyDrawingCanvas")} className={`story-composer-drawing ${drawingMode ? "is-active" : ""}`} onPointerDown={beginDrawing} viewBox="0 0 100 177.777">
           {drawing.map((stroke) => <polyline fill="none" key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(" ")} stroke={stroke.color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke.size || 1.5} />)}
         </svg> : null}
-        {seenQuery.isLoading ? <div className="share-seen-story-state">Loading Seen...</div> : null}
-        {seenQuery.isError ? <div className="share-seen-story-state is-error">This Seen could not be loaded.</div> : null}
+        {seenQuery.isLoading ? <div className="share-seen-story-state">{__msg("social.loadingSeen_7dfa67")}</div> : null}
+        {seenQuery.isError ? <div className="share-seen-story-state is-error">{__msg("social.thisSeenCouldNotBeLoaded")}</div> : null}
         {seen ? (
           <div
             className="share-seen-story-card-positioner"
@@ -434,7 +439,7 @@ function ShareSeenAsStoryPage() {
         ) : null}
         {textOverlays.map((overlay) => (
           <input
-            aria-label="Story text"
+            aria-label={__msg("stories.storyText")}
             className="share-seen-story-text"
             key={overlay.id}
             maxLength={80}
@@ -456,7 +461,7 @@ function ShareSeenAsStoryPage() {
               }
               if (event.key === "Enter") event.currentTarget.blur();
             }}
-            placeholder="Say it..."
+            placeholder={__msg("stories.sayIt")}
             style={overlayStyle(overlay)}
             type="text"
             value={overlay.text}
@@ -471,35 +476,35 @@ function ShareSeenAsStoryPage() {
             style={{ left: `${questionSticker.x}%`, top: `${questionSticker.y}%` }}
           >
             <input
-              aria-label="Question sticker prompt"
+              aria-label={__msg("social.questionStickerPrompt")}
               maxLength={60}
               onChange={(event) => setQuestionSticker((current) => current ? { ...current, prompt: event.target.value } : current)}
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
-              placeholder="Ask me anything"
+              placeholder={__msg("stories.askMeAnything")}
               ref={questionInputRef}
               type="text"
               value={questionSticker.prompt}
             />
-            <span>answers go to your inbox · tap to edit</span>
+            <span>{__msg("social.answersGoToYourInboxTapToEdit")}</span>
           </div>
         ) : null}
       </div>
 
-      {notice ? <p className="share-seen-story-notice" role="status">{notice}</p> : null}
+      {notice ? <p className="share-seen-story-notice" role="status">{__systemMessage(notice)}</p> : null}
 
       <div className="share-seen-story-media">
-        <button aria-label="Add media to Story" onClick={() => mediaInputRef.current?.click()} type="button"><FiImage aria-hidden="true" /></button>
+        <button aria-label={__msg("social.addMediaToStory")} onClick={() => mediaInputRef.current?.click()} type="button"><FiImage aria-hidden="true" /></button>
         <input accept="image/*" className="sr-only" onChange={chooseMedia} ref={mediaInputRef} type="file" />
       </div>
 
       {editMode || drawingMode ? (
         <div className="share-seen-story-color-control">
           {paletteOpen ? (
-            <div aria-label="Story color options" className="share-seen-story-color-palette" role="group">
+            <div aria-label={__msg("social.storyColorOptions")} className="share-seen-story-color-palette" role="group">
               {EDIT_COLORS.map((color, index) => (
                 <button
-                  aria-label={`Use ${color}`}
+                  aria-label={__msg("social.use", { value0: color })}
                   aria-pressed={index === activeEditorColorIndex}
                   className={index === activeEditorColorIndex ? "is-selected" : ""}
                   key={color}
@@ -512,13 +517,13 @@ function ShareSeenAsStoryPage() {
           ) : null}
           <button
             aria-expanded={paletteOpen}
-            aria-label="Show story color options"
+            aria-label={__msg("social.showStoryColorOptions")}
             className="share-seen-story-color-wheel"
             onClick={() => setPaletteOpen((current) => !current)}
             style={{ "--share-story-active-color": activeEditorColor }}
             type="button"
           />
-          <div aria-label="Text styles" className="share-seen-story-style-scroll" role="group">
+          <div aria-label={__msg("stories.textStyles")} className="share-seen-story-style-scroll" role="group">
             {TEXT_STYLES.map((style) => (
               <button
                 className={`${selectedStyle === style.value ? "is-selected" : ""} is-style-${style.value}`}
@@ -535,13 +540,13 @@ function ShareSeenAsStoryPage() {
 
       <footer className="share-seen-story-footer">
         <div className="share-seen-story-audience">
-          <button aria-label={`Story audience: ${selectedAudience.label}`} className={`is-${selectedAudience.key}`} onClick={cycleAudience} type="button">
+          <button aria-label={__msg("stories.storyAudience", { value0: selectedAudience.label })} className={`is-${selectedAudience.key}`} onClick={cycleAudience} type="button">
             <AudienceIcon aria-hidden="true" />
             {selectedAudience.label}
           </button>
         </div>
         <button className="share-seen-story-submit" disabled={!canShare} onClick={publish} type="button">
-          {shareMutation.isPending ? "Sharing..." : "Share"}
+          {shareMutation.isPending ? __msg("fanWeb.sharing") : __msg("admin.share")}
         </button>
       </footer>
     </section>

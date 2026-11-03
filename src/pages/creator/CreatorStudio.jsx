@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -20,23 +24,23 @@ const STAR = "\u2726";
 const DOT = "\u00B7";
 const PLANET = "\u{1FA90}";
 const TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "audience", label: "Audience" },
-  { id: "earnings", label: "Earnings" },
+  { id: "overview", get label() { return __msg("stories.overview"); } },
+  { id: "audience", get label() { return __msg("creator.audience"); } },
+  { id: "earnings", get label() { return __msg("layouts.earnings"); } },
 ];
 const PATH_ITEMS = [
-  { key: "publishedSeen", label: "Publish your first Seen", to: "/create/seen" },
-  { key: "wallPost", label: "Write a note on the wall", to: "/wall?compose=note" },
-  { key: "followsThree", label: "Follow 3 people", to: "/discover" },
-  { key: "profilePhotos", label: "Add photos to your profile", to: "/settings/profile" },
+  { key: "publishedSeen", get label() { return __msg("creator.publishYourFirstSeen"); }, to: "/create/seen" },
+  { key: "wallPost", get label() { return __msg("creator.writeANoteOnTheWall"); }, to: "/wall?compose=note" },
+  { key: "followsThree", get label() { return __msg("creator.follow3People"); }, to: "/discover" },
+  { key: "profilePhotos", get label() { return __msg("creator.addPhotosToYourProfile"); }, to: "/settings/profile" },
 ];
 const SOURCE_LABELS = {
   directAccess: "Direct Access",
-  dreamSupport: "Dream support",
-  gifts: "Gifts",
-  unlocks: "Unlocks",
-  worldSubscriptions: "World subscriptions",
-  other: "Other earnings",
+  get dreamSupport() { return __msg("admin.dreamSupport"); },
+  get gifts() { return __msg("creator.gifts"); },
+  get unlocks() { return __msg("creator.unlocks_aecf18"); },
+  get worldSubscriptions() { return __msg("creator.worldSubscriptions"); },
+  get other() { return __msg("creator.otherEarnings"); },
 };
 
 function compact(value) {
@@ -44,17 +48,17 @@ function compact(value) {
   const number = Number(value) || 0;
   if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`;
   if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`;
-  return number.toLocaleString();
+  return number.toLocaleString(__uiLocale());
 }
 
 function money(value) {
   const amount = Number(value) || 0;
-  return `$${amount.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+  return `$${amount.toLocaleString(__uiLocale(), { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
 }
 
 function compactMoney(value) {
   const amount = Number(value) || 0;
-  return `$${amount.toLocaleString(undefined, { maximumFractionDigits: amount % 1 ? 2 : 0, minimumFractionDigits: amount % 1 ? 2 : 0 })}`;
+  return `$${amount.toLocaleString(__uiLocale(), { maximumFractionDigits: amount % 1 ? 2 : 0, minimumFractionDigits: amount % 1 ? 2 : 0 })}`;
 }
 
 function relativeTime(value) {
@@ -68,7 +72,7 @@ function relativeTime(value) {
   return `${Math.round(hours / 24)}d`;
 }
 
-function trendText(changePercent, empty = "Not enough data") {
+function trendText(changePercent, empty = __msg("creator.notEnoughData")) {
   if (changePercent == null) return empty;
   if (changePercent > 0) return `▲ ${changePercent}%`;
   if (changePercent < 0) return `▼ ${Math.abs(changePercent)}%`;
@@ -86,27 +90,29 @@ function initialsFor(user = {}) {
 }
 
 function medianLabel(minutes) {
-  if (minutes == null) return "No requests yet";
+  if (minutes == null) return __msg("creator.noRequestsYet");
   if (minutes < 60) return `~${minutes}m median`;
   return `~${Math.round(minutes / 60)}h median`;
 }
 
 function Header({ onBack }) {
+  __useUiLanguage();
   return (
     <header className="creator-studio-header">
-      <button aria-label="Back" className="creator-studio-back" onClick={onBack} type="button"><FiArrowLeft /></button>
+      <button aria-label={__msg("discover.back")} className="creator-studio-back" onClick={onBack} type="button"><FiArrowLeft data-ui-directional="true" /></button>
       <div>
-        <h1>Creator Dashboard</h1>
-        <p>This month {DOT} free forever {STAR}</p>
+        <h1>{__msg("creator.creatorDashboard")}</h1>
+        <p>{__msg("admin.thisMonth")} {DOT} {__msg("creator.freeForever")} {STAR}</p>
       </div>
-      <Link aria-label="Wallet" className="creator-studio-wallet" to="/wallet"><FiCreditCard /></Link>
+      <Link aria-label={__msg("profile.wallet")} className="creator-studio-wallet" to="/wallet"><FiCreditCard /></Link>
     </header>
   );
 }
 
 function Tabs({ active, onChange }) {
+  __useUiLanguage();
   return (
-    <div aria-label="Creator dashboard tabs" className="creator-studio-tabs" role="tablist">
+    <div aria-label={__msg("creator.creatorDashboardTabs")} className="creator-studio-tabs" role="tablist">
       {TABS.map((tab) => (
         <button aria-selected={active === tab.id} className={active === tab.id ? "is-active" : ""} key={tab.id} onClick={() => onChange(tab.id)} role="tab" type="button">
           {tab.label}
@@ -117,14 +123,17 @@ function Tabs({ active, onChange }) {
 }
 
 function SectionTitle({ children }) {
+  __useUiLanguage();
   return <h2 className="creator-studio-section-title">{children}</h2>;
 }
 
 function Card({ children, className = "" }) {
+  __useUiLanguage();
   return <section className={`creator-studio-card ${className}`}>{children}</section>;
 }
 
 function MetricCard({ label, sub, trend, value, valueClassName = "" }) {
+  __useUiLanguage();
   return (
     <Card className="creator-studio-kpi">
       <span>{label}</span>
@@ -135,24 +144,26 @@ function MetricCard({ label, sub, trend, value, valueClassName = "" }) {
 }
 
 function GrowSummaryCard({ data = {}, loading = false }) {
+  __useUiLanguage();
   const total = Number(data.counts?.total || 0);
   const goal = Number(data.config?.spotlightGoal || 2500);
   const remaining = Number(data.counts?.spotlightRemaining ?? Math.max(0, goal - total));
   const progress = goal > 0 ? Math.min(100, total / goal * 100) : 0;
   return (
-    <Link aria-label="Open Grow" className={`creator-studio-grow-card ${loading ? "is-loading" : ""}`} to="/grow">
-      <span className="creator-studio-grow-head"><b>Grow</b><strong>+{money(data.earnings?.amount || 0)}</strong></span>
-      <small>{loading ? "Loading your growth…" : <>{total.toLocaleString()} people came through your link {DOT} {remaining.toLocaleString()} to Spotlight</>}</small>
+    <Link aria-label={__msg("creator.openGrow")} className={`creator-studio-grow-card ${loading ? "is-loading" : ""}`} to="/grow">
+      <span className="creator-studio-grow-head"><b>{__msg("creator.grow")}</b><strong>+{money(data.earnings?.amount || 0)}</strong></span>
+      <small>{loading ? __msg("creator.loadingYourGrowth") : <>{total.toLocaleString(__uiLocale())} {__msg("creator.peopleCameThroughYourLink")} {DOT} {remaining.toLocaleString(__uiLocale())} {__msg("creator.toSpotlight")}</>}</small>
       <i><b style={{ width: `${progress}%` }} /></i>
     </Link>
   );
 }
 
 function CreatorPath({ data = {} }) {
+  __useUiLanguage();
   return (
     <Card className="creator-studio-path">
       <div className="creator-studio-card-head">
-        <b>Creator path</b>
+        <b>{__msg("creator.creatorPath")}</b>
         <span>{data.completed || 0}/{data.total || PATH_ITEMS.length}</span>
       </div>
       {PATH_ITEMS.map((item) => {
@@ -169,10 +180,11 @@ function CreatorPath({ data = {} }) {
 }
 
 function ReachCard({ metric = {} }) {
+  __useUiLanguage();
   const change = metric.changePercent == null ? 0 : Number(metric.changePercent);
   return (
     <Card className="creator-studio-reach">
-      <span>Reach this month</span>
+      <span>{__msg("creator.reachThisMonth")}</span>
       <div>
         <strong>{compact(metric.value)}</strong>
         <small className={change < 0 ? "is-down" : "is-up"}>{change < 0 ? `▼ ${Math.abs(change)}%` : `▲ ${change}%`}</small>
@@ -182,6 +194,7 @@ function ReachCard({ metric = {} }) {
 }
 
 function PerformerRow({ detail, icon, title, to }) {
+  __useUiLanguage();
   const content = (
     <>
       <span className="creator-studio-row-icon">{icon}</span>
@@ -195,23 +208,25 @@ function PerformerRow({ detail, icon, title, to }) {
 }
 
 function BestPerformers({ data = {} }) {
+  __useUiLanguage();
   const seen = data.seen;
   const wallPost = data.wallPost || data.status;
   const location = data.location;
   return (
     <section className="creator-studio-section">
-      <SectionTitle>Best performers</SectionTitle>
-      <PerformerRow detail={seen ? `Best Seen ${DOT} ${seen.metricLabel}` : "Best Seen · Publish a Seen to unlock this"} icon={<FiEye />} title={seen?.title || "No Seen yet"} to={seen?.id ? `/seen/${seen.id}` : "/create/seen"} />
-      <PerformerRow detail={wallPost ? `Best status ${DOT} ${wallPost.metricLabel}` : "Best status · Write a wall post to unlock this"} icon={<FiMonitor />} title={wallPost?.title || "No wall posts yet"} to={wallPost?.id ? `/wall?post=${wallPost.id}` : "/wall?compose=note"} />
-      <PerformerRow detail={location ? `Most used location ${DOT} ${location.metricLabel}` : "Most used location · Add a location to a wall post"} icon={<FiMapPin />} title={location?.title || "No locations yet"} to={location ? "/wall" : "/wall?compose=note"} />
+      <SectionTitle>{__msg("creator.bestPerformers")}</SectionTitle>
+      <PerformerRow detail={seen ? __msg("creator.bestSeen", { value0: DOT, value1: seen.metricLabel }) : __msg("creator.bestSeenPublishASeenToUnlockThis")} icon={<FiEye />} title={seen?.title || __msg("creator.noSeenYet")} to={seen?.id ? `/seen/${seen.id}` : "/create/seen"} />
+      <PerformerRow detail={wallPost ? __msg("creator.bestStatus", { value0: DOT, value1: wallPost.metricLabel }) : __msg("creator.bestStatusWriteAWallPostToUnlockThis")} icon={<FiMonitor />} title={wallPost?.title || __msg("creator.noWallPostsYet")} to={wallPost?.id ? `/wall?post=${wallPost.id}` : "/wall?compose=note"} />
+      <PerformerRow detail={location ? __msg("creator.mostUsedLocation", { value0: DOT, value1: location.metricLabel }) : __msg("creator.mostUsedLocationAddALocationToAWall")} icon={<FiMapPin />} title={location?.title || __msg("creator.noLocationsYet")} to={location ? "/wall" : "/wall?compose=note"} />
     </section>
   );
 }
 
 function Bars({ empty, rows = [] }) {
+  __useUiLanguage();
   const fallbackRows = [
-    { color: "#9CCBFF", label: "Discover", percent: 0, value: 0 },
-    { color: "#6ECF97", label: "Wall", percent: 0, value: 0 },
+    { color: "#9CCBFF", label: __msg("discover.discover"), percent: 0, value: 0 },
+    { color: "#6ECF97", label: __msg("fanWeb.wall"), percent: 0, value: 0 },
     { color: "#B092FF", label: "Seen", percent: 0, value: 0 },
   ];
   const shownRows = rows.length ? rows : fallbackRows;
@@ -231,40 +246,42 @@ function Bars({ empty, rows = [] }) {
 }
 
 function RecentActivity({ items = [] }) {
+  __useUiLanguage();
   return (
     <section className="creator-studio-section">
-      <SectionTitle>Recent activity</SectionTitle>
+      <SectionTitle>{__msg("creator.recentActivity")}</SectionTitle>
       {items.length ? items.map((item, index) => (
         <div className="creator-studio-activity-row" key={`${item.createdAt}-${index}`}>
-          <span>{item.text}</span>
+          <span dir="auto">{item.text}</span>
           <time>{relativeTime(item.createdAt)}</time>
         </div>
-      )) : <p className="creator-studio-empty">No recent creator activity yet</p>}
+      )) : <p className="creator-studio-empty">{__msg("creator.noRecentCreatorActivityYet")}</p>}
     </section>
   );
 }
 
 function Overview({ data, onEarnings }) {
+  __useUiLanguage();
   const overview = data.overview || {};
   return (
     <div className="creator-studio-panel">
       <CreatorPath data={data.creatorPath} />
       <ReachCard metric={overview.reach} />
       <section className="creator-studio-kpi-grid">
-        <MetricCard label="SEEN VIEWS" sub={trendText(overview.seenViews?.changePercent, "Views pending")} trend={overview.seenViews?.changePercent} value={compact(overview.seenViews?.value ?? 0)} />
-        <MetricCard label="PROFILE VISITS" sub={trendText(overview.profileVisits?.changePercent, "No visits yet")} trend={overview.profileVisits?.changePercent} value={compact(overview.profileVisits?.value ?? 0)} />
-        <MetricCard label="NEW FOLLOWERS" sub={overview.newFollowers?.periodLabel || "this week"} value={`+${compact(overview.newFollowers?.value || 0)}`} />
-        <MetricCard label="RESPONSE RATE" sub={medianLabel(overview.responseRate?.medianResponseMinutes)} value={overview.responseRate?.value == null ? "--" : `${overview.responseRate.value}%`} valueClassName={overview.responseRate?.value == null ? "" : "is-success"} />
+        <MetricCard label={__msg("creator.seenViews")} sub={trendText(overview.seenViews?.changePercent, "Views pending")} trend={overview.seenViews?.changePercent} value={compact(overview.seenViews?.value ?? 0)} />
+        <MetricCard label={__msg("creator.profileVisits")} sub={trendText(overview.profileVisits?.changePercent, "No visits yet")} trend={overview.profileVisits?.changePercent} value={compact(overview.profileVisits?.value ?? 0)} />
+        <MetricCard label={__msg("creator.newFollowers")} sub={overview.newFollowers?.periodLabel || "this week"} value={`+${compact(overview.newFollowers?.value || 0)}`} />
+        <MetricCard label={__msg("creator.responseRate")} sub={medianLabel(overview.responseRate?.medianResponseMinutes)} value={overview.responseRate?.value == null ? "--" : `${overview.responseRate.value}%`} valueClassName={overview.responseRate?.value == null ? "" : "is-success"} />
       </section>
       <button className="creator-studio-nav-row" onClick={onEarnings} type="button">
-        <span>Earnings this month</span>
+        <span>{__msg("creator.earningsThisMonth")}</span>
         <strong>{money(overview.earnings?.amount)}</strong>
         <small className={trendClass(overview.earnings?.changePercent)}>{trendText(overview.earnings?.changePercent, "")}</small>
-        <FiChevronRight />
+        <FiChevronRight data-ui-directional="true" />
       </button>
       <BestPerformers data={overview.bestPerformers} />
       <section className="creator-studio-section">
-        <SectionTitle>Where people find you</SectionTitle>
+        <SectionTitle>{__msg("creator.wherePeopleFindYou")}</SectionTitle>
         <Bars empty="No source attribution yet" rows={overview.discoverySources} />
       </section>
       <RecentActivity items={overview.recentActivity} />
@@ -273,51 +290,54 @@ function Overview({ data, onEarnings }) {
 }
 
 function Audience({ data = {} }) {
+  __useUiLanguage();
   const audience = data.audience || {};
   const cityColors = ["#9CCBFF", "#6ECF97", "#B092FF"];
   return (
     <div className="creator-studio-panel">
       <Card className="creator-studio-followers">
-        <span>Followers</span>
-        <div><strong>{compact(audience.followers || 0)}</strong><small className={Number(audience.newFollowersThisMonth) > 0 ? "is-up" : "is-flat"}>+{compact(audience.newFollowersThisMonth || 0)} this month</small></div>
+        <span>{__msg("discover.followers")}</span>
+        <div><strong>{compact(audience.followers || 0)}</strong><small className={Number(audience.newFollowersThisMonth) > 0 ? "is-up" : "is-flat"}>+{compact(audience.newFollowersThisMonth || 0)} {__msg("creator.thisMonth")}</small></div>
       </Card>
       <section className="creator-studio-section">
-        <SectionTitle>New vs returning</SectionTitle>
-        {audience.newVsReturning?.newPercent == null ? <p className="creator-studio-empty">Not enough audience data yet</p> : (
+        <SectionTitle>{__msg("creator.newVsReturning")}</SectionTitle>
+        {audience.newVsReturning?.newPercent == null ? <p className="creator-studio-empty">{__msg("creator.notEnoughAudienceDataYet")}</p> : (
           <div className="creator-studio-split">
             <i><b style={{ width: `${audience.newVsReturning.newPercent}%` }} /></i>
-            <div><span>{audience.newVsReturning.newPercent}% new</span><span>{audience.newVsReturning.returningPercent}% returning</span></div>
+            <div><span>{audience.newVsReturning.newPercent}{__msg("creator.new")}</span><span>{audience.newVsReturning.returningPercent}{__msg("creator.returning")}</span></div>
           </div>
         )}
       </section>
       <section className="creator-studio-section">
-        <SectionTitle>Top cities</SectionTitle>
+        <SectionTitle>{__msg("creator.topCities")}</SectionTitle>
         <Bars empty="Not enough location data yet" rows={(audience.topCities || []).map((row, index) => ({ ...row, color: cityColors[index] || cityColors[0] }))} />
       </section>
       <section className="creator-studio-section">
-        <SectionTitle>Audience interests</SectionTitle>
-        {audience.interests?.length ? <div className="creator-studio-chips">{audience.interests.map((item) => <span key={item.label}>{item.label}</span>)}</div> : <p className="creator-studio-empty">Not enough audience data yet</p>}
+        <SectionTitle>{__msg("creator.audienceInterests")}</SectionTitle>
+        {audience.interests?.length ? <div className="creator-studio-chips">{audience.interests.map((item) => <span key={item.label}>{item.label}</span>)}</div> : <p className="creator-studio-empty">{__msg("creator.notEnoughAudienceDataYet")}</p>}
       </section>
       <section className="creator-studio-summary">
-        <SummaryRow label="Entered your World" value={`${compact(audience.enteredWorldThisWeek || 0)} · week`} />
-        <SummaryRow label="Mutual connections" value={compact(audience.mutualConnections || 0)} />
-        <SummaryRow label="Story views · avg" value={audience.averageStoryViews == null ? "--" : compact(audience.averageStoryViews)} />
+        <SummaryRow label={__msg("creator.enteredYourWorld")} value={`${compact(audience.enteredWorldThisWeek || 0)} · week`} />
+        <SummaryRow label={__msg("creator.mutualConnections")} value={compact(audience.mutualConnections || 0)} />
+        <SummaryRow label={__msg("creator.storyViewsAvg")} value={audience.averageStoryViews == null ? "--" : compact(audience.averageStoryViews)} />
       </section>
     </div>
   );
 }
 
 function SummaryRow({ label, value }) {
+  __useUiLanguage();
   return <div className="creator-studio-summary-row"><span>{label}</span><strong>{value}</strong></div>;
 }
 
 function EarningRow({ item }) {
+  __useUiLanguage();
   return (
     <Link className="creator-studio-earning-row" to="/wallet/ledger">
       <span className="creator-studio-earning-avatar">{item.counterparty?.avatar ? <img alt="" src={item.counterparty.avatar} /> : <b>{initialsFor(item.counterparty)}</b>}</span>
       <span className="creator-studio-earning-copy">
         <b>{item.description}</b>
-        <small>{STAR}{compact(item.metadata?.stars || 0)} {DOT} {relativeTime(item.createdAt)} ago</small>
+        <small>{STAR}{compact(item.metadata?.stars || 0)} {DOT} {relativeTime(item.createdAt)} {__msg("profile.ago")}</small>
       </span>
       <strong>+{compactMoney(item.amount)}</strong>
     </Link>
@@ -325,40 +345,42 @@ function EarningRow({ item }) {
 }
 
 function Earnings({ data = {}, onPayouts }) {
+  __useUiLanguage();
   const earnings = data.earnings || {};
   const bySource = earnings.bySource || {};
   const [price, setPrice] = useState(10);
   return (
     <div className="creator-studio-panel">
       <Card className="creator-studio-earnings-hero">
-        <span>Your earnings this month</span>
+        <span>{__msg("creator.yourEarningsThisMonth")}</span>
         <strong>{money(earnings.thisMonth)}</strong>
-        <small className={trendClass(earnings.changePercent)}>{earnings.changePercent == null ? "Real creator credits from your ledger" : `${trendText(earnings.changePercent)} vs last month`}</small>
+        <small className={trendClass(earnings.changePercent)}>{earnings.changePercent == null ? __msg("creator.realCreatorCreditsFromYourLedger") : __msg("creator.vsLastMonth", { value0: trendText(earnings.changePercent) })}</small>
       </Card>
       <Link className="creator-studio-residents" to="/profile">
         <span aria-hidden="true">{PLANET}</span>
-        <b>Residents {DOT} <i>{compact(earnings.residents?.count || 0)}</i></b>
-        <strong>{money(earnings.residents?.monthlyRecurringRevenue)}/mo</strong>
+        <b>{__msg("creator.residents")} {DOT} <i>{compact(earnings.residents?.count || 0)}</i></b>
+        <strong>{money(earnings.residents?.monthlyRecurringRevenue)}{__msg("common.perMonth")}</strong>
       </Link>
       <section className="creator-studio-section">
-        <SectionTitle>By source</SectionTitle>
+        <SectionTitle>{__msg("creator.bySource")}</SectionTitle>
         <div className="creator-studio-source-list">
           {Object.entries(SOURCE_LABELS).map(([key, label]) => <SummaryRow key={key} label={label} value={money(bySource[key])} />)}
         </div>
       </section>
       <section className="creator-studio-section">
-        <SectionTitle>Recent earnings</SectionTitle>
-        {earnings.recent?.length ? earnings.recent.map((item) => <EarningRow item={item} key={item.id} />) : <p className="creator-studio-empty">No earnings yet</p>}
+        <SectionTitle>{__msg("creator.recentEarnings")}</SectionTitle>
+        {earnings.recent?.length ? earnings.recent.map((item) => <EarningRow item={item} key={item.id} />) : <p className="creator-studio-empty">{__msg("creator.noEarningsYet")}</p>}
       </section>
-      <Link className="creator-studio-wallet-row" to="/wallet"><span>Wallet & payouts</span><FiChevronRight /></Link>
-      <section className="creator-ways-card"><SectionTitle>Ways to earn</SectionTitle><article><b>Experiences</b><small>Sell focused chapters people can keep.</small></article><article><b>World subscriptions</b><small>Build recurring value for your residents.</small></article><article><b>Gifts</b><small>Let people support your work directly.</small></article></section>
-      <section className="creator-calculator-card"><SectionTitle>Earnings calculator</SectionTitle><p>Choose an example Experience price.</p><div>{[5, 10, 20, 50].map((value) => <button className={price === value ? "is-active" : ""} key={value} onClick={() => setPrice(value)} type="button">${value}</button>)}</div><strong>Your earnings for a ${price} sale are shown before publishing.</strong><small>This example is educational and is not guaranteed income.</small></section>
-      <p className="creator-studio-note">Your numbers are yours. No subscription, no paywall - ever. {STAR} <button onClick={onPayouts} type="button">How payouts work <FiChevronRight /></button></p>
+      <Link className="creator-studio-wallet-row" to="/wallet"><span>{__msg("creator.walletPayouts")}</span><FiChevronRight data-ui-directional="true" /></Link>
+      <section className="creator-ways-card"><SectionTitle>{__msg("creator.waysToEarn")}</SectionTitle><article><b>{__msg("profile.experiences")}</b><small>{__msg("creator.sellFocusedChaptersPeopleCanKeep")}</small></article><article><b>{__msg("creator.worldSubscriptions")}</b><small>{__msg("creator.buildRecurringValueForYourResidents")}</small></article><article><b>{__msg("creator.gifts")}</b><small>{__msg("creator.letPeopleSupportYourWorkDirectly")}</small></article></section>
+      <section className="creator-calculator-card"><SectionTitle>{__msg("creator.earningsCalculator")}</SectionTitle><p>{__msg("creator.chooseAnExampleExperiencePrice")}</p><div>{[5, 10, 20, 50].map((value) => <button className={price === value ? "is-active" : ""} key={value} onClick={() => setPrice(value)} type="button">${value}</button>)}</div><strong>{__msg("creator.yourEarningsForA")}{price} {__msg("creator.saleAreShownBeforePublishing")}</strong><small>{__msg("creator.thisExampleIsEducationalAndIsNotGuaranteedIncome")}</small></section>
+      <p className="creator-studio-note">{__msg("creator.yourNumbersAreYoursNoSubscriptionNoPaywallEver")} {STAR} <button onClick={onPayouts} type="button">{__msg("creator.howPayoutsWork")} <FiChevronRight data-ui-directional="true" /></button></p>
     </div>
   );
 }
 
 function PayoutsSheet({ onClose }) {
+  __useUiLanguage();
   const [sheetPosition, setSheetPosition] = useState(undefined);
 
   useEffect(() => {
@@ -385,20 +407,21 @@ function PayoutsSheet({ onClose }) {
     <div className="creator-payouts-backdrop" onClick={onClose} role="presentation" style={sheetPosition}>
       <section aria-modal="true" className="creator-payouts-sheet" onClick={(event) => event.stopPropagation()} role="dialog">
         <span className="creator-payouts-handle" />
-        <h2>How payouts work</h2>
-        <p>Simple, and the same for everyone.</p>
+        <h2>{__msg("creator.howPayoutsWork")}</h2>
+        <p>{__msg("creator.simpleAndTheSameForEveryone")}</p>
         <div className="creator-payouts-list">
-          <article><span>80%</span><div><b>You keep 80%, after app store fees</b><small>Worlds, Direct Access, gifts, and support use the stored creator credit in your ledger.</small></div></article>
-          <article><span><FiDollarSign /></span><div><b>Payouts in 3-5 business days</b><small>To your bank, from $50. Transfer fees on us.</small></div></article>
-          <article><span><FiZap /></span><div><b>No subscription, no listing fees</b><small>Creating and publishing on @seen is free - forever.</small></div></article>
+          <article><span>80%</span><div><b>{__msg("creator.youKeep80AfterAppStoreFees")}</b><small>{__msg("creator.worldsDirectAccessGiftsAndSupportUseTheStored")}</small></div></article>
+          <article><span><FiDollarSign /></span><div><b>{__msg("creator.payoutsIn35BusinessDays")}</b><small>{__msg("creator.toYourBankFrom50TransferFeesOnUs")}</small></div></article>
+          <article><span><FiZap /></span><div><b>{__msg("creator.noSubscriptionNoListingFees")}</b><small>{__msg("creator.creatingAndPublishingOnSeenIsFreeForever")}</small></div></article>
         </div>
-        <span className="creator-payouts-terms">Full terms in Settings {"->"} Payouts.</span>
+        <span className="creator-payouts-terms">{__msg("creator.fullTermsInSettings")} {"->"} {__msg("creator.payouts")}</span>
       </section>
     </div>
   );
 }
 
 export default function CreatorStudio() {
+  __useUiLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
@@ -438,11 +461,11 @@ export default function CreatorStudio() {
   if (dashboardQuery.isError) {
     return (
       <main className="creator-studio-prototype">
-        <button aria-label="Back" className="creator-studio-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button>
+        <button aria-label={__msg("discover.back")} className="creator-studio-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
         <section className="creator-studio-error">
-          <h1>Creator Dashboard</h1>
-          <p>Unable to load creator studio.</p>
-          <button onClick={() => dashboardQuery.refetch()} type="button"><FiRefreshCw /> Retry</button>
+          <h1>{__msg("creator.creatorDashboard")}</h1>
+          <p>{__msg("creator.unableToLoadCreatorStudio")}</p>
+          <button onClick={() => dashboardQuery.refetch()} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button>
         </section>
       </main>
     );
@@ -456,7 +479,7 @@ export default function CreatorStudio() {
         <Header onBack={() => navigate(-1)} />
         {!previewNew ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
         <Tabs active={activeTab} onChange={setActiveTab} />
-        {previewNew ? <section className="creator-new-preview"><small>PREVIEW · NEW CREATOR</small><h2>Start creating. Start earning.</h2><p>Lina began with one useful Experience, welcomed people into her World, and made Gifts available on her profile. Her example shows what is possible—not guaranteed income.</p><div><Link to="/create/experience">Create an Experience</Link><Link to="/create/world">Start your World</Link><Link to="/grow">Share your gift link</Link></div><button onClick={() => navigate("/studio", { replace: true })} type="button">Exit preview</button></section> : null}
+        {previewNew ? <section className="creator-new-preview"><small>{__msg("creator.previewNewCreator")}</small><h2>{__msg("creator.startCreatingStartEarning")}</h2><p>{__msg("creator.linaBeganWithOneUsefulExperienceWelcomedPeopleInto")}</p><div><Link to="/create/experience">{__msg("creator.createAnExperience")}</Link><Link to="/create/world">{__msg("creator.startYourWorld")}</Link><Link to="/grow">{__msg("creator.shareYourGiftLink")}</Link></div><button onClick={() => navigate("/studio", { replace: true })} type="button">{__msg("creator.exitPreview")}</button></section> : null}
         {!previewNew && activeTab === "overview" ? <Overview data={data} onEarnings={() => setActiveTab("earnings")} /> : null}
         {!previewNew && activeTab === "audience" ? <Audience data={data} /> : null}
         {!previewNew && activeTab === "earnings" ? <Earnings data={data} onPayouts={() => setPayoutsOpen(true)} /> : null}

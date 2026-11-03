@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { relativeTime as compactPostAge } from "../../../utils/relativeTime";
 import WallReactionTray from "./WallReactionTray";
 import { wallCloseLabels } from "../../../utils/wallResolution";
@@ -40,28 +44,28 @@ import {
 import { canManageFeedPost } from "../../../utils/postPermissions";
 
 const reactions = [
-  { key: "like", label: "Like", icon: "👍" },
-  { key: "love", label: "Love", icon: "❤️" },
-  { key: "care", label: "Care", icon: "🤗" },
-  { key: "wow", label: "Wow", icon: "😮" },
-  { key: "useful", label: "Useful", icon: "💡" },
-  { key: "fire", label: "Fire", icon: "🔥" },
+  { key: "like", get label() { return __msg("fanWeb.like"); }, icon: "👍" },
+  { key: "love", get label() { return __msg("fanWeb.love"); }, icon: "❤️" },
+  { key: "care", get label() { return __msg("fanWeb.care"); }, icon: "🤗" },
+  { key: "wow", get label() { return __msg("fanWeb.wow"); }, icon: "😮" },
+  { key: "useful", get label() { return __msg("fanWeb.useful"); }, icon: "💡" },
+  { key: "fire", get label() { return __msg("fanWeb.fire"); }, icon: "🔥" },
 ];
 
 const postReactionOptions = [
-  { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
-  { key: "love", label: "Love", icon: "\u2764\uFE0F" },
-  { key: "care", label: "Care", icon: "\uD83E\uDD17" },
-  { key: "wow", label: "Wow", icon: "\uD83D\uDE2E" },
-  { key: "useful", label: "Useful", icon: "\uD83D\uDCA1" },
-  { key: "fire", label: "Fire", icon: "\uD83D\uDD25" },
-  { key: "clap", label: "Clap", icon: "\uD83D\uDC4F" },
-  { key: "laugh", label: "Laugh", icon: "\uD83D\uDE02" },
-  { key: "see_you", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
-  { key: "sad", label: "Feel you", icon: "\uD83E\uDD72" },
-  { key: "phone", label: "Call me", icon: "\uD83D\uDCF1" },
-  { key: "strong", label: "Strong", icon: "\uD83D\uDCAA" },
-  { key: "pray", label: "Respect", icon: "\uD83D\uDE4F" },
+  { key: "like", get label() { return __msg("fanWeb.support"); }, icon: "\uD83E\uDD1D" },
+  { key: "love", get label() { return __msg("fanWeb.love"); }, icon: "\u2764\uFE0F" },
+  { key: "care", get label() { return __msg("fanWeb.care"); }, icon: "\uD83E\uDD17" },
+  { key: "wow", get label() { return __msg("fanWeb.wow"); }, icon: "\uD83D\uDE2E" },
+  { key: "useful", get label() { return __msg("fanWeb.useful"); }, icon: "\uD83D\uDCA1" },
+  { key: "fire", get label() { return __msg("fanWeb.fire"); }, icon: "\uD83D\uDD25" },
+  { key: "clap", get label() { return __msg("fanWeb.clap"); }, icon: "\uD83D\uDC4F" },
+  { key: "laugh", get label() { return __msg("fanWeb.laugh"); }, icon: "\uD83D\uDE02" },
+  { key: "see_you", get label() { return __msg("discover.iSeeYou"); }, icon: "\uD83D\uDC41\uFE0F" },
+  { key: "sad", get label() { return __msg("fanWeb.feelYou"); }, icon: "\uD83E\uDD72" },
+  { key: "phone", get label() { return __msg("fanWeb.callMe"); }, icon: "\uD83D\uDCF1" },
+  { key: "strong", get label() { return __msg("fanWeb.strong"); }, icon: "\uD83D\uDCAA" },
+  { key: "pray", get label() { return __msg("fanWeb.respect"); }, icon: "\uD83D\uDE4F" },
 ];
 
 function useWallSheetPosition(isOpen) {
@@ -102,18 +106,18 @@ function reactionDisplayFor(key) {
 }
 
 const commentEmojiGroups = [
-  { key: "recent", label: "Recent", emojis: ["😀", "😂", "🥰", "😍", "😎", "😭", "😮", "😅", "🙂", "🙃"] },
-  { key: "gestures", label: "Gestures", emojis: ["👍", "❤️", "👏", "🙏", "🤝", "💪", "👌", "🙌", "✌️", "🤞"] },
-  { key: "vibes", label: "Vibes", emojis: ["✨", "🔥", "💯", "🎉", "⭐", "🌙", "☀️", "💡", "🎶", "📌"] },
-  { key: "food", label: "Food", emojis: ["☕", "🍕", "🍔", "🍰", "🍓", "🍉", "🍜", "🍟", "🥗", "🍿"] },
+  { key: "recent", get label() { return __msg("fanWeb.recent"); }, emojis: ["😀", "😂", "🥰", "😍", "😎", "😭", "😮", "😅", "🙂", "🙃"] },
+  { key: "gestures", get label() { return __msg("fanWeb.gestures"); }, emojis: ["👍", "❤️", "👏", "🙏", "🤝", "💪", "👌", "🙌", "✌️", "🤞"] },
+  { key: "vibes", get label() { return __msg("fanWeb.vibes"); }, emojis: ["✨", "🔥", "💯", "🎉", "⭐", "🌙", "☀️", "💡", "🎶", "📌"] },
+  { key: "food", get label() { return __msg("fanWeb.food"); }, emojis: ["☕", "🍕", "🍔", "🍰", "🍓", "🍉", "🍜", "🍟", "🥗", "🍿"] },
 ];
 
 const mongoIdPattern = /^[a-f\d]{24}$/i;
 const homeCommentEmojiGroups = [
-  { key: "recent", label: "Recent", emojis: ["\uD83D\uDE00", "\uD83D\uDE02", "\uD83E\uDD70", "\uD83D\uDE0D", "\uD83D\uDE0E", "\uD83D\uDE2D", "\uD83D\uDE2E", "\uD83D\uDE05", "\uD83D\uDE42", "\uD83D\uDE43"] },
-  { key: "gestures", label: "Gestures", emojis: ["\uD83D\uDC4D", "\u2764\uFE0F", "\uD83D\uDC4F", "\uD83D\uDE4F", "\uD83E\uDD1D", "\uD83D\uDCAA", "\uD83D\uDC4C", "\uD83D\uDE4C", "\u270C\uFE0F", "\uD83E\uDD1E"] },
-  { key: "vibes", label: "Vibes", emojis: ["\u2728", "\uD83D\uDD25", "\uD83D\uDCAF", "\uD83C\uDF89", "\u2B50", "\uD83C\uDF19", "\u2600\uFE0F", "\uD83D\uDCA1", "\uD83C\uDFB6", "\uD83D\uDCCC"] },
-  { key: "food", label: "Food", emojis: ["\u2615", "\uD83C\uDF55", "\uD83C\uDF54", "\uD83C\uDF70", "\uD83C\uDF53", "\uD83C\uDF49", "\uD83C\uDF5C", "\uD83C\uDF5F", "\uD83E\uDD57", "\uD83C\uDF7F"] },
+  { key: "recent", get label() { return __msg("fanWeb.recent"); }, emojis: ["\uD83D\uDE00", "\uD83D\uDE02", "\uD83E\uDD70", "\uD83D\uDE0D", "\uD83D\uDE0E", "\uD83D\uDE2D", "\uD83D\uDE2E", "\uD83D\uDE05", "\uD83D\uDE42", "\uD83D\uDE43"] },
+  { key: "gestures", get label() { return __msg("fanWeb.gestures"); }, emojis: ["\uD83D\uDC4D", "\u2764\uFE0F", "\uD83D\uDC4F", "\uD83D\uDE4F", "\uD83E\uDD1D", "\uD83D\uDCAA", "\uD83D\uDC4C", "\uD83D\uDE4C", "\u270C\uFE0F", "\uD83E\uDD1E"] },
+  { key: "vibes", get label() { return __msg("fanWeb.vibes"); }, emojis: ["\u2728", "\uD83D\uDD25", "\uD83D\uDCAF", "\uD83C\uDF89", "\u2B50", "\uD83C\uDF19", "\u2600\uFE0F", "\uD83D\uDCA1", "\uD83C\uDFB6", "\uD83D\uDCCC"] },
+  { key: "food", get label() { return __msg("fanWeb.food"); }, emojis: ["\u2615", "\uD83C\uDF55", "\uD83C\uDF54", "\uD83C\uDF70", "\uD83C\uDF53", "\uD83C\uDF49", "\uD83C\uDF5C", "\uD83C\uDF5F", "\uD83E\uDD57", "\uD83C\uDF7F"] },
 ];
 
 // Retained for compatibility with previously persisted comment-composer preferences.
@@ -136,24 +140,26 @@ function formatCount(value = 0) {
   const count = Number(value) || 0;
   if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
   if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString();
+  return count.toLocaleString(__uiLocale());
 }
 
 function MediaItem({ item, title, postId, postText }) {
+  __useUiLanguage();
   const [failed, setFailed] = useState(false);
   if (!item?.url || failed) {
-    return <span className="home-feed-media-fallback" role="img" aria-label="Media unavailable">Media unavailable</span>;
+    return <span className="home-feed-media-fallback" role="img" aria-label={__msg("fanWeb.mediaUnavailable")}>{__msg("fanWeb.mediaUnavailable")}</span>;
   }
   if (String(item.type || "").toLowerCase() === "audio") {
     return <WallVoiceNote item={item} postId={postId} postText={postText} />;
   }
   if (String(item.type || "").toLowerCase().startsWith("video")) {
-    return <video controls preload="metadata" src={item.url} title={`${title} video`} />;
+    return <video controls preload="metadata" src={item.url} title={__msg("fanWeb.video", { value0: title })} />;
   }
-  return <img alt={`${title} attachment`} loading="lazy" onError={() => setFailed(true)} src={item.url} />;
+  return <img alt={__msg("fanWeb.attachment", { value0: title })} loading="lazy" onError={() => setFailed(true)} src={item.url} />;
 }
 
 function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style }) {
+  __useUiLanguage();
   const [activeReaction, setActiveReaction] = useState("");
   const query = useQuery({
     enabled: Boolean(postId),
@@ -179,30 +185,30 @@ function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style 
 
   return (
     <div className="seen-reactions-layer" style={style}>
-      <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
-      <section aria-label="Wall note reactions" aria-modal="true" className="seen-reactors-sheet" role="dialog">
+      <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={onClose} type="button" />
+      <section aria-label={__msg("fanWeb.wallNoteReactions")} aria-modal="true" className="seen-reactors-sheet" role="dialog">
         <span aria-hidden="true" className="seen-reactors-handle" />
-        <header className="seen-reactors-header"><h2>Reactions</h2><span>{formatCount(query.data?.total || 0)}</span></header>
-        <div aria-label="Reaction filters" className="seen-reactors-tabs" role="tablist">
-          <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction("")} role="tab" type="button">All</button>
+        <header className="seen-reactors-header"><h2>{__msg("fanWeb.reactions")}</h2><span>{formatCount(query.data?.total || 0)}</span></header>
+        <div aria-label={__msg("fanWeb.reactionFilters")} className="seen-reactors-tabs" role="tablist">
+          <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction("")} role="tab" type="button">{__msg("fanWeb.all")}</button>
           {reactionTabs.map((item) => <button aria-selected={activeReaction === item.key} className={activeReaction === item.key ? "is-active" : ""} key={item.key} onClick={() => setActiveReaction(item.key)} role="tab" type="button"><span aria-hidden="true">{item.icon}</span>{formatCount(counts[item.key])}</button>)}
         </div>
         <div className="seen-reactors-list">
-          {query.isLoading ? <p className="seen-reactors-state">Loading reactions...</p> : null}
-          {query.isError ? <div className="seen-reactors-state"><p>Could not load reactions</p><button onClick={() => query.refetch()} type="button">Retry</button></div> : null}
+          {query.isLoading ? <p className="seen-reactors-state">{__msg("fanWeb.loadingReactions")}</p> : null}
+          {query.isError ? <div className="seen-reactors-state"><p>{__msg("fanWeb.couldNotLoadReactions")}</p><button onClick={() => query.refetch()} type="button">{__msg("activity.retry")}</button></div> : null}
           {!query.isLoading && !query.isError ? reactors.map((reactor) => {
             const isCurrentUser = String(reactor.user?.id || "") === String(currentUserId || "");
-            const name = isCurrentUser ? "You" : reactor.user?.name || reactor.user?.username || "Atseen user";
+            const name = isCurrentUser ? __msg("fanWeb.you") : reactor.user?.name || reactor.user?.username || __msg("fanWeb.atseenUser");
             const meta = reactionDisplayFor(reactor.reaction);
             return <Link className="seen-reactor-row" key={reactor.id} onClick={onClose} to={reactor.user?.username ? `/profile/${encodeURIComponent(reactor.user.username)}` : "/profile"}>
-              <FanAvatar alt={`${name} avatar`} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatar} />
-              <span className="seen-reactor-copy"><strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>{reactor.user?.username ? <small>@{reactor.user.username}</small> : null}</span>
-              <span aria-label={meta?.label || "Reaction"} className="seen-reactor-emoji">{meta?.icon || "🤝"}</span>
+              <FanAvatar alt={__msg("fan.avatar", { value0: name })} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatar} />
+              <span className="seen-reactor-copy"><strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>{reactor.user?.username ? <small dir="auto">@{reactor.user.username}</small> : null}</span>
+              <span aria-label={meta?.label || __msg("fanWeb.reaction")} className="seen-reactor-emoji">{meta?.icon || "🤝"}</span>
             </Link>;
           }) : null}
-          {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
+          {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">{__msg("fanWeb.noReactionsYet")}</p> : null}
         </div>
-        <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button>
+        <button className="seen-reactors-add" onClick={onAddYours} type="button">{__msg("fanWeb.addYours")}</button>
       </section>
     </div>
   );
@@ -210,7 +216,7 @@ function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style 
 
 function normalizeFeedPost(post = {}) {
   const mockCreator = post.creatorId ? atseenCreators[post.creatorId] : null;
-  const author = post.author || post.creator || mockCreator || { name: "Creator", username: "creator" };
+  const author = post.author || post.creator || mockCreator || { name: __msg("discover.creator"), username: "creator" };
   const media = post.media?.length ? post.media : (post.images || []).map((url) => ({ id: url, type: "image", url }));
   const comments = post.comments?.length
     ? post.comments.map((comment) => ({
@@ -233,7 +239,7 @@ function normalizeFeedPost(post = {}) {
     author: {
       id: author.id || author._id || post.creatorId,
       avatar: author.avatar || "",
-      name: author.name || "Creator",
+      name: author.name || __msg("discover.creator"),
       username: author.username || "creator",
       verified: Boolean(author.verified || author.isVerified),
     },
@@ -282,6 +288,7 @@ function voiceStoryCopy(media = {}, fallback = "") {
 }
 
 function WallPostViewEye() {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className="home-feed-head-eye" fill="none" viewBox="0 0 16 10">
       <path d="M1 5c1.85-2.05 4.2-3.05 7-3.05s5.15 1 7 3.05c-1.85 2.05-4.2 3.05-7 3.05S2.85 7.05 1 5Z" />
@@ -291,6 +298,7 @@ function WallPostViewEye() {
 }
 
 function FeedPost({ post, profileMenu = false }) {
+  const { language: __uiLanguage } = __useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
@@ -344,7 +352,7 @@ function FeedPost({ post, profileMenu = false }) {
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
-  const headerName = ownsPost ? "You" : creator.name;
+  const headerName = ownsPost ? __msg("fanWeb.you") : creator.name;
   const closeLabels = wallCloseLabels(normalized.postType);
   const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (normalized.reactions?.length
@@ -376,7 +384,7 @@ function FeedPost({ post, profileMenu = false }) {
   const isVoiceOnlyPost = normalized.media?.length === 1 && firstMediaType === "audio";
   const voiceCopyForStory = useMemo(() => isVoiceOnlyPost ? voiceStoryCopy(firstMedia, normalized.text) : {}, [firstMedia, isVoiceOnlyPost, normalized.text]);
   const voiceTextForStory = voiceCopyForStory.originalTranscript || voiceCopyForStory.translationText || "";
-  const sharePayload = useMemo(() => ({
+  const sharePayload = useMemo(() => { void __uiLanguage; return ({
     author: {
       avatarUrl: creator.avatar,
       id: creator.id,
@@ -399,17 +407,17 @@ function FeedPost({ post, profileMenu = false }) {
         imageUrl: "",
         kind: "voice_note",
         originalTranscript: voiceCopyForStory.originalTranscript,
-        subtitle: "from my Wall - tap >",
+        subtitle: __msg("fanWeb.fromMyWallTap"),
         translationLabel: voiceCopyForStory.translationLabel,
         translationText: voiceCopyForStory.translationText,
-        title: voiceTextForStory || normalized.text || "Voice note",
+        title: voiceTextForStory || normalized.text || __msg("fanWeb.voiceNote"),
       },
     } : undefined,
     textPreview: normalized.text,
     title: normalized.context
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
-      : normalized.text.slice(0, 96) || "Home post",
-  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
+      : normalized.text.slice(0, 96) || __msg("fanWeb.homePost"),
+  }); }, [actionPostId, creator.avatar, creator.id, creator.name, creator.username, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory, __uiLanguage]);
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
@@ -529,16 +537,16 @@ function FeedPost({ post, profileMenu = false }) {
 
   const requireDatabasePost = () => {
     if (mongoIdPattern.test(String(actionPostId || ""))) return true;
-    showToast("This prototype post is not stored in the database yet.");
+    showToast(__msg("fanWeb.thisPrototypePostIsNotStoredInTheDatabase"));
     return false;
   };
 
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(postUrl);
-      showToast("Post link copied.");
+      showToast(__msg("fanWeb.postLinkCopied"));
     } catch {
-      showToast("Could not copy the link. Try again from your browser.");
+      showToast(__msg("fanWeb.couldNotCopyTheLinkTryAgainFromYour"));
     }
   };
 
@@ -555,7 +563,7 @@ function FeedPost({ post, profileMenu = false }) {
             syncSavedPost(savedPost);
             setShareOpen(false);
             setShareCaption("");
-            showToast("Removed from your profile.");
+            showToast(__msg("fanWeb.removedFromYourProfile"));
           },
         }
       );
@@ -577,7 +585,7 @@ function FeedPost({ post, profileMenu = false }) {
           syncSavedPost(savedPost);
           setShareOpen(false);
           setShareCaption("");
-          showToast("Shared to your profile.");
+          showToast(__msg("fanWeb.sharedToYourProfile"));
         },
       }
     );
@@ -586,7 +594,7 @@ function FeedPost({ post, profileMenu = false }) {
   const submitComment = () => {
     const trimmed = commentText.trim();
     if (!trimmed) {
-      showToast("Write one line first.");
+      showToast(__msg("fanWeb.writeOneLineFirst"));
       return;
     }
     if (commentMutation.isPending) return;
@@ -599,7 +607,7 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setCommentText("");
-          showToast("Comment posted.");
+          showToast(__msg("fanWeb.commentPosted"));
         },
       }
     );
@@ -614,7 +622,7 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setVoiceCommentOpen(false);
-          showToast("Voice comment posted.");
+          showToast(__msg("fanWeb.voiceCommentPosted"));
         },
       },
     );
@@ -659,7 +667,7 @@ function FeedPost({ post, profileMenu = false }) {
         onError: (error) => showToast(error?.response?.data?.message || "Post could not be hidden."),
         onSuccess: () => {
           void analyticsService.trackRecommendationSignal({ creatorId: creator.id, entityId: actionPostId, entityType: "feed_post", eventType: "NOT_INTERESTED", reason: "not_useful", topics: [normalized.context, normalized.location].filter(Boolean) });
-          showToast("Thanks. We will tune your feed.");
+          showToast(__msg("fanWeb.thanksWeWillTuneYourFeed"));
         },
       }
     );
@@ -671,7 +679,7 @@ function FeedPost({ post, profileMenu = false }) {
 
     blockMutation.mutate(actionPostId, {
       onError: (error) => showToast(error?.response?.data?.message || "Account could not be blocked."),
-      onSuccess: () => showToast(`${creator.name.split(" ")[0]} is blocked. They will not know.`),
+      onSuccess: () => showToast(__msg("fanWeb.isBlockedTheyWillNotKnow", { value0: creator.name.split(" ")[0] })),
     });
   };
 
@@ -685,7 +693,7 @@ function FeedPost({ post, profileMenu = false }) {
         onError: (error) => showToast(error?.response?.data?.message || "Report could not be submitted."),
         onSuccess: () => {
           setReportDone(true);
-          showToast("Report submitted.");
+          showToast(__msg("fanWeb.reportSubmitted"));
         },
       }
     );
@@ -699,7 +707,7 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: (savedPost) => {
           setResolvedAt(savedPost.resolvedAt || null);
           setMoreOpen(false);
-          showToast(savedPost.resolvedAt ? `${closeLabels.state}. Your post and replies stay visible.` : "Post reopened.");
+          showToast(savedPost.resolvedAt ? __msg("fanWeb.value0YourPostAndRepliesStayVisible", { value0: closeLabels.state }) : "Post reopened.");
         },
         onError: (error) => showToast(error?.response?.data?.message || "Could not update this request. Please try again."),
         onSettled: () => setMoreBusy(""),
@@ -724,7 +732,7 @@ function FeedPost({ post, profileMenu = false }) {
       setMoreOpen(false);
     } else if (action === "show-more") {
       saveReaction("useful");
-      showToast("Thanks. We will show you more notes like this.");
+      showToast(__msg("fanWeb.thanksWeWillShowYouMoreNotesLikeThis"));
       setMoreOpen(false);
     } else if (action === "hide") {
       hidePost();
@@ -737,10 +745,10 @@ function FeedPost({ post, profileMenu = false }) {
           queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
           queryClient.invalidateQueries({ queryKey: ["discover"] });
           queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-          showToast(`Unfollowed ${creator.name.split(" ")[0]}.`);
+          showToast(__msg("fanWeb.unfollowed", { value0: creator.name.split(" ")[0] }));
           setMoreOpen(false);
         })
-        .catch((error) => showToast(error?.response?.data?.message || "Could not unfollow this account."))
+        .catch((error) => showToast(error?.response?.data?.message || __msg("fanWeb.couldNotUnfollowThisAccount")))
         .finally(() => setMoreBusy(""));
     } else if (action === "report-spam") {
       reportPost("SPAM");
@@ -759,7 +767,7 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: () => {
           setMoreBusy("");
           setMoreOpen(false);
-          showToast("In archive \u2014 restore anytime", { variant: "archive", duration: 1600 });
+          showToast(__msg("fanWeb.inArchiveRestoreAnytime"), { variant: "archive", duration: 1600 });
         },
       });
     } else if (action === "block") {
@@ -793,7 +801,7 @@ function FeedPost({ post, profileMenu = false }) {
           <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
             <span className="font-bold text-atseen-text">{normalized.sharedBy.name || `@${normalized.sharedBy.username}`}</span>
-            <span>shared this &middot; {relativeTime(normalized.feedCreatedAt)}</span>
+            <span>{__msg("fanWeb.sharedThis")} {relativeTime(normalized.feedCreatedAt)}</span>
           </div>
         ) : null}
         {normalized.shareCaption ? (
@@ -811,11 +819,11 @@ function FeedPost({ post, profileMenu = false }) {
             </Link>
             <div className="home-feed-meta wall-note-meta"><WallPostTypeBadge closedLabel={resolvedAt ? closeLabels.state : normalized.isClosed ? normalized.closedReason === "ended" ? "Ended" : "Expired" : ""} rightNow={normalized.rightNow && !normalized.isClosed && !resolvedAt} postType={normalized.postType} context={normalized.context} /><span className="wall-note-age">&middot; {normalized.timestamp}</span>{normalized.location ? <span className="wall-note-place" title={normalized.location}>&middot; <FiMapPin aria-hidden="true" />{normalized.location.split(",")[0]}</span> : null}</div>
           </div>
-          <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
+          <span aria-label={__msg("fanWeb.views", { value0: formatCount(viewCount) })} className="home-feed-head-views" title={__msg("fanWeb.views_24be61")}>
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>
           <button
-            aria-label={`More actions for ${creator.name}'s post`}
+            aria-label={__msg("fanWeb.moreActionsForSPost", { value0: creator.name })}
             className="rounded-full p-1.5 text-atseen-dim transition hover:bg-atseen-surface-2 hover:text-white"
             onClick={() => setMoreOpen((current) => profileMenu ? !current : true)}
             type="button"
@@ -834,7 +842,7 @@ function FeedPost({ post, profileMenu = false }) {
         {normalized.media?.length ? (
           <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
             {normalized.media.map((mediaItem) => (
-              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
+              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} />
             ))}
           </div>
         ) : null}
@@ -844,7 +852,7 @@ function FeedPost({ post, profileMenu = false }) {
         <div className="home-feed-actions">
           <div className="relative">
             <button
-              aria-label={selectedReaction ? `Change ${selectedReaction.label} reaction` : "React to post"}
+              aria-label={selectedReaction ? __msg("fanWeb.changeReaction", { value0: selectedReaction.label }) : __msg("fanWeb.reactToPost")}
               className={`home-reaction-capsule ${selectedReaction ? "is-selected" : ""}`}
               disabled={reactionMutation.isPending}
               onClick={() => { if (!reactionHeldRef.current) openReactionPicker(); reactionHeldRef.current = false; }}
@@ -854,7 +862,7 @@ function FeedPost({ post, profileMenu = false }) {
               onPointerCancel={() => window.clearTimeout(reactionHoldRef.current)}
               onContextMenu={(event) => { event.preventDefault(); setReactionsSheetOpen(true); }}
               ref={reactionAnchorRef}
-              title="React"
+              title={__msg("admin.react")}
               type="button"
             >
               <span className="home-reaction-samples" aria-hidden="true">{visibleReactionSamples}</span>
@@ -862,55 +870,55 @@ function FeedPost({ post, profileMenu = false }) {
 
             </button>
           </div>
-          <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
-            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{normalized.topic === "Meet people" && !ownsPost && !normalized.isClosed && !resolvedAt ? <strong className="wall-join-label">I’m in</strong> : null}
+          <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title={__msg("admin.comment")} type="button">
+            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{normalized.topic === "Meet people" && !ownsPost && !normalized.isClosed && !resolvedAt ? <strong className="wall-join-label">{__msg("fanWeb.iMIn")}</strong> : null}
           </button>
-          <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
+          <button aria-label={shared ? __msg("fanWeb.removeRepost") : __msg("fanWeb.repost")} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title={__msg("fanWeb.repost")} type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
           </button>
           <button
-            aria-label={saved ? "Remove saved post" : "Save post"}
-            className={`home-feed-action-button ml-auto ${saved ? "is-selected" : ""}`}
+            aria-label={saved ? __msg("fanWeb.removeSavedPost") : __msg("fanWeb.savePost")}
+            className={`home-feed-action-button ms-auto ${saved ? "is-selected" : ""}`}
             disabled={saveMutation.isPending}
             onClick={toggleSave}
-            title={saved ? "Unsave" : "Save"}
+            title={saved ? __msg("fanWeb.unsave") : __msg("contentEntities.save_efc007")}
             type="button"
           >
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
-          <button aria-label="Send post" className="home-feed-action-button" onClick={openSendSheet} title="Send" type="button">
+          <button aria-label={__msg("fanWeb.sendPost")} className="home-feed-action-button" onClick={openSendSheet} title={__msg("fanWeb.send")} type="button">
             <FiSend aria-hidden="true" />
           </button>
         </div>
 
-        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={() => { setAllComments(true); setCommentsOpen(true); }} type="button">View all {commentCount} comments</button> : null}
+        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={() => { setAllComments(true); setCommentsOpen(true); }} type="button">{__msg("fanWeb.viewAll")} {commentCount} {__msg("fanWeb.comments")}</button> : null}
         {commentsOpen ? (
-          <section aria-label="Wall note comments" className="seen-comments-panel wall-comments-panel">
-            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {commentCount} comments</button> : null}
+          <section aria-label={__msg("fanWeb.wallNoteComments")} className="seen-comments-panel wall-comments-panel">
+            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">{__msg("fanWeb.viewAll")} {commentCount} {__msg("fanWeb.comments")}</button> : null}
             <div className="seen-comments-list">
               {(allComments ? comments : comments.slice(-2)).map((comment) => {
-                const commentCreator = comment.author || (comment.creatorId === "me" ? { name: "You" } : atseenCreators[comment.creatorId]) || { name: "Creator" };
+                const commentCreator = comment.author || (comment.creatorId === "me" ? { name: __msg("fanWeb.you") } : atseenCreators[comment.creatorId]) || { name: __msg("discover.creator") };
                 return (
                   <article key={comment.id}>
                     <FanAvatar alt="" name={commentCreator.name} size="h-6 w-6" src={commentCreator.avatar || commentCreator.avatarUrl} />
                     <div className="seen-comment-copy">
-                      <p>
+                      <p dir="auto">
                         <Link to={commentCreator.username ? `/profile/${encodeURIComponent(commentCreator.username)}` : "/wall"}>{commentCreator.name}</Link>
                         {comment.text}
                       </p>
-                      {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
+                      {comment.audio ? <VoiceMessageBubble audio={comment.audio} label={__msg("comments.voiceComment")} /> : null}
                     </div>
                   </article>
                 );
               })}
-              {!comments.length ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
+              {!comments.length ? <p className="seen-comments-empty">{__msg("fanWeb.beTheFirstToComment")}</p> : null}
             </div>
-            {normalized.isClosed || resolvedAt ? <p className="wall-replies-closed">Replies are closed. Existing comments stay visible.</p> : null}
+            {normalized.isClosed || resolvedAt ? <p className="wall-replies-closed">{__msg("fanWeb.repliesAreClosedExistingCommentsStayVisible")}</p> : null}
             <form onSubmit={(event) => { event.preventDefault(); if (!normalized.isClosed && !resolvedAt) submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input disabled={normalized.isClosed || Boolean(resolvedAt)} aria-label="Add a Wall note comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
-              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={normalized.isClosed || Boolean(resolvedAt) || commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
-              <button className="seen-comment-post" disabled={normalized.isClosed || Boolean(resolvedAt) || !commentText.trim() || commentMutation.isPending} type="submit">Post</button>
+              <input disabled={normalized.isClosed || Boolean(resolvedAt)} aria-label={__msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={__msg("fanWeb.addAComment")} value={commentText} />
+              <button aria-label={__msg("fanWeb.recordAVoiceComment")} className="seen-comment-mic" disabled={normalized.isClosed || Boolean(resolvedAt) || commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
+              <button className="seen-comment-post" disabled={normalized.isClosed || Boolean(resolvedAt) || !commentText.trim() || commentMutation.isPending} type="submit">{__msg("fanWeb.post")}</button>
             </form>
           </section>
         ) : null}
@@ -936,16 +944,16 @@ function FeedPost({ post, profileMenu = false }) {
       {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={(value) => { saveReaction(value); setReactionPickerOpen(false); }} options={postReactionOptions} selected={reaction} /> : null}
       {reactionPickerOpen && reactionExpanded ? (
         <div className="seen-reactions-layer" style={wallSheetPosition}>
-          <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
-          <section aria-label={`Choose a reaction for ${creator.name}'s post`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
+          <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
+          <section aria-label={__msg("fanWeb.chooseAReactionForSPost", { value0: creator.name })} aria-modal="true" className="seen-reaction-sheet" role="dialog">
             <span aria-hidden="true" className="seen-reaction-handle" />
-            <div aria-label="Choose a Wall note reaction" className="seen-reaction-grid" role="group">
+            <div aria-label={__msg("fanWeb.chooseAWallNoteReaction")} className="seen-reaction-grid" role="group">
               {postReactionOptions.map((item) => {
                 const count = reactionCountsByKey[item.key] || 0;
                 const selected = reaction === item.key;
                 return (
                   <button
-                    aria-label={`${selected ? "Remove" : "Send"} ${item.label} reaction`}
+                    aria-label={__msg("fanWeb.reaction_bfb553", { value0: selected ? __msg("profile.remove") : __msg("fanWeb.send"), value1: item.label })}
                     aria-pressed={selected}
                     className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"}
                     disabled={reactionMutation.isPending}
@@ -962,7 +970,7 @@ function FeedPost({ post, profileMenu = false }) {
                 );
               })}
             </div>
-            <p>One reaction — make it yours</p>
+            <p>{__msg("fanWeb.oneReactionMakeItYours")}</p>
           </section>
         </div>
       ) : null}
@@ -973,16 +981,15 @@ function FeedPost({ post, profileMenu = false }) {
           setShareOpen(false);
           setShareCaption("");
         }}
-        title="Share to profile"
+        title={__msg("fanWeb.shareToProfile")}
       >
-        <p className="text-sm leading-6 text-atseen-muted">Add your own note before this appears on your profile and in the Home feed.</p>
-        <label className="mt-4 block text-xs font-bold text-atseen-muted">
-          Caption <span className="font-normal">(optional)</span>
+        <p className="text-sm leading-6 text-atseen-muted">{__msg("fanWeb.addYourOwnNoteBeforeThisAppearsOnYour")}</p>
+        <label className="mt-4 block text-xs font-bold text-atseen-muted">{__msg("fanWeb.caption")}<span className="font-normal">{__msg("admin.optional")}</span>
           <textarea
             className="mt-2 min-h-28 w-full resize-y rounded-xl border border-atseen-line bg-atseen-bg p-3 text-sm text-white outline-none focus:border-atseen-blue"
             maxLength={500}
             onChange={(event) => setShareCaption(event.target.value)}
-            placeholder="Say something about this post..."
+            placeholder={__msg("fanWeb.saySomethingAboutThisPost")}
             value={shareCaption}
           />
         </label>
@@ -990,18 +997,18 @@ function FeedPost({ post, profileMenu = false }) {
           <div className="flex items-center gap-3 p-3">
             <FanAvatar name={creator.name} size="h-9 w-9" src={creator.avatar} />
             <div className="min-w-0">
-              <p className="flex items-center gap-1 truncate text-xs font-bold">{creator.name}{creator.verified ? <VerifiedBadge /> : null}</p>
-              <p className="text-[10px] text-atseen-muted">@{creator.username} · Original post</p>
+              <p dir="auto" className="flex items-center gap-1 truncate text-xs font-bold">{creator.name}{creator.verified ? <VerifiedBadge /> : null}</p>
+              <p dir="auto" className="text-[10px] text-atseen-muted">@{creator.username} {__msg("fanWeb.originalPost")}</p>
             </div>
           </div>
           <div className="border-t border-atseen-line p-3">
-            <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-white/90">{normalized.text}</p>
-            {normalized.media?.[0]?.url ? <img alt="Post preview" className="mt-3 max-h-52 w-full rounded-xl object-cover" src={normalized.media[0].url} /> : null}
+            <p dir="auto" className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-white/90">{normalized.text}</p>
+            {normalized.media?.[0]?.url ? <img alt={__msg("fanWeb.postPreview")} className="mt-3 max-h-52 w-full rounded-xl object-cover" src={normalized.media[0].url} /> : null}
           </div>
         </div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
-          <button className="rounded-xl border border-atseen-blue/40 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/posts/${actionPostId}`)}`)} type="button">Send in message</button>
-          <button className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text" onClick={copyLink} type="button">Copy Link</button>
+          <button className="rounded-xl border border-atseen-blue/40 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/posts/${actionPostId}`)}`)} type="button">{__msg("fanWeb.sendInMessage")}</button>
+          <button className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text" onClick={copyLink} type="button">{__msg("discover.copyLink")}</button>
           <button
             className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text"
             onClick={() => {
@@ -1009,11 +1016,9 @@ function FeedPost({ post, profileMenu = false }) {
               setShareCaption("");
             }}
             type="button"
-          >
-            Cancel
-          </button>
+          >{__msg("admin.cancel")}</button>
           <button className="rounded-xl bg-atseen-blue px-4 py-2 text-sm font-bold text-atseen-bg disabled:opacity-60" disabled={shareMutation.isPending} onClick={submitShare} type="button">
-            {shareMutation.isPending ? "Sharing..." : "Share"}
+            {shareMutation.isPending ? __msg("fanWeb.sharing") : __msg("admin.share")}
           </button>
         </div>
       </FanModal>
@@ -1026,27 +1031,27 @@ function FeedPost({ post, profileMenu = false }) {
         overlayClassName="home-post-more-overlay"
         overlayStyle={wallSheetPosition}
         portal
-        title={ownsPost ? "Your note" : "This note"}
+        title={ownsPost ? __msg("fanWeb.yourNote") : __msg("fanWeb.thisNote")}
       >
         <span className="home-post-more-handle" aria-hidden="true" />
-        <h2 className="home-post-more-title">{ownsPost ? "Your note" : "This note"}</h2>
+        <h2 className="home-post-more-title">{ownsPost ? __msg("fanWeb.yourNote") : __msg("fanWeb.thisNote")}</h2>
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
-              { key: "repost", label: "Repost to my profile", subtitle: "Your profile, your list — add as many as you like", icon: FiRepeat },
-              { key: "share", label: "Share", icon: FiSend },
-              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen post" : closeLabels.action, subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
-              { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
-              { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
+              { key: "story", label: __msg("activity.addToYourStory"), subtitle: __msg("fanWeb.asACardPeopleTapItAndLandOn"), icon: FiPlusCircle },
+              { key: "repost", label: __msg("fanWeb.repostToMyProfile"), subtitle: __msg("fanWeb.yourProfileYourListAddAsManyAsYou"), icon: FiRepeat },
+              { key: "share", label: __msg("admin.share"), icon: FiSend },
+              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? __msg("fanWeb.reopenPost") : closeLabels.action, subtitle: __msg("fanWeb.yourPostAndRepliesStayVisible"), icon: FiCheck }] : []),
+              { key: "archive", label: __msg("fanWeb.archive"), subtitle: __msg("fanWeb.offTheShowcaseStatsStay"), icon: FiArchive },
+              { key: "delete", label: __msg("fanWeb.deleteNote"), icon: FiTrash2, danger: true },
             ]
             : [
-              { key: "share", label: "Share", icon: FiSend },
-              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: ShowMoreEyeIcon },
-              { key: "hide", label: "Hide this note", icon: FiEyeOff },
+              { key: "share", label: __msg("admin.share"), icon: FiSend },
+              { key: "show-more", label: __msg("fanWeb.showMoreLikeThis"), subtitle: __msg("fanWeb.tunesYourFeed"), icon: ShowMoreEyeIcon },
+              { key: "hide", label: __msg("fanWeb.hideThisNote"), icon: FiEyeOff },
               { key: "unfollow", label: `Unfollow ${creator.name.split(" ")[0]}`, icon: FiUserMinus },
-              { key: "report-spam", label: "Report spam", subtitle: "Spam, misleading links or repeated promotions", icon: FiSlash, danger: true },
-              { key: "report", label: "Report", icon: FiFlag },
+              { key: "report-spam", label: __msg("fanWeb.reportSpam"), subtitle: __msg("fanWeb.spamMisleadingLinksOrRepeatedPromotions"), icon: FiSlash, danger: true },
+              { key: "report", label: __msg("discover.report"), icon: FiFlag },
               { key: "block", label: `Block ${creator.name.split(" ")[0]}`, icon: FiSlash, danger: true },
             ]).map(({ danger, icon: Icon, key, label, subtitle }) => (
             <button
@@ -1057,7 +1062,7 @@ function FeedPost({ post, profileMenu = false }) {
               type="button"
             >
               <Icon aria-hidden="true" />
-              <span><strong>{moreBusy === key ? "Please wait..." : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
+              <span><strong>{moreBusy === key ? __msg("fanWeb.pleaseWait") : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
             </button>
           ))}
         </div>
@@ -1084,16 +1089,16 @@ function FeedPost({ post, profileMenu = false }) {
         onClose={() => setStoryCreatorOpen(false)}
         onPublished={() => {
           setStoryCreatorOpen(false);
-          showToast("Note added to your story.");
+          showToast(__msg("fanWeb.noteAddedToYourStory"));
         }}
       />
 
       <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
 
-      <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Post">
-        <p className="text-sm leading-6 text-atseen-muted">This removes the post from Home and your public posts. This action cannot be undone.</p>
+      <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title={__msg("fanWeb.deletePost")}>
+        <p className="text-sm leading-6 text-atseen-muted">{__msg("fanWeb.thisRemovesThePostFromHomeAndYourPublic")}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setDeleteOpen(false)} type="button">Cancel</button>
+          <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setDeleteOpen(false)} type="button">{__msg("admin.cancel")}</button>
           <button
             className="rounded-xl bg-atseen-danger px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
             disabled={deleteMutation.isPending}
@@ -1102,21 +1107,21 @@ function FeedPost({ post, profileMenu = false }) {
                 onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
                 onSuccess: () => {
                   setDeleteOpen(false);
-                  showToast("Post deleted.");
+                  showToast(__msg("fanWeb.postDeleted"));
                 },
               });
             }}
             type="button"
           >
-            {deleteMutation.isPending ? "Deleting..." : "Delete Post"}
+            {deleteMutation.isPending ? __msg("fanWeb.deleting") : __msg("fanWeb.deletePost")}
           </button>
         </div>
       </FanModal>
 
-      <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? "Report received" : "Report post"}>
+      <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? __msg("fanWeb.reportReceived") : __msg("fanWeb.reportPost")}>
         {reportDone ? (
           <div className="text-center">
-            <p className="text-sm leading-6 text-atseen-muted">Our team reviews every report. You will not be revealed as the reporter.</p>
+            <p className="text-sm leading-6 text-atseen-muted">{__msg("fanWeb.ourTeamReviewsEveryReportYouWillNotBe")}</p>
             <button
               className="mt-5 rounded-xl border border-atseen-line px-5 py-3 text-sm font-bold text-atseen-text"
               onClick={() => {
@@ -1124,17 +1129,15 @@ function FeedPost({ post, profileMenu = false }) {
                 setReportDone(false);
               }}
               type="button"
-            >
-              Done
-            </button>
+            >{__msg("comments.done")}</button>
           </div>
         ) : (
           <div>
-            <p className="text-xs text-atseen-muted">Why are you reporting this?</p>
+            <p className="text-xs text-atseen-muted">{__msg("fanWeb.whyAreYouReportingThis")}</p>
             <div className="mt-2 divide-y divide-white/[0.05]">
               {atseenReportReasons.map((reason) => (
                 <button
-                  className="block w-full px-1 py-3 text-left text-sm font-semibold text-atseen-text transition hover:text-atseen-blue"
+                  className="block w-full px-1 py-3 text-start text-sm font-semibold text-atseen-text transition hover:text-atseen-blue"
                   key={reason}
                   onClick={() => reportPost(reason)}
                   disabled={reportMutation.isPending}

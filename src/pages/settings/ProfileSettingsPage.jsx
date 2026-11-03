@@ -1,3 +1,9 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import ProfileLanguagesField from "../../components/profile/ProfileLanguagesField";
 import "../../styles/profileCategory.css";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -85,6 +91,7 @@ function displayNameFrom(form) {
 }
 
 function Field({ className = "", disabled = false, label, name, onChange, placeholder = "", type = "text", value }) {
+  __useUiLanguage();
   return (
     <label className={`edit-profile-field ${className}`}>
       <span>{label}</span>
@@ -94,22 +101,25 @@ function Field({ className = "", disabled = false, label, name, onChange, placeh
 }
 
 function UsernameField({ onChange, status, value }) {
+  __useUiLanguage();
   const valid = status.state === "available" || status.state === "current";
   return <label className="edit-profile-field edit-profile-field-wide">
-    <span>Username</span>
+    <span>{__msg("auth.username")}</span>
     <span className={`edit-profile-username-input ${status.state ? `is-${status.state}` : ""}`}>
       <b aria-hidden="true">@</b>
-      <input aria-describedby="username-status" autoCapitalize="none" autoCorrect="off" maxLength={30} name="username" onChange={(event) => onChange({ target: { name: "username", value: event.target.value.replace(/^@/, "").toLowerCase() } })} placeholder="your_username" spellCheck="false" value={value || ""} />
+      <input aria-describedby="username-status" autoCapitalize="none" autoCorrect="off" maxLength={30} name="username" onChange={(event) => onChange({ target: { name: "username", value: event.target.value.replace(/^@/, "").toLowerCase() } })} placeholder={__msg("settings.yourUsername")} spellCheck="false" value={value || ""} />
     </span>
     <small className={`edit-profile-username-status ${valid ? "is-valid" : status.state === "checking" ? "is-checking" : "is-invalid"}`} id="username-status" role="status">{status.message}</small>
   </label>;
 }
 
 function BioField({ onChange, value }) {
-  return <label className="edit-profile-field edit-profile-field-wide"><span>Bio</span><textarea maxLength={120} name="bio" onChange={onChange} value={value || ""} /><small className="edit-profile-help">Max 120 — shown right under your name</small></label>;
+  __useUiLanguage();
+  return <label className="edit-profile-field edit-profile-field-wide"><span>{__msg("settings.bio")}</span><textarea maxLength={120} name="bio" onChange={onChange} value={value || ""} /><small className="edit-profile-help">{__msg("settings.max120ShownRightUnderYourName")}</small></label>;
 }
 
 function PhotoRow({ disabled, fileRef, label, onChange, src, subtitle }) {
+  __useUiLanguage();
   return (
     <div className="edit-profile-photo-row">
       <FanAvatar name={label} size="h-[56px] w-[56px]" src={resolveMediaUrl(src)} />
@@ -118,19 +128,20 @@ function PhotoRow({ disabled, fileRef, label, onChange, src, subtitle }) {
         {subtitle ? <small>{subtitle}</small> : null}
       </span>
       <input accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={disabled} onChange={onChange} ref={fileRef} type="file" />
-      <button className="edit-profile-pill-button" disabled={disabled} onClick={() => fileRef.current?.click()} type="button">{src ? "Change" : "Add"}</button>
+      <button className="edit-profile-pill-button" disabled={disabled} onClick={() => fileRef.current?.click()} type="button">{src ? __msg("creator.change") : __msg("publication.add")}</button>
     </div>
   );
 }
 
 function SettingsRow({ subtitle, title, to }) {
+  __useUiLanguage();
   return (
     <Link className="edit-profile-settings-row" to={to}>
       <span>
         <b>{title}</b>
         {subtitle ? <small>{subtitle}</small> : null}
       </span>
-      <FiChevronRight />
+      <FiChevronRight data-ui-directional="true" />
     </Link>
   );
 }
@@ -140,6 +151,7 @@ function Segmented({ label, onChange, options = [
     ["followers", "Followers"],
     ["only_me", "Only me"],
   ], value }) {
+  __useUiLanguage();
   return (
     <div className="edit-profile-privacy-control">
       <p>{label}</p>
@@ -153,16 +165,17 @@ function Segmented({ label, onChange, options = [
 }
 
 const notificationRows = [
-  ["reactions", "Support on your notes"],
-  ["comments", "Comments & replies"],
-  ["followers", "New followers"],
-  ["messages", "Messages"],
-  ["directAccess", "Direct Access requests"],
-  ["gifts", "Gifts received"],
-  ["email", "Weekly digest"],
+  __uiTuple(["reactions", { __uiMessage: "settings.supportOnYourNotes" }]),
+  __uiTuple(["comments", { __uiMessage: "settings.commentsReplies" }]),
+  __uiTuple(["followers", { __uiMessage: "settings.newFollowers" }]),
+  __uiTuple(["messages", { __uiMessage: "share.messages" }]),
+  __uiTuple(["directAccess", { __uiMessage: "settings.directAccessRequests" }]),
+  __uiTuple(["gifts", { __uiMessage: "settings.giftsReceived" }]),
+  __uiTuple(["email", { __uiMessage: "settings.weeklyDigest" }]),
 ];
 
 function NotificationSheet({ anchorRef, isOpen, onClose }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState({});
   const [anchorBounds, setAnchorBounds] = useState(null);
@@ -182,7 +195,7 @@ function NotificationSheet({ anchorRef, isOpen, onClose }) {
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: ["settings", "notifications"] });
-      setError("Unable to save notification settings. Please try again.");
+      setError(__msg("settings.unableToSaveNotificationSettingsPleaseTryAgain"));
     },
   });
 
@@ -218,20 +231,21 @@ function NotificationSheet({ anchorRef, isOpen, onClose }) {
   };
 
   return <div aria-labelledby="profile-notifications-title" aria-modal="true" className="profile-notification-layer settings-notification-layer" role="dialog" style={anchorBounds ? { "--settings-notification-left": `${anchorBounds.left}px`, "--settings-notification-width": `${anchorBounds.width}px` } : undefined}>
-    <button aria-label="Close notifications" className="profile-notification-dim" onClick={onClose} type="button" />
+    <button aria-label={__msg("settings.closeNotifications")} className="profile-notification-dim" onClick={onClose} type="button" />
     <section className="profile-notification-sheet settings-notification-sheet edit-profile-notification-sheet">
       <span aria-hidden="true" className="profile-notification-grab" />
-      <h2 id="profile-notifications-title">Notifications</h2>
+      <h2 id="profile-notifications-title">{__msg("settings.notifications")}</h2>
       {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : <div className="profile-notification-list">
         {notificationRows.map(([key, title]) => <button aria-checked={preferences[key] !== false} disabled={mutation.isPending} key={key} onClick={() => toggle(key)} role="switch" type="button"><span><b>{title}</b></span><i aria-hidden="true" className={preferences[key] !== false ? "is-on" : ""}><em /></i></button>)}
       </div>}
-      {query.isError ? <p className="profile-notification-error">Unable to load notification settings.</p> : null}
-      {error ? <p className="profile-notification-error">{error}</p> : null}
+      {query.isError ? <p className="profile-notification-error">{__msg("settings.unableToLoadNotificationSettings")}</p> : null}
+      {error ? <p className="profile-notification-error">{__systemMessage(error)}</p> : null}
     </section>
   </div>;
 }
 
-function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
+export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [anchorBounds, setAnchorBounds] = useState(null);
@@ -246,7 +260,7 @@ function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: ["settings", "gifts"] });
-      setError("Unable to update gifts. Please try again.");
+      setError(__msg("settings.unableToUpdateGiftsPleaseTryAgain"));
     },
   });
   useEffect(() => {
@@ -282,19 +296,20 @@ function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
 
   return (
     <div aria-labelledby="gift-settings-title" aria-modal="true" className="profile-notification-layer settings-notification-layer" role="dialog" style={anchorBounds ? { "--settings-notification-left": `${anchorBounds.left}px`, "--settings-notification-width": `${anchorBounds.width}px` } : undefined}>
-      <button aria-label="Close gift settings" className="profile-notification-dim" disabled={mutation.isPending} onClick={onClose} type="button" />
+      <button aria-label={__msg("settings.closeGiftSettings")} className="profile-notification-dim" disabled={mutation.isPending} onClick={onClose} type="button" />
       <section className="profile-notification-sheet settings-notification-sheet gift-settings-sheet">
         <span aria-hidden="true" className="profile-notification-grab" />
-        <h2 className="text-[18px] font-black text-white" id="gift-settings-title">Gifts</h2>
-        <p className="mt-1 text-[11px] text-white/45">What fans can send you — coins go to your balance</p>
-        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">Unable to load gift settings.</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-left disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted">✦{Number(gift.stars).toLocaleString()}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
-        {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{error}</p> : null}
+        <h2 className="text-[18px] font-black text-white" id="gift-settings-title">{__msg("creator.gifts")}</h2>
+        <p className="mt-1 text-[11px] text-white/45">{__msg("settings.whatFansCanSendYouCoinsGoToYour")}</p>
+        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-start disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b dir="auto" className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted">✦{Number(gift.stars).toLocaleString(__uiLocale())}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
+        {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{__systemMessage(error)}</p> : null}
       </section>
     </div>
   );
 }
 
 function ProfileSettingsPage() {
+  const { language: __uiLanguage } = __useUiLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const statusContext = useOutletContext();
@@ -367,22 +382,22 @@ function ProfileSettingsPage() {
     const username = form.username.trim().toLowerCase();
     const currentUsername = String(account.username || "").toLowerCase();
     if (!username) {
-      setUsernameStatus({ message: "Username is required.", state: "invalid" });
+      setUsernameStatus({ message: __msg("settings.usernameIsRequired"), state: "invalid" });
       return undefined;
     }
     if (!/^[a-z0-9_.]+$/.test(username)) {
-      setUsernameStatus({ message: "Use only letters, numbers, underscores, and periods.", state: "invalid" });
+      setUsernameStatus({ message: __msg("settings.useOnlyLettersNumbersUnderscoresAndPeriods"), state: "invalid" });
       return undefined;
     }
     if (["admin", "administrator", "support", "api", "login", "register", "settings", "dashboard", "creator", "creators", "user", "users", "onlyme"].includes(username)) {
-      setUsernameStatus({ message: "This username is reserved.", state: "invalid" });
+      setUsernameStatus({ message: __msg("settings.thisUsernameIsReserved"), state: "invalid" });
       return undefined;
     }
     if (username === currentUsername) {
-      setUsernameStatus({ message: "This is your current username.", state: "current" });
+      setUsernameStatus({ message: __msg("settings.thisIsYourCurrentUsername"), state: "current" });
       return undefined;
     }
-    setUsernameStatus({ message: "Checking availability…", state: "checking" });
+    setUsernameStatus({ message: __msg("settings.checkingAvailability"), state: "checking" });
     let active = true;
     const timer = window.setTimeout(async () => {
       try {
@@ -390,11 +405,11 @@ function ProfileSettingsPage() {
         if (!active) return;
         const available = Boolean(response.data?.data?.available);
         setUsernameStatus(available
-          ? { message: `@${username} is available.`, state: "available" }
-          : { message: `@${username} is already taken.`, state: "taken" });
+          ? { message: __msg("settings.value0IsAvailable", { value0: username }), state: "available" }
+          : { message: __msg("settings.value0IsAlreadyTaken", { value0: username }), state: "taken" });
       } catch (requestError) {
         if (!active) return;
-        setUsernameStatus({ message: requestError.response?.data?.message || "Could not check this username.", state: "invalid" });
+        setUsernameStatus({ message: requestError.response?.data?.message || __msg("settings.couldNotCheckThisUsername"), state: "invalid" });
       }
     }, 400);
     return () => {
@@ -403,27 +418,27 @@ function ProfileSettingsPage() {
     };
   }, [account.username, form.username]);
 
-  const directSummary = useMemo(() => {
-    if (role !== "creator") return "Available in Messages";
+  const directSummary = useMemo(() => { void __uiLanguage; 
+    if (role !== "creator") return __msg("settings.availableInMessages");
     const parts = [];
-    if (profile.directAccessEnabled !== false) parts.push("On");
+    if (profile.directAccessEnabled !== false) parts.push(__msg("fanWeb.on"));
     if (profile.directAccessPriceStars) parts.push(`messages ${profile.directAccessPriceStars}`);
     if (profile.directCallEnabled) parts.push(`calls ${profile.directCallPriceStars || 500} / ${profile.directCallDurationMinutes || 5} min`);
-    return parts.length ? parts.join(" - ") : "Off";
-  }, [profile.directAccessEnabled, profile.directAccessPriceStars, profile.directCallDurationMinutes, profile.directCallEnabled, profile.directCallPriceStars, role]);
+    return parts.length ? parts.join(" - ") : __msg("fanWeb.off");
+  }, [profile.directAccessEnabled, profile.directAccessPriceStars, profile.directCallDurationMinutes, profile.directCallEnabled, profile.directCallPriceStars, role, __uiLanguage]);
 
-  const giftSummary = useMemo(() => {
+  const giftSummary = useMemo(() => { void __uiLanguage; 
     const enabled = (giftSettingsQuery.data?.gifts || []).filter((gift) => gift.enabled);
-    if (!giftSettingsQuery.data) return "Choose accepted gifts";
-    if (!enabled.length) return "All gifts off";
-    if (enabled.length === giftSettingsQuery.data.gifts.length) return "All gifts on";
+    if (!giftSettingsQuery.data) return __msg("settings.chooseAcceptedGifts");
+    if (!enabled.length) return __msg("settings.allGiftsOff");
+    if (enabled.length === giftSettingsQuery.data.gifts.length) return __msg("settings.allGiftsOn");
     return enabled.slice(0, 3).map((gift) => gift.name).join(" - ") + (enabled.length > 3 ? ` +${enabled.length - 3}` : "");
-  }, [giftSettingsQuery.data]);
+  }, [giftSettingsQuery.data, __uiLanguage]);
   const notificationSummary = [
-    form.notificationPreferences.directAccess ? "Support" : "",
-    form.notificationPreferences.inApp ? "Comments" : "",
-    form.notificationPreferences.email ? "Messages" : "",
-  ].filter(Boolean).join(" - ") || "Quiet";
+    form.notificationPreferences.directAccess ? __msg("fanWeb.support") : "",
+    form.notificationPreferences.inApp ? __msg("admin.comments") : "",
+    form.notificationPreferences.email ? __msg("share.messages") : "",
+  ].filter(Boolean).join(" - ") || __msg("fanWeb.quiet");
 
   const updateField = ({ target }) => {
     setDirty(true);
@@ -446,9 +461,9 @@ function ProfileSettingsPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const displayName = displayNameFrom(form);
-      if (!displayName) throw new Error("First name is required.");
+      if (!displayName) throw new Error(__msg("settings.firstNameIsRequired"));
       const socialLinks = [
-        ...(form.website.trim() ? [{ platform: "Website", url: form.website.trim() }] : []),
+        ...(form.website.trim() ? [{ platform: __msg("settings.website"), url: form.website.trim() }] : []),
         ...(profile.socialLinks || []).slice(1),
       ];
       const [city = "", ...countryParts] = form.locationText.split(",").map((part) => part.trim()).filter(Boolean);
@@ -510,8 +525,8 @@ function ProfileSettingsPage() {
       setForm(profileToForm(data, privacy));
       setDirty(false);
       setError("");
-      setMessage("Profile saved.");
-      showToast("Profile updated ✓", { placement: "profile" });
+      setMessage(__msg("settings.profileSaved"));
+      showToast(__msg("settings.profileUpdated"), { placement: "profile" });
       navigate(backTarget, { replace: true, state: { restoreScroll: true } });
     },
     onError: (requestError) => {
@@ -519,7 +534,7 @@ function ProfileSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["settings", "privacy"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       setMessage("");
-      setError(requestError.response?.data?.message || requestError.message || "Unable to save profile.");
+      setError(requestError.response?.data?.message || requestError.message || __msg("settings.unableToSaveProfile"));
       settingsMainRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
     },
   });
@@ -548,12 +563,12 @@ function ProfileSettingsPage() {
 
   function handleProfileMutationError(requestError) {
     setMessage("");
-    setError(requestError.response?.data?.message || "Image update failed.");
+    setError(requestError.response?.data?.message || __msg("settings.imageUpdateFailed"));
   }
 
   const avatarMutation = useMutation({
     mutationFn: profileService.uploadAvatar,
-    onSuccess: handleProfileMutationSuccess("Profile photo updated."),
+    onSuccess: handleProfileMutationSuccess(__msg("settings.profilePhotoUpdated")),
     onError: handleProfileMutationError,
   });
   const uploading = avatarMutation.isPending;
@@ -593,8 +608,8 @@ function ProfileSettingsPage() {
   if (profileQuery.isError || privacyQuery.isError) {
     return (
       <div className="edit-profile-page">
-        <button className="edit-profile-back" onClick={() => navigate(backTarget, { state: { restoreScroll: true } })} type="button"><FiChevronLeft /></button>
-        <p className="edit-profile-error">Unable to load profile settings.</p>
+        <button className="edit-profile-back" onClick={() => navigate(backTarget, { state: { restoreScroll: true } })} type="button"><FiChevronLeft data-ui-directional="true" /></button>
+        <p className="edit-profile-error">{__msg("settings.unableToLoadProfileSettings")}</p>
       </div>
     );
   }
@@ -602,82 +617,82 @@ function ProfileSettingsPage() {
   return (
     <form className="edit-profile-page" onSubmit={submit} ref={settingsMainRef}>
       <header className="edit-profile-header">
-        <button aria-label={backTarget === "/settings" ? "Back to settings" : "Back to profile"} className="edit-profile-back" onClick={() => navigate(backTarget, { state: { restoreScroll: true } })} type="button"><FiChevronLeft /></button>
-        <h1>Edit Profile</h1>
+        <button aria-label={backTarget === "/settings" ? __msg("settings.backToSettings") : __msg("profile.backToProfile")} className="edit-profile-back" onClick={() => navigate(backTarget, { state: { restoreScroll: true } })} type="button"><FiChevronLeft data-ui-directional="true" /></button>
+        <h1>{__msg("fan.editProfile")}</h1>
       </header>
 
       <PhotoRow
         disabled={uploading || saveMutation.isPending}
         fileRef={avatarInput}
-        label="Profile photo"
+        label={__msg("profile.profilePhoto_33f385")}
         onChange={(event) => chooseImage("avatar", event)}
         src={profilePhoto}
-        subtitle="Square works best"
+        subtitle={__msg("settings.squareWorksBest")}
       />
       {cropImage ? <ProfileImageCropper kind={cropImage.kind} onCancel={closeCropper} onSave={uploadCroppedImage} saving={uploading} source={cropImage.url} /> : null}
 
       {message ? <p className="edit-profile-success" role="status">{message}</p> : null}
-      {error ? <p className="edit-profile-error" role="alert">{error}</p> : null}
+      {error ? <p className="edit-profile-error" role="alert">{__systemMessage(error)}</p> : null}
 
       <fieldset className="min-w-0" disabled={saveMutation.isPending || uploading}>
       <section className="edit-profile-fields">
-        <Field label="First name" name="firstName" onChange={updateField} value={form.firstName} />
-        <Field label="Last name" name="lastName" onChange={updateField} value={form.lastName} />
+        <Field label={__msg("settings.firstName")} name="firstName" onChange={updateField} value={form.firstName} />
+        <Field label={__msg("settings.lastName")} name="lastName" onChange={updateField} value={form.lastName} />
         <UsernameField onChange={updateField} status={usernameStatus} value={form.username} />
-        <p className="edit-profile-help edit-profile-field-wide">Your profile link is created automatically from your username - atseen.com/{form.username}</p>
+        <p dir="auto" className="edit-profile-help edit-profile-field-wide">{__msg("settings.yourProfileLinkIsCreatedAutomaticallyFromYourUsername")}{form.username}</p>
         <BioField onChange={updateField} value={form.bio} />
-        <Field label="Location" name="locationText" onChange={updateField} value={form.locationText} />
+        <Field label={__msg("fanWeb.location")} name="locationText" onChange={updateField} value={form.locationText} />
         <ProfileLanguagesField preferredLanguage={form.preferredLanguage} onChange={updateField} />
-        {role === "creator" ? <Field className="edit-profile-field-wide" label="Website" name="website" onChange={updateField} placeholder="One external link - site, Instagram, YouTube..." value={form.website} /> : null}
+        {role === "creator" ? <Field className="edit-profile-field-wide" label={__msg("settings.website")} name="website" onChange={updateField} placeholder={__msg("settings.oneExternalLinkSiteInstagramYoutube")} value={form.website} /> : null}
       </section>
 
       <section className="edit-profile-fields">
-        <h2 className="edit-profile-field-wide">Contact Options</h2>
-        <Field className="edit-profile-field-wide" label="Email" name="email" onChange={updateField} type="email" value={form.email} />
-        <Field label="Phone number" name="phoneNumber" onChange={updateField} value={form.phoneNumber} />
-        <Field label="WhatsApp" name="whatsapp" onChange={updateField} value={form.whatsapp} />
+        <h2 className="edit-profile-field-wide">{__msg("settings.contactOptions")}</h2>
+        <Field className="edit-profile-field-wide" label={__msg("auth.email")} name="email" onChange={updateField} type="email" value={form.email} />
+        <Field label={__msg("admin.phoneNumber")} name="phoneNumber" onChange={updateField} value={form.phoneNumber} />
+        <Field label={__msg("share.whatsapp")} name="whatsapp" onChange={updateField} value={form.whatsapp} />
       </section>
 
       <section className="edit-profile-settings-list">
-        <h2>Settings</h2>
+        <h2>{__msg("profile.settings")}</h2>
         <button className="edit-profile-settings-row" onClick={() => setStatusOpen(true)} type="button">
           <span>
-            <b>Status</b>
-            <small>{activeStatus?.label || "At seen"}</small>
+            <b>{__msg("financial.status")}</b>
+            <small>{activeStatus?.label || __msg("constants.atSeen")}</small>
           </span>
-          <FiChevronRight />
+          <FiChevronRight data-ui-directional="true" />
         </button>
-        <SettingsRow subtitle={directSummary} title="Direct Access settings" to="/settings/direct-access" />
+        <SettingsRow subtitle={directSummary} title={__msg("settings.directAccessSettings")} to="/settings/direct-access" />
         <button className="edit-profile-settings-row" onClick={() => setGiftSettingsOpen(true)} type="button">
-          <span><b>Gift settings</b><small>{giftSummary}</small></span><FiChevronRight />
+          <span><b>{__msg("settings.giftSettings")}</b><small>{giftSummary}</small></span><FiChevronRight data-ui-directional="true" />
         </button>
         <button className="edit-profile-settings-row" onClick={() => setNotificationsOpen(true)} type="button">
-          <span><b>Notifications</b><small>{notificationSummary}</small></span><FiChevronRight />
+          <span><b>{__msg("settings.notifications")}</b><small>{notificationSummary}</small></span><FiChevronRight data-ui-directional="true" />
         </button>
       </section>
 
       <section className="edit-profile-privacy">
-        <h2>Privacy</h2>
-        <Segmented label="Who can see your saved places?" onChange={setSavedVisibility} value={form.savedPlacesVisibility} />
-        <Segmented label="Show your 🍂 member badge on comments?" onChange={setMemberBadgeVisibility} options={[["everyone", "Everyone"], ["only_me", "Only me"]]} value={form.showMemberBadgeOnComments ? "everyone" : "only_me"} />
-        <p>Your member number is always private — only you see it</p>
+        <h2>{__msg("settings.privacy")}</h2>
+        <Segmented label={__msg("settings.whoCanSeeYourSavedPlaces")} onChange={setSavedVisibility} value={form.savedPlacesVisibility} />
+        <Segmented label={__msg("settings.showYourMemberBadgeOnComments")} onChange={setMemberBadgeVisibility} options={[["everyone", "Everyone"], ["only_me", "Only me"]]} value={form.showMemberBadgeOnComments ? "everyone" : "only_me"} />
+        <p>{__msg("settings.yourMemberNumberIsAlwaysPrivateOnlyYouSee")}</p>
       </section>
 
       <section className="edit-profile-verification">
-        <h2>Verification</h2>
-        <Link to={role === "creator" ? "/creator/verified" : "/settings"}><FiCheckCircle /><span><b>{account.isVerified ? "Verified ✓" : "Get verified"}</b><small>{account.isVerified ? "the badge shows next to your name" : "Learn about profile verification"}</small></span><FiChevronRight /></Link>
+        <h2>{__msg("social.verification")}</h2>
+        <Link to={role === "creator" ? "/creator/verified" : "/settings"}><FiCheckCircle /><span><b>{account.isVerified ? __msg("settings.verified") : __msg("verification.getVerified")}</b><small>{account.isVerified ? __msg("settings.theBadgeShowsNextToYourName") : __msg("settings.learnAboutProfileVerification")}</small></span><FiChevronRight data-ui-directional="true" /></Link>
       </section>
       <section className="edit-profile-privacy">
-        <Segmented label="Who can see your orbit?" value={form.orbitVisibility} onChange={(value) => {
+        <Segmented label={__msg("settings.whoCanSeeYourOrbit")} value={form.orbitVisibility} onChange={(value) => {
           setDirty(true);
           setForm((current) => ({ ...current, orbitVisibility: value }));
         }} />
-        <p>Your orbit only shows public ties. Messages and private signals never appear to others.</p>
+        <p>{__msg("settings.yourOrbitOnlyShowsPublicTiesMessagesAndPrivate")}</p>
       </section>
       </fieldset>
 
       <button className="edit-profile-save" disabled={saveMutation.isPending || uploading || !["available", "current"].includes(usernameStatus.state)} type="submit">
-        {saveMutation.isPending ? "Saving..." : "Save"}
+        {saveMutation.isPending ? __msg("admin.saving") : __msg("contentEntities.save_efc007")}
       </button>
 
       <StatusPicker

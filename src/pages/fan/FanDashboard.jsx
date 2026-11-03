@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FiCreditCard, FiLock, FiMail, FiMessageCircle, FiUsers } from "react-icons/fi";
@@ -30,6 +33,7 @@ function pluralize(count, singular, plural = `${singular}s`) {
 }
 
 function FanDashboard() {
+  __useUiLanguage();
   const { user, loading: authLoading } = useAuth();
   const dashboardQuery = useQuery({
     queryKey: ["fan", "dashboard"],
@@ -51,8 +55,8 @@ function FanDashboard() {
     <div className="space-y-5">
       <PageHeader
         eyebrow="Overview"
-        title={`Welcome back, ${displayName}`}
-        description="Manage your subscriptions, wallet, purchases, and creator interactions from one place."
+        title={__msg("fan.welcomeBack", { value0: displayName })}
+        description={__msg("fan.manageYourSubscriptionsWalletPurchasesAndCreatorInteractionsFrom")}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -63,7 +67,7 @@ function FanDashboard() {
           help={`${summary.activeSubscriptions || 0} ${pluralize(summary.activeSubscriptions, "creator")} currently supported.`}
           icon={FiUsers}
           loading={isLoading}
-          title="Active Subscriptions"
+          title={__msg("fan.activeSubscriptions")}
           to="/fan/subscriptions"
           value={summary.activeSubscriptions ?? 0}
         />
@@ -74,7 +78,7 @@ function FanDashboard() {
           help="Available balance from your wallet ledger."
           icon={FiCreditCard}
           loading={isLoading}
-          title="Star Balance"
+          title={__msg("fan.starBalance")}
           to="/fan/wallet"
           value={formatCoins(summary.coinBalance)}
         />
@@ -85,7 +89,7 @@ function FanDashboard() {
           help={`${summary.purchasedContentCount || 0} paid ${pluralize(summary.purchasedContentCount, "item")} available to you.`}
           icon={FiLock}
           loading={isLoading}
-          title="Purchased Content"
+          title={__msg("fan.purchasedContent")}
           to="/fan/purchases"
           value={summary.purchasedContentCount ?? 0}
         />
@@ -96,7 +100,7 @@ function FanDashboard() {
           help={`${summary.unreadMessages || 0} unread ${pluralize(summary.unreadMessages, "message")} from creators.`}
           icon={FiMail}
           loading={isLoading}
-          title="Unread Messages"
+          title={__msg("fan.unreadMessages")}
           to="/fan/messages"
           value={summary.unreadMessages ?? 0}
         />
@@ -109,20 +113,20 @@ function FanDashboard() {
         profile={profile}
       />
 
-      <SectionPanel title="Quick Actions" description="Jump into the fan workflows available in this build.">
+      <SectionPanel title={__msg("fan.quickActions")} description={__msg("fan.jumpIntoTheFanWorkflowsAvailableInThisBuild")}>
         {isLoading ? <ListSkeleton count={1} /> : <QuickActions capabilities={data?.capabilities} />}
         {!isLoading && !data?.capabilities?.coinPurchase ? (
           <div className="mt-3">
-            <DisabledActionNotice>Star purchasing will be available after the payment module is enabled.</DisabledActionNotice>
+            <DisabledActionNotice>{__msg("fan.starPurchasingWillBeAvailableAfterThePaymentModule")}</DisabledActionNotice>
           </div>
         ) : null}
       </SectionPanel>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <SectionPanel
-          action={<Link className={sectionLinkClass} to="/fan/subscriptions">View All Subscriptions</Link>}
-          description="Up to three recent active subscriptions."
-          title="Active Subscriptions"
+          action={<Link className={sectionLinkClass} to="/fan/subscriptions">{__msg("fan.viewAllSubscriptions")}</Link>}
+          description={__msg("fan.upToThreeRecentActiveSubscriptions")}
+          title={__msg("fan.activeSubscriptions")}
         >
           {isLoading ? <ListSkeleton /> : null}
           {hasError ? <DashboardErrorState onRetry={() => dashboardQuery.refetch()} /> : null}
@@ -135,10 +139,10 @@ function FanDashboard() {
           ) : null}
           {!isLoading && !hasError && !data?.subscriptions?.length ? (
             <DashboardEmptyState
-              message="You are not subscribed to any creators yet."
+              message={__msg("fan.youAreNotSubscribedToAnyCreatorsYet")}
               action={
                 <Link to="/">
-                  <Button type="button">Discover Creators</Button>
+                  <Button type="button">{__msg("fan.discoverCreators")}</Button>
                 </Link>
               }
             />
@@ -146,15 +150,15 @@ function FanDashboard() {
         </SectionPanel>
 
         <SectionPanel
-          action={<Link className={sectionLinkClass} to="/fan/wallet">View Full Wallet</Link>}
-          description="Current balance and recent wallet activity."
-          title="Wallet"
+          action={<Link className={sectionLinkClass} to="/fan/wallet">{__msg("fan.viewFullWallet")}</Link>}
+          description={__msg("fan.currentBalanceAndRecentWalletActivity")}
+          title={__msg("profile.wallet")}
         >
           {isLoading ? <ListSkeleton /> : null}
           {hasError ? <DashboardErrorState onRetry={() => dashboardQuery.refetch()} /> : null}
           {!isLoading && !hasError ? (
             <div className="mb-4 rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-sm text-brand-mist/60">Available balance</p>
+              <p className="text-sm text-brand-mist/60">{__msg("fan.availableBalance")}</p>
               <p className="mt-1 text-3xl font-black text-white">{formatCoins(walletBalance)}</p>
             </div>
           ) : null}
@@ -166,17 +170,17 @@ function FanDashboard() {
             </div>
           ) : null}
           {!isLoading && !hasError && !hasWalletTransactions && walletBalance === 0 ? (
-            <DashboardEmptyState icon={FiCreditCard} message="Your Star balance is currently empty." />
+            <DashboardEmptyState icon={FiCreditCard} message={__msg("fan.yourStarBalanceIsCurrentlyEmpty")} />
           ) : null}
           {!isLoading && !hasError && !hasWalletTransactions && walletBalance > 0 ? (
-            <DashboardEmptyState icon={FiCreditCard} message="No recent wallet activity." />
+            <DashboardEmptyState icon={FiCreditCard} message={__msg("fan.noRecentWalletActivity")} />
           ) : null}
         </SectionPanel>
 
         <SectionPanel
-          action={<Link className={sectionLinkClass} to="/fan/purchases">View All Purchased Content</Link>}
-          description="Recent paid content unlocked by this fan account."
-          title="Purchased Content"
+          action={<Link className={sectionLinkClass} to="/fan/purchases">{__msg("fan.viewAllPurchasedContent")}</Link>}
+          description={__msg("fan.recentPaidContentUnlockedByThisFanAccount")}
+          title={__msg("fan.purchasedContent")}
         >
           {isLoading ? <ListSkeleton /> : null}
           {hasError ? <DashboardErrorState onRetry={() => dashboardQuery.refetch()} /> : null}
@@ -188,14 +192,14 @@ function FanDashboard() {
             </div>
           ) : null}
           {!isLoading && !hasError && !data?.purchasedContent?.length ? (
-            <DashboardEmptyState icon={FiLock} message="You have not unlocked any paid content yet." />
+            <DashboardEmptyState icon={FiLock} message={__msg("fan.youHaveNotUnlockedAnyPaidContentYet")} />
           ) : null}
         </SectionPanel>
 
         <SectionPanel
-          action={<Link className={sectionLinkClass} to="/fan/messages">View All Messages</Link>}
-          description="Recent creator conversations."
-          title="Messages"
+          action={<Link className={sectionLinkClass} to="/fan/messages">{__msg("fan.viewAllMessages")}</Link>}
+          description={__msg("fan.recentCreatorConversations")}
+          title={__msg("share.messages")}
         >
           {isLoading ? <ListSkeleton /> : null}
           {hasError ? <DashboardErrorState onRetry={() => dashboardQuery.refetch()} /> : null}
@@ -207,15 +211,15 @@ function FanDashboard() {
             </div>
           ) : null}
           {!isLoading && !hasError && !data?.messages?.recentConversations?.length ? (
-            <DashboardEmptyState icon={FiMessageCircle} message="You do not have any conversations yet." />
+            <DashboardEmptyState icon={FiMessageCircle} message={__msg("fan.youDoNotHaveAnyConversationsYet")} />
           ) : null}
         </SectionPanel>
       </div>
 
       <SectionPanel
-        action={<Link className={sectionLinkClass} to="/fan/activity">View Recent Activity</Link>}
-        description="Latest real account events from subscriptions, wallet, messages, and notifications."
-        title="Recent Activity"
+        action={<Link className={sectionLinkClass} to="/fan/activity">{__msg("fan.viewRecentActivity")}</Link>}
+        description={__msg("fan.latestRealAccountEventsFromSubscriptionsWalletMessagesAnd")}
+        title={__msg("fan.recentActivity")}
       >
         {isLoading ? <ListSkeleton count={4} /> : null}
         {hasError ? <DashboardErrorState onRetry={() => dashboardQuery.refetch()} /> : null}
@@ -227,7 +231,7 @@ function FanDashboard() {
           </div>
         ) : null}
         {!isLoading && !hasError && !data?.recentActivity?.length ? (
-          <DashboardEmptyState message="No recent activity to show." />
+          <DashboardEmptyState message={__msg("fan.noRecentActivityToShow")} />
         ) : null}
       </SectionPanel>
     </div>

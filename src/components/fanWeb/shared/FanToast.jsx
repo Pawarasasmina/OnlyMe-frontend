@@ -1,9 +1,14 @@
+import { systemMessage as __systemMessage } from "../../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import "./ArchiveToast.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FanToastContext } from "./FanToastContext";
 import { GIFT_THANKS_OPEN_EVENT } from "./giftThanksEvent";
 
 export function FanToastProvider({ children }) {
+  __useUiLanguage();
   const [toast, setToast] = useState({ message: "", placement: "bottom" });
   const timeoutRef = useRef(null);
   const sequenceTimerRef = useRef(null);
@@ -27,14 +32,14 @@ export function FanToastProvider({ children }) {
 
   const showGiftSequence = useCallback((gift, recipient, onProfile) => {
     window.clearTimeout(sequenceTimerRef.current);
-    const firstName = String(recipient.name || recipient.displayName || "The creator").split(" ")[0];
+    const firstName = String(recipient.name || recipient.displayName || __msg("fanWeb.theCreator")).split(" ")[0];
     const avatar = recipient.avatar || recipient.avatarUrl;
-    showToast(`Your ${gift.name} is first on the shelf`, {
+    showToast(__msg("fanWeb.yourIsFirstOnTheShelf", { value0: gift.name }), {
       variant: "gift-shelf", title: `On ${firstName}\u2019s profile`, avatar,
-      giftImage: gift.imageUrl, action: "View", onAction: onProfile, duration: 4400,
+      giftImage: gift.imageUrl, action: __msg("verification.view"), onAction: onProfile, duration: 4400,
     });
     // Match the reference: celebration, shelf banner, then creator thanks at 12s.
-    const thanksMessage = "This means more than you think. Thank you.";
+    const thanksMessage = __msg("fanWeb.thisMeansMoreThanYouThinkThankYou");
     const openThanks = () => window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, {
       detail: {
         gift,
@@ -49,7 +54,7 @@ export function FanToastProvider({ children }) {
       },
     }));
     sequenceTimerRef.current = window.setTimeout(() => showToast(thanksMessage, {
-      variant: "gift-thanks", title: `${firstName} thanked you`, avatar,
+      variant: "gift-thanks", title: __msg("fanWeb.value0ThankedYou", { value0: firstName }), avatar,
       giftImage: gift.imageUrl, giftName: gift.name, onAction: openThanks, duration: 6000,
     }), 7800);
   }, [showToast]);
@@ -79,15 +84,15 @@ export function FanToastProvider({ children }) {
   return (
     <FanToastContext.Provider value={value}>
       {children}
-      {toast.variant === "archive" ? <div aria-live="polite" role="status" className={`fan-archive-toast ${toast.message ? "is-visible" : ""}`} style={{ left: thanksPosition.left, top: thanksPosition.top }}>{toast.message}</div> : toast.variant === "gift-thanks" ? <div
+      {toast.variant === "archive" ? <div aria-live="polite" role="status" className={`fan-archive-toast ${toast.message ? "is-visible" : ""}`} style={{ left: thanksPosition.left, top: thanksPosition.top }}>{__systemMessage(toast.message)}</div> : toast.variant === "gift-thanks" ? <div
         aria-live="polite"
         className={`fan-gift-thanks-toast ${toast.message ? "is-visible" : ""}`}
         role="status"
         style={thanksPosition}
       >
-        <button aria-label={toast.title} onClick={toast.onAction} tabIndex={toast.message ? 0 : -1} type="button">
+        <button aria-label={__systemMessage(toast.title)} onClick={toast.onAction} tabIndex={toast.message ? 0 : -1} type="button">
           <span className="fan-gift-thanks-avatar">{toast.avatar ? <img alt="" src={toast.avatar} /> : <span>{toast.title?.slice(0, 1)}</span>}</span>
-          <span className="fan-gift-thanks-copy"><strong>{toast.title}</strong><small>{"\u201c"}{toast.message}{"\u201d"}</small></span>
+          <span className="fan-gift-thanks-copy"><strong dir="auto">{__systemMessage(toast.title)}</strong><small>{"\u201c"}{__systemMessage(toast.message)}{"\u201d"}</small></span>
         </button>
       </div> : toast.variant === "gift-shelf" ? <div
         aria-live="polite"
@@ -99,8 +104,8 @@ export function FanToastProvider({ children }) {
           <img alt="" src={toast.avatar} />
           {toast.giftImage ? <img alt="" src={toast.giftImage} /> : null}
         </span>
-        <span className="fan-gift-shelf-copy"><strong>{toast.title}</strong><small>{toast.message}</small></span>
-        {toast.action ? <button onClick={toast.onAction} type="button">{toast.action}</button> : null}
+        <span className="fan-gift-shelf-copy"><strong dir="auto">{__systemMessage(toast.title)}</strong><small>{__systemMessage(toast.message)}</small></span>
+        {toast.action ? <button onClick={toast.onAction} type="button">{__systemMessage(toast.action)}</button> : null}
       </div> : <div
         aria-live="polite"
         className={`pointer-events-none fixed left-1/2 z-[60] max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full border border-atseen-line bg-[#161B24] px-5 py-3 text-center text-xs font-semibold text-atseen-text transition duration-200 ${
@@ -108,7 +113,7 @@ export function FanToastProvider({ children }) {
         }`}
         role="status"
       >
-        {toast.message}
+        {__systemMessage(toast.message)}
       </div>}
     </FanToastContext.Provider>
   );

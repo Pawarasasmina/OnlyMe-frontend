@@ -1,16 +1,20 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo } from "react";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import OrbitWorldBadge from "./OrbitWorldBadge";
 
 function OrbitNode({ featured = false, isNew = false, node, onOpen, position }) {
-  const name = node.name || node.username || "Creator";
+  __useUiLanguage();
+  const name = node.name || node.username || __msg("discover.creator");
   const firstName = name.split(" ")[0];
-  const badge = featured ? { emoji: "\u2726", label: "today" } : isNew ? { emoji: "\u2726", label: "new" } : node.worldBadge || node.worldBadges?.[0];
+  const badge = featured ? { emoji: "\u2726", label: __msg("orbit.today") } : isNew ? { emoji: "\u2726", label: __msg("orbit.new") } : node.worldBadge || node.worldBadges?.[0];
 
   return (
     <button
-      aria-label={`Meet ${name}. ${node.reason || node.reasonDetails?.detail || "Recommended for your Orbit"}.`}
+      aria-label={__msg("orbit.meet", { value0: name, value1: node.reason || node.reasonDetails?.detail || __msg("onboarding.recommendedForYourOrbit") })}
       className="absolute z-20 w-24 -translate-x-1/2 -translate-y-1/2 text-center transition duration-200 hover:scale-105 focus-visible:scale-105 motion-reduce:transition-none"
       onClick={() => onOpen(node)}
       style={{ left: `${position.x}%`, top: `${position.y}%` }}

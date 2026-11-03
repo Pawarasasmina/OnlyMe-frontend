@@ -1,9 +1,13 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import { FiTrash2, FiUploadCloud } from "react-icons/fi";
 import Button from "../common/Button";
 import { resolveMediaUrl } from "../../utils/media";
 
 function ImageUploader({ accept = "image/jpeg,image/png,image/webp", aspect = "square", disabled, label, onRemove, onUpload, value }) {
+  __useUiLanguage();
   const [preview, setPreview] = useState("");
   const imageUrl = preview || resolveMediaUrl(value);
   const frameClass =
@@ -45,9 +49,7 @@ function ImageUploader({ accept = "image/jpeg,image/png,image/webp", aspect = "s
           {imageUrl ? (
             <img alt="" className="h-full w-full object-cover" src={imageUrl} />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm text-brand-mist/45">
-              No image
-            </div>
+            <div className="flex h-full w-full items-center justify-center text-sm text-brand-mist/45">{__msg("profile.noImage")}</div>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -56,15 +58,11 @@ function ImageUploader({ accept = "image/jpeg,image/png,image/webp", aspect = "s
             className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
             htmlFor={inputId}
           >
-            <FiUploadCloud />
-            Upload
-          </label>
+            <FiUploadCloud />{__msg("profile.upload")}</label>
           {value ? (
             <Button disabled={disabled} onClick={onRemove} type="button" variant="ghost">
               <span className="inline-flex items-center gap-2">
-                <FiTrash2 />
-                Remove
-              </span>
+                <FiTrash2 />{__msg("profile.remove")}</span>
             </Button>
           ) : null}
         </div>

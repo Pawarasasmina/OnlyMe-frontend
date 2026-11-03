@@ -1,0 +1,12 @@
+{
+ "social.item": [
+  "{value0, plural, one {# item} other {# items}}",
+  "{value0, plural, zero {لا عناصر} one {عنصر واحد} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+  "{value0, plural, one {# элемент} few {# элемента} many {# элементов} other {# элемента}}",
+  "{value0, plural, one {# елемент} few {# елементи} many {# елементів} other {# елемента}}",
+  "{value0, plural, one {# elemento} other {# elementos}}",
+  "{value0, plural, one {# item} other {# itens}}",
+  "{value0, plural, one {# élément} other {# éléments}}",
+  "{value0, plural, one {# Element} other {# Elemente}}"
+ ]
+}

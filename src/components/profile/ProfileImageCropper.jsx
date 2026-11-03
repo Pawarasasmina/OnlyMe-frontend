@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 
@@ -6,18 +9,19 @@ function outputFileName(kind) {
 }
 
 export default function ProfileImageCropper({ kind, onCancel, onSave, saving, source }) {
+  __useUiLanguage();
   const isSeenCover = kind === "seen";
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
   const gestureRef = useRef({ pointers: new Map() });
   const config = {
-    avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: "profile photo", width: 800 },
-    cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: "cover", width: 1500 },
-    feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "feed image", width: 1080 },
-    seen: { aspect: "aspect-[4/5]", frame: "w-full rounded-2xl", height: 1350, label: "Seen cover", width: 1080 },
-    story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: "story image", width: 1080 },
-  }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: "image", width: 1080 };
+    avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: __msg("profile.profilePhoto"), width: 800 },
+    cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: __msg("profile.cover"), width: 1500 },
+    feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: __msg("profile.feedImage"), width: 1080 },
+    seen: { aspect: "aspect-[4/5]", frame: "w-full rounded-2xl", height: 1350, label: __msg("profile.seenCover"), width: 1080 },
+    story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: __msg("profile.storyImage"), width: 1080 },
+  }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: __msg("profile.image"), width: 1080 };
   const translateLimit = ((zoom - 1) / (2 * zoom)) * 100;
   const translateX = -(x / 100) * translateLimit;
   const translateY = -(y / 100) * translateLimit;
@@ -98,16 +102,16 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
 
   return (
     <div aria-modal="true" className={`profile-image-crop-layer ${isSeenCover ? "is-seen-cover" : ""}`} role="dialog">
-      <button aria-label="Close image editor" className="profile-image-crop-scrim" disabled={saving} onClick={onCancel} type="button" />
+      <button aria-label={__msg("profile.closeImageEditor")} className="profile-image-crop-scrim" disabled={saving} onClick={onCancel} type="button" />
       <section className="profile-image-crop-sheet">
         {isSeenCover ? <span aria-hidden="true" className="profile-image-crop-handle" /> : null}
         <div className="profile-image-crop-head">
-          <div><h2>{isSeenCover ? "Cover — exactly as in the feed" : `Adjust ${config.label}`}</h2><p>{isSeenCover ? "Move it with your fingers in any direction · two fingers to zoom" : "Zoom and reposition the image before uploading."}</p></div>
-          <button aria-label="Close image editor" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={saving} onClick={onCancel} type="button"><FiX /></button>
+          <div><h2>{isSeenCover ? __msg("profile.coverExactlyAsInTheFeed") : __msg("profile.adjust", { value0: config.label })}</h2><p>{isSeenCover ? __msg("profile.moveItWithYourFingersInAnyDirectionTwo") : __msg("profile.zoomAndRepositionTheImageBeforeUploading")}</p></div>
+          <button aria-label={__msg("profile.closeImageEditor")} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={saving} onClick={onCancel} type="button"><FiX /></button>
         </div>
 
         <div
-          aria-label="Crop preview. Drag to reposition and pinch with two fingers to zoom."
+          aria-label={__msg("profile.cropPreviewDragToRepositionAndPinchWithTwo")}
           className={`profile-image-crop-preview ${config.aspect} ${config.frame}`}
           onPointerCancel={endGesture}
           onPointerDown={beginGesture}
@@ -116,11 +120,11 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
           onWheel={zoomWithWheel}
           style={{ touchAction: "none" }}
         >
-          <img alt="Crop preview" className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
+          <img alt={__msg("profile.cropPreview")} className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
 
-        <p className="profile-image-crop-touch-hint">Drag to move · pinch with two fingers to zoom</p>
+        <p className="profile-image-crop-touch-hint">{__msg("profile.dragToMovePinchWithTwoFingersToZoom")}</p>
 
         <div className="profile-image-crop-controls">
           {[['Zoom', zoom, setZoom, 1, 3, 0.01], ['Left / right', x, setX, -100, 100, 1], ['Up / down', y, setY, -100, 100, 1]].map(([label, value, setter, min, max, step]) => (
@@ -128,7 +132,7 @@ export default function ProfileImageCropper({ kind, onCancel, onSave, saving, so
           ))}
         </div>
 
-        <div className="profile-image-crop-actions"><button className="profile-image-crop-cancel" disabled={saving} onClick={onCancel} type="button">Cancel</button><button className="profile-image-crop-save" disabled={saving} onClick={save} type="button">{saving ? "Uploading..." : isSeenCover ? "Done" : "Save image"}</button></div>
+        <div className="profile-image-crop-actions"><button className="profile-image-crop-cancel" disabled={saving} onClick={onCancel} type="button">{__msg("admin.cancel")}</button><button className="profile-image-crop-save" disabled={saving} onClick={save} type="button">{saving ? __msg("profile.uploading") : isSeenCover ? __msg("comments.done") : __msg("profile.saveImage")}</button></div>
       </section>
     </div>
   );

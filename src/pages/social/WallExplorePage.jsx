@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { WALL_NEEDS as NEEDS } from "../../data/wallNeeds";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +13,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { postService } from "../../services/postService";
 const TOPICS = ["meet_people", "work", "services", "housing", "places", "food", "travel", "kids_family", "community"];
 export default function WallExplorePage() {
+  __useUiLanguage();
   const [params] = useSearchParams();
   const filters = readWallFilters(params);
   const { user } = useAuth();
@@ -27,7 +31,7 @@ export default function WallExplorePage() {
   const topics = TOPICS.map(key => [key, WALL_FILTER_TOPICS.find(item => item.value === key).label, null, "topic"]);
   const grid = (items, compact = false) => <div className={`wall-explore-page-grid ${compact ? "is-topics" : ""}`}>{items.map(item => <WallNeedCard compact={compact} data={query.data} item={item} key={item[0]} onSelect={() => choose(item)} pending={query.isPending} selected={filters[item[3]] === item[0]} />)}</div>;
   return <section className="wall-explore-page" aria-labelledby="wall-explore-title">
-    <header><button aria-label="Back to Wall" onClick={() => navigate(backTo)} type="button"><FiChevronLeft aria-hidden="true" /></button><h1 id="wall-explore-title">Explore needs</h1></header>
-    {query.isError ? <div className="wall-explore-page-error" role="alert"><p>Could not load needs.</p><button onClick={() => query.refetch()} type="button">Retry</button></div> : <div className="wall-explore-page-content"><h2>What people post</h2>{grid(purposes)}<h2>Topics</h2>{grid(topics,true)}</div>}
+    <header><button aria-label={__msg("social.backToWall")} onClick={() => navigate(backTo)} type="button"><FiChevronLeft data-ui-directional="true" aria-hidden="true" /></button><h1 id="wall-explore-title">{__msg("fanWeb.exploreNeeds")}</h1></header>
+    {query.isError ? <div className="wall-explore-page-error" role="alert"><p>{__msg("social.couldNotLoadNeeds")}</p><button onClick={() => query.refetch()} type="button">{__msg("activity.retry")}</button></div> : <div className="wall-explore-page-content"><h2>{__msg("social.whatPeoplePost")}</h2>{grid(purposes)}<h2>{__msg("settings.topics")}</h2>{grid(topics,true)}</div>}
   </section>;
 }

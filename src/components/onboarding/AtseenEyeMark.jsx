@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 function AtseenEyeMark({ className = "h-28 w-44" }) {
+  __useUiLanguage();
   return (
     <div className={`relative ${className}`} aria-hidden="true">
       <div className="absolute inset-0 rounded-full bg-[#9CCBFF]/10 blur-2xl" />

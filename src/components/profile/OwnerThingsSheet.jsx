@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import BringFriendsFlow from "./BringFriendsFlow";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -15,16 +19,19 @@ import "./OwnerThingsSheet.css";
 import OwnerLibrary from "./OwnerLibrary";
 
 function WalletCoinIcon() {
+  __useUiLanguage();
   return <svg aria-hidden="true" fill="none" height="22" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24" width="22"><circle cx="12" cy="12" r="8.5" /><path d="M12 6v12m3-9c-1-2-6-2-6 1 0 3 6 1 6 4 0 3-5 3-6 1" /></svg>;
 }
 
 function QueryState({ query, empty, children }) {
-  if (query.isLoading) return <p className="owner-things-state">Loading…</p>;
-  if (query.isError) return <div className="owner-things-state"><p>Unable to load this right now.</p><button onClick={() => query.refetch()} type="button">Try again</button></div>;
+  __useUiLanguage();
+  if (query.isLoading) return <p className="owner-things-state">{__msg("financial.loading")}</p>;
+  if (query.isError) return <div className="owner-things-state"><p>{__msg("profile.unableToLoadThisRightNow")}</p><button onClick={() => query.refetch()} type="button">{__msg("discover.tryAgain")}</button></div>;
   return children || <p className="owner-things-state">{empty}</p>;
 }
 
 export default function OwnerThingsSheet({ isOpen, onClose, initialView = "menu" }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const [view, setView] = useState("menu");
   const [libraryFull, setLibraryFull] = useState(false);
@@ -42,7 +49,7 @@ export default function OwnerThingsSheet({ isOpen, onClose, initialView = "menu"
       return Number(publications.pagination?.total ?? publications.items?.length ?? 0)
         + Number(notes.pagination?.total ?? notes.items?.length ?? 0);
     },
-    enabled: isOpen && Boolean(user?.id),
+    enabled: isOpen && initialView !== "subscriptions" && Boolean(user?.id),
     retry: false,
   });
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then(response => response.data.data.wallet), enabled: isOpen, retry: false });
@@ -58,7 +65,7 @@ export default function OwnerThingsSheet({ isOpen, onClose, initialView = "menu"
       // Activity pages are cumulative: the last page contains all preceding rows.
       return (data.items || data.activity || []).filter(item => /gift.*thank|thank.*gift/i.test(item.type || ""));
     },
-    enabled: isOpen && Boolean(user?.id),
+    enabled: isOpen && initialView !== "subscriptions" && Boolean(user?.id),
     refetchInterval: isOpen ? 30000 : false,
     retry: false,
   });
@@ -86,27 +93,27 @@ export default function OwnerThingsSheet({ isOpen, onClose, initialView = "menu"
   }, [isOpen, onClose]);
   if (!isOpen) return null;
   const rows = [
-    { label: "Library", sub: "What you own and your Worlds", Icon: FiBookmark, action: () => setView("library"), filled: true },
-    { label: "Thanks", sub: thanks.isError ? "Count unavailable" : thanks.data?.length ? `${thanks.data.length} from creators` : thanks.isPending ? "Loading..." : "when creators thank you for gifts", Icon: FiHeart, action: () => setView("thanks") },
-    { label: "Archive", sub: archiveCount.isError ? "Count unavailable" : archiveCount.data > 0 ? `${archiveCount.data} ${archiveCount.data === 1 ? "item" : "items"}` : archiveCount.isPending ? "Loading…" : "hidden from your profile", Icon: FiArchive, to: "/archive" },
-    { label: "Wallet", sub: wallet.data ? `${Number(wallet.data.balance || 0).toLocaleString()} · $${Number(wallet.data.balanceUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "Coins & earnings", Icon: WalletCoinIcon, to: "/wallet" },
-    { label: "Bring friends", sub: "3 friends join \u2014 a gold ring on your photo", Icon: FiGift, isNew: !friendsSeen, action: () => { setView("friends"); setFriendsSeen(true); try { localStorage.setItem(`atseen:friends-opened:${user?.id}`, "1"); } catch { /* optional hint */ } } },
-    { label: "Settings", sub: "Account & privacy", Icon: FiSettings, to: "/settings" },
+    { label: __msg("profile.library"), sub: __msg("profile.whatYouOwnAndYourWorlds"), Icon: FiBookmark, action: () => setView("library"), filled: true },
+    { label: __msg("profile.thanks"), sub: thanks.isError ? __msg("fanWeb.countUnavailable") : thanks.data?.length ? __msg("profile.value0FromCreators", { value0: thanks.data.length }) : thanks.isPending ? __msg("admin.loading") : __msg("profile.whenCreatorsThankYouForGifts"), Icon: FiHeart, action: () => setView("thanks") },
+    { label: __msg("fanWeb.archive"), sub: archiveCount.isError ? __msg("fanWeb.countUnavailable") : archiveCount.data > 0 ? `${archiveCount.data} ${archiveCount.data === 1 ? "item" : "items"}` : archiveCount.isPending ? __msg("financial.loading") : "hidden from your profile", Icon: FiArchive, to: "/archive" },
+    { label: __msg("profile.wallet"), sub: wallet.data ? `${Number(wallet.data.balance || 0).toLocaleString(__uiLocale())} · $${Number(wallet.data.balanceUsd || 0).toLocaleString(__uiLocale(), { maximumFractionDigits: 2 })}` : __msg("profile.coinsEarnings"), Icon: WalletCoinIcon, to: "/wallet" },
+    { label: __msg("profile.bringFriends"), sub: __msg("profile.3FriendsJoinAGoldRingOnYour"), Icon: FiGift, isNew: !friendsSeen, action: () => { setView("friends"); setFriendsSeen(true); try { localStorage.setItem(`atseen:friends-opened:${user?.id}`, "1"); } catch { /* optional hint */ } } },
+    { label: __msg("profile.settings"), sub: __msg("profile.accountPrivacy"), Icon: FiSettings, to: "/settings" },
   ];
-  const title = { menu: "Your things", library: "Library", thanks: "Thanks", friends: "Bring friends" }[view];
+  const title = { menu: __msg("profile.yourThings"), library: __msg("profile.library"), thanks: __msg("profile.thanks"), friends: __msg("profile.bringFriends"), subscriptions: __msg("admin.subscriptions") }[view];
   return createPortal(<div className={`owner-things-layer ${view === "friends" ? "is-bring-friends" : ""}`} style={position}>
-    <button aria-label="Close your things" className="owner-things-dim" onClick={onClose} tabIndex={-1} type="button" />
+    <button aria-label={__msg("profile.closeYourThings")} className="owner-things-dim" onClick={onClose} tabIndex={-1} type="button" />
     <section aria-label={title} aria-modal="true" className={`owner-things-sheet ${libraryFull ? "library-full-screen" : ""}`} ref={sheetRef} role="dialog" tabIndex={-1}>
       <span className="owner-things-handle" />
-      {!["library", "friends"].includes(view) ? <header>{view !== "menu" ? <button aria-label="Back to your things" onClick={() => { setView("menu"); setLibraryFull(false); }} type="button"><FiArrowLeft /></button> : null}{view !== "library" ? <h2>{title}</h2> : null}</header> : null}
+      {!["library", "friends", "subscriptions"].includes(view) ? <header>{view !== "menu" ? <button aria-label={__msg("profile.backToYourThings")} onClick={() => { setView("menu"); setLibraryFull(false); }} type="button"><FiArrowLeft data-ui-directional="true" /></button> : null}{view !== "library" ? <h2>{title}</h2> : null}</header> : null}
       {view === "menu" ? <div>{rows.map(({ label, sub, Icon, to, action, isNew, filled }) => {
-        const content = <><span className={`owner-things-icon ${filled ? "is-filled" : ""}`}><Icon /></span><span className="owner-things-copy"><b>{label}{isNew ? <em>NEW</em> : null}</b><small>{sub}</small></span><FiChevronRight /></>;
+        const content = <><span className={`owner-things-icon ${filled ? "is-filled" : ""}`}><Icon /></span><span className="owner-things-copy"><b>{label}{isNew ? <em>{__msg("profile.new")}</em> : null}</b><small>{sub}</small></span><FiChevronRight data-ui-directional="true" /></>;
         return to ? <Link className="owner-things-row" key={label} onClick={onClose} to={to}>{content}</Link> : <button className="owner-things-row" key={label} onClick={action} type="button">{content}</button>;
       })}</div> : null}
-      {view === "library" ? <OwnerLibrary onClose={onClose} onFullScreen={setLibraryFull} userId={user?.id} wallet={wallet.data} /> : null}
+      {["library", "subscriptions"].includes(view) ? <OwnerLibrary subscriptionsOnly={view === "subscriptions"} onClose={onClose} onFullScreen={setLibraryFull} userId={user?.id} wallet={wallet.data} /> : null}
       {view === "thanks" ? <QueryState empty="When a creator thanks you for a gift, it stays here." query={thanks}>{thanks.data?.length ? thanks.data.map(item => {
         const actor = item.relatedCreator || item.actor || {};
-        return <button className="owner-things-row" key={item.id || item._id} onClick={() => { onClose(); window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, { detail: item })); }} type="button"><FanAvatar name={actor.name || actor.displayName || "Creator"} size="h-10 w-10" src={actor.avatarUrl || actor.avatar} /><span className="owner-things-copy"><b>{actor.name || actor.displayName || "Creator"}</b><small>{item.preview || item.message || item.title || "Thank you for your gift"}</small></span><FiChevronRight /></button>;
+        return <button className="owner-things-row" key={item.id || item._id} onClick={() => { onClose(); window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, { detail: item })); }} type="button"><FanAvatar name={actor.name || actor.displayName || "Creator"} size="h-10 w-10" src={actor.avatarUrl || actor.avatar} /><span className="owner-things-copy"><b>{actor.name || actor.displayName || __msg("discover.creator")}</b><small>{item.preview || item.message || item.title || __msg("profile.thankYouForYourGift")}</small></span><FiChevronRight data-ui-directional="true" /></button>;
       }) : null}</QueryState> : null}
       {view === "friends" ? <BringFriendsFlow user={user} onClose={onClose} onFullScreen={setLibraryFull} /> : null}
     </section>

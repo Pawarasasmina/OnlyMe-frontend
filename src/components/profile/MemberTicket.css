@@ -18,6 +18,6 @@
 .member-ticket-share { display:flex;align-items:center;justify-content:center;gap:9px;width:min(100%,375px);flex-shrink:0;margin-top:32px;padding:16px;border-radius:18px;background:#9ccbff;color:#0a0c0f;font-size:16px;font-weight:700; }
 .member-ticket-close { flex-shrink:0;padding:16px;color:rgba(255,255,255,.6);font-size:14px; }
 .member-ticket-share-menu { position:absolute;right:16px;bottom:16px;left:16px;padding:20px;border:1px solid rgba(255,255,255,.12);border-radius:20px;background:#12161d;box-shadow:0 -15px 70px #000; }
-.member-ticket-share-menu header { display:flex;justify-content:space-between;align-items:center;margin-bottom:12px; }.member-ticket-share-menu > button { display:flex;align-items:center;gap:12px;width:100%;padding:14px 0;text-align:left; }.member-ticket-share-menu p { color:#9ccbff;font-size:13px; }
+.member-ticket-share-menu header { display:flex;justify-content:space-between;align-items:center;margin-bottom:12px; }.member-ticket-share-menu > button { display:flex;align-items:center;gap:12px;width:100%;padding:14px 0;text-align:start; }.member-ticket-share-menu p { color:#9ccbff;font-size:13px; }
 .member-ticket-badge:focus-visible,.member-ticket-screen button:focus-visible { outline:2px solid #9ccbff;outline-offset:4px; }
 @media (max-height:800px) { .member-ticket-screen { justify-content:flex-start;padding-block:24px; }.member-ticket-card { width:min(100%,300px); }.member-ticket-share { width:min(100%,300px);margin-top:22px; }.member-ticket-identity strong { font-size:56px; } }

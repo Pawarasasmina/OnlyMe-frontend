@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import OrbitCanvas from "../../components/orbit/OrbitCanvas";
 import OrbitEmptyState from "../../components/orbit/OrbitEmptyState";
@@ -13,18 +16,18 @@ import { useAuth } from "../../hooks/useAuth";
 import { useOrbit } from "../../hooks/useOrbit";
 
 function OrbitError({ onRetry }) {
+  __useUiLanguage();
   return (
     <FanCard className="border-atseen-danger/25 bg-atseen-danger/10 text-center">
-      <h1 className="text-lg font-bold text-atseen-text">We could not load your Orbit.</h1>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-atseen-muted">Please try again when the connection is steady.</p>
-      <button className="mt-4 rounded-xl bg-atseen-blue px-4 py-2.5 text-xs font-bold text-atseen-bg" onClick={onRetry} type="button">
-        Try again
-      </button>
+      <h1 className="text-lg font-bold text-atseen-text">{__msg("fan.weCouldNotLoadYourOrbit")}</h1>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-atseen-muted">{__msg("fan.pleaseTryAgainWhenTheConnectionIsSteady")}</p>
+      <button className="mt-4 rounded-xl bg-atseen-blue px-4 py-2.5 text-xs font-bold text-atseen-bg" onClick={onRetry} type="button">{__msg("discover.tryAgain")}</button>
     </FanCard>
   );
 }
 
 function OrbitPage() {
+  __useUiLanguage();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const [cursor, setCursor] = useState("");
@@ -54,13 +57,13 @@ function OrbitPage() {
 
   const refreshLights = () => {
     if (!orbit?.nextCursor) {
-      showToast("No more new lights right now.");
+      showToast(__msg("fan.noMoreNewLightsRightNow"));
       orbitQuery.refetch();
       return;
     }
 
     setCursor(orbit.nextCursor);
-    showToast("Looking for new lights in your Orbit.");
+    showToast(__msg("fan.lookingForNewLightsInYourOrbit"));
   };
 
   return (

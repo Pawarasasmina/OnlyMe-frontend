@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +25,7 @@ function saveAction(entity) {
 }
 
 export default function ContentEntityChip({ entity = {}, onNotice }) {
+  __useUiLanguage();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [currentSaved, setCurrentSaved] = useState(Boolean(entity?.saved));
   const queryClient = useQueryClient();
@@ -31,12 +35,12 @@ export default function ContentEntityChip({ entity = {}, onNotice }) {
   const directSave = [CONTENT_ENTITY_TYPES.PLACE, CONTENT_ENTITY_TYPES.BOOK].includes(entity.type);
   const mutation = useMutation({
     mutationFn: () => saveAction(displayEntity),
-    onError: (error) => onNotice?.(error?.response?.data?.message || "Saved could not be updated."),
+    onError: (error) => onNotice?.(error?.response?.data?.message || __msg("contentEntities.savedCouldNotBeUpdated")),
     onSuccess: (response) => {
       const nextSaved = Boolean(response?.data?.data?.saved);
       setCurrentSaved(nextSaved);
       updateAttachedEntitySaved(queryClient, entity, nextSaved);
-      onNotice?.(nextSaved ? `Saved to ${entity.type === "book" ? "Books" : "Places"}.` : "Removed from Saved.");
+      onNotice?.(nextSaved ? __msg("contentEntities.savedToValue0", { value0: entity.type === "book" ? __msg("social.books") : __msg("data.places") }) : __msg("contentEntities.removedFromSaved"));
     },
   });
 
@@ -66,16 +70,16 @@ export default function ContentEntityChip({ entity = {}, onNotice }) {
   return (
     <>
       <span className="content-entity-chip-wrap">
-        <button aria-label={`Open ${entity.title}`} className="content-entity-chip" onClick={open} type="button">
+        <button aria-label={__msg("contentEntities.open", { value0: entity.title })} className="content-entity-chip" onClick={open} type="button">
           <Icon aria-hidden="true" />
           <span>
-            <strong>{entity.title}</strong>
+            <strong dir="auto">{entity.title}</strong>
             {entity.subtitle ? <small>{entity.subtitle}</small> : null}
           </span>
         </button>
         {directSave ? (
           <button
-            aria-label={currentSaved ? `Remove ${entity.title} from Saved ${entity.type === "book" ? "Books" : "Places"}` : `Save ${entity.title}`}
+            aria-label={currentSaved ? __msg("contentEntities.removeFromSaved_4dbfb2", { value0: entity.title, value1: entity.type === "book" ? __msg("social.books") : __msg("data.places") }) : __msg("contentEntities.save", { value0: entity.title })}
             className={currentSaved ? "content-entity-save is-saved" : "content-entity-save"}
             disabled={mutation.isPending}
             onClick={(event) => {

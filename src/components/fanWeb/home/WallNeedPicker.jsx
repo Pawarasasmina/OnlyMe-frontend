@@ -1,18 +1,22 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
 import { postService } from "../../../services/postService";
 import { FiCalendar, FiGift, FiHelpCircle, FiLifeBuoy, FiSearch, FiStar, FiTag, FiX } from "react-icons/fi";
 
 const NEEDS = [
-  { key: "need_help", label: "Need help", type: "Need Help", icon: FiLifeBuoy, description: "Something went wrong — people nearby can step in" },
-  { key: "looking_for", label: "Looking for", type: "Looking for", icon: FiSearch, description: "A person, a service or a thing" },
-  { key: "offering", label: "Offering", type: "Offering", icon: FiGift, description: "Your help, skill or service" },
-  { key: "buy_sell", label: "Buy & Sell", type: "Buy & Sell", icon: FiTag, description: "Sell something or find it second-hand" },
-  { key: "question", label: "Question", type: "Question", icon: FiHelpCircle, description: "Ask the people around you" },
-  { key: "recommendation", label: "Recommendation", type: "Recommendation", icon: FiStar, description: "A place or person worth it" },
-  { key: "event", label: "Event", type: "Event", icon: FiCalendar, description: "Invite people somewhere" },
+  { key: "need_help", get label() { return __msg("fanWeb.needHelp"); }, type: "Need Help", icon: FiLifeBuoy, get description() { return __msg("fanWeb.somethingWentWrongPeopleNearbyCanStepIn"); } },
+  { key: "looking_for", get label() { return __msg("fanWeb.lookingFor"); }, type: "Looking for", icon: FiSearch, get description() { return __msg("fanWeb.aPersonAServiceOrAThing"); } },
+  { key: "offering", get label() { return __msg("fanWeb.offering"); }, type: "Offering", icon: FiGift, get description() { return __msg("fanWeb.yourHelpSkillOrService"); } },
+  { key: "buy_sell", get label() { return __msg("fanWeb.buySell"); }, type: "Buy & Sell", icon: FiTag, get description() { return __msg("fanWeb.sellSomethingOrFindItSecondHand"); } },
+  { key: "question", get label() { return __msg("fanWeb.question"); }, type: "Question", icon: FiHelpCircle, get description() { return __msg("fanWeb.askThePeopleAroundYou"); } },
+  { key: "recommendation", get label() { return __msg("fanWeb.recommendation"); }, type: "Recommendation", icon: FiStar, get description() { return __msg("fanWeb.aPlaceOrPersonWorthIt"); } },
+  { key: "event", get label() { return __msg("fanWeb.event"); }, type: "Event", icon: FiCalendar, get description() { return __msg("fanWeb.invitePeopleSomewhere"); } },
 ];
 
 export default function WallNeedPicker({ onClose, onSelect, location = "", viewerId }) {
+  __useUiLanguage();
   const params = { scope: location ? "custom" : "worldwide", location };
   const countsQuery = useQuery({
     queryKey: ["feed-posts", "need-counts", viewerId, params],
@@ -22,17 +26,17 @@ export default function WallNeedPicker({ onClose, onSelect, location = "", viewe
     retry: false,
   });
   return <section aria-labelledby="wall-need-title" className="wall-need-picker">
-    <button aria-label="Close need picker" className="wall-need-close" onClick={onClose} type="button"><FiX /></button>
+    <button aria-label={__msg("fanWeb.closeNeedPicker")} className="wall-need-close" onClick={onClose} type="button"><FiX /></button>
     <div className="wall-need-content">
-      <h1 id="wall-need-title">What do you need today?</h1>
-      <p>Choose what fits. People nearby will see it and reply.</p>
-      {countsQuery.isError ? <button className="wall-need-retry" onClick={() => countsQuery.refetch()} type="button">Could not load activity. Retry</button> : null}
+      <h1 id="wall-need-title">{__msg("fanWeb.whatDoYouNeedToday")}</h1>
+      <p>{__msg("fanWeb.chooseWhatFitsPeopleNearbyWillSeeItAnd")}</p>
+      {countsQuery.isError ? <button className="wall-need-retry" onClick={() => countsQuery.refetch()} type="button">{__msg("fanWeb.couldNotLoadActivityRetry")}</button> : null}
       <div className="wall-need-grid">
         {NEEDS.map(({ icon: Icon, ...need }) => <button className="wall-need-card" key={need.label} onClick={() => onSelect(need)} type="button">
           <Icon aria-hidden="true" />
           <strong>{need.label}</strong>
           <span>{need.description}</span>
-          <small>{countsQuery.isPending ? "Loading?" : countsQuery.isError ? "Count unavailable" : countsQuery.data?.counts?.[need.key] ? `${countsQuery.data.counts[need.key]} active ${location ? "nearby" : "on Wall"}` : location ? "Quiet nearby" : "Quiet for now"}</small>
+          <small>{countsQuery.isPending ? __msg("fanWeb.loading_5fabab") : countsQuery.isError ? __msg("fanWeb.countUnavailable") : countsQuery.data?.counts?.[need.key] ? __msg("fanWeb.active_be09be", { value0: countsQuery.data.counts[need.key], value1: location ? "nearby" : "on Wall" }) : location ? __msg("fanWeb.quietNearby") : __msg("fanWeb.quietForNow")}</small>
         </button>)}
       </div>
     </div>
