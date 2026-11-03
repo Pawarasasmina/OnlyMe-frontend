@@ -1,328 +1,84 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
-import { FiChevronRight, FiLoader } from "react-icons/fi";
+import { FiChevronRight, FiLoader, FiSearch, FiUsers } from "react-icons/fi";
 import OnboardingLayout from "../../layouts/OnboardingLayout";
-import WelcomeCarousel from "../../components/onboarding/WelcomeCarousel";
 import InterestGrid from "../../components/onboarding/InterestGrid";
-import InstinctTuning from "../../components/onboarding/InstinctTuning";
 import SuggestedPeopleGrid from "../../components/onboarding/SuggestedPeopleGrid";
-import AtseenEyeMark from "../../components/onboarding/AtseenEyeMark";
-import LightYourWorldChecklist from "../../components/onboarding/LightYourWorldChecklist";
+import AccountTypePicker from "../../components/onboarding/AccountTypePicker";
+import OnboardingTicket from "../../components/onboarding/OnboardingTicket";
 import { useAuth } from "../../hooks/useAuth";
 import { useOnboarding, useOnboardingSuggestions } from "../../hooks/useOnboarding";
 import { defaultDestinationFor, isOnboardingComplete } from "../../utils/socialAccess";
 import { normalizeApiError } from "../../utils/apiErrors";
 
-const progressSteps = ["welcome", "interests", "instincts", "people", "light-your-world"];
-const routeSteps = [...progressSteps, "complete"];
-const emptyPreferences = {
-  showMe: "everyone",
-  creatorVibe: "any",
-  contentDepth: "both",
-  discoveryRange: "global",
-  creatorStyle: "any",
-};
+const steps = ["welcome", "interests", "account-type", "fill-feed", "ticket"];
+const routes = [...steps, "complete"];
+const normalizedStage = (value) => value === "completed" ? "complete" : routes.includes(value) ? value : null;
+const pathFor = (value) => `/onboarding/${value}`;
 
-function normalizeRouteStep(step) {
-  if (!step) return null;
-  if (step === "checklist") return "light-your-world";
-  if (step === "completed") return "complete";
-  return routeSteps.includes(step) ? step : null;
+function Loading({ label = "Preparing your @seen…" }) {
+  return <div className="grid min-h-[420px] place-items-center text-center"><div><FiLoader className="mx-auto animate-spin text-3xl text-[#9CCBFF]" /><p className="mt-4 text-sm font-bold text-white/55">{label}</p></div></div>;
+}
+function Panel({ children, eyebrow, subtitle, title }) {
+  return <section className="w-full max-w-[620px] rounded-[26px] border border-white/10 bg-[#0A0C0F]/95 p-5 shadow-2xl sm:p-7"><p className="text-[11px] font-black uppercase tracking-[.22em] text-[#9CCBFF]">{eyebrow}</p><h1 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em]">{title}</h1><p className="mt-2 text-sm leading-6 text-white/55">{subtitle}</p>{children}</section>;
+}
+function Cta({ busy, children, disabled, error, onClick, note }) {
+  return <div className="sticky bottom-0 -mx-5 mt-6 border-t border-white/10 bg-[#0A0C0F]/95 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 backdrop-blur sm:-mx-7 sm:px-7">{error ? <p className="mb-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{error}</p> : null}<button className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#9CCBFF] py-4 font-black text-[#0A0C0F] transition active:scale-[.97] disabled:opacity-40" disabled={disabled || busy} onClick={onClick} type="button">{busy ? "Saving…" : children}<FiChevronRight /></button>{note ? <p className="mt-3 text-center text-xs text-white/35">{note}</p> : null}</div>;
 }
 
-function stepPath(step) {
-  return `/onboarding/${step === "completed" ? "complete" : step}`;
-}
-
-function savedStep(state) {
-  const step = state?.onboarding?.currentStep || "welcome";
-  return normalizeRouteStep(step) || "welcome";
-}
-
-function progressIndexFor(stage) {
-  if (stage === "complete") return progressSteps.length - 1;
-  return Math.max(0, progressSteps.indexOf(stage));
-}
-
-function LoadingState({ label = "Loading onboarding..." }) {
-  return (
-    <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
-      <FiLoader className="mb-4 animate-spin text-3xl text-[#9CCBFF]" />
-      <p className="text-sm font-bold text-white/62">{label}</p>
-    </div>
-  );
-}
-
-function ErrorState({ error, onRetry }) {
-  const normalized = normalizeApiError(error, "Unable to load onboarding.");
-  return (
-    <div className="w-full max-w-[560px] rounded-3xl border border-[#F17878]/30 bg-[#F17878]/10 p-6 text-center">
-      <h1 className="text-2xl font-black text-white">Something did not load</h1>
-      <p className="mt-3 text-sm leading-6 text-[#F17878]">{normalized.message}</p>
-      <button className="mt-5 rounded-2xl bg-[#9CCBFF] px-5 py-3 font-black text-[#0A0C0F]" onClick={onRetry} type="button">Retry</button>
-    </div>
-  );
-}
-
-function StagePanel({ children, eyebrow, title, subtitle }) {
-  return (
-    <section className="onboarding-stage-panel w-full max-w-[900px] rounded-[24px] border border-white/10 bg-[#0A0C0F]/92 p-5 shadow-glow sm:p-6 lg:p-7">
-      <div className="mb-5">
-        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#9CCBFF]/80">{eyebrow}</p>
-        <h1 className="mt-2 text-2xl font-black tracking-normal text-white sm:text-3xl">{title}</h1>
-        <p className="mt-2 max-w-[660px] text-sm leading-6 text-white/62">{subtitle}</p>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function BottomCta({ children, disabled, error, onClick, secondary }) {
-  return (
-    <div className="sticky bottom-0 -mx-5 mt-6 border-t border-white/10 bg-[#0A0C0F]/95 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 backdrop-blur sm:-mx-7 sm:px-7 lg:-mx-8 lg:px-8">
-      {error ? <p className="mb-3 rounded-2xl border border-[#F17878]/30 bg-[#F17878]/10 p-3 text-sm text-[#F17878]" role="alert">{error}</p> : null}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {secondary ? <div className="text-sm text-white/45">{secondary}</div> : <span />}
-        <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#9CCBFF] px-5 py-4 font-black text-[#0A0C0F] transition hover:bg-[#6FA9E8] disabled:opacity-45" disabled={disabled} onClick={onClick} type="button">
-          {children} <FiChevronRight aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function OnboardingPage() {
+export default function OnboardingPage() {
   const { step } = useParams();
-  const { loading: authLoading, user } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { loading: authLoading, user } = useAuth();
   const onboarding = useOnboarding();
   const state = onboarding.data;
-  const routeStage = normalizeRouteStep(step);
-  const [stage, setStage] = useState(routeStage || "welcome");
+  const requested = normalizedStage(step);
+  const [stage, setStage] = useState(requested || "welcome");
   const [interests, setInterests] = useState([]);
-  const [preferences, setPreferences] = useState(emptyPreferences);
+  const [profileType, setProfileType] = useState("personal");
   const [selectedPeople, setSelectedPeople] = useState([]);
   const [error, setError] = useState("");
-  const suggestions = useOnboardingSuggestions(stage === "people");
-
-  const roleHome = defaultDestinationFor(user?.role);
-  const saving = onboarding.saveWelcome.isPending
-    || onboarding.saveInterests.isPending
-    || onboarding.saveInstincts.isPending
-    || onboarding.savePeople.isPending
-    || onboarding.acknowledgeChecklist.isPending
-    || onboarding.complete.isPending;
+  const suggestions = useOnboardingSuggestions(stage === "fill-feed");
+  const home = defaultDestinationFor(user?.role);
 
   useEffect(() => {
     if (!state) return;
-    const authoritativeStage = savedStep(state);
-    const requestedIsAllowed = routeStage
-      && routeSteps.indexOf(routeStage) <= routeSteps.indexOf(authoritativeStage);
-    const nextStage = requestedIsAllowed ? routeStage : authoritativeStage;
-    setStage(nextStage);
+    const saved = normalizedStage(state.onboarding?.currentStep) || "welcome";
+    const allowed = requested && routes.indexOf(requested) <= routes.indexOf(saved);
+    const next = allowed ? requested : saved;
+    setStage(next);
     setInterests(state.profile?.interests || []);
-    setPreferences({ ...emptyPreferences, ...(state.profile?.discoveryPreferences || {}) });
-    if (!routeStage || step !== nextStage) {
-      navigate(stepPath(nextStage), { replace: true });
-    }
-  }, [navigate, routeStage, state, step]);
+    setProfileType(state.user?.profileType || "personal");
+    if (step !== next) navigate(pathFor(next), { replace: true });
+  }, [navigate, requested, state, step]);
+  useEffect(() => { setError(""); window.scrollTo({ top: 0, behavior: "instant" }); }, [stage]);
 
-  useEffect(() => {
-    setError("");
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }, [stage]);
-
-  const navigateStage = (nextStage) => {
-    setStage(nextStage);
-    navigate(stepPath(nextStage));
-  };
-
-  if (authLoading) return <OnboardingLayout backDisabled steps={progressSteps}><LoadingState label="Checking session..." /></OnboardingLayout>;
+  const go = (next) => { setStage(next); navigate(pathFor(next)); };
+  const fail = (reason, fallback) => setError(normalizeApiError(reason, fallback).message);
+  const run = async (action, next, fallback) => { setError(""); try { await action(); go(next); } catch (reason) { fail(reason, fallback); } };
+  if (authLoading) return <OnboardingLayout><Loading label="Checking your account…" /></OnboardingLayout>;
   if (!user) return <Navigate replace state={{ from: location }} to="/login" />;
   if (user.role === "admin") return <Navigate replace to="/admin/dashboard" />;
-  if (isOnboardingComplete(user)) return <Navigate replace to={roleHome} />;
+  if (isOnboardingComplete(user)) return <Navigate replace to={home} />;
+  if (onboarding.isLoading || !state) return <OnboardingLayout><Loading /></OnboardingLayout>;
+  if (onboarding.isError) return <OnboardingLayout><Panel eyebrow="Connection" title="Couldn’t open onboarding" subtitle={normalizeApiError(onboarding.error, "Please try again.").message}><button className="mt-6 w-full rounded-2xl bg-[#9CCBFF] py-4 font-black text-black" onClick={() => onboarding.refetch()} type="button">Retry</button></Panel></OnboardingLayout>;
+  if (stage === "welcome") return <Navigate replace to="/welcome" />;
 
-  if (onboarding.isLoading || !state) {
-    return <OnboardingLayout backDisabled steps={progressSteps}><LoadingState /></OnboardingLayout>;
-  }
+  const toggleInterest = (id) => setInterests((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const togglePerson = (id) => setSelectedPeople((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const list = suggestions.data || [];
+  const saveInterests = () => run(() => onboarding.saveInterests.mutateAsync(interests), "account-type", "Couldn’t save your interests.");
+  const saveType = () => run(() => onboarding.saveProfileType.mutateAsync(profileType), "fill-feed", "Couldn’t save your account type.");
+  const savePeople = () => run(() => onboarding.savePeople.mutateAsync(selectedPeople), "ticket", "Couldn’t save who you followed.");
+  const ticketContinue = () => run(() => onboarding.acknowledgeTicket.mutateAsync(), "complete", "Couldn’t continue from your ticket.");
+  const finish = async () => { try { await onboarding.complete.mutateAsync(); navigate(home, { replace: true }); } catch (reason) { fail(reason, "Couldn’t open your feed."); } };
 
-  if (onboarding.isError) {
-    return <OnboardingLayout backDisabled steps={progressSteps}><ErrorState error={onboarding.error} onRetry={() => onboarding.refetch()} /></OnboardingLayout>;
-  }
-
-  const fail = (requestError, fallback) => {
-    const normalized = normalizeApiError(requestError, fallback);
-    setError(normalized.message);
-  };
-
-  const goBack = () => {
-    const currentIndex = routeSteps.indexOf(stage);
-    navigateStage(routeSteps[Math.max(0, currentIndex - 1)]);
-  };
-
-  const saveWelcome = async () => {
-    try {
-      await onboarding.saveWelcome.mutateAsync();
-      navigateStage("interests");
-    } catch (requestError) {
-      fail(requestError, "Unable to save your welcome step.");
-    }
-  };
-
-  const saveInterests = async () => {
-    try {
-      await onboarding.saveInterests.mutateAsync(interests);
-      navigateStage("instincts");
-    } catch (requestError) {
-      fail(requestError, "Unable to save your interests.");
-    }
-  };
-
-  const saveInstincts = async () => {
-    try {
-      await onboarding.saveInstincts.mutateAsync(preferences);
-      navigateStage("people");
-    } catch (requestError) {
-      fail(requestError, "Unable to save your instincts.");
-    }
-  };
-
-  const savePeople = async () => {
-    try {
-      await onboarding.savePeople.mutateAsync(selectedPeople);
-      navigateStage("light-your-world");
-    } catch (requestError) {
-      fail(requestError, "Unable to save your Orbit selections.");
-    }
-  };
-
-  const acknowledgeChecklist = async () => {
-    try {
-      await onboarding.acknowledgeChecklist.mutateAsync();
-      navigateStage("complete");
-    } catch (requestError) {
-      fail(requestError, "Unable to save your checklist review.");
-    }
-  };
-
-  const complete = async () => {
-    try {
-      await onboarding.complete.mutateAsync();
-      navigate(roleHome, { replace: true });
-    } catch (requestError) {
-      fail(requestError, "Unable to complete onboarding.");
-    }
-  };
-
-  const toggleInterest = (id) => {
-    setInterests((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 8 ? [...current, id] : current);
-  };
-
-  const togglePerson = (id) => {
-    setSelectedPeople((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 10 ? [...current, id] : current);
-  };
-
-  const suggestionList = suggestions.data || [];
-  const currentStep = progressIndexFor(stage);
-
-  return (
-    <OnboardingLayout
-      backDisabled={stage === "welcome"}
-      currentStep={currentStep}
-      onBack={goBack}
-      saving={saving}
-      steps={progressSteps}
-    >
-      {stage === "welcome" ? (
-        <WelcomeCarousel
-          error={error}
-          onAlreadyHaveAccount={() => navigate(roleHome, { replace: true })}
-          onGetStarted={saveWelcome}
-          saving={onboarding.saveWelcome.isPending}
-        />
-      ) : null}
-
-      {stage === "interests" ? (
-        <StagePanel eyebrow="Step 2 of 5" subtitle="Choose what you want to see more of." title="Build your world">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <p className="text-sm font-bold text-white/62" aria-live="polite">{interests.length} of 8 selected</p>
-            {interests.length < 3 ? <p className="text-sm font-bold text-[#9CCBFF]">Choose at least 3</p> : null}
-          </div>
-          {state.categories?.length ? (
-            <InterestGrid categories={state.categories} onToggle={toggleInterest} selected={interests} />
-          ) : (
-            <ErrorState error={{ message: "Categories are unavailable right now." }} onRetry={() => onboarding.refetch()} />
-          )}
-          <BottomCta disabled={interests.length < 3 || saving || !state.categories?.length} error={error} onClick={saveInterests} secondary="You can change interests later in Settings.">
-            {onboarding.saveInterests.isPending ? "Saving..." : "Continue"}
-          </BottomCta>
-        </StagePanel>
-      ) : null}
-
-      {stage === "instincts" ? (
-        <StagePanel eyebrow="Step 3 of 5" subtitle="Choose the kind of people and experiences you naturally notice." title="Tune your instincts">
-          <InstinctTuning onChange={(key, value) => setPreferences((current) => ({ ...current, [key]: value }))} values={preferences} />
-          <BottomCta disabled={saving} error={error} onClick={saveInstincts} secondary="Discovery defaults to Everyone unless you choose otherwise.">
-            {onboarding.saveInstincts.isPending ? "Saving..." : "Continue"}
-          </BottomCta>
-        </StagePanel>
-      ) : null}
-
-      {stage === "people" ? (
-        <StagePanel eyebrow="Step 4 of 5" subtitle="Start your Orbit with a few people who match your interests." title="People worth seeing">
-          {suggestions.isLoading ? <LoadingState label="Finding people worth seeing..." /> : null}
-          {suggestions.isError ? <ErrorState error={suggestions.error} onRetry={() => suggestions.refetch()} /> : null}
-          {!suggestions.isLoading && !suggestions.isError && !suggestionList.length ? (
-            <div className="rounded-[22px] border border-white/10 bg-[#12151B] p-6 text-center">
-              <h2 className="text-2xl font-black">Your first people are still being discovered.</h2>
-              <p className="mt-2 text-sm leading-6 text-white/62">You can retry or continue without following.</p>
-              <button className="mt-5 rounded-2xl border border-white/10 px-5 py-3 font-bold text-white/70 hover:bg-white/5" onClick={() => suggestions.refetch()} type="button">Retry</button>
-            </div>
-          ) : null}
-          {suggestionList.length ? (
-            <>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <p className="text-sm font-bold text-white/62" aria-live="polite">{selectedPeople.length} of 10 selected</p>
-                {selectedPeople.length < 3 ? <p className="text-sm font-bold text-[#9CCBFF]">Try choosing 3, or skip for now.</p> : null}
-              </div>
-              <SuggestedPeopleGrid onToggle={togglePerson} people={suggestionList} selected={selectedPeople} />
-            </>
-          ) : null}
-          <BottomCta disabled={saving || suggestions.isLoading} error={error} onClick={savePeople} secondary={suggestionList.length ? "Selected people are saved together when you continue." : "You can continue without following."}>
-            {onboarding.savePeople.isPending ? "Saving..." : selectedPeople.length ? "Follow selected" : "Skip for now"}
-          </BottomCta>
-        </StagePanel>
-      ) : null}
-
-      {stage === "light-your-world" ? (
-        <StagePanel eyebrow="Step 5 of 5" subtitle="A few small steps make your Atseen experience feel alive." title="Light your world">
-          <LightYourWorldChecklist forceVisible onboardingMode />
-          <BottomCta disabled={saving} error={error} onClick={acknowledgeChecklist} secondary="Only interests and instincts are required. The rest can wait.">
-            {onboarding.acknowledgeChecklist.isPending ? "Saving..." : "Continue"}
-          </BottomCta>
-        </StagePanel>
-      ) : null}
-
-      {stage === "complete" ? (
-        <StagePanel eyebrow="Ready" subtitle="Your feed, Orbit and Worlds are now tuned to you." title="Your world is lit.">
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="flex flex-col items-center justify-center rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_50%_40%,rgba(156,203,255,.16),transparent_55%),#12151B] p-8 text-center">
-              <AtseenEyeMark className="h-32 w-52" />
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
-                {interests.slice(0, 8).map((interest) => <span className="rounded-full border border-[#9CCBFF]/25 bg-[#9CCBFF]/10 px-3 py-1 text-xs font-bold text-[#9CCBFF]" key={interest}>{interest}</span>)}
-              </div>
-              <button className="mt-6 rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold text-white/62 hover:bg-white/5 hover:text-white" onClick={() => navigateStage("interests")} type="button">Review my choices</button>
-            </div>
-            <LightYourWorldChecklist compact forceVisible />
-          </div>
-          <BottomCta disabled={saving} error={error} onClick={complete} secondary={user.role === "creator" ? "Creator monetization stays in Studio." : "Your Home and Orbit are ready."}>
-            {onboarding.complete.isPending ? "Lighting..." : "Enter Atseen"}
-          </BottomCta>
-        </StagePanel>
-      ) : null}
-    </OnboardingLayout>
-  );
+  return <OnboardingLayout backDisabled={stage === "welcome"} currentStep={Math.max(0, steps.indexOf(stage))} onBack={() => go(routes[Math.max(0, routes.indexOf(stage) - 1)])} steps={steps}>
+    {stage === "interests" ? <Panel eyebrow="Step 2 of 5" title="What pulls you in?" subtitle="Every tap is a signal. Choose at least three topics; swipe through the stories that feel like you."><div className="mt-5 flex items-center justify-between"><b className="text-sm">{interests.length} selected</b><span className="text-xs font-bold text-[#9CCBFF]">Minimum 3</span></div><div className="mt-4 max-h-[52dvh] overflow-y-auto pr-1"><InterestGrid categories={state.categories} max={18} onToggle={toggleInterest} selected={interests} /></div><Cta busy={onboarding.saveInterests.isPending} disabled={interests.length < 3} error={error} note="You can change this later in Settings." onClick={saveInterests}>Continue</Cta></Panel> : null}
+    {stage === "account-type" ? <Panel eyebrow="Step 3 of 5" title="How will you use @seen?" subtitle="Everyone can earn. Your account type only changes the tools you see, and you can switch later in Settings."><div className="mt-5"><AccountTypePicker onChange={setProfileType} value={profileType} /></div><Cta busy={onboarding.saveProfileType.isPending} error={error} onClick={saveType}>Continue</Cta></Panel> : null}
+    {stage === "fill-feed" ? <Panel eyebrow="Step 4 of 5" title="Fill your feed" subtitle="Follow 5 people to start. Your interests choose who appears here."><button className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[.05] p-4 text-left active:scale-[.97]" type="button"><span className="grid h-11 w-11 place-items-center rounded-full bg-[#9CCBFF]/15 text-[#BFE3FF]"><FiUsers /></span><span className="flex-1"><b className="block text-sm">Friends from your contacts</b><small className="text-white/45">See who’s here · nothing is posted</small></span><FiSearch /></button><div className="mt-5 flex gap-1">{Array.from({ length: 5 }, (_, index) => <i className={`h-1 flex-1 rounded ${index < selectedPeople.length ? "bg-[#9CCBFF]" : "bg-white/15"}`} key={index} />)}</div><div className="mt-5 max-h-[48dvh] overflow-y-auto">{suggestions.isLoading ? <Loading label="Finding people for you…" /> : <SuggestedPeopleGrid onToggle={togglePerson} people={list} selected={selectedPeople} />}</div><Cta busy={onboarding.savePeople.isPending} disabled={suggestions.isLoading} error={error} note={selectedPeople.length < 5 ? `${5 - selectedPeople.length} more to reach 5 · you can also continue now` : "Your feed is ready."} onClick={savePeople}>{selectedPeople.length >= 5 ? "Continue" : "Not now"}</Cta></Panel> : null}
+    {stage === "ticket" ? <OnboardingTicket memberNumber={state.user?.memberNumber || user.memberNumber} name={user.name} onContinue={ticketContinue} /> : null}
+    {stage === "complete" ? <Panel eyebrow="FOR YOU" title="Your feed is ready" subtitle="@seen has ranked your first feed using the topics and people you chose."><div className="mt-6 flex flex-wrap gap-2">{interests.map((item) => <span className="rounded-full bg-white px-3 py-2 text-xs font-black text-[#0A0C0F]" key={item}>{item}</span>)}</div><Cta busy={onboarding.complete.isPending} error={error} onClick={finish}>Enter @seen</Cta></Panel> : null}
+  </OnboardingLayout>;
 }
-
-export default OnboardingPage;

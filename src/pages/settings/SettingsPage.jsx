@@ -10,6 +10,7 @@ import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
 import DeleteAccountSheet from "./DeleteAccountSheet";
+import AccountTypePicker from "../../components/onboarding/AccountTypePicker";
 
 function SettingsRow({ onClick, subtitle, title, to, trailing }) {
   const content = <><span className="settings-index-row-copy"><b>{title}</b>{subtitle ? <small>{subtitle}</small> : null}</span>{trailing || <FiChevronRight />}</>;
@@ -24,7 +25,7 @@ function SettingsGroup({ children, title }) {
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, setUser, user } = useAuth();
   const settingsMainRef = useRef(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -34,6 +35,8 @@ export default function SettingsPage() {
   const [supportersSaved, setSupportersSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [accountTypeOpen, setAccountTypeOpen] = useState(false);
+  const [nextProfileType, setNextProfileType] = useState(user?.profileType || "personal");
 
   const privacyQuery = useQuery({
     queryKey: ["settings", "privacy"],
@@ -77,17 +80,27 @@ export default function SettingsPage() {
       setBusy(false);
     }
   };
+  const changeProfileType = async () => {
+    setBusy(true); setError("");
+    try {
+      const response = await authService.updateProfileType(nextProfileType);
+      setUser(response.data.data.user);
+      setAccountTypeOpen(false);
+    } catch (requestError) { setError(requestError.response?.data?.message || "Unable to change account type."); }
+    finally { setBusy(false); }
+  };
 
   return <main className="settings-index-page" ref={settingsMainRef}>
     <header className="settings-index-header"><button aria-label="Back to profile" onClick={() => navigate("/profile")} type="button"><FiArrowLeft /></button><h1>Settings</h1></header>
 
     <SettingsGroup title="Account">
+      <SettingsRow onClick={() => { setNextProfileType(user?.profileType || "personal"); setAccountTypeOpen(true); }} subtitle="Switch anytime · confirmation required" title="Account type" trailing={<span className="capitalize text-sm text-white/55">{user?.profileType || "personal"}<FiChevronRight className="ml-2 inline" /></span>} />
       {["fan", "creator"].includes(user?.role) ? user.creatorApprovalStatus === "approved" ? <SettingsRow icon={FiUserCheck} subtitle="Approved creator access" title="Creator tools" to="/studio" /> : <SettingsRow icon={FiUserCheck} onClick={() => setCreatorApplyOpen(true)} subtitle={user.creatorApprovalStatus === "pending" ? "Application under review" : "For people who want to publish and earn"} title={user.creatorApprovalStatus === "pending" ? "Creator application" : "Apply as a creator"} /> : null}
       <SettingsRow icon={FiEdit3} subtitle="Identity, photos and contact options" title="Edit profile" to="/settings/profile?from=settings" />
       <SettingsRow icon={FiGlobe} subtitle="Language, time zone and password" title="Account preferences" to="/settings/account" />
     </SettingsGroup>
 
-    {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Creator"><SettingsRow icon={FiUserCheck} subtitle="Optional identity and seller verification" title="Apply for Verified Creator" to="/creator/seller-verification" /><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title="Professional dashboard" to="/studio" /></SettingsGroup> : null}
+    {user?.creatorApprovalStatus === "approved" || ["creator", "business"].includes(user?.profileType) ? <SettingsGroup title={user?.profileType === "business" ? "Business" : "Creator"}><SettingsRow icon={FiUserCheck} subtitle="Required before selling paid products" title="Seller verification" to="/creator/seller-verification" /><SettingsRow icon={FiMessageCircle} subtitle="Messages, calls and pricing" title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle="Insights, audience and earnings" title={user?.profileType === "business" ? "Business dashboard" : "Creator dashboard"} to="/studio" /></SettingsGroup> : null}
 
     {user?.creatorApprovalStatus === "approved" ? <SettingsGroup title="Preview"><SettingsRow icon={FiUsers} subtitle="See the onboarding and earning examples" title="Preview as a new creator" to="/studio?preview=new" /></SettingsGroup> : null}
     <SettingsGroup title="Preferences"><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle="Comments, reactions, messages and income" title="Notifications" /><SettingsRow icon={FiGlobe} subtitle="Topics, people and what you see" title="Content preferences" to="/settings/content" /><SettingsRow icon={FiZap} subtitle="Allowance, privacy and creation limits" title="AI" to="/settings/ai" /></SettingsGroup>
@@ -114,5 +127,6 @@ export default function SettingsPage() {
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
     {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">Supporters {privacyQuery.data?.privacySettings?.showFollowers ? "shown" : "hidden"}</div> : null}
+    {accountTypeOpen ? <><button aria-label="Close account type" className="fixed inset-0 z-[220] bg-black/70 backdrop-blur-sm" onClick={() => setAccountTypeOpen(false)} type="button" /><section className="fixed inset-x-0 bottom-0 z-[221] mx-auto max-w-[560px] rounded-t-[28px] border border-white/10 bg-[#0D1117] p-5 pb-[max(24px,env(safe-area-inset-bottom))] shadow-2xl"><div className="mx-auto mb-5 h-1 w-12 rounded-full bg-white/30" /><h2 className="text-2xl font-black">Account type</h2><p className="mt-2 text-sm leading-6 text-white/55">Everyone can earn. Your type changes which tools appear. Your profile, followers and earnings stay the same.</p><div className="mt-5"><AccountTypePicker onChange={setNextProfileType} value={nextProfileType} /></div>{error ? <p className="mt-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{error}</p> : null}<button className="mt-5 w-full rounded-2xl bg-[#9CCBFF] py-4 font-black text-[#0A0C0F] active:scale-[.97] disabled:opacity-50" disabled={busy || nextProfileType === user?.profileType} onClick={changeProfileType} type="button">{busy ? "Saving…" : `Confirm ${nextProfileType} account`}</button></section></> : null}
   </main>;
 }

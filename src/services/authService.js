@@ -21,4 +21,5 @@ export const authService = {
   logout: () => axiosInstance.post("/auth/logout"),
   deleteAccount: () => axiosInstance.delete("/auth/account"),
   getProfile: () => axiosInstance.get("/auth/me"),
+  updateProfileType: (profileType) => axiosInstance.put("/auth/profile-type", { profileType, confirmed: true }),
 };

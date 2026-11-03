@@ -82,6 +82,7 @@ const DiscoverPage = lazyPage("../pages/social/DiscoverPage");
 const PostDetailPage = lazyPage("../pages/social/PostDetailPage");
 const OnboardingPage = lazyPage("../pages/onboarding/OnboardingPage");
 const WelcomePage = lazyPage("../pages/onboarding/WelcomePage");
+const PublicInterestsPage = lazyPage("../pages/onboarding/PublicInterestsPage");
 const AccountSettingsPage = lazyPage("../pages/settings/AccountSettingsPage");
 const PrivacySettingsPage = lazyPage("../pages/settings/PrivacySettingsPage");
 const NotificationSettingsPage = lazyPage("../pages/settings/NotificationSettingsPage");
@@ -96,7 +97,7 @@ function RootRedirect() {
   const { loading, user } = useAuth();
   if (loading) return null;
   if (user?.role === ROLES.ADMIN) return <Navigate replace to="/admin/dashboard" />;
-  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/login"} />;
+  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
 function LegacyCreatorProfileRedirect() {
@@ -141,6 +142,7 @@ function AppRoutes() {
     </Route>
 
     <Route path="/welcome" element={<WelcomePage />} />
+    <Route path="/start/interests" element={<PublicInterestsPage />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />

@@ -8,6 +8,7 @@ import { clearAnalyticsSession } from "../services/analyticsSession";
 
 const ACCESS_TOKEN_KEY = "onlyme_access_token";
 const CACHED_USER_KEY = "onlyme_cached_user";
+const LAST_USER_KEY = "onlyme_last_user";
 
 function readCachedUser() {
   if (!localStorage.getItem(ACCESS_TOKEN_KEY)) return null;
@@ -88,6 +89,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem(ACCESS_TOKEN_KEY, response.data.data.accessToken);
       const nextUser = response.data?.data?.user ?? null;
       if (nextUser) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
+      if (nextUser) localStorage.setItem(LAST_USER_KEY, JSON.stringify({ name: nextUser.name, email: nextUser.email, avatar: nextUser.avatar || "" }));
       setUser(nextUser);
       return response;
     },
@@ -96,6 +98,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem(ACCESS_TOKEN_KEY, response.data.data.accessToken);
       const nextUser = response.data?.data?.user ?? null;
       if (nextUser) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
+      if (nextUser) localStorage.setItem(LAST_USER_KEY, JSON.stringify({ name: nextUser.name, email: nextUser.email, avatar: nextUser.avatar || "" }));
       setUser(nextUser);
       return response;
     },
