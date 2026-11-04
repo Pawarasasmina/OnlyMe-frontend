@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
-import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiLock, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -21,6 +21,7 @@ import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { fanService } from "../../services/fanService";
 import { publicationService } from "../../services/publicationService";
 import { analyticsService } from "../../services/analyticsService";
+import { repostService } from "../../services/repostService";
 import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
@@ -32,16 +33,17 @@ import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { atseenReportReasons } from "../../data/atseenMockData";
 import { relativeTime } from "../../utils/relativeTime";
 import { isSeenOwner, normalizeId } from "../../utils/seenOwnership";
+import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 
 const seenReactionOptions = [
-  { key: "LIKE", label: "Support", icon: "\uD83E\uDD1D" },
+  { key: "SEE_YOU", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
   { key: "LOVE", label: "Love", icon: "\u2764\uFE0F" },
   { key: "FIRE", label: "Fire", icon: "\uD83D\uDD25" },
-  { key: "CLAP", label: "Clap", icon: "\uD83D\uDC4F" },
-  { key: "LAUGH", label: "Laugh", icon: "\uD83D\uDE02" },
-  { key: "SEE_YOU", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
-  { key: "WOW", label: "Surprised", icon: "\uD83D\uDE2E" },
   { key: "TEARY", label: "Moved", icon: "\uD83E\uDD79" },
+  { key: "LAUGH", label: "Laugh", icon: "\uD83D\uDE02" },
+  { key: "LIKE", label: "Support", icon: "\uD83E\uDD1D" },
+  { key: "CLAP", label: "Clap", icon: "\uD83D\uDC4F" },
+  { key: "WOW", label: "Surprised", icon: "\uD83D\uDE2E" },
   { key: "ADMIRE", label: "Adore", icon: "\uD83D\uDE0D" },
   { key: "SAD", label: "Sad", icon: "\uD83D\uDE22" },
   { key: "HUG", label: "Hug", icon: "\uD83E\uDEC2" },
@@ -148,7 +150,11 @@ function normalizeSeen(raw = {}) {
       id: chapter.stableChapterId || chapter.id || `${raw.id}-${index}`,
       title: chapter.title || `Chapter ${index + 1}`,
       blocks: chapter.blocks || [],
+      locked: Boolean(chapter.locked),
     })),
+    pricing: raw.pricing || { mode: "FREE", starsAmount: null },
+    paymentAvailable: Boolean(raw.paymentAvailable),
+    ownerCount: Number(raw.ownerCount || 0),
     attachedEntities: raw.attachedEntities || [],
     series: raw.series || null,
     seriesId: raw.seriesId || raw.series?._id || raw.series?.id || "",
@@ -337,7 +343,7 @@ function SeenActionRow({ danger = false, disabled = false, icon: Icon, onClick, 
   );
 }
 
-function SeenContextMenu({ busyAction = "", isOpen, isOwn, item, onArchive, onClose, onDelete, onEdit, onHide, onInsights, onMove, onMute, onPinToggle, onReact, onReport, onRepost, onSave, onShare, pending }) {
+function SeenContextMenu({ busyAction = "", isOpen, isOwn, item, onArchive, onClose, onDelete, onEdit, onHide, onInsights, onMove, onMute, onPinToggle, onReact, onReactionMore, onReport, onRepost, onSave, onShare, pending }) {
   const sheetPosition = useSeenSheetPosition(isOpen);
 
   useEffect(() => {
@@ -377,7 +383,7 @@ function SeenContextMenu({ busyAction = "", isOpen, isOwn, item, onArchive, onCl
   return <div className="seen-context-layer seen-feed-options-layer" style={sheetPosition}>
     <button aria-label="Close Seen actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
     <section aria-label={`${isOwn ? "Manage" : "Options for"} ${item.title}`} aria-modal="true" className={`seen-context-menu ${isOwn ? "is-owner" : "is-visitor"}`} role="dialog">
-      {!isOwn ? <div aria-label="React to Seen" className="seen-context-reactions">{seenReactionOptions.slice(0, 6).map((reaction) => <button aria-label={reaction.label} className={item.viewerState.reaction === reaction.key ? "is-selected" : ""} disabled={pending} key={reaction.key} onClick={() => onReact(reaction.key)} type="button">{reaction.icon}</button>)}</div> : null}
+      {!isOwn ? <div aria-label="React to Seen" className="seen-context-reactions">{seenReactionOptions.slice(0, 6).map((reaction) => <button aria-label={reaction.label} className={item.viewerState.reaction === reaction.key ? "is-selected" : ""} disabled={pending} key={reaction.key} onClick={() => onReact(reaction.key)} type="button">{reaction.icon}</button>)}<button aria-label="More reactions" disabled={pending} onClick={onReactionMore} type="button"><FiPlus /></button></div> : null}
       <div className="seen-context-preview">
         <span>{item.media.url ? item.media.type === "video" ? <video muted playsInline preload="metadata" src={item.media.url} /> : <img alt="" src={item.media.url} /> : <SeenEyeMark />}</span>
         <div><strong>{item.title}</strong><small>{isOwn ? "" : `${item.creator.displayName} · `}{chapterCount} {chapterCount === 1 ? "chapter" : "chapters"}</small></div>
@@ -522,14 +528,14 @@ function CompactSeenMedia({ item, onOpen }) {
 
   return <div className="seen-media-wrap">
     <button aria-label={`Open ${item.title}`} className="seen-media" onClick={onOpen} type="button">
-      {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={{ mediaType: isVideo ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} muted={muted} /> : <span className="seen-media-fallback">@seen</span>}
+      {item.media.url ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop maxPlaybackSeconds={6} media={{ mediaType: isVideo ? "VIDEO" : "IMAGE", secureUrl: item.media.url }} muted={muted} /> : <span className="seen-media-fallback">@seen</span>}
       {isVideo && item.media.durationSeconds ? <span className="seen-video-pill">▶ {formatDuration(item.media.durationSeconds)}</span> : null}
     </button>
     {isVideo && item.media.url ? <button aria-label={muted ? "Unmute video" : "Mute video"} aria-pressed={!muted} className="seen-video-sound-toggle" onClick={() => setMuted((value) => !value)} title={muted ? "Unmute video" : "Mute video"} type="button">{muted ? <FiVolumeX aria-hidden="true" /> : <FiVolume2 aria-hidden="true" />}</button> : null}
   </div>;
 }
 
-function SeenSummary({ item, onOpenChapter }) {
+function SeenSummary({ item, onOpenChapter, onPurchase }) {
   const chapterCount = item.chapters.length;
   const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
   const meta = [`${chapterCount} ${chapterWord}`, `~${item.readMinutes} min`].join(" Â· ");
@@ -543,6 +549,7 @@ function SeenSummary({ item, onOpenChapter }) {
         {item.description ? <p>{item.description}</p> : null}
       </button>
     </div>
+    {item.pricing?.mode === "ONE_TIME" ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> ✦ {Number(item.pricing.starsAmount || 0).toLocaleString()}</span><small>Chapter 1 free · {item.ownerCount.toLocaleString()} own it</small><b>{item.paymentAvailable ? "Unlock ›" : "Yours"}</b></button> : null}
     <ChapterPreviewList chapters={item.chapters} maxVisible={5} onOpenChapter={onOpenChapter} />
   </div>;
 }
@@ -555,7 +562,7 @@ function ChapterPreviewList({ chapters, maxVisible = 3, onOpenChapter }) {
     {visible.map((chapter, index) => (
       <button className="seen-chapter-preview" key={chapter.id || index} onClick={() => onOpenChapter(index)} type="button">
         <span>{String(index + 1).padStart(2, "0")}</span>
-        <strong>{chapter.title}</strong>
+        <strong>{chapter.locked ? <><FiLock /> {chapter.title}</> : chapter.title}</strong>
         <FiChevronRight aria-hidden="true" />
       </button>
     ))}
@@ -575,15 +582,22 @@ function InlineChapterBlock({ block }) {
   return block?.text || block?.label ? <p>{block.text || block.label}</p> : null;
 }
 
-function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onOverview, onSelect }) {
+function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onOverview, onPurchase, onSelect }) {
   const blocks = chapter?.blocks || [];
   const nextChapter = chapters[chapterIndex + 1];
+  if (chapter?.locked) return <section className="seen-inline-chapter is-locked" aria-live="polite">
+    <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>Chapter {chapterIndex + 1} of {chapters.length}</span></div>
+    <h2>{chapter.title || item.title}</h2><i className="seen-inline-accent" />
+    <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
+    <div className="seen-paid-locked-card"><span><FiLock /></span><h2>Unlock the rest</h2><p>One-time · yours forever · {item.ownerCount.toLocaleString()} own it</p><button onClick={onPurchase} type="button">Unlock · ✦ {Number(item.pricing?.starsAmount || 0).toLocaleString()}</button></div>
+    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label="Locked chapter" /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
+  </section>;
   return <section className="seen-inline-chapter" aria-live="polite">
     <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>Chapter {chapterIndex + 1} of {chapters.length}</span></div>
     <h2>{chapter?.title || item.title}</h2>
     <i className="seen-inline-accent" />
     <div className="seen-inline-blocks">{blocks.length ? blocks.map((block, index) => <InlineChapterBlock block={block} key={block.id || `${chapter.id}-${index}`} />) : <p>This chapter has no content yet.</p>}</div>
-    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} Â· {nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
+    {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>Next</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label="Locked chapter" /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>Done</small><strong>Back to overview</strong><FiChevronRight /></button>}
   </section>;
 }
 
@@ -600,6 +614,11 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
   const [replyTo, setReplyTo] = useState(null);
   const [reactionTarget, setReactionTarget] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
+  const [reposted, setReposted] = useState({});
+  const repostCommentMutation = useMutation({
+    mutationFn: (comment) => repostService.toggle("cm", comment.id, "SeenEngagement").then((response) => ({ comment, ...response.data.data })),
+    onSuccess: ({ comment, reposted: value }) => setReposted((current) => ({ ...current, [comment.id]: value })),
+  });
   const voiceCommentMutation = useMutation({
     mutationFn: (recording) => publicationService.voiceCommentOnSeen(item.id, { audioBlob: recording.audioBlob, text: recording.text, waveform: recording.waveform }),
     onSuccess: (response) => {
@@ -631,7 +650,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
       <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link>{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
-        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}</span>
+        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
       </div>
     </article>;
   };
@@ -759,15 +778,19 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
   </div>;
 }
 
-function EngagementBar({ item, onCommentToggle, onCopyLink, onReactOpen, onRepost, onSave, commentsOpen, pending }) {
+function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReactOpen, onRepost, onSave, commentsOpen, isOwn = false, pending }) {
   const selected = item.viewerState;
+  const holdTimer = useRef(null);
+  const held = useRef(false);
+  useEffect(() => () => window.clearTimeout(holdTimer.current), []);
+  const cancelHold = () => window.clearTimeout(holdTimer.current);
   return <div className="seen-engagement-bar">
     <div className="seen-engagement-left">
-      <button aria-label={selected.reaction ? "Change reaction" : "React to Seen"} className={selected.reaction ? "is-selected seen-reactions" : "seen-reactions"} disabled={pending} onClick={onReactOpen} type="button">
+      <button aria-label={selected.reaction ? "Change reaction" : "React to Seen"} className={selected.reaction ? "is-selected seen-reactions" : "seen-reactions"} disabled={pending} onClick={() => { if (!held.current) onReactOpen(); held.current = false; }} onPointerCancel={cancelHold} onPointerDown={() => { held.current = false; holdTimer.current = window.setTimeout(() => { held.current = true; onReactHold(); navigator.vibrate?.(12); }, 420); }} onPointerLeave={cancelHold} onPointerUp={cancelHold} type="button">
         <span>{reactionCluster(item)}</span><b>{formatCount(item.engagement.reactions)}</b>
       </button>
       <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-selected" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><b>{formatCount(item.engagement.comments)}</b></button>
-      <button aria-label={selected.reposted ? "Remove repost" : "Repost Seen"} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat /><b>{formatCount(item.engagement.reposts)}</b></button>
+      {!isOwn ? <button aria-label={selected.reposted ? "Remove repost" : "Repost Seen"} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat /><b>{formatCount(item.engagement.reposts)}</b></button> : null}
     </div>
     <div className="seen-engagement-right">
       <button aria-label={selected.saved ? "Remove from Saved" : "Save Seen"} className={selected.saved ? "is-selected" : ""} disabled={pending} onClick={onSave} type="button"><FiBookmark fill={selected.saved ? "currentColor" : "none"} /></button>
@@ -799,9 +822,11 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const [actionPill, setActionPill] = useState("");
   const [busyOwnerAction, setBusyOwnerAction] = useState("");
   const [activeChapter, setActiveChapter] = useState(-1);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(1);
   const [mobileSwipe, setMobileSwipe] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
   const longPressRef = useRef({ startX: 0, startY: 0, timer: null });
+  const lastContentTapRef = useRef({ at: 0, x: 0, y: 0 });
   const trackingTopics = useMemo(() => [item.category].filter(Boolean), [item.category]);
   const trackingRef = useRecommendationTracking({ batchId, creatorId: item.creator.id, entityId: item.id, entityType: "seen", position, topics: trackingTopics });
   const engagementQuery = useQuery({
@@ -1015,6 +1040,25 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     if (reactionMutation.isPending) return;
     reactionMutation.mutate(reaction);
   };
+  const addHeartFromDoubleTap = () => {
+    // A double tap is additive: an existing heart stays selected rather than
+    // being toggled off. Any other reaction is replaced, preserving the
+    // one-reaction-per-person invariant enforced by the API.
+    if (reactionMutation.isPending || item.viewerState.reaction === "LOVE") return;
+    reactionMutation.mutate("LOVE");
+  };
+  const detectTouchDoubleTap = (event) => {
+    if (event.pointerType !== "touch") return;
+    const previous = lastContentTapRef.current;
+    const now = Date.now();
+    const nearby = Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 34;
+    if (previous.at && now - previous.at <= 320 && nearby) {
+      lastContentTapRef.current = { at: 0, x: 0, y: 0 };
+      addHeartFromDoubleTap();
+      return;
+    }
+    lastContentTapRef.current = { at: now, x: event.clientX, y: event.clientY };
+  };
   const openReactions = () => {
     setMenuOpen(false);
     if (item.engagement.reactions > 0) setReactionsSheetOpen(true);
@@ -1090,8 +1134,8 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const previousChapterPanel = activeChapter >= 0 ? activeChapter - 1 : null;
   const nextChapterPanel = activeChapter < item.chapters.length - 1 ? activeChapter + 1 : item.chapters.length ? -1 : null;
   const renderInlinePanel = (panel) => panel == null ? <span /> : panel < 0
-    ? <SeenSummary item={item} onOpenChapter={selectChapter} />
-    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} onOverview={() => selectChapter(-1, -1)} onSelect={selectChapter} />;
+    ? <SeenSummary item={item} onOpenChapter={selectChapter} onPurchase={() => setPurchaseOpen(true)} />
+    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} onOverview={() => selectChapter(-1, -1)} onPurchase={() => setPurchaseOpen(true)} onSelect={selectChapter} />;
 
   return <motion.article
     className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
@@ -1177,6 +1221,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       onMute={() => runContextAction(() => muteMutation.mutate())}
       onPinToggle={() => runContextAction(() => pinMutation.mutate())}
       onReact={(reaction) => runContextAction(() => reactionMutation.mutate(reaction))}
+      onReactionMore={() => { closeContextMenu(); setReactionPickerOpen(true); }}
       onReport={() => { closeContextMenu(); setReportDone(false); setReportOpen(true); }}
       onRepost={() => runContextAction(() => repostMutation.mutate())}
       onSave={() => runContextAction(() => saveMutation.mutate())}
@@ -1185,6 +1230,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     />
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
+    <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => window.location.reload()} publication={rawItem} />
     <SeenInsightsSheet fallbackViews={item.engagement.views} insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
     <SeriesPickerSheet
       isOpen={seriesOpen}
@@ -1198,7 +1244,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       selectedSeriesId={item.seriesId}
     />
     <div className={`seen-feed-copy ${activeChapter >= 0 ? "is-reading" : "is-overview"}`}>
-      <div className="seen-inline-stage">
+      <div className="seen-inline-stage" onDoubleClick={addHeartFromDoubleTap} onPointerUp={detectTouchDoubleTap}>
         <button aria-label={activeChapter <= 0 ? "Back to Seen overview" : "Previous chapter"} className="seen-inline-arrow is-previous" disabled={activeChapter < 0} onClick={previousPanel} type="button"><FiChevronLeft /></button>
         <motion.div animate={{ opacity: 1, x: 0 }} className="seen-inline-track" drag={mobileSwipe ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragDirectionLock dragElastic={mobileSwipe ? .82 : 0} dragMomentum={false} initial={reduceMotion ? false : { opacity: .45, x: swipeDirection * 54 }} key={activeChapter} onDragEnd={finishSwipe} transition={reduceMotion ? { duration: 0 } : { duration: .26, ease: [0.22,1,0.36,1] }}>
           <div aria-hidden="true" className="seen-inline-panel is-neighbor">{renderInlinePanel(previousChapterPanel)}</div>
@@ -1213,7 +1259,8 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       </div> : null}
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       {activeChapter < 0 ? <PreviewComment comment={item.previewComment} /> : null}
-      <EngagementBar commentsOpen={commentsOpen} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
+      {activeChapter < 0 && item.moreFrom ? <Link className="seen-more-from-paid" to={`/seen/${encodeURIComponent(item.moreFrom.id)}`}><span>More from {item.creator?.name?.split(" ")?.[0] || item.creator?.username || "creator"}</span><b>{item.moreFrom.title}</b><strong>✦{Number(item.moreFrom.priceStars || 0).toLocaleString()} ›</strong></Link> : null}
+      <EngagementBar commentsOpen={commentsOpen} isOwn={isOwn} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactHold={() => setReactionPickerOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
       {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}

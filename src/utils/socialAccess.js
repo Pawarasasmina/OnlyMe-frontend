@@ -21,7 +21,7 @@ export function onboardingPathFor(user) {
 
 export function canAccessAppDuringOnboarding(user) {
   if (isOnboardingComplete(user)) return true;
-  return ["light-your-world", "complete"].includes(user?.onboarding?.currentStep);
+  return ["ticket", "complete"].includes(user?.onboarding?.currentStep);
 }
 
 export function destinationForUser(user) {
@@ -34,12 +34,15 @@ export function destinationForUser(user) {
 export function socialCapabilitiesFor(user) {
   const isAuthenticated = Boolean(user);
   const isConsumer = isConsumerRole(user?.role);
-  const isApprovedCreator = isConsumer && user?.creatorApprovalStatus === "approved";
+  const hasProfessionalType = ["creator", "business"].includes(user?.profileType);
+  const isApprovedCreator = isConsumer && (user?.creatorApprovalStatus === "approved" || hasProfessionalType);
 
   return {
     isAuthenticated,
     role: user?.role || null,
     isCreator: isApprovedCreator,
+    profileType: user?.profileType || "personal",
+    isBusiness: user?.profileType === "business",
     isApprovedCreator,
     canCreate: isConsumer,
     canAccessStudio: isApprovedCreator,

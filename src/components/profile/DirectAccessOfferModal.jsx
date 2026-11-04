@@ -64,7 +64,7 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
   };
   const requestCall = (type = "AUDIO") => {
     onClose();
-    startCall({ id: creatorId, displayName: profile.displayName, username: profile.username, avatarUrl: profile.avatar, role: "creator" }, type);
+    startCall({ id: creatorId, displayName: profile.displayName, username: profile.username, avatarUrl: profile.avatar, role: "creator" }, "AUDIO");
   };
   const replyHours = Math.max(1, Number(offer?.typicalReplyHours || 6));
 

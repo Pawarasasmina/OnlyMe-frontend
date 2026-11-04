@@ -50,8 +50,10 @@ export function useOnboarding() {
     ...stateQuery,
     saveWelcome: useMutation({ mutationFn: onboardingService.saveWelcomeStep, ...mutationOptions }),
     saveInterests: useMutation({ mutationFn: onboardingService.saveInterests, ...mutationOptions }),
+    saveProfileType: useMutation({ mutationFn: onboardingService.saveProfileType, ...mutationOptions }),
     saveInstincts: useMutation({ mutationFn: onboardingService.saveInstincts, ...mutationOptions }),
     savePeople: useMutation({ mutationFn: onboardingService.saveSuggestedPeople, ...mutationOptions }),
+    acknowledgeTicket: useMutation({ mutationFn: onboardingService.acknowledgeTicket, ...mutationOptions }),
     acknowledgeChecklist: useMutation({ mutationFn: onboardingService.acknowledgeChecklist, ...mutationOptions }),
     skip: useMutation({ mutationFn: onboardingService.skipOnboarding, ...mutationOptions }),
     complete: completeMutation,
@@ -64,5 +66,6 @@ export function useOnboardingSuggestions(enabled = true) {
     queryKey: onboardingKeys.suggestions(user?.id),
     queryFn: () => onboardingService.getSuggestedPeople({ limit: 12 }).then((response) => response.data.data.suggestions || []),
     enabled: Boolean(user?.id && enabled),
+    refetchOnMount: "always",
   });
 }

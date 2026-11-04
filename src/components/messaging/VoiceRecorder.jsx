@@ -15,7 +15,7 @@ const supportedMime = () => [
   "audio/webm",
 ].find((type) => window.MediaRecorder?.isTypeSupported(type)) || "";
 
-export default function VoiceRecorder({ disabled = false, onSend }) {
+export default function VoiceRecorder({ compact = false, disabled = false, onSend }) {
   const [mode, setMode] = useState("idle");
   const [elapsed, setElapsed] = useState(0);
   const [levels, setLevels] = useState([]);
@@ -147,7 +147,7 @@ export default function VoiceRecorder({ disabled = false, onSend }) {
     }
   };
 
-  if (mode === "idle") return <><VideoNoteRecorder disabled={disabled} onSend={(blob, onProgress) => onSend(blob, onProgress, "video")} /><div className="shrink-0"><button aria-label="Record voice message" className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:text-atseen-blue disabled:opacity-40" disabled={disabled} onClick={begin} title="Record voice message" type="button"><FiMic /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs text-atseen-danger shadow-xl">{error}<button aria-label="Dismiss microphone error" className="float-right" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div></>;
+  if (mode === "idle") return <><div className="shrink-0"><button aria-label="Record voice message" className={compact ? "grid h-8 w-8 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-atseen-blue disabled:opacity-40" : "grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:text-atseen-blue disabled:opacity-40"} disabled={disabled} onClick={begin} title="Record voice message" type="button"><FiMic /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs text-atseen-danger shadow-xl">{error}<button aria-label="Dismiss microphone error" className="float-right" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div><VideoNoteRecorder compact={compact} disabled={disabled} onSend={(blob, onProgress) => onSend(blob, onProgress, "video")} /></>;
 
   if (["recording", "paused"].includes(mode)) return <div className="absolute inset-x-3 bottom-3 z-30 flex min-h-12 items-center gap-3 rounded-2xl border border-atseen-line bg-atseen-bg-2 px-3 py-2 shadow-2xl sm:inset-x-4 sm:bottom-4">
     <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${mode === "recording" ? "animate-pulse bg-atseen-danger" : "bg-atseen-warning"}`} />

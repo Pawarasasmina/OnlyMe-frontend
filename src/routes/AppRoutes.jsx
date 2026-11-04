@@ -29,6 +29,7 @@ const GrowFanPreviewPage = lazyPage("../pages/creator/GrowFanPreviewPage");
 const ReferralLandingPage = lazyPage("../pages/public/ReferralLandingPage");
 const CreatorApplicationPage = lazyPage("../pages/creator/CreatorApplicationPage");
 const CreatorVerificationPage = lazyPage("../pages/creator/CreatorVerificationPage");
+const SellerVerificationPage = lazyPage("../pages/creator/SellerVerificationPage");
 const ContentManager = lazyPage("../pages/creator/ContentManager");
 const ContentComposerPage = lazyPage("../pages/creator/ContentComposerPage");
 const ContentDetailPage = lazyPage("../pages/creator/ContentDetailPage");
@@ -64,9 +65,9 @@ const WalletPage = lazyPage("../pages/social/WalletPage");
 const WalletLedgerPage = lazyPage("../pages/social/WalletLedgerPage");
 const WithdrawPage = lazyPage("../pages/social/WithdrawPage");
 const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
-const MyExperiencesPage = lazyPage("../pages/social/MyExperiencesPage");
 const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
+const MembershipCancellationPage = lazyPage("../pages/social/MembershipCancellationPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
 const SavedPage = lazyPage("../pages/social/SavedPage");
 const ArchivePage = lazyPage("../pages/social/ArchivePage");
@@ -81,10 +82,12 @@ const DiscoverPage = lazyPage("../pages/social/DiscoverPage");
 const PostDetailPage = lazyPage("../pages/social/PostDetailPage");
 const OnboardingPage = lazyPage("../pages/onboarding/OnboardingPage");
 const WelcomePage = lazyPage("../pages/onboarding/WelcomePage");
+const PublicInterestsPage = lazyPage("../pages/onboarding/PublicStoryInterestsPage");
 const AccountSettingsPage = lazyPage("../pages/settings/AccountSettingsPage");
 const PrivacySettingsPage = lazyPage("../pages/settings/PrivacySettingsPage");
 const NotificationSettingsPage = lazyPage("../pages/settings/NotificationSettingsPage");
 const ContentPreferencesPage = lazyPage("../pages/settings/ContentPreferencesPage");
+const AiSettingsPage = lazyPage("../pages/settings/AiSettingsPage");
 const SupportPage = lazyPage("../pages/settings/SupportPage");
 const GiftManagementPage = lazyPage("../pages/admin/GiftManagementPage");
 const VerifiedCreatorPage = lazyPage("../pages/creator/VerifiedCreatorPage");
@@ -94,7 +97,7 @@ function RootRedirect() {
   const { loading, user } = useAuth();
   if (loading) return null;
   if (user?.role === ROLES.ADMIN) return <Navigate replace to="/admin/dashboard" />;
-  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/login"} />;
+  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
 function LegacyCreatorProfileRedirect() {
@@ -139,6 +142,7 @@ function AppRoutes() {
     </Route>
 
     <Route path="/welcome" element={<WelcomePage />} />
+    <Route path="/start/interests" element={<PublicInterestsPage />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />
@@ -177,6 +181,7 @@ function AppRoutes() {
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
           <Route path="/settings/content" element={<ContentPreferencesPage />} />
+          <Route path="/settings/ai" element={<AiSettingsPage />} />
           <Route path="/settings/support/:section" element={<SupportPage />} />
           <Route path="/creator/verified" element={<VerifiedCreatorPage />} />
           <Route path="/settings/security" element={<AccountSecurityPage />} />
@@ -186,10 +191,12 @@ function AppRoutes() {
           <Route path="/wallet/ledger" element={<WalletLedgerPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
-          <Route path="/experiences" element={<MyExperiencesPage />} />
-          <Route path="/profile/:username/experiences" element={<MyExperiencesPage />} />
+          <Route path="/memberships/:id/cancel" element={<MembershipCancellationPage />} />
+          <Route path="/experiences" element={<Navigate replace to="/profile" />} />
+          <Route path="/profile/:username/experiences" element={<Navigate replace to="/profile" />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
+            <Route path="/creator/seller-verification" element={<SellerVerificationPage />} />
           </Route>
           <Route path="/create" element={<CreateHubPage />} />
           <Route path="/create/seen" element={<SeenComposerPage />} />
@@ -202,8 +209,8 @@ function AppRoutes() {
             <Route path="/grow/fan-preview" element={<GrowFanPreviewPage />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
-            <Route path="/create/experience" element={<WorldComposerPage experience />} />
-            <Route path="/studio/experiences/:id/edit" element={<WorldComposerPage experience />} />
+            <Route path="/create/experience" element={<Navigate replace to="/create/seen" />} />
+            <Route path="/studio/experiences/:id/edit" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />

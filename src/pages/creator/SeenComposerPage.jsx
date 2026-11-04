@@ -9,12 +9,14 @@ import {
   FiChevronRight,
   FiCopy,
   FiEdit3,
+  FiEye,
   FiFilm,
   FiGlobe,
   FiGrid,
   FiImage,
   FiLink,
   FiList,
+  FiLock,
   FiMapPin,
   FiMic,
   FiPause,
@@ -31,14 +33,19 @@ import { publicationService as api } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
 import { voiceService } from "../../services/voiceService";
 import { searchService } from "../../services/searchService";
+import { walletService } from "../../services/walletService";
+import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import EntityAttachmentPicker from "../../components/contentEntities/EntityAttachmentPicker";
 import { normalizeTags, publicationError, seenCompleteness } from "../../utils/publicationValidation";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import { resolveMediaUrl } from "../../utils/media";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
+import AiSeenGuide from "../../components/publication/AiSeenGuide";
 
-const empty = { allowDownload: false, attachedEntities: [], entityRefs: [], experienceLocation: "", kind: "SEEN", taggedPeople: [], title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
+const empty = { allowDownload: false, captionsEnabled: true, ownerWelcomeNote: "", attachedEntities: [], entityRefs: [], experienceLocation: "", kind: "SEEN", pricing: { mode: "FREE", starsAmount: null, presetId: null }, taggedPeople: [], title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
 const fallbackCategories = ["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"];
+const usd = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(Number(value) || 0);
 const audienceOptions = [
   { icon: FiGlobe, label: "Everyone", value: "PUBLIC" },
   { description: "Only mutual friends", icon: FiUsers, label: "Friends", value: "FRIENDS" },
@@ -91,6 +98,46 @@ function statusLabel(status, uploading) {
   if (uploading) return "Uploading media...";
   if (status === "Saved") return "";
   return status;
+}
+
+function PaidSeenBuyerView({ chapters = [], coverKind, coverUrl, creatorAvatar, creatorName, onClose, onUnlock, price, title }) {
+  const previews = chapters.filter((chapter) => chapter.isPreview);
+  const firstPreview = previews[0] || chapters[0];
+  const [selectedChapterId, setSelectedChapterId] = useState(firstPreview?.stableChapterId || firstPreview?.id || "");
+  const selectedChapter = chapters.find((chapter) => (chapter.stableChapterId || chapter.id) === selectedChapterId) || firstPreview;
+  useEffect(() => { const closeOnEscape = (event) => event.key === "Escape" && onClose(); window.addEventListener("keydown", closeOnEscape); return () => window.removeEventListener("keydown", closeOnEscape); }, [onClose]);
+  return <div className="seen-buyer-view-layer" role="presentation">
+    <button aria-label="Close buyer view" className="seen-buyer-view-scrim" onClick={onClose} type="button" />
+    <section aria-label="Paid Seen buyer view" aria-modal="true" className="seen-buyer-view-sheet" role="dialog">
+      <button aria-label="Close buyer view" className="seen-buyer-view-handle" onClick={onClose} type="button"><span /></button>
+      <p className="seen-buyer-view-label"><FiEye /> BUYER VIEW</p>
+      <div className="seen-buyer-view-card"><header><span className="seen-buyer-view-avatar">{creatorAvatar ? <img alt="" src={creatorAvatar} /> : creatorName.slice(0, 1).toUpperCase()}</span><strong>{creatorName}</strong><small>tap Preview / Locked</small></header><div className="seen-buyer-view-cover">{coverUrl ? coverKind === "VIDEO" ? <video autoPlay loop muted playsInline src={coverUrl} /> : <img alt="" src={coverUrl} /> : <span><FiEye /><small>Paid Seen</small></span>}<div><small>PAID SEEN</small><h2>{title || "Untitled Seen"}</h2><p>{chapters.length} {chapters.length === 1 ? "chapter" : "chapters"}</p></div></div></div>
+      <p className="seen-buyer-view-new"><i /> New — be one of the first owners</p>
+      <div className="seen-buyer-view-inside-head"><b>INSIDE</b><span>· chapter {chapters.length === 1 ? "1" : `1–${chapters.length}`}</span></div>
+      <div className="seen-buyer-view-chapters">{chapters.map((chapter, index) => { const preview = Boolean(chapter.isPreview); const chapterId = chapter.stableChapterId || chapter.id || String(index); return <button className={selectedChapter === chapter ? "is-active" : ""} key={chapterId} onClick={() => preview ? setSelectedChapterId(chapterId) : onUnlock()} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{chapter.title?.trim() || `Chapter ${index + 1}`}</strong><em className={preview ? "is-preview" : "is-locked"}>{preview ? "Free preview" : <><FiLock /> Locked</>}</em></button>; })}</div>
+      {selectedChapter ? <div className="seen-buyer-view-excerpt"><b>{selectedChapter.title || "Free preview"}</b><p>{chapterStoryText(selectedChapter) || "Open this free preview to see what is inside."}</p></div> : null}
+      <div className="seen-buyer-view-benefits"><span><FiCheck /><small>Yours forever</small></span><span><FiArrowRight /><small>New chapters included</small></span></div>
+      <button className="seen-buyer-view-unlock" onClick={onUnlock} type="button">Unlock <span>·</span> <b>✦ {Number(price || 0).toLocaleString()}</b></button>
+      <small className="seen-buyer-view-footnote">One-time · yours forever · refund within 24h if it’s not for you</small>
+    </section>
+  </div>;
+}
+
+function OwnerVoiceSheet({ busy, onClose, onSave }) {
+  const recorder = useRef(null);
+  const stream = useRef(null);
+  const chunks = useRef([]);
+  const fileInput = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const [voice, setVoice] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => { if (!recording) return undefined; const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000); return () => window.clearInterval(timer); }, [recording]);
+  useEffect(() => () => { stream.current?.getTracks().forEach((track) => track.stop()); if (voice?.url) URL.revokeObjectURL(voice.url); }, [voice?.url]);
+  const start = async () => { try { const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true }); const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm"; const next = new MediaRecorder(mediaStream, { mimeType }); stream.current = mediaStream; recorder.current = next; chunks.current = []; next.ondataavailable = ({ data }) => data.size && chunks.current.push(data); next.onstop = () => { const blob = new Blob(chunks.current, { type: mimeType }); setVoice({ file: new File([blob], `owner-welcome-${Date.now()}.webm`, { type: mimeType }), url: URL.createObjectURL(blob) }); mediaStream.getTracks().forEach((track) => track.stop()); }; next.start(250); setSeconds(0); setRecording(true); setError(""); } catch { setError("Microphone access is needed to record. You can upload audio instead."); } };
+  const stop = () => { if (recorder.current?.state === "recording") recorder.current.stop(); setRecording(false); };
+  const chooseFile = (event) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (voice?.url) URL.revokeObjectURL(voice.url); setVoice({ file, url: URL.createObjectURL(file) }); };
+  return <div className="owner-voice-layer"><button aria-label="Close voice recorder" className="owner-voice-scrim" onClick={onClose} type="button" /><section aria-modal="true" className="owner-voice-sheet" role="dialog"><span className="owner-voice-handle" /><header><div><h2>Voice hello</h2><p>Welcome owners in your own voice.</p></div><button aria-label="Close" onClick={onClose} type="button"><FiX /></button></header>{voice ? <div className="owner-voice-preview"><audio controls src={voice.url} /><button onClick={() => { URL.revokeObjectURL(voice.url); setVoice(null); setSeconds(0); }} type="button">Record again</button></div> : <button className={`owner-voice-record ${recording ? "is-recording" : ""}`} onClick={recording ? stop : start} type="button"><FiMic /><b>{recording ? "Stop recording" : "Start recording"}</b><small>{recording ? `${seconds}s` : "Tap when you’re ready"}</small></button>}{error ? <p className="owner-voice-error">{error}</p> : null}<button className="owner-voice-upload" onClick={() => fileInput.current?.click()} type="button"><FiUpload /> Upload audio</button><input accept="audio/*" className="sr-only" onChange={chooseFile} ref={fileInput} type="file" /><button className="owner-voice-use" disabled={!voice?.file || busy} onClick={() => onSave(voice.file)} type="button">{busy ? "Adding voice…" : "Add voice hello"}</button></section></div>;
 }
 
 const tagsWithoutSeries = (tags = []) => normalizeTags(tags).filter((tag) => !String(tag).startsWith("series:"));
@@ -887,32 +934,7 @@ function PeopleSheet({ onChange, onClose, selectedIds, selectedPeople }) {
 }
 
 function LocationSheet({ onClose, onSelect, value }) {
-  const [query, setQuery] = useState(value || "");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const search = query.trim();
-    if (search.length < 2 || search === value) { setResults([]); return undefined; }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      searchService.searchLocations({ q: search, language: navigator.language || "en" }, controller.signal)
-        .then(setResults)
-        .catch(() => setResults([]))
-        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    }, 300);
-    return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [query, value]);
-  return (
-    <SelectionSheet onClose={onClose} title="Location">
-      <input className="seen-settings-search" onChange={(event) => setQuery(event.target.value)} placeholder="Search a country or city" value={query} />
-      <div className="seen-settings-options">
-        {value ? <SheetRow Icon={FiMapPin} label={value} onClick={() => onSelect("")} selected /> : null}
-        {loading ? <p className="seen-settings-empty">Searching locations...</p> : null}
-        {results.map((place) => <SheetRow description={place.subtitle} Icon={FiMapPin} key={place.id} label={place.name || place.label} onClick={() => onSelect(place.label)} />)}
-      </div>
-    </SelectionSheet>
-  );
+  return <UniversalLocationPicker onClose={onClose} onSelect={onSelect} value={value} />;
 }
 
 function SeriesSheet({ creating, error, items, loading, newSeries, onClose, onCreate, onInput, onRemove, onSelect, selectedId }) {
@@ -983,9 +1005,6 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
   const [recordedVoice, setRecordedVoice] = useState(null);
   const [voiceError, setVoiceError] = useState("");
   const [placeOpen, setPlaceOpen] = useState(false);
-  const [placeQuery, setPlaceQuery] = useState("");
-  const [placeSuggestions, setPlaceSuggestions] = useState([]);
-  const [placeLoading, setPlaceLoading] = useState(false);
   const [draggingBlockId, setDraggingBlockId] = useState("");
   const [editorHintVisible, setEditorHintVisible] = useState(true);
   const [textToolsOpen, setTextToolsOpen] = useState(false);
@@ -1173,30 +1192,6 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
     return () => window.removeEventListener("resize", keepTextToolsInViewport);
   }, [textToolsOpen, textToolPosition.left, textToolPosition.top]);
 
-  useEffect(() => {
-    if (!placeOpen || placeQuery.trim().length < 2) {
-      setPlaceSuggestions([]);
-      setPlaceLoading(false);
-      return undefined;
-    }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setPlaceLoading(true);
-      searchService
-        .getSuggestions(placeQuery.trim(), controller.signal)
-        .then((data) =>
-          setPlaceSuggestions(
-            (data.suggestions || []).filter((item) => item.type === "place"),
-          ),
-        )
-        .catch(() => setPlaceSuggestions([]))
-        .finally(() => setPlaceLoading(false));
-    }, 300);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [placeOpen, placeQuery]);
 
   const discardVoice = () => {
     if (recordedVoice?.url) URL.revokeObjectURL(recordedVoice.url);
@@ -1603,12 +1598,12 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
         <div>
           {flow ? <input aria-label="Chapter title" className="seen-chapter-flow-title" disabled={busy} maxLength={120} onChange={(event) => onTitleChange?.(event.target.value)} placeholder="Chapter name" value={chapter?.title || ""} /> : <h1>{chapter?.title?.trim() || "Chapter name"}</h1>}
         </div>
-        <button disabled={busy} onClick={() => finishChapterEditing(flow ? "finish" : "done")} type="button">{busy ? "Saving" : flow ? "Preview" : "Done"}</button>
+        <button disabled={busy} onClick={() => finishChapterEditing(flow ? "finish" : "done")} type="button">{busy ? "Saving" : flow ? "Continue" : "Done"}</button>
       </header>
 
-      {flow ? <nav aria-label="Chapters" className="seen-chapter-flow-progress" style={{ "--chapter-progress-count": flow.max || flow.total }}>
-        <div>{Array.from({ length: flow.max || flow.total }, (_, index) => <button aria-label={index < flow.total ? `Open chapter ${index + 1}` : `Chapter ${index + 1} not added`} aria-current={index === flow.index ? "step" : undefined} className={index === flow.index ? "is-active" : index < flow.index ? "is-complete" : ""} disabled={busy || index >= flow.total} key={index} onClick={() => flow.onSelect?.(index)} type="button" />)}</div>
-        <span>{flow.index + 1}/{flow.max || flow.total}</span>
+      {flow ? <nav aria-label="Chapters" className="seen-chapter-flow-progress" style={{ "--chapter-progress-count": flow.total }}>
+        <div>{Array.from({ length: flow.total }, (_, index) => <button aria-label={`Open chapter ${index + 1}`} aria-current={index === flow.index ? "step" : undefined} className={index === flow.index ? "is-active" : index < flow.index ? "is-complete" : ""} disabled={busy} key={index} onClick={() => flow.onSelect?.(index)} type="button" />)}</div>
+        <span>{flow.index + 1}/{flow.total}</span>
       </nav> : null}
 
       {textToolsOpen ? (
@@ -1694,7 +1689,7 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
       ) : null}
 
       {!writingStarted && !attachmentBlocks.length && !structuredBlocks.length && !locationBlocks.length ? <section className="seen-chapter-empty-state">
-        <p>CHAPTER {flow ? flow.index + 1 : 1} OF {flow?.max || 1}</p>
+        <p>CHAPTER {flow ? flow.index + 1 : 1} OF {flow?.total || 1}</p>
         <h2>Start your story</h2>
         <div>
           <button onClick={() => { setWritingStarted(true); window.requestAnimationFrame(() => textareaRef.current?.focus()); }} type="button"><FiEdit3 /><b>Write something</b></button>
@@ -2091,83 +2086,7 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
           </div>
         </section>
       ) : null}
-      {placeOpen ? (
-        <section
-          className="seen-chapter-place-picker"
-          aria-label="Add a location"
-        >
-          <div className="seen-chapter-place-head">
-            <strong>Add location</strong>
-            <button onClick={() => setPlaceOpen(false)} type="button">
-              <FiX />
-            </button>
-          </div>
-          <label>
-            <FiMapPin />
-            <input
-              autoFocus
-              onChange={(event) => setPlaceQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && placeQuery.trim()) {
-                  onAddPlace(placeQuery.trim());
-                  setPlaceOpen(false);
-                  setPlaceQuery("");
-                }
-              }}
-              placeholder="Place — e.g. Lisbon, Alfama"
-              value={placeQuery}
-            />
-          </label>
-          <button
-            className="seen-chapter-place-add"
-            disabled={!placeQuery.trim()}
-            onClick={() => {
-              onAddPlace(placeQuery.trim());
-              setPlaceOpen(false);
-              setPlaceQuery("");
-            }}
-            type="button"
-          >
-            Add
-          </button>
-          <div className="seen-chapter-place-results">
-            {placeLoading ? <p>Searching locations...</p> : null}
-            {placeSuggestions.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onAddPlace(item.value || item.label);
-                  setPlaceOpen(false);
-                  setPlaceQuery("");
-                }}
-                type="button"
-              >
-                <FiMapPin />
-                <span>
-                  <b>{item.label}</b>
-                  <small>Place</small>
-                </span>
-              </button>
-            ))}
-            {!placeLoading && placeQuery.trim().length >= 2 ? (
-              <button
-                onClick={() => {
-                  onAddPlace(placeQuery.trim());
-                  setPlaceOpen(false);
-                  setPlaceQuery("");
-                }}
-                type="button"
-              >
-                <FiPlus />
-                <span>
-                  <b>Add “{placeQuery.trim()}”</b>
-                  <small>Use this location</small>
-                </span>
-              </button>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
+      {placeOpen ? <UniversalLocationPicker onClose={() => setPlaceOpen(false)} onSelect={(location) => onAddPlace(location)} title="Place" /> : null}
       {structuredEditor ? (
         <section
           className={`seen-chapter-structured-editor is-${structuredEditor.type.toLowerCase()}-editor`}
@@ -2488,7 +2407,10 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
           <FiX />
         </button>
       </div> : null}
-      {flow && flow.canAdd ? <button className="seen-chapter-add-next" disabled={busy} onClick={() => finishChapterEditing("add")} type="button"><FiPlus /> Chapter {flow.total + 1}</button> : null}
+      {flow && (flow.index > 0 || flow.canAdd) ? <div className="seen-chapter-nav-actions">
+        {flow.index > 0 ? <button aria-label="Previous chapter" className="seen-chapter-back-previous" disabled={busy} onClick={() => finishChapterEditing("back")} type="button"><FiChevronLeft /></button> : null}
+        {flow.canAdd ? <button className="seen-chapter-add-next" disabled={busy} onClick={() => finishChapterEditing("add")} type="button"><FiPlus /> Chapter {flow.total + 1}</button> : null}
+      </div> : null}
       {flow ? <footer className="seen-chapter-flow-footer" style={flowFooterStyle}>
         <button disabled={busy} onClick={() => finishChapterEditing("back")} type="button"><FiChevronLeft /> Back</button>
         <span aria-live="polite">{busy ? "Saving…" : status || (typeof navigator !== "undefined" && !navigator.onLine ? "Offline — changes pending" : "Saved as draft")}</span>
@@ -2547,14 +2469,20 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
 
 export default function SeenComposerPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { id } = useParams();
   const nav = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const fromDrafts = searchParams.get("from") === "drafts";
   const fromSeen = searchParams.get("from") === "seen";
-  const draftSuffix = fromDrafts ? "?from=drafts" : "";
-  const backTarget = id
+  const requestedReturnTo = searchParams.get("returnTo") || "";
+  const returnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//") ? requestedReturnTo : "";
+  const composerSearch = new URLSearchParams();
+  if (fromDrafts) composerSearch.set("from", "drafts");
+  if (returnTo) composerSearch.set("returnTo", returnTo);
+  const draftSuffix = composerSearch.size ? `?${composerSearch.toString()}` : "";
+  const backTarget = returnTo || (id
     ? fromSeen
       ? "/seen"
       : fromDrafts
@@ -2562,9 +2490,11 @@ export default function SeenComposerPage() {
         : "/profile"
     : fromDrafts
       ? "/profile"
-      : "/profile";
+      : "/profile");
   const replyToSeenId = id ? "" : searchParams.get("replyToSeenId") || "";
+  const requestedSeenType = id ? "" : searchParams.get("type") || "";
   const coverInput = useRef(null);
+  const ownerVoiceInput = useRef(null);
   const busy = useRef(false);
   const dirty = useRef(false);
   const pendingCoverKind = useRef("IMAGE");
@@ -2573,8 +2503,15 @@ export default function SeenComposerPage() {
   const chapterAutoSaveTimer = useRef(null);
   const publicationAutoSaveTimer = useRef(null);
   const initialChapterStarted = useRef(false);
+  const pageWasReloaded = useRef(
+    window.performance?.getEntriesByType?.("navigation")?.[0]?.type === "reload"
+      && !location.state?.composerStep,
+  );
   const [p, setP] = useState(() => ({
     ...empty,
+    pricing: requestedSeenType === "paid"
+      ? { mode: "ONE_TIME", starsAmount: 190, presetId: "paid-seen" }
+      : empty.pricing,
     replyToSeen: replyToSeenId || null,
   }));
   const [replySeen, setReplySeen] = useState(null);
@@ -2594,18 +2531,41 @@ export default function SeenComposerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [uploading, setUploading] = useState("");
+  const [starsPerUsd, setStarsPerUsd] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [videoToTrim, setVideoToTrim] = useState(null);
-  const [activeChapterId, setActiveChapterId] = useState(() => location.state?.openChapterId || "");
+  const [buyerViewOpen, setBuyerViewOpen] = useState(false);
+  const [ownerVoiceOpen, setOwnerVoiceOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    walletService.getWallet()
+      .then((response) => {
+        const rate = Number(response.data?.data?.wallet?.starsPerUsd);
+        if (active && Number.isFinite(rate) && rate > 0) setStarsPerUsd(rate);
+      })
+      .catch(() => {
+        if (active) setStarsPerUsd(null);
+      });
+    return () => { active = false; };
+  }, []);
+  const [activeChapterId, setActiveChapterId] = useState(() => pageWasReloaded.current ? "" : location.state?.openChapterId || "");
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
   const [chapterAdding, setChapterAdding] = useState(false);
-  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => location.state?.focusChapterId || "");
+  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => pageWasReloaded.current ? "" : location.state?.focusChapterId || "");
   const [chapterStatus, setChapterStatus] = useState("");
   const [cropTarget, setCropTarget] = useState(null);
   const [loadingPublication, setLoadingPublication] = useState(Boolean(id));
   const [aboutStep, setAboutStep] = useState(() => !id);
+  const [chaptersStep, setChaptersStep] = useState(() => !pageWasReloaded.current && location.state?.composerStep === "chapters");
   const [continuingToChapter, setContinuingToChapter] = useState(false);
+  const [aiSeenOpen, setAiSeenOpen] = useState(false);
+
+  useEffect(() => {
+    if (!location.state?.openChapterId && !location.state?.focusChapterId && !location.state?.composerStep) return;
+    nav(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -2651,6 +2611,7 @@ export default function SeenComposerPage() {
       series: publication?.series || null,
       seriesId: publication?.seriesId || publication?.series?.id || null,
       visibility: publication?.visibility || "PUBLIC",
+      pricing: publication?.pricing || empty.pricing,
     };
     if (preserveLocalChanges) {
       setP((current) => {
@@ -2664,6 +2625,7 @@ export default function SeenComposerPage() {
           series: current.series,
           seriesId: current.seriesId,
           visibility: current.visibility,
+          pricing: current.pricing,
           allowDownload: current.allowDownload,
           experienceLocation: current.experienceLocation,
           taggedPeople: current.taggedPeople,
@@ -2775,7 +2737,10 @@ export default function SeenComposerPage() {
       category: p.category,
       seriesId: p.seriesId || p.series?.id || null,
       visibility: p.visibility || "PUBLIC",
+      pricing: p.pricing || empty.pricing,
       allowDownload: Boolean(p.allowDownload),
+      ownerWelcomeNote: p.ownerWelcomeNote || "",
+      captionsEnabled: p.captionsEnabled !== false,
       experienceLocation: p.experienceLocation || "",
       taggedPeople: p.taggedPeople || [],
       entityRefs: (p.attachedEntities || []).map((entity) => ({ entityId: entity.id, entityType: entity.type })),
@@ -2807,12 +2772,15 @@ export default function SeenComposerPage() {
       let publication = await ensure({ navigateToDraft: !aboutStep });
       publication = (await api.updatePublicationDraft(publication.id, {
         title: p.title,
-        summary: p.summary || p.description,
+        summary: p.summary || p.description || p.title,
         description: p.description,
         category: p.category,
         seriesId: p.seriesId || p.series?.id || null,
         visibility: p.visibility || "PUBLIC",
+        pricing: p.pricing || empty.pricing,
         allowDownload: Boolean(p.allowDownload),
+        ownerWelcomeNote: p.ownerWelcomeNote || "",
+        captionsEnabled: p.captionsEnabled !== false,
         experienceLocation: p.experienceLocation || "",
         taggedPeople: p.taggedPeople || [],
         entityRefs: (p.attachedEntities || []).map((entity) => ({ entityId: entity.id, entityType: entity.type })),
@@ -2821,12 +2789,25 @@ export default function SeenComposerPage() {
         statusVersion: publication.statusVersion,
       })).data.data.publication;
 
-      for (const chapter of p.chapters || []) {
+      const comparableChapter = (chapter = {}) => JSON.stringify({
+        title: (chapter.title || "").trim() || "Chapter name",
+        isPreview: Boolean(chapter.isPreview),
+        worldBonus: Boolean(chapter.worldBonus),
+        releaseMode: chapter.releaseMode || "IMMEDIATE",
+        blocks: (chapter.blocks || []).map((block) => ({ id: block.id, type: block.type, order: block.order, text: block.text || "", url: block.url || "", label: block.label || "", metadata: block.metadata || null, assetId: block.media?.assetId || "" })),
+      });
+      const savedChapters = new Map((publication.chapters || []).map((chapter) => [chapter.stableChapterId, chapter]));
+      for (const [chapterIndex, chapter] of (p.chapters || []).entries()) {
         if (!chapter.stableChapterId) continue;
+        const savedChapter = savedChapters.get(chapter.stableChapterId);
+        const expectedPreview = p.pricing?.mode !== "ONE_TIME" || chapterIndex === 0;
+        const nextChapter = { ...chapter, isPreview: expectedPreview };
+        if (savedChapter && comparableChapter(savedChapter) === comparableChapter(nextChapter)) continue;
         await api.updateChapter(publication.id, chapter.stableChapterId, {
           title: (chapter.title || "").trim() || "Chapter name",
           blocks: chapter.blocks || [],
-          isPreview: true,
+          isPreview: expectedPreview,
+          worldBonus: Boolean(chapter.worldBonus),
           releaseMode: chapter.releaseMode || "IMMEDIATE",
           statusVersion: publication.statusVersion,
         });
@@ -2860,7 +2841,7 @@ export default function SeenComposerPage() {
     window.clearTimeout(publicationAutoSaveTimer.current);
     publicationAutoSaveTimer.current = window.setTimeout(() => void save(), 850);
     return () => window.clearTimeout(publicationAutoSaveTimer.current);
-  }, [aboutStep, activeChapterId, p.allowDownload, p.category, p.description, p.experienceLocation, p.seriesId, p.summary, p.taggedPeople, p.title, p.visibility]);
+  }, [aboutStep, activeChapterId, p.allowDownload, p.category, p.description, p.experienceLocation, p.pricing, p.seriesId, p.summary, p.taggedPeople, p.title, p.visibility]);
 
   const cancelCreation = async () => {
     if (uploading || submitting || canceling) return;
@@ -2872,7 +2853,7 @@ export default function SeenComposerPage() {
         if (latest.status === "DRAFT") await api.deleteSeen(latest.id, latest.statusVersion);
       }
       sessionStorage.removeItem("atseen_new_seen_draft");
-      nav(fromSeen ? "/seen" : "/profile", { replace: true });
+      nav(returnTo || (fromSeen ? "/seen" : "/profile"), { replace: true });
     } catch (requestError) {
       setError(publicationError(requestError, "Could not cancel this Seen"));
       setCanceling(false);
@@ -2886,12 +2867,12 @@ export default function SeenComposerPage() {
   useEffect(() => {
     if (!activeChapter) return;
     setChapterStory(chapterStoryText(activeChapter));
-    setChapterStatus("");
+    setChapterStatus((current) => (/^Write\s/i.test(current) ? current : ""));
     setError("");
   }, [activeChapterId]);
 
   useEffect(() => {
-    if (!chapterStatus || !/(saved|added|removed)$/i.test(chapterStatus))
+    if (!chapterStatus || (!/(saved|added|removed)$/i.test(chapterStatus) && !/^Write\s/i.test(chapterStatus)))
       return undefined;
     const timer = window.setTimeout(() => setChapterStatus(""), 2600);
     return () => window.clearTimeout(timer);
@@ -2963,10 +2944,15 @@ export default function SeenComposerPage() {
       setError("");
       const url = URL.createObjectURL(file);
       try {
-        await readVideoDuration(url);
+        const duration = await readVideoDuration(url);
+        if (duration < 5) {
+          URL.revokeObjectURL(url);
+          setError("Seen cover videos must be at least 5 seconds.");
+          return;
+        }
         setVideoToTrim((current) => {
           if (current?.url) URL.revokeObjectURL(current.url);
-          return { file, limitSeconds: pendingVideoLimit.current, url };
+          return { file, limitSeconds: pendingVideoLimit.current, target: "cover", url };
         });
       } catch (durationError) {
         URL.revokeObjectURL(url);
@@ -2981,6 +2967,33 @@ export default function SeenComposerPage() {
     setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
   };
 
+  const uploadOwnerVoice = async (source) => {
+    const file = source?.target?.files?.[0] || source;
+    if (source?.target) source.target.value = "";
+    if (!file) return;
+    setUploading("VOICE");
+    setError("");
+    try {
+      const publication = await ensure({ navigateToDraft: false });
+      await api.uploadMedia(publication.id, file, { mediaType: "VOICE", purpose: "INTRO", statusVersion: publication.statusVersion });
+      await refresh(publication.id, { preserveLocalChanges: dirty.current });
+      setToast("Voice hello added");
+      setOwnerVoiceOpen(false);
+    } catch (requestError) {
+      setError(publicationError(requestError, "Could not add the voice hello"));
+    } finally {
+      setUploading("");
+    }
+  };
+
+  const removeOwnerVoice = async () => {
+    if (!p.id || !p.introMedia || uploading) return;
+    setUploading("VOICE");
+    try { await api.deleteMedia(p.id, "INTRO", p.statusVersion); await refresh(p.id, { preserveLocalChanges: dirty.current }); setToast("Voice hello removed"); }
+    catch (requestError) { setError(publicationError(requestError, "Could not remove the voice hello")); }
+    finally { setUploading(""); }
+  };
+
   const chooseMedia = (kind, limitSeconds = 15) => {
     pendingCoverKind.current = kind;
     pendingVideoLimit.current = limitSeconds;
@@ -2992,8 +3005,9 @@ export default function SeenComposerPage() {
 
   const addChapter = async () => {
     if (chapterAdding) return;
-    if (p.chapters.length >= 5) {
-      setError("Maximum five chapters.");
+    const maxChapters = 5;
+    if (p.chapters.length >= maxChapters) {
+      setError(`Maximum ${maxChapters} chapters.`);
       return;
     }
     const creatingDraft = !p.id;
@@ -3008,7 +3022,7 @@ export default function SeenComposerPage() {
       const response = await api.addChapter(publication.id, {
         title,
         blocks: [],
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || p.chapters.length === 0,
         releaseMode: "IMMEDIATE",
         statusVersion: publication.statusVersion,
       });
@@ -3029,6 +3043,69 @@ export default function SeenComposerPage() {
     }
   };
 
+  const completeAiSeen = async ({ chapters, description, sessionId, title }) => {
+    if (!chapters?.length || continuingToChapter) {
+      if (!chapters?.length) setError("Answer at least one photo question to create your Seen");
+      return;
+    }
+    setContinuingToChapter(true);
+    setError("");
+    setStatus("Saving...");
+    try {
+      const lowerWords = `${title} ${description}`.toLowerCase();
+      const category = lowerWords.match(/travel|trip|city|beach|mountain/u) ? "Travel"
+        : lowerWords.match(/work|business|client|career/u) ? "Business"
+          : lowerWords.match(/food|cook|meal|coffee/u) ? "Food"
+            : lowerWords.match(/fitness|gym|run|health/u) ? "Fitness"
+              : "Lifestyle";
+      let publication = (await api.createPublicationDraft({
+        kind: "SEEN",
+        title,
+        summary: description || title,
+        description,
+        category,
+        visibility: p.visibility || "PUBLIC",
+        pricing: p.pricing || empty.pricing,
+        tags: [],
+      })).data.data.publication;
+      sessionStorage.setItem("atseen_new_seen_draft", publication.id);
+      await api.linkAiSeenPublication(sessionId, publication.id);
+      for (const [chapterIndex, prepared] of chapters.entries()) {
+        const added = await api.addChapter(publication.id, {
+          title: prepared.heading || `Chapter ${chapterIndex + 1}`,
+          blocks: [],
+          isPreview: publication.pricing?.mode !== "ONE_TIME" || chapterIndex === 0,
+          releaseMode: "IMMEDIATE",
+          statusVersion: publication.statusVersion,
+        });
+        const chapterId = added.data?.data?.chapter?.stableChapterId;
+        publication = await refresh(publication.id);
+        const blockId = globalThis.crypto?.randomUUID?.() || `ai-photo-${Date.now()}-${chapterIndex}`;
+        const uploaded = (await api.uploadMedia(publication.id, prepared.file, { chapterId, blockId, mediaType: "IMAGE" })).data?.data;
+        await api.updateChapter(publication.id, chapterId, {
+          title: prepared.heading || `Chapter ${chapterIndex + 1}`,
+          blocks: [
+            { id: blockId, type: "IMAGE", order: 0, media: uploaded, metadata: { label: prepared.caption || "", aiGeneratedCaption: true } },
+            { id: `${blockId}-text`, type: "TEXT", order: 1, text: prepared.text },
+          ],
+          isPreview: publication.pricing?.mode !== "ONE_TIME" || chapterIndex === 0,
+          releaseMode: "IMMEDIATE",
+          statusVersion: publication.statusVersion,
+        });
+        publication = await refresh(publication.id);
+      }
+      setAiSeenOpen(false);
+      setAboutStep(false);
+      setChaptersStep(true);
+      setStatus("Saved");
+      nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, { replace: true, state: { composerStep: "chapters", aiGenerated: true } });
+    } catch (requestError) {
+      setError(publicationError(requestError, "Could not create this AI Seen"));
+    } finally {
+      setContinuingToChapter(false);
+    }
+  };
+
   const continueToFirstChapter = async () => {
     const title = p.title.trim();
     if (!title) {
@@ -3044,11 +3121,12 @@ export default function SeenComposerPage() {
       let publication = p.id ? p : await ensure({ navigateToDraft: false });
       publication = (await api.updatePublicationDraft(publication.id, {
         title,
-        summary: p.summary || p.description,
+        summary: p.summary || p.description || title,
         description: p.description,
         category: p.category,
         seriesId: p.seriesId || p.series?.id || null,
         visibility: p.visibility || "PUBLIC",
+        pricing: p.pricing || empty.pricing,
         allowDownload: Boolean(p.allowDownload),
         experienceLocation: p.experienceLocation || "",
         taggedPeople: p.taggedPeople || [],
@@ -3073,16 +3151,24 @@ export default function SeenComposerPage() {
       const firstChapter = latest.chapters.find((chapter) => chapter.stableChapterId === chapterId) || latest.chapters[0];
       initialChapterStarted.current = true;
       setAboutStep(false);
-      if (firstChapter?.stableChapterId) {
+      setChaptersStep(p.pricing?.mode === "ONE_TIME");
+      if (p.pricing?.mode !== "ONE_TIME" && firstChapter?.stableChapterId) {
         setActiveChapterId(firstChapter.stableChapterId);
         setChapterStory(chapterStoryText(firstChapter));
+      } else {
+        setActiveChapterId("");
+        setChapterStory("");
       }
       dirty.current = false;
       setStatus("Saved");
-      nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
-        replace: true,
-        state: { openChapterId: firstChapter?.stableChapterId || chapterId },
-      });
+      if (String(id || "") !== String(publication.id)) {
+        nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
+          replace: true,
+          state: p.pricing?.mode === "ONE_TIME"
+            ? { composerStep: "chapters" }
+            : { openChapterId: firstChapter?.stableChapterId || chapterId },
+        });
+      }
     } catch (requestError) {
       setStatus("Save failed");
       setError(publicationError(requestError, "Could not start the first chapter"));
@@ -3116,6 +3202,20 @@ export default function SeenComposerPage() {
     setError("");
   };
 
+  const toggleWorldBonusChapter = async (chapter) => {
+    if (!p.id || !chapter?.stableChapterId || p.pricing?.mode === "ONE_TIME") return;
+    setStatus(chapter.worldBonus ? "Removing World bonus…" : "Adding World bonus…");
+    setError("");
+    try {
+      await api.setWorldBonusChapter(p.id, chapter.stableChapterId, !chapter.worldBonus, p.statusVersion);
+      await refresh(p.id);
+      setStatus(chapter.worldBonus ? "Removed from World bonuses" : "World bonus chapter saved");
+    } catch (requestError) {
+      setError(publicationError(requestError));
+      if (requestError.response?.status === 409) await refresh(p.id).catch(() => {});
+    }
+  };
+
   const saveChapterStory = async ({ close = true } = {}) => {
     if (!activeChapter || !p.id || chapterSaving) return;
     window.clearTimeout(chapterAutoSaveTimer.current);
@@ -3126,7 +3226,8 @@ export default function SeenComposerPage() {
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
         blocks: chapterBlocksWithStory(activeChapter, chapterStory),
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3158,20 +3259,35 @@ export default function SeenComposerPage() {
         await api.updateChapter(p.id, activeChapter.stableChapterId, {
           title: activeChapter.title?.trim() || "Chapter name",
           blocks: chapterBlocksWithStory(activeChapter, chapterStory),
-          isPreview: true,
+          isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+          worldBonus: Boolean(activeChapter.worldBonus),
           releaseMode: activeChapter.releaseMode || "IMMEDIATE",
           statusVersion: p.statusVersion,
         });
         publication = await refresh(p.id);
       }
 
-      const emptyChapterIds = (publication.chapters || [])
-        .filter((chapter) => !chapterHasContent(chapter))
-        .map((chapter) => chapter.stableChapterId)
-        .filter(Boolean);
-      for (const chapterId of emptyChapterIds) {
-        await api.deleteChapter(p.id, chapterId, publication.statusVersion);
-        publication = await refresh(p.id);
+      const chapters = publication.chapters || [];
+      const hasCompletedChapter = chapters.some((chapter) => chapterHasContent(chapter));
+      const firstBlankIndex = chapters.findIndex((chapter) => !chapterHasContent(chapter));
+      if (!hasCompletedChapter && firstBlankIndex >= 0) {
+        const firstBlank = publication.chapters[firstBlankIndex];
+        setActiveChapterId(firstBlank.stableChapterId);
+        setChapterStory(chapterStoryText(firstBlank));
+        setChapterStatus(firstBlankIndex === 0 ? "Write the first chapter" : `Write chapter ${firstBlankIndex + 1}`);
+        setStatus("Saved");
+        dirty.current = false;
+        return;
+      }
+
+      if (hasCompletedChapter && firstBlankIndex >= 0) {
+        const blankChapterIds = chapters
+          .filter((chapter) => !chapterHasContent(chapter))
+          .map((chapter) => chapter.stableChapterId);
+        for (const chapterId of blankChapterIds) {
+          await api.deleteChapter(p.id, chapterId, publication.statusVersion);
+          publication = await refresh(p.id);
+        }
       }
 
       setActiveChapterId("");
@@ -3229,7 +3345,7 @@ export default function SeenComposerPage() {
       const response = await api.addChapter(publication.id, {
         title: `Chapter ${(publication.chapters?.length || 0) + 1}`,
         blocks: [],
-        isPreview: true,
+        isPreview: publication.pricing?.mode !== "ONE_TIME",
         releaseMode: "IMMEDIATE",
         statusVersion: publication.statusVersion,
       });
@@ -3287,7 +3403,8 @@ export default function SeenComposerPage() {
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
         blocks,
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3315,7 +3432,24 @@ export default function SeenComposerPage() {
     else await uploadChapterMedia("IMAGE", file);
   };
 
-  const requestChapterMedia = (mediaType, file, metadata = {}) => {
+  const requestChapterMedia = async (mediaType, file, metadata = {}) => {
+    if (mediaType === "VIDEO") {
+      const limitSeconds = p.pricing?.mode === "ONE_TIME" ? 120 : 60;
+      const url = URL.createObjectURL(file);
+      try {
+        const duration = await readVideoDuration(url);
+        if (duration > limitSeconds + 0.1) {
+          setVideoToTrim({ file, limitSeconds, metadata, target: "chapter", url });
+          return;
+        }
+      } catch (durationError) {
+        setError(durationError.message);
+        URL.revokeObjectURL(url);
+        return;
+      }
+      URL.revokeObjectURL(url);
+      return uploadChapterMedia(mediaType, file, metadata);
+    }
     if (mediaType !== "IMAGE") return uploadChapterMedia(mediaType, file, metadata);
     setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
   };
@@ -3343,7 +3477,8 @@ export default function SeenComposerPage() {
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
         blocks,
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3374,6 +3509,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: activeChapter.isPreview,
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: activeChapter.releaseMode || "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3406,6 +3542,7 @@ export default function SeenComposerPage() {
         title: activeChapter.title || "Chapter name",
         blocks,
         isPreview: activeChapter.isPreview,
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: activeChapter.releaseMode || "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3434,7 +3571,8 @@ export default function SeenComposerPage() {
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
         blocks,
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3476,7 +3614,8 @@ export default function SeenComposerPage() {
       await api.updateChapter(p.id, activeChapter.stableChapterId, {
         title: activeChapter.title || "Chapter name",
         blocks: reordered.map((block, order) => ({ ...block, order })),
-        isPreview: true,
+        isPreview: p.pricing?.mode !== "ONE_TIME" || Boolean(activeChapter.isPreview),
+        worldBonus: Boolean(activeChapter.worldBonus),
         releaseMode: "IMMEDIATE",
         statusVersion: p.statusVersion,
       });
@@ -3523,8 +3662,15 @@ export default function SeenComposerPage() {
         setStatus("Link-only Seen published");
         return;
       }
-      nav(fromSeen ? "/seen" : "/profile", { replace: true });
+      nav(returnTo || (fromSeen ? "/seen" : "/profile"), {
+        replace: true,
+        state: returnTo || fromSeen ? undefined : { publishedSeen: { id: published?.id || publication.id, title: published?.title || publication.title } },
+      });
     } catch (requestError) {
+      if (["SELLER_VERIFICATION_REQUIRED", "SELLER_INFORMATION_REQUIRED"].includes(requestError.response?.data?.code)) {
+        nav("/creator/seller-verification", { state: { returnTo: window.location.pathname } });
+        return;
+      }
       setError(publicationError(requestError));
     } finally {
       setSubmitting(false);
@@ -3588,6 +3734,10 @@ export default function SeenComposerPage() {
   const AudienceIcon = selectedAudience.icon;
   const creatorName = user?.name || user?.displayName || user?.username || "Creator";
   const creatorAvatar = resolveMediaUrl(user?.avatar || user?.avatarUrl || user?.profilePhoto || "");
+  const paidSeen = p.pricing?.mode === "ONE_TIME";
+  const paidPriceStars = Number(p.pricing?.starsAmount) || 190;
+  const paidPriceUsd = Number(starsPerUsd) > 0 ? paidPriceStars / Number(starsPerUsd) : null;
+  const maxChapters = 5;
   const copyShareLink = async () => {
     if (!linkOnlyShare?.url) return;
     try {
@@ -3626,15 +3776,17 @@ export default function SeenComposerPage() {
         ) : null}
 
         <header className="seen-about-header">
-          <button aria-label="Back" className="seen-compose-back" onClick={() => nav(backTarget)} type="button"><FiChevronLeft /></button>
+          <button aria-label="Back" className="seen-compose-back" onClick={() => p.id ? setAboutStep(false) : nav(backTarget)} type="button"><FiChevronLeft /></button>
           <div>
-            <h1>New Seen</h1>
-            <p>A short story told in up to 5 chapters</p>
+            <h1>{paidSeen ? "New paid Seen" : "New Seen"}</h1>
+            <p>{paidSeen ? "A path you’ve walked — told in chapters" : "A short story told in up to 5 chapters"}</p>
           </div>
         </header>
+        {paidSeen ? <div className="seen-paid-create-progress" aria-label="Step 1 of 3"><i /><i /><i /></div> : null}
 
         <div className="seen-about-body">
-          <section className="seen-about-preview" aria-label="Live feed preview">
+          <button className="seen-create-from-photos" onClick={() => setAiSeenOpen(true)} type="button"><span><FiEye /></span><span><b>Create from photos</b><small>Tell what happened — AI writes it up</small></span><FiChevronRight /></button>
+          {!paidSeen ? <section className="seen-about-preview" aria-label="Live feed preview">
             <header>
               <span className="seen-about-avatar">{creatorAvatar ? <img alt="" src={creatorAvatar} /> : creatorName.slice(0, 1).toUpperCase()}</span>
               <strong>{creatorName.split(" ")[0]}</strong>
@@ -3648,24 +3800,31 @@ export default function SeenComposerPage() {
               </button>
               <div className="seen-about-preview-copy">
                 <strong className={p.title.trim() ? "" : "is-placeholder"}>{p.title.trim() || "Your title"}</strong>
-                <small>up to 5 chapters</small>
+                <small>up to {maxChapters} chapters{paidSeen ? ` · ✦${p.pricing?.starsAmount || 190}` : ""}</small>
                 {description ? <p>{description}</p> : null}
               </div>
             </div>
-          </section>
+          </section> : <section className="seen-paid-prototype-preview" aria-label="Paid Seen preview">
+            <button className={`seen-paid-prototype-cover ${mediaPreview ? "has-media" : ""}`} disabled={Boolean(uploading)} onClick={() => mediaPreview ? setSettingsSheet("cover") : chooseMedia("AUTO", 15)} type="button">
+              {mediaPreview ? mediaKind === "VIDEO" ? <video autoPlay loop muted playsInline preload="metadata" src={mediaPreview} /> : <img alt="Paid Seen cover preview" src={mediaPreview} /> : <span><FiPlus /><b>Add cover</b><small>photo or video · optional</small></span>}
+            </button>
+            <button className="seen-paid-prototype-edit" onClick={() => mediaPreview ? setSettingsSheet("cover") : chooseMedia("AUTO", 15)} type="button">Edit</button>
+            <button className="seen-paid-prototype-video" onClick={() => chooseMedia("VIDEO", 15)} type="button"><FiPlay /><b>Add a video cover</b><span>· 5–15 sec, it plays in the feed</span></button>
+            <div className="seen-paid-prototype-title"><small>Give it a title</small><strong>{p.title.trim() || "Your title"}</strong></div>
+          </section>}
 
-          {mediaPreview && mediaKind === "VIDEO" ? <div className="seen-about-video-nudge is-confirmed"><FiCheck /><span>Video cover · plays in the feed</span></div> : <button className="seen-about-video-nudge" onClick={() => chooseMedia("VIDEO", 15)} type="button"><FiPlay /><span><b>Add a video cover</b> · 5–15 sec, it plays in the feed</span></button>}
+          {!paidSeen ? mediaPreview && mediaKind === "VIDEO" ? <div className="seen-about-video-nudge is-confirmed"><FiCheck /><span>Video cover · plays in the feed</span></div> : <button className="seen-about-video-nudge" onClick={() => chooseMedia("VIDEO", 15)} type="button"><FiPlay /><span><b>Add a video cover</b> · 5–15 sec, it plays in the feed</span></button> : null}
 
           <label className="seen-about-title-field">
             <span className="sr-only">Seen title</span>
-            <input className="seen-about-title" maxLength={80} onChange={(event) => change({ title: event.target.value })} placeholder="Give it a title" value={p.title} />
+            <input className="seen-about-title" maxLength={80} onChange={(event) => change({ title: event.target.value })} placeholder={paidSeen ? "Title — e.g. “Moving to Dubai”" : "Give it a title"} value={p.title} />
           </label>
           <label className="seen-about-description-field">
             <span className="sr-only">Seen description</span>
-            <textarea maxLength={220} onChange={(event) => change({ description: event.target.value, summary: event.target.value })} placeholder="What’s it about? A line or two — optional" rows={3} value={description} />
+            <textarea maxLength={220} onChange={(event) => change({ description: event.target.value, summary: event.target.value })} placeholder={paidSeen ? "The path — from where to where. “From office job to my own studio”" : "What’s it about? A line or two — optional"} rows={3} value={description} />
           </label>
           {replyToSeenId ? <p className="seen-compose-reply-context">Replying to {replySeen?.title ? `“${replySeen.title}”` : "this Seen"}</p> : null}
-          <button className="seen-about-continue" disabled={!p.title.trim() || Boolean(uploading || continuingToChapter)} onClick={continueToFirstChapter} type="button">{continuingToChapter ? "Opening chapter..." : "Continue"}</button>
+          <button className="seen-about-continue" disabled={!p.title.trim() || Boolean(uploading || continuingToChapter)} onClick={continueToFirstChapter} type="button">{continuingToChapter ? "Opening chapter..." : t("Continue")}</button>
         </div>
         <input accept={`${IMAGE_ACCEPT},${VIDEO_ACCEPT}`} className="sr-only" onChange={uploadCover} ref={coverInput} type="file" />
         {settingsSheet === "cover" ? <CoverSheet hasCover={Boolean(p.coverMedia || coverPreview)} onClose={() => setSettingsSheet("")} onUpload={(kind) => chooseMedia(kind, 15)} /> : null}
@@ -3676,6 +3835,7 @@ export default function SeenComposerPage() {
   if (activeChapter) {
     return (
       <>
+        {videoToTrim?.target === "chapter" ? <VideoTrimSheet file={videoToTrim} limitSeconds={videoToTrim.limitSeconds} onCancel={() => setVideoToTrim((current) => { if (current?.url) URL.revokeObjectURL(current.url); return null; })} onUpload={(file) => { const metadata = videoToTrim.metadata || {}; setVideoToTrim(null); return uploadChapterMedia("VIDEO", file, metadata); }} /> : null}
         {cropTarget ? (
           <ProfileImageCropper
             kind="seen"
@@ -3690,10 +3850,10 @@ export default function SeenComposerPage() {
           chapter={activeChapter}
           error={error}
           flow={{
-            canAdd: p.chapters.length < 5,
+            canAdd: p.chapters.length < maxChapters,
             index: Math.max(0, p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId)),
-            max: 5,
-            nextLabel: p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId) < p.chapters.length - 1 ? "Next" : p.chapters.length < 5 ? "New chapter" : "Review",
+            max: maxChapters,
+            nextLabel: p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId) < p.chapters.length - 1 ? "Next" : p.chapters.length < maxChapters ? "New chapter" : "Review",
             onAdd: nextSeenChapter,
             onBack: previousSeenChapter,
             onFinish: previewSeen,
@@ -3720,6 +3880,29 @@ export default function SeenComposerPage() {
     );
   }
 
+  if (paidSeen && chaptersStep) {
+    return (
+      <section className="seen-compose-page seen-chapters-step">
+        {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
+        {error || statusText ? <div className="seen-compose-feedback-stack" aria-live="polite">{error ? <p className="seen-compose-feedback is-error" role="alert">{error}</p> : null}{statusText ? <p className="seen-compose-feedback is-status" role="status">{statusText}</p> : null}</div> : null}
+        <header className="seen-compose-header seen-flow-step-header">
+          <button aria-label="Back" className="seen-compose-back" onClick={() => setAboutStep(true)} type="button"><FiChevronLeft /></button>
+          <div className="seen-compose-heading"><h1>{t("Chapters")}</h1><p>{p.title || "Your paid Seen"}</p></div>
+        </header>
+        <div className="seen-paid-create-progress is-step-two" aria-label="Step 2 of 3"><i /><i /><i /></div>
+        <div className="seen-chapters-step-body">
+          <p className="seen-chapters-step-intro">Each chapter is one step of the path. Write it, add photos, a voice note — the same way people will read it.</p>
+          <div className="seen-compose-chapters is-page-grid">
+            {p.chapters.map((chapter, index) => <div className="seen-compose-chapter is-page" key={chapter.stableChapterId || index}><span>{String(index + 1).padStart(2, "0")}</span><button aria-label={`Remove chapter ${index + 1}`} onClick={() => removeChapter(chapter)} type="button"><FiX /></button><button className="seen-compose-chapter-page-copy" onClick={() => openChapterEditor(chapter)} type="button"><strong>{chapter.title?.trim() || `Chapter ${index + 1}`}{p.aiAssistance?.generated ? <FiEdit3 aria-label="AI suggestion — editable" /> : null}</strong>{chapterStoryText(chapter) ? <small>{chapterStoryText(chapter)}</small> : null}</button><span className={`seen-chapter-access-toggle ${index === 0 ? "is-preview" : "is-locked"}`}>{index === 0 ? <FiEye /> : <FiLock />}{t(index === 0 ? "Preview" : "Locked")}</span></div>)}
+            {p.chapters.length < maxChapters ? <button className="seen-compose-add-chapter is-page" disabled={chapterAdding} onClick={addChapter} type="button"><FiPlus /><span>{chapterAdding ? "Adding..." : `Chapter ${p.chapters.length + 1}`}</span></button> : null}
+          </div>
+          <p className="seen-chapters-step-count">{p.chapters.length}/{maxChapters} · you can add chapters after publishing — buyers get them free</p>
+          <button className="seen-about-continue" disabled={!p.chapters.length || Boolean(chapterAdding || chapterSaving)} onClick={() => setChaptersStep(false)} type="button">{t("Continue")}</button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="seen-compose-page">
       {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
@@ -3741,13 +3924,13 @@ export default function SeenComposerPage() {
         <button
           aria-label="Back"
           className="seen-compose-back"
-          onClick={() => p.chapters.length ? openChapterEditor(p.chapters[p.chapters.length - 1]) : setAboutStep(true)}
+          onClick={() => paidSeen ? setChaptersStep(true) : p.chapters.length ? openChapterEditor(p.chapters[p.chapters.length - 1]) : setAboutStep(true)}
           type="button"
         >
           <FiChevronLeft />
         </button>
         <div className="seen-compose-heading">
-          <h1>Preview &amp; publish</h1>
+          <h1>{paidSeen ? t("Price & publish") : "Preview & publish"}</h1>
           {introOpen && !p.chapters.length ? (
             <p>
               <span>
@@ -3767,13 +3950,14 @@ export default function SeenComposerPage() {
             </p>
           ) : null}
         </div>
-        <button className="seen-compose-save" onClick={saveForLater} type="button">
-          Save for later
+        <button className="seen-compose-save" onClick={() => paidSeen ? setBuyerViewOpen(true) : saveForLater()} type="button">
+          {paidSeen ? <><FiEye /> {t("Buyer view")}</> : "Save for later"}
         </button>
       </header>
+      {paidSeen ? <div className="seen-paid-create-progress is-step-three" aria-label="Step 3 of 3"><i /><i /><i /></div> : null}
 
       <div className="seen-compose-body">
-        <section className="seen-review-feed-preview" aria-label="Seen feed preview">
+        <section className={`seen-review-feed-preview ${paidSeen ? "is-paid-publish" : ""}`} aria-label="Seen feed preview">
           <header>
             <span className="seen-about-avatar">{creatorAvatar ? <img alt="" src={creatorAvatar} /> : creatorName.slice(0, 1).toUpperCase()}</span>
             <strong>{creatorName.split(" ")[0]}</strong>
@@ -3810,7 +3994,7 @@ export default function SeenComposerPage() {
                 return null;
               })
             }
-            onUpload={(file) => uploadCoverFile(file, "VIDEO")}
+            onUpload={(file) => videoToTrim.target === "chapter" ? uploadChapterMedia("VIDEO", file, videoToTrim.metadata || {}) : uploadCoverFile(file, "VIDEO")}
           />
         ) : null}
 
@@ -3824,7 +4008,7 @@ export default function SeenComposerPage() {
         <div className="seen-compose-section-title">
           <span>CHAPTERS</span>
           <small>
-            {p.chapters.length}/5 {"\u00b7"} tap a page to edit
+            {paidSeen ? "Chapter 1 Preview / rest Locked" : `${p.chapters.length}/${maxChapters} \u00b7 tap a page to edit`}
           </small>
         </div>
 
@@ -3835,6 +4019,7 @@ export default function SeenComposerPage() {
               key={chapter.stableChapterId || index}
             >
               <span>{String(index + 1).padStart(2, "0")}</span>
+              {paidSeen && index > 0 ? <span className="seen-compose-chapter-lock">🔒</span> : null}
               <button
                 aria-label={`Remove chapter ${index + 1}`}
                 onClick={() => removeChapter(chapter)}
@@ -3843,12 +4028,13 @@ export default function SeenComposerPage() {
                 <FiX />
               </button>
               <button className="seen-compose-chapter-page-copy" onClick={() => openChapterEditor(chapter)} type="button">
-                <strong>{chapter.title?.trim() || `Chapter ${index + 1}`}</strong>
+                <strong>{chapter.title?.trim() || `Chapter ${index + 1}`}{p.aiAssistance?.generated ? <FiEdit3 aria-label="AI suggestion — editable" /> : null}</strong>
                 {chapterStoryText(chapter) ? <small>{chapterStoryText(chapter)}</small> : null}
               </button>
+              {paidSeen ? <span className={`seen-chapter-access-toggle ${index === 0 ? "is-preview" : "is-locked"}`}>{index === 0 ? <FiEye /> : <FiLock />}{t(index === 0 ? "Preview" : "Locked")}</span> : <button aria-pressed={Boolean(chapter.worldBonus)} className={`seen-world-bonus-toggle ${chapter.worldBonus ? "is-active" : ""}`} onClick={() => toggleWorldBonusChapter(chapter)} type="button"><FiUsers />{chapter.worldBonus ? "World bonus" : "Add to World"}</button>}
             </div>
           ))}
-          {p.chapters.length < 5 ? (
+          {p.chapters.length < maxChapters ? (
             <button
               className="seen-compose-add-chapter is-page"
               disabled={chapterAdding}
@@ -3856,19 +4042,38 @@ export default function SeenComposerPage() {
               type="button"
             >
               <FiPlus aria-hidden="true" />
-              <span>{chapterAdding ? "Adding..." : p.chapters.length ? "Add chapter" : "Chapter 1"}</span>
+              <span>{chapterAdding ? "Adding..." : p.chapters.length ? t("Add chapter") : "Chapter 1"}</span>
             </button>
           ) : null}
         </div>
 
-        <div className="seen-compose-settings" aria-label="Seen settings">
-          <SettingsRow Icon={FiTag} label="Category" onClick={() => setSettingsSheet("category")} value={p.category || "-"} />
-          <SettingsRow Icon={FiGrid} label="Series" onClick={() => { setSeriesError(""); setSettingsSheet("series"); }} value={selectedSeriesLabel} />
-          <SettingsRow Icon={FiUsers} label="Tag people" onClick={() => setSettingsSheet("people")} value={p.taggedPeople?.length ? `${p.taggedPeople.length} tagged` : "None"} />
+        {paidSeen ? <p className="seen-paid-chapter-access-note"><FiEye /> Preview chapters are free for everyone — that’s how people decide to unlock the rest.</p> : null}
+
+        {paidSeen ? <>
+          <section className="seen-paid-pricing-panel" aria-label="Choose paid Seen price">
+            <div className="seen-paid-price-presets">{[90, 190, 290, 490].map((amount) => <button className={(Number(p.pricing?.starsAmount) || 190) === amount ? "is-selected" : ""} key={amount} onClick={() => change({ pricing: { mode: "ONE_TIME", starsAmount: amount, presetId: `paid-seen-${amount}` } })} type="button"><span>✦</span>{amount}</button>)}</div>
+            <p><b>SUGGESTED</b><span>Similar Seens sell best at 190–290</span></p>
+            <div className="seen-paid-earnings"><span><small>You get from each unlock</small><strong>{paidPriceUsd == null ? "—" : usd(paidPriceUsd)}</strong></span><span><b>100 owners <strong>{paidPriceUsd == null ? "—" : usd(paidPriceUsd * 100)}</strong></b><small>{starsPerUsd ? `${Number(starsPerUsd).toLocaleString()} Stars = $1` : "Loading exchange rate…"}</small></span></div>
+          </section>
+          <section className="seen-paid-owner-note">
+            <span>NOTE FOR OWNERS</span>
+            <p>Everyone who unlocks gets this — on the “It’s yours” screen and in their chat with you.</p>
+            <textarea maxLength={500} onChange={(event) => change({ ownerWelcomeNote: event.target.value })} placeholder="Welcome them in — where should they start?" value={p.ownerWelcomeNote || ""} />
+            {p.introMedia?.secureUrl || p.introMedia?.url ? <div className="seen-owner-voice-attached"><audio controls src={p.introMedia.secureUrl || p.introMedia.url} /><button disabled={uploading === "VOICE"} onClick={removeOwnerVoice} type="button">Remove</button></div> : null}
+            <button disabled={uploading === "VOICE"} onClick={() => setOwnerVoiceOpen(true)} type="button"><FiMic /> {uploading === "VOICE" ? "Adding voice…" : p.introMedia ? "Replace voice hello" : "Add a voice hello"}</button>
+          </section>
+        </> : null}
+        <div className={`seen-compose-settings ${paidSeen ? "is-paid-publish" : ""}`} aria-label="Seen settings">
+          {paidSeen ? <label className="seen-review-paid-price"><span><FiLock /><b>One-time price</b><small>Chapter 1 stays free</small></span><span>✦ <input aria-label="Paid Seen price" min="10" onChange={(event) => change({ pricing: { mode: "ONE_TIME", starsAmount: Math.max(10, Math.round(Number(event.target.value) || 10)), presetId: "paid-seen" } })} type="number" value={Number(p.pricing?.starsAmount) || 190} /></span></label> : null}
+          <SettingsRow Icon={FiTag} label="Category" onClick={() => setSettingsSheet("category")} value={p.category || (paidSeen ? "Choose" : "-")} />
+          {!paidSeen ? <SettingsRow Icon={FiGrid} label="Series" onClick={() => { setSeriesError(""); setSettingsSheet("series"); }} value={selectedSeriesLabel} /> : null}
+          {!paidSeen ? <SettingsRow Icon={FiUsers} label="Tag people" onClick={() => setSettingsSheet("people")} value={p.taggedPeople?.length ? `${p.taggedPeople.length} tagged` : "None"} /> : null}
           <SettingsRow Icon={FiMapPin} label="Location" onClick={() => setSettingsSheet("location")} value={p.experienceLocation || "Add"} />
-          <SettingsRow Icon={AudienceIcon} label="Audience" onClick={() => setSettingsSheet("audience")} value={selectedAudience.label} />
-          <SettingsRow Icon={FiUpload} label="Allow download" onClick={() => change({ allowDownload: !p.allowDownload })} toggle value={p.allowDownload ? "On" : "Off"} />
-          <SettingsRow Icon={FiFilm} label="Part of an Experience" onClick={() => setSettingsSheet("experience")} value={(p.attachedEntities || []).find((item) => item.type === "experience")?.title || "None"} />
+          {paidSeen ? <SettingsRow Icon={FiFilm} label="Captions & AI label" onClick={() => change({ captionsEnabled: p.captionsEnabled === false })} value={p.captionsEnabled === false ? "Off" : "Captions"} /> : null}
+          {paidSeen ? <SettingsRow Icon={FiUpload} label="PDF copy for owners" onClick={() => change({ allowDownload: !p.allowDownload })} toggle value={p.allowDownload ? "On" : "Off"} /> : null}
+          {!paidSeen ? <SettingsRow Icon={AudienceIcon} label="Audience" onClick={() => setSettingsSheet("audience")} value={selectedAudience.label} /> : null}
+          {!paidSeen ? <SettingsRow Icon={FiUpload} label="Allow download" onClick={() => change({ allowDownload: !p.allowDownload })} toggle value={p.allowDownload ? "On" : "Off"} /> : null}
+          {!paidSeen ? <SettingsRow Icon={FiFilm} label="Part of an Experience" onClick={() => setSettingsSheet("experience")} value={(p.attachedEntities || []).find((item) => item.type === "experience")?.title || "None"} /> : null}
         </div>
         {linkOnlyShare?.url ? (
           <div className="seen-compose-share-link">
@@ -3878,8 +4083,11 @@ export default function SeenComposerPage() {
         ) : null}
 
         <button className="seen-compose-publish" disabled={Boolean(uploading || submitting)} onClick={submit} type="button">{submitting ? "Publishing..." : p.publishedVersion ? "Republish" : "Publish"}</button>
-        <button className="seen-compose-cancel" disabled={Boolean(uploading || submitting || canceling)} onClick={cancelCreation} type="button">{canceling ? "Canceling..." : "Cancel"}</button>
+        {paidSeen ? <small className="seen-paid-publish-footnote">Owners keep it forever — new chapters reach them free</small> : <button className="seen-compose-cancel" disabled={Boolean(uploading || submitting || canceling)} onClick={cancelCreation} type="button">{canceling ? "Canceling..." : "Cancel"}</button>}
       </div>
+      {ownerVoiceOpen ? <OwnerVoiceSheet busy={uploading === "VOICE"} onClose={() => !uploading && setOwnerVoiceOpen(false)} onSave={uploadOwnerVoice} /> : null}
+      {paidSeen && buyerViewOpen ? <PaidSeenBuyerView chapters={p.chapters} coverKind={mediaKind} coverUrl={mediaPreview} creatorAvatar={creatorAvatar} creatorName={creatorName.split(" ")[0]} onClose={() => setBuyerViewOpen(false)} onUnlock={() => setToast("Buyer preview only — publishing makes this unlock available to fans")} price={paidPriceStars} title={p.title} /> : null}
+      <AiSeenGuide onClose={() => setAiSeenOpen(false)} onComplete={completeAiSeen} open={aiSeenOpen} />
       {settingsSheet === "category" ? (
         <CategorySheet
           categories={categoryOptions}

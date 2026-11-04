@@ -7,9 +7,11 @@ import { useAuth } from "../../hooks/useAuth";
 import { publicationService as api } from "../../services/publicationService";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { socialCapabilitiesFor } from "../../utils/socialAccess";
+import { useLanguage } from "../../hooks/useLanguage";
 
 function CreateHubPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
@@ -20,7 +22,7 @@ function CreateHubPage() {
   const capabilities = socialCapabilitiesFor(user);
   const publicationsQuery = useQuery({
     queryKey: ["creation-capacity"],
-    queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD,EXPERIENCE", limit: 50 })
+    queryFn: () => api.listMyPublications({ kind: "PREMIUM_WORLD", limit: 50 })
       .then((response) => response.data.data.items || []),
     enabled: capabilities.isApprovedCreator,
   });
@@ -28,8 +30,8 @@ function CreateHubPage() {
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
   const cards = [
-    ...(capabilities.isApprovedCreator ? [{ title: "Premium Experience", text: "Multi-chapter journey · first chapter free · one-time unlock · create as many as you need", to: "/create/experience" }] : []),
-    { title: "Seen", text: "Free public publication with 1–3 chapters", to: "/create/seen" },
+    { title: t("Free Seen"), text: "Up to 5 chapters · every chapter is open to everyone", to: "/create/seen?type=free" },
+    { title: t("Paid Seen"), text: "Up to 5 chapters · chapter 1 is free and the rest unlock once", to: "/create/seen?type=paid" },
     ...(capabilities.isApprovedCreator ? [{ title: "World", text: `Monthly subscription · private ecosystem · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 

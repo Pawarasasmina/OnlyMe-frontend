@@ -26,6 +26,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { formatVoiceTime, useVoiceRecorder } from "../../hooks/useVoiceRecorder";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import StoryCreator from "../../components/stories/StoryCreator";
+import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import { publicationService as api } from "../../services/publicationService";
 import { normalizeTags, publicationError } from "../../utils/publicationValidation";
 import { worldCompletenessBySection } from "../../utils/worldValidation";
@@ -40,7 +41,7 @@ const SUBSCRIBER_STORY_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
 const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 const WORLD_CATEGORIES = ["Places", "Moving", "Business", "Growth", "Lifestyle"];
-const MONTHLY_PRICES = [90, 190, 290, 390, 500, 1000];
+const MONTHLY_PRICES = [190, 490, 990];
 
 function planetFaceEmoji(planet = {}) {
   return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
@@ -54,6 +55,7 @@ function freshWorld(experience = false) {
     description: "",
     commentsEnabled: true,
     firstMonthOfferEnabled: false,
+    ownerWelcomeNote: "",
     includedInWorld: false,
     allowDownload: false,
     experiencePath: "",
@@ -271,6 +273,20 @@ function WorldCreateTextSheet({ busy, description, label, maxLength, onClose, on
   );
 }
 
+function WorldWelcomeMessageSheet({ busy, onClose, onSave, value }) {
+  const [message, setMessage] = useState(value || "");
+  const cleanMessage = message.trim();
+  return <div className="world-create-sheet-layer">
+    <button aria-label="Close welcome message" className="world-create-sheet-scrim" disabled={busy} onClick={onClose} type="button" />
+    <section aria-labelledby="world-welcome-message-title" aria-modal="true" className="world-create-option-sheet world-welcome-message-sheet" role="dialog">
+      <span className="world-create-sheet-handle" aria-hidden="true" />
+      <header><div><h2 id="world-welcome-message-title">Welcome message</h2><p>Every new member gets it the moment they join. Write it once.</p></div><button aria-label="Close" disabled={busy} onClick={onClose} type="button"><FiX /></button></header>
+      <label className="world-welcome-message-field"><span className="sr-only">Welcome message</span><textarea autoFocus maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder="Hi, welcome inside! Start with my Food Map, and say hi in the Cafés circle." rows={5} value={message} /><small>{message.length}/500</small></label>
+      <button className="world-create-sheet-done" disabled={busy || cleanMessage === (value || "").trim()} onClick={() => onSave(cleanMessage)} type="button">{busy ? "Saving…" : "Save"}</button>
+    </section>
+  </div>;
+}
+
 function WorldCreatePriceSheet({ busy, currentPrice, onClose, onSave }) {
   const [price, setPrice] = useState(Number(currentPrice || 190));
   const payout = new Intl.NumberFormat("en-US", { currency: "USD", style: "currency" }).format((price / 1000) * 0.68);
@@ -282,13 +298,13 @@ function WorldCreatePriceSheet({ busy, currentPrice, onClose, onSave }) {
         <p className="world-sheet-copy">Monthly subscription. Everyone already inside keeps their price forever — the new price is for new residents only.</p>
         <div aria-label="World monthly price" className="world-price-options" role="radiogroup">
           {MONTHLY_PRICES.map((tierPrice) => {
-            const locked = tierPrice === 1000;
+            const locked = tierPrice === 990;
             const selected = price === tierPrice;
             return <button aria-checked={selected} aria-disabled={locked} className={`${selected ? "is-selected" : ""} ${locked ? "is-locked" : ""}`} disabled={locked || busy} key={tierPrice} onClick={() => setPrice(tierPrice)} role="radio" title={locked ? "Requires 100+ residents with steady renewals" : undefined} type="button">{locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString()}</button>;
           })}
         </div>
         <p className="world-price-payout"><b>{payout}</b> <span>to you · per resident · monthly</span></p>
-        <p className="world-price-helper">Top tier ✦1,000 — opens at 100+ residents with steady renewals. First month -50% for newcomers stays on. Change once every 30 days.</p>
+        <p className="world-price-helper">✦490 is recommended. The ✦990 top tier opens at 100+ members with steady renewals. First month is half price; change once every 30 days.</p>
         <button className="world-sheet-primary" disabled={busy} onClick={() => onSave(price)} type="button">{busy ? "Saving..." : "Save"}</button>
       </section>
     </div>
@@ -416,6 +432,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [videoTrimFile, setVideoTrimFile] = useState(null);
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
   const [experiencePreviewOpen, setExperiencePreviewOpen] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const [worldCreateSheet, setWorldCreateSheet] = useState("");
   const chapters = world.chapters || [];
@@ -556,6 +573,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       description: current.description,
       commentsEnabled: current.commentsEnabled,
       firstMonthOfferEnabled: current.firstMonthOfferEnabled,
+      ownerWelcomeNote: current.ownerWelcomeNote,
       experienceLocation: current.experienceLocation,
       experiencePath: current.experiencePath,
       includedInWorld: current.includedInWorld,
@@ -574,6 +592,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       description: snapshot.description,
       commentsEnabled: snapshot.commentsEnabled !== false,
       firstMonthOfferEnabled: Boolean(snapshot.firstMonthOfferEnabled),
+      ownerWelcomeNote: snapshot.ownerWelcomeNote || "",
       includedInWorld: Boolean(snapshot.includedInWorld),
       allowDownload: Boolean(snapshot.allowDownload),
       experiencePath: snapshot.experiencePath || "",
@@ -594,6 +613,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       description: snapshot.description,
       commentsEnabled: snapshot.commentsEnabled !== false,
       firstMonthOfferEnabled: Boolean(snapshot.firstMonthOfferEnabled),
+      ownerWelcomeNote: snapshot.ownerWelcomeNote || "",
       experienceLocation: snapshot.experienceLocation,
       experiencePath: snapshot.experiencePath,
       includedInWorld: snapshot.includedInWorld,
@@ -704,6 +724,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         commentsEnabled: snapshot.commentsEnabled !== false,
         description: snapshot.description,
         firstMonthOfferEnabled: Boolean(snapshot.firstMonthOfferEnabled),
+        ownerWelcomeNote: snapshot.ownerWelcomeNote || "",
         includedInWorld: Boolean(snapshot.includedInWorld),
         allowDownload: Boolean(snapshot.allowDownload),
         experiencePath: snapshot.experiencePath || "",
@@ -1267,6 +1288,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       nav(experience && returnTo ? returnTo : experience ? `/experience/${submitted.id}` : `/world/${submitted.id}`, { replace: true });
     } catch (requestError) {
+      if (["SELLER_VERIFICATION_REQUIRED", "SELLER_INFORMATION_REQUIRED"].includes(requestError.response?.data?.code)) {
+        nav("/creator/seller-verification", { state: { returnTo: window.location.pathname } });
+        return;
+      }
       setError(publicationError(requestError));
       setNotice("Publish failed");
     } finally {
@@ -1598,7 +1623,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
             <label><span>Category</span><select onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Choose</option>{["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"].map((category) => <option key={category}>{category}</option>)}</select></label>
             <label><span>Price</span><div className="experience-final-price"><b>{STAR}</b><input aria-label="One-time Experience price" min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /></div></label>
           </div>
-          <label><span>Location <em>optional</em></span><div className="experience-final-location"><FiMapPin /><input onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Add a location" value={world.experienceLocation || ""} /></div></label>
+          <label><span>Location <em>optional</em></span><button className="experience-final-location" onClick={() => setLocationPickerOpen(true)} type="button"><FiMapPin />{world.experienceLocation || "Add a location"}</button></label>
+          {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
           <button aria-pressed={world.allowDownload} className={`experience-final-toggle ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span><strong>Allow download</strong><small>Watermarked text and photos</small></span><i><b /></i></button>
         </section>
         <button className="experience-review-save" disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? <><FiLoader className="world-story-upload-spinner" /> Publishing…</> : "Publish Experience"}</button>
@@ -1636,7 +1662,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <textarea className="experience-form-input" maxLength={300} onChange={(event) => updateWorld({ description: event.target.value, summary: event.target.value.slice(0, 300) })} placeholder="Description" value={world.description} />
         <div className="experience-inline-fields">
           <select className="experience-form-input" onChange={(event) => updateWorld({ category: event.target.value })} value={world.category}><option value="">Category</option>{WORLD_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select>
-          <input className="experience-form-input" onChange={(event) => updateWorld({ experienceLocation: event.target.value })} placeholder="Location" value={world.experienceLocation || ""} />
+          <button className="experience-form-input" onClick={() => setLocationPickerOpen(true)} type="button">{world.experienceLocation || "Location"}</button>
+          {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
         </div>
 
         <p className="experience-field-label">CONTENT</p>
@@ -1804,7 +1831,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {experience ? <section className="planet-create-fieldset planet-price-section">
         <div className="world-prototype-section-head"><h2>{experience ? "Unlock price" : "Subscription price"}</h2><span>{experience ? "one-time, permanent access" : "one honest monthly price"}</span></div>
-        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: experience ? "ONE_TIME" : "MONTHLY", presetId: `${experience ? "ONE_TIME" : "MONTHLY"}_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>{experience ? "once" : "/month"}</small>{price === 190 ? <em>Most chosen</em> : null}</button>)}</div>
+        <div className="planet-price-options">{MONTHLY_PRICES.map((price) => <button className={Number(world.pricing?.starsAmount) === price ? "is-selected" : ""} key={price} onClick={() => updateWorld({ pricing: { mode: experience ? "ONE_TIME" : "MONTHLY", presetId: `${experience ? "ONE_TIME" : "MONTHLY"}_${price}`, starsAmount: price } })} type="button"><strong>{STAR}{price}</strong><small>{experience ? "once" : "/month"}</small>{price === 490 ? <em>Recommended</em> : null}</button>)}</div>
         <div className="planet-price-preview"><span>10 {experience ? "unlocks" : "members"} <b>{STAR}{(world.pricing?.starsAmount || 190) * 10}{experience ? "" : "/mo"}</b></span><span>50 {experience ? "unlocks" : "members"} <b>{STAR}{(world.pricing?.starsAmount || 190) * 50}{experience ? "" : "/mo"}</b></span></div>
       </section> : null}
 
@@ -1814,12 +1841,17 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <span className="world-prototype-direct-access world-create-direct-access">
           <span><FiZap /></span><b>Direct Access</b><small>members first · 1 free reply included</small><i><FiArrowUpRight /></i>
         </span>
+        <button className="world-create-welcome-row" onClick={() => setWorldCreateSheet("welcome")} type="button">
+          <span className="world-create-welcome-icon" aria-hidden="true">∞</span>
+          <span><b>Welcome message</b><small>{world.ownerWelcomeNote ? "Saved — every new member gets it" : "Write once — every new member gets it"}</small></span>
+          <strong>{world.ownerWelcomeNote ? "Edit" : "Add"} <FiArrowUpRight /></strong>
+        </button>
         <button aria-controls="world-create-settings-list" aria-expanded={worldCreateSheet === "settings"} className={`world-prototype-settings-row ${worldCreateSheet === "settings" ? "is-expanded" : ""}`} onClick={() => setWorldCreateSheet((current) => current === "settings" ? "" : "settings")} type="button">
           <FiSettings /><b>World settings</b><FiArrowUpRight className="world-settings-chevron" />
         </button>
         {worldCreateSheet === "settings" ? <div className="world-settings-list" id="world-create-settings-list">
           <p>INSIDE YOUR WORLD</p>
-          <button className="world-settings-item is-add" onClick={() => { setWorldCreateSheet(""); openWorldManagement("include"); }} type="button"><span className="world-settings-status"><FiPlus /></span><span className="world-settings-copy"><b>Experiences included</b><small>add one · included Experiences help sell the World</small></span><FiArrowUpRight className="world-settings-row-chevron" /></button>
+          <button className="world-settings-item is-add" onClick={() => { setWorldCreateSheet(""); openWorldManagement("include"); }} type="button"><span className="world-settings-status"><FiPlus /></span><span className="world-settings-copy"><b>Paid Seens included</b><small>add one · members get included Paid Seens</small></span><FiArrowUpRight className="world-settings-row-chevron" /></button>
           <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>Direct Access for members</b><small>1 free reply / month each · then first in line</small></span></span>
           <span className="world-settings-item is-complete"><span className="world-settings-status"><FiCheck /></span><span className="world-settings-copy"><b>Price locked for members</b><small>early members keep their joining price forever</small></span></span>
           <button aria-pressed={Boolean(world.firstMonthOfferEnabled)} className="world-settings-item is-switch" onClick={() => updateWorld({ firstMonthOfferEnabled: !world.firstMonthOfferEnabled })} type="button"><span className="world-settings-status" /><span className="world-settings-copy"><b>First month -50%</b><small>converts the hesitant · smarter than refunds</small></span><i aria-hidden="true" className={world.firstMonthOfferEnabled ? "is-on" : ""}><u /></i></button>
@@ -1831,9 +1863,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       </button> : null}
 
       <section className="world-prototype-inside world-create-experiences">
-        <h2>Experiences inside</h2>
-        <p>Attach an Experience — members get it with the subscription.</p>
-        <button className="world-prototype-include-experience" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> Include an experience</button>
+        <h2>Paid Seens inside</h2>
+        <p>Attach a paid Seen — members get it with their World subscription.</p>
+        <button className="world-prototype-include-experience" disabled={saving || uploading} onClick={() => openWorldManagement("include")} type="button"><FiPlus /> Add a paid Seen</button>
       </section>
 
       {!experience ? <section className="world-prototype-comments world-create-comments-preview">
@@ -1843,6 +1875,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {worldCreateSheet === "name" ? <WorldCreateTextSheet busy={saving} description="One World per creator. The name carries your stories, experiences, and private access." label="name" maxLength={30} onClose={() => setWorldCreateSheet("")} onSave={(title) => { updateWorld({ title }); setWorldCreateSheet(""); }} placeholder="Name your World" title="Name your World" value={world.title} /> : null}
       {worldCreateSheet === "description" ? <WorldCreateTextSheet busy={saving} description="One honest paragraph. People see it right under your World settings." label="description" maxLength={300} onClose={() => setWorldCreateSheet("")} onSave={(description) => { updateWorld({ description, summary: description }); setWorldCreateSheet(""); }} placeholder="Describe what members will experience" title="Describe your World" value={world.description} /> : null}
+      {worldCreateSheet === "welcome" ? <WorldWelcomeMessageSheet busy={saving} onClose={() => setWorldCreateSheet("")} onSave={(ownerWelcomeNote) => { updateWorld({ ownerWelcomeNote }); setWorldCreateSheet(""); }} value={world.ownerWelcomeNote} /> : null}
+      {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
 
       {worldCreateSheet === "price" ? (
         <WorldCreatePriceSheet busy={saving} currentPrice={world.pricing?.starsAmount} onClose={() => setWorldCreateSheet("")} onSave={(price) => { updateWorld({ pricing: { mode: "MONTHLY", presetId: `MONTHLY_${price}`, starsAmount: price } }); setWorldCreateSheet(""); }} />

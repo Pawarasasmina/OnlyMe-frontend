@@ -1,6 +1,10 @@
 import axiosInstance from "../api/axiosInstance";
 
 export const publicationService = {
+  getAiSeenStatus: () => axiosInstance.get("/publications/ai-seen/status"),
+  startAiSeen: () => axiosInstance.post("/publications/ai-seen/start"),
+  generateAiSeenChapter: (sessionId, answer, sayAgain = false) => axiosInstance.post(`/publications/ai-seen/${encodeURIComponent(sessionId)}/generate`, { answer, sayAgain }),
+  linkAiSeenPublication: (sessionId, publicationId) => axiosInstance.post(`/publications/ai-seen/${encodeURIComponent(sessionId)}/link`, { publicationId }),
   listMyPublications: (params) => axiosInstance.get("/publications/mine", { params }),
   getMyPublication: (id) => axiosInstance.get(`/publications/mine/${id}`),
   getWorldManagement: (id) => axiosInstance.get(`/publications/mine/${id}/world-management`),
@@ -10,6 +14,8 @@ export const publicationService = {
   updateWorldPricing: (id, monthlyStars) => axiosInstance.patch(`/publications/mine/${id}/world-pricing`, { monthlyStars }),
   uploadWorldCover: (id, file, onProgress) => { const body = new FormData(); body.append("file", file); return axiosInstance.post(`/publications/mine/${id}/world-management/cover`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },
   removeWorldCover: (id) => axiosInstance.delete(`/publications/mine/${id}/world-management/cover`),
+  uploadWorldWelcomeVoice: (id, file, onProgress) => { const body = new FormData(); body.append("file", file); return axiosInstance.post(`/publications/mine/${id}/world-management/welcome-voice`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },
+  removeWorldWelcomeVoice: (id) => axiosInstance.delete(`/publications/mine/${id}/world-management/welcome-voice`),
   uploadWorldStory: (id, file, fields = {}, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/world-management/stories`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },
   removeWorldStory: (id, chapterId, blockId) => axiosInstance.delete(`/publications/mine/${id}/world-management/stories/${encodeURIComponent(chapterId)}/${encodeURIComponent(blockId)}`),
   includeWorldExperience: (id, experienceId) => axiosInstance.post(`/publications/mine/${id}/world-management/experiences/${encodeURIComponent(experienceId)}`),
@@ -24,6 +30,7 @@ export const publicationService = {
   setCommentsEnabled: (id, enabled) => axiosInstance.put(`/publications/mine/${id}/comments-enabled`, { enabled }),
   addChapter: (id, payload) => axiosInstance.post(`/publications/mine/${id}/chapters`, payload),
   updateChapter: (id, chapterId, payload) => axiosInstance.put(`/publications/mine/${id}/chapters/${chapterId}`, payload),
+  setWorldBonusChapter: (id, chapterId, worldBonus, statusVersion) => axiosInstance.patch(`/publications/mine/${id}/chapters/${chapterId}/world-bonus`, { worldBonus, statusVersion }),
   deleteChapter: (id, chapterId, statusVersion) => axiosInstance.delete(`/publications/mine/${id}/chapters/${chapterId}`, { data: { statusVersion } }),
   reorderChapters: (id, chapterIds, statusVersion) => axiosInstance.post(`/publications/mine/${id}/reorder-chapters`, { chapterIds, statusVersion }),
   uploadMedia: (id, file, fields, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/media-upload`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },

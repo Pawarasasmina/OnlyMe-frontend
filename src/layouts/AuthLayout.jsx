@@ -2,8 +2,8 @@ import { Outlet } from "react-router-dom";
 
 function AuthLayout() {
   return (
-    <div className="user-app-shell flex min-h-screen items-center justify-center bg-hero px-4 py-10">
-      <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-brand-slate/90 p-8 shadow-glow backdrop-blur">
+    <div className="user-app-shell min-h-[100dvh] bg-[#050608] text-white">
+      <div className="mx-auto min-h-[100dvh] w-full max-w-[470px] overflow-hidden border-x border-white/[.06] bg-[radial-gradient(120%_70%_at_50%_0%,#101923_0%,#080B0F_48%,#06080B_100%)]">
         <Outlet />
       </div>
     </div>

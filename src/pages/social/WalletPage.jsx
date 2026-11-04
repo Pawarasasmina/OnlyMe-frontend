@@ -45,6 +45,7 @@ export default function WalletPage() {
   const [tab, setTab] = useState("coins");
   const [topUpBusy, setTopUpBusy] = useState(null);
   const [topUpMessage, setTopUpMessage] = useState("");
+  const [limitDraft, setLimitDraft] = useState("");
   const walletQuery = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet), retry: false });
   const ledgerQuery = useQuery({ queryKey: ["wallet-ledger", 1], queryFn: () => walletService.getLedger({ page: 1, limit: 100 }).then((response) => response.data.data.items), retry: false });
   const wallet = walletQuery.data;
@@ -67,6 +68,14 @@ export default function WalletPage() {
       setTopUpBusy(null);
     }
   };
+  const saveLimit = async () => {
+    setTopUpMessage("");
+    try {
+      await walletService.updateSpendingLimit(limitDraft === "" ? null : Number(limitDraft));
+      await queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      setTopUpMessage(limitDraft === "" ? "Monthly spending limit removed." : "Monthly spending limit saved.");
+    } catch (error) { setTopUpMessage(error.response?.data?.message || "Could not save the spending limit."); }
+  };
 
   return <section className="wallet-prototype-page">
     <header className="wallet-prototype-header"><button aria-label="Go back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><button aria-label="Open purchases and subscriptions" className="wallet-prototype-history" onClick={() => navigate("/memberships")} title="Purchases and subscriptions" type="button"><FiClock /></button><h1>Wallet</h1></header>
@@ -77,6 +86,8 @@ export default function WalletPage() {
       <div className="wallet-prototype-packs">{packs.map((pack) => <button aria-label={`Add ${pack.total} Stars`} disabled={topUpBusy !== null} key={pack.usd} onClick={() => topUp(pack)} type="button">{pack.badge ? <em>{pack.badge}</em> : null}<strong>{STAR}{pack.total.toLocaleString()} {pack.bonus ? <small>+ {STAR}{pack.bonus} bonus</small> : null}</strong><span>{topUpBusy === pack.usd ? "Adding…" : money(pack.usd)}</span></button>)}</div>
       {topUpMessage ? <p className="wallet-prototype-state" role="status">{topUpMessage}</p> : null}
       <p className="wallet-prototype-rate">{STAR}{rate.toLocaleString()} = $1 · Direct top-up preview · Coins never convert back to money</p>
+      <h2 className="wallet-prototype-label">Monthly spending limit</h2>
+      <div className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><div className="flex items-center justify-between text-xs text-white/60"><span>Spent this month</span><b className="text-white">🪙{Number(wallet.monthlySpent || 0).toLocaleString()}{wallet.monthlySpendingLimit ? ` / ${Number(wallet.monthlySpendingLimit).toLocaleString()}` : ""}</b></div><div className="mt-3 flex gap-2"><input className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white" min="1" onChange={(event) => setLimitDraft(event.target.value)} placeholder={wallet.monthlySpendingLimit ? String(wallet.monthlySpendingLimit) : "No limit"} type="number" value={limitDraft} /><button className="rounded-xl bg-atseen-blue px-4 text-xs font-black text-atseen-bg" onClick={saveLimit} type="button">Save</button></div><p className="mt-2 text-[10px] text-white/35">Leave empty and save to remove the limit. Subscription charges respect this setting.</p></div>
       <h2 className="wallet-prototype-label">Activity</h2>
       <div className="wallet-prototype-activity">{ledgerQuery.isLoading ? <p className="wallet-prototype-state">Loading activity…</p> : (ledgerQuery.data || []).length ? ledgerQuery.data.slice(0, 12).map((item) => <ActivityRow item={item} key={item.id} rate={rate} />) : <p className="wallet-prototype-state">No Stars activity yet.</p>}</div>
     </> : <>

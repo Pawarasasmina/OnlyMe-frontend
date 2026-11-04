@@ -31,11 +31,7 @@ export function FanToastProvider({ children }) {
       variant: "gift-shelf", title: `On ${firstName}\u2019s profile`, avatar,
       giftImage: gift.imageUrl, action: "View", onAction: onProfile, duration: 4400,
     });
-    // Match the reference: celebration, shelf banner, then creator thanks at 12s.
-    sequenceTimerRef.current = window.setTimeout(() => showToast("This means more than you think. Thank you.", {
-      variant: "gift-thanks", title: `${firstName} thanked you`, avatar,
-      onAction: onProfile, duration: 6000,
-    }), 7800);
+    // Creator thanks are announced only by GiftThanksNotice after a real creator action.
   }, [showToast]);
 
   useEffect(() => () => {

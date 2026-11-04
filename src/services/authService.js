@@ -21,4 +21,5 @@ export const authService = {
   logout: () => axiosInstance.post("/auth/logout"),
   deleteAccount: () => axiosInstance.delete("/auth/account"),
   getProfile: () => axiosInstance.get("/auth/me"),
+  updateProfileType: (selection) => axiosInstance.put("/auth/profile-type", { ...(typeof selection === "string" ? { profileType: selection } : selection), confirmed: true }),
 };

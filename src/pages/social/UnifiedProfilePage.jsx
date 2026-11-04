@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
@@ -15,7 +15,9 @@ import {
   FiGrid,
   FiUsers,
   FiMail,
+  FiMapPin,
   FiMoreHorizontal,
+  FiPhone,
   FiPlus,
   FiRefreshCw,
   FiRepeat,
@@ -25,6 +27,7 @@ import {
   FiSlash,
   FiX,
   FiZap,
+  FiGlobe,
 } from "react-icons/fi";
 import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferModal";
 import AppShareSheet from "../../components/share/ShareSheet";
@@ -38,7 +41,6 @@ import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
 import ProfileMediaSection from "../../components/profile/ProfileMediaSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
-import ProfileExperiences from "../../components/profile/ProfileExperiences";
 import StoryHighlights from "../../components/profile/StoryHighlights";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
@@ -254,9 +256,9 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
   const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
+  const worldTarget = worldCreateTarget(planets);
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
-  const worldTarget = worldCreateTarget(planets);
   const openCreate = () => {
     if (!viewerCapabilities.canCreate) return;
     setCreateOpen(true);
@@ -577,6 +579,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
         {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button> : null}
         {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
       </div>
+      <BusinessContactActions isOwner={isOwner} profile={profile} />
       <ProfileViewersSheet isOpen={viewersOpen} onClose={() => setViewersOpen(false)} />
       <ProfileShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} shareUrl={shareUrl} />
       {directGiftOpen ? <StoryGiftPicker onClose={() => setDirectGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName, username: profile.username, avatar: resolveMediaUrl(profile.avatar) }} sourceType="DIRECT" /> : null}
@@ -592,6 +595,28 @@ function VisitorFollowButton({ profile, relationship = {} }) {
   });
   const following = Boolean(relationship.following);
   return <button className={`profile-action-chip profile-follow-action ${following ? "is-following" : ""}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? "Following" : "Follow"}</button>;
+}
+
+function BusinessContactActions({ profile, isOwner }) {
+  const navigate = useNavigate();
+  if (profile.profileType !== "business") return null;
+  const contact = profile.businessContact || {};
+  const enabled = new Set(contact.enabled || []);
+  const actions = [
+    { id: "call", label: "Call", Icon: FiPhone, value: contact.call, href: contact.call ? `tel:${String(contact.call).replace(/[^+\d]/g, "")}` : "" },
+    { id: "directions", label: "Directions", Icon: FiMapPin, value: contact.directions, href: contact.directions ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.directions)}` : "" },
+    { id: "website", label: "Website", Icon: FiGlobe, value: contact.website, href: contact.website || "" },
+  ].filter((item) => enabled.has(item.id) && (isOwner || item.value));
+  if (!actions.length) return null;
+  const open = (item) => {
+    if (!item.href) {
+      navigate("/settings/profile?from=profile");
+      return;
+    }
+    if (item.id === "call") window.location.href = item.href;
+    else window.open(item.href, "_blank", "noopener,noreferrer");
+  };
+  return <div className="mt-3 grid grid-cols-3 gap-2">{actions.map(({ Icon, ...item }) => <button className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.07] px-2 text-xs font-black transition hover:bg-white/10 active:scale-[.97]" key={item.id} onClick={() => open(item)} type="button"><Icon />{item.label}</button>)}</div>;
 }
 
 function DirectAccessRow({ profile, viewerCapabilities }) {
@@ -640,7 +665,7 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
       {canShowDirect ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       {canShowDashboard ? (
         <>
-          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>Professional dashboard</span><FiChevronRight /></Link>
+          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>{profile.profileType === "business" ? "Business dashboard" : "Creator dashboard"}</span><FiChevronRight /></Link>
           <Link className="profile-row profile-dashboard-row" to="/grow"><FiUsers /><span>Grow</span><FiChevronRight /></Link>
         </>
       ) : null}
@@ -926,6 +951,15 @@ function ProfileMixedContentPanel({ emptyText, owner = false, reposted = false, 
   </div>;
 }
 
+function UnifiedRepostGrid({ items = [], owner = false }) {
+  if (!items.length) return <ContentEmptyState compact message={owner ? "Repost a Seen, note, reply, or photo and it will appear here." : "There are no reposts yet."} primaryAction={owner ? { label: "Explore content", to: "/seen" } : { label: "Discover people", to: "/discover" }} title="No reposts yet" variant="profile" />;
+  return <div className="profile-repost-grid">{items.map((item) => <Link aria-label={`Open reposted ${item.kind} by ${item.author?.name || "author"}`} className="profile-repost-tile" key={item.id} to={item.route || "#"}>
+    {item.imageUrl ? <img alt="" src={item.imageUrl} /> : <span className="profile-repost-fallback">{item.kind === "cm" ? "“" : "↻"}</span>}
+    <span className="profile-repost-shade" /><span className="profile-repost-mark"><FiRepeat /></span>
+    <span className="profile-repost-author"><FanAvatar name={item.author?.name} size="h-6 w-6" src={item.author?.avatar} /><b>{item.author?.name || "Author"}</b></span><strong>{item.title}</strong>
+  </Link>)}</div>;
+}
+
 function ContentTabsPanel({ data, isOwner, tab }) {
   const saved = useQuery({
     queryKey: ["saved-content"],
@@ -934,7 +968,7 @@ function ContentTabsPanel({ data, isOwner, tab }) {
     retry: false,
   });
   if (tab === "seens") return <ProfileContentGrid content={data.seens || []} emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."} kind="seens" owner={isOwner} series={data.series || []} />;
-  if (tab === "reposts") return <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
+  if (tab === "reposts") return data.reposts ? <UnifiedRepostGrid items={data.reposts} owner={isOwner} /> : <ProfileMixedContentPanel emptyText="No reshared Wall notes or Seens yet." owner={isOwner} reposted seens={data.sharedSeens || []} wallPosts={data.sharedWallPosts || []} />;
   if (!isOwner) return <div className="profile-empty-state">Saved items are private.</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
   if (saved.isError) return <div className="profile-empty-state">Saved items could not be loaded.</div>;
@@ -955,16 +989,16 @@ function ProfileNotes({ isOwner, posts = [] }) {
 
 function ProfileBody({ data, setConnectionsType }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   const [activeSeriesId, setActiveSeriesId] = useState("");
   const [activeSeenListId, setActiveSeenListId] = useState("");
-  const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
   const [profileStoryViewer, setProfileStoryViewer] = useState(null);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
+  const [publishedSeen, setPublishedSeen] = useState(() => location.state?.publishedSeen || null);
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
@@ -983,8 +1017,6 @@ function ProfileBody({ data, setConnectionsType }) {
       setProfileStoryViewer({ index: unseenIndex >= 0 ? unseenIndex : 0, stories });
     });
   };
-  const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
-  const canPostNote = canCreateFeedPost(user);
   useEffect(() => {
     setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
   }, [requestedTab]);
@@ -998,6 +1030,11 @@ function ProfileBody({ data, setConnectionsType }) {
     const timer = window.setTimeout(() => setDraftSavedCount(0), 3200);
     return () => window.clearTimeout(timer);
   }, [draftSavedCount, setSearchParams]);
+  useEffect(() => {
+    if (!publishedSeen) return undefined;
+    const timer = window.setTimeout(() => setPublishedSeen(null), 4200);
+    return () => window.clearTimeout(timer);
+  }, [publishedSeen]);
   useEffect(() => {
     if (tab !== "seens") {
       setActiveSeriesId("");
@@ -1050,6 +1087,7 @@ function ProfileBody({ data, setConnectionsType }) {
   }
   return (
     <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-public-profile"}`}>
+      {publishedSeen ? <div className="profile-published-seen-banner" role="status"><span>Published</span><button onClick={async () => { const url = `${window.location.origin}/seen/${publishedSeen.id}`; if (navigator.share) await navigator.share({ title: publishedSeen.title || "Seen", url }).catch(() => {}); else await navigator.clipboard?.writeText(url); }} type="button">Share</button></div> : null}
       {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">Saved for later · {draftSavedCount}/3 ✍️</p> : null}
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
@@ -1060,13 +1098,13 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} viewerId={user?.id || user?._id} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} username={profile.username} />
-      <ProfileExperiences creatorUsername={profile.username} experiences={data.experiences || []} onCreate={() => setExperienceCreateOpen(true)} owner={isOwner} />
       <ProfileTabs setTab={setTab} tab={tab} />
       <section className="profile-grid-panel">
         {tab === "seens" ? (
           <ProfileContentGrid
             content={data.seens || []}
             emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."}
+            highlightSeenId={publishedSeen?.id || ""}
             kind="seens"
             onActiveSeriesChange={setSeriesFocus}
             onActiveSeenListChange={setSeenListFocus}
@@ -1078,20 +1116,6 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileDream capabilities={viewerCapabilities} profile={profile} role={profile.role} />
       <ProfileNotes isOwner={isOwner} posts={data.wallPosts || []} />
       {profile.joinedAt ? <p className="profile-joined"><FiCalendar /> Joined {new Date(profile.joinedAt).toLocaleDateString()}</p> : null}
-      {isOwner ? <FanCreateSheet
-        canCreateSeen={viewerCapabilities.canCreate}
-        canCreateStoryNow={canCreateStoryNow}
-        canCreateWorld={viewerCapabilities.canAccessStudio}
-        canPostNote={canPostNote}
-        isOpen={experienceCreateOpen}
-        onClose={() => setExperienceCreateOpen(false)}
-        onNote={() => {
-          setExperienceCreateOpen(false);
-          navigate(`/wall?compose=note&composeRequest=${Date.now()}`);
-        }}
-        onStory={() => { setExperienceCreateOpen(false); setExperienceStoryOpen(true); }}
-        worldTarget={worldCreateTarget(data.planets || [])}
-      /> : null}
       <StoryCreator isOpen={experienceStoryOpen} onClose={() => setExperienceStoryOpen(false)} />
       <StoryViewer initialIndex={profileStoryViewer?.index || 0} isOpen={Boolean(profileStoryViewer?.stories?.length)} onClose={() => setProfileStoryViewer(null)} stories={profileStoryViewer?.stories || []} />
     </div>
