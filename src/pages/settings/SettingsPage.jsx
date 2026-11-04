@@ -167,7 +167,7 @@ export default function SettingsPage() {
     </SettingsGroup>
 
     {error || privacyError ? <p className="mt-5 rounded-xl bg-atseen-danger/10 p-3 text-sm text-atseen-danger" role="alert">{error || privacyError}</p> : null}
-    <div className="settings-index-footer"><button className="settings-index-logout" disabled={busy} onClick={() => setLogoutOpen(true)} type="button">{__msg("layouts.logOut")}</button><small>{__msg("settings.seenByAtseen")} · prototype</small></div>
+    <div className="settings-index-footer"><button className="settings-index-logout" disabled={busy} onClick={() => setLogoutOpen(true)} type="button">{__msg("layouts.logOut")}</button><small>{__msg("settings.seenByAtseen")}</small></div>
     {logoutOpen ? <DeleteAccountSheet anchorRef={settingsMainRef} busy={busy} step="logout" onClose={() => setLogoutOpen(false)} onConfirm={signOut} /> : null}
 
     {ownershipStep ? <DeleteAccountSheet anchorRef={settingsMainRef} busy={busy || checkingEarnings} error={__systemMessage(error)} step={ownershipStep} earnings={earnings} loading={checkingEarnings} onRetry={() => changeOwnershipStep("check")} onStep={changeOwnershipStep} onClose={() => { setOwnershipStep(null); setError(""); }} onConfirm={deleteAccount} onPayouts={() => { setOwnershipStep(null); setVerificationView("payouts"); setCreatorApplyOpen(true); }} /> : null}

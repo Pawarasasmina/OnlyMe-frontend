@@ -545,7 +545,7 @@ function FeedPost({ post, profileMenu = false }) {
 
   const requireDatabasePost = () => {
     if (mongoIdPattern.test(String(actionPostId || ""))) return true;
-    showToast("This prototype post is not stored in the database yet.");
+    showToast("This post is not available yet.");
     return false;
   };
 
