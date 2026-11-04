@@ -1,13 +1,17 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { FiPlus } from "react-icons/fi";
 import AtseenLogo from "../branding/AtseenLogo";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 
 function StoryItem({ canAdd = false, hasUnseen = false, isOwn = false, label, onAdd, onOpen, owner, statusEmoji, statusLabel = "" }) {
+  __useUiLanguage();
   return (
     <div className="story-status-item relative flex shrink-0 flex-col items-center text-center">
       <button
-        aria-label={label || `View ${owner.name}'s Story`}
+        aria-label={label || __msg("stories.viewSStory", { value0: owner.name })}
         className="story-status-button flex flex-col items-center"
         onClick={onOpen}
         type="button"
@@ -18,19 +22,19 @@ function StoryItem({ canAdd = false, hasUnseen = false, isOwn = false, label, on
           </span>
         </span>
         {statusEmoji ? (
-          <span className="story-status-badge -mt-3 ml-7 inline-flex h-5 w-5 items-center justify-center rounded-full border border-atseen-blue/35 bg-atseen-bg text-[10px]">
+          <span className="story-status-badge -mt-3 ms-7 inline-flex h-5 w-5 items-center justify-center rounded-full border border-atseen-blue/35 bg-atseen-bg text-[10px]">
             {statusEmoji}
           </span>
         ) : null}
         <span className="story-status-name mt-1 flex max-w-16 items-center gap-1 truncate text-[10px] font-semibold text-atseen-muted">
-          <span className="truncate">{isOwn ? "You" : owner.name}</span>
+          <span className="truncate">{isOwn ? __msg("fanWeb.you") : owner.name}</span>
           {owner.verified ? <VerifiedBadge className="h-3 w-3 shrink-0" /> : null}
         </span>
         {statusLabel ? <span className="story-status-label">{statusLabel}</span> : null}
       </button>
       {canAdd ? (
         <button
-          aria-label="Add Story"
+          aria-label={__msg("stories.addStory_34dd81")}
           className="absolute right-1 top-10 flex h-5 w-5 items-center justify-center rounded-full border border-atseen-bg bg-atseen-blue text-[12px] text-atseen-bg shadow-glow"
           onClick={(event) => {
             event.stopPropagation();

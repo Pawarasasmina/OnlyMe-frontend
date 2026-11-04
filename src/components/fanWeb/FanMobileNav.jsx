@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { NavLink } from "react-router-dom";
 import { socialPrimaryNavItems } from "../social/socialNavItems";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -6,6 +9,7 @@ import FanAvatar from "./shared/FanAvatar";
 import { getUserDisplay } from "./shared/userDisplay";
 
 function FanMobileNav({ unreadMessageCount = 0 }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const { t } = useLanguage();
   const display = getUserDisplay(user);
@@ -13,7 +17,7 @@ function FanMobileNav({ unreadMessageCount = 0 }) {
 
   return (
     <nav
-      aria-label="Mobile fan navigation"
+      aria-label={__msg("fanWeb.mobileFanNavigation")}
       className="fan-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.05] bg-[#090c0f]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur min-[881px]:hidden"
     >
       <div className="mx-auto grid h-[54px] max-w-md grid-cols-5 items-center gap-1">
@@ -35,7 +39,7 @@ function FanMobileNav({ unreadMessageCount = 0 }) {
                   <span className="relative">
                     {item.to === "/profile" ? (
                       <FanAvatar
-                        alt="Your profile"
+                        alt={__msg("fanWeb.yourProfile")}
                         className={`border ${isActive ? "border-atseen-blue" : "border-white/35"}`}
                         name={display.name}
                         size="h-5 w-5"
@@ -44,7 +48,7 @@ function FanMobileNav({ unreadMessageCount = 0 }) {
                     ) : (
                       <Icon aria-hidden="true" className="h-5 w-5" />
                     )}
-                    {item.to === "/messages" && unreadMessageCount > 0 ? <span aria-label={`${unreadMessageCount} unread chats`} className="absolute -right-3 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">{unreadMessageCount > 99 ? "99+" : unreadMessageCount}</span> : null}
+                    {item.to === "/messages" && unreadMessageCount > 0 ? <span aria-label={__msg("fanWeb.unreadChats", { value0: unreadMessageCount })} className="absolute -right-3 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">{unreadMessageCount > 99 ? "99+" : unreadMessageCount}</span> : null}
                   </span>
                   <span className="sr-only">{t(item.label)}</span>
                 </>

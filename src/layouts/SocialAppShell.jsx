@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Component, Fragment, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,17 +43,16 @@ class SocialContentErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
     return (
       <section className="mx-auto mt-10 max-w-lg rounded-2xl border border-red-400/25 bg-red-400/10 p-6 text-white">
-        <h1 className="text-xl font-black">This page could not load</h1>
-        <p className="mt-2 text-sm text-red-100/80">The draft screen hit a temporary rendering error.</p>
-        <button className="mt-5 rounded-full bg-atseen-blue px-4 py-2 text-sm font-black text-atseen-bg" onClick={() => window.location.reload()} type="button">
-          Reload page
-        </button>
+        <h1 className="text-xl font-black">{__msg("layouts.thisPageCouldNotLoad")}</h1>
+        <p className="mt-2 text-sm text-red-100/80">{__msg("layouts.theDraftScreenHitATemporaryRenderingError")}</p>
+        <button className="mt-5 rounded-full bg-atseen-blue px-4 py-2 text-sm font-black text-atseen-bg" onClick={() => window.location.reload()} type="button">{__msg("layouts.reloadPage")}</button>
       </section>
     );
   }
 }
 
 function SocialAppShell({ children = null }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const onboarding = useOnboarding();
   const capabilities = useSocialCapabilities();
@@ -156,7 +158,7 @@ function SocialAppShell({ children = null }) {
     <FanToastProvider>
       <GiftThanksNotice />
       <CallProvider user={user}>
-      {currentWarning ? <div className="fixed inset-0 z-[300] grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="moderation-warning-title"><section className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#210b0d] p-6 text-white shadow-[0_24px_90px_rgba(220,38,38,.35)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-500/20 text-3xl text-red-400">!</div><p className="mt-5 text-center text-xs font-black uppercase tracking-[.2em] text-red-400">Account warning</p><h2 className="mt-2 text-center text-2xl font-black" id="moderation-warning-title">{currentWarning.title}</h2><p className="mt-4 text-center text-sm leading-6 text-red-50/80">{currentWarning.message}</p><p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">Future violations may lead to temporary restriction or account suspension.</p><button className="mt-6 w-full rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white disabled:opacity-50" disabled={acknowledgeWarning.isPending} onClick={() => acknowledgeWarning.mutate()} type="button">{acknowledgeWarning.isPending ? "Saving…" : "I understand"}</button></section></div> : null}
+      {currentWarning ? <div className="fixed inset-0 z-[300] grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="moderation-warning-title"><section className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#210b0d] p-6 text-white shadow-[0_24px_90px_rgba(220,38,38,.35)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-500/20 text-3xl text-red-400">!</div><p className="mt-5 text-center text-xs font-black uppercase tracking-[.2em] text-red-400">{__msg("layouts.accountWarning")}</p><h2 dir="auto" className="mt-2 text-center text-2xl font-black" id="moderation-warning-title">{currentWarning.title}</h2><p className="mt-4 text-center text-sm leading-6 text-red-50/80">{currentWarning.message}</p><p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">{__msg("layouts.futureViolationsMayLeadToTemporaryRestrictionOrAccount")}</p><button className="mt-6 w-full rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white disabled:opacity-50" disabled={acknowledgeWarning.isPending} onClick={() => acknowledgeWarning.mutate()} type="button">{acknowledgeWarning.isPending ? __msg("financial.saving") : __msg("layouts.iUnderstand")}</button></section></div> : null}
       <div className="user-app-shell social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text min-[881px]:h-screen min-[881px]:overflow-hidden" onClickCapture={handleShellNavigation}>
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] min-[881px]:h-screen min-[881px]:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadActivityCount={unreadActivityCount} unreadMessageCount={unreadMessageCount} />
@@ -187,8 +189,8 @@ function SocialAppShell({ children = null }) {
         </div>
         <FanMobileNav capabilities={capabilities} unreadMessageCount={unreadMessageCount} />
       </div>
-      <FanModal isOpen={appModalOpen} onClose={() => setAppModalOpen(false)} title="Get the app">
-        <p className="text-center text-sm leading-6 text-atseen-muted">Mobile app availability will be announced when it is ready.</p>
+      <FanModal isOpen={appModalOpen} onClose={() => setAppModalOpen(false)} title={__msg("layouts.getTheApp")}>
+        <p className="text-center text-sm leading-6 text-atseen-muted">{__msg("layouts.mobileAppAvailabilityWillBeAnnouncedWhenItIs")}</p>
       </FanModal>
       <FanCreateSheet
         canCreateSeen={capabilities.canCreate}
@@ -205,7 +207,7 @@ function SocialAppShell({ children = null }) {
         worldTarget={worldTarget}
       />
       <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
-      {verificationOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setVerificationOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
+      {verificationOpen ? <CreatorVerificationPage onClose={() => setVerificationOpen(false)} /> : null}
       </CallProvider>
     </FanToastProvider>
   );

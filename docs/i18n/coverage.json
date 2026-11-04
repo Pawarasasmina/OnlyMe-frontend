@@ -1,0 +1,1411 @@
+{
+  "locales": {
+    "en": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [],
+      "unexpectedEnglish": []
+    },
+    "ar": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "profile.directAccess",
+          "source": "· Direct Access"
+        },
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "admin.ctr",
+          "source": "CTR"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "fan.directAccess",
+          "source": "✦ Direct Access"
+        },
+        {
+          "key": "settings.atseenCom",
+          "source": "· atseen.com"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        }
+      ],
+      "unexpectedEnglish": []
+    },
+    "ru": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        }
+      ],
+      "unexpectedEnglish": []
+    },
+    "uk": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "profile.directAccess",
+          "source": "· Direct Access"
+        },
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "fan.directAccess",
+          "source": "✦ Direct Access"
+        },
+        {
+          "key": "fan.directAccess_419dbf",
+          "source": "Direct Access · ✦{value0}"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        }
+      ],
+      "unexpectedEnglish": []
+    },
+    "es": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "admin.mb",
+          "source": " · {value0} MB"
+        },
+        {
+          "key": "fanWeb.original",
+          "source": "Original"
+        },
+        {
+          "key": "profile.directAccess",
+          "source": "· Direct Access"
+        },
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "stories.neon",
+          "source": "Neon"
+        },
+        {
+          "key": "data.popular",
+          "source": "Popular"
+        },
+        {
+          "key": "admin.total",
+          "source": "Total"
+        },
+        {
+          "key": "admin.ctr",
+          "source": "CTR"
+        },
+        {
+          "key": "admin.test_984816",
+          "source": "TEST"
+        },
+        {
+          "key": "admin.visible",
+          "source": "Visible"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "creator.horizontal",
+          "source": "Horizontal"
+        },
+        {
+          "key": "creator.vertical",
+          "source": "Vertical"
+        },
+        {
+          "key": "fan.fitness",
+          "source": "Fitness"
+        },
+        {
+          "key": "fan.directAccess",
+          "source": "✦ Direct Access"
+        },
+        {
+          "key": "fan.directAccess_419dbf",
+          "source": "Direct Access · ✦{value0}"
+        },
+        {
+          "key": "fan.audio",
+          "source": "audio"
+        },
+        {
+          "key": "fan.audio_acdac2",
+          "source": "Audio"
+        },
+        {
+          "key": "social.spam",
+          "source": "Spam"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        },
+        {
+          "key": "verification.selfie",
+          "source": "Selfie"
+        },
+        {
+          "key": "wallLocations.indonesia",
+          "source": "Indonesia"
+        },
+        {
+          "key": "wallLocations.portugal",
+          "source": "Portugal"
+        },
+        {
+          "key": "wallLocations.madrid",
+          "source": "Madrid"
+        },
+        {
+          "key": "wallLocations.abuDhabi",
+          "source": "Abu Dhabi"
+        },
+        {
+          "key": "options.Chef",
+          "source": "Chef"
+        },
+        {
+          "key": "options.Bangkok",
+          "source": "Bangkok"
+        }
+      ],
+      "unexpectedEnglish": []
+    },
+    "pt": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "discover.online",
+          "source": "Online"
+        },
+        {
+          "key": "fanWeb.original",
+          "source": "Original"
+        },
+        {
+          "key": "profile.directAccess",
+          "source": "· Direct Access"
+        },
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "stories.mono",
+          "source": "Mono"
+        },
+        {
+          "key": "stories.neon",
+          "source": "Neon"
+        },
+        {
+          "key": "data.popular",
+          "source": "Popular"
+        },
+        {
+          "key": "admin.total",
+          "source": "Total"
+        },
+        {
+          "key": "admin.ctr",
+          "source": "CTR"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "creator.horizontal",
+          "source": "Horizontal"
+        },
+        {
+          "key": "creator.vertical",
+          "source": "Vertical"
+        },
+        {
+          "key": "creator.item",
+          "source": "item"
+        },
+        {
+          "key": "fan.fitness",
+          "source": "Fitness"
+        },
+        {
+          "key": "fan.directAccess",
+          "source": "✦ Direct Access"
+        },
+        {
+          "key": "social.spam",
+          "source": "Spam"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "fan.offline",
+          "source": "Offline"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        },
+        {
+          "key": "verification.selfie",
+          "source": "Selfie"
+        },
+        {
+          "key": "wallLocations.portugal",
+          "source": "Portugal"
+        },
+        {
+          "key": "wallLocations.porto",
+          "source": "Porto"
+        },
+        {
+          "key": "wallLocations.madrid",
+          "source": "Madrid"
+        },
+        {
+          "key": "wallLocations.abuDhabi",
+          "source": "Abu Dhabi"
+        }
+      ],
+      "unexpectedEnglish": []
+    },
+    "fr": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "admin.transition",
+          "source": "Transition"
+        },
+        {
+          "key": "content.type",
+          "source": "Type"
+        },
+        {
+          "key": "content.description",
+          "source": "Description"
+        },
+        {
+          "key": "discover.message",
+          "source": "Message"
+        },
+        {
+          "key": "fanWeb.respect",
+          "source": "Respect"
+        },
+        {
+          "key": "fanWeb.photo",
+          "source": "Photo"
+        },
+        {
+          "key": "fanWeb.question",
+          "source": "Question"
+        },
+        {
+          "key": "fanWeb.original",
+          "source": "Original"
+        },
+        {
+          "key": "posts.images",
+          "source": "Images"
+        },
+        {
+          "key": "profile.directAccess",
+          "source": "· Direct Access"
+        },
+        {
+          "key": "profile.fan",
+          "source": "Fan"
+        },
+        {
+          "key": "profile.zoom",
+          "source": "Zoom"
+        },
+        {
+          "key": "profile.image",
+          "source": "image"
+        },
+        {
+          "key": "profile.photo",
+          "source": "photo"
+        },
+        {
+          "key": "profile.photos",
+          "source": "Photos"
+        },
+        {
+          "key": "profile.photo_84a32c",
+          "source": "Photo {value0}"
+        },
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "share.messages",
+          "source": "Messages"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "stories.mono",
+          "source": "Mono"
+        },
+        {
+          "key": "stories.neon",
+          "source": "Neon"
+        },
+        {
+          "key": "verification.documents",
+          "source": "Documents"
+        },
+        {
+          "key": "data.questions",
+          "source": "Questions"
+        },
+        {
+          "key": "data.services",
+          "source": "Services"
+        },
+        {
+          "key": "layouts.commerce",
+          "source": "Commerce"
+        },
+        {
+          "key": "layouts.communication",
+          "source": "Communication"
+        },
+        {
+          "key": "layouts.studio",
+          "source": "Studio"
+        },
+        {
+          "key": "admin.sessions",
+          "source": "Sessions"
+        },
+        {
+          "key": "admin.total",
+          "source": "Total"
+        },
+        {
+          "key": "admin.fans",
+          "source": "Fans"
+        },
+        {
+          "key": "admin.ctr",
+          "source": "CTR"
+        },
+        {
+          "key": "admin.stories",
+          "source": "Stories"
+        },
+        {
+          "key": "admin.page",
+          "source": "Page"
+        },
+        {
+          "key": "admin.actions",
+          "source": "Actions"
+        },
+        {
+          "key": "admin.transactions",
+          "source": "Transactions"
+        },
+        {
+          "key": "admin.action",
+          "source": "Action"
+        },
+        {
+          "key": "admin.visible",
+          "source": "Visible"
+        },
+        {
+          "key": "admin.version",
+          "source": "Version"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "creator.dates",
+          "source": "Dates"
+        },
+        {
+          "key": "creator.audience",
+          "source": "Audience"
+        },
+        {
+          "key": "creator.vertical",
+          "source": "Vertical"
+        },
+        {
+          "key": "creator.option_e31d97",
+          "source": "Option"
+        },
+        {
+          "key": "creator.option_5ce069",
+          "source": "+ Option"
+        },
+        {
+          "key": "fan.fitness",
+          "source": "Fitness"
+        },
+        {
+          "key": "fan.shopping",
+          "source": "Shopping"
+        },
+        {
+          "key": "fan.directAccess",
+          "source": "✦ Direct Access"
+        },
+        {
+          "key": "fan.directAccess_419dbf",
+          "source": "Direct Access · ✦{value0}"
+        },
+        {
+          "key": "fan.fan",
+          "source": "fan"
+        },
+        {
+          "key": "fan.participant",
+          "source": "Participant"
+        },
+        {
+          "key": "fan.message",
+          "source": "Message…"
+        },
+        {
+          "key": "fan.audio_acdac2",
+          "source": "Audio"
+        },
+        {
+          "key": "settings.notifications",
+          "source": "Notifications"
+        },
+        {
+          "key": "settings.public",
+          "source": "Public"
+        },
+        {
+          "key": "social.orbit",
+          "source": "Orbit"
+        },
+        {
+          "key": "social.spam",
+          "source": "Spam"
+        },
+        {
+          "key": "social.notes",
+          "source": "Notes"
+        },
+        {
+          "key": "social.note",
+          "source": "note"
+        },
+        {
+          "key": "social.note_2c924e",
+          "source": "Note"
+        },
+        {
+          "key": "social.minimum",
+          "source": "minimum"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        },
+        {
+          "key": "common.messagesCount",
+          "source": "{count, plural, one {# message} other {# messages}}"
+        },
+        {
+          "key": "verification.selfie",
+          "source": "Selfie"
+        },
+        {
+          "key": "wallLocations.france",
+          "source": "France"
+        },
+        {
+          "key": "wallLocations.rome",
+          "source": "Rome"
+        },
+        {
+          "key": "wallLocations.portugal",
+          "source": "Portugal"
+        },
+        {
+          "key": "wallLocations.madrid",
+          "source": "Madrid"
+        },
+        {
+          "key": "wallLocations.abuDhabi",
+          "source": "Abu Dhabi"
+        },
+        {
+          "key": "options.Art",
+          "source": "Art"
+        },
+        {
+          "key": "options.Coach",
+          "source": "Coach"
+        },
+        {
+          "key": "options.Chef",
+          "source": "Chef"
+        },
+        {
+          "key": "options.Restaurant",
+          "source": "Restaurant"
+        },
+        {
+          "key": "options.Paris_France",
+          "source": "Paris, France"
+        },
+        {
+          "key": "options.Bali",
+          "source": "Bali"
+        },
+        {
+          "key": "options.Milan",
+          "source": "Milan"
+        },
+        {
+          "key": "options.Bangkok",
+          "source": "Bangkok"
+        },
+        {
+          "key": "options.New_York",
+          "source": "New York"
+        },
+        {
+          "key": "options.Miami",
+          "source": "Miami"
+        },
+        {
+          "key": "options.Tech",
+          "source": "Tech"
+        },
+        {
+          "key": "options.Mentions",
+          "source": "Mentions"
+        },
+        {
+          "key": "states.image",
+          "source": "Image"
+        },
+        {
+          "key": "states.standard",
+          "source": "Standard"
+        },
+        {
+          "key": "states.conversation",
+          "source": "Conversation"
+        }
+      ],
+      "unexpectedEnglish": []
+    },
+    "de": {
+      "keys": 5826,
+      "required": 5826,
+      "missing": [],
+      "invalid": [],
+      "identical": [
+        {
+          "key": "admin.optional",
+          "source": "(optional)"
+        },
+        {
+          "key": "discover.global",
+          "source": "Global"
+        },
+        {
+          "key": "discover.online",
+          "source": "Online"
+        },
+        {
+          "key": "fanWeb.event",
+          "source": "Event"
+        },
+        {
+          "key": "fanWeb.original",
+          "source": "Original"
+        },
+        {
+          "key": "financial.status",
+          "source": "Status"
+        },
+        {
+          "key": "financial.premium",
+          "source": "Premium"
+        },
+        {
+          "key": "onboarding.optional",
+          "source": "Optional"
+        },
+        {
+          "key": "profile.directAccess",
+          "source": "· Direct Access"
+        },
+        {
+          "key": "profile.fan",
+          "source": "Fan"
+        },
+        {
+          "key": "profile.zoom",
+          "source": "Zoom"
+        },
+        {
+          "key": "profile.video",
+          "source": "Video"
+        },
+        {
+          "key": "profile.highlights",
+          "source": "Highlights"
+        },
+        {
+          "key": "publication.link",
+          "source": "Link"
+        },
+        {
+          "key": "search.top",
+          "source": "Top"
+        },
+        {
+          "key": "search.relevant",
+          "source": "Relevant"
+        },
+        {
+          "key": "search.lina",
+          "source": "Lina"
+        },
+        {
+          "key": "search.ethan",
+          "source": "Ethan"
+        },
+        {
+          "key": "search.anna",
+          "source": "Anna"
+        },
+        {
+          "key": "search.omar",
+          "source": "Omar"
+        },
+        {
+          "key": "stories.ethanBrooks",
+          "source": "Ethan Brooks"
+        },
+        {
+          "key": "stories.mono",
+          "source": "Mono"
+        },
+        {
+          "key": "stories.neon",
+          "source": "Neon"
+        },
+        {
+          "key": "stories.status",
+          "source": "Status {value0}"
+        },
+        {
+          "key": "stories.highlight",
+          "source": "Highlight"
+        },
+        {
+          "key": "data.wellness",
+          "source": "Wellness"
+        },
+        {
+          "key": "layouts.administrator",
+          "source": "Administrator"
+        },
+        {
+          "key": "layouts.studio",
+          "source": "Studio"
+        },
+        {
+          "key": "admin.fans",
+          "source": "Fans"
+        },
+        {
+          "key": "admin.test",
+          "source": "Test"
+        },
+        {
+          "key": "admin.ctr",
+          "source": "CTR"
+        },
+        {
+          "key": "admin.version",
+          "source": "Version"
+        },
+        {
+          "key": "admin.text",
+          "source": "'{{firstName}}'"
+        },
+        {
+          "key": "auth.name",
+          "source": "Name"
+        },
+        {
+          "key": "creator.link",
+          "source": "LINK"
+        },
+        {
+          "key": "creator.option_e31d97",
+          "source": "Option"
+        },
+        {
+          "key": "creator.option_5ce069",
+          "source": "+ Option"
+        },
+        {
+          "key": "creator.pause",
+          "source": "Pause"
+        },
+        {
+          "key": "creator.optional",
+          "source": "optional"
+        },
+        {
+          "key": "fan.fitness",
+          "source": "Fitness"
+        },
+        {
+          "key": "fan.directAccess",
+          "source": "✦ Direct Access"
+        },
+        {
+          "key": "fan.audio_acdac2",
+          "source": "Audio"
+        },
+        {
+          "key": "fan.text",
+          "source": "Text"
+        },
+        {
+          "key": "social.orbit",
+          "source": "Orbit"
+        },
+        {
+          "key": "social.spam",
+          "source": "Spam"
+        },
+        {
+          "key": "social.snapchat",
+          "source": "Snapchat"
+        },
+        {
+          "key": "social.premium",
+          "source": "{value0} Premium"
+        },
+        {
+          "key": "atseenMockData.paris",
+          "source": "Paris"
+        },
+        {
+          "key": "atseenMockData.dubai",
+          "source": "Dubai"
+        },
+        {
+          "key": "atseenMockData.tokyo",
+          "source": "Tokyo"
+        },
+        {
+          "key": "atseenMockData.warsaw",
+          "source": "Warsaw"
+        },
+        {
+          "key": "atseenMockData.barcelona",
+          "source": "Barcelona"
+        },
+        {
+          "key": "admin.alex",
+          "source": "Alex"
+        },
+        {
+          "key": "creator.max",
+          "source": "Max"
+        },
+        {
+          "key": "fan.offline",
+          "source": "Offline"
+        },
+        {
+          "key": "settings.espaOl",
+          "source": "Español"
+        },
+        {
+          "key": "settings.portuguSPortugal",
+          "source": "Português (Portugal)"
+        },
+        {
+          "key": "settings.franAis",
+          "source": "Français"
+        },
+        {
+          "key": "settings.deutsch",
+          "source": "Deutsch"
+        },
+        {
+          "key": "social.moderator_ad3b15",
+          "source": "Moderator"
+        },
+        {
+          "key": "verification.selfie",
+          "source": "Selfie"
+        },
+        {
+          "key": "wallLocations.japan",
+          "source": "Japan"
+        },
+        {
+          "key": "wallLocations.portugal",
+          "source": "Portugal"
+        },
+        {
+          "key": "wallLocations.porto",
+          "source": "Porto"
+        },
+        {
+          "key": "wallLocations.madrid",
+          "source": "Madrid"
+        },
+        {
+          "key": "wallLocations.thailand",
+          "source": "Thailand"
+        },
+        {
+          "key": "wallLocations.abuDhabi",
+          "source": "Abu Dhabi"
+        },
+        {
+          "key": "creator.details_dc3dec",
+          "source": "Details"
+        },
+        {
+          "key": "options.Coach",
+          "source": "Coach"
+        },
+        {
+          "key": "options.Restaurant",
+          "source": "Restaurant"
+        },
+        {
+          "key": "options.Tokyo_Japan",
+          "source": "Tokyo, Japan"
+        },
+        {
+          "key": "options.New_York_USA",
+          "source": "New York, USA"
+        },
+        {
+          "key": "options.Bali",
+          "source": "Bali"
+        },
+        {
+          "key": "options.Bangkok",
+          "source": "Bangkok"
+        },
+        {
+          "key": "options.London",
+          "source": "London"
+        },
+        {
+          "key": "options.New_York",
+          "source": "New York"
+        },
+        {
+          "key": "options.Miami",
+          "source": "Miami"
+        },
+        {
+          "key": "options.Tech",
+          "source": "Tech"
+        },
+        {
+          "key": "states.standard",
+          "source": "Standard"
+        },
+        {
+          "key": "verification.bankEnding",
+          "source": "Bank •• {value0}"
+        }
+      ],
+      "unexpectedEnglish": []
+    }
+  },
+  "source": {
+    "modules": 448,
+    "routeDeclarations": 123,
+    "routes": [
+      "/explore",
+      "/creators/:username",
+      "/invite/:code",
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/welcome",
+      "/onboarding",
+      "/onboarding/:step",
+      "/wall",
+      "/wall/notes/:id",
+      "/home",
+      "/posts/:id",
+      "/discover",
+      "/search",
+      "/profile/seen",
+      "/wall/search",
+      "/wall/explore",
+      "/seen",
+      "/seen/:id/share/story",
+      "/seen/:id",
+      "/orbit",
+      "/messages",
+      "/activity",
+      "/stories/:id",
+      "/saved",
+      "/saved/:category",
+      "/archive",
+      "/invitations",
+      "/invitations/:code",
+      "/places/:id",
+      "/books/:id",
+      "/profile",
+      "/profile/status",
+      "/profile/dream",
+      "/settings",
+      "/settings/monetization",
+      "/settings/profile",
+      "/settings/direct-access",
+      "/settings/account",
+      "/settings/privacy",
+      "/settings/notifications",
+      "/settings/content",
+      "/settings/support/:section",
+      "/creator/verified",
+      "/settings/security",
+      "/wallet",
+      "/wallet/withdraw",
+      "/wallet/to-coins",
+      "/wallet/ledger",
+      "/purchases",
+      "/memberships",
+      "/experiences",
+      "/profile/:username/experiences",
+      "/creator/verification",
+      "/create",
+      "/create/seen",
+      "/studio/seens",
+      "/studio/seens/:id",
+      "/studio/seens/:id/edit",
+      "/studio",
+      "/grow",
+      "/grow/fan-preview",
+      "/create/world",
+      "/create/premium-world",
+      "/create/experience",
+      "/studio/experiences/:id/edit",
+      "/studio/worlds",
+      "/studio/worlds/:id",
+      "/studio/worlds/:id/edit",
+      "/fan/dashboard",
+      "/fan/home",
+      "/fan/orbit",
+      "/fan/messages",
+      "/fan/activity",
+      "/fan/profile",
+      "/fan/worlds",
+      "/fan/wallet",
+      "/fan/subscriptions",
+      "/fan/purchases",
+      "/creator/dashboard",
+      "/creator/application",
+      "/creator/profile",
+      "/creator/settings",
+      "/creator/settings/security",
+      "/creator/studio",
+      "/creator/content",
+      "/creator/content/new",
+      "/creator/content/:id/edit",
+      "/creator/content/:id",
+      "/creator/earnings",
+      "/admin/dashboard",
+      "/admin/analytics",
+      "/admin/recommendations",
+      "/admin/users",
+      "/admin/identity-verifications",
+      "/admin/fans",
+      "/admin/creators",
+      "/admin/creator-verifications",
+      "/admin/creator-verifications/:id",
+      "/admin/verified-creators",
+      "/admin/content-moderation",
+      "/admin/content-moderation/:id",
+      "/admin/publication-moderation",
+      "/admin/publication-moderation/:id",
+      "/admin/moderation",
+      "/admin/welcome-email",
+      "/admin/profile",
+      "/admin/financial",
+      "/admin/bank-reviews",
+      "/admin/message-reports",
+      "/admin/message-reports/:reportId",
+      "/admin/user-reports",
+      "/admin/user-reports/:reportId",
+      "/admin/post-reports",
+      "/admin/post-reports/:reportId",
+      "/admin/gifts",
+      "/profile/:username",
+      "/world/:id/inside",
+      "/world/:id",
+      "/experience/:id",
+      "/planet/:id",
+      "*"
+    ],
+    "unregistered": [],
+    "rawJsx": []
+  },
+  "references": {
+    "html": true,
+    "oct17": true,
+    "oct20": true
+  }
+}

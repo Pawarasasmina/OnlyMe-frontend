@@ -6,11 +6,12 @@ import reactRefresh from "eslint-plugin-react-refresh";
 
 export default [
   {
-    ignores: ["dist", "OnlyMe-backend"],
+    ignores: ["dist", "OnlyMe-backend", "tmp", ".codex-tmp"],
   },
   js.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat["jsx-runtime"],
+  { files: ["**/*.{mjs,cjs}", "scripts/**/*.js", "*.config.js"], languageOptions: { globals: globals.node } },
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {

@@ -1,4 +1,8 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 function DiscoverSlideSkeleton() {
+  __useUiLanguage();
   return (
     <div className="discover-person-slide" role="status">
       <div className="discover-skeleton-bg" />
@@ -14,7 +18,7 @@ function DiscoverSlideSkeleton() {
         {Array.from({ length: 5 }).map((_, index) => <span key={index} />)}
       </div>
       <div className="discover-skeleton-offer" />
-      <span className="sr-only">Loading Discover</span>
+      <span className="sr-only">{__msg("discover.loadingDiscover")}</span>
     </div>
   );
 }

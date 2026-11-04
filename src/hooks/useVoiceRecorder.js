@@ -1,3 +1,5 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { POST_VOICE_NOTE_MAX_DURATION_SECONDS } from "../data/postOptions";
 
@@ -20,9 +22,9 @@ function microphoneErrorMessage(error) {
     return "Microphone access is blocked. Please allow microphone permission in your browser settings and try again.";
   }
   if (error?.name === "NotFoundError" || error?.name === "DevicesNotFoundError") {
-    return "No microphone was detected.";
+    return __msg("useVoiceRecorder.noMicrophoneWasDetected");
   }
-  return "The microphone could not be started.";
+  return __msg("useVoiceRecorder.theMicrophoneCouldNotBeStarted");
 }
 
 export function formatVoiceTime(seconds = 0) {
@@ -135,7 +137,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
     setError("");
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       setStatus("error");
-      setError("Voice recording isn't supported by this browser.");
+      setError(__msg("hooks.voiceRecordingIsnTSupportedByThisBrowser"));
       return;
     }
 
@@ -168,7 +170,7 @@ export function useVoiceRecorder({ maxDurationSeconds = POST_VOICE_NOTE_MAX_DURA
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
         if (!blob.size) {
           setStatus("error");
-          setError("The recording was empty. Please try again.");
+          setError(__msg("hooks.theRecordingWasEmptyPleaseTryAgain"));
           return;
         }
         const url = URL.createObjectURL(blob);

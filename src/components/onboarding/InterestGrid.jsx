@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useState } from "react";
 import { FiCheck } from "react-icons/fi";
 
@@ -31,6 +32,7 @@ const categoryImageFallbacks = {
 };
 
 function InterestGrid({ categories = [], max = 8, onToggle, selected = [] }) {
+  __useUiLanguage();
   const selectedSet = new Set(selected);
   const [failedImages, setFailedImages] = useState(() => new Set());
   return (
@@ -46,7 +48,7 @@ function InterestGrid({ categories = [], max = 8, onToggle, selected = [] }) {
         return (
           <button
             aria-pressed={active}
-            className={`group relative aspect-[1.05] overflow-hidden rounded-[18px] border text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9CCBFF] ${
+            className={`group relative aspect-[1.05] overflow-hidden rounded-[18px] border text-start transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9CCBFF] ${
               active ? "border-[#9CCBFF] shadow-[0_0_28px_rgba(156,203,255,.22)]" : "border-white/10 hover:border-white/25"
             } ${disabled ? "opacity-45" : ""}`}
             disabled={disabled}
@@ -65,7 +67,7 @@ function InterestGrid({ categories = [], max = 8, onToggle, selected = [] }) {
             ) : null}
             <span className="absolute inset-0 bg-gradient-to-t from-[#050608] via-[#050608]/28 to-transparent" />
             <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-black/35 px-2 py-1 text-[10px] font-black tracking-[0.16em] text-white/70">{category.badge}</span>
-            <span className="absolute bottom-3 left-3 right-10 text-base font-black text-white">{category.name}</span>
+            <span dir="auto" className="absolute bottom-3 left-3 right-10 text-base font-black text-white">{category.name}</span>
             <span className={`absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full border ${active ? "border-[#9CCBFF] bg-[#9CCBFF] text-[#0A0C0F]" : "border-white/20 bg-black/30 text-transparent"}`}>
               <FiCheck aria-hidden="true" />
             </span>

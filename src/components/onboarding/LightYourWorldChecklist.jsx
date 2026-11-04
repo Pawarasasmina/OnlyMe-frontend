@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link, useNavigate } from "react-router-dom";
 import { FiBriefcase, FiCheck, FiCircle, FiEdit3, FiEye, FiImage, FiMap, FiMapPin, FiNavigation, FiRadio, FiUser, FiUsers, FiX } from "react-icons/fi";
 import { useDismissChecklist, useOnboardingChecklist, useTrackChecklistEvent } from "../../hooks/useOnboardingChecklist";
@@ -23,6 +26,7 @@ const icons = {
 };
 
 function ChecklistSkeleton() {
+  __useUiLanguage();
   return (
     <div className="space-y-3">
       {[0, 1, 2].map((item) => <div className="h-12 animate-pulse rounded-2xl bg-white/5" key={item} />)}
@@ -40,6 +44,7 @@ const eventByTask = {
 };
 
 function LightYourWorldChecklist({ compact = false, forceVisible = false, onboardingMode = false }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const checklist = useOnboardingChecklist();
   const trackEvent = useTrackChecklistEvent();
@@ -70,11 +75,11 @@ function LightYourWorldChecklist({ compact = false, forceVisible = false, onboar
     <section className={`rounded-[20px] border border-[#9CCBFF]/20 bg-[#12151B] ${compact ? "p-4" : "p-4"}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-white">{data.title} <span className="text-[#9CCBFF]">✦</span></h2>
+          <h2 dir="auto" className="text-base font-black text-white">{data.title} <span className="text-[#9CCBFF]">✦</span></h2>
           <p className="mt-1 text-xs leading-5 text-white/45">{data.subtitle}</p>
         </div>
         {!compact && !onboardingMode ? (
-          <button aria-label="Dismiss checklist" className="rounded-full p-1 text-white/35 hover:bg-white/5 hover:text-white/70" onClick={() => dismiss.mutate()} type="button">
+          <button aria-label={__msg("onboarding.dismissChecklist")} className="rounded-full p-1 text-white/35 hover:bg-white/5 hover:text-white/70" onClick={() => dismiss.mutate()} type="button">
             <FiX aria-hidden="true" />
           </button>
         ) : null}
@@ -90,7 +95,7 @@ function LightYourWorldChecklist({ compact = false, forceVisible = false, onboar
           const Icon = icons[task.key] || FiCircle;
           return (
             <button
-              className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${task.completed ? "border-white/5 bg-white/[0.025] opacity-60" : "border-white/10 bg-white/[0.035] hover:border-[#9CCBFF]/35 hover:bg-[#9CCBFF]/8"}`}
+              className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-start transition ${task.completed ? "border-white/5 bg-white/[0.025] opacity-60" : "border-white/10 bg-white/[0.035] hover:border-[#9CCBFF]/35 hover:bg-[#9CCBFF]/8"}`}
               disabled={task.completed}
               key={task.key}
               onClick={() => openTask(task)}
@@ -100,20 +105,20 @@ function LightYourWorldChecklist({ compact = false, forceVisible = false, onboar
                 {task.completed ? <FiCheck aria-hidden="true" /> : <Icon aria-hidden="true" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className={`block truncate text-sm font-black ${task.completed ? "text-white/45 line-through" : "text-white"}`}>{task.title}</span>
+                <span dir="auto" className={`block truncate text-sm font-black ${task.completed ? "text-white/45 line-through" : "text-white"}`}>{task.title}</span>
                 {!task.completed ? <span className="mt-0.5 block truncate text-[11px] text-white/42">{task.description}</span> : null}
               </span>
               <span className={`rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${task.required ? "border-[#9CCBFF]/25 text-[#9CCBFF]" : "border-white/10 text-white/35"}`}>
-                {task.required ? "Required" : "Optional"}
+                {task.required ? __msg("onboarding.required") : __msg("onboarding.optional")}
               </span>
             </button>
           );
         })}
       </div>
       {data.reward?.enabled ? (
-        <p className="mt-4 rounded-2xl border border-[#9CCBFF]/20 bg-[#9CCBFF]/10 p-3 text-xs font-bold text-[#9CCBFF]">Welcome Stars unlock when all five are complete.</p>
+        <p className="mt-4 rounded-2xl border border-[#9CCBFF]/20 bg-[#9CCBFF]/10 p-3 text-xs font-bold text-[#9CCBFF]">{__msg("onboarding.welcomeStarsUnlockWhenAllFiveAreComplete")}</p>
       ) : null}
-      {!compact && !onboardingMode ? <Link className="mt-3 block text-center text-xs font-bold text-[#9CCBFF]" to="/settings/profile">Tune profile details</Link> : null}
+      {!compact && !onboardingMode ? <Link className="mt-3 block text-center text-xs font-bold text-[#9CCBFF]" to="/settings/profile">{__msg("onboarding.tuneProfileDetails")}</Link> : null}
     </section>
   );
 }

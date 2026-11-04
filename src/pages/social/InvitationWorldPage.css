@@ -1,0 +1,24 @@
+.invitation-world-page{min-height:100%;display:flex;flex-direction:column;background:#0a0d10;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.invitation-world-close{display:flex;justify-content:flex-end;padding:8px 16px 0}
+.invitation-world-close button{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);font-size:16px}
+.invitation-world-main{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 28px 0}
+.invitation-world-avatar{width:112px;height:112px;margin-top:8px;outline:1.5px solid rgba(156,203,255,.45);outline-offset:6px}
+.invitation-world-eyebrow{font-size:12px;font-weight:750;letter-spacing:1.3px;color:#9ccbff;margin:22px 0 0}
+.invitation-world-main h1{font-size:28px;font-weight:800;letter-spacing:-.8px;line-height:1.15;margin:8px 0 0}
+.invitation-world-count{font-size:12.5px;color:#a7adb6;margin:12px 0 0}
+.invitation-world-previews{display:flex;gap:10px;margin-top:24px;width:100%}
+.invitation-world-preview{flex:1;min-width:0;position:relative;aspect-ratio:4/5;border-radius:18px;overflow:hidden;background:#171d26}
+.invitation-world-preview img,.invitation-world-preview video{position:absolute;width:100%;height:100%;object-fit:cover}
+.invitation-world-preview:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(6,8,11,.88));pointer-events:none}
+.invitation-world-preview b{position:absolute;z-index:1;left:11px;right:11px;bottom:10px;font-size:12.5px;line-height:1.25;text-align:start;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.invitation-world-preview button{position:absolute;z-index:2;bottom:8px;left:8px;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#171b20bb}
+.invitation-world-preview:has(button) b{left:42px}
+.invitation-world-perks{margin-top:18px;text-align:start;width:100%}
+.invitation-world-perks p{display:flex;align-items:center;gap:11px;padding:9px 0;margin:0;font-size:13.5px;color:#a7adb6}
+.invitation-world-perks span{display:grid;place-items:center;flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(156,203,255,.1);color:#bfe3ff;font-size:13px}
+.invitation-world-page footer{padding:18px 22px 30px;text-align:center}
+.invitation-world-page footer>button{width:100%;border-radius:16px;padding:16px;font-size:15.5px;font-weight:750;background:#9ccbff;color:#06080b}
+.invitation-world-page footer>button:disabled{opacity:.6}
+.invitation-world-page footer p{font-size:11px;color:#747c89;margin:10px 0 0}
+.invitation-world-page footer [role=alert]{color:#ff9292;margin:0 0 12px}
+.invitation-world-state{padding:32px;text-align:center}

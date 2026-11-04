@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Navigate, useNavigate } from "react-router-dom";
 import WelcomeCarousel from "../../components/onboarding/WelcomeCarousel";
 import { useAuth } from "../../hooks/useAuth";
@@ -6,6 +7,7 @@ import { onboardingService } from "../../services/onboardingService";
 import { useState } from "react";
 
 function WelcomePage() {
+  __useUiLanguage();
   const { loading, user } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);

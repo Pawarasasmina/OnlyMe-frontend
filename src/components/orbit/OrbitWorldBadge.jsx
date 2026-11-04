@@ -1,6 +1,8 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { FiLayers } from "react-icons/fi";
 
 function OrbitWorldBadge({ badge }) {
+  __useUiLanguage();
   if (!badge?.label) return null;
 
   return (

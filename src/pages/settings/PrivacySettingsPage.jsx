@@ -1,3 +1,9 @@
+import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
+import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,31 +17,32 @@ import { resolveMediaUrl } from "../../utils/media";
 
 const roleOptions = {
   fan: [
-    ["showOnlineStatus", "Show online status"],
-    ["showActivityStatus", "Show activity status"],
-    ["showLocation", "Show location"],
-    ["allowDiscovery", "Allow profile discovery"],
-    ["allowDirectMessages", "Allow direct messages"],
-    ["allowMentions", "Allow mentions"],
+    __uiTuple(["showOnlineStatus", { __uiMessage: "settings.showOnlineStatus" }]),
+    __uiTuple(["showActivityStatus", { __uiMessage: "settings.showActivityStatus" }]),
+    __uiTuple(["showLocation", { __uiMessage: "settings.showLocation" }]),
+    __uiTuple(["allowDiscovery", { __uiMessage: "settings.allowProfileDiscovery" }]),
+    __uiTuple(["allowDirectMessages", { __uiMessage: "settings.allowDirectMessages" }]),
+    __uiTuple(["allowMentions", { __uiMessage: "settings.allowMentions" }]),
   ],
   creator: [
-    ["showOnlineStatus", "Show online status"],
-    ["showActivityStatus", "Show activity status"],
-    ["showLocation", "Show location"],
-    ["allowDiscovery", "Allow creator discovery"],
-    ["allowDirectMessages", "Allow direct messages"],
-    ["allowMentions", "Allow mentions"],
-    ["allowTags", "Allow tags"],
-    ["showFollowers", "Show followers"],
+    __uiTuple(["showOnlineStatus", { __uiMessage: "settings.showOnlineStatus" }]),
+    __uiTuple(["showActivityStatus", { __uiMessage: "settings.showActivityStatus" }]),
+    __uiTuple(["showLocation", { __uiMessage: "settings.showLocation" }]),
+    __uiTuple(["allowDiscovery", { __uiMessage: "settings.allowCreatorDiscovery" }]),
+    __uiTuple(["allowDirectMessages", { __uiMessage: "settings.allowDirectMessages" }]),
+    __uiTuple(["allowMentions", { __uiMessage: "settings.allowMentions" }]),
+    __uiTuple(["allowTags", { __uiMessage: "settings.allowTags" }]),
+    __uiTuple(["showFollowers", { __uiMessage: "settings.showFollowers" }]),
   ],
   admin: [
-    ["showOnlineStatus", "Show online status"],
-    ["showActivityStatus", "Show activity status"],
-    ["allowDirectMessages", "Allow direct messages"],
+    __uiTuple(["showOnlineStatus", { __uiMessage: "settings.showOnlineStatus" }]),
+    __uiTuple(["showActivityStatus", { __uiMessage: "settings.showActivityStatus" }]),
+    __uiTuple(["allowDirectMessages", { __uiMessage: "settings.allowDirectMessages" }]),
   ],
 };
 
 function Toggle({ checked, disabled, label, name, onChange }) {
+  __useUiLanguage();
   return (
     <label className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
       <span className="text-sm font-medium text-brand-mist/85">{label}</span>
@@ -45,6 +52,7 @@ function Toggle({ checked, disabled, label, name, onChange }) {
 }
 
 function PrivacySettingsPage() {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ profileVisibility: "private", privacySettings: {} });
   const [dirty, setDirty] = useState(false);
@@ -88,11 +96,11 @@ function PrivacySettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       setDirty(false);
       setError("");
-      setMessage("Privacy settings saved.");
+      setMessage(__msg("settings.privacySettingsSaved"));
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Your settings could not be saved. Please try again.").message);
+      setError(normalizeApiError(err, __msg("settings.yourSettingsCouldNotBeSavedPleaseTryAgain")).message);
     },
   });
 
@@ -103,12 +111,12 @@ function PrivacySettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
       queryClient.invalidateQueries({ queryKey: ["orbit"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
-      setMessage("Account unblocked.");
+      setMessage(__msg("settings.accountUnblocked"));
       setError("");
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Unable to unblock this account. Please try again.").message);
+      setError(normalizeApiError(err, __msg("settings.unableToUnblockThisAccountPleaseTryAgain")).message);
     },
   });
 
@@ -120,12 +128,16 @@ function PrivacySettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["discover"] });
       queryClient.invalidateQueries({ queryKey: ["orbit"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
-      setMessage("Account unmuted.");
+      queryClient.invalidateQueries({ queryKey: ["stories"] });
+      queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      queryClient.invalidateQueries({ queryKey: ["muted-accounts"] });
+      setMessage(__msg("settings.accountUnmuted"));
       setError("");
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Unable to unmute this account. Please try again.").message);
+      setError(normalizeApiError(err, __msg("settings.unableToUnmuteThisAccountPleaseTryAgain")).message);
     },
   });
 
@@ -136,17 +148,17 @@ function PrivacySettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
       queryClient.invalidateQueries({ queryKey: ["discover"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
-      setMessage("Seen will be shown again.");
+      setMessage(__msg("settings.seenWillBeShownAgain"));
       setError("");
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Unable to show this Seen again. Please try again.").message);
+      setError(normalizeApiError(err, __msg("settings.unableToShowThisSeenAgainPleaseTryAgain")).message);
     },
   });
 
-  if (query.isLoading) return <Loader label="Loading privacy settings..." />;
-  if (query.isError) return <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load privacy settings.</p>;
+  if (query.isLoading) return <Loader label={__msg("settings.loadingPrivacySettings")} />;
+  if (query.isError) return <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{__msg("settings.unableToLoadPrivacySettings")}</p>;
 
   const role = query.data?.role || "fan";
   const options = roleOptions[role] || roleOptions.fan;
@@ -156,7 +168,7 @@ function PrivacySettingsPage() {
     setMessage("");
     setForm((current) => ({
       ...current,
-      privacySettings: { ...current.privacySettings, [target.name]: target.checked },
+      privacySettings: { ...current.privacySettings, [target.name]: target.checked, ...(target.name === "allowDirectMessages" ? { messageAudience: target.checked ? "everyone" : "no_one" } : {}) },
     }));
   };
 
@@ -168,17 +180,16 @@ function PrivacySettingsPage() {
   return (
     <div className="space-y-6">
       <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand-mist/70 transition hover:text-white" to="/settings">
-        <FiArrowLeft /> Back to settings
-      </Link>
+        <FiArrowLeft data-ui-directional="true" />{__msg("settings.backToSettings")}</Link>
       <form className="space-y-6" onSubmit={submit}>
         <section className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
           <div>
-            <h1 className="text-2xl font-semibold">Privacy settings</h1>
-            <p className="mt-1 text-sm text-brand-mist/60">Control profile visibility and social discovery.</p>
+            <h1 className="text-2xl font-semibold">{__msg("settings.privacySettings")}</h1>
+            <p className="mt-1 text-sm text-brand-mist/60">{__msg("settings.controlProfileVisibilityAndSocialDiscovery")}</p>
           </div>
           {role !== "admin" ? (
             <label className="block space-y-2">
-              <span className="text-sm text-brand-mist/80">Profile visibility</span>
+              <span className="text-sm text-brand-mist/80">{__msg("settings.profileVisibility")}</span>
               <select
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-brand-primary"
                 onChange={(event) => {
@@ -188,8 +199,8 @@ function PrivacySettingsPage() {
                 }}
                 value={form.profileVisibility}
               >
-                <option className="bg-brand-dark" value="public">Public</option>
-                <option className="bg-brand-dark" value="private">Private</option>
+                <option className="bg-brand-dark" value="public">{__msg("settings.public")}</option>
+                <option className="bg-brand-dark" value="private">{__msg("settings.private")}</option>
               </select>
             </label>
           ) : null}
@@ -205,14 +216,14 @@ function PrivacySettingsPage() {
               <FiUserX />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">Blocked accounts</h2>
-              <p className="mt-1 text-sm text-brand-mist/60">Accounts you blocked will not appear in your social spaces.</p>
+              <h2 className="text-lg font-semibold">{__msg("settings.blockedAccounts")}</h2>
+              <p className="mt-1 text-sm text-brand-mist/60">{__msg("settings.accountsYouBlockedWillNotAppearInYourSocial")}</p>
             </div>
           </div>
-          {blockedQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">Loading blocked accounts...</p> : null}
-          {blockedQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">Unable to load blocked accounts.</p> : null}
+          {blockedQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">{__msg("settings.loadingBlockedAccounts")}</p> : null}
+          {blockedQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__msg("settings.unableToLoadBlockedAccounts")}</p> : null}
           {!blockedQuery.isLoading && !blockedQuery.isError && !blockedQuery.data?.length ? (
-            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">No blocked accounts.</p>
+            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">{__msg("settings.noBlockedAccounts")}</p>
           ) : null}
           {blockedQuery.data?.length ? (
             <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
@@ -221,7 +232,7 @@ function PrivacySettingsPage() {
                   <FanAvatar name={account.displayName || account.username} src={account.profilePhoto} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">{account.displayName || `@${account.username}`}</p>
-                    <p className="truncate text-xs text-brand-mist/50">@{account.username} · {account.role}</p>
+                    <p dir="auto" className="truncate text-xs text-brand-mist/50">@{account.username} · {__enumLabel(account.role)}</p>
                   </div>
                   <Button
                     className="px-4 py-2"
@@ -229,9 +240,7 @@ function PrivacySettingsPage() {
                     onClick={() => unblockMutation.mutate(account.id)}
                     type="button"
                     variant="ghost"
-                  >
-                    Unblock
-                  </Button>
+                  >{__msg("fan.unblock")}</Button>
                 </div>
               ))}
             </div>
@@ -243,14 +252,14 @@ function PrivacySettingsPage() {
               <FiVolumeX />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">Muted accounts</h2>
-              <p className="mt-1 text-sm text-brand-mist/60">Seens from muted accounts will stay out of your Seen feed.</p>
+              <h2 className="text-lg font-semibold">{__msg("settings.mutedAccounts")}</h2>
+              <p className="mt-1 text-sm text-brand-mist/60">{__msg("settings.seensFromMutedAccountsWillStayOutOfYour")}</p>
             </div>
           </div>
-          {mutedQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">Loading muted accounts...</p> : null}
-          {mutedQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">Unable to load muted accounts.</p> : null}
+          {mutedQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">{__msg("settings.loadingMutedAccounts")}</p> : null}
+          {mutedQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__msg("settings.unableToLoadMutedAccounts")}</p> : null}
           {!mutedQuery.isLoading && !mutedQuery.isError && !mutedQuery.data?.length ? (
-            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">No muted accounts.</p>
+            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">{__msg("settings.noMutedAccounts")}</p>
           ) : null}
           {mutedQuery.data?.length ? (
             <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
@@ -259,7 +268,7 @@ function PrivacySettingsPage() {
                   <FanAvatar name={account.displayName || account.username} src={account.profilePhoto} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">{account.displayName || `@${account.username}`}</p>
-                    <p className="truncate text-xs text-brand-mist/50">@{account.username} · {account.role}</p>
+                    <p dir="auto" className="truncate text-xs text-brand-mist/50">@{account.username} · {__enumLabel(account.role)}</p>
                   </div>
                   <Button
                     className="px-4 py-2"
@@ -267,9 +276,7 @@ function PrivacySettingsPage() {
                     onClick={() => unmuteMutation.mutate(account.id)}
                     type="button"
                     variant="ghost"
-                  >
-                    Unmute
-                  </Button>
+                  >{__msg("profile.unmute")}</Button>
                 </div>
               ))}
             </div>
@@ -281,21 +288,21 @@ function PrivacySettingsPage() {
               <FiEyeOff />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">Hidden Seens</h2>
-              <p className="mt-1 text-sm text-brand-mist/60">Individual Seens marked Not interested stay out of your Seen feed.</p>
+              <h2 className="text-lg font-semibold">{__msg("settings.hiddenSeens")}</h2>
+              <p className="mt-1 text-sm text-brand-mist/60">{__msg("settings.individualSeensMarkedNotInterestedStayOutOfYour")}</p>
             </div>
           </div>
-          {hiddenSeensQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">Loading hidden Seens...</p> : null}
-          {hiddenSeensQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">Unable to load hidden Seens.</p> : null}
+          {hiddenSeensQuery.isLoading ? <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">{__msg("settings.loadingHiddenSeens")}</p> : null}
+          {hiddenSeensQuery.isError ? <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__msg("settings.unableToLoadHiddenSeens")}</p> : null}
           {!hiddenSeensQuery.isLoading && !hiddenSeensQuery.isError && !hiddenSeensQuery.data?.length ? (
-            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">No hidden Seens.</p>
+            <p className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-brand-mist/60">{__msg("settings.noHiddenSeens")}</p>
           ) : null}
           {hiddenSeensQuery.data?.length ? (
             <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
               {hiddenSeensQuery.data.map((seen) => {
                 const coverUrl = resolveMediaUrl(seen.coverMedia?.secureUrl || seen.coverMedia?.url || seen.coverImage || seen.cover);
-                const creatorName = seen.creator?.displayName || seen.creator?.name || seen.creator?.username || "Unknown creator";
-                const creatorUsername = seen.creator?.username ? `@${seen.creator.username}` : "Creator unavailable";
+                const creatorName = seen.creator?.displayName || seen.creator?.name || seen.creator?.username || __msg("admin.unknownCreator");
+                const creatorUsername = seen.creator?.username ? `@${seen.creator.username}` : __msg("fan.creatorUnavailable");
 
                 return (
                   <div className="flex items-center gap-3 bg-white/[0.03] px-4 py-3" key={seen.id}>
@@ -304,7 +311,7 @@ function PrivacySettingsPage() {
                     </Link>
                     <div className="min-w-0 flex-1">
                       <Link className="block truncate text-sm font-semibold text-white hover:text-brand-primary" to={`/seen/${encodeURIComponent(seen.id)}`}>
-                        {seen.title || "Untitled Seen"}
+                        {seen.title || __msg("profile.untitledSeen")}
                       </Link>
                       <p className="truncate text-xs text-brand-mist/50">{creatorName} - {creatorUsername}</p>
                     </div>
@@ -314,9 +321,7 @@ function PrivacySettingsPage() {
                       onClick={() => showSeenAgainMutation.mutate(seen.id)}
                       type="button"
                       variant="ghost"
-                    >
-                      Show again
-                    </Button>
+                    >{__msg("settings.showAgain")}</Button>
                   </div>
                 );
               })}
@@ -324,9 +329,9 @@ function PrivacySettingsPage() {
           ) : null}
         </section>
         {message ? <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
-        {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p> : null}
+        {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__systemMessage(error)}</p> : null}
         <div className="flex justify-end">
-          <Button disabled={!dirty || mutation.isPending} type="submit">{mutation.isPending ? "Saving..." : "Save privacy"}</Button>
+          <Button disabled={!dirty || mutation.isPending} type="submit">{mutation.isPending ? __msg("admin.saving") : __msg("settings.savePrivacy")}</Button>
         </div>
       </form>
     </div>

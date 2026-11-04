@@ -1,6 +1,8 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link } from "react-router-dom";
 
 function EmptyIllustration({ variant }) {
+  __useUiLanguage();
   return <svg aria-hidden="true" className="content-empty-illustration" viewBox="0 0 320 220">
     <defs><linearGradient id={`empty-gradient-${variant}`} x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#6FA9E8" /><stop offset="1" stopColor="#D6EAFF" /></linearGradient></defs>
     <path d="M58 128c0-38 27-70 64-77 20-29 67-31 89 0 30 7 52 34 52 67 0 43-35 78-78 78H131c-40 0-73-30-73-68Z" fill="rgba(111,169,232,.10)" />
@@ -12,12 +14,14 @@ function EmptyIllustration({ variant }) {
 }
 
 function EmptyAction({ action, secondary = false }) {
+  __useUiLanguage();
   if (!action?.label) return null;
   const className = secondary ? "content-empty-secondary" : "content-empty-primary";
   return action.to ? <Link className={className} to={action.to}>{action.label}</Link> : <button className={className} onClick={action.onClick} type="button">{action.label}</button>;
 }
 
 export default function ContentEmptyState({ compact = false, message, primaryAction, secondaryAction, title, variant = "content" }) {
+  __useUiLanguage();
   return <section aria-live="polite" className={`content-empty-state is-${variant}${compact ? " is-compact" : ""}`}>
     <EmptyIllustration variant={variant} />
     <h2>{title}</h2><p>{message}</p>

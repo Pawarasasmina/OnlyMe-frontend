@@ -1,0 +1,73 @@
+.direct-settings-layer { position:absolute;inset:0;z-index:85;display:flex;justify-content:center;background:#0a0c0f; }
+.direct-settings-sheet { width:100%;height:100%;overflow-x:hidden;overflow-y:auto;color:#fff; }
+.direct-settings-header { display:flex;align-items:center;gap:12px; }
+.direct-settings-header > button { display:grid;width:38px;height:38px;flex:none;place-items:center;border-radius:50%; }
+.direct-settings-header > button svg { width:17px;height:17px; }
+.direct-settings-intro { display:flex;align-items:center;flex-direction:column;text-align:center; }
+.direct-settings-intro > span { display:grid;place-items:center;border-radius:50%;color:#9ccbff; }
+.direct-settings-explainer { display:grid;border:1px solid;border-radius:14px; }
+.direct-settings-explainer p { display:grid;align-items:center;color:rgba(255,255,255,.69); }
+.direct-settings-note,.direct-settings-option > small { color:rgba(255,255,255,.4); }
+.direct-settings-option-head { display:grid;align-items:center; }
+.direct-settings-option-head > svg { width:15px;height:15px; }
+.direct-settings-option-head h3 { font-weight:700; }
+.direct-settings-toggle { position:relative;width:46px;border-radius:999px;background:#252b33;transition:background .16s ease; }
+.direct-settings-toggle span { position:absolute;top:4px;left:4px;border-radius:50%;background:#0a0c0f;transition:left .16s ease; }
+.direct-settings-choices { display:flex;overflow-x:auto;scrollbar-width:none; }
+.direct-settings-choices::-webkit-scrollbar { display:none; }
+.direct-settings-choices button { flex:none;border:1px solid;border-radius:999px; }
+.direct-settings-option > small { display:block; }
+.direct-settings-estimate { display:grid;border:1px solid; }
+.direct-settings-estimate > small,.direct-settings-estimate p { color:rgba(255,255,255,.45); }
+.direct-settings-estimate strong { font-weight:760;letter-spacing:-.02em; }
+.direct-settings-estimate strong em { color:rgba(255,255,255,.48);font-style:normal;font-weight:450;letter-spacing:0; }
+.direct-settings-refund { display:block;border:1px solid;border-radius:12px;color:rgba(255,255,255,.66); }
+.direct-settings-error { margin-top:9px;color:#ff858f;font-size:12px;text-align:center; }
+.direct-settings-save { width:100%;color:#07111b;font-weight:750; }
+.direct-settings-sheet button:disabled { opacity:.5; }
+.direct-settings-sheet { box-sizing:border-box;background:#0a0c0f;padding:22px 20px 32px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent; }
+.direct-settings-sheet::-webkit-scrollbar { display:block;width:6px; }
+.direct-settings-sheet::-webkit-scrollbar-thumb { border-radius:6px;background:rgba(255,255,255,.35); }
+.direct-settings-header { height:38px; }
+.direct-settings-header > button { background:rgba(255,255,255,.07);color:#fff; }
+.direct-settings-header h2 { font-size:19px;font-weight:700; }
+.direct-settings-intro { margin-top:18px;padding:8px 0 4px; }
+.direct-settings-intro > span { width:62px;height:62px;background:radial-gradient(circle at 50% 35%,rgba(156,203,255,.22),rgba(156,203,255,.04) 70%);box-shadow:0 0 38px rgba(156,203,255,.22); }
+.direct-settings-intro i { display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(156,203,255,.45);border-radius:50%;background:rgba(156,203,255,.08); }
+.direct-settings-intro i svg { width:12px;height:12px; }
+.direct-settings-intro h3 { margin-top:14px;font-size:19px;letter-spacing:-.3px; }
+.direct-settings-intro p { max-width:300px;margin-top:6px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.65); }
+.direct-settings-explainer { gap:0;margin-top:16px;padding:6px 14px;border-color:rgba(255,255,255,.06);background:rgba(255,255,255,.03); }
+.direct-settings-explainer p { grid-template-columns:26px minmax(0,1fr);gap:11px;padding:8px 0;font-size:12px;line-height:1.5; }
+.direct-settings-explainer svg { justify-self:center;width:15px;height:15px;color:#9ccbff; }
+.direct-settings-note { margin:12px 2px 2px;font-size:10px;line-height:1.6; }
+.direct-settings-option { margin-top:4px;padding:0 0 2px;border:0; }
+.direct-settings-option + .direct-settings-option { margin-top:6px; }
+.direct-settings-option-head { grid-template-columns:26px minmax(0,1fr) 46px;gap:11px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05); }
+.direct-settings-option-head > svg { justify-self:center;color:#9ccbff; }
+.direct-settings-option-head h3 { font-size:13.5px; }
+.direct-settings-toggle { height:28px; }
+.direct-settings-toggle span { width:20px;height:20px; }
+.direct-settings-toggle.is-on { background:#9ccbff; }
+.direct-settings-toggle.is-on span { left:22px; }
+.direct-settings-choices { gap:8px;margin:11px 0 0 37px;padding-bottom:4px; }
+.direct-settings-choices button { display:flex;align-items:center;justify-content:center;min-width:0;height:auto;padding:7px 12px;font-size:11.5px;font-weight:600;line-height:1.35;border-color:rgba(255,255,255,.06);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7); }
+.direct-settings-choices button.is-active { border-color:#f2f3f5;background:#f2f3f5;color:#0a0c0f;box-shadow:none; }
+.direct-settings-coin { display:inline-block;width:9px;height:9px;object-fit:contain; }
+.direct-settings-choices.is-duration { margin-top:8px; }
+.direct-settings-option > small { margin:6px 0 2px 37px;font-size:10px; }
+.direct-settings-estimate { margin-top:16px;padding:15px 16px;border-radius:16px;border-color:rgba(156,203,255,.18);background:radial-gradient(120% 160% at 20% 0%,rgba(156,203,255,.09),rgba(255,255,255,.02) 60%); }
+.direct-settings-estimate > small { font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase; }
+.direct-settings-estimate strong { margin-top:7px;font-size:26px;line-height:1.3; }
+.direct-settings-estimate strong span { font-size:26px; }
+.direct-settings-estimate strong em { font-size:11px; }
+.direct-settings-estimate p { margin-top:4px;font-size:10.5px; }
+.direct-settings-refund { margin-top:12px;padding:10px 13px;border-color:rgba(110,207,151,.2);background:rgba(110,207,151,.06);font-size:11px;line-height:1.6; }
+.direct-settings-save { height:auto;margin-top:14px;padding:13px;border-radius:13px;background:#9ccbff;font-size:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18); }
+.direct-settings-sheet button:focus-visible { outline:2px solid #9ccbff;outline-offset:3px; }
+.direct-settings-sheet button:active:not(:disabled) { transform:scale(.97); }
+.direct-settings-rate-status { margin-top:12px;color:rgba(255,255,255,.6);font-size:12px; }
+.direct-settings-rate-status button { color:#9ccbff;text-decoration:underline; }
+[dir="rtl"] .direct-settings-choices { margin-left:0;margin-right:37px; }
+[dir="rtl"] .direct-settings-option > small { margin-left:0;margin-right:37px; }
+@media (max-width:400px) { .direct-settings-sheet { padding-inline:16px; } }

@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiImage, FiMapPin, FiRefreshCw, FiTrash2, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
@@ -18,7 +22,7 @@ import { canCreateFeedPost } from "../../utils/postPermissions";
 import { useAuth } from "../../hooks/useAuth";
 
 function readError(error) {
-  return error?.response?.data?.message || error?.message || "Something went wrong.";
+  return error?.response?.data?.message || error?.message || __msg("posts.somethingWentWrong");
 }
 
 function formatBytes(value) {
@@ -31,20 +35,21 @@ function makeFilePreview(file) {
 
 function validateFile(file) {
   if (!POST_IMAGE_TYPES.includes(file.type)) {
-    return "Only JPEG, PNG, or WebP images are allowed.";
+    return __msg("fanWeb.onlyJpegPngOrWebpImagesAreAllowed");
   }
   if (file.size > POST_MAX_IMAGE_SIZE) {
-    return `Images must be ${formatBytes(POST_MAX_IMAGE_SIZE)} or smaller.`;
+    return __msg("posts.imagesMustBeValue0OrSmaller", { value0: formatBytes(POST_MAX_IMAGE_SIZE) });
   }
   return "";
 }
 
 function ProgressState({ error, progress, step }) {
+  __useUiLanguage();
   if (!step && !error) return null;
   return (
     <div className={`rounded-2xl border p-4 ${error ? "border-atseen-danger/25 bg-atseen-danger/10" : "border-atseen-line bg-atseen-surface"}`}>
       <div className="flex items-center justify-between text-sm">
-        <span className={`font-bold ${error ? "text-atseen-danger" : "text-atseen-text"}`}>{error ? "Failed" : step}</span>
+        <span className={`font-bold ${error ? "text-atseen-danger" : "text-atseen-text"}`}>{error ? __msg("posts.failed") : step}</span>
         {!error ? <span className="text-atseen-muted">{progress}%</span> : null}
       </div>
       {!error ? (
@@ -52,13 +57,14 @@ function ProgressState({ error, progress, step }) {
           <span className="block h-full rounded-full bg-atseen-blue transition-[width]" style={{ width: `${progress}%` }} />
         </div>
       ) : (
-        <p className="mt-2 text-sm text-atseen-danger">{error}</p>
+        <p className="mt-2 text-sm text-atseen-danger">{__systemMessage(error)}</p>
       )}
     </div>
   );
 }
 
 function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "create", onClose }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const textRef = useRef(null);
@@ -134,7 +140,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
 
   const addFiles = (incoming) => {
     if (!canCreate) {
-      showToast("Home post creation is only available for creator accounts.");
+      showToast(__msg("posts.homePostCreationIsOnlyAvailableForCreatorAccounts"));
       return;
     }
 
@@ -142,7 +148,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     const accepted = [];
     const remaining = POST_MAX_IMAGES - files.length - serverMedia.length;
     if (remaining <= 0) {
-      setErrors((current) => ({ ...current, media: `You can attach up to ${POST_MAX_IMAGES} images.` }));
+      setErrors((current) => ({ ...current, media: __msg("posts.youCanAttachUpToValue0Images", { value0: POST_MAX_IMAGES }) }));
       return;
     }
 
@@ -156,7 +162,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
     });
 
     if (incoming.length > remaining) {
-      nextErrors.media = `You can attach up to ${POST_MAX_IMAGES} images.`;
+      nextErrors.media = __msg("posts.youCanAttachUpToValue0Images", { value0: POST_MAX_IMAGES });
     }
 
     setErrors((current) => ({ ...current, ...nextErrors }));
@@ -196,23 +202,23 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
 
   const onUploadProgress = (event) => {
     const percent = event.total ? Math.max(8, Math.round((event.loaded / event.total) * 85)) : 45;
-    setProgress({ error: "", progress: percent, step: percent < 85 ? "Uploading media" : "Publishing" });
+    setProgress({ error: "", progress: percent, step: percent < 85 ? __msg("posts.uploadingMedia") : __msg("fanWeb.publishing") });
   };
 
   const publish = () => {
     if (!canCreate) {
-      setErrors({ form: "Home post creation is only available for creator accounts." });
+      setErrors({ form: __msg("posts.homePostCreationIsOnlyAvailableForCreatorAccounts") });
       return;
     }
     if (!isValid) {
-      setErrors((current) => ({ ...current, text: trimmedText ? "" : "Write something before publishing." }));
+      setErrors((current) => ({ ...current, text: trimmedText ? "" : __msg("posts.writeSomethingBeforePublishing") }));
       return;
     }
 
-    setProgress({ error: "", progress: 8, step: "Preparing" });
+    setProgress({ error: "", progress: 8, step: __msg("posts.preparing") });
     const onSuccess = () => {
-      setProgress({ error: "", progress: 100, step: "Complete" });
-      showToast(isEditing ? "Post updated." : "Post published.");
+      setProgress({ error: "", progress: 100, step: __msg("social.complete") });
+      showToast(isEditing ? __msg("posts.postUpdated") : __msg("posts.postPublished"));
       resetAndClose();
     };
     const onError = (error) => {
@@ -235,15 +241,15 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
 
   const saveDraft = () => {
     if (!canCreate) {
-      setErrors({ form: "Home post drafts are only available for creator accounts." });
+      setErrors({ form: __msg("posts.homePostDraftsAreOnlyAvailableForCreator") });
       return;
     }
     if (!trimmedText && !files.length && !serverMedia.length) {
-      setErrors({ text: "Add text or images before saving a draft." });
+      setErrors({ text: __msg("posts.addTextOrImagesBeforeSavingADraft") });
       return;
     }
 
-    setProgress({ error: "", progress: 8, step: "Saving draft" });
+    setProgress({ error: "", progress: 8, step: __msg("posts.savingDraft") });
     saveDraftMutation.mutate(
       { formData: buildFormData(), onUploadProgress },
       {
@@ -251,7 +257,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
         onSuccess: (draft) => {
           setProgress({ error: "", progress: 100, step: "Draft saved" });
           setLoadedDraftId(draft.id);
-          showToast("Draft saved.");
+          showToast(__msg("posts.draftSaved"));
           resetAndClose();
         },
       }
@@ -273,14 +279,14 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
   const discardDraft = (draftId) => {
     deleteMutation.mutate(draftId, {
       onError: (error) => showToast(readError(error)),
-      onSuccess: () => showToast("Draft discarded."),
+      onSuccess: () => showToast(__msg("posts.draftDiscarded")),
     });
   };
 
   if (!isOpen) return null;
 
   return (
-    <FanModal className="max-h-[94dvh] max-w-[920px] p-0 sm:p-0" isOpen={isOpen} onClose={requestClose} title={isEditing ? "Edit Home post" : "Create Home post"}>
+    <FanModal className="max-h-[94dvh] max-w-[920px] p-0 sm:p-0" isOpen={isOpen} onClose={requestClose} title={isEditing ? __msg("posts.editHomePost") : __msg("posts.createHomePost")}>
       {cropQueue[0] ? <ProfileImageCropper kind="feed" onCancel={skipCrop} onSave={finishCrop} source={cropQueue[0].url} /> : null}
       <div className="grid bg-[#0B0E13] lg:grid-cols-[minmax(0,1fr)_280px]">
         <section
@@ -292,21 +298,19 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
           }}
         >
           {!canCreate ? (
-            <div className="rounded-2xl border border-atseen-danger/25 bg-atseen-danger/10 p-4 text-sm text-atseen-danger">
-              Home post creation is only available for creator accounts.
-            </div>
+            <div className="rounded-2xl border border-atseen-danger/25 bg-atseen-danger/10 p-4 text-sm text-atseen-danger">{__msg("posts.homePostCreationIsOnlyAvailableForCreatorAccounts")}</div>
           ) : null}
 
           <div className="flex items-center gap-3">
             <FanAvatar name={currentUser?.name || user?.name || "Creator"} size="h-11 w-11" src={currentUser?.avatar || user?.avatar} />
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{currentUser?.name || user?.name || "Creator"}</p>
-              <p className="text-xs text-atseen-muted">{isEditing ? "Editing Home post" : "Publishing to Home"}</p>
+              <p className="truncate text-sm font-bold">{currentUser?.name || user?.name || __msg("discover.creator")}</p>
+              <p className="text-xs text-atseen-muted">{isEditing ? __msg("posts.editingHomePost") : __msg("posts.publishingToHome")}</p>
             </div>
           </div>
 
           <label className="mt-5 block">
-            <span className="sr-only">Post text</span>
+            <span className="sr-only">{__msg("posts.postText")}</span>
             <textarea
               aria-describedby="post-text-count post-text-error"
               className="max-h-[320px] min-h-[156px] w-full resize-y rounded-2xl border border-atseen-line bg-atseen-surface px-4 py-4 text-base leading-7 text-atseen-text outline-none transition focus:border-atseen-blue"
@@ -315,7 +319,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
                 setText(event.target.value);
                 setErrors((current) => ({ ...current, text: "" }));
               }}
-              placeholder="Share what you've seen..."
+              placeholder={__msg("posts.shareWhatYouVeSeen")}
               ref={textRef}
               value={text}
             />
@@ -326,7 +330,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
           </div>
 
           <div className="mt-5">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">Context</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">{__msg("posts.context")}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {POST_CONTEXTS.map((item) => (
                 <button
@@ -342,7 +346,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
           </div>
 
           <div className="mt-5">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">Location</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">{__msg("fanWeb.location")}</p>
             <div className="mt-2 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface px-3 py-2">
               <FiMapPin className="text-atseen-blue" />
               <input
@@ -351,10 +355,10 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
                   setLocationSearch(event.target.value);
                   setLocation(event.target.value);
                 }}
-                placeholder="Search city or country"
+                placeholder={__msg("posts.searchCityOrCountry")}
                 value={locationSearch || location}
               />
-              {location ? <button aria-label="Clear location" className="text-atseen-muted" onClick={() => { setLocation(""); setLocationSearch(""); }} type="button"><FiX /></button> : null}
+              {location ? <button aria-label={__msg("posts.clearLocation")} className="text-atseen-muted" onClick={() => { setLocation(""); setLocationSearch(""); }} type="button"><FiX /></button> : null}
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {filteredLocations.map((item) => (
@@ -369,10 +373,9 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
 
           <div className="mt-5">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">Images</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">{__msg("posts.images")}</p>
               <button className="inline-flex items-center gap-2 rounded-full border border-atseen-line px-3 py-2 text-xs font-bold text-atseen-muted hover:text-white" onClick={() => fileInputRef.current?.click()} type="button">
-                <FiImage /> Attach
-              </button>
+                <FiImage />{__msg("contentEntities.attach")}</button>
             </div>
             <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => addFiles(event.target.files || [])} ref={fileInputRef} type="file" />
             {errors.media ? <p className="mt-2 text-xs text-atseen-danger">{errors.media}</p> : null}
@@ -383,7 +386,7 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
               {files.map((item) => (
                 <div className="relative" key={item.id}>
                   <img alt="" className="aspect-square w-full rounded-2xl border border-atseen-line object-cover" src={item.url} />
-                  <button aria-label="Remove image" className="absolute right-2 top-2 rounded-full bg-black/70 p-2 text-white" onClick={() => removeFile(item.id)} type="button"><FiX /></button>
+                  <button aria-label={__msg("fanWeb.removeImage")} className="absolute right-2 top-2 rounded-full bg-black/70 p-2 text-white" onClick={() => removeFile(item.id)} type="button"><FiX /></button>
                 </div>
               ))}
             </div>
@@ -394,36 +397,36 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
           </div>
 
           <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-muted hover:text-white" disabled={busy} onClick={requestClose} type="button">Cancel</button>
-            {!isEditing ? <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text disabled:opacity-60" disabled={busy || (!trimmedText && !files.length && !serverMedia.length)} onClick={saveDraft} type="button">Save Draft</button> : null}
+            <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-muted hover:text-white" disabled={busy} onClick={requestClose} type="button">{__msg("admin.cancel")}</button>
+            {!isEditing ? <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text disabled:opacity-60" disabled={busy || (!trimmedText && !files.length && !serverMedia.length)} onClick={saveDraft} type="button">{__msg("posts.saveDraft")}</button> : null}
             <button className="rounded-xl bg-atseen-blue px-5 py-3 text-sm font-black text-atseen-bg disabled:opacity-60" disabled={busy || !isValid} onClick={publish} type="button">
-              {busy ? "Working..." : isEditing ? "Save changes" : "Publish"}
+              {busy ? __msg("posts.working") : isEditing ? __msg("posts.saveChanges") : __msg("posts.publish")}
             </button>
-            {progress.error ? <button className="inline-flex items-center gap-2 rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={publish} type="button"><FiRefreshCw /> Retry</button> : null}
+            {progress.error ? <button className="inline-flex items-center gap-2 rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={publish} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button> : null}
           </div>
         </section>
 
         <aside className="border-t border-atseen-line bg-white/[0.025] p-5 lg:border-l lg:border-t-0">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">Preview</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">{__msg("admin.preview")}</p>
           <div className="mt-3 rounded-2xl border border-atseen-line bg-atseen-surface p-4">
             <div className="flex items-center gap-2.5">
               <FanAvatar name={currentUser?.name || user?.name || "Creator"} size="h-9 w-9" src={currentUser?.avatar || user?.avatar} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold">{currentUser?.name || user?.name || "Creator"}</p>
-                <p className="text-[10px] text-atseen-muted">now</p>
+                <p className="truncate text-sm font-bold">{currentUser?.name || user?.name || __msg("discover.creator")}</p>
+                <p className="text-[10px] text-atseen-muted">{__msg("posts.now")}</p>
               </div>
             </div>
             {context || location ? <p className="mt-3 inline-flex rounded-full border border-atseen-blue/20 bg-atseen-blue/10 px-2.5 py-1 text-[10px] font-bold text-atseen-blue">{[context, location].filter(Boolean).join(" - ")}</p> : null}
             {attachedEntities.length ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 {attachedEntities.map((entity) => (
-                  <span className="rounded-[13px] border border-atseen-blue/20 bg-atseen-blue/10 px-2.5 py-1.5 text-[11px] font-bold text-atseen-blue" key={`${entity.type}-${entity.id}`}>
+                  <span dir="auto" className="rounded-[13px] border border-atseen-blue/20 bg-atseen-blue/10 px-2.5 py-1.5 text-[11px] font-bold text-atseen-blue" key={`${entity.type}-${entity.id}`}>
                     {entity.title}
                   </span>
                 ))}
               </div>
             ) : null}
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-white/85">{trimmedText || "Your post preview will appear here."}</p>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-white/85">{trimmedText || __msg("posts.yourPostPreviewWillAppearHere")}</p>
             {existingMedia.length || files.length ? (
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {existingMedia.slice(0, 4).map((item) => (
@@ -438,26 +441,26 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
 
           {mode === "create" ? (
             <div className="mt-6">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">Drafts</p>
-              {draftsQuery.isLoading ? <p className="mt-3 text-xs text-atseen-muted">Loading drafts...</p> : null}
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-dim">{__msg("posts.drafts")}</p>
+              {draftsQuery.isLoading ? <p className="mt-3 text-xs text-atseen-muted">{__msg("posts.loadingDrafts")}</p> : null}
               {draftsQuery.data?.items?.length ? (
                 <div className="mt-2 space-y-2">
                   {draftsQuery.data.items.slice(0, 4).map((draft) => (
                     <div className="rounded-2xl border border-atseen-line p-3" key={draft.id}>
-                      <button className="flex w-full gap-3 text-left text-xs leading-5 text-atseen-muted" onClick={() => loadDraft(draft)} type="button">
+                      <button className="flex w-full gap-3 text-start text-xs leading-5 text-atseen-muted" onClick={() => loadDraft(draft)} type="button">
                         {draft.media?.[0]?.url ? (
                           <img alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" src={draft.media[0].url} />
                         ) : null}
                         <span className="min-w-0 flex-1">
-                          <strong className="block text-atseen-text">Home post draft</strong>
-                          <span className="line-clamp-2">{draft.text?.slice(0, 90) || `${draft.media?.length || 0} attached image${draft.media?.length === 1 ? "" : "s"}`}</span>
+                          <strong className="block text-atseen-text">{__msg("posts.homePostDraft")}</strong>
+                          <span className="line-clamp-2">{draft.text?.slice(0, 90) || __msg("posts.attachedImage", { value0: draft.media?.length || 0, value1: draft.media?.length === 1 ? "" : "s" })}</span>
                         </span>
                       </button>
-                      <button className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-atseen-danger" onClick={() => discardDraft(draft.id)} type="button"><FiTrash2 /> Delete</button>
+                      <button className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-atseen-danger" onClick={() => discardDraft(draft.id)} type="button"><FiTrash2 /> {__msg("posts.delete")}</button>
                     </div>
                   ))}
                 </div>
-              ) : <p className="mt-3 text-xs text-atseen-muted">No saved Home drafts yet.</p>}
+              ) : <p className="mt-3 text-xs text-atseen-muted">{__msg("posts.noSavedHomeDraftsYet")}</p>}
             </div>
           ) : null}
         </aside>
@@ -466,12 +469,12 @@ function FeedPostComposer({ currentUser, initialPost = null, isOpen, mode = "cre
       {confirmClose ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-4">
           <div className="w-full max-w-sm rounded-[22px] border border-atseen-line bg-[#0B0E13] p-5">
-            <h3 className="text-base font-bold">Save this draft?</h3>
-            <p className="mt-2 text-sm leading-6 text-atseen-muted">You have unsaved Home post changes.</p>
+            <h3 className="text-base font-bold">{__msg("posts.saveThisDraft")}</h3>
+            <p className="mt-2 text-sm leading-6 text-atseen-muted">{__msg("posts.youHaveUnsavedHomePostChanges")}</p>
             <div className="mt-5 grid gap-2">
-              <button className="rounded-xl bg-atseen-blue px-4 py-3 text-sm font-black text-atseen-bg" onClick={saveDraft} type="button">Save as Draft</button>
-              <button className="rounded-xl border border-atseen-danger/40 px-4 py-3 text-sm font-bold text-atseen-danger" onClick={resetAndClose} type="button">Discard</button>
-              <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setConfirmClose(false)} type="button">Continue editing</button>
+              <button className="rounded-xl bg-atseen-blue px-4 py-3 text-sm font-black text-atseen-bg" onClick={saveDraft} type="button">{__msg("posts.saveAsDraft")}</button>
+              <button className="rounded-xl border border-atseen-danger/40 px-4 py-3 text-sm font-bold text-atseen-danger" onClick={resetAndClose} type="button">{__msg("posts.discard")}</button>
+              <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setConfirmClose(false)} type="button">{__msg("posts.continueEditing")}</button>
             </div>
           </div>
         </div>

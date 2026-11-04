@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiBookmark, FiBookOpen, FiExternalLink, FiMapPin, FiRefreshCw } from "react-icons/fi";
@@ -17,6 +20,7 @@ function saveAction(entity) {
 }
 
 export default function EntityDetailPage() {
+  __useUiLanguage();
   const { id, type: pathType = "" } = useParams();
   const type = routeType(pathType || window.location.pathname.split("/")[1]);
   const navigate = useNavigate();
@@ -35,33 +39,33 @@ export default function EntityDetailPage() {
   });
 
   if (query.isLoading) return <section className="entity-detail-page"><div className="attached-entity-loading" /></section>;
-  if (query.isError || !entity) return <section className="entity-detail-page"><button onClick={() => navigate(-1)} type="button"><FiArrowLeft /> Back</button><h1>This item is not available.</h1><button onClick={() => query.refetch()} type="button"><FiRefreshCw /> Retry</button></section>;
+  if (query.isError || !entity) return <section className="entity-detail-page"><button onClick={() => navigate(-1)} type="button"><FiArrowLeft data-ui-directional="true" /> {__msg("discover.back")}</button><h1>{__msg("social.thisItemIsNotAvailable")}</h1><button onClick={() => query.refetch()} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button></section>;
 
   return (
     <section className="entity-detail-page">
       <header>
-        <button aria-label="Back" onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button>
-        <span>{type === CONTENT_ENTITY_TYPES.BOOK ? "Book" : "Place"}</span>
+        <button aria-label={__msg("discover.back")} onClick={() => navigate(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+        <span>{type === CONTENT_ENTITY_TYPES.BOOK ? __msg("contentEntities.book") : __msg("contentEntities.place")}</span>
       </header>
       <div className="entity-detail-hero">
         {image ? <img alt="" src={image} /> : <Icon aria-hidden="true" />}
       </div>
       <main>
-        <p>{entity.category || (type === CONTENT_ENTITY_TYPES.BOOK ? "Book" : "Place")}</p>
-        <h1>{entity.title}</h1>
+        <p>{entity.category || (type === CONTENT_ENTITY_TYPES.BOOK ? __msg("contentEntities.book") : __msg("contentEntities.place"))}</p>
+        <h1 dir="auto">{entity.title}</h1>
         {entity.subtitle ? <strong>{entity.subtitle}</strong> : null}
         {entity.address ? <small>{entity.address}</small> : null}
         {entity.description ? <span>{entity.description}</span> : null}
-        {entity.creator?.username ? <Link to={`/profile/${encodeURIComponent(entity.creator.username)}`}>Recommended by {entity.creator.name || entity.creator.username}<FiExternalLink /></Link> : null}
+        {entity.creator?.username ? <Link to={`/profile/${encodeURIComponent(entity.creator.username)}`}>{__msg("social.recommendedBy")} {entity.creator.name || entity.creator.username}<FiExternalLink /></Link> : null}
         <button
-          aria-label={entity.saved ? `Remove ${entity.title} from Saved` : `Save ${entity.title}`}
+          aria-label={entity.saved ? __msg("contentEntities.removeFromSaved", { value0: entity.title }) : __msg("contentEntities.save", { value0: entity.title })}
           className={entity.saved ? "is-saved" : ""}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate()}
           type="button"
         >
           <FiBookmark aria-hidden="true" fill={entity.saved ? "currentColor" : "none"} />
-          {entity.saved ? "Saved" : "Save"}
+          {entity.saved ? __msg("contentEntities.saved") : __msg("contentEntities.save_efc007")}
         </button>
       </main>
     </section>

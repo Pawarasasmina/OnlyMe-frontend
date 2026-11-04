@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
@@ -19,10 +22,12 @@ function profileRoute(person) {
 }
 
 function PersonName({ person }) {
+  __useUiLanguage();
   return <span>{friendFirstName(person)}</span>;
 }
 
 function FriendAvatarContent({ friend }) {
+  __useUiLanguage();
   const active = hasActiveFriendStory(friend);
   const unseen = hasUnseenFriendStory(friend);
   const ringClass = active ? unseen ? "has-unseen-story" : "has-seen-story" : "has-no-story";
@@ -30,7 +35,7 @@ function FriendAvatarContent({ friend }) {
     <>
       <span className={`discover-friend-avatar ${ringClass}`}>
         <FanAvatar name={friendDisplayName(friend)} size="h-[52px] w-[52px]" src={friend.avatar} />
-        {friend.hasPremiumOffering && !friend.activeStatus ? <i aria-label="Premium access available" /> : null}
+        {friend.hasPremiumOffering && !friend.activeStatus ? <i aria-label={__msg("discover.premiumAccessAvailable")} /> : null}
         <StoryStatusBadge status={friend.activeStatus} />
       </span>
       <small><PersonName person={friend} /></small>
@@ -42,9 +47,10 @@ function FriendAvatarContent({ friend }) {
 function DiscoverFriendsSection({
   friends = [],
   onOpenFriendStories,
-  title = "Friends",
+  title = __msg("stories.friends_c11d5e"),
   subtitle,
 }) {
+  __useUiLanguage();
   if (!friends.length) return null;
 
   return (
@@ -63,7 +69,7 @@ function DiscoverFriendsSection({
             <div className="discover-friend-item" key={key} role="listitem">
               {stories.length ? (
                 <button
-                  aria-label={`View ${friendDisplayName(friend)}'s story`}
+                  aria-label={__msg("discover.viewSStory", { value0: friendDisplayName(friend) })}
                   className="discover-friend-link"
                   onClick={(event) => onOpenFriendStories?.(friend, event.currentTarget)}
                   type="button"
@@ -71,7 +77,7 @@ function DiscoverFriendsSection({
                   <FriendAvatarContent friend={friend} />
                 </button>
               ) : (
-                <Link aria-label={`Open ${friendDisplayName(friend)}'s profile`} className="discover-friend-link" to={profileRoute(friend)}>
+                <Link aria-label={__msg("discover.openSProfile", { value0: friendDisplayName(friend) })} className="discover-friend-link" to={profileRoute(friend)}>
                   <FriendAvatarContent friend={friend} />
                 </Link>
               )}
@@ -84,6 +90,7 @@ function DiscoverFriendsSection({
 }
 
 function DiscoverFollowingSection({ following = [], onOpenFollowingStories }) {
+  __useUiLanguage();
   const stripRef = useRef(null);
   const [scrollState, setScrollState] = useState({ canScrollBack: false, canScrollForward: false });
 
@@ -130,27 +137,27 @@ function DiscoverFollowingSection({ following = [], onOpenFollowingStories }) {
     <section className="discover-orb-section" aria-labelledby="discover-following-title">
       <div className="discover-orb-heading-row">
         <div className="discover-orb-heading-copy">
-          <h2 id="discover-following-title">Following</h2>
-          <p>People and creators you follow</p>
+          <h2 id="discover-following-title">{__msg("activity.following")}</h2>
+          <p>{__msg("discover.peopleAndCreatorsYouFollow")}</p>
         </div>
         <div className="discover-orb-scroll-controls">
           <button
-            aria-label="Scroll Following left"
+            aria-label={__msg("discover.scrollFollowingLeft")}
             className="discover-orb-scroll-button"
             disabled={!scrollState.canScrollBack}
             onClick={() => scrollFollowing(-1)}
             type="button"
           >
-            <FiChevronLeft aria-hidden="true" />
+            <FiChevronLeft data-ui-directional="true" aria-hidden="true" />
           </button>
           <button
-            aria-label="Scroll Following right"
+            aria-label={__msg("discover.scrollFollowingRight")}
             className="discover-orb-scroll-button"
             disabled={!scrollState.canScrollForward}
             onClick={() => scrollFollowing(1)}
             type="button"
           >
-            <FiChevronRight aria-hidden="true" />
+            <FiChevronRight data-ui-directional="true" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -162,13 +169,13 @@ function DiscoverFollowingSection({ following = [], onOpenFollowingStories }) {
             <>
               {cover ? <img alt="" loading="lazy" src={cover} /> : <span aria-hidden="true">{(person.displayName || person.name || "@").slice(0, 1)}</span>}
               <strong><PersonName person={person} /></strong>
-              {person.online ? <i aria-label="Online" /> : null}
+              {person.online ? <i aria-label={__msg("discover.online")} /> : null}
             </>
           );
           if (stories.length) {
             return (
               <button
-                aria-label={`View ${friendDisplayName(person)}'s story`}
+                aria-label={__msg("discover.viewSStory", { value0: friendDisplayName(person) })}
                 className="discover-following-card"
                 key={person.id || person.username}
                 onClick={(event) => onOpenFollowingStories?.(person, event.currentTarget)}
@@ -198,6 +205,7 @@ function DiscoverPeopleSections({
   onOpenFriendStories,
   onOpenFollowingStories,
 }) {
+  __useUiLanguage();
   return (
     <>
       <DiscoverFriendsSection

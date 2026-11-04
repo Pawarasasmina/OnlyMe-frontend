@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { FiPause, FiPlay } from "react-icons/fi";
 
@@ -12,7 +15,8 @@ const finiteDuration = (value, fallback = 0) => {
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
 };
 
-export default function VoiceMessageBubble({ audio, label = "Voice message", mine = false, compact = false, variant = "default" }) {
+export default function VoiceMessageBubble({ audio, label = __msg("fan.voiceMessage"), mine = false, compact = false, variant = "default" }) {
+  __useUiLanguage();
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -58,15 +62,15 @@ export default function VoiceMessageBubble({ audio, label = "Voice message", min
 
   return <div className={compact ? `wall-audio-player ${variant === "chip" ? "wall-audio-chip" : ""}` : "flex w-[min(190px,62vw)] min-w-0 max-w-full items-center gap-2.5 sm:w-auto sm:min-w-[190px]"}>
     <audio onDurationChange={(event) => setDuration(finiteDuration(event.currentTarget.duration, suppliedDuration))} onEnded={() => { setPlaying(false); setCurrent(0); }} onError={() => setFailed(true)} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={(event) => setCurrent(finiteDuration(event.currentTarget.currentTime))} preload="metadata" ref={audioRef} src={audio?.url} />
-    <button aria-label={playing ? `Pause ${label}` : `Play ${label}`} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${mine ? "bg-atseen-bg/15" : "bg-atseen-blue/15 text-atseen-blue"}`} disabled={failed} onClick={toggle} type="button">{playing ? <FiPause /> : <FiPlay className="ml-0.5" />}</button>
+    <button aria-label={playing ? __msg("messaging.pause", { value0: label }) : __msg("messaging.play", { value0: label })} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${mine ? "bg-atseen-bg/15" : "bg-atseen-blue/15 text-atseen-blue"}`} disabled={failed} onClick={toggle} type="button">{playing ? <FiPause /> : <FiPlay className="ms-0.5" />}</button>
     <div className="min-w-0 flex-1">
-      <button aria-label={`Seek ${label}. Current position ${clock(current)} of ${clock(duration)}`} className={`flex h-8 w-full touch-none cursor-pointer items-center gap-[2px] ${compact ? "wall-audio-waveform" : ""}`} disabled={failed || duration <= 0} onDoubleClick={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); seek(current - 5); } if (event.key === "ArrowRight") { event.preventDefault(); seek(current + 5); } }} onPointerDown={startWaveformDrag} onPointerMove={dragWaveform} type="button">{visibleWaveform.map((level, index) => {
+      <button aria-label={__msg("messaging.seekCurrentPositionOf", { value0: label, value1: clock(current), value2: clock(duration) })} className={`flex h-8 w-full touch-none cursor-pointer items-center gap-[2px] ${compact ? "wall-audio-waveform" : ""}`} disabled={failed || duration <= 0} onDoubleClick={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); seek(current - 5); } if (event.key === "ArrowRight") { event.preventDefault(); seek(current + 5); } }} onPointerDown={startWaveformDrag} onPointerMove={dragWaveform} type="button">{visibleWaveform.map((level, index) => {
         const progress = duration > 0 && Number.isFinite(duration) ? current / duration : 0;
         const played = index / Math.max(1, visibleWaveform.length - 1) <= progress;
         return <span className={`w-[2px] flex-1 rounded-full ${played ? mine ? "bg-atseen-bg" : "bg-atseen-blue" : mine ? "bg-atseen-bg/35" : "bg-atseen-muted/45"}`} key={index} style={{ height: `${Math.max(4, Math.round(Number(level) * 22))}px`, ...(compact ? { width: 2, flex: "0 0 2px" } : {}) }} />;
       })}</button>
-      {!compact ? <div className={`mt-0.5 flex justify-between text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}><span>{failed ? "Audio unavailable" : playing ? clock(current) : label}</span><span>{clock(duration)}</span></div> : null}
+      {!compact ? <div className={`mt-0.5 flex justify-between text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}><span>{failed ? __msg("messaging.audioUnavailable") : playing ? clock(current) : label}</span><span>{clock(duration)}</span></div> : null}
     </div>
-    {compact ? <span className="wall-audio-duration">{failed ? "Audio unavailable" : clock(playing ? current : duration)}</span> : null}
+    {compact ? <span className="wall-audio-duration">{failed ? __msg("messaging.audioUnavailable") : clock(playing ? current : duration)}</span> : null}
   </div>;
 }

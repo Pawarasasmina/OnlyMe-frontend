@@ -1,9 +1,11 @@
+import { getLocale as __uiLocale } from "../i18n/runtime.js";
+import { msg as __msg } from "../i18n/runtime.js";
 export function formatDate(value, options = {}) {
   if (!value) {
-    return "Not available";
+    return __msg("admin.notAvailable");
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(__uiLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -13,10 +15,10 @@ export function formatDate(value, options = {}) {
 
 export function formatDateTime(value) {
   if (!value) {
-    return "Not available";
+    return __msg("admin.notAvailable");
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(__uiLocale(), {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -25,5 +27,5 @@ export function formatDateTime(value) {
 }
 
 export function formatCoins(value) {
-  return `✦ ${new Intl.NumberFormat("en-US").format(Number(value) || 0)}`;
+  return `✦ ${new Intl.NumberFormat(__uiLocale()).format(Number(value) || 0)}`;
 }

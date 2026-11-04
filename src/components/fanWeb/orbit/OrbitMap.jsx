@@ -1,3 +1,7 @@
+import { enumLabel as __enumLabel } from "../../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useState } from "react";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
@@ -6,6 +10,7 @@ import { useFanToast } from "../shared/FanToastContext";
 import { atseenCreators, atseenOrbitPositions, atseenWorlds } from "../../../data/atseenMockData";
 
 function OrbitMap({ currentUser }) {
+  __useUiLanguage();
   const { showToast } = useFanToast();
   const [preview, setPreview] = useState(null);
 
@@ -40,7 +45,7 @@ function OrbitMap({ currentUser }) {
         ))}
         <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center">
           <FanAvatar className="border-2 border-atseen-blue shadow-glow" name={currentUser.name} size="h-[58px] w-[58px]" src={currentUser.avatar} />
-          <p className="mt-1.5 text-[10.5px] font-bold text-atseen-text">You</p>
+          <p className="mt-1.5 text-[10.5px] font-bold text-atseen-text">{__msg("fanWeb.you")}</p>
         </div>
         {creators.map((creator) => {
           const [left, top] = atseenOrbitPositions[creator.id];
@@ -62,43 +67,39 @@ function OrbitMap({ currentUser }) {
             </button>
           );
         })}
-        <p className="absolute bottom-3 left-0 right-0 text-center text-[10px] text-atseen-muted">tap a light to meet them ✦</p>
+        <p className="absolute bottom-3 left-0 right-0 text-center text-[10px] text-atseen-muted">{__msg("fanWeb.tapALightToMeetThem")}</p>
       </div>
 
-      <FanModal isOpen={Boolean(preview)} onClose={() => setPreview(null)} title={preview?.name || "Creator preview"}>
+      <FanModal isOpen={Boolean(preview)} onClose={() => setPreview(null)} title={preview?.name || __msg("fanWeb.creatorPreview")}>
         {preview ? (
           <div>
             <div className="flex items-center gap-4">
               <FanAvatar className="border-2 border-atseen-blue/45" name={preview.name} size="h-16 w-16" src={preview.avatar} />
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-lg font-bold text-atseen-text">
+                <p dir="auto" className="flex items-center gap-1.5 text-lg font-bold text-atseen-text">
                   {preview.name}
                   {preview.verified ? <VerifiedBadge /> : null}
                 </p>
                 <p className="text-sm text-atseen-muted">
-                  {preview.statusEmoji} {preview.status} · {preview.location}
+                  {preview.statusEmoji} {__enumLabel(preview.status)} · {preview.location}
                 </p>
               </div>
             </div>
             <div className="mt-4 rounded-2xl border border-atseen-blue/20 bg-atseen-blue/10 p-4">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-blue">Why You Two</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-atseen-blue">{__msg("fanWeb.whyYouTwo")}</p>
               <p className="mt-2 text-sm font-semibold text-atseen-text">{preview.reason}</p>
             </div>
             <div className="mt-4 flex gap-2">
               <button
                 className="flex-1 rounded-xl border border-atseen-line bg-atseen-surface-2 px-4 py-3 text-sm font-semibold text-atseen-text transition hover:border-atseen-blue/50"
-                onClick={() => showToast(`Private signal sent to ${preview.name.split(" ")[0]}.`)}
+                onClick={() => showToast(__msg("fanWeb.privateSignalSentTo", { value0: preview.name.split(" ")[0] }))}
                 type="button"
-              >
-                I see you
-              </button>
+              >{__msg("discover.iSeeYou")}</button>
               <button
                 className="flex-1 rounded-xl bg-gradient-to-br from-atseen-blue to-atseen-blue-strong px-4 py-3 text-sm font-bold text-atseen-bg"
-                onClick={() => showToast("Messages live in the app.")}
+                onClick={() => showToast(__msg("fanWeb.messagesLiveInTheApp"))}
                 type="button"
-              >
-                Message
-              </button>
+              >{__msg("discover.message")}</button>
             </div>
           </div>
         ) : null}

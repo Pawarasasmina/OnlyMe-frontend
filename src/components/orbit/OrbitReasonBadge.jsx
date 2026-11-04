@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 function OrbitReasonBadge({ reason }) {
+  __useUiLanguage();
   if (!reason) return null;
 
   return (

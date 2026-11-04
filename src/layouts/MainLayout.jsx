@@ -1,8 +1,10 @@
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 
 function MainLayout() {
+  __useUiLanguage();
   return (
     <div className="user-app-shell min-h-screen bg-brand-dark text-white">
       <Navbar />

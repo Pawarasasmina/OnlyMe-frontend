@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { FiMic, FiSquare, FiX } from "react-icons/fi";
 import { formatVoiceTime, useVoiceRecorder } from "../../hooks/useVoiceRecorder";
@@ -6,6 +9,7 @@ import { voiceService } from "../../services/voiceService";
 const MAX_SECONDS = 30;
 
 export default function VoiceCommentRecorder({ busy = false, onClose, onSubmit }) {
+  __useUiLanguage();
   const recorder = useVoiceRecorder({ maxDurationSeconds: MAX_SECONDS });
   const [transcript, setTranscript] = useState("");
   const [transcribing, setTranscribing] = useState(false);
@@ -70,12 +74,12 @@ export default function VoiceCommentRecorder({ busy = false, onClose, onSubmit }
 
   return (
     <div aria-modal="true" className="voice-comment-layer" role="dialog" style={sheetPosition}>
-      <button aria-label="Cancel voice comment" className="voice-comment-dim" onClick={close} type="button" />
+      <button aria-label={__msg("comments.cancelVoiceComment")} className="voice-comment-dim" onClick={close} type="button" />
       <section className="voice-comment-sheet">
         <i aria-hidden="true" className="voice-comment-grab" />
-        <button aria-label="Close voice comment" className="voice-comment-close" disabled={busy} onClick={close} type="button"><FiX /></button>
+        <button aria-label={__msg("comments.closeVoiceComment")} className="voice-comment-close" disabled={busy} onClick={close} type="button"><FiX /></button>
         <button
-          aria-label={recording ? "Finish voice comment" : "Record voice comment"}
+          aria-label={recording ? __msg("comments.finishVoiceComment") : __msg("comments.recordVoiceComment")}
           className={`voice-comment-record ${recording ? "is-recording" : ""}`}
           disabled={busy || recorder.status === "stopping"}
           onClick={recording ? recorder.stopRecording : recorder.startRecording}
@@ -83,13 +87,13 @@ export default function VoiceCommentRecorder({ busy = false, onClose, onSubmit }
         >
           {recording ? <FiSquare /> : <FiMic />}
         </button>
-        <h2>Voice comment</h2>
-        <p>{recording ? `${formatVoiceTime(recorder.durationSeconds)} of 00:30` : transcribing ? "Writing the text for you..." : "Up to 30 seconds - we'll write the text for you"}</p>
+        <h2>{__msg("comments.voiceComment")}</h2>
+        <p>{recording ? __msg("comments.of0030", { value0: formatVoiceTime(recorder.durationSeconds) }) : transcribing ? __msg("comments.writingTheTextForYou") : __msg("comments.upTo30SecondsWeLlWriteTheText")}</p>
         {recorder.audioUrl ? <audio controls preload="metadata" src={recorder.audioUrl} /> : null}
-        {transcript ? <textarea aria-label="Voice comment text" maxLength={500} onChange={(event) => setTranscript(event.target.value)} value={transcript} /> : null}
+        {transcript ? <textarea aria-label={__msg("comments.voiceCommentText")} maxLength={500} onChange={(event) => setTranscript(event.target.value)} value={transcript} /> : null}
         {recorder.error ? <small className="voice-comment-error">{recorder.error}</small> : null}
-        <button className="voice-comment-done" disabled={!canSubmit} onClick={submit} type="button">{busy ? "Posting..." : "Done"}</button>
-        <button className="voice-comment-cancel" disabled={busy} onClick={close} type="button">Cancel</button>
+        <button className="voice-comment-done" disabled={!canSubmit} onClick={submit} type="button">{busy ? __msg("comments.posting") : __msg("comments.done")}</button>
+        <button className="voice-comment-cancel" disabled={busy} onClick={close} type="button">{__msg("admin.cancel")}</button>
       </section>
     </div>
   );

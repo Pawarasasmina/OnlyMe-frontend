@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 function Button({ children, className = "", variant = "primary", ...props }) {
+  __useUiLanguage();
   const variants = {
     primary: "bg-brand-primary text-white hover:bg-orange-500",
     secondary: "bg-white/10 text-white hover:bg-white/20",

@@ -1,5 +1,7 @@
+import { getLocale as __uiLocale } from "../../../i18n/runtime.js";
+import { msg as __msg } from "../../../i18n/runtime.js";
 export function getUserDisplay(user, status) {
-  const name = user?.name || user?.displayName || user?.username || "Account";
+  const name = user?.name || user?.displayName || user?.username || __msg("layouts.account");
   const username = user?.username || String(name).split(" ")[0]?.toLowerCase() || "account";
 
   return {
@@ -13,5 +15,5 @@ export function getUserDisplay(user, status) {
 }
 
 export function formatSparks(value) {
-  return new Intl.NumberFormat("en-US").format(Number(value) || 0);
+  return new Intl.NumberFormat(__uiLocale()).format(Number(value) || 0);
 }

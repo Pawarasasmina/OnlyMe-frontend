@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { wallService } from "../../../services/wallService";
@@ -7,6 +10,7 @@ const emptySeenToday = { count: 0, hasUnseen: false, people: [], unseenCount: 0 
 const queryKey = ["wall", "saw-you-today"];
 
 function WallSeenTodayNotice() {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeBatch, setActiveBatch] = useState(emptySeenToday);
@@ -61,13 +65,13 @@ function WallSeenTodayNotice() {
     <>
       {showNotice ? (
         <button
-          aria-label={`${count} ${count === 1 ? "person" : "people"} saw you today. View people.`}
+          aria-label={__msg("fanWeb.sawYouTodayViewPeople", { value0: count, value1: count === 1 ? "person" : "people" })}
           className="home-seen-today"
           onClick={handleOpen}
           type="button"
         >
           <strong>{count}</strong>
-          <span>saw you today</span>
+          <span>{__msg("fanWeb.sawYouToday")}</span>
           <span aria-hidden="true">&rsaquo;</span>
         </button>
       ) : null}

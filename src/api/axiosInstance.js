@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getAnalyticsSessionId } from "../services/analyticsSession";
+import { localizedApiError, localizedValidationErrors } from "../i18n/errors.js";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api",
@@ -53,5 +54,13 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+axiosInstance.interceptors.response.use(response => response, error => {
+  if (error.response?.data && typeof error.response.data === "object") {
+    error.response.data.message = localizedApiError(error);
+    if (error.response.data.errors) error.response.data.errors = localizedValidationErrors(error.response.data.errors);
+  }
+  return Promise.reject(error);
+});
 
 export default axiosInstance;

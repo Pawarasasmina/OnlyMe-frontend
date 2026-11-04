@@ -1,3 +1,9 @@
+import CoinIcon from "../branding/CoinIcon";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,7 +18,6 @@ import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { GiftCelebration } from "../profile/ProfileDream";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 
-const STAR = String.fromCharCode(10022);
 const giftTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
 
 function useGiftSheetPosition(backdropRef) {
@@ -43,11 +48,13 @@ function useGiftSheetPosition(backdropRef) {
 }
 
 export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType = "STORY" }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const navigate = useNavigate();
   const backdropRef = useRef(null);
   const completionTimerRef = useRef(null);
+  const sendLockRef = useRef(false);
   useEffect(() => () => window.clearTimeout(completionTimerRef.current), []);
   const [sending, setSending] = useState("");
   const [sent, setSent] = useState(null);
@@ -79,7 +86,8 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
 
   const send = async () => {
     const gift = selectedGift;
-    if (sending || sent || !recipientId || !gift) return;
+    if (sendLockRef.current || sent || !recipientId || !gift) return;
+    sendLockRef.current = true;
     setSending(gift.id);
     setError("");
     try {
@@ -102,8 +110,9 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
         onSent?.(sentGift);
       }, 4200);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to send gift");
+      setError(requestError.response?.data?.message || __msg("profile.unableToSendGift"));
     } finally {
+      sendLockRef.current = false;
       setSending("");
     }
   };
@@ -117,11 +126,12 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
     (user?.id || user?._id) && String(latestGift.sender?.id || latestGift.sender?._id || "") === String(user.id || user._id)
   );
   const latestSender = latestGift?.visibility === "RECIPIENT_ONLY" ? ""
-    : fromViewer ? "from you"
+    : fromViewer ? __msg("stories.fromYou")
       : latestGift?.sender?.username ? `from @${latestGift.sender.username}` : "";
 
   const balance = Number(walletQuery.data?.balance || 0);
   const confirmGift = () => {
+    if (!walletQuery.isSuccess) return;
     if (balance < Number(selectedGift?.stars || 0)) {
       onClose();
       navigate("/wallet");
@@ -132,53 +142,53 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
   const mostGifted = [...gifts].filter((gift) => gift.receivedCount > 0).sort((a, b) => b.receivedCount - a.receivedCount).slice(0, 4);
   const categories = gifts.reduce((groups, gift) => {
     const key = gift.category?.id || "other";
-    if (!groups.has(key)) groups.set(key, { id: key, name: gift.category?.name || "Other gifts", sortOrder: gift.category?.sortOrder ?? 100000, gifts: [] });
+    if (!groups.has(key)) groups.set(key, { id: key, name: gift.category?.name || __msg("stories.otherGifts"), sortOrder: gift.category?.sortOrder ?? 100000, gifts: [] });
     groups.get(key).gifts.push(gift);
     return groups;
   }, new Map());
   const sections = [...categories.values()].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
   const giftTile = (gift) => {
     const affordable = balance >= Number(gift.stars || 0);
-    return <button aria-label={`${gift.name}, ${Number(gift.stars || 0).toLocaleString()} coins${affordable ? "" : ", recharge required"}`} className={`dream-gift-tile ${selectedGift?.id === gift.id ? "is-selected" : ""} ${affordable ? "" : "is-unaffordable"}`} disabled={Boolean(sending) || Boolean(sent) || walletQuery.isLoading} key={gift.id} onClick={() => { setSelectedGift(gift); setError(""); }} type="button">
+    return <button aria-label={__msg("stories.coins", { value0: gift.name, value1: Number(gift.stars || 0).toLocaleString(__uiLocale()), value2: affordable ? "" : ", recharge required" })} className={`dream-gift-tile ${selectedGift?.id === gift.id ? "is-selected" : ""} ${affordable ? "" : "is-unaffordable"}`} disabled={Boolean(sending) || Boolean(sent) || walletQuery.isLoading} key={gift.id} onClick={() => { setSelectedGift(gift); setError(""); }} type="button">
       <span><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftTransform(gift) }} /></span>
-      <strong>{sending === gift.id ? "Sending..." : gift.name}</strong>
-      <small>{STAR}{Number(gift.stars || 0).toLocaleString()}</small>
+      <strong>{sending === gift.id ? __msg("profile.sending") : gift.name}</strong>
+      <small><CoinIcon />{Number(gift.stars || 0).toLocaleString(__uiLocale())}</small>
     </button>;
   };
   return (
     <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && !sent && onClose()} ref={backdropRef} style={sheetPosition}>
       {sent ? <GiftCelebration caption={sent.note} gift={sent} recipientName={String(recipient?.name || "them").split(" ")[0]} showSuccessToast={false} variant="is-profile-gift" /> : null}
-      <section aria-label={sourceType === "DIRECT" ? "Send a direct gift" : "Send a story gift"} className="dream-gift-sheet">
+      <section aria-label={sourceType === "DIRECT" ? __msg("stories.sendADirectGift") : __msg("stories.sendAStoryGift")} className="dream-gift-sheet">
         <span className="dream-gift-handle" />
         {!selectedGift ? <>
         <div className="dream-gift-header is-direct-profile-gift">
           <FanAvatar name={recipient?.name || "Creator"} size="h-8 w-8" src={recipient?.avatar} />
-          <div><h2>Send {String(recipient?.name || "them").split(" ")[0]} a gift</h2><p>Gifts are direct support — {String(recipient?.name || "They").split(" ")[0]} earns from them instantly</p></div>
-          <button aria-label="Close gift picker" disabled={Boolean(sending) || Boolean(sent)} onClick={onClose} type="button"><FiX /></button>
+          <div><h2>{__msg("fanWeb.send")} {String(recipient?.name || "them").split(" ")[0]} {__msg("stories.aGift")}</h2><p>{__msg("stories.giftsAreDirectSupport")} {String(recipient?.name || __msg("stories.they")).split(" ")[0]} {__msg("stories.earnsFromThemInstantly")}</p></div>
+          <button aria-label={__msg("stories.closeGiftPicker")} disabled={Boolean(sending) || Boolean(sent)} onClick={onClose} type="button"><FiX /></button>
         </div>
-        {latestGift ? <div className="dream-gift-recent" aria-label="Recent gift">
+        {latestGift ? <div className="dream-gift-recent" aria-label={__msg("stories.recentGift")}>
           <span className="dream-gift-recent-art"><img alt={latestGift.name} src={resolveMediaUrl(latestGift.imageUrl)} style={{ transform: giftTransform(latestGift) }} /></span>
-          <p>{`Someone just made ${String(recipient?.name || "them").split(" ")[0]}\u2019s day \u2014 `}<strong>{latestGift.name}</strong>{latestSender ? ` \u00b7 ${latestSender}` : ""}</p>
+          <p>{__msg("stories.someoneJustMadeSDay", { value0: String(recipient?.name || "them").split(" ")[0] })}<strong dir="auto">{latestGift.name}</strong>{latestSender ? ` \u00b7 ${latestSender}` : ""}</p>
         </div> : null}
-        {giftsQuery.isLoading ? <p className="dream-gift-empty">Loading gifts…</p> : giftsQuery.isError ? <p className="dream-gift-empty">{giftsQuery.error?.response?.data?.message || "Gifts could not be loaded."}</p> : (
+        {giftsQuery.isLoading ? <p className="dream-gift-empty">{__msg("stories.loadingGifts")}</p> : giftsQuery.isError ? <p className="dream-gift-empty">{giftsQuery.error?.response?.data?.message || __msg("stories.giftsCouldNotBeLoaded")}</p> : (
           <div className="dream-gift-sections">
-            {mostGifted.length ? <section className="dream-gift-category"><h3>Most gifted</h3><div className="dream-gift-grid is-most-gifted">{mostGifted.map(giftTile)}</div></section> : null}
-            {sections.map((section) => <section className="dream-gift-category" key={section.id}><h3>{section.name}</h3><div className="dream-gift-grid">{section.gifts.map(giftTile)}</div></section>)}
+            {mostGifted.length ? <section className="dream-gift-category"><h3>{__msg("stories.mostGifted")}</h3><div className="dream-gift-grid is-most-gifted">{mostGifted.map(giftTile)}</div></section> : null}
+            {sections.map((section) => <section className="dream-gift-category" key={section.id}><h3 dir="auto">{section.name}</h3><div className="dream-gift-grid">{section.gifts.map(giftTile)}</div></section>)}
           </div>
         )}
         </> : <div className="dream-gift-confirm">
-          <button className="dream-gift-change" disabled={Boolean(sending) || Boolean(sent)} onClick={() => setSelectedGift(null)} type="button">Change gift</button>
+          <button className="dream-gift-change" disabled={Boolean(sending) || Boolean(sent)} onClick={() => { setSelectedGift(null); setError(""); }} type="button">{__msg("stories.changeGift")}</button>
           <span className="dream-gift-confirm-image"><img alt={selectedGift.name} src={selectedGift.imageUrl} style={{ transform: giftTransform(selectedGift) }} /></span>
-          <h2>{selectedGift.name}</h2>
-          <small>to <strong>{recipient?.username ? `@${recipient.username}` : recipient?.name || "this creator"}</strong></small>
-          <em>{STAR}{Number(selectedGift.stars || 0).toLocaleString()} · {recipient?.name || "They"} receives this as real earnings</em>
-          <div className="dream-gift-arrival-note">{recipient?.name || "They"} sees it the moment it lands — first on the shelf</div>
-          <button className="dream-gift-visibility" disabled={Boolean(sending) || Boolean(sent)} onClick={() => setVisibility((current) => current === "EVERYONE" ? "RECIPIENT_ONLY" : "EVERYONE")} type="button"><span>Visibility</span><b>{visibility === "EVERYONE" ? "Everyone" : "Only recipient"}</b><FiChevronRight aria-hidden="true" /></button>
-          <label className="dream-gift-message"><span>Add a message · optional</span><input maxLength={500} disabled={Boolean(sending) || Boolean(sent)} onChange={(event) => setMessage(event.target.value)} placeholder="Say something..." value={message} /></label>
-          <button className="dream-gift-send" disabled={Boolean(sending) || Boolean(sent)} onClick={confirmGift} type="button">{sending ? "Sending…" : balance < Number(selectedGift.stars || 0) ? <>Recharge · <span>{STAR}{Number(selectedGift.stars || 0).toLocaleString()}</span></> : <>Send gift · <span>{STAR}{Number(selectedGift.stars || 0).toLocaleString()}</span></>}</button>
-          <p className="dream-gift-open-note">You’ll know the moment {recipient?.name || "they"} opens it ✦</p>
+          <h2 dir="auto">{selectedGift.name}</h2>
+          <small>{__msg("stories.to")} <strong>{recipient?.username ? `@${recipient.username}` : recipient?.name || __msg("stories.thisCreator")}</strong></small>
+          <em><CoinIcon />{Number(selectedGift.stars || 0).toLocaleString(__uiLocale())} · {recipient?.name || __msg("stories.they")} {__msg("stories.receivesThisAsRealEarnings")}</em>
+          <div className="dream-gift-arrival-note">{recipient?.name || __msg("stories.they")} {__msg("stories.seesItTheMomentItLandsFirstOnThe")}</div>
+          <button className="dream-gift-visibility" disabled={Boolean(sending) || Boolean(sent)} onClick={() => setVisibility((current) => current === "EVERYONE" ? "RECIPIENT_ONLY" : "EVERYONE")} type="button"><span>{__msg("fan.visibility")}</span><b>{visibility === "EVERYONE" ? __msg("onboarding.everyone") : __msg("stories.onlyRecipient")}</b><FiChevronRight data-ui-directional="true" aria-hidden="true" /></button>
+          <label className="dream-gift-message"><span>{__msg("stories.addAMessageOptional")}</span><input maxLength={500} disabled={Boolean(sending) || Boolean(sent)} onChange={(event) => setMessage(event.target.value)} placeholder={__msg("stories.saySomething")} value={message} /></label>
+          <button className="dream-gift-send" disabled={Boolean(sending) || Boolean(sent) || !walletQuery.isSuccess} onClick={confirmGift} type="button">{sending ? __msg("stories.sending") : balance < Number(selectedGift.stars || 0) ? <>{__msg("stories.recharge")} <span><CoinIcon />{Number(selectedGift.stars || 0).toLocaleString(__uiLocale())}</span></> : <>{__msg("stories.sendGift")} <span><CoinIcon />{Number(selectedGift.stars || 0).toLocaleString(__uiLocale())}</span></>}</button>
+          <p className="dream-gift-open-note">{__msg("stories.youLlKnowTheMoment")} {recipient?.name || __msg("stories.they_f1fdd4")} {__msg("stories.opensIt")}</p>
         </div>}
-        {error ? <div className="mt-4 rounded-xl bg-red-400/10 p-3 text-xs text-red-300">{error}{error.toLowerCase().includes("insufficient") ? <Link className="ml-2 font-bold underline" to="/wallet">Open wallet</Link> : null}</div> : null}
+        {error ? <div className="mt-4 rounded-xl bg-red-400/10 p-3 text-xs text-red-300">{__systemMessage(error)}{error.toLowerCase().includes("insufficient") ? <Link className="ms-2 font-bold underline" to="/wallet">{__msg("profile.openWallet")}</Link> : null}</div> : null}
       </section>
     </div>
   );

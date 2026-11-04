@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft } from "react-icons/fi";
@@ -23,6 +27,7 @@ function updateCachedProfileStatus(queryClient, activeStatus) {
 }
 
 function ProfileStatusPage() {
+  __useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useFanToast();
@@ -66,7 +71,7 @@ function ProfileStatusPage() {
   const saveStatus = useMutation({
     mutationFn: (payload) => profileService.updateStatus(payload).then((response) => response.data.data.activeStatus),
     onError: (requestError) => {
-      setError(requestError.response?.data?.message || "Status could not be updated.");
+      setError(requestError.response?.data?.message || __msg("social.statusCouldNotBeUpdated"));
       inputRef.current?.focus();
     },
     onSuccess: (activeStatus) => {
@@ -74,13 +79,13 @@ function ProfileStatusPage() {
       queryClient.invalidateQueries({ queryKey: ["unified-profile", "me"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
-      showToast(activeStatus ? "Now it's seen" : "Status removed");
+      showToast(activeStatus ? __msg("social.nowItSSeen") : __msg("social.statusRemoved"));
       navigate("/profile", { replace: true });
     },
   });
 
   const leave = () => {
-    if (changed && !saveStatus.isPending && !window.confirm("Discard your status changes?")) return;
+    if (changed && !saveStatus.isPending && !window.confirm(__msg("social.discardYourStatusChanges"))) return;
     navigate("/profile");
   };
 
@@ -88,12 +93,12 @@ function ProfileStatusPage() {
     event.preventDefault();
     const normalized = statusText.trim();
     if (!normalized) {
-      setError("Type a status before showing it.");
+      setError(__msg("social.typeAStatusBeforeShowingIt"));
       inputRef.current?.focus();
       return;
     }
     if (Array.from(normalized).length > STATUS_LABEL_MAX_LENGTH) {
-      setError(`Status must be ${STATUS_LABEL_MAX_LENGTH} characters or fewer.`);
+      setError(__msg("social.statusMustBeCharactersOrFewer", { value0: STATUS_LABEL_MAX_LENGTH }));
       inputRef.current?.focus();
       return;
     }
@@ -111,10 +116,10 @@ function ProfileStatusPage() {
     return (
       <section className="profile-status-route">
         <header className="profile-status-header">
-          <button aria-label="Back to profile" className="profile-status-back" onClick={leave} type="button"><FiArrowLeft /></button>
-          <h1>Status</h1>
+          <button aria-label={__msg("profile.backToProfile")} className="profile-status-back" onClick={leave} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+          <h1>{__msg("financial.status")}</h1>
         </header>
-        <div className="profile-status-loading" role="status">Loading status...</div>
+        <div className="profile-status-loading" role="status">{__msg("social.loadingStatus")}</div>
       </section>
     );
   }
@@ -123,12 +128,12 @@ function ProfileStatusPage() {
     return (
       <section className="profile-status-route">
         <header className="profile-status-header">
-          <button aria-label="Back to profile" className="profile-status-back" onClick={leave} type="button"><FiArrowLeft /></button>
-          <h1>Status</h1>
+          <button aria-label={__msg("profile.backToProfile")} className="profile-status-back" onClick={leave} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+          <h1>{__msg("financial.status")}</h1>
         </header>
         <div className="profile-status-error-panel">
-          <p>Unable to load your profile status.</p>
-          <button onClick={() => profileQuery.refetch()} type="button">Retry</button>
+          <p>{__msg("social.unableToLoadYourProfileStatus")}</p>
+          <button onClick={() => profileQuery.refetch()} type="button">{__msg("activity.retry")}</button>
         </div>
       </section>
     );
@@ -137,16 +142,16 @@ function ProfileStatusPage() {
   return (
     <section className="profile-status-route">
       <header className="profile-status-header">
-        <button aria-label="Back to profile" className="profile-status-back" disabled={saveStatus.isPending} onClick={leave} type="button"><FiArrowLeft /></button>
-        <h1>Status</h1>
+        <button aria-label={__msg("profile.backToProfile")} className="profile-status-back" disabled={saveStatus.isPending} onClick={leave} type="button"><FiArrowLeft data-ui-directional="true" /></button>
+        <h1>{__msg("financial.status")}</h1>
       </header>
 
       <form className="profile-status-form" onSubmit={submit}>
         <div className="profile-status-avatar-ring">
-          <FanAvatar alt={`${profile?.displayName || "Your"} avatar`} name={profile?.displayName || profile?.username || "You"} size="h-[88px] w-[88px]" src={resolveMediaUrl(profile?.avatar)} />
+          <FanAvatar alt={__msg("fan.avatar", { value0: profile?.displayName || __msg("social.your") })} name={profile?.displayName || profile?.username || "You"} size="h-[88px] w-[88px]" src={resolveMediaUrl(profile?.avatar)} />
         </div>
 
-        <label className="sr-only" htmlFor="profile-status-input">Right now status</label>
+        <label className="sr-only" htmlFor="profile-status-input">{__msg("social.rightNowStatus")}</label>
         <input
           aria-describedby={`profile-status-help${error ? " profile-status-error" : ""}`}
           aria-invalid={Boolean(error)}
@@ -160,17 +165,17 @@ function ProfileStatusPage() {
             setError("");
             setStatusText(event.target.value);
           }}
-          placeholder="Right now..."
+          placeholder={__msg("stories.rightNow")}
           ref={inputRef}
           type="text"
           value={statusText}
         />
         <span aria-hidden="true" className="profile-status-underline" />
-        <p className="profile-status-helper" id="profile-status-help">seen by people who open your profile</p>
-        {remaining <= 20 ? <p className={`profile-status-count ${remaining < 0 ? "is-over" : ""}`}>{remaining} characters left</p> : null}
-        {error ? <p className="profile-status-error" id="profile-status-error">{error}</p> : null}
+        <p className="profile-status-helper" id="profile-status-help">{__msg("stories.seenByPeopleWhoOpenYourProfile")}</p>
+        {remaining <= 20 ? <p className={`profile-status-count ${remaining < 0 ? "is-over" : ""}`}>{remaining} {__msg("social.charactersLeft")}</p> : null}
+        {error ? <p className="profile-status-error" id="profile-status-error">{__systemMessage(error)}</p> : null}
 
-        <div aria-label="Suggested statuses" className="profile-status-suggestions">
+        <div aria-label={__msg("social.suggestedStatuses")} className="profile-status-suggestions">
           {PROFILE_STATUS_SUGGESTIONS.map((suggestion) => {
             const selected = selectedSuggestion === suggestion;
             return (
@@ -197,11 +202,11 @@ function ProfileStatusPage() {
         </div>
 
         {savedStatus ? (
-          <button className="profile-status-clear" disabled={saveStatus.isPending} onClick={clearStatus} type="button">Clear status</button>
+          <button className="profile-status-clear" disabled={saveStatus.isPending} onClick={clearStatus} type="button">{__msg("stories.clearStatus")}</button>
         ) : null}
 
         <button className="profile-status-show" disabled={!canShow || saveStatus.isPending} type="submit">
-          {saveStatus.isPending ? "Showing..." : "Show"}
+          {saveStatus.isPending ? __msg("stories.showing") : __msg("stories.show")}
         </button>
       </form>
     </section>

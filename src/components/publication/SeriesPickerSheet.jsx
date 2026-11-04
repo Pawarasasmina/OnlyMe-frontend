@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiCheck, FiPlus, FiX } from "react-icons/fi";
@@ -12,7 +16,7 @@ function normalizeName(value) {
 }
 
 function seriesName(item = {}) {
-  return item.name || item.title || "Untitled Series";
+  return item.name || item.title || __msg("profile.untitledSeries");
 }
 
 export default function SeriesPickerSheet({
@@ -24,6 +28,7 @@ export default function SeriesPickerSheet({
   selectedSeries = null,
   selectedSeriesId = "",
 }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const { showToast } = useFanToast();
   const [draftName, setDraftName] = useState("");
@@ -69,10 +74,10 @@ export default function SeriesPickerSheet({
     onSuccess: async (series) => {
       onSelected?.(series);
       await invalidate();
-      showToast(`In "${seriesName(series)}" ✓`);
+      showToast(__msg("publication.in", { value0: seriesName(series) }));
       onClose();
     },
-    onError: (requestError) => setError(publicationError(requestError, "Unable to update Series")),
+    onError: (requestError) => setError(publicationError(requestError, __msg("publication.unableToUpdateSeries"))),
   });
 
   const removeMutation = useMutation({
@@ -80,10 +85,10 @@ export default function SeriesPickerSheet({
     onSuccess: async () => {
       onSelected?.(null);
       await invalidate();
-      showToast("Removed from Series.");
+      showToast(__msg("publication.removedFromSeries"));
       onClose();
     },
-    onError: (requestError) => setError(publicationError(requestError, "Unable to remove from Series")),
+    onError: (requestError) => setError(publicationError(requestError, __msg("publication.unableToRemoveFromSeries"))),
   });
 
   const createMutation = useMutation({
@@ -93,13 +98,13 @@ export default function SeriesPickerSheet({
       setDraftName("");
       if (mode === "select") {
         onSelected?.(created);
-        showToast(`Series "${seriesName(created)}" created.`);
+        showToast(__msg("publication.seriesCreated", { value0: seriesName(created) }));
         onClose();
         return;
       }
       assignMutation.mutate(created);
     },
-    onError: (requestError) => setError(publicationError(requestError, "Unable to create Series")),
+    onError: (requestError) => setError(publicationError(requestError, __msg("publication.unableToCreateSeries"))),
   });
 
   if (!isOpen) return null;
@@ -109,11 +114,11 @@ export default function SeriesPickerSheet({
     event.preventDefault();
     const name = normalizeName(draftName);
     if (!name) {
-      setError("Series name is required.");
+      setError(__msg("publication.seriesNameIsRequired"));
       return;
     }
     if (duplicateNames.has(name.toLowerCase())) {
-      setError("You already have a Series with that name.");
+      setError(__msg("publication.youAlreadyHaveASeriesWithThatName"));
       return;
     }
     setError("");
@@ -140,16 +145,16 @@ export default function SeriesPickerSheet({
 
   return (
     <div aria-modal="true" className="profile-series-backdrop" onMouseDown={onClose} role="dialog">
-      <section aria-label="Series" className="profile-series-sheet" onMouseDown={(event) => event.stopPropagation()}>
+      <section aria-label={__msg("publication.series")} className="profile-series-sheet" onMouseDown={(event) => event.stopPropagation()}>
         <span className="profile-series-handle" />
-        <button aria-label="Close Series" className="profile-series-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
-        <h2>Series</h2>
-        <p>One tap - the Seen joins the book.</p>
+        <button aria-label={__msg("publication.closeSeries")} className="profile-series-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
+        <h2>{__msg("publication.series")}</h2>
+        <p>{__msg("publication.oneTapTheSeenJoinsTheBook")}</p>
 
         <div className="profile-series-list">
-          {seriesQuery.isLoading ? <p className="seen-settings-empty">Loading Series...</p> : null}
-          {seriesQuery.isError ? <button className="profile-series-error" onClick={() => seriesQuery.refetch()} type="button">Unable to load Series. Retry</button> : null}
-          {!seriesQuery.isLoading && !seriesQuery.isError && !items.length ? <p className="seen-settings-empty">No Series yet.</p> : null}
+          {seriesQuery.isLoading ? <p className="seen-settings-empty">{__msg("publication.loadingSeries")}</p> : null}
+          {seriesQuery.isError ? <button className="profile-series-error" onClick={() => seriesQuery.refetch()} type="button">{__msg("publication.unableToLoadSeriesRetry")}</button> : null}
+          {!seriesQuery.isLoading && !seriesQuery.isError && !items.length ? <p className="seen-settings-empty">{__msg("publication.noSeriesYet")}</p> : null}
           {items.map((item) => {
             const selected = item.id === currentId;
             return (
@@ -163,18 +168,18 @@ export default function SeriesPickerSheet({
 
         <form className="profile-series-create" onSubmit={create}>
           <input
-            aria-label="New series name"
+            aria-label={__msg("publication.newSeriesName")}
             disabled={busy}
             maxLength={SERIES_LIMIT}
             onChange={(event) => { setDraftName(event.target.value.slice(0, SERIES_LIMIT)); setError(""); }}
-            placeholder="New series..."
+            placeholder={__msg("publication.newSeries")}
             value={draftName}
           />
-          <button aria-label="Create series" disabled={busy || !draftName.trim()} type="submit"><FiPlus /></button>
+          <button aria-label={__msg("publication.createSeries")} disabled={busy || !draftName.trim()} type="submit"><FiPlus /></button>
         </form>
 
-        {error ? <p className="profile-series-error" role="alert">{error}</p> : null}
-        <button className="profile-series-remove" disabled={busy || !currentId} onClick={clearSelection} type="button">{mode === "select" ? "None" : `Remove from series${selectedName ? `: ${selectedName}` : ""}`}</button>
+        {error ? <p className="profile-series-error" role="alert">{__systemMessage(error)}</p> : null}
+        <button className="profile-series-remove" disabled={busy || !currentId} onClick={clearSelection} type="button">{mode === "select" ? __msg("content.none") : __msg("publication.removeFromSeries", { value0: selectedName ? `: ${selectedName}` : "" })}</button>
       </section>
     </div>
   );

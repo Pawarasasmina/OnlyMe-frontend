@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FiLock } from "react-icons/fi";
@@ -13,15 +16,16 @@ import {
 import { fanService } from "../../services/fanService";
 
 const filters = [
-  { label: "All", value: "all" },
-  { label: "Photo", value: "photo" },
-  { label: "Video", value: "video" },
-  { label: "Audio", value: "audio" },
-  { label: "Text", value: "text" },
-  { label: "Bundle", value: "bundle" },
+  { get label() { return __msg("fanWeb.all"); }, value: "all" },
+  { get label() { return __msg("fanWeb.photo"); }, value: "photo" },
+  { get label() { return __msg("profile.video"); }, value: "video" },
+  { get label() { return __msg("fan.audio_acdac2"); }, value: "audio" },
+  { get label() { return __msg("fan.text"); }, value: "text" },
+  { get label() { return __msg("fan.bundle"); }, value: "bundle" },
 ];
 
 function PurchasesPage() {
+  __useUiLanguage();
   const [filter, setFilter] = useState("all");
   const purchasesQuery = useQuery({
     queryKey: ["fan", "purchases"],
@@ -43,15 +47,15 @@ function PurchasesPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Purchases"
-        title="Purchased Content"
-        description="Paid content unlocked by your authenticated fan account will appear here when purchase records are available."
+        title={__msg("fan.purchasedContent")}
+        description={__msg("fan.paidContentUnlockedByYourAuthenticatedFanAccountWill")}
       />
 
-      <SectionPanel title="Unlocked Content" description="Only content authorized for this fan account is requested from the backend.">
+      <SectionPanel title={__msg("fan.unlockedContent")} description={__msg("fan.onlyContentAuthorizedForThisFanAccountIsRequested")}>
         <FilterPills active={filter} filters={filters} onChange={setFilter} />
         <div className="mt-5">
           {purchasesQuery.isLoading ? <ListSkeleton count={4} /> : null}
-          {purchasesQuery.isError ? <DashboardErrorState message="Unable to load purchased content." onRetry={() => purchasesQuery.refetch()} /> : null}
+          {purchasesQuery.isError ? <DashboardErrorState message={__msg("fan.unableToLoadPurchasedContent")} onRetry={() => purchasesQuery.refetch()} /> : null}
           {!purchasesQuery.isLoading && !purchasesQuery.isError && filteredItems.length ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredItems.map((item) => (
@@ -60,7 +64,7 @@ function PurchasesPage() {
             </div>
           ) : null}
           {!purchasesQuery.isLoading && !purchasesQuery.isError && !filteredItems.length ? (
-            <DashboardEmptyState icon={FiLock} message="You have not unlocked any paid content yet." />
+            <DashboardEmptyState icon={FiLock} message={__msg("fan.youHaveNotUnlockedAnyPaidContentYet")} />
           ) : null}
         </div>
       </SectionPanel>

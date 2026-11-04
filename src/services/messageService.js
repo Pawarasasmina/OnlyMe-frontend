@@ -3,9 +3,9 @@ import axiosInstance from "../api/axiosInstance";
 export const messageService = {
   getConversations: () => axiosInstance.get("/messages/conversations"),
   getGifts: (recipientId) => axiosInstance.get("/messages/gifts", { params: { recipientId } }),
-  getMessages: (userId, { cursor = null, limit = 50, directAccessWindowId = null } = {}) => axiosInstance.get(
+  getMessages: (userId, { cursor = null, limit = 50, directAccessWindowId = null, focusMessageId = null } = {}) => axiosInstance.get(
     `/messages/conversations/${userId}`,
-    { params: { limit, ...(cursor ? { cursor } : {}), ...(directAccessWindowId ? { directAccessWindowId } : {}) } },
+    { params: { limit, ...(cursor ? { cursor } : {}), ...(focusMessageId ? { focusMessageId } : {}), ...(directAccessWindowId ? { directAccessWindowId } : {}) } },
   ),
   send: (userId, body, replyToId = null, clientMessageId, directAccessWindowId = null, disappearAfterSeconds = null) => axiosInstance.post(
     `/messages/conversations/${userId}`,

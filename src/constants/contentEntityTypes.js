@@ -1,3 +1,4 @@
+import { msg as __msg } from "../i18n/runtime.js";
 export const CONTENT_ENTITY_TYPES = {
   BOOK: "book",
   EXPERIENCE: "experience",
@@ -6,15 +7,15 @@ export const CONTENT_ENTITY_TYPES = {
 };
 
 export const CONTENT_ENTITY_LABELS = {
-  [CONTENT_ENTITY_TYPES.BOOK]: "Book",
-  [CONTENT_ENTITY_TYPES.EXPERIENCE]: "Experience",
-  [CONTENT_ENTITY_TYPES.JOURNEY]: "Journey",
-  [CONTENT_ENTITY_TYPES.PLACE]: "Place",
+  get [CONTENT_ENTITY_TYPES.BOOK]() { return __msg("contentEntities.book"); },
+  get [CONTENT_ENTITY_TYPES.EXPERIENCE]() { return __msg("contentEntities.experience"); },
+  get [CONTENT_ENTITY_TYPES.JOURNEY]() { return __msg("contentEntities.journey"); },
+  get [CONTENT_ENTITY_TYPES.PLACE]() { return __msg("contentEntities.place"); },
 };
 
 export const CONTENT_ENTITY_ICONS = {
-  [CONTENT_ENTITY_TYPES.BOOK]: "Book",
-  [CONTENT_ENTITY_TYPES.EXPERIENCE]: "Experience",
-  [CONTENT_ENTITY_TYPES.JOURNEY]: "Journey",
-  [CONTENT_ENTITY_TYPES.PLACE]: "Place",
+  get [CONTENT_ENTITY_TYPES.BOOK]() { return __msg("contentEntities.book"); },
+  get [CONTENT_ENTITY_TYPES.EXPERIENCE]() { return __msg("contentEntities.experience"); },
+  get [CONTENT_ENTITY_TYPES.JOURNEY]() { return __msg("contentEntities.journey"); },
+  get [CONTENT_ENTITY_TYPES.PLACE]() { return __msg("contentEntities.place"); },
 };

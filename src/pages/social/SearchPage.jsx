@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -46,6 +49,7 @@ function paramsObject(searchParams) {
 }
 
 function SearchPage() {
+  __useUiLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const inputRef = useRef(null);
@@ -172,9 +176,7 @@ function SearchPage() {
         <SearchTypeNote type={searchType} />
         <SearchTypedResults items={searchQuery.data?.items || []} />
         {searchQuery.data?.nextCursor ? (
-          <button className="mt-4 min-h-11 w-full rounded-full border border-atseen-line bg-atseen-surface-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={loadMore} type="button">
-            Load more
-          </button>
+          <button className="mt-4 min-h-11 w-full rounded-full border border-atseen-line bg-atseen-surface-2 text-sm font-bold text-atseen-muted hover:text-white" onClick={loadMore} type="button">{__msg("fan.loadMore")}</button>
         ) : null}
       </>
     );
@@ -199,7 +201,7 @@ function SearchPage() {
         showBack
         showFilters={false}
         suggestionsOpen={false}
-        placeholder="People, Seens, Wall"
+        placeholder={__msg("social.peopleSeensWall")}
         value={draft}
       />
       {hasSearch ? <SearchTabs
@@ -208,7 +210,7 @@ function SearchPage() {
         value={searchType}
       /> : null}
       </div>
-      {searchQuery.isFetching && !searchQuery.isLoading ? <p className="mb-2 text-xs text-atseen-dim" role="status">Updating results...</p> : null}
+      {searchQuery.isFetching && !searchQuery.isLoading ? <p className="mb-2 text-xs text-atseen-dim" role="status">{__msg("social.updatingResults")}</p> : null}
       <ResultCountAnnouncer count={totalCount} query={normalizedDebounced || "current filters"} />
       {renderResults()}
     </div>

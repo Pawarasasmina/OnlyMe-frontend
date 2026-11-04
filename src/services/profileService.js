@@ -1,6 +1,9 @@
 import axiosInstance from "../api/axiosInstance";
 
 export const profileService = {
+  setPhotoReaction: (username, mediaId, reaction) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/reaction`, { reaction }),
+  getPhotoReactions: (username, mediaId) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/reactions`),
+  getInvitations: () => axiosInstance.get("/settings/invitations"),
   getMe: () => axiosInstance.get("/profile/me"),
   getUnifiedMe: () => axiosInstance.get("/profiles/me"),
   getOwnConnections: (type) => axiosInstance.get("/profiles/me/connections", { params: { type } }),
@@ -47,6 +50,7 @@ export const profileService = {
   getBlockedAccounts: () => axiosInstance.get("/settings/blocked-accounts"),
   unblockAccount: (userId) => axiosInstance.delete(`/settings/blocked-accounts/${encodeURIComponent(userId)}`),
   getMutedAccounts: () => axiosInstance.get("/settings/muted-accounts"),
+  muteAccount: (userId) => axiosInstance.put(`/settings/muted-accounts/${encodeURIComponent(userId)}`),
   unmuteAccount: (userId) => axiosInstance.delete(`/settings/muted-accounts/${encodeURIComponent(userId)}`),
   getHiddenSeens: () => axiosInstance.get("/settings/hidden-seens"),
   showHiddenSeenAgain: (seenId) => axiosInstance.delete(`/settings/hidden-seens/${encodeURIComponent(seenId)}`),

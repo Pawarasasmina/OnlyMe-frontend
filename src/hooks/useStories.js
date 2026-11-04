@@ -12,6 +12,8 @@ export const storyKeys = {
 function invalidateStoryLists(queryClient) {
   queryClient.invalidateQueries({ queryKey: ["stories"] });
   queryClient.invalidateQueries({ queryKey: ["wall-stories"] });
+  queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+  queryClient.invalidateQueries({ queryKey: ["discover"] });
 }
 
 function markStoryViewedInStory(story, storyId) {
@@ -81,6 +83,7 @@ function setStoryReactionInDiscoverPage(page, storyId, reaction) {
 
 function markStoryViewedInQueryData(data, storyId) {
   if (!data) return data;
+  if (data.id === storyId && data.mediaType) return markStoryViewedInStory(data, storyId);
   if (Array.isArray(data)) return data.map((story) => markStoryViewedInStory(story, storyId));
   if (data.pages) return { ...data, pages: data.pages.map((page) => markStoryViewedInDiscoverPage(page, storyId)) };
   return markStoryViewedInDiscoverPage(data, storyId);
@@ -88,6 +91,7 @@ function markStoryViewedInQueryData(data, storyId) {
 
 function setStoryReactionInQueryData(data, storyId, reaction) {
   if (!data) return data;
+  if (data.id === storyId && data.mediaType) return setStoryReactionInStory(data, storyId, reaction);
   if (Array.isArray(data)) return data.map((story) => setStoryReactionInStory(story, storyId, reaction));
   if (data.pages) return { ...data, pages: data.pages.map((page) => setStoryReactionInDiscoverPage(page, storyId, reaction)) };
   return setStoryReactionInDiscoverPage(data, storyId, reaction);
@@ -126,7 +130,10 @@ export function useCreateStory() {
   return useMutation({
     mutationFn: storyService.createStory,
     retry: false,
-    onSuccess: () => invalidateStoryLists(queryClient),
+    onSuccess: () => {
+      invalidateStoryLists(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+    },
   });
 }
 

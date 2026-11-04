@@ -1,3 +1,4 @@
+import { msg as __msg } from "../i18n/runtime.js";
 // Resolution changes must preserve share captions, engagement, and identity.
 export function patchWallResolution(current, post) {
   if (!current) return current;
@@ -10,9 +11,9 @@ export function patchWallResolution(current, post) {
 
 export function wallCloseLabels(postType) {
   return ({
-    "Buy & Sell": { action: "Mark as sold", state: "Sold" },
-    Offering: { action: "No longer available", state: "Not available" },
-    Recommendation: { action: "Mark as outdated", state: "Outdated" },
-    Event: { action: "End event", state: "Ended" },
-  })[postType] || { action: "Mark as solved", state: "Solved" };
+    "Buy & Sell": { action: __msg("wallResolution.markAsSold"), state: __msg("wallResolution.sold") },
+    Offering: { action: __msg("wallResolution.noLongerAvailable"), state: __msg("admin.notAvailable") },
+    Recommendation: { action: __msg("wallResolution.markAsOutdated"), state: __msg("wallResolution.outdated") },
+    Event: { action: __msg("wallResolution.endEvent"), state: __msg("wallResolution.ended") },
+  })[postType] || { action: __msg("wallResolution.markAsSolved"), state: __msg("social.solved") };
 }

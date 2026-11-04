@@ -133,6 +133,7 @@ export function useArchiveFeedPost() {
     onSuccess: (_data, postId) => {
       removePostFromCaches(queryClient, postId);
       queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["profile-archive"] });
       queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
     },

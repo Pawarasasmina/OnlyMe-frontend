@@ -1,0 +1,15 @@
+.profile-verified-seal[type="button"] { padding:0;border:0;background:transparent;cursor:pointer; }
+.profile-verified-seal[type="button"]:focus-visible { outline:2px solid #9ccbff;outline-offset:4px;border-radius:50%; }
+.profile-verification-layer { position:fixed;inset:0;z-index:250; }
+.profile-verification-dim { position:absolute;inset:0;width:100%;background:rgba(0,0,0,.6); }
+.profile-verification-sheet { position:absolute;bottom:0;left:var(--verified-sheet-left,0);width:var(--verified-sheet-width,100%);max-height:94dvh;overflow-y:auto;padding:14px 24px max(38px,env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:#0a0c0f;color:#fff;text-align:center; }
+.profile-verification-handle { display:block;width:40px;height:4px;margin:0 auto 20px;border-radius:999px;background:rgba(255,255,255,.28); }
+.profile-verification-illustration { display:block;width:calc(100% + 8px);max-width:none;height:auto;margin:0 -4px;aspect-ratio:343/210;border-radius:20px; }
+.profile-verification-sheet h2 { margin:22px 0 0;font-size:24px;font-weight:750;line-height:30px;letter-spacing:-.4px; }
+.profile-verification-name { display:inline-flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.05); }
+.profile-verification-name b { font-size:16px;font-weight:650;line-height:22px; }
+.profile-verification-name .profile-verified-seal { display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none; }.profile-verification-name .profile-verified-seal svg { width:16px;height:16px; }
+.profile-verification-sheet p { margin:16px 0 0;color:rgba(255,255,255,.6);font-size:16px;line-height:25px; }
+.profile-verification-done { display:block;width:100%;margin-top:20px;padding:16px;border-radius:16px;background:#9ccbff;color:#0a0c0f;font-size:15px;font-weight:700; }
+.profile-verification-done:focus-visible { outline:2px solid #d6eaff;outline-offset:3px; }
+@media(max-width:880px) { .profile-verification-sheet { left:0;width:100%;padding-inline:20px; }.profile-verification-sheet h2 { font-size:21px;line-height:27px;margin-top:16px; }.profile-verification-sheet p { font-size:14px;line-height:22px; } }

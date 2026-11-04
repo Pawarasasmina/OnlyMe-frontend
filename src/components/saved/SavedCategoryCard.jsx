@@ -1,6 +1,10 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link } from "react-router-dom";
 
 function SavedCategoryCard({ count = 0, full = false, icon: Icon, loading = false, subtitle, title, to }) {
+  __useUiLanguage();
   const content = (
     <>
       <span className="saved-category-icon" aria-hidden="true">
@@ -15,7 +19,7 @@ function SavedCategoryCard({ count = 0, full = false, icon: Icon, loading = fals
 
   return (
     <Link
-      aria-label={`Open saved ${title.toLowerCase()}`}
+      aria-label={__msg("saved.openSaved", { value0: title.toLowerCase() })}
       className={`saved-category-card ${full ? "is-full" : ""}`}
       to={to}
     >

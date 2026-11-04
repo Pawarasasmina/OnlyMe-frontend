@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 const rings = [
   ["82%", "50%"],
   ["62%", "37%"],
@@ -16,6 +17,7 @@ const stars = [
 ];
 
 function OrbitRings() {
+  __useUiLanguage();
   return (
     <>
       {rings.map(([width, height]) => (

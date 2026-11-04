@@ -1,0 +1,22 @@
+import {test,expect} from '@playwright/test';
+test('payments shows server balance and renewal details with working destinations',async({page})=>{
+  await page.route('**/api/**',route=>new URL(route.request().url()).pathname.startsWith('/api/') ? route.fulfill({contentType:'application/json',body:JSON.stringify({data:new URL(route.request().url()).pathname.endsWith('/wallet') ? {wallet:{balance:1257}} : {items:[{id:'membership',premiumPublication:{id:'world',title:'Test World'},creator:{name:'Test Creator'},memberNumber:23,status:'ACTIVE',autoRenew:true,starsPerPeriod:375,currentPeriodEnd:new Date(Date.now()+86400000).toISOString()}]}})}) : route.continue());
+  await page.goto('/tests/fixtures/settings-payments.html');
+  await expect(page.getByRole('link',{name:/Wallet/})).toHaveAttribute('href','/wallet');
+  await expect(page.getByRole('link',{name:/Wallet/})).toContainText('1,257');
+  await expect(page.getByRole('button',{name:/Subscriptions/})).toContainText('375 coins');
+  await page.getByRole('button',{name:/Payment methods/}).click();
+  await expect(page.getByRole('status')).toContainText('Saved payment methods are not available yet');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button',{name:/Subscriptions/}).click();
+  const dialog=page.getByRole('dialog');
+  await expect(dialog.getByRole('heading',{name:'Subscriptions',exact:true})).toBeVisible();
+  await dialog.getByRole('button',{name:/Test World/}).click();
+  await expect(dialog.locator('.library-recap')).toBeVisible();
+  await dialog.getByRole('button',{name:'Cancel membership',exact:true}).click();
+  await expect(dialog.getByRole('heading',{name:'Cancel your membership?'})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:'Finish cancellation'})).toBeVisible();
+  await dialog.getByRole('button',{name:'Go back',exact:true}).click();
+  await expect(dialog.getByRole('button',{name:'Cancel membership',exact:true})).toBeVisible();
+});

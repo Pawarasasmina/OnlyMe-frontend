@@ -231,7 +231,7 @@ function NotificationSheet({ anchorRef, isOpen, onClose }) {
   </div>;
 }
 
-function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
+export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [anchorBounds, setAnchorBounds] = useState(null);

@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiGlobe, FiMic, FiRefreshCw, FiSend, FiSquare, FiTrash2, FiX } from "react-icons/fi";
 import FanModal from "../fanWeb/shared/FanModal";
@@ -22,6 +25,7 @@ function fileFromBlob(blob) {
 }
 
 function WaveBars({ active = false, levels = [] }) {
+  __useUiLanguage();
   const measured = levels.slice(-36);
   const bars = Array.from({ length: 26 }, (_, index) => {
     if (!measured.length) return 0.08;
@@ -37,6 +41,7 @@ function WaveBars({ active = false, levels = [] }) {
 }
 
 export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = false, initialRecording = null, onDelete }) {
+  __useUiLanguage();
   const recorder = useVoiceRecorder({ maxDurationSeconds: 30 });
   const { resetRecording, startRecording, loadRecording } = recorder;
   const initializedRef = useRef(false);
@@ -134,7 +139,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
         setTranscriptionError("");
       } else {
         setTranscriptStatus("error");
-        setTranscriptionError(error?.response?.data?.message || "Couldn't generate a transcript. You can still use the voice note.");
+        setTranscriptionError(error?.response?.data?.message || __msg("voice.couldnTGenerateATranscriptYouCanStill"));
       }
     } finally {
       if (requestIdRef.current === requestId) {
@@ -162,7 +167,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
     } catch (error) {
       if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") return;
       setTranslationLanguageStatus("error");
-      setTranslationError(error?.response?.data?.message || "Translation languages are unavailable.");
+      setTranslationError(error?.response?.data?.message || __msg("voice.translationLanguagesAreUnavailable"));
     } finally {
       if (languageAbortRef.current === controller) {
         languageAbortRef.current = null;
@@ -219,7 +224,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
     } catch (error) {
       if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError" || translationRequestIdsRef.current[targetLanguage] !== requestId) return;
       setTranslationStatuses((current) => ({ ...current, [targetLanguage]: "error" }));
-      setTranslationError(error?.response?.data?.message || "Couldn't translate this transcript.");
+      setTranslationError(error?.response?.data?.message || __msg("voice.couldnTTranslateThisTranscript"));
     } finally {
       if (translationRequestIdsRef.current[targetLanguage] === requestId) {
         translationAbortRefs.current[targetLanguage] = null;
@@ -240,8 +245,8 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
 
   useEffect(() => {
     if (!isOpen || !quick || recorder.status !== "preview" || !recorder.audioBlob || attachedRef.current) return;
-    if (recorder.durationSeconds < 1) { setTranscriptionError("Record at least one second before stopping."); return; }
-    if (recorder.audioBlob.size > POST_VOICE_NOTE_MAX_SIZE) { setTranscriptionError("Voice notes must be 20 MB or smaller."); return; }
+    if (recorder.durationSeconds < 1) { setTranscriptionError(__msg("voice.recordAtLeastOneSecondBeforeStopping")); return; }
+    if (recorder.audioBlob.size > POST_VOICE_NOTE_MAX_SIZE) { setTranscriptionError(__msg("voice.voiceNotesMustBe20MbOrSmaller")); return; }
     attachedRef.current = true;
     onUse({ file: fileFromBlob(recorder.audioBlob), duration: recorder.durationSeconds, waveform: recorder.levels, transcript: "", transcriptLanguage: "", translations: [] });
     onClose();
@@ -276,14 +281,14 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
   const useRecording = () => {
     if (!recorder.audioBlob) return;
     if (recorder.audioBlob.size > POST_VOICE_NOTE_MAX_SIZE) {
-      setTranscriptionError("Voice notes must be 20 MB or smaller.");
+      setTranscriptionError(__msg("voice.voiceNotesMustBe20MbOrSmaller"));
       return;
     }
     const sourceText = transcript.trim();
     const translationEntries = Object.values(translations);
     const staleTranslations = translationEntries.filter((translation) => translation.text?.trim() && translation.sourceText !== sourceText);
     if (staleTranslations.length) {
-      setTranslationError("Update or remove stale translations before using this recording.");
+      setTranslationError(__msg("voice.updateOrRemoveStaleTranslationsBeforeUsingThis"));
       return;
     }
     onUse({
@@ -319,7 +324,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
   const recordingPaused = recorder.status === "paused";
   const recordingBusy = recorder.status === "requesting-permission" || recorder.status === "stopping";
   const showCapture = recordingActive || recordingPaused || recordingBusy;
-  const title = recorder.status === "preview" ? "Review voice note" : "Voice note";
+  const title = recorder.status === "preview" ? __msg("voice.reviewVoiceNote") : __msg("fanWeb.voiceNote");
   const transcribing = transcriptStatus === "loading";
   const sourceText = transcript.trim();
   const selectedTranslationStatus = translationStatuses[selectedLanguage] || "idle";
@@ -343,109 +348,99 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-atseen-blue/25 bg-atseen-blue/10 text-2xl text-atseen-blue">
             <FiMic aria-hidden="true" />
           </div>
-          <p className="mt-4 text-xl font-black text-atseen-text">Voice note</p>
-          <p className="mt-1 text-sm text-atseen-muted">Up to 30 seconds. We can turn your voice into text.</p>
+          <p className="mt-4 text-xl font-black text-atseen-text">{__msg("fanWeb.voiceNote")}</p>
+          <p className="mt-1 text-sm text-atseen-muted">{__msg("voice.upTo30SecondsWeCanTurnYourVoice")}</p>
           {recorder.error ? <p className="mt-4 rounded-2xl border border-atseen-danger/20 bg-atseen-danger/10 p-3 text-sm text-atseen-danger">{recorder.error}</p> : null}
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
-            <button className="rounded-2xl border border-atseen-line px-5 py-3 text-sm font-bold text-atseen-text" onClick={close} type="button">
-              Cancel
-            </button>
-            <button className="rounded-2xl bg-atseen-blue px-6 py-3 text-sm font-black text-atseen-bg" onClick={recorder.startRecording} type="button">
-              Start Recording
-            </button>
+            <button className="rounded-2xl border border-atseen-line px-5 py-3 text-sm font-bold text-atseen-text" onClick={close} type="button">{__msg("admin.cancel")}</button>
+            <button className="rounded-2xl bg-atseen-blue px-6 py-3 text-sm font-black text-atseen-bg" onClick={recorder.startRecording} type="button">{__msg("voice.startRecording")}</button>
           </div>
         </div>
       ) : null}
 
       {showCapture ? (
         <div className="wall-voice-capture">
-          <button aria-label="Stop recording" className={`wall-voice-stop-orb ${recordingActive ? "is-recording" : ""}`} disabled={recordingBusy} onClick={recorder.stopRecording} type="button">
+          <button aria-label={__msg("publication.stopRecording")} className={`wall-voice-stop-orb ${recordingActive ? "is-recording" : ""}`} disabled={recordingBusy} onClick={recorder.stopRecording} type="button">
             <FiSquare aria-hidden="true" />
           </button>
-          <h2>Say what you see</h2>
-          <p aria-live="polite">{recordingBusy ? "Preparing your microphone..." : recordingPaused ? "Recording paused" : quick ? "Up to 30 seconds \u2014 we\u2019ll turn it into text" : `${formatVoiceTime(recorder.durationSeconds)} of 00:30 \u2014 we'll turn it into text`}</p>
+          <h2>{__msg("voice.sayWhatYouSee")}</h2>
+          <p aria-live="polite">{recordingBusy ? __msg("voice.preparingYourMicrophone") : recordingPaused ? __msg("voice.recordingPaused") : quick ? __msg("voice.upTo30SecondsWeLlTurnItInto") : __msg("voice.of0030WeLlTurnItIntoText", { value0: formatVoiceTime(recorder.durationSeconds) })}</p>
           <div className="wall-voice-capture-wave">
             <WaveBars active={recordingActive} levels={recorder.levels} />
           </div>
-          <span className="sr-only" aria-live="off">{formatVoiceTime(recorder.durationSeconds)} of 00:30</span>
-          <button className="wall-voice-stop-action" disabled={recordingBusy} onClick={recorder.stopRecording} type="button">Stop</button>
+          <span className="sr-only" aria-live="off">{formatVoiceTime(recorder.durationSeconds)} {__msg("voice.of0030")}</span>
+          <button className="wall-voice-stop-action" disabled={recordingBusy} onClick={recorder.stopRecording} type="button">{__msg("voice.stop")}</button>
         </div>
       ) : null}
 
-      {quick && recorder.status === "preview" && transcriptionError ? <div className="wall-voice-quick-error"><p role="alert">{transcriptionError}</p><button onClick={() => { setTranscriptionError(""); recorder.startRecording(); }} type="button">Try recording again</button><button onClick={close} type="button">Cancel</button></div> : null}
+      {quick && recorder.status === "preview" && transcriptionError ? <div className="wall-voice-quick-error"><p role="alert">{transcriptionError}</p><button onClick={() => { setTranscriptionError(""); recorder.startRecording(); }} type="button">{__msg("voice.tryRecordingAgain")}</button><button onClick={close} type="button">{__msg("admin.cancel")}</button></div> : null}
       {!quick && recorder.status === "preview" ? (
         <div>
-          <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-lg font-bold text-atseen-text">{title}</h2><button aria-label="Close voice recorder" className="grid h-9 w-9 place-items-center rounded-full border border-atseen-line text-atseen-muted" onClick={close} type="button"><FiX /></button></div>
+          <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-lg font-bold text-atseen-text">{title}</h2><button aria-label={__msg("voice.closeVoiceRecorder")} className="grid h-9 w-9 place-items-center rounded-full border border-atseen-line text-atseen-muted" onClick={close} type="button"><FiX /></button></div>
           <div className="rounded-2xl border border-atseen-line bg-white/[0.025] p-3">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-sm font-black text-atseen-text">Voice note - {formatVoiceTime(recorder.durationSeconds)}</p>
-              <button aria-label="Delete voice note" className="grid h-8 w-8 place-items-center rounded-full text-atseen-danger hover:bg-atseen-danger/10" onClick={deleteRecording} type="button">
+              <p className="text-sm font-black text-atseen-text">{__msg("voice.voiceNote")} {formatVoiceTime(recorder.durationSeconds)}</p>
+              <button aria-label={__msg("voice.deleteVoiceNote")} className="grid h-8 w-8 place-items-center rounded-full text-atseen-danger hover:bg-atseen-danger/10" onClick={deleteRecording} type="button">
                 <FiTrash2 aria-hidden="true" />
               </button>
             </div>
-            <VoiceMessageBubble audio={{ duration: recorder.durationSeconds, url: recorder.audioUrl, waveform: recorder.levels }} label="Voice note" />
+            <VoiceMessageBubble audio={{ duration: recorder.durationSeconds, url: recorder.audioUrl, waveform: recorder.levels }} label={__msg("fanWeb.voiceNote")} />
           </div>
 
-          <label className="mt-4 block text-xs font-bold text-atseen-muted">
-            Transcript
-            <textarea
+          <label className="mt-4 block text-xs font-bold text-atseen-muted">{__msg("voice.transcript")}<textarea
               className="mt-2 min-h-28 w-full resize-y rounded-2xl border border-atseen-line bg-atseen-bg p-3 text-sm leading-6 text-white outline-none transition focus:border-atseen-blue"
               maxLength={POST_TEXT_MAX_LENGTH}
               onChange={(event) => {
                 setTranscript(event.target.value);
                 setTranslationError("");
               }}
-              placeholder={transcribing ? "Transcribing voice note..." : "Review or edit the transcript"}
+              placeholder={transcribing ? __msg("voice.transcribingVoiceNote") : __msg("voice.reviewOrEditTheTranscript")}
               value={transcript}
             />
           </label>
-          {transcribing ? <p className="mt-2 text-xs font-bold text-atseen-blue">Transcribing voice note...</p> : null}
-          {transcriptStatus === "empty" ? <p className="mt-2 text-xs text-atseen-muted">No speech was detected. You can still use the voice note.</p> : null}
-          {transcriptStatus === "success" && confidence !== null ? <p className="mt-2 text-xs text-atseen-muted">Transcript ready.</p> : null}
-          {transcriptStatus === "not-configured" ? <p className="mt-2 text-xs text-atseen-muted">Transcription is not configured yet. You can still use the voice note.</p> : null}
+          {transcribing ? <p className="mt-2 text-xs font-bold text-atseen-blue">{__msg("voice.transcribingVoiceNote")}</p> : null}
+          {transcriptStatus === "empty" ? <p className="mt-2 text-xs text-atseen-muted">{__msg("voice.noSpeechWasDetectedYouCanStillUseThe")}</p> : null}
+          {transcriptStatus === "success" && confidence !== null ? <p className="mt-2 text-xs text-atseen-muted">{__msg("voice.transcriptReady")}</p> : null}
+          {transcriptStatus === "not-configured" ? <p className="mt-2 text-xs text-atseen-muted">{__msg("voice.transcriptionIsNotConfiguredYetYouCanStillUse")}</p> : null}
           {transcriptionError ? (
             <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-atseen-danger/20 bg-atseen-danger/10 p-3 text-xs text-atseen-danger">
               <span>{transcriptionError}</span>
-              <button className="font-black text-atseen-blue" onClick={transcribe} type="button">Retry transcription</button>
+              <button className="font-black text-atseen-blue" onClick={transcribe} type="button">{__msg("voice.retryTranscription")}</button>
             </div>
           ) : null}
 
-          <section aria-label="Transcript translations" className="mt-4 rounded-2xl border border-atseen-line bg-white/[0.025] p-3">
+          <section aria-label={__msg("voice.transcriptTranslations")} className="mt-4 rounded-2xl border border-atseen-line bg-white/[0.025] p-3">
             <div className="mb-3 flex items-center gap-2 text-xs font-black text-atseen-text">
-              <FiGlobe aria-hidden="true" />
-              Translations
-            </div>
+              <FiGlobe aria-hidden="true" />{__msg("voice.translations")}</div>
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <label className="block text-xs font-bold text-atseen-muted">
-                Translate to
-                <select
+              <label className="block text-xs font-bold text-atseen-muted">{__msg("voice.translateTo")}<select
                   className="mt-2 min-h-11 w-full rounded-xl border border-atseen-line bg-atseen-bg px-3 text-sm font-bold text-white outline-none transition focus:border-atseen-blue"
                   onChange={(event) => setSelectedLanguage(event.target.value)}
                   value={selectedLanguage}
                 >
-                  <option value="">Select language</option>
+                  <option value="">{__msg("voice.selectLanguage")}</option>
                   {translationLanguages.map((language) => (
                     <option key={language.code} value={language.code}>{language.name}</option>
                   ))}
                 </select>
               </label>
               <button
-                aria-label="Translate transcript"
+                aria-label={__msg("voice.translateTranscript")}
                 className="inline-flex min-h-11 items-center justify-center self-end rounded-xl bg-atseen-blue px-4 text-sm font-black text-atseen-bg disabled:opacity-50"
                 disabled={!sourceText || !selectedLanguage || transcribing || selectedTranslationStatus === "loading" || translationLanguageStatus !== "success"}
                 onClick={() => translateLanguage(selectedLanguage)}
                 type="button"
               >
-                {selectedTranslationStatus === "loading" ? "Translating..." : translations[selectedLanguage]?.sourceText === sourceText ? "Use cached" : "Translate"}
+                {selectedTranslationStatus === "loading" ? __msg("fanWeb.translating") : translations[selectedLanguage]?.sourceText === sourceText ? __msg("voice.useCached") : __msg("voice.translate")}
               </button>
             </div>
             <p aria-live="polite" className="mt-2 min-h-4 text-xs text-atseen-muted">
-              {translationLanguageStatus === "loading" ? "Loading translation languages..." : translationLanguageStatus === "error" ? "Translation languages are unavailable." : selectedTranslationStatus === "error" ? "Couldn't translate this transcript." : selectedTranslationStatus === "loading" ? "Translating..." : ""}
+              {translationLanguageStatus === "loading" ? __msg("voice.loadingTranslationLanguages") : translationLanguageStatus === "error" ? __msg("voice.translationLanguagesAreUnavailable") : selectedTranslationStatus === "error" ? __msg("voice.couldnTTranslateThisTranscript") : selectedTranslationStatus === "loading" ? __msg("fanWeb.translating") : ""}
             </p>
             {translationError ? (
               <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-atseen-danger/20 bg-atseen-danger/10 p-3 text-xs text-atseen-danger">
                 <span>{translationError}</span>
-                {selectedLanguage ? <button className="font-black text-atseen-blue" onClick={() => translateLanguage(selectedLanguage, { force: true })} type="button">Retry</button> : null}
+                {selectedLanguage ? <button className="font-black text-atseen-blue" onClick={() => translateLanguage(selectedLanguage, { force: true })} type="button">{__msg("activity.retry")}</button> : null}
               </div>
             ) : null}
 
@@ -460,14 +455,14 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <div>
                           <p className="text-xs font-black text-atseen-text">{label}</p>
-                          <p className="text-[11px] text-atseen-muted">{stale ? "Original changed - update before publishing" : `Translated to ${label}`}</p>
+                          <p className="text-[11px] text-atseen-muted">{stale ? __msg("voice.originalChangedUpdateBeforePublishing") : __msg("stories.translatedTo", { value0: label })}</p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <button className="text-[11px] font-black text-atseen-blue disabled:opacity-50" disabled={status === "loading" || !sourceText} onClick={() => translateLanguage(translation.language, { force: true })} type="button">
-                            {status === "loading" ? "Translating..." : stale ? "Update" : "Translate again"}
+                            {status === "loading" ? __msg("fanWeb.translating") : stale ? __msg("voice.update") : __msg("voice.translateAgain")}
                           </button>
                           <button
-                            aria-label={`Remove ${label} translation`}
+                            aria-label={__msg("voice.removeTranslation", { value0: label })}
                             className="grid h-7 w-7 place-items-center rounded-full text-atseen-danger hover:bg-atseen-danger/10"
                             onClick={() => {
                               translationAbortRefs.current[translation.language]?.abort();
@@ -488,9 +483,7 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
                           </button>
                         </div>
                       </div>
-                      <label className="block text-[11px] font-bold text-atseen-muted">
-                        Translation text
-                        <textarea
+                      <label className="block text-[11px] font-bold text-atseen-muted">{__msg("voice.translationText")}<textarea
                           className="mt-1 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-white/[0.025] p-3 text-sm leading-6 text-white outline-none transition focus:border-atseen-blue"
                           maxLength={POST_TEXT_MAX_LENGTH}
                           onChange={(event) => {
@@ -512,22 +505,17 @@ export default function WallVoiceRecorder({ isOpen, onClose, onUse, quick = fals
               </div>
             ) : null}
             {nextMissingLanguage ? (
-              <button className="mt-3 text-xs font-black text-atseen-blue" onClick={() => setSelectedLanguage(nextMissingLanguage)} type="button">
-                + Add another language
-              </button>
+              <button className="mt-3 text-xs font-black text-atseen-blue" onClick={() => setSelectedLanguage(nextMissingLanguage)} type="button">{__msg("voice.addAnotherLanguage")}</button>
             ) : null}
           </section>
 
           <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-atseen-line px-4 text-sm font-bold text-atseen-text" onClick={rerecord} type="button">
-              <FiRefreshCw aria-hidden="true" /> Re-record
-            </button>
+              <FiRefreshCw aria-hidden="true" />{__msg("messaging.reRecord")}</button>
             <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-atseen-danger/25 px-4 text-sm font-bold text-atseen-danger" onClick={deleteRecording} type="button">
-              <FiTrash2 aria-hidden="true" /> Delete
-            </button>
+              <FiTrash2 aria-hidden="true" />{__msg("posts.delete")}</button>
             <button className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-atseen-blue px-5 text-sm font-black text-atseen-bg" onClick={useRecording} type="button">
-              <FiSend aria-hidden="true" /> Use Recording
-            </button>
+              <FiSend aria-hidden="true" />{__msg("voice.useRecording")}</button>
           </div>
         </div>
       ) : null}

@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo } from "react";
 import DiscoverActionRail from "./DiscoverActionRail";
 import DiscoverContextStack from "./DiscoverContextStack";
@@ -16,9 +19,10 @@ function DiscoverPersonSlide({
   pending,
   slide,
 }) {
+  __useUiLanguage();
   const creator = slide.creator;
   return (
-    <article aria-label={`${creator.name} recommendation`} className="discover-person-slide" data-active={active ? "true" : "false"}>
+    <article aria-label={__msg("discover.recommendation", { value0: creator.name })} className="discover-person-slide" data-active={active ? "true" : "false"}>
       <DiscoverMediaBackground active={active} creatorName={creator.name} media={slide.media} />
       <div aria-hidden="true" className="discover-shade-top" />
       <div aria-hidden="true" className="discover-shade-bottom" />
