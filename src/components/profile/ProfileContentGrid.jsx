@@ -573,14 +573,16 @@ function ProfileContentGrid({
       );
     }
     if (draftsOpen) {
+      const restrictedPaidDrafts = drafts.filter((item) => item.pricing?.mode === "ONE_TIME");
       return (
         <section className="profile-seen-drafts is-open">
           <header><button onClick={() => setDraftsOpen(false)} type="button">‹ My Seens</button><i>·</i><b>Drafts {drafts.length}</b></header>
+          {restrictedPaidDrafts.length ? <div className="mx-3 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.05] p-3 text-left"><span><b className="block text-sm">Only you can see this</b><small className="mt-1 block text-xs text-white/45">Add seller info to publish paid content.</small></span><Link className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[#0A0C0F] active:scale-[.97]" to="/creator/seller-verification">Add info</Link></div> : null}
           <div className="profile-seens-grid">
             {drafts.map((item) => <Link className="profile-seen-tile is-draft" key={item.id} to={`/studio/seens/${item.id}/edit?from=drafts`}>
               {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title || "Untitled Seen"} draft cover`} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
               <span className="profile-seen-shade" />
-              <span className="profile-seen-badge">DRAFT</span>
+              <span className="profile-seen-badge">{item.pricing?.mode === "ONE_TIME" ? "Only you" : "DRAFT"}</span>
               <span className="profile-seen-copy"><strong>{item.title || "Untitled Seen"}</strong></span>
             </Link>)}
           </div>

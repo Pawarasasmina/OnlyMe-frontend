@@ -4,7 +4,7 @@ export const onboardingService = {
   getOnboardingState: () => axiosInstance.get("/onboarding"),
   saveWelcomeStep: () => axiosInstance.put("/onboarding/welcome"),
   saveInterests: (interestIds) => axiosInstance.put("/onboarding/interests", { interestIds }),
-  saveProfileType: (profileType) => axiosInstance.put("/onboarding/account-type", { profileType }),
+  saveProfileType: (selection) => axiosInstance.put("/onboarding/account-type", typeof selection === "string" ? { profileType: selection } : selection),
   saveInstincts: (discoveryPreferences) => axiosInstance.put("/onboarding/instincts", { discoveryPreferences }),
   getSuggestedPeople: (params = {}) => axiosInstance.get("/onboarding/suggestions", { params }),
   saveSuggestedPeople: (targetUserIds) => axiosInstance.put("/onboarding/people", { targetUserIds }),

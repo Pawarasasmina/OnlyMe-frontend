@@ -66,5 +66,6 @@ export function useOnboardingSuggestions(enabled = true) {
     queryKey: onboardingKeys.suggestions(user?.id),
     queryFn: () => onboardingService.getSuggestedPeople({ limit: 12 }).then((response) => response.data.data.suggestions || []),
     enabled: Boolean(user?.id && enabled),
+    refetchOnMount: "always",
   });
 }

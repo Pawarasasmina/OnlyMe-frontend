@@ -1288,6 +1288,10 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       nav(experience && returnTo ? returnTo : experience ? `/experience/${submitted.id}` : `/world/${submitted.id}`, { replace: true });
     } catch (requestError) {
+      if (["SELLER_VERIFICATION_REQUIRED", "SELLER_INFORMATION_REQUIRED"].includes(requestError.response?.data?.code)) {
+        nav("/creator/seller-verification", { state: { returnTo: window.location.pathname } });
+        return;
+      }
       setError(publicationError(requestError));
       setNotice("Publish failed");
     } finally {

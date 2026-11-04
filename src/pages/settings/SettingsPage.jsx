@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBarChart2, FiBell, FiChevronRight, FiCreditCard, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiLogOut, FiMessageCircle, FiShield, FiTrash2, FiUserCheck, FiUserX, FiUsers, FiVolumeX, FiZap } from "react-icons/fi";
+import { FiArrowLeft, FiBarChart2, FiBell, FiChevronRight, FiCreditCard, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiLink, FiLogOut, FiMapPin, FiMessageCircle, FiPhone, FiShield, FiTrash2, FiUserCheck, FiUserX, FiUsers, FiVolumeX, FiZap } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
 import NotificationSettingsSheet from "./NotificationSettingsSheet";
@@ -11,6 +11,12 @@ import { normalizeApiError } from "../../utils/apiErrors";
 import CreatorVerificationPage from "../creator/CreatorVerificationPage";
 import DeleteAccountSheet from "./DeleteAccountSheet";
 import AccountTypePicker from "../../components/onboarding/AccountTypePicker";
+
+const accountCategories = {
+  creator: ["Digital creator", "Coach", "Traveler", "Artist", "Musician", "Athlete", "Chef", "Educator"],
+  business: ["Shop", "Café & restaurant", "Studio & salon", "Fitness club", "Hotel & travel", "Media & news", "Services", "Brand"],
+};
+const businessButtons = [{ id: "call", label: "Call", Icon: FiPhone }, { id: "directions", label: "Directions", Icon: FiMapPin }, { id: "website", label: "Website", Icon: FiLink }];
 
 function SettingsRow({ onClick, subtitle, title, to, trailing }) {
   const content = <><span className="settings-index-row-copy"><b>{title}</b>{subtitle ? <small>{subtitle}</small> : null}</span>{trailing || <FiChevronRight />}</>;
@@ -37,6 +43,8 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [accountTypeOpen, setAccountTypeOpen] = useState(false);
   const [nextProfileType, setNextProfileType] = useState(user?.profileType || "personal");
+  const [nextCategory, setNextCategory] = useState("");
+  const [nextContactButtons, setNextContactButtons] = useState(user?.businessContactButtons?.length ? user.businessContactButtons : ["call", "directions", "website"]);
 
   const privacyQuery = useQuery({
     queryKey: ["settings", "privacy"],
@@ -83,8 +91,10 @@ export default function SettingsPage() {
   const changeProfileType = async () => {
     setBusy(true); setError("");
     try {
-      const response = await authService.updateProfileType(nextProfileType);
+      const response = await authService.updateProfileType({ profileType: nextProfileType, category: nextCategory, contactButtons: nextProfileType === "business" ? nextContactButtons : [] });
       setUser(response.data.data.user);
+      await queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       setAccountTypeOpen(false);
     } catch (requestError) { setError(requestError.response?.data?.message || "Unable to change account type."); }
     finally { setBusy(false); }
@@ -94,7 +104,7 @@ export default function SettingsPage() {
     <header className="settings-index-header"><button aria-label="Back to profile" onClick={() => navigate("/profile")} type="button"><FiArrowLeft /></button><h1>Settings</h1></header>
 
     <SettingsGroup title="Account">
-      <SettingsRow onClick={() => { setNextProfileType(user?.profileType || "personal"); setAccountTypeOpen(true); }} subtitle="Switch anytime · confirmation required" title="Account type" trailing={<span className="capitalize text-sm text-white/55">{user?.profileType || "personal"}<FiChevronRight className="ml-2 inline" /></span>} />
+      <SettingsRow onClick={() => { setNextProfileType(user?.profileType || "personal"); setNextCategory(""); setNextContactButtons(user?.businessContactButtonsConfigured ? (user.businessContactButtons || []) : ["call", "directions", "website"]); setAccountTypeOpen(true); }} subtitle="Switch anytime · confirmation required" title="Account type" trailing={<span className="capitalize text-sm text-white/55">{user?.profileType || "personal"}<FiChevronRight className="ml-2 inline" /></span>} />
       {["fan", "creator"].includes(user?.role) ? user.creatorApprovalStatus === "approved" ? <SettingsRow icon={FiUserCheck} subtitle="Approved creator access" title="Creator tools" to="/studio" /> : <SettingsRow icon={FiUserCheck} onClick={() => setCreatorApplyOpen(true)} subtitle={user.creatorApprovalStatus === "pending" ? "Application under review" : "For people who want to publish and earn"} title={user.creatorApprovalStatus === "pending" ? "Creator application" : "Apply as a creator"} /> : null}
       <SettingsRow icon={FiEdit3} subtitle="Identity, photos and contact options" title="Edit profile" to="/settings/profile?from=settings" />
       <SettingsRow icon={FiGlobe} subtitle="Language, time zone and password" title="Account preferences" to="/settings/account" />
@@ -127,6 +137,6 @@ export default function SettingsPage() {
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <><button aria-label="Close creator application" className="fixed inset-0 z-[189] cursor-default bg-black/65 backdrop-blur-[2px]" onClick={() => setCreatorApplyOpen(false)} type="button" /><CreatorVerificationPage /></> : null}
     {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">Supporters {privacyQuery.data?.privacySettings?.showFollowers ? "shown" : "hidden"}</div> : null}
-    {accountTypeOpen ? <><button aria-label="Close account type" className="fixed inset-0 z-[220] bg-black/70 backdrop-blur-sm" onClick={() => setAccountTypeOpen(false)} type="button" /><section className="fixed inset-x-0 bottom-0 z-[221] mx-auto max-w-[560px] rounded-t-[28px] border border-white/10 bg-[#0D1117] p-5 pb-[max(24px,env(safe-area-inset-bottom))] shadow-2xl"><div className="mx-auto mb-5 h-1 w-12 rounded-full bg-white/30" /><h2 className="text-2xl font-black">Account type</h2><p className="mt-2 text-sm leading-6 text-white/55">Everyone can earn. Your type changes which tools appear. Your profile, followers and earnings stay the same.</p><div className="mt-5"><AccountTypePicker onChange={setNextProfileType} value={nextProfileType} /></div>{error ? <p className="mt-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{error}</p> : null}<button className="mt-5 w-full rounded-2xl bg-[#9CCBFF] py-4 font-black text-[#0A0C0F] active:scale-[.97] disabled:opacity-50" disabled={busy || nextProfileType === user?.profileType} onClick={changeProfileType} type="button">{busy ? "Saving…" : `Confirm ${nextProfileType} account`}</button></section></> : null}
+    {accountTypeOpen ? <><button aria-label="Close account type" className="fixed inset-0 z-[220] bg-black/70 backdrop-blur-sm" onClick={() => setAccountTypeOpen(false)} type="button" /><section className="fixed inset-x-0 bottom-0 z-[221] mx-auto max-h-[92dvh] max-w-[560px] overflow-y-auto rounded-t-[28px] border border-white/10 bg-[#0D1117] p-5 pb-[max(24px,env(safe-area-inset-bottom))] shadow-2xl"><div className="mx-auto mb-5 h-1 w-12 rounded-full bg-white/30" /><h2 className="text-2xl font-black">Account type</h2><p className="mt-2 text-sm leading-6 text-white/55">Everyone can earn. Your type changes which tools appear. Your profile, followers and earnings stay the same.</p><div className="mt-5"><AccountTypePicker onChange={(value) => { setNextProfileType(value); setNextCategory(""); }} value={nextProfileType} /></div>{["creator", "business"].includes(nextProfileType) ? <section className="mt-5 border-t border-white/10 pt-5"><h3 className="text-sm font-black">Category <span className="font-normal text-white/40">· optional</span></h3><div className="mt-3 flex flex-wrap gap-2">{accountCategories[nextProfileType].map((category) => <button className={`rounded-full px-3 py-2 text-xs font-bold transition active:scale-[.97] ${nextCategory === category ? "bg-white text-[#0A0C0F]" : "bg-white/[.07] text-white/65"}`} key={category} onClick={() => setNextCategory((current) => current === category ? "" : category)} type="button">{category}</button>)}</div></section> : null}{nextProfileType === "business" ? <section className="mt-5 border-t border-white/10 pt-5"><h3 className="text-sm font-black">Contact buttons</h3><p className="mt-1 text-xs text-white/45">Choose which buttons appear on your Business profile.</p><div className="mt-2 divide-y divide-white/[.06]">{businessButtons.map(({ id, label, Icon }) => { const enabled = nextContactButtons.includes(id); return <button className="flex w-full items-center gap-3 py-3.5 text-left" key={id} onClick={() => setNextContactButtons((current) => enabled ? current.filter((item) => item !== id) : [...current, id])} type="button"><Icon className="text-white/55" /><b className="flex-1 text-sm">{label}</b><span className={`relative h-7 w-12 rounded-full transition ${enabled ? "bg-[#9CCBFF]" : "bg-white/10"}`}><i className={`absolute top-1 h-5 w-5 rounded-full bg-[#0A0C0F] transition ${enabled ? "left-6" : "left-1"}`} /></span></button>; })}</div></section> : null}{error ? <p className="mt-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{error}</p> : null}<button className="mt-5 w-full rounded-2xl bg-[#9CCBFF] py-4 font-black text-[#0A0C0F] active:scale-[.97] disabled:opacity-50" disabled={busy} onClick={changeProfileType} type="button">{busy ? "Saving…" : `${nextProfileType === user?.profileType ? "Update" : "Confirm"} ${nextProfileType} account`}</button></section></> : null}
   </main>;
 }

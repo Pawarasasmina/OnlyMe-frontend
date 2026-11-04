@@ -21,6 +21,8 @@ import { moderationWarningService } from "../services/moderationWarningService";
 import { publicationService } from "../services/publicationService";
 import { useSocialScrollRestoration } from "../hooks/useSocialScrollRestoration";
 import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
+import OnboardingTicket from "../components/onboarding/OnboardingTicket";
+import { useOnboarding } from "../hooks/useOnboarding";
 
 const STATUS_KEY = "atseen_social_status";
 
@@ -50,6 +52,7 @@ class SocialContentErrorBoundary extends Component {
 
 function SocialAppShell({ children = null }) {
   const { user } = useAuth();
+  const onboarding = useOnboarding();
   const capabilities = useSocialCapabilities();
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,6 +87,16 @@ function SocialAppShell({ children = null }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const [verificationOpen, setVerificationOpen] = useState(false);
+  const ticketVisible = user?.onboarding?.status === "in_progress" && user?.onboarding?.currentStep === "ticket";
+
+  const closeOnboardingTicket = async () => {
+    try {
+      await onboarding.acknowledgeTicket.mutateAsync();
+      await onboarding.complete.mutateAsync();
+    } catch {
+      // Keep the ticket visible so the user can retry without losing their place.
+    }
+  };
 
   useEffect(() => {
     if (status) localStorage.setItem(STATUS_KEY, status);
@@ -147,7 +160,8 @@ function SocialAppShell({ children = null }) {
       <div className="user-app-shell social-app-shell min-h-screen overflow-x-hidden bg-atseen-bg text-atseen-text min-[881px]:h-screen min-[881px]:overflow-hidden" onClickCapture={handleShellNavigation}>
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] min-[881px]:h-screen min-[881px]:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadActivityCount={unreadActivityCount} unreadMessageCount={unreadMessageCount} />
-          <div className="social-center-scroll min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
+          <div className="social-center-scroll relative min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
+            {ticketVisible ? <OnboardingTicket busy={onboarding.acknowledgeTicket.isPending || onboarding.complete.isPending} city={onboarding.data?.profile?.city || "Dubai"} memberNumber={onboarding.data?.user?.memberNumber || user?.memberNumber} name={user?.name} onContinue={closeOnboardingTicket} overlay /> : null}
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isWorldReaderPage

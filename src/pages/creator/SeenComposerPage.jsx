@@ -3667,6 +3667,10 @@ export default function SeenComposerPage() {
         state: returnTo || fromSeen ? undefined : { publishedSeen: { id: published?.id || publication.id, title: published?.title || publication.title } },
       });
     } catch (requestError) {
+      if (["SELLER_VERIFICATION_REQUIRED", "SELLER_INFORMATION_REQUIRED"].includes(requestError.response?.data?.code)) {
+        nav("/creator/seller-verification", { state: { returnTo: window.location.pathname } });
+        return;
+      }
       setError(publicationError(requestError));
     } finally {
       setSubmitting(false);

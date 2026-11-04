@@ -507,6 +507,7 @@ function ProfileSettingsPage() {
         isVerified: data.account.isVerified,
         status: data.account.status,
         creatorApprovalStatus: user?.creatorApprovalStatus,
+        profileType: data.account.profileType || user?.profileType,
       });
       setForm(profileToForm(data, privacy));
       setDirty(false);

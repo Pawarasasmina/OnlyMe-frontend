@@ -15,7 +15,9 @@ import {
   FiGrid,
   FiUsers,
   FiMail,
+  FiMapPin,
   FiMoreHorizontal,
+  FiPhone,
   FiPlus,
   FiRefreshCw,
   FiRepeat,
@@ -25,6 +27,7 @@ import {
   FiSlash,
   FiX,
   FiZap,
+  FiGlobe,
 } from "react-icons/fi";
 import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferModal";
 import AppShareSheet from "../../components/share/ShareSheet";
@@ -576,6 +579,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
         {isOwner ? <button className="profile-action-chip" onClick={() => setShareOpen(true)} type="button"><FiShare2 /> Share</button> : null}
         {isOwner ? <MoreMenu isOwner profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /> : null}
       </div>
+      <BusinessContactActions isOwner={isOwner} profile={profile} />
       <ProfileViewersSheet isOpen={viewersOpen} onClose={() => setViewersOpen(false)} />
       <ProfileShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} shareUrl={shareUrl} />
       {directGiftOpen ? <StoryGiftPicker onClose={() => setDirectGiftOpen(false)} recipient={{ id: profile.ownerUserId, name: profile.displayName, username: profile.username, avatar: resolveMediaUrl(profile.avatar) }} sourceType="DIRECT" /> : null}
@@ -591,6 +595,28 @@ function VisitorFollowButton({ profile, relationship = {} }) {
   });
   const following = Boolean(relationship.following);
   return <button className={`profile-action-chip profile-follow-action ${following ? "is-following" : ""}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? "Following" : "Follow"}</button>;
+}
+
+function BusinessContactActions({ profile, isOwner }) {
+  const navigate = useNavigate();
+  if (profile.profileType !== "business") return null;
+  const contact = profile.businessContact || {};
+  const enabled = new Set(contact.enabled || []);
+  const actions = [
+    { id: "call", label: "Call", Icon: FiPhone, value: contact.call, href: contact.call ? `tel:${String(contact.call).replace(/[^+\d]/g, "")}` : "" },
+    { id: "directions", label: "Directions", Icon: FiMapPin, value: contact.directions, href: contact.directions ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.directions)}` : "" },
+    { id: "website", label: "Website", Icon: FiGlobe, value: contact.website, href: contact.website || "" },
+  ].filter((item) => enabled.has(item.id) && (isOwner || item.value));
+  if (!actions.length) return null;
+  const open = (item) => {
+    if (!item.href) {
+      navigate("/settings/profile?from=profile");
+      return;
+    }
+    if (item.id === "call") window.location.href = item.href;
+    else window.open(item.href, "_blank", "noopener,noreferrer");
+  };
+  return <div className="mt-3 grid grid-cols-3 gap-2">{actions.map(({ Icon, ...item }) => <button className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.07] px-2 text-xs font-black transition hover:bg-white/10 active:scale-[.97]" key={item.id} onClick={() => open(item)} type="button"><Icon />{item.label}</button>)}</div>;
 }
 
 function DirectAccessRow({ profile, viewerCapabilities }) {
@@ -639,7 +665,7 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
       {canShowDirect ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       {canShowDashboard ? (
         <>
-          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>Professional dashboard</span><FiChevronRight /></Link>
+          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>{profile.profileType === "business" ? "Business dashboard" : "Creator dashboard"}</span><FiChevronRight /></Link>
           <Link className="profile-row profile-dashboard-row" to="/grow"><FiUsers /><span>Grow</span><FiChevronRight /></Link>
         </>
       ) : null}
