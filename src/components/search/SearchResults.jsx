@@ -1,3 +1,8 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -20,6 +25,7 @@ const resultIcons = {
 };
 
 function ResultThumb({ item }) {
+  __useUiLanguage();
   if (item.type === "person" || item.type === "post") {
     const author = item.metadata?.author;
     return <FanAvatar className="ring-1 ring-[#526681]" name={author?.name || item.title} size={item.type === "post" ? "h-10 w-10" : "h-11 w-11"} src={author?.avatar || item.image} />;
@@ -28,16 +34,17 @@ function ResultThumb({ item }) {
   const image = resolveMediaUrl(item.image);
   return (
     <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[12px] bg-atseen-surface-2 text-atseen-blue">
-      {item.coverMedia ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay className="h-full w-full object-cover" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : image ? <img alt="" className="h-full w-full object-cover" loading="lazy" src={image} /> : <Icon aria-hidden="true" />}
+      {item.coverMedia ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: item.title })} autoPlay className="h-full w-full object-cover" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : image ? <img alt="" className="h-full w-full object-cover" loading="lazy" src={image} /> : <Icon aria-hidden="true" />}
     </span>
   );
 }
 
 function ResultMeta({ item }) {
+  __useUiLanguage();
   const bits = [];
   if (item.category) bits.push(item.category);
   if (item.location?.city) bits.push(item.location.country ? `${item.location.city}, ${item.location.country}` : item.location.city);
-  if (item.createdAt) bits.push(new Date(item.createdAt).toLocaleDateString());
+  if (item.createdAt) bits.push(new Date(item.createdAt).toLocaleDateString(__uiLocale()));
   return bits.length ? <p className="mt-1 truncate text-[11px] text-atseen-dim">{bits.join(" - ")}</p> : null;
 }
 
@@ -52,81 +59,86 @@ function trackResult(item, position, searchCategory) {
 }
 
 function SeenResults({ items, preview = false }) {
+  __useUiLanguage();
   return <div className={preview ? "search-seen-strip atseen-hide-scrollbar" : "search-seen-grid"}>
     {items.map((item, index) => {
       const chapters = item.metadata?.chapters || [];
       const chapterCount = Number(item.metadata?.chapterCount) || chapters.length;
       const creator = item.metadata?.creator || {};
-      return <Link aria-label={`Open Seen ${item.title}`} className="search-seen-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "seens")} to={item.route || "/search"}>
+      return <Link aria-label={__msg("search.openSeen", { value0: item.title })} className="search-seen-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "seens")} to={item.route || "/search"}>
         <span className="search-seen-media">
           {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiFileText /></span>}
 
         </span>
         <span className="search-seen-copy">
           {item.category ? <small className="search-seen-category">{item.category}</small> : null}
-          <strong>{item.title}</strong>
+          <strong dir="auto">{item.title}</strong>
           {chapters.length ? <span className="search-seen-chapters">
             {chapters.slice(0, 2).map((chapter, chapterIndex) => <span key={chapter.id || chapterIndex}><b>{String(chapterIndex + 1).padStart(2, "0")}</b><em>{typeof chapter === "string" ? chapter : chapter.title || chapter.preview || chapter.p}</em></span>)}
           </span> : null}
         </span>
-        <span className="search-seen-byline"><FanAvatar name={creator.name || "Creator"} size="h-4 w-4" src={creator.avatar} /><span>{creator.name?.split(" ")[0] || "Creator"} · {chapterCount} chapters</span></span>
+        <span className="search-seen-byline"><FanAvatar name={creator.name || "Creator"} size="h-4 w-4" src={creator.avatar} /><span>{creator.name?.split(" ")[0] || __msg("discover.creator")} · {chapterCount} {__msg("discover.chapters")}</span></span>
       </Link>;
     })}
   </div>;
 }
 
 function ExperienceResults({ items }) {
+  __useUiLanguage();
   return <div className="search-experience-grid">
     {items.map((item, index) => <Link className="search-experience-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "experiences")} to={item.route || "/search"}>
       <span className="search-experience-cover">
         {item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <span className="search-result-media-fallback"><FiGrid /></span>}
       </span>
       <span className="search-experience-copy">
-        <strong>{item.title}</strong>
+        <strong dir="auto">{item.title}</strong>
         <span>{[item.metadata?.creator?.name?.split(" ")[0], item.description].filter(Boolean).join(" \u00b7 ")}</span>
       </span>
-      <span className="search-experience-price">{item.metadata?.unlocked ? "\u2713" : Number(item.metadata?.price) > 0 ? <><img alt="coins" src="/brand/goldcoin.png" />{Number(item.metadata.price).toLocaleString()}</> : "Free"}</span>
+      <span className="search-experience-price">{item.metadata?.unlocked ? "\u2713" : Number(item.metadata?.price) > 0 ? <><img alt={__msg("profile.coins")} src="/brand/goldcoin.png" />{Number(item.metadata.price).toLocaleString(__uiLocale())}</> : __msg("profile.free")}</span>
     </Link>)}
   </div>;
 }
 
 function WallResults({ items }) {
+  __useUiLanguage();
   return <div className="search-wall-list">
     {items.map((item, index) => {
       const author = item.metadata?.author || {};
-      const authorName = item.metadata?.isOwn ? "You" : author.name || "User";
+      const authorName = item.metadata?.isOwn ? __msg("fanWeb.you") : author.name || __msg("admin.user");
       return <Link className="search-wall-result" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "wall_notes")} to={item.route || "/wall"}>
         <span className="search-wall-result-copy">
           <span className="search-wall-result-text">{item.description || item.title}</span>
           <span className="search-wall-result-byline">
             <FanAvatar className="search-wall-avatar" name={authorName} size="h-6 w-6" src={author.avatar} />
             <strong>{authorName}</strong>
-            <time>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</time>
+            <time>{item.createdAt ? new Date(item.createdAt).toLocaleDateString(__uiLocale()) : ""}</time>
           </span>
           <span className="search-wall-result-meta">{item.category ? <em>#{item.category.replace(/^#/u, "")}</em> : null}{item.location?.city ? <small><FiMapPin />{item.location.city}</small> : null}</span>
         </span>
-        <FiChevronRight aria-hidden="true" className="search-wall-open" />
+        <FiChevronRight data-ui-directional="true" aria-hidden="true" className="search-wall-open" />
       </Link>;
     })}
   </div>;
 }
 
 function WorldResults({ items }) {
+  __useUiLanguage();
   return <div className="search-world-list">
     {items.map((item, index) => <Link className="search-world-card" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "worlds")} to={item.route || "/search"}>
       <span className="search-world-cover">{item.coverMedia ? <PublicationCoverMedia alt="" autoPlay className="search-result-cover-media" loading="lazy" loop media={item.coverMedia} preload="metadata" /> : resolveMediaUrl(item.image) ? <img alt="" loading="lazy" src={resolveMediaUrl(item.image)} /> : <FiGrid />}</span>
       <span className="search-world-copy">
-        <small>World by {item.metadata?.creator?.name || "Creator"}</small>
-        <strong>{item.title}</strong>
+        <small>{__msg("search.worldBy")} {item.metadata?.creator?.name || __msg("discover.creator")}</small>
+        <strong dir="auto">{item.title}</strong>
         {item.description ? <span>{item.description}</span> : null}
-        <em>{item.metadata?.subscriptionPriceCents ? `$${(Number(item.metadata.subscriptionPriceCents) / 100).toFixed(2)}/month` : "Open World"}{item.metadata?.chapterCount ? ` · ${item.metadata.chapterCount} chapters` : ""}</em>
+        <em>{item.metadata?.subscriptionPriceCents ? __msg("search.month", { value0: (Number(item.metadata.subscriptionPriceCents) / 100).toFixed(2) }) : __msg("financial.openWorld")}{item.metadata?.chapterCount ? __msg("search.chapters", { value0: item.metadata.chapterCount }) : ""}</em>
       </span>
-      <FiChevronRight aria-hidden="true" />
+      <FiChevronRight data-ui-directional="true" aria-hidden="true" />
     </Link>)}
   </div>;
 }
 
 export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
+  __useUiLanguage();
   const isPerson = item.type === "person";
   const personRoute = isPerson && (item.id === "seen" || item.metadata?.username === "seen" || item.route === "/profile/seen") ? "/profile/seen" : item.route || "/search";
   const queryClient = useQueryClient();
@@ -137,7 +149,7 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
   const statusLabel = typeof status === "string" ? status : status?.label || status?.text || "";
   const statusEmoji = typeof status === "object" ? status?.emoji : item.metadata?.statusEmoji;
   const creatorName = item.metadata?.creator?.name || item.metadata?.author?.name || item.subtitle;
-  const wallTitle = item.metadata?.isOwn ? "You" : item.metadata?.author?.name || "User";
+  const wallTitle = item.metadata?.isOwn ? __msg("fanWeb.you") : item.metadata?.author?.name || __msg("admin.user");
   const saveTarget = item.saveTarget || null;
   const save = useMutation({
     mutationFn: async () => {
@@ -155,7 +167,7 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
       queryClient.invalidateQueries({ queryKey: ["search"] });
     },
     onError: (requestError) => {
-      setError(requestError.response?.data?.message || "Unable to update Saved.");
+      setError(requestError.response?.data?.message || __msg("search.unableToUpdateSaved"));
     },
   });
 
@@ -173,7 +185,7 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
         </span>
         {searchCategory === "posts" && item.description ? <span className="mt-px block truncate text-[12px] font-normal leading-[17px] text-[#78869b]">{item.description}</span> : (isPerson ? personSubtitle : creatorName) ? <span className="mt-0.5 block truncate text-xs font-medium text-[#78869b]">{isPerson ? personSubtitle : creatorName}</span> : null}
         {searchCategory === "typed" ? <ResultMeta item={item} /> : null}
-        {error ? <span className="mt-1 block text-[11px] font-semibold text-atseen-danger" role="alert">{error}</span> : null}
+        {error ? <span className="mt-1 block text-[11px] font-semibold text-atseen-danger" role="alert">{__systemMessage(error)}</span> : null}
       </span>
     </>
   );
@@ -193,12 +205,12 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
         <Link className="flex min-w-0 flex-1 items-center gap-3" onClick={trackClick} to={personRoute}>
           <span className={`search-person-avatar ${item.metadata?.hasActiveStory ? "has-story" : ""}`}><ResultThumb item={item} />{statusEmoji ? <span className="search-person-status-badge">{statusEmoji}</span> : null}</span>
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1.5 text-sm font-extrabold text-atseen-text"><span className="truncate">{item.title}</span>{item.verified ? <VerifiedBadge /> : null}</span>
+            <span className="flex items-center gap-1.5 text-sm font-extrabold text-atseen-text"><span dir="auto" className="truncate">{item.title}</span>{item.verified ? <VerifiedBadge /> : null}</span>
             <span className="mt-0.5 block truncate text-xs font-medium text-[#78869b]">{statusLabel ? <><em className="search-person-status">{statusLabel}</em>{personSubtitle ? " \u00b7 " : ""}</> : null}{personSubtitle}</span>
 
           </span>
         </Link>
-        <Link aria-label={`Open ${item.title}`} className="grid h-9 w-9 place-items-center text-lg text-white/25 transition hover:text-atseen-blue" onClick={trackClick} to={personRoute}><FiChevronRight /></Link>
+        <Link aria-label={__msg("contentEntities.open", { value0: item.title })} className="grid h-9 w-9 place-items-center text-lg text-white/25 transition hover:text-atseen-blue" onClick={trackClick} to={personRoute}><FiChevronRight data-ui-directional="true" /></Link>
       </div>
     );
   }
@@ -212,7 +224,7 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
         {searchCategory === "worlds" && item.metadata?.price ? <span className="text-xs font-black text-[#78baff]">✦{item.metadata.price}</span> : null}
         {saveTarget ? (
           <button
-            aria-label={`${saved ? "Remove from" : "Save to"} Saved`}
+            aria-label={__msg("search.saved", { value0: saved ? __msg("search.removeFrom") : __msg("search.saveTo") })}
             className={`grid h-9 w-9 place-items-center rounded-full border transition ${saved ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-white/[0.035] text-atseen-muted hover:text-white"}`}
             disabled={save.isPending}
             onClick={() => save.mutate()}
@@ -220,9 +232,9 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
           >
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
-        ) : saved ? <FiBookmark aria-label="Saved" className="text-atseen-blue" fill="currentColor" /> : null}
-        <Link aria-label={`Open ${item.title}`} className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:text-atseen-blue ${searchCategory === "posts" ? "text-white/25" : "text-atseen-dim"}`} onClick={trackClick} to={item.route || "/search"}>
-          <FiChevronRight aria-hidden="true" />
+        ) : saved ? <FiBookmark aria-label={__msg("contentEntities.saved")} className="text-atseen-blue" fill="currentColor" /> : null}
+        <Link aria-label={__msg("contentEntities.open", { value0: item.title })} className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:text-atseen-blue ${searchCategory === "posts" ? "text-white/25" : "text-atseen-dim"}`} onClick={trackClick} to={item.route || "/search"}>
+          <FiChevronRight data-ui-directional="true" aria-hidden="true" />
         </Link>
       </span>
     </div>
@@ -231,19 +243,20 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
 
 function sectionLabel(type) {
   return {
-    journeys: "Journeys",
-    people: "People",
-    places: "Places",
-    posts: "Wall",
-    wall_notes: "Wall",
-    saved: "Saved",
+    journeys: __msg("social.journeys"),
+    people: __msg("search.people"),
+    places: __msg("data.places"),
+    posts: __msg("fanWeb.wall"),
+    wall_notes: __msg("fanWeb.wall"),
+    saved: __msg("contentEntities.saved"),
     seens: "Seen",
-    experiences: "Experiences",
-    worlds: "Worlds",
+    experiences: __msg("profile.experiences"),
+    worlds: __msg("orbit.worlds"),
   }[type] || type;
 }
 
 export function SearchSection({ data, type, preview = false }) {
+  __useUiLanguage();
   const items = data?.items || [];
   if (!items.length) return null;
   return (
@@ -263,6 +276,7 @@ export function SearchSection({ data, type, preview = false }) {
 }
 
 export function SearchAllResults({ sections = {} }) {
+  __useUiLanguage();
   const sectionOrder = ["people", "experiences", "seens", "wall_notes", "worlds"]
     .filter((type, index, items) => items.indexOf(type) === index);
   return (
@@ -275,6 +289,7 @@ export function SearchAllResults({ sections = {} }) {
 }
 
 export function SearchTypedResults({ items = [] }) {
+  __useUiLanguage();
   const type = items[0]?.type === "seen" ? "seens" : items[0]?.type === "experience" ? "experiences" : items[0]?.type === "post" ? "wall_notes" : items[0]?.type === "world" || items[0]?.type === "book" ? "worlds" : "";
   if (type) return <SearchSection data={{ items }} type={type} />;
   return (
@@ -285,18 +300,18 @@ export function SearchTypedResults({ items = [] }) {
 }
 
 export function ResultCountAnnouncer({ count, query }) {
+  __useUiLanguage();
   return (
     <p className="sr-only" aria-live="polite">
-      {count} results for {query}
+      {count} {__msg("search.resultsFor")} {query}
     </p>
   );
 }
 
 export function SearchTypeNote({ type }) {
+  __useUiLanguage();
   if (type !== "saved") return null;
   return (
-    <p className="mt-4 rounded-2xl border border-atseen-line bg-atseen-surface p-4 text-xs leading-5 text-atseen-muted">
-      Saved search is private. Open Profile - Saved to browse your saved library categories.
-    </p>
+    <p className="mt-4 rounded-2xl border border-atseen-line bg-atseen-surface p-4 text-xs leading-5 text-atseen-muted">{__msg("search.savedSearchIsPrivateOpenProfileSavedToBrowse")}</p>
   );
 }

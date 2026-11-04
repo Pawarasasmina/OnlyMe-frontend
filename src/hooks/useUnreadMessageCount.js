@@ -49,6 +49,7 @@ export function useUnreadMessageCount(enabled = true, options = {}) {
       interval = window.setInterval(refresh, 10000);
       socket?.on("connect", refresh);
       socket?.on("message:new", refresh);
+      socket?.on("message:updated", refresh);
       socket?.on("group:message", refresh);
       socket?.on("conversation:status", refresh);
       document.addEventListener("visibilitychange", refresh);
@@ -61,6 +62,7 @@ export function useUnreadMessageCount(enabled = true, options = {}) {
       if (shouldPoll) {
         socket?.off("connect", refresh);
         socket?.off("message:new", refresh);
+        socket?.off("message:updated", refresh);
         socket?.off("group:message", refresh);
         socket?.off("conversation:status", refresh);
         document.removeEventListener("visibilitychange", refresh);

@@ -1,0 +1,986 @@
+[
+  {
+    "file": "src\\components\\branding\\AtseenLogo.jsx",
+    "line": 7,
+    "text": "inline-flex items-center gap-2.5 {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\contentEntities\\AttachedEntityPreview.jsx",
+    "line": 47,
+    "text": "Saved to {}.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\contentEntities\\ContentEntityChip.jsx",
+    "line": 43,
+    "text": "Saved to {}.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverCards.jsx",
+    "line": 18,
+    "text": "h-full w-full object-cover {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMasonryCard.jsx",
+    "line": 19,
+    "text": "Dreams of: {}",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMasonryCard.jsx",
+    "line": 20,
+    "text": "Also in {}",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
+    "line": 710,
+    "text": "{}. Your post and replies stay visible.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
+    "line": 843,
+    "text": "home-feed-media media-count-{} media-layout-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
+    "line": 881,
+    "text": "home-feed-action-button ms-auto {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\HomeRightRail.jsx",
+    "line": 35,
+    "text": "{} is At seen",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 338,
+    "text": "You can attach up to 3 images.",
+    "parent": "AssignmentExpression"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 471,
+    "text": "home-note-composer wall-create-screen {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\fanWeb\\shared\\FanToast.jsx",
+    "line": 57,
+    "text": "{} thanked you",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\components\\fanWeb\\shared\\GiftThanksNotice.jsx",
+    "line": 69,
+    "text": "{} thanked you",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\components\\financial\\JoinPremiumModal.jsx",
+    "line": 43,
+    "text": "✦{} first month · ✦{}/mo after",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\financial\\JoinPremiumModal.jsx",
+    "line": 102,
+    "text": "free story {}",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\components\\messages\\InvitationMessageCard.jsx",
+    "line": 11,
+    "text": "{} invited you to @seen",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\components\\messages\\InvitationMessageCard.jsx",
+    "line": 14,
+    "text": "Open invitation: {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\components\\messaging\\VoiceMessageBubble.jsx",
+    "line": 67,
+    "text": "flex h-8 w-full touch-none cursor-pointer items-center gap-[2px] {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\posts\\FeedPostComposer.jsx",
+    "line": 41,
+    "text": "Images must be {} or smaller.",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\components\\posts\\FeedPostComposer.jsx",
+    "line": 151,
+    "text": "You can attach up to {} images.",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\components\\posts\\FeedPostComposer.jsx",
+    "line": 165,
+    "text": "You can attach up to {} images.",
+    "parent": "AssignmentExpression"
+  },
+  {
+    "file": "src\\components\\profile\\BringFriendsFlow.jsx",
+    "line": 52,
+    "text": "{} invited you to @seen",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\components\\profile\\BringFriendsFlow.jsx",
+    "line": 53,
+    "text": "Joined — {} won’t be told",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\profile\\OwnerThingsSheet.jsx",
+    "line": 97,
+    "text": "{} from creators",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\profile\\ProfileDream.jsx",
+    "line": 486,
+    "text": "profile-dream-card profile-dream-compact {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\profile\\ProfileMediaSection.jsx",
+    "line": 337,
+    "text": "Report this {}?\n\nA human reviewer will look at it.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\components\\profile\\ProfileMediaSection.jsx",
+    "line": 445,
+    "text": "Remove from Media?\n\nThis {} will no longer appear in your profile Media.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\components\\profile\\ProfileSocialActions.jsx",
+    "line": 42,
+    "text": "grid gap-2 {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\profile\\StoryHighlights.jsx",
+    "line": 69,
+    "text": "profile-highlight-sheet is-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\publication\\PublicationComposerShell.jsx",
+    "line": 851,
+    "text": "Submit {} for moderation?",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 37,
+    "text": "search-discover-person-status is-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\share\\ShareSheet.jsx",
+    "line": 281,
+    "text": "{}. Real stories from real people. Join me there. {}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\share\\ShareSheet.jsx",
+    "line": 281,
+    "text": "Check this out on @seen: {} {}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\share\\ShareSheet.jsx",
+    "line": 303,
+    "text": "{}. Real stories from real people. Join me there.\n{}",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\components\\shared\\ContentEmptyState.jsx",
+    "line": 25,
+    "text": "content-empty-state is-{}{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\stories\\OwnStoryItem.jsx",
+    "line": 10,
+    "text": "View your story, {} item{}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\stories\\SharedSeenStoryCard.jsx",
+    "line": 40,
+    "text": "shared-seen-story-card is-{} {}",
+    "parent": "MemberExpression"
+  },
+  {
+    "file": "src\\components\\stories\\StoryCreator.jsx",
+    "line": 1283,
+    "text": "story-composer-audience is-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\stories\\StoryViewer.jsx",
+    "line": 111,
+    "text": "{} answers already",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\stories\\StoryViewer.jsx",
+    "line": 980,
+    "text": "Sent to {}",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\components\\stories\\StoryViewer.jsx",
+    "line": 1154,
+    "text": "Story from {}",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\components\\stories\\WallStoryPersonItem.jsx",
+    "line": 22,
+    "text": "wall-story-item wall-story-button {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 78,
+    "text": "identity-sheet view-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 82,
+    "text": "Account ending {} ? approved by admin",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\components\\voice\\WallVoiceRecorder.jsx",
+    "line": 336,
+    "text": "wall-voice-recorder-sheet max-w-md {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 25,
+    "text": "{} At seen",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 27,
+    "text": "{} Morning person",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 28,
+    "text": "{} At the gym",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 30,
+    "text": "{} Coffee walk",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 31,
+    "text": "{} Deep work",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 33,
+    "text": "{} New Seen soon",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 35,
+    "text": "{} Replying to everyone",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 36,
+    "text": "{} Open for calls",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\constants\\statusPresets.js",
+    "line": 37,
+    "text": "{} My World is open",
+    "parent": "ArrayExpression"
+  },
+  {
+    "file": "src\\context\\CallContext.jsx",
+    "line": 333,
+    "text": "paid call · ✦{}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
+    "line": 216,
+    "text": "{} returning users",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
+    "line": 224,
+    "text": "{} zero-result rate",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
+    "line": 225,
+    "text": "{} view rate",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\AdminDashboard.jsx",
+    "line": 21,
+    "text": "{} awaiting approval",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\admin\\AdminReportDetailPage.jsx",
+    "line": 38,
+    "text": "Apply this restriction for {}?",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\ContentModerationDetail.jsx",
+    "line": 18,
+    "text": "Locked until PPV entitlement is implemented. Listed price: {} coins.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+    "line": 38,
+    "text": "Exchange rate updated: {} = $1.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+    "line": 105,
+    "text": "Delete “{}”? Deactivate it if fans have already sent it.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsOnlyPage.jsx",
+    "line": 48,
+    "text": "Restrict messaging for {}?",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsPage.jsx",
+    "line": 58,
+    "text": "Restrict this account for {}?",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\auth\\RegisterPage.jsx",
+    "line": 45,
+    "text": "@{} is available",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\auth\\RegisterPage.jsx",
+    "line": 46,
+    "text": "@{} is already taken",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\create\\CreateHubPage.jsx",
+    "line": 37,
+    "text": "Monthly subscription · private ecosystem · profile only · {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 1283,
+    "text": "{} You can still use the voice.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 1679,
+    "text": "is-color is-{} {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 1746,
+    "text": "seen-chapter-attachment seen-chapter-sortable-block is-{} {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 1899,
+    "text": "is-color is-{} {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 1982,
+    "text": "seen-chapter-preview-block is-{} {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 2171,
+    "text": "seen-chapter-structured-editor is-{}-editor",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 3275,
+    "text": "{} upload failed",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\WorldManagerPage.jsx",
+    "line": 25,
+    "text": "Remove “{}”? It will no longer be visible to fans.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\WorldOwnerDetailPage.jsx",
+    "line": 20,
+    "text": "Remove “{}”? It will disappear from your profile and will no longer be visible to fans.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
+    "line": 1384,
+    "text": "Remove “{}”? This also removes everything saved inside this chapter.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
+    "line": 1421,
+    "text": "A structured Experience built around {}, with a clear beginning, practical chapters, and a result people can carry forward.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
+    "line": 1422,
+    "text": "A structured Experience built around {}.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
+    "line": 1517,
+    "text": "Preview photo {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 204,
+    "text": "You unlocked {}'s World",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 206,
+    "text": "{} unlocked your World",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 208,
+    "text": "You unlocked {}'s Premium World",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 210,
+    "text": "You renewed {}'s Premium World",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 212,
+    "text": "{} unlocked your Premium World",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 214,
+    "text": "You sent {} toward {}'s Dream",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 216,
+    "text": "{} sent {} toward your Dream",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 218,
+    "text": "You sent a gift to {}",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 220,
+    "text": "{} sent you a gift",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 222,
+    "text": "You opened Direct Access with {}",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 224,
+    "text": "{} booked Direct Access",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 228,
+    "text": "You requested a paid call with {}",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 230,
+    "text": "{} completed a paid call",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 309,
+    "text": "{} thanked you for your gift",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 400,
+    "text": "{}{} said “I see you” 🔁",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 444,
+    "text": "saved your {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 445,
+    "text": "reacted to your {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 446,
+    "text": "commented on your {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 447,
+    "text": "reposted your {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 645,
+    "text": "activity-prototype-row is-{} {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\FanDashboard.jsx",
+    "line": 67,
+    "text": "{} {} currently supported.",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\FanDashboard.jsx",
+    "line": 89,
+    "text": "{} paid {} available to you.",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\FanDashboard.jsx",
+    "line": 100,
+    "text": "{} unread {} from creators.",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 39,
+    "text": "Last seen {}m ago",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 40,
+    "text": "Last seen {}h ago",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 41,
+    "text": "Last seen {}",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 873,
+    "text": "⚡ New Direct Access — {} · +${}",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1557,
+    "text": "Block {}? They will not be able to message you.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1569,
+    "text": "Could not {} this account.",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1747,
+    "text": "disappearing-progress {}s linear forwards",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1759,
+    "text": "{} h-full min-h-0 w-full flex-col",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1804,
+    "text": "+${} to you",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1839,
+    "text": "{} isolate h-full min-h-0 min-w-0 flex-1 flex-col",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1844,
+    "text": " · replies within {}h",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1885,
+    "text": "relative flex max-w-[86%] flex-col sm:max-w-[78%] {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1911,
+    "text": "-mt-1 flex flex-wrap gap-1 {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 1987,
+    "text": "{} messages selected",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\settings\\DeleteAccountSheet.jsx",
+    "line": 70,
+    "text": "settings-delete-sheet ownership-sheet ownership-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\settings\\ProfileSettingsPage.jsx",
+    "line": 408,
+    "text": "@{} is available.",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\settings\\ProfileSettingsPage.jsx",
+    "line": 409,
+    "text": "@{} is already taken.",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 62,
+    "text": "@seen problem report: {}",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 63,
+    "text": "\n\nScreenshot selected: {}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\IncomeToCoinsPage.jsx",
+    "line": 29,
+    "text": "Convert {} of creator income into {}{} Coins? This cannot be reversed or withdrawn later.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\social\\OrbitPage.jsx",
+    "line": 16,
+    "text": "orbit-riding-planet planet-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\social\\SavedPage.jsx",
+    "line": 196,
+    "text": "{} / {} places completed",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\SavedPage.jsx",
+    "line": 197,
+    "text": "{} Local Tips",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\SeenFeedPage.jsx",
+    "line": 675,
+    "text": "Comment by {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\SeenPermalinkPage.jsx",
+    "line": 68,
+    "text": "seen-prototype-page seen-permalink-page {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\social\\SeenReaderPage.jsx",
+    "line": 308,
+    "text": "seen-reader-mark seen-reader-mark-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\social\\SeenReaderPage.jsx",
+    "line": 668,
+    "text": "{} · {} {} · {} saw this",
+    "parent": "VariableDeclarator"
+  },
+  {
+    "file": "src\\pages\\social\\SeenReaderPage.jsx",
+    "line": 726,
+    "text": "{} — {}report sent ✓",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\social\\SeenReaderPage.jsx",
+    "line": 1097,
+    "text": "Added {} items to Profile Media ✓",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\StoryPermalinkPage.jsx",
+    "line": 20,
+    "text": "@{} · Original story",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+    "line": 358,
+    "text": "Could not {}.",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+    "line": 371,
+    "text": "Block {}? They will not be able to message or interact with you.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+    "line": 381,
+    "text": "profile-quick-actions-sheet is-visitor {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+    "line": 535,
+    "text": "profile-action-chip profile-follow-action {}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+    "line": 833,
+    "text": "Received via {}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 23,
+    "text": "{} unlocked your question",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 26,
+    "text": "{} supported your dream{}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 27,
+    "text": "{} subscribed to your World",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 64,
+    "text": "Add {}{} to your Wallet{}?",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 70,
+    "text": "{}{} added to your Wallet.",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WithdrawPage.jsx",
+    "line": 37,
+    "text": "Withdraw {} to the temporary bank account ending 4832?",
+    "parent": "CallExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 169,
+    "text": "Included Experience {}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 231,
+    "text": "The whole of {}'s world opens to you - every corner",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 233,
+    "text": "Stories {} does not post publicly",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 234,
+    "text": "One personal reply a month{}",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 239,
+    "text": "first {} are the founding circle",
+    "parent": "ObjectProperty"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 502,
+    "text": "world-analytics-progress is-{}",
+    "parent": "JSXExpressionContainer"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 1064,
+    "text": "Check this out on @seen: {} {}",
+    "parent": "VariableDeclarator"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 1301,
+    "text": "every post and comment by {}",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 1552,
+    "text": "World image {}",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 1999,
+    "text": "{} comments setting could not be updated.",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 2079,
+    "text": "{} cover could not be removed.",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 2537,
+    "text": "Premium Experience · {}{} · one-time",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\services\\contentService.js",
+    "line": 16,
+    "text": "File exceeds the {} MB upload limit",
+    "parent": "NewExpression"
+  },
+  {
+    "file": "src\\services\\discoverService.js",
+    "line": 138,
+    "text": "{} public media",
+    "parent": "LogicalExpression"
+  },
+  {
+    "file": "src\\utils\\content.js",
+    "line": 10,
+    "text": "{} Refresh and review the latest version.",
+    "parent": "ReturnStatement"
+  },
+  {
+    "file": "src\\utils\\memberTicket.js",
+    "line": 65,
+    "text": "One of the first in {}.",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\utils\\worldValidation.js",
+    "line": 59,
+    "text": "{} requires at least {} chapters",
+    "parent": "ConditionalExpression"
+  },
+  {
+    "file": "src\\utils\\worldValidation.js",
+    "line": 63,
+    "text": "{} requires {} preview chapters",
+    "parent": "CallExpression"
+  }
+]

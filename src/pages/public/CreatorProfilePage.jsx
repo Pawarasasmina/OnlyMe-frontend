@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { FiArrowLeft, FiCheckCircle, FiExternalLink, FiMapPin } from "react-icons/fi";
@@ -11,6 +14,7 @@ function formatPrice(cents) {
 }
 
 function CreatorProfilePage() {
+  __useUiLanguage();
   const { username } = useParams();
   const creatorQuery = useQuery({
     queryKey: ["public-creator", username],
@@ -21,7 +25,7 @@ function CreatorProfilePage() {
   if (creatorQuery.isLoading) {
     return (
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <Loader label="Loading creator profile..." />
+        <Loader label={__msg("public.loadingCreatorProfile")} />
       </section>
     );
   }
@@ -30,12 +34,11 @@ function CreatorProfilePage() {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <Link className="inline-flex items-center gap-2 text-sm text-brand-mist/60" to="/">
-          <FiArrowLeft /> All creators
-        </Link>
+          <FiArrowLeft data-ui-directional="true" />{__msg("public.allCreators")}</Link>
         <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-8">
-          <h1 className="text-2xl font-bold">Creator profile not available</h1>
-          <p className="mt-2 text-brand-mist/70">This creator may not exist, may be private, or may be inactive.</p>
-          <Button className="mt-6" onClick={() => creatorQuery.refetch()} type="button">Retry</Button>
+          <h1 className="text-2xl font-bold">{__msg("public.creatorProfileNotAvailable")}</h1>
+          <p className="mt-2 text-brand-mist/70">{__msg("public.thisCreatorMayNotExistMayBePrivateOr")}</p>
+          <Button className="mt-6" onClick={() => creatorQuery.refetch()} type="button">{__msg("activity.retry")}</Button>
         </div>
       </section>
     );
@@ -49,11 +52,10 @@ function CreatorProfilePage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <Link className="inline-flex items-center gap-2 text-sm text-brand-mist/60" to="/">
-        <FiArrowLeft /> All creators
-      </Link>
+        <FiArrowLeft data-ui-directional="true" />{__msg("public.allCreators")}</Link>
       <div className="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5">
         <div className="h-48 bg-brand-dark sm:h-64">
-          {coverPhoto ? <img alt={`${creator.displayName} cover`} className="h-full w-full object-cover" src={coverPhoto} /> : null}
+          {coverPhoto ? <img alt={__msg("discover.cover", { value0: creator.displayName })} className="h-full w-full object-cover" src={coverPhoto} /> : null}
         </div>
         <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1fr_320px]">
           <div>
@@ -67,10 +69,10 @@ function CreatorProfilePage() {
               )}
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <h1 className="text-4xl font-black">{creator.displayName}</h1>
-              {creator.isVerified ? <FiCheckCircle className="text-brand-secondary" title="Verified creator" /> : null}
+              <h1 dir="auto" className="text-4xl font-black">{creator.displayName}</h1>
+              {creator.isVerified ? <FiCheckCircle className="text-brand-secondary" title={__msg("public.verifiedCreator")} /> : null}
             </div>
-            <p className="mt-1 text-brand-mist/55">@{creator.username}</p>
+            <p dir="auto" className="mt-1 text-brand-mist/55">@{creator.username}</p>
             {creator.categories?.length ? (
               <div className="mt-5 flex flex-wrap gap-2">
                 {creator.categories.map((category) => (
@@ -78,7 +80,7 @@ function CreatorProfilePage() {
                 ))}
               </div>
             ) : null}
-            {creator.bio ? <p className="mt-6 max-w-2xl text-lg leading-8 text-brand-mist/75">{creator.bio}</p> : null}
+            {creator.bio ? <p dir="auto" className="mt-6 max-w-2xl text-lg leading-8 text-brand-mist/75">{creator.bio}</p> : null}
             {hasLocation ? <p className="mt-5 inline-flex items-center gap-2 text-sm text-brand-mist/60"><FiMapPin /> {[creator.city, creator.country].filter(Boolean).join(", ")}</p> : null}
             {creator.socialLinks?.length ? (
               <div className="mt-6 flex flex-wrap gap-3">
@@ -90,20 +92,20 @@ function CreatorProfilePage() {
               </div>
             ) : null}
             <div className="mt-10">
-              <h2 className="text-2xl font-bold">Public posts</h2>
+              <h2 className="text-2xl font-bold">{__msg("public.publicPosts")}</h2>
               {posts.length ? (
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  {posts.map((post) => <article className="rounded-3xl border border-white/10 bg-white/5 p-5" key={post.id}><h3 className="font-semibold">{post.title}</h3></article>)}
+                  {posts.map((post) => <article className="rounded-3xl border border-white/10 bg-white/5 p-5" key={post.id}><h3 dir="auto" className="font-semibold">{post.title}</h3></article>)}
                 </div>
               ) : (
-                <p className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5 text-brand-mist/65">No public or free-preview posts are available yet.</p>
+                <p className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5 text-brand-mist/65">{__msg("public.noPublicOrFreePreviewPostsAreAvailableYet")}</p>
               )}
             </div>
           </div>
           <aside className="h-fit rounded-3xl border border-white/10 bg-brand-dark/60 p-6">
-            <p className="text-sm text-brand-mist/60">Monthly membership</p>
-            <p className="mt-2 text-4xl font-black">{formatPrice(creator.subscriptionPriceCents)}<span className="text-base font-normal text-brand-mist/50"> / month</span></p>
-            <p className="mt-5 text-sm text-brand-mist/60">Subscription checkout is not enabled in this build, so no join action is shown.</p>
+            <p className="text-sm text-brand-mist/60">{__msg("public.monthlyMembership")}</p>
+            <p className="mt-2 text-4xl font-black">{formatPrice(creator.subscriptionPriceCents)}<span className="text-base font-normal text-brand-mist/50">{__msg("common.perMonthLong")}</span></p>
+            <p className="mt-5 text-sm text-brand-mist/60">{__msg("public.subscriptionCheckoutIsNotEnabledInThisBuildSo")}</p>
           </aside>
         </div>
       </div>

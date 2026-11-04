@@ -1,22 +1,28 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiCamera, FiEdit3, FiEye, FiHelpCircle, FiImage, FiRefreshCw, FiRepeat, FiTrash2, FiType, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { useCreateStory } from "../../hooks/useStories";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useFanToast } from "../fanWeb/shared/FanToastContext";
+import StoryReshareCard from "./StoryReshareCard";
+import StoryMentionPicker from "./StoryMentionPicker";
+import { storyTextStyle } from "../../utils/storyPresentation";
 
 const STORY_COLORS = ["#FFFFFF", "#D6EAFF", "#9CCBFF", "#0A0C0F", "#6ECF97", "#F17878"];
 const STORY_TEXT_STYLES = [
-  { label: "Classic", value: 0 },
-  { label: "Strong", value: 1 },
-  { label: "Plate", value: 2 },
-  { label: "Serif", value: 3 },
-  { label: "Mono", value: 4 },
+  { get label() { return __msg("stories.classic"); }, value: 0 },
+  { get label() { return __msg("fanWeb.strong"); }, value: 1 },
+  { get label() { return __msg("stories.serif"); }, value: 3 },
+  { get label() { return __msg("stories.mono"); }, value: 4 },
+  { get label() { return __msg("stories.neon"); }, value: 5 },
 ];
 const STORY_AUDIENCES = [
-  { icon: FiEye, label: "Everyone", value: "everyone" },
-  { icon: FiUsers, label: "Friends", value: "friends" },
-  { icon: FiEye, label: "My World", value: "world" },
+  { icon: FiEye, get label() { return __msg("onboarding.everyone"); }, value: "everyone" },
+  { icon: FiUsers, get label() { return __msg("stories.friends_c11d5e"); }, value: "close_circle" },
+  { icon: FiEye, get label() { return __msg("stories.myWorld"); }, value: "world" },
 ];
 const STORY_GRADIENTS = [
   ["#16233a", "#0b0e13"],
@@ -29,6 +35,9 @@ function newTextOverlay(text = "", position = {}) {
     color: "#FFFFFF",
     size: 28,
     style: 0,
+    align: "center",
+    backgroundMode: 0,
+    rotation: 0,
     text,
     x: position.x ?? 0.5,
     y: position.y ?? 0.42,
@@ -36,19 +45,25 @@ function newTextOverlay(text = "", position = {}) {
 }
 
 function freshStory(initialContent = null) {
-  const sharedCard = initialContent?.sharedCard ? { x: 50, y: 50, ...initialContent.sharedCard } : null;
+  const sharedCard = initialContent?.sharedCard ? { x: 50, y: 50, scale: 1, ...initialContent.sharedCard } : null;
   const initialText = sharedCard ? "" : String(initialContent?.caption || "").slice(0, 300);
   const imageUrl = sharedCard ? "" : initialContent?.imageUrl || "";
   return {
     audience: "everyone",
+    publishKey: crypto.randomUUID(),
+    mentions: [],
+    sourceStoryId: initialContent?.sourceStoryId || "",
     drawing: Array.isArray(initialContent?.drawing) ? initialContent.drawing : [],
-    gradient: 0,
+    gradient: sharedCard?.kind === "story" ? 1 : 0,
     photo: Boolean(imageUrl),
     questionSticker: initialContent?.questionSticker || null,
     sharedCard,
     texts: [newTextOverlay(initialText)],
     transform: { scale: 1, x: 0, y: 0 },
     uploadedUrl: imageUrl,
+    mediaType: "image",
+    uploadedFile: null,
+    mediaDimensions: null,
   };
 }
 
@@ -65,27 +80,29 @@ function loadStoryImage(src) {
     const image = new Image();
     image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Story image could not be loaded."));
+    image.onerror = () => reject(new Error(__msg("stories.storyImageCouldNotBeLoaded")));
     image.src = src;
   });
 }
 
 function drawCoverImage(context, image, width, height, transform = {}) {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * (Number(transform.scale) || 1);
+  const fill = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  context.save();
+  context.filter = "blur(32px) brightness(.6)";
+  const backdropScale = fill * 1.12;
+  context.drawImage(image, (width - image.naturalWidth * backdropScale) / 2, (height - image.naturalHeight * backdropScale) / 2, image.naturalWidth * backdropScale, image.naturalHeight * backdropScale);
+  context.restore();
+  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight) * (Number(transform.scale) || 1);
   const drawWidth = image.naturalWidth * scale;
   const drawHeight = image.naturalHeight * scale;
-  const freeX = Math.max(0, drawWidth - width);
-  const freeY = Math.max(0, drawHeight - height);
-  const left = (width - drawWidth) / 2 - ((Number(transform.x) || 0) / 100) * freeX / 2;
-  const top = (height - drawHeight) / 2 - ((Number(transform.y) || 0) / 100) * freeY / 2;
-  context.drawImage(image, left, top, drawWidth, drawHeight);
+  context.drawImage(image, (width - drawWidth) / 2 + (Number(transform.x) || 0) / 100 * width, (height - drawHeight) / 2 + (Number(transform.y) || 0) / 100 * height, drawWidth, drawHeight);
 }
 
 function fileFromCanvas(canvas) {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
-        reject(new Error("Could not prepare this story."));
+        reject(new Error(__msg("stories.couldNotPrepareThisStory")));
         return;
       }
       resolve(new File([blob], `story-${Date.now()}.jpg`, { type: "image/jpeg" }));
@@ -93,7 +110,7 @@ function fileFromCanvas(canvas) {
   });
 }
 
-async function renderStoryFile(story) {
+async function renderStoryFile(story, includeInteractive = false) {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1920;
@@ -118,13 +135,13 @@ async function renderStoryFile(story) {
   context.fillStyle = shade;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  if (story.sharedCard) {
+  if (includeInteractive && story.sharedCard) {
     const card = story.sharedCard;
     const isQuestionReply = card.kind === "question_reply";
     const isTextOnly = isTextOnlySharedCard(card);
     const originalTranscript = String(card.originalTranscript || card.title || "").trim();
     const translationText = String(card.translationText || "").trim();
-    const translationLabel = String(card.translationLabel || "Translation").trim();
+    const translationLabel = String(card.translationLabel || __msg("stories.translation")).trim();
     const cardWidth = isQuestionReply ? 700 : 650;
     const cardHeight = isQuestionReply ? 430 : isTextOnly ? (translationText ? 500 : 360) : 560;
     const cardX = (finiteCardPosition(card.x, 50, 16, 84) / 100) * canvas.width - cardWidth / 2;
@@ -137,10 +154,10 @@ async function renderStoryFile(story) {
       context.font = "800 27px system-ui";
       context.textAlign = "left";
       context.textBaseline = "top";
-      context.fillText(String(card.eyebrow || "Answered your question").slice(0, 42), cardX + 42, cardY + 40, cardWidth - 84);
+      context.fillText(String(card.eyebrow || __msg("fan.answeredYourQuestion")).slice(0, 42), cardX + 42, cardY + 40, cardWidth - 84);
       context.fillStyle = "rgba(255,255,255,.58)";
       context.font = "650 29px system-ui";
-      drawWrappedText(context, String(card.subtitle || "Question").slice(0, 90), cardX + 42, cardY + 92, cardWidth - 84, 38, 2);
+      drawWrappedText(context, String(card.subtitle || __msg("fanWeb.question")).slice(0, 90), cardX + 42, cardY + 92, cardWidth - 84, 38, 2);
       context.fillStyle = "#FFFFFF";
       context.font = "850 45px system-ui";
       drawWrappedText(context, String(card.title || "").slice(0, 180), cardX + 42, cardY + 190, cardWidth - 84, 58, 3);
@@ -190,10 +207,10 @@ async function renderStoryFile(story) {
       context.font = "800 34px system-ui";
       context.textAlign = "left";
       context.textBaseline = "top";
-      context.fillText(String(card.title || "Shared post").slice(0, 42), cardX + 34, cardY + 425, cardWidth - 68);
+      context.fillText(String(card.title || __msg("fan.sharedPost")).slice(0, 42), cardX + 34, cardY + 425, cardWidth - 68);
       context.fillStyle = "rgba(255,255,255,.58)";
       context.font = "500 23px system-ui";
-      context.fillText(String(card.subtitle || "Tap to open").slice(0, 60), cardX + 34, cardY + 480, cardWidth - 68);
+      context.fillText(String(card.subtitle || __msg("stories.tapToOpen")).slice(0, 60), cardX + 34, cardY + 480, cardWidth - 68);
     }
     context.strokeStyle = "rgba(255,255,255,.18)";
     context.lineWidth = 3;
@@ -202,34 +219,49 @@ async function renderStoryFile(story) {
   }
 
   story.texts.filter((item) => item.text.trim()).forEach((overlay) => {
+    context.save();
     const text = overlay.text.trim();
     const fontSize = overlay.size * 3.1;
     const x = overlay.x * canvas.width;
     const y = overlay.y * canvas.height;
-    context.textAlign = "center";
+    context.translate(x, y);
+    context.rotate((overlay.rotation || 0) * Math.PI / 180);
+    const backgroundMode = overlay.backgroundMode ?? (overlay.style === 2 ? 1 : 0);
+    context.textAlign = overlay.align || "center";
     context.textBaseline = "middle";
-    context.font = `${overlay.style === 1 || overlay.style === 2 ? 800 : 650} ${fontSize}px ${
-      overlay.style === 3 ? "Georgia" : overlay.style === 4 ? "Consolas" : "system-ui"
+    context.font = `${overlay.style === 3 ? "italic " : ""}${overlay.style === 1 || overlay.style === 2 ? 800 : 650} ${fontSize}px ${
+      overlay.style === 3 ? __msg("stories.georgia") : overlay.style === 4 ? __msg("stories.consolas") : "system-ui"
     }`;
-    const width = Math.min(canvas.width * 0.82, context.measureText(text).width + 96);
-    if (overlay.style === 2) {
-      context.fillStyle = overlay.color;
-      roundRect(context, x - width / 2, y - fontSize * 0.75, width, fontSize * 1.5, 42);
+    const lines = text.split("\n").flatMap((paragraph) => {
+      const result = []; let line = "";
+      for (const character of paragraph) {
+        if (context.measureText(line + character).width > canvas.width * .76 && line) { result.push(line); line = ""; }
+        line += character;
+      }
+      return [...result, line];
+    });
+    const width = Math.min(canvas.width * 0.82, Math.max(...lines.map((line) => context.measureText(line).width)) + 64);
+    if (backgroundMode) {
+      context.fillStyle = backgroundMode === 2 ? `${overlay.color}66` : overlay.color;
+      roundRect(context, -width / 2, -fontSize * lines.length * .6, width, fontSize * lines.length * 1.2, 42);
       context.fill();
-      context.fillStyle = overlay.color === "#0A0C0F" ? "#FFFFFF" : "#0A0C0F";
+      context.fillStyle = backgroundMode === 2 || overlay.color === "#0A0C0F" ? "#FFFFFF" : "#0A0C0F";
     } else {
       context.shadowColor = "rgba(0,0,0,.55)";
       context.shadowBlur = 24;
       context.fillStyle = overlay.color;
     }
-    context.fillText(text, x, y, canvas.width * 0.82);
+    if (overlay.style === 5 && !backgroundMode) { context.shadowColor = overlay.color; context.shadowBlur = 28; context.fillStyle = "#fff"; }
+    const textX = overlay.align === "left" ? -width / 2 + 32 : overlay.align === "right" ? width / 2 - 32 : 0;
+    lines.forEach((line, index) => context.fillText(line, textX, (index - (lines.length - 1) / 2) * fontSize * 1.2, canvas.width * .76));
+    context.restore();
   });
 
-  if ((story.photo || story.sharedCard) && story.questionSticker) {
+  if (includeInteractive && (story.photo || story.sharedCard) && story.questionSticker) {
     const sticker = story.questionSticker;
     const x = (Number(sticker.x) || 50) / 100 * canvas.width;
     const y = (Number(sticker.y) || 63) / 100 * canvas.height;
-    const prompt = String(sticker.prompt || "Ask me anything").slice(0, 80);
+    const prompt = String(sticker.prompt || __msg("stories.askMeAnything")).slice(0, 80);
     const boxWidth = Math.min(760, Math.max(520, prompt.length * 19));
     const boxHeight = 180;
     context.save();
@@ -251,7 +283,7 @@ async function renderStoryFile(story) {
     context.fillText(prompt, x, y - 22, boxWidth - 60);
     context.fillStyle = "rgba(255,255,255,.5)";
     context.font = "650 22px system-ui";
-    context.fillText("answers go to your inbox · tap to reply", x, y + 42, boxWidth - 60);
+    context.fillText(__msg("stories.answersGoToYourInboxTapToReply"), x, y + 42, boxWidth - 60);
   }
 
   (story.drawing || []).forEach((stroke) => {
@@ -315,6 +347,7 @@ function isTextOnlySharedCard(card = {}) {
 }
 
 function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose, onPublished, onSave }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const canCreate = canCreateStory(user);
@@ -328,7 +361,10 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const dragRef = useRef(null);
   const dragMovedRef = useRef(false);
   const draggingTextIdRef = useRef("");
+  const objectGesture = useRef({ pointers: new Map(), pinch: null, origin: null });
+  const draggingMentionIdRef = useRef("");
   const draggingCardRef = useRef(false);
+  const sharedCardRef = useRef(null);
   const draggingQuestionRef = useRef(false);
   const drawingRef = useRef(null);
   const photoGestureRef = useRef({ pointers: new Map() });
@@ -352,6 +388,19 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const [paletteOpen, setPaletteOpen] = useState(true);
   const [drawingMode, setDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState("#9CCBFF");
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const publishBusy = useRef(false);
+
+  useEffect(() => {
+    const element = sharedCardRef.current;
+    if (!isOpen || !element) return undefined;
+    const zoom = (event) => {
+      event.preventDefault(); event.stopPropagation();
+      setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, (current.sharedCard.scale || 1) * Math.exp(-event.deltaY * .002))) } }));
+    };
+    element.addEventListener("wheel", zoom, { passive: false });
+    return () => element.removeEventListener("wheel", zoom);
+  }, [isOpen, story.sharedCard?.kind]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -377,18 +426,43 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const activeText = useMemo(() => story.texts.find((item) => item.id === activeTextId) || story.texts[0], [activeTextId, story.texts]);
   const activeAudience = STORY_AUDIENCES.find((item) => item.value === story.audience) || STORY_AUDIENCES[0];
   const ActiveAudienceIcon = activeAudience.icon;
-  const hasActiveTextSurface = Boolean(editingTextId || story.texts.some((item) => item.text.trim()));
   const photoScale = story.transform?.scale || 1;
   const photoTranslateLimit = ((photoScale - 1) / (2 * photoScale)) * 100;
   const photoTranslateX = -((story.transform?.x || 0) / 100) * photoTranslateLimit;
   const photoTranslateY = -((story.transform?.y || 0) / 100) * photoTranslateLimit;
+  const mediaAspect = story.mediaDimensions ? story.mediaDimensions.width / story.mediaDimensions.height : 9 / 16;
+  const photoWidth = Math.min(1, mediaAspect / (9 / 16)) * photoScale;
+  const photoHeight = Math.min(1, (9 / 16) / mediaAspect) * photoScale;
   const backgroundStyle = story.photo
-    ? {
-        backgroundImage: `url("${story.uploadedUrl}")`,
-        backgroundPosition: `${50 + (story.transform?.x || 0) / 2}% ${50 + (story.transform?.y || 0) / 2}%`,
-        transform: `translate(${photoTranslateX}%, ${photoTranslateY}%) scale(${photoScale})`,
-      }
+    ? { background: "#0A0C0F" }
     : { background: `linear-gradient(160deg,${STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length].join(",")})` };
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!isOpen || !stage || !story.photo || story.mediaType === "video" || drawingMode || editingTextId) return undefined;
+    const wheel = (event) => {
+      if (!event.target.closest(".story-composer-focus")) return;
+      event.preventDefault();
+      const bounds = stage.getBoundingClientRect();
+      const anchorX = (event.clientX - bounds.left) / bounds.width * 100 - 50;
+      const anchorY = (event.clientY - bounds.top) / bounds.height * 100 - 50;
+      setStory((current) => {
+        const start = current.transform;
+        const scale = Math.max(.4, Math.min(4, start.scale * Math.exp(-event.deltaY * (event.deltaMode === 1 ? .032 : .002))));
+        const ratio = scale / start.scale;
+        return { ...current, transform: { scale, x: anchorX - (anchorX - start.x) * ratio, y: anchorY - (anchorY - start.y) * ratio } };
+      });
+    };
+    stage.addEventListener("wheel", wheel, { passive: false });
+    return () => stage.removeEventListener("wheel", wheel);
+  }, [isOpen, story.photo, story.mediaType, drawingMode, editingTextId]);
+  useEffect(() => {
+    if (!isOpen || !story.photo || story.mediaType === "video" || !story.uploadedUrl) return undefined;
+    let active = true;
+    const image = new Image();
+    image.onload = () => { if (active && image.naturalWidth) setStory((current) => ({ ...current, mediaDimensions: { width: image.naturalWidth, height: image.naturalHeight } })); };
+    image.src = story.uploadedUrl;
+    return () => { active = false; };
+  }, [isOpen, story.photo, story.uploadedUrl, story.mediaType]);
 
   const stopCamera = useCallback(() => {
     cameraRequestRef.current += 1;
@@ -402,7 +476,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     const requestId = ++cameraRequestRef.current;
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraStatus("unavailable");
-      setCameraError("Camera is not available in this browser. Choose an image instead.");
+      setCameraError(__msg("stories.cameraIsNotAvailableInThisBrowserChoose"));
       return;
     }
     setCameraStatus("starting");
@@ -428,8 +502,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       });
     } catch (error) {
       if (error?.name === "NotAllowedError") setCameraError("Camera access was blocked. Allow camera permission or choose an image.");
-      else if (error?.name === "NotFoundError") setCameraError("No camera was found. Choose an image instead.");
-      else setCameraError("Could not open the camera. Choose an image instead.");
+      else if (error?.name === "NotFoundError") setCameraError(__msg("stories.noCameraWasFoundChooseAnImageInstead"));
+      else setCameraError(__msg("stories.couldNotOpenTheCameraChooseAnImage"));
       setCameraStatus("unavailable");
     }
   }, [stopCamera]);
@@ -440,11 +514,13 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       return undefined;
     }
     const next = freshStory(initialContent);
+    publishBusy.current = false;
+    setMentionOpen(false);
     setStory(next);
     setDrawingMode(false);
     setDrawingColor("#9CCBFF");
     setActiveTextId(next.texts[0].id);
-    if (next.sharedCard) {
+    if (next.sharedCard || next.photo) {
       stopCamera();
       setCameraStatus("captured");
     } else {
@@ -466,6 +542,12 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   useEffect(() => () => {
     if (uploadedUrlRef.current?.startsWith("blob:")) URL.revokeObjectURL(uploadedUrlRef.current);
   }, []);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const restore = document.activeElement;
+    const frame = requestAnimationFrame(() => stageRef.current?.focus({ preventScroll: true }));
+    return () => { cancelAnimationFrame(frame); if (restore?.isConnected) restore.focus?.({ preventScroll: true }); };
+  }, [isOpen]);
 
   const updateStory = (patch) => setStory((current) => ({ ...current, ...patch }));
   const updateActiveText = (patch) => setStory((current) => ({
@@ -518,6 +600,21 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   };
 
   const close = () => {
+    publishBusy.current = false;
+    objectGesture.current.pointers.clear();
+    objectGesture.current.pinch = null;
+    dragRef.current = null;
+    draggingTextIdRef.current = "";
+    draggingMentionIdRef.current = "";
+    draggingQuestionRef.current = false;
+    draggingCardRef.current = false;
+    drawingRef.current = null;
+    photoGestureRef.current.pointers.clear();
+    deleteArmedRef.current = false;
+    setTextDragging(false);
+    setDeleteArmed(false);
+    setPhotoGuides({ x: false, y: false });
+    setMentionOpen(false);
     stopCamera();
     setUpload({ error: "", progress: 0, step: "" });
     setEditingTextId("");
@@ -535,15 +632,17 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      showToast("Choose an image file.");
+    if (mode === "compose" && file.type.startsWith("video/")) { showToast(__msg("stories.chooseAnImageForThisSharedCardBackground")); return; }
+    if (!/^(image|video)\//.test(file.type)) {
+      showToast(__msg("stories.chooseAnImageOrVideoFile"));
       return;
     }
+    if (file.type.startsWith("video/") && file.size > 60 * 1024 * 1024) { showToast(__msg("stories.chooseAVideoUpTo60Mb")); return; }
     stopCamera();
     const url = URL.createObjectURL(file);
     setStory((current) => {
       if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
-      return { ...current, drawing: [], photo: true, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: url };
+      return { ...current, drawing: [], photo: true, mediaType: file.type.startsWith("video/") ? "video" : "image", uploadedFile: file, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: url };
     });
     setCameraStatus("captured");
   };
@@ -564,7 +663,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     const url = URL.createObjectURL(file);
     setStory((current) => {
       if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
-      return { ...current, photo: true, uploadedUrl: url };
+      return { ...current, photo: true, mediaType: "image", uploadedFile: file, uploadedUrl: url };
     });
     stopCamera();
     setCameraStatus("captured");
@@ -573,11 +672,13 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const switchCamera = () => startCamera(facingMode === "environment" ? "user" : "environment");
 
   const beginPhotoGesture = (event) => {
-    if (!story.photo || drawingMode || event.target.closest("input,button:not(.story-composer-focus)")) return;
+    if (!story.photo || story.mediaType === "video" || drawingMode || event.target.closest("input,button:not(.story-composer-focus)")) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     const gesture = photoGestureRef.current;
     gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (gesture.pointers.size === 1) { gesture.tapStart = { x: event.clientX, y: event.clientY }; gesture.moved = false; }
+    else gesture.moved = true;
     const points = [...gesture.pointers.values()];
     gesture.start = { ...story.transform };
     gesture.origin = points.length === 1 ? points[0] : { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
@@ -587,6 +688,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const movePhotoGesture = (event) => {
     const gesture = photoGestureRef.current;
     if (!gesture.pointers.has(event.pointerId) || !stageRef.current) return false;
+    if (gesture.tapStart && Math.hypot(event.clientX-gesture.tapStart.x, event.clientY-gesture.tapStart.y) > 6) gesture.moved = true;
+    if (!gesture.moved) return true;
     gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const points = [...gesture.pointers.values()];
     const center = points.length === 1 ? points[0] : { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
@@ -596,8 +699,11 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
       scale = Math.max(0.4, Math.min(4, scale * (distance / gesture.distance)));
     }
-    const rawX = Math.max(-100, Math.min(100, (gesture.start.x || 0) - ((center.x - gesture.origin.x) / bounds.width) * 200));
-    const rawY = Math.max(-100, Math.min(100, (gesture.start.y || 0) - ((center.y - gesture.origin.y) / bounds.height) * 200));
+    const ratio = scale / (gesture.start.scale || 1);
+    const originX = (gesture.origin.x - bounds.left) / bounds.width * 100 - 50;
+    const originY = (gesture.origin.y - bounds.top) / bounds.height * 100 - 50;
+    const rawX = originX - (originX - (gesture.start.x || 0)) * ratio + (center.x - gesture.origin.x) / bounds.width * 100;
+    const rawY = originY - (originY - (gesture.start.y || 0)) * ratio + (center.y - gesture.origin.y) / bounds.height * 100;
     const snapX = Math.abs(rawX) < 3;
     const snapY = Math.abs(rawY) < 3;
     const x = snapX ? 0 : rawX;
@@ -609,6 +715,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
   const endPhotoGesture = (event) => {
     const gesture = photoGestureRef.current;
+    const tap = gesture.pointers.has(event.pointerId) && !gesture.moved && event.type !== "pointercancel";
     gesture.pointers.delete(event.pointerId);
     const point = [...gesture.pointers.values()][0];
     if (point) {
@@ -616,6 +723,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       gesture.origin = point;
       gesture.distance = 0;
     } else {
+      if (tap) focusTextAt(event);
       setPhotoGuides({ x: false, y: false });
       setStory((current) => ({
         ...current,
@@ -627,15 +735,30 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     }
   };
 
-  const beginDrag = (event, textId) => {
-    const overlay = story.texts.find((item) => item.id === textId);
-    if (!overlay?.text.trim() || !stageRef.current) return;
+  const beginDrag = (event, textId, kind = "text") => {
+    const mention = kind === "mention";
+    const question = kind === "question";
+    const overlay = question ? story.questionSticker : mention ? story.mentions.find((item) => item.userId === textId) : story.texts.find((item) => item.id === textId);
+    if (!overlay || !stageRef.current) return;
     event.preventDefault();
+    event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    const gesture = objectGesture.current;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...gesture.pointers.values()];
+    if (points.length === 2) {
+      const [a, b] = points;
+      gesture.pinch = { distance: Math.max(1, Math.hypot(a.x-b.x, a.y-b.y)), angle: Math.atan2(b.y-a.y, b.x-a.x), size: mention || question ? overlay.scale || 1 : overlay.size, rotation: overlay.rotation || 0 };
+      dragMovedRef.current = true;
+      return;
+    }
+    gesture.origin = { x: event.clientX, y: event.clientY, overlayX: mention || question ? overlay.x / 100 : overlay.x, overlayY: mention || question ? overlay.y / 100 : overlay.y };
     dragRef.current = true;
     dragMovedRef.current = false;
-    draggingTextIdRef.current = textId;
-    setActiveTextId(textId);
+    draggingTextIdRef.current = mention || question ? "" : textId;
+    draggingMentionIdRef.current = mention ? textId : "";
+    draggingQuestionRef.current = question;
+    if (!mention && !question) setActiveTextId(textId);
     setEditingTextId("");
     setTextDragging(true);
   };
@@ -646,12 +769,19 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     draggingCardRef.current = true;
+    const gesture = objectGesture.current;
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    gesture.origin = { x: event.clientX, y: event.clientY, overlayX: story.sharedCard.x / 100, overlayY: story.sharedCard.y / 100 };
+    if (gesture.pointers.size === 2) {
+      const [a, b] = [...gesture.pointers.values()];
+      gesture.pinch = { distance: Math.max(1, Math.hypot(a.x-b.x, a.y-b.y)), size: story.sharedCard.scale || 1 };
+    }
   };
 
   const toggleQuestionSticker = () => {
     setStory((current) => ({
       ...current,
-      questionSticker: current.questionSticker ? null : { id: `question-${Date.now()}`, prompt: "Ask me anything", x: 50, y: 63 },
+      questionSticker: current.questionSticker ? null : { id: `question-${Date.now()}`, prompt: __msg("stories.askMeAnything"), x: 50, y: 63 },
     }));
     window.setTimeout(() => {
       questionInputRef.current?.focus();
@@ -661,12 +791,27 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
   const beginQuestionDrag = (event) => {
     if (event.target.closest("input")) return;
-    event.preventDefault();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    draggingQuestionRef.current = true;
+    beginDrag(event, "question", "question");
   };
 
   const moveDrag = (event) => {
+    const gesture = objectGesture.current;
+    if (gesture.pointers.has(event.pointerId)) gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (gesture.pointers.size >= 2 && gesture.pinch) {
+      dragMovedRef.current = true;
+      const [a,b] = [...gesture.pointers.values()];
+      const pinch = gesture.pinch;
+      const ratio = Math.hypot(a.x-b.x,a.y-b.y) / pinch.distance;
+      if (draggingCardRef.current) {
+        setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, pinch.size * ratio)) } }));
+        return;
+      }
+      const rotation = Math.max(-180, Math.min(180, pinch.rotation + (Math.atan2(b.y-a.y,b.x-a.x)-pinch.angle)*180/Math.PI));
+      setStory((current) => draggingQuestionRef.current ? { ...current, questionSticker: { ...current.questionSticker, rotation, scale: Math.max(.5, Math.min(3, pinch.size*ratio)) } } : draggingMentionIdRef.current
+        ? { ...current, mentions: current.mentions.map((item) => item.userId === draggingMentionIdRef.current ? { ...item, rotation, scale: Math.max(.5, Math.min(3, pinch.size*ratio)) } : item) }
+        : { ...current, texts: current.texts.map((item) => item.id === draggingTextIdRef.current ? { ...item, rotation, size: Math.max(12, Math.min(96, pinch.size*ratio)) } : item) });
+      return;
+    }
     if (movePhotoGesture(event)) return;
     if (drawingRef.current && stageRef.current) {
       const rect = stageRef.current.getBoundingClientRect();
@@ -677,26 +822,28 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       setStory((current) => ({ ...current, drawing: current.drawing.map((stroke) => stroke.id === drawingRef.current ? { ...stroke, points: [...stroke.points, point] } : stroke) }));
       return;
     }
-    if (draggingQuestionRef.current && stageRef.current) {
-      const rect = stageRef.current.getBoundingClientRect();
-      const x = Math.max(8, Math.min(92, ((event.clientX - rect.left) / rect.width) * 100));
-      const y = Math.max(12, Math.min(86, ((event.clientY - rect.top) / rect.height) * 100));
-      setStory((current) => ({ ...current, questionSticker: current.questionSticker ? { ...current.questionSticker, x, y } : null }));
-      return;
-    }
     if (draggingCardRef.current && stageRef.current) {
       const rect = stageRef.current.getBoundingClientRect();
-      const x = finiteCardPosition(((event.clientX - rect.left) / rect.width) * 100, 50, 16, 84);
-      const y = finiteCardPosition(((event.clientY - rect.top) / rect.height) * 100, 50, 20, 78);
+      if (!gesture.origin) { gesture.origin = { x: event.clientX, y: event.clientY, overlayX: story.sharedCard.x / 100, overlayY: story.sharedCard.y / 100 }; return; }
+      const x = finiteCardPosition((gesture.origin.overlayX + (event.clientX - gesture.origin.x) / rect.width) * 100, 50, 16, 84);
+      const y = finiteCardPosition((gesture.origin.overlayY + (event.clientY - gesture.origin.y) / rect.height) * 100, 50, 20, 78);
       setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, x, y } }));
       return;
     }
     if (!dragRef.current || !stageRef.current) return;
     const rect = stageRef.current.getBoundingClientRect();
-    const x = Math.min(0.95, Math.max(0.05, (event.clientX - rect.left) / rect.width));
-    const y = Math.min(0.85, Math.max(0.08, (event.clientY - rect.top) / rect.height));
+    const origin = gesture.origin;
+    if (!origin || Math.hypot(event.clientX-origin.x, event.clientY-origin.y) < 6 && !dragMovedRef.current) return;
+    let x = Math.min(1.05, Math.max(-0.05, origin.overlayX + (event.clientX-origin.x) / rect.width));
+    let y = Math.min(1.02, Math.max(-0.02, origin.overlayY + (event.clientY-origin.y) / rect.height));
+    const guides = { x: Math.abs(x-.5) < .015, y: Math.abs(y-.5) < .015 };
+    if (guides.x) x = .5;
+    if (guides.y) y = .5;
+    setPhotoGuides(guides);
     dragMovedRef.current = true;
-    setStory((current) => ({ ...current, texts: current.texts.map((item) => item.id === draggingTextIdRef.current ? { ...item, x, y } : item) }));
+    setStory((current) => draggingQuestionRef.current ? { ...current, questionSticker: { ...current.questionSticker, x: x*100, y: y*100 } } : draggingMentionIdRef.current
+      ? { ...current, mentions: current.mentions.map((item) => item.userId === draggingMentionIdRef.current ? { ...item, x: x*100, y: y*100 } : item) }
+      : { ...current, texts: current.texts.map((item) => item.id === draggingTextIdRef.current ? { ...item, x, y } : item) });
     const deleteRect = deleteTargetRef.current?.getBoundingClientRect();
     const isOverDelete = Boolean(deleteRect
       && event.clientX >= deleteRect.left
@@ -707,25 +854,40 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     setDeleteArmed(isOverDelete);
   };
 
-  const endDrag = () => {
+  const endDrag = (event) => {
+    if (photoGestureRef.current.pointers.size) return;
+    const gesture = objectGesture.current;
+    gesture.pointers.delete(event?.pointerId);
+    if (gesture.pointers.size) { gesture.pinch = null; gesture.origin = null; return; }
+    gesture.pinch = null;
+    setPhotoGuides({ x: false, y: false });
     photoGestureRef.current.pointers.clear();
     draggingCardRef.current = false;
-    draggingQuestionRef.current = false;
     drawingRef.current = null;
-    if (deleteArmedRef.current) {
+    if (deleteArmedRef.current && draggingQuestionRef.current) {
+      updateStory({ questionSticker: null });
+    } else if (deleteArmedRef.current && draggingMentionIdRef.current) {
+      const id = draggingMentionIdRef.current;
+      setStory((current) => ({ ...current, mentions: current.mentions.filter((item) => item.userId !== id) }));
+    } else if (deleteArmedRef.current) {
       const deletedId = draggingTextIdRef.current;
       const remaining = story.texts.filter((item) => item.id !== deletedId);
       const texts = remaining.length ? remaining : [newTextOverlay()];
       setStory((current) => ({ ...current, texts }));
       setActiveTextId(texts.at(-1).id);
       setEditingTextId("");
-    } else if (dragRef.current && !dragMovedRef.current && draggingTextIdRef.current) {
+    } else if (event?.type !== "pointercancel" && dragRef.current && !dragMovedRef.current && draggingMentionIdRef.current) {
+      const id = draggingMentionIdRef.current;
+      setStory((current) => ({ ...current, mentions: current.mentions.map((item) => item.userId === id ? { ...item, st: item.st === 1 ? 0 : 1 } : item) }));
+    } else if (event?.type !== "pointercancel" && dragRef.current && !dragMovedRef.current && draggingTextIdRef.current) {
       setEditingTextId(draggingTextIdRef.current);
       window.setTimeout(() => inputRef.current?.focus(), 40);
     }
     dragRef.current = null;
     dragMovedRef.current = false;
     draggingTextIdRef.current = "";
+    draggingMentionIdRef.current = "";
+    draggingQuestionRef.current = false;
     deleteArmedRef.current = false;
     setTextDragging(false);
     setDeleteArmed(false);
@@ -747,21 +909,25 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   };
 
   const publish = async () => {
+    if (publishBusy.current) return;
     if (!canCreate) {
-      showToast("Story publishing is not available for this account.");
+      showToast(__msg("stories.storyPublishingIsNotAvailableForThisAccount"));
       return;
     }
     const storyTexts = story.texts.filter((item) => item.text.trim());
-    const caption = storyTexts.map((item) => item.text.trim()).join(" ");
+    const caption = storyTexts.map((item) => item.text.trim()).join(" ").slice(0, 300);
     if (!storyTexts.length && !story.photo && !story.sharedCard) {
-      showToast("Write something first.");
+      showToast(__msg("stories.writeSomethingFirst"));
       return;
     }
     try {
-      setUpload({ error: "", progress: 8, step: "Preparing" });
-      const file = await renderStoryFile(story);
+      publishBusy.current = true;
+      setUpload({ error: "", progress: 8, step: __msg("posts.preparing") });
+      const file = story.mediaType === "video" ? story.uploadedFile : await renderStoryFile(story);
       const editorMetadata = {
-        prototypeComposer: true,
+        flattened: story.mediaType !== "video",
+        ...(story.mediaType === "video" ? { transform: { scale: photoScale, translateX: photoTranslateX, translateY: photoTranslateY, rotation: 0 } } : {}),
+        mentions: story.mentions,
         ...(story.photo ? {
           mediaFraming: {
             fitMode: (story.transform?.scale || 1) < 1 ? "fit" : "fill",
@@ -776,25 +942,32 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         textOverlays: storyTexts.map((item) => ({
           color: item.color,
           fontSize: item.size,
+          fontWeight: storyTextStyle(item).fontWeight,
           id: item.id,
           style: item.style,
-          styleName: STORY_TEXT_STYLES.find((style) => style.value === item.style)?.label || "Classic",
+          backgroundMode: item.backgroundMode,
+          background: "none",
+          rotation: item.rotation,
+          align: item.align,
+          styleName: STORY_TEXT_STYLES.find((style) => style.value === item.style)?.label || __msg("stories.classic"),
           text: item.text.trim(),
           x: item.x * 100,
           y: item.y * 100,
         })),
       };
       if (mode === "compose") {
-        setUpload({ error: "", progress: 70, step: "Adding preview" });
+        setUpload({ error: "", progress: 70, step: __msg("stories.addingPreview") });
         await onSave?.({ caption, editorMetadata, file });
-        setUpload({ error: "", progress: 100, step: "Added" });
+        setUpload({ error: "", progress: 100, step: __msg("stories.added") });
         close();
         return;
       }
       const formData = new FormData();
       formData.append("image", file);
-      formData.append("mediaType", "image");
-      formData.append("duration", "5");
+      formData.append("publishKey", story.publishKey);
+      if (story.sourceStoryId) formData.append("sourceStoryId", story.sourceStoryId);
+      formData.append("mediaType", story.mediaType);
+      formData.append("duration", story.mediaType === "video" ? "15" : "5");
       formData.append("caption", caption);
       formData.append("audience", story.audience || "everyone");
       formData.append("allowReactions", "true");
@@ -803,7 +976,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       formData.append("editorMetadata", JSON.stringify(editorMetadata));
       formData.append("owner", JSON.stringify({
         id: user?.id || user?._id || "me",
-        name: user?.name || user?.displayName || "You",
+        name: user?.name || user?.displayName || __msg("fanWeb.you"),
         username: user?.username || "you",
         avatar: user?.avatar || user?.profileImage || "",
         verified: Boolean(user?.verified || user?.isVerified),
@@ -820,11 +993,12 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         {
           onSuccess: (created) => {
             setUpload({ error: "", progress: 100, step: "Published" });
-            showToast("Your story is live - 24h");
-            onPublished?.(created);
+            showToast(__msg("stories.yourStoryIsLive24h"));
             close();
+            onPublished?.(created);
           },
           onError: (error) => {
+            publishBusy.current = false;
             const message = error?.response?.data?.message || error?.message || "Story upload failed.";
             setUpload({ error: message, progress: 0, step: "Failed" });
             showToast(message);
@@ -832,7 +1006,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         },
       );
     } catch (error) {
-      setUpload({ error: error.message, progress: 0, step: "Failed" });
+      publishBusy.current = false;
+      setUpload({ error: error.message, progress: 0, step: __msg("posts.failed") });
       showToast(error.message);
     }
   };
@@ -840,36 +1015,47 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   if (!isOpen || !canCreate) return null;
 
   return (
-    <div aria-label="Create Story" aria-modal="true" className="story-composer-overlay" role="dialog" style={composerPosition}>
+    <div aria-label={__msg("stories.createStory")} aria-modal="true" className="story-composer-overlay" role="dialog" style={composerPosition} onKeyDown={(event) => {
+      if (event.key === "Escape") { event.preventDefault(); if (editingTextId) setEditingTextId(""); else close(); }
+      if (event.key !== "Tab") return;
+      const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled), input:not([type="file"]), textarea, a[href]')].filter((element) => element.getClientRects().length);
+      if (!controls.length) return;
+      if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
+      else if (!event.shiftKey && (document.activeElement === controls.at(-1) || document.activeElement === stageRef.current)) { event.preventDefault(); controls[0].focus(); }
+    }}>
       <section
-        className="story-composer-stage"
+        className={`story-composer-stage ${story.sharedCard?.kind === "story" && !story.photo ? "is-story-reshare" : ""}`}
         onPointerMove={moveDrag}
         onPointerCancel={endDrag}
         onPointerUp={endDrag}
         ref={stageRef}
+        tabIndex={-1}
       >
-        <div aria-hidden="true" className="story-composer-bg" style={backgroundStyle} />
-        {story.photo && photoGuides.x ? <span aria-hidden="true" className="story-composer-guide is-x" /> : null}
-        {story.photo && photoGuides.y ? <span aria-hidden="true" className="story-composer-guide is-y" /> : null}
-        {!story.photo && ["starting", "live"].includes(cameraStatus) ? <video aria-label="Camera preview" autoPlay className={`story-composer-camera ${facingMode === "user" ? "is-mirrored" : ""}`} muted playsInline ref={videoRef} /> : null}
+        {story.mediaType === "video" ? <video aria-label={__msg("stories.storyVideoPreview")} autoPlay className="story-composer-camera" loop muted onTimeUpdate={(event) => { if (event.currentTarget.currentTime >= 15) event.currentTarget.currentTime = 0; }} playsInline src={story.uploadedUrl} style={{ transform: backgroundStyle.transform }} /> : <div aria-hidden="true" className="story-composer-bg" style={backgroundStyle}>{story.photo ? <><img alt="" className="story-composer-photo-blur" draggable={false} src={story.uploadedUrl} /><img alt="" className="story-composer-photo-image" draggable={false} src={story.uploadedUrl} style={{ width: `${photoWidth * 100}%`, height: `${photoHeight * 100}%`, left: `${50 + (story.transform.x || 0)}%`, top: `${50 + (story.transform.y || 0)}%` }} /></> : null}</div>}
+        {photoGuides.x ? <span aria-hidden="true" className="story-composer-guide is-x" /> : null}
+        {photoGuides.y ? <span aria-hidden="true" className="story-composer-guide is-y" /> : null}
+        {editingTextId ? <button aria-label={__msg("stories.finishEditingText")} className="story-composer-scrim" onClick={() => setEditingTextId("")} type="button" /> : null}
+        {!story.photo && ["starting", "live"].includes(cameraStatus) ? <video aria-label={__msg("stories.cameraPreview")} autoPlay className={`story-composer-camera ${facingMode === "user" ? "is-mirrored" : ""}`} muted playsInline ref={videoRef} /> : null}
         <button
-          aria-label={story.photo ? "Adjust story photo. Drag to move and pinch to zoom." : "Focus story text"}
+          aria-label={story.photo ? __msg("stories.adjustStoryPhotoDragToMoveAndPinchTo") : __msg("stories.focusStoryText")}
           className="story-composer-focus"
           onClick={story.photo ? undefined : focusTextAt}
+          onDoubleClick={story.photo ? () => { const fill = Math.max(mediaAspect / (9 / 16), (9 / 16) / mediaAspect); updateStory({ transform: { scale: Math.abs(photoScale - 1) < .06 ? Math.min(4, fill) : 1, x: 0, y: 0 } }); } : undefined}
           onPointerDown={beginPhotoGesture}
           onPointerCancel={endPhotoGesture}
           onPointerUp={endPhotoGesture}
           type="button"
         />
 
-        <header className="story-composer-head">
-          <button aria-label="Close Story composer" onClick={close} type="button"><FiX /></button>
-          <span />
-          <button aria-label="Add text" className={editingTextId ? "is-selected" : ""} onClick={addText} type="button"><FiType /></button>
-          {story.photo || story.sharedCard ? <button aria-label={drawingMode ? "Stop drawing" : "Draw on story"} className={drawingMode ? "is-selected" : ""} onClick={() => { setDrawingMode((current) => !current); setEditingTextId(""); setPaletteOpen(true); }} type="button"><FiEdit3 /></button> : null}
-          {story.photo || story.sharedCard ? <button aria-label={story.questionSticker ? "Remove question sticker" : "Add question sticker"} className={story.questionSticker ? "is-selected" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle /></button> : null}
+        <header className="story-composer-head" hidden={Boolean(editingTextId)}>
+          <button aria-label={__msg("stories.closeStoryComposer")} onClick={close} type="button"><FiX /></button>
+          <span className="story-composer-lifetime">{__msg("stories.24h")}</span>
+          <button aria-label={__msg("stories.addText")} className={editingTextId ? "is-selected" : ""} onClick={addText} type="button">{story.sharedCard?.kind === "story" ? <FiEdit3 /> : <FiType />}</button>
+          <button aria-label={__msg("stories.mentionPeople")} onClick={() => { setEditingTextId(""); setMentionOpen(true); }} type="button">@</button>
+          {(story.photo || story.sharedCard) && story.sharedCard?.kind !== "story" ? <button aria-label={drawingMode ? __msg("stories.stopDrawing") : __msg("stories.drawOnStory")} className={drawingMode ? "is-selected" : ""} onClick={() => { setDrawingMode((current) => !current); setEditingTextId(""); setPaletteOpen(true); }} type="button"><FiEdit3 /></button> : null}
+          {story.photo || story.sharedCard ? <button aria-label={story.questionSticker ? __msg("stories.removeQuestionSticker") : __msg("stories.addQuestionSticker")} className={story.questionSticker ? "is-selected" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle /></button> : null}
           <button
-            aria-label={cameraStatus === "live" ? "Switch camera" : story.photo ? "Retake photo" : "Refresh background"}
+            aria-label={cameraStatus === "live" ? __msg("stories.switchCamera") : story.photo ? __msg("stories.retakePhoto") : __msg("stories.refreshBackground")}
             className={cameraStatus === "live" && !canSwitchCamera ? "invisible" : ""}
             onClick={() => {
               if (cameraStatus === "live") {
@@ -878,7 +1064,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
               }
               if (story.uploadedUrl) {
                 if (story.uploadedUrl.startsWith("blob:")) URL.revokeObjectURL(story.uploadedUrl);
-                updateStory({ drawing: [], photo: false, questionSticker: null, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: "" });
+                updateStory({ drawing: [], photo: false, mediaType: "image", uploadedFile: null, questionSticker: null, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: "" });
                 startCamera(facingMode);
               } else {
                 updateStory({ gradient: story.gradient + 1 });
@@ -889,13 +1075,11 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             {cameraStatus === "live" ? <FiRepeat /> : <FiRefreshCw />}
           </button>
         </header>
-        <input accept="image/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
+        <input accept="image/*,video/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
 
-        {hintOpen && !story.sharedCard ? (
-          <div className="story-composer-hint">
-            Tap to write {"\u00b7"} drag the text
-            <button
-              aria-label="Dismiss composer hint"
+        {hintOpen && !story.sharedCard && !editingTextId ? (
+          <div className="story-composer-hint">{__msg("stories.tapToWriteDragToMovePinchToResize")}<button
+              aria-label={__msg("stories.dismissComposerHint")}
               onClick={() => {
                 localStorage.setItem("atseen_story_comp_hint", "1");
                 setHintOpen(false);
@@ -911,41 +1095,45 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           <div className="story-composer-empty">
             <button onClick={() => uploadInputRef.current?.click()} type="button">
               <span><FiImage /></span>
-              <strong>Add image to your story</strong>
+              <strong>{__msg("stories.addImageToYourStory")}</strong>
             </button>
-            <p>{cameraError || "Or tap anywhere to write"}</p>
+            <p>{cameraError || __msg("stories.orTapAnywhereToWrite")}</p>
           </div>
         ) : null}
 
-        {!story.sharedCard && cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) && !editingTextId ? <button className="story-composer-text-prompt" onClick={addText} type="button">Say it...</button> : null}
+        {!story.sharedCard && cameraStatus === "text" && !story.texts.some((item) => item.text.trim()) && !editingTextId ? <button className="story-composer-text-prompt" onClick={addText} type="button">{__msg("stories.sayIt")}</button> : null}
 
-        {cameraStatus === "starting" ? <div className="story-composer-camera-loading"><FiRefreshCw /> Opening camera…</div> : null}
+        {cameraStatus === "starting" ? <div className="story-composer-camera-loading"><FiRefreshCw /> {__msg("stories.openingCamera")}</div> : null}
 
         {story.sharedCard ? (
           <article
-            className={`story-shared-card-preview ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
-            aria-label={`Shared ${story.sharedCard.kind || "post"}: ${story.sharedCard.title}`}
+            className={`story-shared-card-preview ${story.sharedCard.kind === "story" ? "is-story-reshare-card" : ""} ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
+            aria-label={__msg("stories.shared", { value0: story.sharedCard.kind || "post", value1: story.sharedCard.title })}
             onPointerDown={beginCardDrag}
-            style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%` }}
+            ref={sharedCardRef}
+            tabIndex={0}
+            role="group"
+            onKeyDown={(event) => { if (["+", "=", "-"].includes(event.key)) { event.preventDefault(); setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, (current.sharedCard.scale || 1) + (event.key === "-" ? -.1 : .1))) } })); } }}
+            style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%`, transform: `translate(-50%,-50%) scale(${story.sharedCard.scale || 1})` }}
           >
-            {story.sharedCard.kind === "question_reply" ? (
-              <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<small>{story.sharedCard.subtitle || "Question"}</small><strong>{story.sharedCard.title}</strong></div>
+            {story.sharedCard.kind === "story" ? <StoryReshareCard card={story.sharedCard} /> : story.sharedCard.kind === "question_reply" ? (
+              <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<small>{story.sharedCard.subtitle || __msg("fanWeb.question")}</small><strong dir="auto">{story.sharedCard.title}</strong></div>
             ) : isTextOnlySharedCard(story.sharedCard) ? (
               <div>
                 {story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}
                 <strong>{story.sharedCard.originalTranscript || story.sharedCard.title}</strong>
                 {story.sharedCard.translationText ? (
                   <span className="story-shared-card-translation">
-                    <b>{story.sharedCard.translationLabel ? `Translated to ${story.sharedCard.translationLabel}` : "Translation"}</b>
+                    <b>{story.sharedCard.translationLabel ? __msg("stories.translatedTo", { value0: story.sharedCard.translationLabel }) : __msg("stories.translation")}</b>
                     <i>{story.sharedCard.translationText}</i>
                   </span>
                 ) : null}
-                <small>{story.sharedCard.subtitle || "Tap to open"}</small>
+                <small>{story.sharedCard.subtitle || __msg("stories.tapToOpen")}</small>
               </div>
             ) : (
               <>
-                {story.sharedCard.imageUrl ? <img alt="" src={story.sharedCard.imageUrl} /> : story.sharedCard.kind === "post" ? null : <div className="story-shared-card-fallback" />}
-                <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<strong>{story.sharedCard.title}</strong><small>{story.sharedCard.subtitle || "Tap to open"}</small></div>
+                {story.sharedCard.imageUrl ? story.sharedCard.mediaType === "video" ? <video autoPlay loop muted onTimeUpdate={(event) => { if (event.currentTarget.currentTime >= 15) event.currentTarget.currentTime = 0; }} playsInline src={story.sharedCard.imageUrl} /> : <img alt="" src={story.sharedCard.imageUrl} /> : story.sharedCard.kind === "post" ? null : <div className="story-shared-card-fallback" />}
+                <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<strong dir="auto">{story.sharedCard.title}</strong><small>{story.sharedCard.subtitle || __msg("stories.tapToOpen")}</small></div>
               </>
             )}
           </article>
@@ -955,36 +1143,48 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           <label
             className="share-seen-story-question"
             onPointerDown={beginQuestionDrag}
-            style={{ left: `${story.questionSticker.x}%`, top: `${story.questionSticker.y}%` }}
+            style={{ left: `${story.questionSticker.x}%`, top: `${story.questionSticker.y}%`, transform: `translate(-50%,-50%) scale(${story.questionSticker.scale || 1}) rotate(${story.questionSticker.rotation || 0}deg)` }}
           >
             <input
-              aria-label="Story question"
+              aria-label={__msg("stories.storyQuestion")}
               maxLength={80}
               onChange={(event) => setStory((current) => ({ ...current, questionSticker: { ...current.questionSticker, prompt: event.target.value } }))}
-              placeholder="Ask me anything"
+              placeholder={__msg("stories.askMeAnything")}
               ref={questionInputRef}
               value={story.questionSticker.prompt}
             />
-            <span>answers go to your inbox · tap to reply</span>
+            <span>{__msg("stories.answersGoToYourInboxTapToReply")}</span>
           </label>
         ) : null}
 
-        {(story.drawing || []).length || drawingMode ? <svg aria-label="Story drawing canvas" className={`story-composer-drawing ${drawingMode ? "is-active" : ""}`} onPointerDown={beginDrawing} viewBox="0 0 100 177.777">
+        {(story.drawing || []).length || drawingMode ? <svg aria-label={__msg("stories.storyDrawingCanvas")} className={`story-composer-drawing ${drawingMode ? "is-active" : ""}`} onPointerDown={beginDrawing} viewBox="0 0 100 177.777">
           {(story.drawing || []).map((stroke) => <polyline fill="none" key={stroke.id} points={(stroke.points || []).map((point) => `${point.x},${point.y}`).join(" ")} stroke={stroke.color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke.size || 1.5} />)}
         </svg> : null}
+
+        {story.mentions.map((mention) => <button className={`story-composer-mention ${mention.st === 1 ? "is-solid" : ""}`} key={mention.userId}
+          aria-label={__msg("stories.mentionUseArrowsToMoveDeleteToRemove", { value0: mention.username })}
+          onPointerDown={(event) => beginDrag(event, mention.userId, "mention")}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") { event.preventDefault(); updateStory({ mentions: story.mentions.map((item) => item.userId === mention.userId ? { ...item, st: item.st === 1 ? 0 : 1 } : item) }); return; }
+            if (event.altKey && ["ArrowLeft", "ArrowRight"].includes(event.key)) { event.preventDefault(); updateStory({ mentions: story.mentions.map((item) => item.userId === mention.userId ? { ...item, rotation: Math.max(-180, Math.min(180, (item.rotation || 0) + (event.key === "ArrowRight" ? 5 : -5))) } : item) }); return; }
+            if (["+", "=", "-"].includes(event.key)) { event.preventDefault(); updateStory({ mentions: story.mentions.map((item) => item.userId === mention.userId ? { ...item, scale: Math.max(.5, Math.min(3, (item.scale || 1) + (event.key === "-" ? -.1 : .1))) } : item) }); return; }
+            if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); updateStory({ mentions: story.mentions.filter((item) => item.userId !== mention.userId) }); }
+            if (event.key.startsWith("Arrow")) { event.preventDefault(); updateStory({ mentions: story.mentions.map((item) => item.userId === mention.userId ? { ...item, x: Math.max(-5, Math.min(105, item.x + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0))), y: Math.max(-2, Math.min(102, item.y + (event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0))) } : item) }); }
+          }}
+          style={{ left: `${mention.x}%`, top: `${mention.y}%`, transform: `translate(-50%,-50%) scale(${mention.scale || 1}) rotate(${mention.rotation || 0}deg)` }} type="button"><span>@</span>{mention.username}</button>)}
 
         {story.texts.filter((item) => item.text || editingTextId === item.id).map((item) => {
           const isEditing = editingTextId === item.id;
           const textStyle = {
-            color: item.style === 2 && item.color !== "#0A0C0F" ? "#0A0C0F" : item.color,
-            fontSize: `${item.size}px`,
+            ...storyTextStyle(item),
+            fontSize: `${item.size / 3.5}cqw`,
             left: `${item.x * 100}%`,
             top: `${item.y * 100}%`,
-            ...(item.style === 2 ? { backgroundColor: item.color } : null),
+            transform: `translate(-50%,-50%) rotate(${isEditing ? 0 : item.rotation || 0}deg)`,
           };
           return isEditing ? (
             <textarea
-              aria-label="Story text"
+              aria-label={__msg("stories.storyText")}
               className={`${storyTextClass(item.style)} is-editing ${activeTextId === item.id ? "is-active" : ""}`}
               key={item.id}
               maxLength={300}
@@ -997,7 +1197,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
                 event.preventDefault();
                 updateActiveText({ size: Math.min(64, Math.max(14, item.size + (event.deltaY < 0 ? 2 : -2))) });
               }}
-              placeholder="Say it..."
+              placeholder={__msg("stories.sayIt")}
               ref={inputRef}
               rows={1}
               style={textStyle}
@@ -1005,14 +1205,20 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             />
           ) : (
             <button
-              className={`${storyTextClass(item.style)} ${activeTextId === item.id ? "is-active" : ""}`}
+              className={`${storyTextClass(item.style)} ${activeTextId === item.id && textDragging ? "is-active" : ""}`}
               key={item.id}
-              onClick={() => {
+              onClick={(event) => {
+                if (event.detail !== 0) return;
                 setActiveTextId(item.id);
                 setEditingTextId(item.id);
                 window.setTimeout(() => inputRef.current?.focus(), 40);
               }}
               onPointerDown={(event) => beginDrag(event, item.id)}
+              onKeyDown={(event) => {
+                if (event.altKey && ["ArrowLeft", "ArrowRight"].includes(event.key)) { event.preventDefault(); setStory((current) => ({ ...current, texts: current.texts.map((text) => text.id === item.id ? { ...text, rotation: Math.max(-180, Math.min(180, (text.rotation || 0) + (event.key === "ArrowRight" ? 5 : -5))) } : text) })); return; }
+                if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); setStory((current) => ({ ...current, texts: current.texts.filter((text) => text.id !== item.id) })); }
+                if (event.key.startsWith("Arrow")) { event.preventDefault(); setStory((current) => ({ ...current, texts: current.texts.map((text) => text.id === item.id ? { ...text, x: Math.max(-.05, Math.min(1.05, text.x + (event.key === "ArrowRight" ? .01 : event.key === "ArrowLeft" ? -.01 : 0))), y: Math.max(-.02, Math.min(1.02, text.y + (event.key === "ArrowDown" ? .01 : event.key === "ArrowUp" ? -.01 : 0))) } : text) })); }
+              }}
               style={textStyle}
               type="button"
             >
@@ -1021,26 +1227,33 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
           );
         })}
 
-        {textDragging ? <div aria-label="Drag here to delete text" className={`story-composer-delete-target ${deleteArmed ? "is-armed" : ""}`} ref={deleteTargetRef} role="status"><FiTrash2 /><span>{deleteArmed ? "Release to delete" : "Drag here to delete"}</span></div> : null}
+        {textDragging ? <div aria-label={deleteArmed ? __msg("stories.releaseToDelete") : __msg("stories.deleteSticker")} className={`story-composer-delete-target ${deleteArmed ? "is-armed" : ""}`} ref={deleteTargetRef} role="status"><FiTrash2 aria-hidden="true" /></div> : null}
 
-        <button aria-label="Add an image" className="story-composer-gallery-thumb" onClick={() => uploadInputRef.current?.click()} type="button">
+        <button aria-label={__msg("stories.addAnImage")} className="story-composer-gallery-thumb" hidden={Boolean(editingTextId)} onClick={() => uploadInputRef.current?.click()} type="button">
           <FiImage />
         </button>
 
         {cameraStatus === "live" ? <div className="story-composer-camera-controls">
-          <button aria-label="Take photo" className="story-composer-shutter" onClick={capturePhoto} type="button"><span><FiCamera /></span></button>
+          <button aria-label={__msg("stories.takePhoto")} className="story-composer-shutter" onClick={capturePhoto} type="button"><span><FiCamera /></span></button>
         </div> : null}
 
         <div className="story-composer-bottom">
-          {hasActiveTextSurface || drawingMode ? (
+          {editingTextId ? <div className="story-text-edit-controls">
+            <button aria-label={__msg("stories.changeTextAlignment")} onClick={() => updateActiveText({ align: { center: "left", left: "right", right: "center" }[activeText?.align || "center"] })} type="button">{__msg("stories.align")}</button>
+            <button aria-label={__msg("stories.changeTextBackground")} onClick={() => updateActiveText({ backgroundMode: ((activeText?.backgroundMode || 0) + 1) % 3 })} type="button">{__msg("stories.background")} {activeText?.backgroundMode || 0}</button>
+            <label>{__msg("stories.size")}<input aria-label={__msg("stories.textSize")} max="96" min="12" onChange={(event) => updateActiveText({ size: Number(event.target.value) })} type="range" value={activeText?.size || 28} /></label>
+            <button onClick={() => setEditingTextId("")} type="button">{__msg("comments.done")}</button>
+          </div> : null}
+          {editingTextId || drawingMode ? (
             <div className="story-composer-text-options">
               {paletteOpen ? (
-                <div aria-label={drawingMode ? "Drawing colors" : "Text colors"} className="story-composer-color-dots" role="group">
+                <div aria-label={drawingMode ? __msg("stories.drawingColors") : __msg("stories.textColors")} className="story-composer-color-dots" role="group">
                   {STORY_COLORS.map((color) => (
                     <button
-                      aria-label={drawingMode ? `Use ${color} drawing color` : `Use ${color} text`}
+                      aria-label={drawingMode ? __msg("stories.useDrawingColor", { value0: color }) : __msg("stories.useText", { value0: color })}
                       className={(drawingMode ? drawingColor : activeText?.color) === color ? "is-selected" : ""}
                       key={color}
+                      onMouseDown={(event) => event.preventDefault()}
                       onClick={() => { setDrawingColor(color); if (!drawingMode) updateActiveText({ color }); }}
                       style={{ backgroundColor: color }}
                       type="button"
@@ -1049,12 +1262,13 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
                 </div>
               ) : null}
               {!drawingMode ? <div className="story-composer-style-row">
-                <button aria-label="Toggle text colors" className={`story-composer-color-wheel ${paletteOpen ? "is-selected" : ""}`} onClick={() => setPaletteOpen((current) => !current)} type="button" />
-                <div aria-label="Text styles" className="story-composer-style-scroll" role="group">
+                <button aria-label={__msg("stories.toggleTextColors")} className={`story-composer-color-wheel ${paletteOpen ? "is-selected" : ""}`} onClick={() => setPaletteOpen((current) => !current)} type="button" />
+                <div aria-label={__msg("stories.textStyles")} className="story-composer-style-scroll" role="group">
                   {STORY_TEXT_STYLES.map((style) => (
                     <button
                       className={`${activeText?.style === style.value ? "is-selected" : ""} is-style-${style.value}`}
                       key={style.value}
+                      onMouseDown={(event) => event.preventDefault()}
                       onClick={() => updateActiveText({ style: style.value })}
                       type="button"
                     >
@@ -1065,13 +1279,13 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
               </div> : null}
             </div>
           ) : null}
-          <div className="story-composer-toolbar">
-            <button aria-label={`Story audience: ${activeAudience.label}`} className={`story-composer-audience is-${activeAudience.value}`} onClick={cycleAudience} type="button">
+          <div className="story-composer-toolbar" hidden={Boolean(editingTextId)}>
+            <button aria-label={__msg("stories.storyAudience", { value0: activeAudience.label })} className={`story-composer-audience is-${activeAudience.value}`} onClick={cycleAudience} type="button">
               <ActiveAudienceIcon /> {activeAudience.label}
             </button>
             <span />
             <button className="story-composer-share" disabled={createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step)} onClick={publish} type="button">
-              {createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step) ? <><FiRefreshCw className="story-composer-button-spinner" /> {mode === "compose" ? "Adding..." : "Sharing..."}</> : mode === "compose" ? "Add" : "Share"}
+              {createMutation.isPending || ["Preparing", "Adding preview"].includes(upload.step) ? <><FiRefreshCw className="story-composer-button-spinner" /> {mode === "compose" ? __msg("stories.adding") : __msg("fanWeb.sharing")}</> : mode === "compose" ? __msg("publication.add") : __msg("admin.share")}
             </button>
           </div>
           {upload.step ? (
@@ -1081,6 +1295,13 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             </div>
           ) : null}
         </div>
+
+        {mentionOpen ? <StoryMentionPicker onClose={() => setMentionOpen(false)} selectedIds={story.mentions.map((item) => item.userId)} onSelect={(person) => {
+          if (story.mentions.length >= 10) { showToast(__msg("stories.youCanMentionUpTo10People")); return; }
+          if (story.mentions.some((item) => item.userId === person.id)) return;
+          updateStory({ mentions: [...story.mentions, { userId: person.id, username: person.username, name: person.name, x: 50, y: 45 + story.mentions.length * 4, scale: 1, rotation: 0 }] });
+          setMentionOpen(false);
+        }} /> : null}
 
       </section>
     </div>

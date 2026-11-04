@@ -1652,7 +1652,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       </div> : <p className="world-inside-detail__empty">No experiences have been included yet.</p>}
     </section>
 
-    {bonusChapters.length ? <section className="world-member-home__bonus"><h2>BONUS CHAPTERS <span>· at the end of {firstName}'s free Seens</span></h2><div>{bonusChapters.map((chapter, index) => <button key={chapter.id || index} onClick={() => navigate(`/seen/${chapter.seenId}?chapter=${chapter.chapterIndex}&returnTo=${encodeURIComponent(`/world/${publication.id || publication._id}/inside?view=detail`)}`)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || `Bonus chapter ${index + 1}`}<small>⌁ {chapter.seenTitle} · World members only</small></b><FiChevronRight /></button>)}</div></section> : null}
+    {bonusChapters.length ? <section className="world-member-home__bonus"><h2>BONUS CHAPTERS <span>· at the end of {firstName}’s free Seens</span></h2><div>{bonusChapters.map((chapter, index) => <button key={chapter.id || index} onClick={() => navigate(`/seen/${chapter.seenId}?chapter=${chapter.chapterIndex}&returnTo=${encodeURIComponent(`/world/${publication.id || publication._id}/inside?view=detail`)}`)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || `Bonus chapter ${index + 1}`}<small>⌁ {chapter.seenTitle} · World members only</small></b><FiChevronRight /></button>)}</div></section> : null}
 
     <section className="world-inside-detail__comments">
       <h2>Comments · {Number(engagement.commentCount || 0).toLocaleString()}</h2>

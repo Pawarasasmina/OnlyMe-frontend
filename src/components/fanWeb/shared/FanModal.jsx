@@ -1,8 +1,12 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 
 function FanModal({ children, className = "", hideHeader = false, isOpen, onClose, overlayClassName = "", overlayStyle, portal = false, title }) {
+  __useUiLanguage();
   const titleId = useId();
   const dialogRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -82,7 +86,7 @@ function FanModal({ children, className = "", hideHeader = false, isOpen, onClos
             {title}
           </h2>
           <button
-            aria-label="Close dialog"
+            aria-label={__msg("fanWeb.closeDialog")}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-atseen-line bg-white/[0.03] text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white"
             onClick={onClose}
             type="button"

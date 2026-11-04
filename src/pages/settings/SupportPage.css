@@ -1,0 +1,24 @@
+.support-help-page { box-sizing:border-box;max-width:none;min-height:100dvh;padding:22px 20px 70px;background:#0a0c0f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif; }
+.support-help-page > header { gap:12px; }
+.support-help-page > header > button { width:38px;height:38px;flex:none;background:rgba(255,255,255,.07);font-size:16px; }
+.support-help-page > header h1 { font-size:18px;font-weight:700;letter-spacing:-.3px;line-height:1.2; }
+.support-help-page > div { margin-top:34px; }
+.support-help-page > div > section { margin:24px 0 0; }
+.support-help-page > div > section:first-child { margin-top:0; }
+.support-help-page section > h2 { margin:0 0 2px;color:rgba(255,255,255,.4);font-size:11px;font-weight:700;line-height:1.45;letter-spacing:.12em;text-transform:uppercase; }
+.support-help-page section > div > article { margin:16px 0 0; }
+.support-help-page section > div > article:first-child:has(> p:only-child) { margin-top:9px; }
+.support-help-page article h3 { margin:0;color:#fff;font-size:14.5px;font-weight:750;line-height:1.4; }
+.support-help-page article p { margin:9px 0 0;color:rgba(255,255,255,.65);font-size:13px;font-weight:400;line-height:1.7; }
+.support-help-page article p:only-child { margin-top:0; }
+.support-help-page > a { margin-top:9px;color:#9ccbff;font-size:13px;font-weight:700;line-height:1.7; }
+.support-help-page button:focus-visible,.support-help-page a:focus-visible { outline:2px solid #9ccbff;outline-offset:3px; }
+.support-about-page > .support-about-intro { margin-top:28px; }
+.support-about-logo { font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:normal; }
+.support-about-logo > span { color:#9ccbff; }
+.support-about-intro > p { margin:4px 0 0;color:rgba(255,255,255,.62);font-size:14px;line-height:normal; }
+.support-about-page > .support-about-intro + div { margin-top:24px; }
+.support-about-page article p { color:rgba(255,255,255,.62); }
+.support-about-contact { margin-top:9px;color:rgba(255,255,255,.62);font-size:13px;line-height:1.7; }
+.support-about-contact a { color:#9ccbff;font-weight:700; }
+.support-about-contact > span { margin-inline-start:4px;color:inherit;font-size:inherit; }

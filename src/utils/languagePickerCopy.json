@@ -1,0 +1,58 @@
+{
+  "en": {
+    "Language": "Language",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.",
+    "Suggested": "Suggested",
+    "All languages": "All languages",
+    "Device language": "Device language"
+  },
+  "ar": {
+    "Language": "اللغة",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "اختر لغة @seen. تبقى المنشورات باللغة التي كُتبت بها — اضغط «عرض الترجمة» لقراءتها بلغتك.",
+    "Suggested": "مقترحة",
+    "All languages": "كل اللغات",
+    "Device language": "لغة الجهاز"
+  },
+  "uk": {
+    "Language": "Мова",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Обери мову @seen. Пости залишаються мовою автора — натисни «Показати переклад», щоб читати своєю.",
+    "Suggested": "Рекомендовано",
+    "All languages": "Усі мови",
+    "Device language": "Мова пристрою"
+  },
+  "es": {
+    "Language": "Idioma",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Elige el idioma de @seen. Las publicaciones se quedan en el idioma en que se escribieron: toca «Ver traducción» para leerlas en el tuyo.",
+    "Suggested": "Sugerido",
+    "All languages": "Todos los idiomas",
+    "Device language": "Idioma del dispositivo"
+  },
+  "pt": {
+    "Language": "Idioma",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Escolhe o idioma do @seen. As publicações ficam no idioma em que foram escritas — toca em «Ver tradução» para as ler no teu.",
+    "Suggested": "Sugerido",
+    "All languages": "Todos os idiomas",
+    "Device language": "Idioma do dispositivo"
+  },
+  "fr": {
+    "Language": "Langue",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Choisis la langue de @seen. Les posts restent dans la langue d’origine — touche « Voir la traduction » pour les lire dans la tienne.",
+    "Suggested": "Suggérée",
+    "All languages": "Toutes les langues",
+    "Device language": "Langue de l’appareil"
+  },
+  "de": {
+    "Language": "Sprache",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Wähle die Sprache für @seen. Posts bleiben in ihrer Originalsprache — tippe auf „Übersetzung anzeigen“, um sie in deiner zu lesen.",
+    "Suggested": "Vorgeschlagen",
+    "All languages": "Alle Sprachen",
+    "Device language": "Gerätesprache"
+  },
+  "ru": {
+    "Language": "Язык",
+    "All languages": "Все языки",
+    "Suggested": "Рекомендуем",
+    "Device language": "Язык устройства",
+    "Choose the language for @seen. Posts stay in the language people wrote them in — tap “See translation” to read them in yours.": "Выбери язык @seen. Посты остаются на языке автора — нажми «Показать перевод», чтобы читать на своём."
+  }
+}

@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { mergeActivitySources } from "./activitySources.js";
 const activity = { id: "notice", type: "gift_sent", title: "You sent My Star to Arjun", direction: "sent", createdAt: "2026-10-23T10:00:00Z", relatedCreator: { id: "arjun", username: "arjun" }, metadata: { giftId: "star" }, reference: { type: "MESSAGE", id: "message-1" }, filterKeys: ["support"] };

@@ -1,4 +1,4 @@
-﻿// Freshly received gifts lead the shelf; then featured gifts and the viewer's gifts.
+// Freshly received gifts lead the shelf; then featured gifts and the viewer's gifts.
 export function sortedProfileGifts(gifts, viewerId) {
   const receivedAt = (gift) => new Date(gift.createdAt || gift.receivedAt || 0).getTime() || 0;
   const mine = (gift) => Boolean(viewerId && String(gift.sender?.id || gift.sender?._id || "") === String(viewerId));

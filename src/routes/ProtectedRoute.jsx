@@ -1,16 +1,20 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import { useAuth } from "../hooks/useAuth";
 import { canAccessAppDuringOnboarding, isConsumerRole, isOnboardingComplete, onboardingPathFor } from "../utils/socialAccess";
 
 function ProtectedRoute() {
+  __useUiLanguage();
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-7xl items-center px-4 sm:px-6">
-        <Loader label="Checking session..." />
+        <Loader label={__msg("onboarding.checkingSession")} />
       </div>
     );
   }

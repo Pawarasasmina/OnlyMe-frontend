@@ -1,3 +1,7 @@
+import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -7,14 +11,15 @@ import { callService } from "../../services/callService";
 import { messageService } from "../../services/messageService";
 
 const benefitRows = [
-  [FiMessageCircle, "A 48-hour private window", "Up to 3 messages from you — a real back-and-forth, not a ticket."],
-  [FiInbox, "Top of the priority inbox", "Your message appears above standard conversations so it cannot get lost."],
-  [FiClock, "First reply within 48 hours", "A personal reply, usually much faster — within the guarantee."],
-  [FiRefreshCw, "Refunded if unanswered", "No reply in 48 hours? Your coins come back automatically. Every time."],
+  __uiTuple([FiMessageCircle, "A 48-hour private window", { __uiMessage: "profile.upTo3MessagesFromYouAReal" }]),
+  __uiTuple([FiInbox, { __uiMessage: "profile.topOfThePriorityInbox" }, { __uiMessage: "profile.yourMessageAppearsAboveStandardConversationsSoIt" }]),
+  __uiTuple([FiClock, { __uiMessage: "profile.firstReplyWithin48Hours" }, { __uiMessage: "profile.aPersonalReplyUsuallyMuchFasterWithinThe" }]),
+  __uiTuple([FiRefreshCw, { __uiMessage: "profile.refundedIfUnanswered" }, { __uiMessage: "profile.noReplyIn48HoursYourCoinsCome" }]),
 ];
 const STAR = String.fromCharCode(10022);
 
 export default function DirectAccessOfferModal({ onClose, profile }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const { startCall } = useCalls();
   const [pagePosition, setPagePosition] = useState(undefined);
@@ -71,47 +76,47 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
   return <div className="direct-access-page-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} style={pagePosition}>
     <section aria-labelledby="direct-access-offer-title" aria-modal="true" className="direct-access-page" role="dialog">
       <header className="direct-access-page-header">
-        <button aria-label="Close Direct Access" onClick={onClose} type="button"><FiArrowLeft /></button>
+        <button aria-label={__msg("profile.closeDirectAccess")} onClick={onClose} type="button"><FiArrowLeft data-ui-directional="true" /></button>
         <img alt="" src={profile.avatar || "/default-avatar.png"} />
-        <span><h2 id="direct-access-offer-title">{profile.displayName} <i>✓</i></h2><small>Direct Access</small></span>
+        <span><h2 dir="auto" id="direct-access-offer-title">{profile.displayName} <i>✓</i></h2><small>Direct Access</small></span>
       </header>
 
       <main>
-        <p className="direct-access-priority">🪶 World members get priority replies</p>
-        <section className="direct-access-quote"><img alt="" src={profile.avatar || "/default-avatar.png"} /><span><strong>“Write as you are — I read everything myself.”</strong><small>{firstName} · Direct Access</small></span></section>
+        <p className="direct-access-priority">{__msg("profile.worldMembersGetPriorityReplies")}</p>
+        <section className="direct-access-quote"><img alt="" src={profile.avatar || "/default-avatar.png"} /><span><strong>{__msg("profile.writeAsYouAreIReadEverythingMyself")}</strong><small>{firstName} {__msg("profile.directAccess")}</small></span></section>
 
-        <section className="direct-access-private-preview" aria-label="Recent private replies preview">
-          <h3>Recent private replies</h3>
-          <div><span className="is-right">You did you feel after you tried...</span><span>I honestly felt lost until I saw another...</span><i><FiLock /></i><span className="is-right">What would you tell someone who...</span><span>Stop waiting for the perfect moment and...</span><i><FiLock /></i></div>
-          <p>Private stays private — yours will look like this to everyone else</p>
-          <footer><span>⚡ replies within {replyHours}h</span><span>🪙 98% warm calls</span><span>↪ 48h or refund</span></footer>
+        <section className="direct-access-private-preview" aria-label={__msg("profile.recentPrivateRepliesPreview")}>
+          <h3>{__msg("profile.recentPrivateReplies")}</h3>
+          <div><span className="is-right">{__msg("profile.youDidYouFeelAfterYouTried")}</span><span>{__msg("profile.iHonestlyFeltLostUntilISawAnother")}</span><i><FiLock /></i><span className="is-right">{__msg("profile.whatWouldYouTellSomeoneWho")}</span><span>{__msg("profile.stopWaitingForThePerfectMomentAnd")}</span><i><FiLock /></i></div>
+          <p>{__msg("profile.privateStaysPrivateYoursWillLookLikeThisTo")}</p>
+          <footer><span>{__msg("profile.repliesWithin")} {replyHours}{__msg("profile.h")}</span><span>{__msg("profile.98WarmCalls")}</span><span>{__msg("profile.48hOrRefund")}</span></footer>
         </section>
 
         {callOffer.isLoading ? <div className="direct-access-call is-loading" /> : paidCall?.enabled ? <section className="direct-access-call">
           <FiPhone />
-          <span><strong>Call with {firstName}</strong><small>A real voice — just you and {firstName}</small><em>{STAR}{paidCall.priceStars} · {paidCall.durationMinutes} min · guaranteed or refunded</em></span>
-          <button onClick={() => requestCall("AUDIO")} type="button">Request</button>
+          <span><strong>{__msg("profile.callWith")} {firstName}</strong><small>{__msg("profile.aRealVoiceJustYouAnd")} {firstName}</small><em>{STAR}{paidCall.priceStars} · {paidCall.durationMinutes} {__msg("profile.minGuaranteedOrRefunded")}</em></span>
+          <button onClick={() => requestCall("AUDIO")} type="button">{__msg("profile.request")}</button>
         </section> : null}
 
         <section className="direct-access-story">
           <div className="direct-access-spark">✦</div>
-          <h3>A real conversation.</h3>
-          <p>Not one reply into the void — a private 48-hour window with {firstName}, with a promise attached.</p>
+          <h3>{__msg("profile.aRealConversation")}</h3>
+          <p>{__msg("profile.notOneReplyIntoTheVoidAPrivate48")} {firstName}{__msg("profile.withAPromiseAttached")}</p>
         </section>
 
         <section className="direct-access-benefits">{benefitRows.map(([Icon, title, copy]) => <article key={title}><span><Icon /></span><div><h4>{title}</h4><p>{copy}</p></div></article>)}</section>
 
-        {messageOffer.isError ? <p className="direct-access-error">{messageOffer.error?.response?.data?.message || "Direct Access is unavailable right now."}</p> : offer ? <section className="direct-access-price-card">
-          <div><span>Price</span><b>{offer.premiumAllowance?.available ? "Included" : `${STAR}${offer.priceStars}`}</b></div>
-          <div><span>Usually replies</span><b>within {replyHours}h</b></div>
-          <div><span>Guarantee</span><b>48h or refunded</b></div>
+        {messageOffer.isError ? <p className="direct-access-error">{messageOffer.error?.response?.data?.message || __msg("profile.directAccessIsUnavailableRightNow")}</p> : offer ? <section className="direct-access-price-card">
+          <div><span>{__msg("fan.price")}</span><b>{offer.premiumAllowance?.available ? __msg("profile.included") : `${STAR}${offer.priceStars}`}</b></div>
+          <div><span>{__msg("profile.usuallyReplies")}</span><b>{__msg("profile.within")} {replyHours}{__msg("profile.h")}</b></div>
+          <div><span>{__msg("profile.guarantee")}</span><b>{__msg("profile.48hOrRefunded")}</b></div>
         </section> : null}
-        <p className="direct-access-charge-note">You’re only charged when {firstName} replies.</p>
+        <p className="direct-access-charge-note">{__msg("profile.youReOnlyChargedWhen")} {firstName} {__msg("profile.replies")}</p>
       </main>
 
       <footer className="direct-access-unlock">
-        <button disabled={messageOffer.isLoading || !offer?.enabled} onClick={openMessages} type="button">{offer?.premiumAllowance?.available ? "Open Direct Access" : "Unlock Direct Access"}</button>
-        {offer && !offer.premiumAllowance?.available && Number(offer.walletBalance || 0) < Number(offer.priceStars) ? <button className="is-wallet" onClick={() => { onClose(); navigate("/fan/wallet"); }} type="button">Not enough Stars · Open Wallet</button> : null}
+        <button disabled={messageOffer.isLoading || !offer?.enabled} onClick={openMessages} type="button">{offer?.premiumAllowance?.available ? __msg("profile.openDirectAccess") : __msg("profile.unlockDirectAccess")}</button>
+        {offer && !offer.premiumAllowance?.available && Number(offer.walletBalance || 0) < Number(offer.priceStars) ? <button className="is-wallet" onClick={() => { onClose(); navigate("/fan/wallet"); }} type="button">{__msg("profile.notEnoughStarsOpenWallet")}</button> : null}
       </footer>
     </section>
   </div>;

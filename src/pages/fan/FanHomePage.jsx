@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import WallExploreNeeds from "../../components/fanWeb/home/WallExploreNeeds";
 import { prependCreatedWallPosts } from "../../utils/wallCreatedPosts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -22,19 +25,19 @@ import { canCreateFeedPost } from "../../utils/postPermissions";
 import ContentEmptyState from "../../components/shared/ContentEmptyState";
 
 const HOME_FILTERS = [
-  { key: "all", label: "All" },
-  { key: "right_now", label: "Right now" },
-  { key: "places", label: "Places" },
-  { key: "events", label: "Events" },
-  { key: "things_to_do", label: "Things to do" },
-  { key: "food", label: "Food" },
-  { key: "travel", label: "Travel" },
-  { key: "business", label: "Business" },
-  { key: "fitness", label: "Fitness" },
-  { key: "beauty", label: "Beauty" },
-  { key: "family", label: "Family" },
-  { key: "shopping", label: "Shopping" },
-  { key: "advice", label: "Advice" },
+  { key: "all", get label() { return __msg("fanWeb.all"); } },
+  { key: "right_now", get label() { return __msg("constants.rightNow"); } },
+  { key: "places", get label() { return __msg("data.places"); } },
+  { key: "events", get label() { return __msg("data.events"); } },
+  { key: "things_to_do", get label() { return __msg("fan.thingsToDo"); } },
+  { key: "food", get label() { return __msg("fanWeb.food"); } },
+  { key: "travel", get label() { return __msg("data.travel"); } },
+  { key: "business", get label() { return __msg("profile.business"); } },
+  { key: "fitness", get label() { return __msg("fan.fitness"); } },
+  { key: "beauty", get label() { return __msg("fan.beauty"); } },
+  { key: "family", get label() { return __msg("fan.family"); } },
+  { key: "shopping", get label() { return __msg("fan.shopping"); } },
+  { key: "advice", get label() { return __msg("fan.advice"); } },
 ];
 
 function uniqueList(items = []) {
@@ -46,11 +49,13 @@ function creatorLocation(creator = {}) {
 }
 
 function HomeEmptyState({ activeFilter, canPost, onShowAll }) {
+  __useUiLanguage();
   const filtered = activeFilter !== "all";
-  return <ContentEmptyState message={filtered ? "No posts match these filters yet. Try another type, topic, or location." : "Give your Wall some life with a note, or discover people worth following."} primaryAction={filtered ? { label: "Show all posts", onClick: onShowAll } : canPost ? { label: "Create your first post", to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: "Discover people", to: "/discover" }} secondaryAction={filtered || canPost ? { label: "Discover people", to: "/discover" } : { label: "View Seen", to: "/seen" }} title={filtered ? "Nothing here yet" : "Create your first post"} variant="wall" />;
+  return <ContentEmptyState message={filtered ? __msg("fan.noPostsMatchTheseFiltersYetTryAnotherType") : __msg("fan.giveYourWallSomeLifeWithANoteOr")} primaryAction={filtered ? { label: __msg("fan.showAllPosts"), onClick: onShowAll } : canPost ? { label: __msg("fan.createYourFirstPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} secondaryAction={filtered || canPost ? { label: __msg("profile.discoverPeople"), to: "/discover" } : { label: __msg("fan.viewSeen"), to: "/seen" }} title={filtered ? __msg("fan.nothingHereYet") : __msg("fan.createYourFirstPost")} variant="wall" />;
 }
 
 function FanHomePage() {
+  __useUiLanguage();
   const { status, setStatus } = useOutletContext();
   const navigation = useLocation();
   const { user, loading: authLoading } = useAuth();
@@ -185,14 +190,14 @@ function FanHomePage() {
   }, [setSearchParams]);
   const activeCount = Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(activeFilter !== "all") + Number(Boolean(searchParams.get("q")));
   const selectedLabels = [
-    filters.type !== "all" ? ({ need_help: "Need help", right_now: "Right now", buy_sell: "Buy & Sell", looking_for: "Looking for" }[filters.type] || WALL_FILTER_TYPES.find((item) => item.value === filters.type)?.label) : "",
+    filters.type !== "all" ? ({ need_help: __msg("fanWeb.needHelp"), right_now: __msg("constants.rightNow"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[filters.type] || WALL_FILTER_TYPES.find((item) => item.value === filters.type)?.label) : "",
     filters.topic !== "all" ? WALL_FILTER_TOPICS.find((item) => item.value === filters.topic)?.label : "",
   ].filter(Boolean);
-  const feedTitle = selectedLabels.join(" \u00b7 ") || (activeFilter !== "all" ? HOME_FILTERS.find((item) => item.key === activeFilter)?.label : "For you");
+  const feedTitle = selectedLabels.join(" \u00b7 ") || (activeFilter !== "all" ? HOME_FILTERS.find((item) => item.key === activeFilter)?.label : __msg("fan.forYou"));
 
   return (
     <div className="home-prototype-page">
-      <section className="home-prototype-main" aria-label="Home feed">
+      <section className="home-prototype-main" aria-label={__msg("fan.homeFeed")}>
         <HomeHeader
           activityCount={unreadActivityCount}
           countryCode={selectedCountryCode}
@@ -212,13 +217,13 @@ function FanHomePage() {
 
 
         <WallExploreNeeds location={feedLocation} viewerId={String(user?.id || user?._id || "")} filters={filters} onSelect={(selection) => applyFilters({ ...filters, type: "all", topic: "all", ...selection })} />
-        <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || "Worldwide"}</span>{activeCount ? <button onClick={resetFilters} type="button">Clear</button> : null}</div>
+        <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || __msg("fanWeb.worldwide")}</span>{activeCount ? <button onClick={resetFilters} type="button">{__msg("fan.clear")}</button> : null}</div>
 
         {loading ? <WallFeedSkeleton /> : null}
         {feedQuery.isError ? (
           <section className="home-feed-error" role="alert">
-            <p>Unable to load posts from the database.</p>
-            <button onClick={() => feedQuery.refetch()} type="button">Retry</button>
+            <p>{__msg("fan.unableToLoadPostsFromTheDatabase")}</p>
+            <button onClick={() => feedQuery.refetch()} type="button">{__msg("activity.retry")}</button>
           </section>
         ) : null}
         {!loading && !feedQuery.isError && !feedPosts.length ? <HomeEmptyState activeFilter={activeCount ? "filtered" : "all"} canPost={canPost} onShowAll={resetFilters} /> : null}

@@ -1,6 +1,8 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import ContentEntityChip from "./ContentEntityChip";
 
 export default function ContentEntityList({ entities = [], onNotice }) {
+  __useUiLanguage();
   const visible = (entities || []).filter((entity) => entity?.id && entity?.title);
   if (!visible.length) return null;
   return (

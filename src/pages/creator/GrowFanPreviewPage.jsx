@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { FiCheck, FiStar, FiVolumeX, FiX } from "react-icons/fi";
@@ -7,10 +11,11 @@ import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
 
 function firstName(value = "") {
-  return value.trim().split(/\s+/u)[0] || "this creator";
+  return value.trim().split(/\s+/u)[0] || __msg("stories.thisCreator");
 }
 
 function Avatar({ avatar, name }) {
+  __useUiLanguage();
   const source = resolveMediaUrl(avatar);
   return source
     ? <img alt={name} src={source} />
@@ -18,6 +23,7 @@ function Avatar({ avatar, name }) {
 }
 
 export default function GrowFanPreviewPage() {
+  __useUiLanguage();
   const navigate = useNavigate();
   const profileQuery = useQuery({
     queryKey: ["unified-profile", "me"],
@@ -34,7 +40,7 @@ export default function GrowFanPreviewPage() {
     return <main className="grow-fan-preview grow-fan-preview-loading"><LoadingSkeleton className="h-28" count={3} /></main>;
   }
   if (profileQuery.isError || growQuery.isError) {
-    return <main className="grow-fan-preview"><button aria-label="Close preview" className="grow-fan-preview-close" onClick={() => navigate("/grow")} type="button"><FiX /></button><div className="grow-fan-preview-error"><h1>Preview unavailable</h1><p>We couldn’t load your fan view.</p><button onClick={() => { profileQuery.refetch(); growQuery.refetch(); }} type="button">Try again</button></div></main>;
+    return <main className="grow-fan-preview"><button aria-label={__msg("admin.closePreview")} className="grow-fan-preview-close" onClick={() => navigate("/grow")} type="button"><FiX /></button><div className="grow-fan-preview-error"><h1>{__msg("creator.previewUnavailable")}</h1><p>{__msg("creator.weCouldnTLoadYourFanView")}</p><button onClick={() => { profileQuery.refetch(); growQuery.refetch(); }} type="button">{__msg("discover.tryAgain")}</button></div></main>;
   }
 
   const data = profileQuery.data || {};
@@ -47,14 +53,14 @@ export default function GrowFanPreviewPage() {
   const invitationPath = `/invite/${encodeURIComponent(grow.codes?.creator || "")}`;
 
   return <main className="grow-fan-preview">
-    <button aria-label="Close preview" className="grow-fan-preview-close" onClick={() => navigate("/grow")} type="button"><FiX /></button>
+    <button aria-label={__msg("admin.closePreview")} className="grow-fan-preview-close" onClick={() => navigate("/grow")} type="button"><FiX /></button>
     <section className="grow-fan-preview-hero">
       <div className="grow-fan-preview-avatar"><Avatar avatar={profile.avatar} name={profile.displayName} /></div>
-      <p>{creatorName.toUpperCase()} INVITED YOU</p>
-      <h1>Step into {creatorName}’s world</h1>
+      <p>{creatorName.toUpperCase()} {__msg("profile.invitedYou")}</p>
+      <h1>{__msg("creator.stepInto")} {creatorName}{__msg("creator.sWorld")}</h1>
       <div className="grow-fan-preview-joined">
         <span>{recent.slice(0, 4).map((row) => <i key={row.id}><Avatar avatar={row.person?.avatar} name={row.person?.name} /></i>)}</span>
-        <small>{joinedCount.toLocaleString()} joined through {creatorName}</small>
+        <small>{joinedCount.toLocaleString(__uiLocale())} {__msg("creator.joinedThrough")} {creatorName}</small>
       </div>
     </section>
 
@@ -62,19 +68,19 @@ export default function GrowFanPreviewPage() {
       {experiences.map((experience) => <Link key={experience.id} to={`/experience/${experience.id}`}>
         {experience.coverMedia?.secureUrl ? <img alt="" src={resolveMediaUrl(experience.coverMedia.secureUrl)} /> : <span className="grow-fan-preview-cover-fallback"><FiStar /></span>}
         <span className="grow-fan-preview-card-shade" />
-        <span className="grow-fan-preview-card-title"><i><FiVolumeX /></i><b>{experience.title || "Untitled Experience"}</b></span>
+        <span className="grow-fan-preview-card-title"><i><FiVolumeX /></i><b>{experience.title || __msg("profile.untitledExperience")}</b></span>
       </Link>)}
-      {!experiences.length ? <div className="grow-fan-preview-empty"><FiStar /><b>Your Experiences will appear here</b><small>Publish an Experience to complete the invitation preview.</small></div> : null}
+      {!experiences.length ? <div className="grow-fan-preview-empty"><FiStar /><b>{__msg("creator.yourExperiencesWillAppearHere")}</b><small>{__msg("creator.publishAnExperienceToCompleteTheInvitationPreview")}</small></div> : null}
     </section>
 
     <section className="grow-fan-preview-benefits">
-      <p><i><FiCheck /></i><span>The first chapter of everything — free</span></p>
-      <p><i><FiStar /></i><span>Founding fan #{Math.max(1, joinedCount + 1).toLocaleString()} — next to your name, for good</span></p>
+      <p><i><FiCheck /></i><span>{__msg("creator.theFirstChapterOfEverythingFree")}</span></p>
+      <p><i><FiStar /></i><span>{__msg("creator.foundingFan")}{Math.max(1, joinedCount + 1).toLocaleString(__uiLocale())} {__msg("creator.nextToYourNameForGood")}</span></p>
     </section>
 
     <div className="grow-fan-preview-cta">
-      <Link to={invitationPath}>Join {creatorName}</Link>
-      <small>Free · you can leave anytime</small>
+      <Link to={invitationPath}>{__msg("profile.join")} {creatorName}</Link>
+      <small>{__msg("creator.freeYouCanLeaveAnytime")}</small>
     </div>
   </main>;
 }

@@ -1,0 +1,1656 @@
+[
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 30,
+    "key": "context",
+    "msg": "fanWeb.buySell_670e90"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 31,
+    "key": "context",
+    "msg": "fanWeb.lookingFor"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 32,
+    "key": "context",
+    "msg": "fanWeb.buySell_670e90"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 33,
+    "key": "context",
+    "msg": "fanWeb.needHelp"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 34,
+    "key": "context",
+    "msg": "fan.advice"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 35,
+    "key": "context",
+    "msg": "fanWeb.recommendation"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 36,
+    "key": "context",
+    "msg": "constants.rightNow"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 37,
+    "key": "context",
+    "msg": "data.events"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 40,
+    "key": "Need Help",
+    "msg": "fanWeb.whatHappenedAndHowCanPeopleHelp"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 41,
+    "key": "Looking for",
+    "msg": "fanWeb.whatAreYouLookingForWhatWhereWhen"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 42,
+    "key": "Offering",
+    "msg": "fanWeb.whatAreYouOfferingPriceConditionWhere"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 43,
+    "key": "Question",
+    "msg": "fanWeb.askItTheMoreDetailTheBetterThe"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 44,
+    "key": "Recommendation",
+    "msg": "fanWeb.whatDoYouRecommendAndWhy"
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\PostComposer.jsx",
+    "line": 45,
+    "key": "Event",
+    "msg": "fanWeb.whatWhereWhenAndWhoShouldCome"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 11,
+    "key": "status",
+    "msg": "search.official"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 12,
+    "key": "status",
+    "msg": "constants.atSeen"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 13,
+    "key": "status",
+    "msg": "constants.atTheGym"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 14,
+    "key": "status",
+    "msg": "constants.traveling"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 15,
+    "key": "status",
+    "msg": "constants.coffeeBreak"
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 16,
+    "key": "status",
+    "msg": "constants.celebrating"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusBadge.jsx",
+    "line": 13,
+    "key": "NOT_STARTED",
+    "msg": "verification.notStarted"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusBadge.jsx",
+    "line": 14,
+    "key": "DRAFT",
+    "msg": "verification.draft"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusBadge.jsx",
+    "line": 15,
+    "key": "PENDING_REVIEW",
+    "msg": "verification.pendingReview"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusBadge.jsx",
+    "line": 16,
+    "key": "CHANGES_REQUESTED",
+    "msg": "content.changesRequested"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusBadge.jsx",
+    "line": 17,
+    "key": "APPROVED",
+    "msg": "verification.approved"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusBadge.jsx",
+    "line": 18,
+    "key": "REJECTED",
+    "msg": "verification.rejected"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusCard.jsx",
+    "line": 10,
+    "key": "action",
+    "msg": "verification.startVerification_a9e4fd"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusCard.jsx",
+    "line": 11,
+    "key": "action",
+    "msg": "verification.continueVerification"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusCard.jsx",
+    "line": 13,
+    "key": "action",
+    "msg": "verification.updateAndResubmit"
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStatusCard.jsx",
+    "line": 14,
+    "key": "action",
+    "msg": "verification.openCreatorStudio"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 10,
+    "msg": "contentEntities.book"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 11,
+    "msg": "contentEntities.experience"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 12,
+    "msg": "contentEntities.journey"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 13,
+    "msg": "contentEntities.place"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 17,
+    "msg": "contentEntities.book"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 18,
+    "msg": "contentEntities.experience"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 19,
+    "msg": "contentEntities.journey"
+  },
+  {
+    "file": "src\\constants\\contentEntityTypes.js",
+    "line": 20,
+    "msg": "contentEntities.place"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 4,
+    "key": "Caught Feelings",
+    "msg": "giftCaptions.thisGotMeInMyFeelings"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 5,
+    "key": "I Love You",
+    "msg": "giftCaptions.iLoveThis"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 6,
+    "key": "Main Character",
+    "msg": "giftCaptions.mainCharacterEnergy"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 7,
+    "key": "Glow Up",
+    "msg": "giftCaptions.youReGlowing"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 8,
+    "key": "Retail Therapy",
+    "msg": "giftCaptions.treatYourself"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 9,
+    "key": "Fit Check",
+    "msg": "giftCaptions.fitGoesHard"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 10,
+    "key": "Beam Me Up",
+    "msg": "giftCaptions.takeMeWithYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 12,
+    "key": "To The Moon",
+    "msg": "giftCaptions.keepGoingAllTheWay"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 13,
+    "key": "Proud of You",
+    "msg": "giftCaptions.soProudOfYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 14,
+    "key": "The Treasure",
+    "msg": "giftCaptions.worthMoreThanGold"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 15,
+    "key": "You Got This",
+    "msg": "giftCaptions.allTheWayToTheTop"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 16,
+    "key": "Night Rider",
+    "msg": "giftCaptions.builtDifferent"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 17,
+    "key": "Full Send",
+    "msg": "giftCaptions.noBrakes"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 18,
+    "key": "Royalty",
+    "msg": "giftCaptions.absoluteRoyalty"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 19,
+    "key": "The Crown",
+    "msg": "giftCaptions.youWearItBest"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 20,
+    "key": "Take My Heart",
+    "msg": "giftCaptions.itSYoursNow"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 21,
+    "key": "Soft Spot",
+    "msg": "giftCaptions.youReMySoftSpot"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 22,
+    "key": "Butterflies",
+    "msg": "giftCaptions.youGiveMeButterflies"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 23,
+    "key": "Tulips",
+    "msg": "giftCaptions.justBecause"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 24,
+    "key": "Sent With Love",
+    "msg": "giftCaptions.flewStraightToYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 25,
+    "key": "The Question",
+    "msg": "giftCaptions.sayYes"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 26,
+    "key": "Just For You",
+    "msg": "giftCaptions.openMe"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 27,
+    "key": "My Star",
+    "msg": "giftCaptions.youReTheStarHere"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 28,
+    "key": "Boba Date",
+    "msg": "giftCaptions.firstSipIsYours"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 29,
+    "key": "Sweet Ride",
+    "msg": "giftCaptions.sweetestThingToday"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 30,
+    "key": "Little World",
+    "msg": "giftCaptions.ourOwnLittleWorld"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 31,
+    "key": "Carousel",
+    "msg": "giftCaptions.roundAndRoundWithYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 32,
+    "key": "Little Dancer",
+    "msg": "giftCaptions.youMakeItLookEasy"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 33,
+    "key": "Balloon Friend",
+    "msg": "giftCaptions.neverLetsYouDown"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 34,
+    "key": "Make a Wish",
+    "msg": "giftCaptions.closeYourEyesAndBlow"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 35,
+    "key": "The Pearl",
+    "msg": "giftCaptions.foundSomethingRare"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 36,
+    "key": "Sweet Dreams",
+    "msg": "giftCaptions.restYouEarnedIt"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 37,
+    "key": "Moon Chair",
+    "msg": "giftCaptions.savedYouASeat"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 38,
+    "key": "Tiara",
+    "msg": "giftCaptions.obviouslyYours"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 39,
+    "key": "Glide On",
+    "msg": "giftCaptions.lifeLooksGoodOnYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 40,
+    "key": "Call Me",
+    "msg": "giftCaptions.iMissYourVoice"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 41,
+    "key": "Lost in Music",
+    "msg": "giftCaptions.thisSongIsUs"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 42,
+    "key": "In Sync",
+    "msg": "giftCaptions.sameWaveAlways"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 43,
+    "key": "Sweet Sip",
+    "msg": "giftCaptions.thisOneIsOnMe"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 44,
+    "key": "Rewind",
+    "msg": "giftCaptions.replayingOurBestMoments"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 45,
+    "key": "B-Side",
+    "msg": "giftCaptions.forYourRareSides"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 46,
+    "key": "Unplugged",
+    "msg": "giftCaptions.playItLikeYouFeelIt"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 47,
+    "key": "Just Because",
+    "msg": "giftCaptions.noReasonJustYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 48,
+    "key": "Keep Going",
+    "msg": "giftCaptions.oneMoreMile"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 49,
+    "key": "Aura",
+    "msg": "giftCaptions.youAreMagic"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 50,
+    "key": "No Bad Days",
+    "msg": "giftCaptions.futureLooksBright"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 51,
+    "key": "The Moment",
+    "msg": "giftCaptions.caughtYouBeingGreat"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 52,
+    "key": "Voltage",
+    "msg": "giftCaptions.pureEnergy"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 53,
+    "key": "Eyes Up",
+    "msg": "giftCaptions.watchingYouWin"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 54,
+    "key": "Dream Plan Do",
+    "msg": "giftCaptions.inThatOrder"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 55,
+    "key": "Spark",
+    "msg": "giftCaptions.lightItUp"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 56,
+    "key": "Inner Fire",
+    "msg": "giftCaptions.neverLetItDie"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 57,
+    "key": "On Time",
+    "msg": "giftCaptions.yourTimeIsNow"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 58,
+    "key": "No Days Off",
+    "msg": "giftCaptions.strengthSuitsYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 59,
+    "key": "Grandmaster",
+    "msg": "giftCaptions.threeMovesAheadAlways"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 60,
+    "key": "True North",
+    "msg": "giftCaptions.keepMovingForward"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 61,
+    "key": "Player One",
+    "msg": "giftCaptions.youSetTheDifficulty"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 62,
+    "key": "Next Chapter",
+    "msg": "giftCaptions.packLightGoFar"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 63,
+    "key": "Explore More",
+    "msg": "giftCaptions.theWorldIsWaiting"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 64,
+    "key": "Far Sight",
+    "msg": "giftCaptions.youSawItFirst"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 65,
+    "key": "Stargazer",
+    "msg": "giftCaptions.aimHigherThanTheSky"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 66,
+    "key": "Our Time",
+    "msg": "giftCaptions.worthEverySecond"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 67,
+    "key": "Stay Focused",
+    "msg": "giftCaptions.eyesOnThePrize"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 68,
+    "key": "Focus & Drive",
+    "msg": "giftCaptions.smellsLikeSuccess"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 69,
+    "key": "Full Throttle",
+    "msg": "giftCaptions.speedBecomesYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 70,
+    "key": "Discipline",
+    "msg": "giftCaptions.sharpMindCalmHeart"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 71,
+    "key": "Top Shelf",
+    "msg": "giftCaptions.toTheOnesWhoEarnedIt"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 72,
+    "key": "All In",
+    "msg": "giftCaptions.betOnYourself"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 73,
+    "key": "Deep Work",
+    "msg": "giftCaptions.buildYourEmpire"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 75,
+    "key": "Your World",
+    "msg": "giftCaptions.theWorldOrbitsYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 76,
+    "key": "The Deal",
+    "msg": "giftCaptions.signedSealedYours"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 77,
+    "key": "Heart of Chrome",
+    "msg": "giftCaptions.itBeatsForRealOnes"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 78,
+    "key": "First Class",
+    "msg": "giftCaptions.youBelongUpThere"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 79,
+    "key": "Offshore",
+    "msg": "giftCaptions.saltAndSpeed"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 80,
+    "key": "Off Road",
+    "msg": "giftCaptions.noRoadNoProblem"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 81,
+    "key": "Time Creates Legends",
+    "msg": "giftCaptions.andYouReProof"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 82,
+    "key": "Eternity",
+    "msg": "giftCaptions.timeBelongsToYouNow"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 83,
+    "key": "Golden Hour",
+    "msg": "giftCaptions.toNightsThatNeverEnd"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 84,
+    "key": "Nocturne",
+    "msg": "giftCaptions.musicWrittenOnlyForYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 85,
+    "key": "Crystal City",
+    "msg": "giftCaptions.yourCityFrozenInCrystal"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 86,
+    "key": "The Universe",
+    "msg": "giftCaptions.itAllRevolvesAroundYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 87,
+    "key": "Iced Out",
+    "msg": "giftCaptions.frozenAtTheTop"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 88,
+    "key": "Private Island",
+    "msg": "giftCaptions.aWorldOfYourOwn"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 89,
+    "key": "Wheels Up",
+    "msg": "giftCaptions.departureWheneverYouWant"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 90,
+    "key": "Flagship",
+    "msg": "giftCaptions.arriveLikeAnEmpire"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 91,
+    "key": "Beyond",
+    "msg": "giftCaptions.notFromThisWorld"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 92,
+    "key": "The Imperial",
+    "msg": "giftCaptions.aboveEveryCrown"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 93,
+    "key": "Forever",
+    "msg": "giftCaptions.alwaysWithYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 94,
+    "key": "Take Your Time",
+    "msg": "giftCaptions.noRushIWillWait"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 95,
+    "key": "Soft Sound",
+    "msg": "giftCaptions.forQuietEvenings"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 96,
+    "key": "Text Me Back",
+    "msg": "giftCaptions.waitingForYourReply"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 97,
+    "key": "The Win",
+    "msg": "giftCaptions.youEarnedThis"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 98,
+    "key": "Pole Position",
+    "msg": "giftCaptions.trainLikeAChampion"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 99,
+    "key": "Liftoff",
+    "msg": "giftCaptions.nothingCanStopYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 100,
+    "key": "Heirloom",
+    "msg": "giftCaptions.timeWorthKeeping"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 101,
+    "key": "Midnight Moto",
+    "msg": "giftCaptions.noSpeedLimitsTonight"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 102,
+    "key": "The Peak",
+    "msg": "giftCaptions.aboveTheCloudsNow"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 103,
+    "key": "Showstopper",
+    "msg": "giftCaptions.allEyesOnYou"
+  },
+  {
+    "file": "src\\data\\giftCaptions.js",
+    "line": 104,
+    "key": "Dark Water",
+    "msg": "giftCaptions.silentPower"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 6,
+    "key": "category",
+    "msg": "sampleCreators.fitnessWellness"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 7,
+    "key": "bio",
+    "msg": "sampleCreators.movementCoachSharingEnergizingWorkoutsPracticalRoutinesAnd"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 17,
+    "key": "category",
+    "msg": "sampleCreators.photography"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 18,
+    "key": "bio",
+    "msg": "sampleCreators.behindTheScenesLightingBreakdownsAndHonestLessons"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 28,
+    "key": "category",
+    "msg": "profile.lifestyle"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 29,
+    "key": "bio",
+    "msg": "sampleCreators.exclusiveVlogsPersonalStoriesAndWeeklyLiveHangouts"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 39,
+    "key": "category",
+    "msg": "sampleCreators.foodCooking"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 40,
+    "key": "bio",
+    "msg": "sampleCreators.restaurantLevelRecipesMadeApproachablePlusMonthlyCook"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 50,
+    "key": "category",
+    "msg": "sampleCreators.music"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 51,
+    "key": "bio",
+    "msg": "sampleCreators.demosProductionSessionsUnreleasedTracksAndTheStories"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 61,
+    "key": "category",
+    "msg": "sampleCreators.artIllustration"
+  },
+  {
+    "file": "src\\data\\sampleCreators.js",
+    "line": 62,
+    "key": "bio",
+    "msg": "sampleCreators.sketchbookToursBrushesProcessVideosAndCreativePrompts"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 4,
+    "key": "sourceLabel",
+    "msg": "fanWeb.buySell"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 5,
+    "key": "sourceLabel",
+    "msg": "data.allPosts"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 6,
+    "key": "sourceLabel",
+    "msg": "fanWeb.lookingFor"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 7,
+    "key": "sourceLabel",
+    "msg": "fanWeb.offering"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 8,
+    "key": "sourceLabel",
+    "msg": "data.questions"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 9,
+    "key": "sourceLabel",
+    "msg": "data.events"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 10,
+    "key": "sourceLabel",
+    "msg": "data.needHelp"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 11,
+    "key": "sourceLabel",
+    "msg": "fanWeb.recommendation"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 12,
+    "key": "sourceLabel",
+    "msg": "data.rightNow"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 15,
+    "key": "sourceLabel",
+    "msg": "data.meetPeople"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 16,
+    "key": "sourceLabel",
+    "msg": "data.housing"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 17,
+    "key": "sourceLabel",
+    "msg": "data.kidsFamily"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 18,
+    "key": "sourceLabel",
+    "msg": "data.allTopics"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 19,
+    "key": "sourceLabel",
+    "msg": "data.buySell"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 20,
+    "key": "sourceLabel",
+    "msg": "data.places"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 21,
+    "key": "sourceLabel",
+    "msg": "fanWeb.food"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 22,
+    "key": "sourceLabel",
+    "msg": "data.travel"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 23,
+    "key": "sourceLabel",
+    "msg": "data.work"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 24,
+    "key": "sourceLabel",
+    "msg": "data.wellness"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 25,
+    "key": "sourceLabel",
+    "msg": "data.learning"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 26,
+    "key": "sourceLabel",
+    "msg": "profile.lifestyle"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 27,
+    "key": "sourceLabel",
+    "msg": "data.services"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 28,
+    "key": "sourceLabel",
+    "msg": "data.community"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 31,
+    "key": "sourceLabel",
+    "msg": "fanWeb.recent"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 32,
+    "key": "sourceLabel",
+    "msg": "data.popular"
+  },
+  {
+    "file": "src\\data\\wallFilters.js",
+    "line": 33,
+    "key": "sourceLabel",
+    "msg": "discover.nearby"
+  },
+  {
+    "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
+    "line": 59,
+    "key": "unavailable",
+    "msg": "admin.noImpressions"
+  },
+  {
+    "file": "src\\pages\\admin\\CreatorVerificationQueue.jsx",
+    "line": 23,
+    "key": "PENDING_REVIEW",
+    "msg": "admin.pendingReview"
+  },
+  {
+    "file": "src\\pages\\admin\\CreatorVerificationQueue.jsx",
+    "line": 23,
+    "key": "CHANGES_REQUESTED",
+    "msg": "admin.changesRequested"
+  },
+  {
+    "file": "src\\pages\\admin\\CreatorVerificationQueue.jsx",
+    "line": 23,
+    "key": "APPROVED",
+    "msg": "admin.approved"
+  },
+  {
+    "file": "src\\pages\\admin\\CreatorVerificationQueue.jsx",
+    "line": 23,
+    "key": "REJECTED",
+    "msg": "admin.rejected"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "follow",
+    "msg": "admin.followCreator"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "save",
+    "msg": "contentEntities.save_efc007"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "share",
+    "msg": "admin.share"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "replay",
+    "msg": "admin.replay"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "completion",
+    "msg": "admin.completion"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "reaction",
+    "msg": "fanWeb.reaction"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "profileOpen",
+    "msg": "admin.profileOpen"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "longWatch",
+    "msg": "admin.longWatch"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "fastSkip",
+    "msg": "admin.fastSkip"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 12,
+    "key": "notInterested",
+    "msg": "social.notInterested"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "batchSize",
+    "msg": "admin.batchSize"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "candidateLimit",
+    "msg": "admin.candidatePool"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "maxPerCreator",
+    "msg": "admin.maximumPerCreator"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "minCategoryDiversity",
+    "msg": "admin.minimumCategoryDiversity"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "maxConsecutiveCategory",
+    "msg": "admin.maximumConsecutiveCategory"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "repeatCooldownDays",
+    "msg": "admin.repeatCooldownDays"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "recentExposureLimit",
+    "msg": "admin.recentExposureMemory"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "recencyHalfLifeHours",
+    "msg": "admin.recencyHalfLifeHours"
+  },
+  {
+    "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+    "line": 13,
+    "key": "fastSkipSeconds",
+    "msg": "admin.fastSkipThresholdSeconds"
+  },
+  {
+    "file": "src\\pages\\creator\\CreatorStudio.jsx",
+    "line": 39,
+    "key": "dreamSupport",
+    "msg": "admin.dreamSupport"
+  },
+  {
+    "file": "src\\pages\\creator\\CreatorStudio.jsx",
+    "line": 40,
+    "key": "gifts",
+    "msg": "creator.gifts"
+  },
+  {
+    "file": "src\\pages\\creator\\CreatorStudio.jsx",
+    "line": 41,
+    "key": "unlocks",
+    "msg": "creator.unlocks_aecf18"
+  },
+  {
+    "file": "src\\pages\\creator\\CreatorStudio.jsx",
+    "line": 42,
+    "key": "worldSubscriptions",
+    "msg": "creator.worldSubscriptions"
+  },
+  {
+    "file": "src\\pages\\creator\\CreatorStudio.jsx",
+    "line": 43,
+    "key": "other",
+    "msg": "creator.otherEarnings"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 95,
+    "key": "OPENING_BALANCE",
+    "msg": "fan.openingBalance"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 96,
+    "key": "CREDIT_ADMIN",
+    "msg": "fan.walletCredit"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 97,
+    "key": "CREDIT_TEST",
+    "msg": "fan.testWalletCredit"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 98,
+    "key": "WORLD_PURCHASE_DEBIT",
+    "msg": "fan.youUnlockedAWorld"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 99,
+    "key": "WORLD_CREATOR_EARNING",
+    "msg": "fan.worldEarning"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 100,
+    "key": "PREMIUM_JOIN_DEBIT",
+    "msg": "fan.youUnlockedAPremiumWorld"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 101,
+    "key": "PREMIUM_CREATOR_EARNING",
+    "msg": "fan.premiumWorldEarning"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 102,
+    "key": "PREMIUM_RENEWAL_DEBIT",
+    "msg": "fan.premiumWorldRenewal"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 103,
+    "key": "VERIFIED_CREATOR_DEBIT",
+    "msg": "fan.verifiedCreatorActivation"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 104,
+    "key": "DREAM_GIFT_DEBIT",
+    "msg": "fan.dreamSupportSent"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 105,
+    "key": "DREAM_CREATOR_EARNING",
+    "msg": "fan.dreamSupportReceived"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 106,
+    "key": "CHAT_GIFT_DEBIT",
+    "msg": "fan.giftSent"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 107,
+    "key": "CHAT_GIFT_EARNING",
+    "msg": "social.giftReceived"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 108,
+    "key": "DA_HOLD_DEBIT",
+    "msg": "fan.youOpenedDirectAccess"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 109,
+    "key": "DA_CREATOR_EARNING",
+    "msg": "fan.directAccessEarning"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 110,
+    "key": "DA_REFUND_CREDIT",
+    "msg": "fan.directAccessRefund"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 111,
+    "key": "CALL_HOLD_DEBIT",
+    "msg": "fan.youRequestedAPaidCall"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 112,
+    "key": "CALL_CREATOR_EARNING",
+    "msg": "fan.callEarning"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 113,
+    "key": "CALL_REFUND_CREDIT",
+    "msg": "fan.callRefund"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 114,
+    "key": "REFUND_CREDIT",
+    "msg": "fan.refundReceived"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 115,
+    "key": "CREATOR_EARNING_REVERSAL",
+    "msg": "fan.creatorEarningReversal"
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 116,
+    "key": "MANUAL_ADJUSTMENT",
+    "msg": "fan.walletAdjustment"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 14,
+    "key": "email",
+    "msg": "settings.emailNotifications"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 15,
+    "key": "inApp",
+    "msg": "settings.inAppNotifications"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 16,
+    "key": "comments",
+    "msg": "admin.comments"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 17,
+    "key": "reactions",
+    "msg": "fanWeb.reactions"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 18,
+    "key": "followers",
+    "msg": "settings.newFollowers"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 19,
+    "key": "saves",
+    "msg": "admin.saves"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 20,
+    "key": "reposts",
+    "msg": "settings.reposts"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 21,
+    "key": "marketing",
+    "msg": "settings.productAnnouncements"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 22,
+    "key": "security",
+    "msg": "settings.securityAlerts"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 23,
+    "key": "messages",
+    "msg": "share.messages"
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsPage.jsx",
+    "line": 24,
+    "key": "directAccess",
+    "msg": "settings.directAccessRequests"
+  },
+  {
+    "file": "src\\pages\\social\\SavedPage.jsx",
+    "line": 37,
+    "key": "detailTitle",
+    "msg": "social.premiumExperiences"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 13,
+    "key": "badge",
+    "msg": "data.popular"
+  },
+  {
+    "file": "src\\pages\\social\\WalletPage.jsx",
+    "line": 13,
+    "key": "badge",
+    "msg": "social.bestValue"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 879,
+    "key": "action",
+    "msg": "social.openedChapter1"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 880,
+    "key": "action",
+    "msg": "social.walkedTheWholeWorld"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 881,
+    "key": "action",
+    "msg": "social.cameBackTwiceToday"
+  },
+  {
+    "file": "src\\pages\\social\\WorldReaderPage.jsx",
+    "line": 882,
+    "key": "action",
+    "msg": "social.openedChapter1"
+  },
+  {
+    "file": "src\\utils\\apiErrors.js",
+    "line": 3,
+    "key": "validation",
+    "msg": "apiErrors.pleaseCheckTheEnteredInformationAndTryAgain"
+  },
+  {
+    "file": "src\\utils\\apiErrors.js",
+    "line": 4,
+    "key": "credentials",
+    "msg": "apiErrors.theEmailAddressOrPasswordIsIncorrect"
+  },
+  {
+    "file": "src\\utils\\apiErrors.js",
+    "line": 5,
+    "key": "network",
+    "msg": "apiErrors.unableToConnectToTheServerCheckYour"
+  },
+  {
+    "file": "src\\utils\\apiErrors.js",
+    "line": 6,
+    "key": "rateLimit",
+    "msg": "apiErrors.tooManyAttemptsPleaseWaitAMomentAnd"
+  },
+  {
+    "file": "src\\utils\\apiErrors.js",
+    "line": 7,
+    "key": "server",
+    "msg": "apiErrors.somethingWentWrongPleaseTryAgain"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 3,
+    "key": "INSUFFICIENT_STARS",
+    "msg": "financialErrorMessages.youDoNotHaveEnoughStarsStarsPurchasing"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 4,
+    "key": "CREATOR_REVERSAL_INSUFFICIENT_STARS",
+    "msg": "financialErrorMessages.theCreatorWalletCannotCoverThisReversalNo"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 5,
+    "key": "ALREADY_ENTITLED",
+    "msg": "financialErrorMessages.thisWorldIsAlreadyInYourPurchases"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 5,
+    "key": "MEMBERSHIP_ALREADY_ACTIVE",
+    "msg": "financialErrorMessages.yourPremiumMembershipIsAlreadyActive"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 6,
+    "key": "IDEMPOTENCY_CONFLICT",
+    "msg": "financialErrorMessages.thisRequestConflictsWithAnEarlierActionClose"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 6,
+    "key": "COMMAND_PROCESSING",
+    "msg": "financialErrorMessages.thisActionIsAlreadyProcessingRetryWithThe"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 7,
+    "key": "PUBLICATION_NOT_PURCHASABLE",
+    "msg": "financialErrorMessages.thisPublicationIsNotCurrentlyAvailableForPurchase"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 7,
+    "key": "SELF_PURCHASE_NOT_REQUIRED",
+    "msg": "financialErrorMessages.youAlreadyHaveCreatorAccessToThisPublication"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 8,
+    "key": "ENTITLEMENT_REVOKED",
+    "msg": "financialErrorMessages.thisWorldEntitlementIsNoLongerActive"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 8,
+    "key": "MEMBERSHIP_EXPIRED",
+    "msg": "financialErrorMessages.thisPremiumMembershipIsNoLongerActive"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 8,
+    "key": "TRANSACTIONS_REQUIRED",
+    "msg": "financialErrorMessages.theFinancialServiceIsTemporarilyUnavailable"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 9,
+    "key": "WALLET_REQUIRES_MIGRATION",
+    "msg": "financialErrorMessages.thisWalletRequiresAdministratorReviewBeforeItCan"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 9,
+    "key": "WALLET_MIGRATION_REQUIRED",
+    "msg": "financialErrorMessages.thisWalletRequiresAdministratorReviewBeforeItCan"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "WALLET_ALREADY_ACTIVATED",
+    "msg": "financialErrorMessages.thisWalletIsAlreadyActive"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "WALLET_LEDGER_NOT_EMPTY",
+    "msg": "financialErrorMessages.thisWalletHasLedgerEntriesAndRequiresManual"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "INVALID_OPENING_BALANCE",
+    "msg": "financialErrorMessages.enterAValidNonNegativeOpeningBalance"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "FAN_WALLET_REQUIRED",
+    "msg": "financialErrorMessages.selectAFanAccount"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "FAN_ACCOUNT_INACTIVE",
+    "msg": "financialErrorMessages.activateThisFanAccountBeforeChangingItsWallet"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "WALLET_ACCOUNT_REQUIRED",
+    "msg": "financialErrorMessages.selectAFanOrCreatorAccount"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 10,
+    "key": "WALLET_ACCOUNT_INACTIVE",
+    "msg": "financialErrorMessages.activateThisAccountBeforeChangingItsWallet"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 11,
+    "key": "WALLET_RESET_CONFIRMATION_REQUIRED",
+    "msg": "financialErrorMessages.confirmTheLegacyWalletResetBeforeAddingStars"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 12,
+    "key": "DUPLICATE_WALLETS",
+    "msg": "financialErrorMessages.duplicateWalletRecordsRequireAdministratorReview"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 12,
+    "key": "WALLET_DUPLICATE",
+    "msg": "financialErrorMessages.duplicateWalletRecordsRequireAdministratorReview"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 13,
+    "key": "ADMIN_CREDITS_DISABLED",
+    "msg": "financialErrorMessages.manualStarsCreditsAreDisabledInThisEnvironment"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 13,
+    "key": "ADMIN_STAR_CREDITS_DISABLED",
+    "msg": "financialErrorMessages.manualStarsCreditsAreDisabledInThisEnvironment"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 14,
+    "key": "REFUND_ALREADY_PROCESSED",
+    "msg": "financialErrorMessages.thisRefundWasAlreadyProcessed"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 14,
+    "key": "FINANCIAL_RATE_LIMITED",
+    "msg": "financialErrorMessages.tooManyFinancialRequestsRetryShortlyWithThe"
+  },
+  {
+    "file": "src\\utils\\financialErrorMessages.js",
+    "line": 14,
+    "key": "INVALID_FINANCIAL_ID",
+    "msg": "financialErrorMessages.enterAValidRecordIdentifier"
+  }
+]

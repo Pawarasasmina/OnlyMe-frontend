@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import LegacyWallNoteDetail from "../../components/fanWeb/home/LegacyWallNoteDetail";
 import { wallService } from "../../services/wallService";
 import { Link, useParams } from "react-router-dom";
@@ -9,6 +12,7 @@ import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { postService } from "../../services/postService";
 
 function PostDetailPage({ legacy = false }) {
+  __useUiLanguage();
   const { id } = useParams();
   const postQuery = useQuery({
     queryKey: [legacy ? "legacy-wall-post" : "feed-posts", "detail", id],
@@ -25,14 +29,14 @@ function PostDetailPage({ legacy = false }) {
   });
 
   if (postQuery.isLoading) {
-    return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft /> Back to Wall</Link><LoadingSkeleton className="h-48" count={1} /></div>;
+    return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft data-ui-directional="true" /> {__msg("social.backToWall")}</Link><LoadingSkeleton className="h-48" count={1} /></div>;
   }
 
   if (postQuery.isError || !postQuery.data?.id) {
-    return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft /> Back to Wall</Link><FanCard className="text-center"><h1 className="text-lg font-bold">Post not found</h1><p className="mt-2 text-sm text-atseen-muted">This post may have been removed or is unavailable.</p></FanCard></div>;
+    return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft data-ui-directional="true" /> {__msg("social.backToWall")}</Link><FanCard className="text-center"><h1 className="text-lg font-bold">{__msg("social.postNotFound")}</h1><p className="mt-2 text-sm text-atseen-muted">{__msg("social.thisPostMayHaveBeenRemovedOrIsUnavailable")}</p></FanCard></div>;
   }
 
-  return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft /> Back to Wall</Link>{postQuery.data.legacy ? <LegacyWallNoteDetail post={postQuery.data} /> : <FeedPost post={postQuery.data} />}</div>;
+  return <div><Link className="mb-4 inline-flex items-center gap-2 text-sm text-atseen-muted hover:text-white" to="/wall"><FiArrowLeft data-ui-directional="true" /> {__msg("social.backToWall")}</Link>{postQuery.data.legacy ? <LegacyWallNoteDetail post={postQuery.data} /> : <FeedPost post={postQuery.data} />}</div>;
 }
 
 export default PostDetailPage;

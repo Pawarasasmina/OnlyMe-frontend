@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import AtseenLogo from "../branding/AtseenLogo";
 import FanAvatar from "./shared/FanAvatar";
@@ -7,19 +10,20 @@ import { socialPrimaryNavItems } from "../social/socialNavItems";
 import { useLanguage } from "../../hooks/useLanguage";
 
 function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0, unreadMessageCount = 0 }) {
+  __useUiLanguage();
   const { user } = useAuth();
   const { t } = useLanguage();
   const location = useLocation();
   const display = getUserDisplay(user, status);
-  const createAction = capabilities.canCreate ? { label: "Create ✦", onClick: onCreate } : null;
+  const createAction = capabilities.canCreate ? { label: __msg("fanWeb.create_66eee2"), onClick: onCreate } : null;
 
   return (
     <aside className="social-fixed-rail social-left-rail fan-web-sidebar sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[18px] pb-[22px] pt-[30px] min-[881px]:flex">
-      <Link aria-label="Atseen home" className="fan-sidebar-brand mb-6 flex items-center justify-start px-3 py-1.5" to="/wall">
+      <Link aria-label={__msg("fanWeb.atseenHome")} className="fan-sidebar-brand mb-6 flex items-center justify-start px-3 py-1.5" to="/wall">
         <AtseenLogo className="fan-sidebar-wordmark" wordmarkOnly />
       </Link>
 
-      <nav aria-label="Fan navigation" className="fan-sidebar-nav grid gap-0.5">
+      <nav aria-label={__msg("fanWeb.fanNavigation")} className="fan-sidebar-nav grid gap-0.5">
         {socialPrimaryNavItems.map((item) => (
           <NavLink
             aria-current={location.pathname === "/profile/seen" ? false : item.to === "/profile" && location.pathname.startsWith("/saved") ? "page" : undefined}
@@ -34,7 +38,12 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
             to={item.to}
           >
             <span className="fan-sidebar-icon relative shrink-0">
-              <item.icon aria-hidden="true" className="h-[23px] w-[23px]" />
+              {item.to === "/activity" ? (
+                <svg aria-hidden="true" className="h-[23px] w-[23px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+                  <path d="M12 2.5l1.9 6.3 6.6 1.7-6.6 1.8L12 18.6l-1.9-6.3-6.6-1.8 6.6-1.7z" />
+                  <path d="M18.5 16.5l.7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7z" />
+                </svg>
+              ) : <item.icon aria-hidden="true" className="h-[23px] w-[23px]" />}
               {item.to === "/messages" && unreadMessageCount > 0 ? (
                 <span aria-hidden="true" className="absolute -right-2 -top-2 hidden h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
@@ -48,11 +57,11 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
             <span className="flex min-w-0 items-center gap-2">
               <span className="truncate">{t(item.label)}</span>
               {item.to === "/messages" && unreadMessageCount > 0 ? (
-                <span aria-label={`${unreadMessageCount} unread chats`} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">
+                <span aria-label={__msg("fanWeb.unreadChats", { value0: unreadMessageCount })} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                 </span>
               ) : null}
-              {item.to === "/activity" && unreadActivityCount > 0 ? <span className="sr-only">{unreadActivityCount} unread activities</span> : null}
+              {item.to === "/activity" && unreadActivityCount > 0 ? <span className="sr-only">{unreadActivityCount} {__msg("fanWeb.unreadActivities")}</span> : null}
             </span>
           </NavLink>
         ))}
@@ -75,7 +84,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
         >
           <FanAvatar name={display.name} size="h-10 w-10" src={display.avatar} />
           <span className="fan-sidebar-user-copy min-w-0">
-            <strong className="block truncate">{display.name}</strong>
+            <strong dir="auto" className="block truncate">{display.name}</strong>
             <small className="mt-0.5 block truncate">{t("Your space")}</small>
           </span>
         </NavLink>

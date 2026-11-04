@@ -1,0 +1,43 @@
+.monetization-page { box-sizing:border-box;min-height:100dvh;padding:22px 20px 30px;background:#0A0C0F;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:16px;font-weight:400;line-height:normal; }
+.monetization-approved-country { display:block;margin-top:8px;color:rgba(255,255,255,.65);font-size:14px; }
+.monetization-header { display:flex;align-items:center;gap:12px;margin-bottom:14px; }
+.monetization-header button { display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:50%;background:rgba(255,255,255,.07);color:#fff; }
+.monetization-header button svg { width:20px;height:20px; }
+.monetization-header h1,.monetization-setup h2 { margin:0;font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:normal; }
+.monetization-summary { margin-top:4px;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:20px;background:#12151B; }
+.monetization-summary.is-enabled { background:linear-gradient(135deg,rgba(110,207,151,.12),rgba(110,207,151,.02));border-color:rgba(110,207,151,.26); }
+.monetization-summary > div { display:flex;align-items:center;gap:12px; }
+.monetization-summary-icon { display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;flex:none;background:rgba(156,203,255,.12);color:#9CCBFF; }
+.is-enabled .monetization-summary-icon { background:rgba(110,207,151,.16);color:#8FDDAF; }
+.monetization-summary b { font-size:15px;font-weight:700; }
+.monetization-summary small { display:block;margin-top:2px;color:rgba(255,255,255,.4);font-size:11.5px; }
+.monetization-label { margin:18px 0 10px;color:rgba(255,255,255,.4);font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase; }
+.monetization-check { display:flex;align-items:center;gap:26px;padding:12px 0; }
+.monetization-check > span { display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border-radius:50%;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4); }
+.monetization-check > span.is-passed { background:rgba(110,207,151,.14);color:#8FDDAF; }
+.monetization-check b,.monetization-tool-copy b { display:block;color:#fff;font-size:13.5px;font-weight:600; }
+.monetization-check small,.monetization-tool-copy small { color:rgba(255,255,255,.4);font-size:12.5px;font-weight:400; }
+.monetization-tool { display:flex;align-items:center;gap:14px;width:100%;padding:12px 0;border:0;background:transparent;color:#fff;text-align:start;line-height:normal;font-family:inherit;cursor:pointer; }
+.monetization-icon { display:flex;justify-content:center;width:30px;flex:none;color:rgba(255,255,255,.62); }
+.monetization-icon svg { width:16px;height:16px;stroke-width:1.6; }
+.monetization-tool-copy { flex:1;min-width:0;margin-inline-start:10px; }
+.monetization-state,.monetization-on { flex:none;font-size:12px;font-weight:700; }
+.monetization-state { color:rgba(255,255,255,.4); }
+.monetization-on { color:#8FDDAF; }
+.monetization-state svg { width:12px;height:12px; }
+.monetization-page button:focus-visible { outline:2px solid #9CCBFF;outline-offset:3px; }
+.monetization-primary { display:block;width:100%;margin-top:14px;border:0;border-radius:14px;padding:12px;background:#9CCBFF;color:#0A0C0F;font-family:inherit;font-size:15px;font-weight:650;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.18); }
+.monetization-primary:disabled { opacity:.4;cursor:default; }
+.monetization-setup-layer { position:fixed;inset:0 auto 0 0;width:100%;z-index:240; }
+.monetization-dim { position:absolute;inset:0;width:100%;background:rgba(0,0,0,.6); }
+.monetization-setup { position:absolute;bottom:0;left:0;width:100%;max-height:88dvh;overflow-y:auto;border-radius:16px 16px 0 0;padding:24px 20px 36px;background:#0A0C0F; }
+.monetization-setup > p { margin-top:8px;font-size:14px;line-height:1.45;color:rgba(255,255,255,.62); }
+.monetization-setup form { display:grid;gap:16px;margin-top:18px; }
+.monetization-setup label { display:grid;gap:8px;font-size:13px; }
+.monetization-setup small { color:rgba(255,255,255,.4);font-size:11.5px; }
+.monetization-setup input:not([type=checkbox]),.monetization-setup select { width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#12151B;color:#fff;color-scheme:dark;font:inherit; }
+.monetization-setup label.monetization-consent { display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:rgba(255,255,255,.62);line-height:1.5; }
+.monetization-consent input { flex:none;margin-top:3px;accent-color:#9CCBFF; }
+.monetization-consent a { color:#9CCBFF;text-decoration:underline; }
+.monetization-cancel { display:block;margin:12px auto 0;font-size:13px;color:rgba(255,255,255,.62); }
+.monetization-setup .monetization-error { color:#F17878; }

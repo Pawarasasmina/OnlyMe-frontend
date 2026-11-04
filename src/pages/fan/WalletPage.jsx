@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FiClock, FiCreditCard, FiDownload, FiMinusCircle, FiPlusCircle, FiRefreshCw } from "react-icons/fi";
@@ -17,14 +20,15 @@ import { fanService } from "../../services/fanService";
 import { formatCoins } from "../../utils/fanDashboardFormatters";
 
 const filters = [
-  { label: "All", value: "all" },
-  { label: "Credits", value: "credit" },
-  { label: "Debits", value: "debit" },
-  { label: "Captured", value: "completed" },
-  { label: "Held", value: "pending" },
+  { get label() { return __msg("fanWeb.all"); }, value: "all" },
+  { get label() { return __msg("fan.credits"); }, value: "credit" },
+  { get label() { return __msg("fan.debits"); }, value: "debit" },
+  { get label() { return __msg("fan.captured"); }, value: "completed" },
+  { get label() { return __msg("fan.held_87807a"); }, value: "pending" },
 ];
 
 function WalletPage() {
+  __useUiLanguage();
   const [filter, setFilter] = useState("all");
   const walletQuery = useQuery({
     queryKey: ["fan", "wallet"],
@@ -54,16 +58,14 @@ function WalletPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Wallet"
-        title="Star Wallet"
-        description="Track your available Stars, held Stars, and ledger activity. 10 Stars = $1."
+        title={__msg("fan.starWallet")}
+        description={__msg("fan.trackYourAvailableStarsHeldStarsAndLedgerActivity")}
         action={
-          <Button disabled type="button">
-            Buy Stars
-          </Button>
+          <Button disabled type="button">{__msg("fan.buyStars")}</Button>
         }
       />
 
-      <DisabledActionNotice>Star purchasing is not wired to a payment provider yet, so the balance cannot be changed from the frontend.</DisabledActionNotice>
+      <DisabledActionNotice>{__msg("fan.starPurchasingIsNotWiredToAPaymentProvider")}</DisabledActionNotice>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
@@ -72,7 +74,7 @@ function WalletPage() {
           help="Available spendable balance."
           icon={FiCreditCard}
           loading={walletQuery.isLoading}
-          title="Available Balance"
+          title={__msg("fan.availableBalance_396a22")}
           value={formatCoins(wallet?.balance || 0)}
         />
         <StatCard
@@ -81,7 +83,7 @@ function WalletPage() {
           help="Stars held for pending Direct Access."
           icon={FiClock}
           loading={walletQuery.isLoading}
-          title="Held Stars"
+          title={__msg("fan.heldStars")}
           value={formatCoins(summary.totalHeld || 0)}
         />
         <StatCard
@@ -90,7 +92,7 @@ function WalletPage() {
           help="Completed credit transactions."
           icon={FiPlusCircle}
           loading={walletQuery.isLoading}
-          title="Purchased Stars"
+          title={__msg("fan.purchasedStars")}
           value={formatCoins(summary.totalPurchased || 0)}
         />
         <StatCard
@@ -99,7 +101,7 @@ function WalletPage() {
           help="Completed debit transactions."
           icon={FiMinusCircle}
           loading={walletQuery.isLoading}
-          title="Spent Stars"
+          title={__msg("fan.spentStars")}
           value={formatCoins(summary.totalSpent || 0)}
         />
         <StatCard
@@ -108,7 +110,7 @@ function WalletPage() {
           help="Stars returned from expired or cancelled requests."
           icon={FiRefreshCw}
           loading={walletQuery.isLoading}
-          title="Refunds"
+          title={__msg("fan.refunds")}
           value={formatCoins(summary.totalRefunded || 0)}
         />
         <StatCard
@@ -117,16 +119,16 @@ function WalletPage() {
           help="Transactions currently loaded."
           icon={FiDownload}
           loading={walletQuery.isLoading}
-          title="Recent Transactions"
+          title={__msg("fan.recentTransactions")}
           value={summary.recentTransactionCount ?? 0}
         />
       </div>
 
-      <SectionPanel title="Transaction History" description="Credits and debits recorded for this fan wallet.">
+      <SectionPanel title={__msg("fan.transactionHistory")} description={__msg("fan.creditsAndDebitsRecordedForThisFanWallet")}>
         <FilterPills active={filter} filters={filters} onChange={setFilter} />
         <div className="mt-5">
           {walletQuery.isLoading ? <ListSkeleton count={5} /> : null}
-          {walletQuery.isError ? <DashboardErrorState message="Unable to load wallet data." onRetry={() => walletQuery.refetch()} /> : null}
+          {walletQuery.isError ? <DashboardErrorState message={__msg("fan.unableToLoadWalletData")} onRetry={() => walletQuery.refetch()} /> : null}
           {!walletQuery.isLoading && !walletQuery.isError && filteredTransactions.length ? (
             <div className="space-y-3">
               {filteredTransactions.map((transaction) => (
@@ -135,7 +137,7 @@ function WalletPage() {
             </div>
           ) : null}
           {!walletQuery.isLoading && !walletQuery.isError && !filteredTransactions.length ? (
-            <DashboardEmptyState icon={FiCreditCard} message="Your Star balance is currently empty." />
+            <DashboardEmptyState icon={FiCreditCard} message={__msg("fan.yourStarBalanceIsCurrentlyEmpty")} />
           ) : null}
         </div>
       </SectionPanel>

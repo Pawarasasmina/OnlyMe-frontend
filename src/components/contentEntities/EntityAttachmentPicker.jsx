@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import { FiBookmark, FiBookOpen, FiCompass, FiLock, FiMapPin, FiSearch, FiX } from "react-icons/fi";
 import { CONTENT_ENTITY_LABELS, CONTENT_ENTITY_TYPES } from "../../constants/contentEntityTypes";
@@ -5,13 +8,14 @@ import { contentEntityService } from "../../services/contentEntityService";
 import { resolveMediaUrl } from "../../utils/media";
 
 const typeOptions = [
-  { icon: FiMapPin, label: "Place", type: CONTENT_ENTITY_TYPES.PLACE },
-  { icon: FiBookOpen, label: "Book", type: CONTENT_ENTITY_TYPES.BOOK },
-  { icon: FiCompass, label: "Journey", type: CONTENT_ENTITY_TYPES.JOURNEY },
-  { icon: FiLock, label: "Experience", type: CONTENT_ENTITY_TYPES.EXPERIENCE },
+  { icon: FiMapPin, get label() { return __msg("contentEntities.place"); }, type: CONTENT_ENTITY_TYPES.PLACE },
+  { icon: FiBookOpen, get label() { return __msg("contentEntities.book"); }, type: CONTENT_ENTITY_TYPES.BOOK },
+  { icon: FiCompass, get label() { return __msg("contentEntities.journey"); }, type: CONTENT_ENTITY_TYPES.JOURNEY },
+  { icon: FiLock, get label() { return __msg("contentEntities.experience"); }, type: CONTENT_ENTITY_TYPES.EXPERIENCE },
 ];
 
 export default function EntityAttachmentPicker({ context = "", disabled = false, fixedType = "", onChange, value = [] }) {
+  __useUiLanguage();
   const [type, setType] = useState(() => {
     if (fixedType) return fixedType;
     const normalized = String(context).toLowerCase();
@@ -60,8 +64,8 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
   return (
     <section className="entity-attachment-picker">
       <div className="entity-attachment-head">
-        <span><FiBookmark aria-hidden="true" /> Attach</span>
-        {!fixedType ? <div role="group" aria-label="Attachment type">
+        <span><FiBookmark aria-hidden="true" /> {__msg("contentEntities.attach")}</span>
+        {!fixedType ? <div role="group" aria-label={__msg("contentEntities.attachmentType")}>
           {typeOptions.map(({ icon: Icon, label, type: optionType }) => (
             <button aria-pressed={type === optionType} className={type === optionType ? "is-selected" : ""} disabled={disabled} key={optionType} onClick={() => setType(optionType)} type="button">
               <Icon aria-hidden="true" /> {label}
@@ -71,7 +75,7 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
       </div>
       <label className="entity-attachment-search">
         <FiSearch aria-hidden="true" />
-        <input disabled={disabled} onChange={(event) => setQuery(event.target.value)} placeholder={`Search existing ${CONTENT_ENTITY_LABELS[type].toLowerCase()} records`} value={query} />
+        <input disabled={disabled} onChange={(event) => setQuery(event.target.value)} placeholder={__msg("contentEntities.searchExistingRecords", { value0: CONTENT_ENTITY_LABELS[type].toLowerCase() })} value={query} />
       </label>
       {selected.length ? (
         <div className="entity-attachment-selected">
@@ -81,8 +85,8 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
             return (
               <span key={`${item.type}-${item.id}`}>
                 <Icon aria-hidden="true" />
-                <b>{item.title}</b>
-                <button aria-label={`Remove ${item.title}`} disabled={disabled} onClick={() => onChange?.(selected.filter((candidate) => `${candidate.type}:${candidate.id}` !== `${item.type}:${item.id}`))} type="button"><FiX /></button>
+                <b dir="auto">{item.title}</b>
+                <button aria-label={__msg("contentEntities.remove", { value0: item.title })} disabled={disabled} onClick={() => onChange?.(selected.filter((candidate) => `${candidate.type}:${candidate.id}` !== `${item.type}:${item.id}`))} type="button"><FiX /></button>
               </span>
             );
           })}
@@ -90,8 +94,8 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
       ) : null}
       {query.trim().length >= 2 ? (
         <div className="entity-attachment-results" role="listbox">
-          {loading ? <p>Searching...</p> : null}
-          {!loading && !results.length ? <p>No existing {CONTENT_ENTITY_LABELS[type].toLowerCase()} found.</p> : null}
+          {loading ? <p>{__msg("contentEntities.searching")}</p> : null}
+          {!loading && !results.length ? <p>{__msg("contentEntities.noExisting")} {CONTENT_ENTITY_LABELS[type].toLowerCase()} {__msg("contentEntities.found")}</p> : null}
           {results.map((item) => {
             const image = resolveMediaUrl(item.image);
             const option = typeOptions.find((entry) => entry.type === item.type) || typeOptions[0];
@@ -100,7 +104,7 @@ export default function EntityAttachmentPicker({ context = "", disabled = false,
             return (
               <button aria-disabled={selectedAlready} disabled={selectedAlready || disabled} key={`${item.type}-${item.id}`} onClick={() => add(item)} type="button">
                 <span>{image ? <img alt="" src={image} /> : <Icon aria-hidden="true" />}</span>
-                <strong>{item.title}<small>{item.subtitle || item.category}</small></strong>
+                <strong dir="auto">{item.title}<small>{item.subtitle || item.category}</small></strong>
               </button>
             );
           })}

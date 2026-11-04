@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 function SeenEyeMark({ className = "" }) {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className={className} viewBox="0 0 64 40">
       <path d="M2 20C14 3 50 3 62 20C50 37 14 37 2 20Z" fill="currentColor" />

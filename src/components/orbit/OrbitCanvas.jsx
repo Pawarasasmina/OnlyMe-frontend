@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
@@ -50,12 +53,13 @@ function positionForNode(node, index, tierCounts) {
 }
 
 function OrbitCanvas({ currentUser, recommendations = [], todayEncounter }) {
+  __useUiLanguage();
   const [preview, setPreview] = useState(null);
   const positions = useMemo(() => {
     const tierCounts = {};
     return recommendations.map((node, index) => positionForNode(node, index, tierCounts));
   }, [recommendations]);
-  const currentName = currentUser?.name || "You";
+  const currentName = currentUser?.name || __msg("fanWeb.you");
   const todayEncounterId = todayEncounter?.id;
   const encounterLine = formatOrbitStatusLine(todayEncounter);
 
@@ -64,7 +68,7 @@ function OrbitCanvas({ currentUser, recommendations = [], todayEncounter }) {
       <section className="relative mt-[18px] min-h-[calc(100dvh-190px)] overflow-hidden rounded-[22px] border border-atseen-line bg-[radial-gradient(80%_90%_at_50%_45%,#0d1420,#06080B_75%)] sm:h-[440px] sm:min-h-0">
         <OrbitRings />
         <Link
-          aria-label="Open your profile"
+          aria-label={__msg("orbit.openYourProfile")}
           className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center transition hover:scale-105"
           to="/profile"
         >
@@ -72,28 +76,26 @@ function OrbitCanvas({ currentUser, recommendations = [], todayEncounter }) {
             <FanAvatar className="border-2 border-atseen-blue shadow-glow" name={currentName} size="h-[58px] w-[58px]" src={currentUser?.avatar} />
             {currentUser?.verified ? <VerifiedBadge className="absolute -right-1 bottom-0" /> : null}
           </span>
-          <p className="mt-1.5 max-w-[100px] truncate text-[10.5px] font-bold text-atseen-text">You</p>
+          <p className="mt-1.5 max-w-[100px] truncate text-[10.5px] font-bold text-atseen-text">{__msg("fanWeb.you")}</p>
         </Link>
         {recommendations.slice(0, 12).map((node, index) => (
           <OrbitNode featured={todayEncounterId === node.id} isNew={index < 3 && todayEncounterId !== node.id} key={node.id} node={node} onOpen={setPreview} position={positions[index]} />
         ))}
-        <p className="absolute inset-x-0 bottom-3 z-[2] text-center text-[10px] text-atseen-muted">
-          tap a light to meet them
-        </p>
+        <p className="absolute inset-x-0 bottom-3 z-[2] text-center text-[10px] text-atseen-muted">{__msg("orbit.tapALightToMeetThem")}</p>
         {todayEncounter ? (
           <button
-            aria-label={`Meet today's encounter, ${todayEncounter.name}. ${todayEncounter.reason}`}
-            className="absolute bottom-9 left-4 right-4 z-30 flex items-center gap-3 rounded-2xl border border-atseen-line bg-[#151a24]/95 p-3 text-left shadow-glow backdrop-blur transition hover:border-atseen-blue/45 sm:hidden"
+            aria-label={__msg("orbit.meetTodaySEncounter", { value0: todayEncounter.name, value1: todayEncounter.reason })}
+            className="absolute bottom-9 left-4 right-4 z-30 flex items-center gap-3 rounded-2xl border border-atseen-line bg-[#151a24]/95 p-3 text-start shadow-glow backdrop-blur transition hover:border-atseen-blue/45 sm:hidden"
             onClick={() => setPreview(todayEncounter)}
             type="button"
           >
             <FanAvatar name={todayEncounter.name} size="h-11 w-11" src={todayEncounter.avatar} />
             <span className="min-w-0 flex-1">
-              <span className="block text-[9px] font-extrabold uppercase tracking-[0.18em] text-atseen-blue">Today&apos;s Encounter</span>
-              <span className="mt-0.5 block truncate text-sm font-extrabold text-atseen-text">{todayEncounter.name}</span>
+              <span className="block text-[9px] font-extrabold uppercase tracking-[0.18em] text-atseen-blue">{__msg("orbit.todaySEncounter")}</span>
+              <span dir="auto" className="mt-0.5 block truncate text-sm font-extrabold text-atseen-text">{todayEncounter.name}</span>
               {encounterLine ? <span className="mt-0.5 block truncate text-[11px] text-atseen-muted">{encounterLine}</span> : null}
             </span>
-            <span className="shrink-0 text-xs font-extrabold text-atseen-blue">Meet</span>
+            <span className="shrink-0 text-xs font-extrabold text-atseen-blue">{__msg("fanWeb.meet")}</span>
           </button>
         ) : null}
       </section>

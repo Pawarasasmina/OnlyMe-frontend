@@ -1,4 +1,4 @@
-﻿import axiosInstance from "../api/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
 
 export const adminVerificationService = {
   list: (params) => axiosInstance.get("/admin/creator-verifications", { params }),

@@ -1,6 +1,10 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link } from "react-router-dom";
 
 function DiscoverContextStack({ dream, profileRoute, quote }) {
+  __useUiLanguage();
   if (!quote && !dream) return null;
   return (
     <div className="discover-context-stack">
@@ -8,7 +12,7 @@ function DiscoverContextStack({ dream, profileRoute, quote }) {
       {dream ? (
         <Link className="discover-dream" to={profileRoute}>
           {dream.emoji ? <span aria-hidden="true">{dream.emoji}</span> : null}
-          <span>Dreams of <b>{dream.title}</b></span>
+          <span>{__msg("discover.dreamsOf")} <b dir="auto">{dream.title}</b></span>
         </Link>
       ) : null}
     </div>

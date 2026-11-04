@@ -1,3 +1,7 @@
+import { localizedTuple as __uiTuple } from "../../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -5,12 +9,13 @@ import { FiCheck, FiStar } from "react-icons/fi";
 import { postService } from "../../../services/postService";
 
 const TOPICS = [
-  ["meet_people", "Meet people"], ["work", "Work"], ["services", "Services"],
-  ["housing", "Housing"], ["places", "Places"], ["food", "Food"],
-  ["travel", "Travel"], ["kids_family", "Kids & Family"], ["community", "Community"],
+  __uiTuple(["meet_people", { __uiMessage: "data.meetPeople" }]), __uiTuple(["work", { __uiMessage: "data.work" }]), __uiTuple(["services", { __uiMessage: "data.services" }]),
+  __uiTuple(["housing", { __uiMessage: "data.housing" }]), __uiTuple(["places", { __uiMessage: "data.places" }]), __uiTuple(["food", { __uiMessage: "fanWeb.food" }]),
+  __uiTuple(["travel", { __uiMessage: "data.travel" }]), __uiTuple(["kids_family", { __uiMessage: "data.kidsFamily" }]), __uiTuple(["community", { __uiMessage: "data.community" }]),
 ];
 
 export default function WallTopicSheet({ selected, inferred, location, viewerId, onClose, onSelect, anchorRef }) {
+  __useUiLanguage();
   const sheetRef = useRef(null);
   const [position, setPosition] = useState({});
   const params = { scope: location ? "custom" : "worldwide", location };
@@ -51,19 +56,19 @@ export default function WallTopicSheet({ selected, inferred, location, viewerId,
     }
   };
   return createPortal(<div className="wall-topic-layer" style={position} onKeyDown={handleKeyDown}>
-    <button className="wall-topic-scrim" aria-label="Close topic picker" tabIndex={-1} onClick={onClose} type="button" />
+    <button className="wall-topic-scrim" aria-label={__msg("fanWeb.closeTopicPicker")} tabIndex={-1} onClick={onClose} type="button" />
     <section aria-modal="true" aria-labelledby="wall-topic-title" className="wall-topic-sheet" role="dialog" ref={sheetRef}>
       <span className="wall-topic-handle" aria-hidden="true" />
-      <h2 id="wall-topic-title">Choose topic</h2>
-      <p>Helps the right people find your post</p>
+      <h2 id="wall-topic-title">{__msg("fanWeb.chooseTopic")}</h2>
+      <p>{__msg("fanWeb.helpsTheRightPeopleFindYourPost")}</p>
       <button aria-pressed={!selected} className={`wall-topic-auto ${!selected ? "is-selected" : ""}`} onClick={() => onSelect("")} type="button">
-        <FiStar aria-hidden="true" /><span><strong>Auto — from your text</strong><small>{inferred ? `Right now: ${inferred}` : "We'll pick it as you write"}</small></span>{!selected ? <FiCheck aria-hidden="true" /> : null}
+        <FiStar aria-hidden="true" /><span><strong>{__msg("fanWeb.autoFromYourText")}</strong><small>{inferred ? __msg("fanWeb.rightNow_5f5b0e", { value0: inferred }) : __msg("fanWeb.weLlPickItAsYouWrite")}</small></span>{!selected ? <FiCheck aria-hidden="true" /> : null}
       </button>
-      {counts.isError ? <button className="wall-topic-retry" onClick={() => counts.refetch()} type="button">Could not load activity. Retry</button> : null}
+      {counts.isError ? <button className="wall-topic-retry" onClick={() => counts.refetch()} type="button">{__msg("fanWeb.couldNotLoadActivityRetry")}</button> : null}
       <div className="wall-topic-scroll"><div className="wall-topic-grid">
         {TOPICS.map(([key, label]) => {
           const total = counts.data?.topicCounts?.[key];
-          return <button aria-pressed={selected === label} className={selected === label ? "is-selected" : ""} key={key} onClick={() => onSelect(label)} type="button"><strong>{label}{selected === label ? <FiCheck aria-hidden="true" /> : null}</strong><small>{counts.isPending ? "Loading..." : total == null ? "Count unavailable" : total ? `${total} active` : "Quiet"}</small></button>;
+          return <button aria-pressed={selected === label} className={selected === label ? "is-selected" : ""} key={key} onClick={() => onSelect(label)} type="button"><strong>{label}{selected === label ? <FiCheck aria-hidden="true" /> : null}</strong><small>{counts.isPending ? __msg("admin.loading") : total == null ? __msg("fanWeb.countUnavailable") : total ? __msg("fanWeb.active", { value0: total }) : __msg("fanWeb.quiet")}</small></button>;
         })}
       </div></div>
     </section>

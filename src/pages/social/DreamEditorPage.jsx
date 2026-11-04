@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { DreamEditor } from "../../components/profile/ProfileDream";
@@ -6,6 +9,7 @@ import { dreamService } from "../../services/dreamService";
 import { profileService } from "../../services/profileService";
 
 export default function DreamEditorPage() {
+  __useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const profileQuery = useQuery({
@@ -22,7 +26,7 @@ export default function DreamEditorPage() {
   });
 
   if (profileQuery.isLoading || dreamQuery.isLoading) return <div className="profile-dream-page"><LoadingSkeleton className="h-[520px]" count={1} /></div>;
-  if (profileQuery.isError || dreamQuery.isError) return <div className="profile-dream-page profile-dream-page-state"><strong>Dream editor could not load.</strong><button onClick={() => navigate("/profile")} type="button">Back to profile</button></div>;
+  if (profileQuery.isError || dreamQuery.isError) return <div className="profile-dream-page profile-dream-page-state"><strong>{__msg("social.dreamEditorCouldNotLoad")}</strong><button onClick={() => navigate("/profile")} type="button">{__msg("profile.backToProfile")}</button></div>;
 
   const dream = dreamQuery.data?.dream?.status === "ACTIVE" ? dreamQuery.data.dream : null;
   return <main className="profile-dream-page">

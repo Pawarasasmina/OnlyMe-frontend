@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +11,7 @@ import { followInvalidationKeys } from "../../utils/savedPeople";
 import DirectAccessOfferModal from "./DirectAccessOfferModal";
 
 export default function ProfileSocialActions({ capabilities, profile, relationship = {} }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [error, setError] = useState("");
@@ -15,8 +20,8 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
   const [directAccessOpen, setDirectAccessOpen] = useState(false);
   const refreshProfile = () => queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
   const refreshFollowSurfaces = () => Promise.all(followInvalidationKeys().map((queryKey) => queryClient.invalidateQueries({ queryKey })));
-  const follow = useMutation({ mutationFn: () => profileService.toggleFollow(profile.username), onSuccess: () => { setError(""); refreshFollowSurfaces(); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to update this follow.") });
-  const signal = useMutation({ mutationFn: () => profileService.toggleSeeSignal(profile.username), onSuccess: () => { setError(""); refreshProfile(); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }, onError: (requestError) => setError(requestError.response?.data?.message || "Unable to send this signal.") });
+  const follow = useMutation({ mutationFn: () => profileService.toggleFollow(profile.username), onSuccess: () => { setError(""); refreshFollowSurfaces(); }, onError: (requestError) => setError(requestError.response?.data?.message || __msg("profile.unableToUpdateThisFollow")) });
+  const signal = useMutation({ mutationFn: () => profileService.toggleSeeSignal(profile.username), onSuccess: () => { setError(""); refreshProfile(); queryClient.invalidateQueries({ queryKey: ["fan", "activity"] }); }, onError: (requestError) => setError(requestError.response?.data?.message || __msg("profile.unableToSendThisSignal")) });
   const openMessage = () => {
     if (relationship.following) navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`);
     else setMessagePrompt(true);
@@ -28,38 +33,38 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
       await profileService.toggleFollow(profile.username);
       await refreshFollowSurfaces();
       navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}`);
-    } catch (requestError) { setError(requestError.response?.data?.message || "Unable to follow this creator."); }
+    } catch (requestError) { setError(requestError.response?.data?.message || __msg("profile.unableToFollowThisCreator")); }
     finally { setMessageBusy(false); }
   };
 
   if (!capabilities.canFollow && !capabilities.canMessage) return null;
   return <section className="mt-4">
     <div className={`grid gap-2 ${capabilities.canMessage ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
-      {capabilities.canFollow ? <button className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-bold transition ${relationship.following ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface hover:border-atseen-blue/45"}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{relationship.following ? <FiUserCheck /> : <FiUserPlus />}{relationship.following ? "Following" : "Follow"}</button> : null}
-      {capabilities.canFollow ? <button className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-bold transition ${relationship.seeSignalSent ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface hover:border-atseen-blue/45"}`} disabled={signal.isPending} onClick={() => signal.mutate()} type="button"><FiEye />{relationship.seeSignalSent ? "Seen you" : "I see you"}</button> : null}
-      {capabilities.canMessage ? <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-atseen-blue px-3 py-3 text-sm font-bold text-atseen-bg transition hover:bg-white" onClick={openMessage} type="button"><FiMessageCircle /> Message</button> : null}
-      {capabilities.canMessage ? <button className="inline-flex items-center justify-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface px-3 py-3 text-sm font-bold transition hover:border-atseen-blue/45" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/profile/${profile.username}`)}`)} type="button"><FiShare2 /> Share</button> : null}
+      {capabilities.canFollow ? <button className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-bold transition ${relationship.following ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface hover:border-atseen-blue/45"}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{relationship.following ? <FiUserCheck /> : <FiUserPlus />}{relationship.following ? __msg("activity.following") : __msg("discover.follow")}</button> : null}
+      {capabilities.canFollow ? <button className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-bold transition ${relationship.seeSignalSent ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface hover:border-atseen-blue/45"}`} disabled={signal.isPending} onClick={() => signal.mutate()} type="button"><FiEye />{relationship.seeSignalSent ? __msg("profile.seenYou") : __msg("discover.iSeeYou")}</button> : null}
+      {capabilities.canMessage ? <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-atseen-blue px-3 py-3 text-sm font-bold text-atseen-bg transition hover:bg-white" onClick={openMessage} type="button"><FiMessageCircle /> {__msg("discover.message")}</button> : null}
+      {capabilities.canMessage ? <button className="inline-flex items-center justify-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface px-3 py-3 text-sm font-bold transition hover:border-atseen-blue/45" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/profile/${profile.username}`)}`)} type="button"><FiShare2 /> {__msg("admin.share")}</button> : null}
     </div>
-    {capabilities.canMessage && (profile.directAccess?.enabled || profile.directAccess?.callEnabled) ? <button className="group mt-3 w-full overflow-hidden rounded-2xl border border-atseen-blue/30 bg-gradient-to-br from-atseen-blue/[0.14] via-atseen-blue/[0.06] to-transparent p-4 text-left transition hover:border-atseen-blue/60 hover:from-atseen-blue/[0.2]" onClick={openDirectAccess} type="button">
+    {capabilities.canMessage && (profile.directAccess?.enabled || profile.directAccess?.callEnabled) ? <button className="group mt-3 w-full overflow-hidden rounded-2xl border border-atseen-blue/30 bg-gradient-to-br from-atseen-blue/[0.14] via-atseen-blue/[0.06] to-transparent p-4 text-start transition hover:border-atseen-blue/60 hover:from-atseen-blue/[0.2]" onClick={openDirectAccess} type="button">
       <span className="flex items-center gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue shadow-[0_0_24px_-8px_rgba(156,203,255,0.8)]"><FiZap /></span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-3">
             <span className="font-black">Direct Access</span>
-            <span className="shrink-0 rounded-full bg-atseen-blue px-3 py-1 text-xs font-black text-atseen-bg">{profile.directAccess.enabled ? `✦${profile.directAccess.priceStars}` : `Call ✦${profile.directAccess.callPriceStars}`}</span>
+            <span className="shrink-0 rounded-full bg-atseen-blue px-3 py-1 text-xs font-black text-atseen-bg">{profile.directAccess.enabled ? `✦${profile.directAccess.priceStars}` : __msg("profile.call", { value0: profile.directAccess.callPriceStars })}</span>
           </span>
-          <span className="mt-1 block text-xs leading-5 text-atseen-muted">Priority messages and calls with a delivery guarantee—or a full refund.</span>
+          <span className="mt-1 block text-xs leading-5 text-atseen-muted">{__msg("profile.priorityMessagesAndCallsWithADeliveryGuaranteeOr")}</span>
         </span>
       </span>
       <span className="mt-3 flex flex-wrap gap-x-4 gap-y-2 border-t border-atseen-blue/15 pt-3 text-[11px] font-semibold text-atseen-blue">
-        <span className="inline-flex items-center gap-1.5"><FiClock /> 48-hour window</span>
-        {profile.directAccess.enabled ? <span className="inline-flex items-center gap-1.5"><FiMessageCircle /> Up to 3 messages</span> : null}
-        {profile.directAccess.callEnabled ? <span className="inline-flex items-center gap-1.5">Call · {profile.directAccess.callDurationMinutes} min</span> : null}
-        <span className="inline-flex items-center gap-1.5"><FiShield /> Refund if unanswered</span>
+        <span className="inline-flex items-center gap-1.5"><FiClock /> {__msg("profile.48HourWindow")}</span>
+        {profile.directAccess.enabled ? <span className="inline-flex items-center gap-1.5"><FiMessageCircle /> {__msg("profile.upTo3Messages")}</span> : null}
+        {profile.directAccess.callEnabled ? <span className="inline-flex items-center gap-1.5">{__msg("profile.call_0226f2")} {profile.directAccess.callDurationMinutes} {__msg("messages.min")}</span> : null}
+        <span className="inline-flex items-center gap-1.5"><FiShield /> {__msg("profile.refundIfUnanswered")}</span>
       </span>
     </button> : null}
     {directAccessOpen ? <DirectAccessOfferModal onClose={() => setDirectAccessOpen(false)} profile={profile} /> : null}
-    {error ? <p className="mt-2 text-xs text-red-300" role="alert">{error}</p> : null}
-    {messagePrompt ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4"><div className="w-full max-w-sm rounded-3xl border border-atseen-line bg-atseen-bg-2 p-6 shadow-2xl"><h2 className="text-lg font-bold">Message this creator?</h2><p className="mt-3 text-sm leading-6 text-atseen-muted">You are not following this creator. Follow first to message directly, or start with a message request.</p>{error ? <p className="mt-3 text-xs text-atseen-danger">{error}</p> : null}<div className="mt-6 grid gap-2"><button className="rounded-full bg-atseen-blue py-3 text-sm font-bold text-atseen-bg disabled:opacity-50" disabled={messageBusy} onClick={followAndMessage} type="button">{messageBusy ? "Following…" : "Follow & message directly"}</button><button className="rounded-full border border-atseen-blue/40 py-3 text-sm font-bold text-atseen-blue disabled:opacity-50" disabled={messageBusy} onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}&request=1`)} type="button">Send a message request</button><button className="py-2 text-sm font-bold text-atseen-muted hover:text-white" disabled={messageBusy} onClick={() => setMessagePrompt(false)} type="button">Cancel</button></div></div></div> : null}
+    {error ? <p className="mt-2 text-xs text-red-300" role="alert">{__systemMessage(error)}</p> : null}
+    {messagePrompt ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4"><div className="w-full max-w-sm rounded-3xl border border-atseen-line bg-atseen-bg-2 p-6 shadow-2xl"><h2 className="text-lg font-bold">{__msg("profile.messageThisCreator")}</h2><p className="mt-3 text-sm leading-6 text-atseen-muted">{__msg("profile.youAreNotFollowingThisCreatorFollowFirstTo")}</p>{error ? <p className="mt-3 text-xs text-atseen-danger">{__systemMessage(error)}</p> : null}<div className="mt-6 grid gap-2"><button className="rounded-full bg-atseen-blue py-3 text-sm font-bold text-atseen-bg disabled:opacity-50" disabled={messageBusy} onClick={followAndMessage} type="button">{messageBusy ? __msg("profile.following") : __msg("profile.followMessageDirectly")}</button><button className="rounded-full border border-atseen-blue/40 py-3 text-sm font-bold text-atseen-blue disabled:opacity-50" disabled={messageBusy} onClick={() => navigate(`/messages?with=${encodeURIComponent(profile.ownerUserId)}&request=1`)} type="button">{__msg("profile.sendAMessageRequest")}</button><button className="py-2 text-sm font-bold text-atseen-muted hover:text-white" disabled={messageBusy} onClick={() => setMessagePrompt(false)} type="button">{__msg("admin.cancel")}</button></div></div></div> : null}
   </section>;
 }

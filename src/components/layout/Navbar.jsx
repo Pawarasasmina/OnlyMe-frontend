@@ -1,3 +1,7 @@
+import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
@@ -7,6 +11,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { resolveMediaUrl } from "../../utils/media";
 
 function Navbar() {
+  __useUiLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const dashboardPath = user?.role === "admin" ? "/admin/dashboard" : "/wall";
@@ -21,9 +26,7 @@ function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-brand-dark/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link className="text-xl font-black uppercase tracking-[0.28em]" to="/">
-          OnlyMe
-        </Link>
+        <Link className="text-xl font-black uppercase tracking-[0.28em]" to="/">{__msg("layout.onlyme")}</Link>
         <nav className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((link) => (
             <NavLink
@@ -48,25 +51,23 @@ function Navbar() {
                 </span>
                 <span className="hidden max-w-32 truncate lg:inline">{user.name || user.username}</span>
               </Link>
-              <Link className="text-sm font-semibold capitalize text-brand-secondary" to={dashboardPath}>{user.role} dashboard</Link>
-              <Button onClick={logout} variant="ghost">
-                Logout
-              </Button>
+              <Link className="text-sm font-semibold capitalize text-brand-secondary" to={dashboardPath}>{__enumLabel(user.role)} {__msg("layout.dashboard")}</Link>
+              <Button onClick={logout} variant="ghost">{__msg("layout.logout")}</Button>
             </>
           ) : (
             <>
               <Link to="/login">
-                <Button variant="ghost">Sign in</Button>
+                <Button variant="ghost">{__msg("layout.signIn")}</Button>
               </Link>
               <Link to="/register">
-                <Button>Join Now</Button>
+                <Button>{__msg("layout.joinNow")}</Button>
               </Link>
             </>
           )}
         </div>
         <button
           aria-expanded={mobileOpen}
-          aria-label="Toggle navigation"
+          aria-label={__msg("layout.toggleNavigation")}
           className="rounded-full border border-white/10 p-2 md:hidden"
           onClick={() => setMobileOpen((current) => !current)}
           type="button"
@@ -97,19 +98,16 @@ function Navbar() {
                   {user.name || user.username}
                 </Link>
                 <Link className="rounded-2xl bg-white/5 px-4 py-3 text-sm font-semibold capitalize text-brand-secondary" onClick={closeMobile} to={dashboardPath}>
-                  {user.role} dashboard
-                </Link>
-                <Button onClick={logoutAndClose} variant="ghost">
-                  Logout
-                </Button>
+                  {__enumLabel(user.role)}{__msg("layout.dashboard")}</Link>
+                <Button onClick={logoutAndClose} variant="ghost">{__msg("layout.logout")}</Button>
               </>
             ) : (
               <>
                 <Link onClick={closeMobile} to="/login">
-                  <Button className="w-full" variant="ghost">Sign in</Button>
+                  <Button className="w-full" variant="ghost">{__msg("layout.signIn")}</Button>
                 </Link>
                 <Link onClick={closeMobile} to="/register">
-                  <Button className="w-full">Join Now</Button>
+                  <Button className="w-full">{__msg("layout.joinNow")}</Button>
                 </Link>
               </>
             )}

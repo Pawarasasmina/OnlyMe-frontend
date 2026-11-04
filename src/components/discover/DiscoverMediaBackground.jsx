@@ -1,7 +1,11 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useEffect, useRef, useState } from "react";
 import { resolveMediaUrl } from "../../utils/media";
 
 function DiscoverMediaBackground({ active, creatorName, media }) {
+  __useUiLanguage();
   const videoRef = useRef(null);
   const [failed, setFailed] = useState(false);
   const url = resolveMediaUrl(media?.url || "");
@@ -29,7 +33,7 @@ function DiscoverMediaBackground({ active, creatorName, media }) {
   if (media?.type === "video") {
     return (
       <video
-        aria-label={media.alt || `${creatorName} public video`}
+        aria-label={media.alt || __msg("discover.publicVideo", { value0: creatorName })}
         className="discover-media"
         loop
         muted
@@ -45,7 +49,7 @@ function DiscoverMediaBackground({ active, creatorName, media }) {
 
   return (
     <img
-      alt={media?.alt || `${creatorName} public media`}
+      alt={media?.alt || __msg("discover.publicMedia", { value0: creatorName })}
       className="discover-media"
       loading={active ? "eager" : "lazy"}
       onError={() => setFailed(true)}

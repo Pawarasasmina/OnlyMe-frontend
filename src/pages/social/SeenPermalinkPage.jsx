@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +12,7 @@ import { profileService } from "../../services/profileService";
 import SeenReaderPage from "./SeenReaderPage";
 
 export default function SeenPermalinkPage() {
+  __useUiLanguage();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -18,7 +22,7 @@ export default function SeenPermalinkPage() {
   const origin = location.state?.seenOrigin;
   const searchOrigin = origin?.pathname === "/search" ? origin : null;
   const originQuery = searchOrigin ? new URLSearchParams(searchOrigin.search || "") : null;
-  const searchLabel = originQuery?.get("q")?.trim() || "Search";
+  const searchLabel = originQuery?.get("q")?.trim() || __msg("discover.search");
   const query = useQuery({
     queryKey: ["seen-permalink", id, accessToken],
     queryFn: () => publicationService.getPublicPublication(id, accessToken ? { access: accessToken } : undefined).then((response) => response.data.data.publication),
@@ -42,8 +46,8 @@ export default function SeenPermalinkPage() {
   // standard feed permalink. The route is shared, so hand it to the reader.
   if (searchParams.get("overview") === "1") return <SeenReaderPage />;
 
-  if (query.isLoading) return <section className="seen-permalink-status" aria-label="Loading Seen"><span /><span /><span /></section>;
-  if (query.isError || !publication) return <section className="seen-permalink-error"><h1>This Seen is not available.</h1><Link to="/seen">Back to Seen</Link></section>;
+  if (query.isLoading) return <section className="seen-permalink-status" aria-label={__msg("social.loadingSeen")}><span /><span /><span /></section>;
+  if (query.isError || !publication) return <section className="seen-permalink-error"><h1>{__msg("social.thisSeenIsNotAvailable")}</h1><Link to="/seen">{__msg("social.backToSeen")}</Link></section>;
 
   const replacePublication = (_seenId, nextPublication) => {
     setLocalPublication((current) => ({ ...(current || publication), ...nextPublication }));
@@ -78,7 +82,7 @@ export default function SeenPermalinkPage() {
 
   return <section className={`seen-prototype-page seen-permalink-page ${searchOrigin ? "has-search-origin" : ""}`}>
     {searchOrigin ? <header className="seen-permalink-origin-header">
-      <button aria-label={`Back to search for ${searchLabel}`} onClick={returnToSearch} type="button"><FiChevronLeft /></button>
+      <button aria-label={__msg("social.backToSearchFor", { value0: searchLabel })} onClick={returnToSearch} type="button"><FiChevronLeft data-ui-directional="true" /></button>
       <strong>{searchLabel === "Search" ? searchLabel : `“${searchLabel}”`}</strong>
     </header> : null}
     {!searchOrigin && paidSeen ? <header className="seen-paid-permalink-header"><button aria-label="Back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate(`/profile/${encodeURIComponent(publication.creator?.username || "")}`)} type="button"><FiChevronLeft /></button><strong>{String(publication.creator?.name || publication.creator?.username || "Creator").split(" ")[0]} · Seen</strong></header> : null}

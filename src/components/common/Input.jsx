@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 function Input({ label, className = "", ...props }) {
+  __useUiLanguage();
   return (
     <label className="block space-y-2">
       {label ? <span className="text-sm text-brand-mist/80">{label}</span> : null}

@@ -1,10 +1,14 @@
-﻿import { useEffect, useRef, useState } from "react";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { messageService } from "../../services/messageService";
 import { resolveMediaUrl } from "../../utils/media";
 import { FiGift } from "react-icons/fi";
 
 export default function ActivityGiftPreview({ activity, onClose }) {
+  __useUiLanguage();
   const closeButton = useRef(null);
   const [position, setPosition] = useState({});
   const metadata = activity.metadata || {};
@@ -18,7 +22,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
     staleTime: 60000,
   });
   const gift = { ...(catalog.data?.find((item) => String(item.id) === String(giftId)) || {}), ...snapshot };
-  const name = metadata.giftName || gift.name || "Gift";
+  const name = metadata.giftName || gift.name || __msg("fan.gift");
   const imageUrl = resolveMediaUrl(metadata.giftImageUrl || gift.imageUrl || activity.giftImageUrl);
   const meaning = metadata.giftMeaning || metadata.giftDescription || gift.meaning || gift.description;
   const note = metadata.giftNote || metadata.giftMessage || gift.note;
@@ -53,8 +57,8 @@ export default function ActivityGiftPreview({ activity, onClose }) {
     };
   }, [onClose]);
 
-  return <div aria-label={`${name} gift preview`} aria-modal="true" className="activity-gift-preview" role="dialog" style={position}>
-    <button aria-label="Close gift preview" className="activity-gift-preview-dismiss" onClick={onClose} ref={closeButton} type="button">
+  return <div aria-label={__msg("activity.giftPreview", { value0: name })} aria-modal="true" className="activity-gift-preview" role="dialog" style={position}>
+    <button aria-label={__msg("activity.closeGiftPreview")} className="activity-gift-preview-dismiss" onClick={onClose} ref={closeButton} type="button">
       <span className="activity-gift-preview-art">
         <i aria-hidden="true" />
         {imageUrl ? <img alt={name} src={imageUrl} style={{ transform: `translate(${Number(gift.imagePositionX || metadata.giftImagePositionX || 0)}%, ${Number(gift.imagePositionY || metadata.giftImagePositionY || 0)}%) scale(${Number(gift.displayScale || metadata.giftDisplayScale || 100) / 100})` }} /> : <FiGift aria-label={name} />}
@@ -62,7 +66,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
       <span className="activity-gift-preview-info">
         <strong>{name}</strong>
         {meaning ? <span className="activity-gift-preview-meaning">{"\u201c"}{meaning}{"\u201d"}</span> : null}
-        {from ? <small>from {from}</small> : null}
+        {from ? <small>{__msg("activity.from")} {from}</small> : null}
         {note ? <span className="activity-gift-preview-note">{"\u201c"}{note}{"\u201d"}</span> : null}
       </span>
     </button>

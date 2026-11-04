@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import OrbitRings from "./OrbitRings";
 
 const skeletonPositions = [
@@ -9,6 +10,7 @@ const skeletonPositions = [
 ];
 
 function OrbitSkeleton() {
+  __useUiLanguage();
   return (
     <div className="animate-pulse">
       <div className="h-5 w-40 rounded-full bg-atseen-surface-2" />

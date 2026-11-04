@@ -1,0 +1,23 @@
+.profile-archive-page{min-height:100dvh;padding:22px 20px 70px;background:#0a0c0f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+.profile-archive-page>header{display:flex;align-items:center;gap:12px;margin:0;padding-bottom:10px}
+.profile-archive-page>header button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;border-radius:50%;background:rgba(255,255,255,.07);font-size:16px;font-weight:400;color:#f2f4f7}
+.profile-archive-page>header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.3px}
+.profile-archive-page .profile-archive-lead{margin:4px 0 10px;color:rgba(255,255,255,.62);font-size:14px;line-height:1.45}
+.profile-archive-page .profile-archive-empty{display:block;text-align:center;padding:44px 30px}
+.profile-archive-page .profile-archive-empty svg{display:block;width:34px;height:34px;margin:0 auto;color:rgba(255,255,255,.15);fill:currentColor}
+.profile-archive-page .profile-archive-empty p{margin:12px 0 0;color:rgba(255,255,255,.62);font-size:14px;line-height:1.6}
+.profile-archive-page .profile-archive-row{display:flex;align-items:center;gap:12px;min-height:0;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.045)}
+.profile-archive-page .profile-archive-row.is-note{padding:12px 0}
+.profile-archive-page .profile-archive-thumb{width:50px;height:62px;border-radius:9px;flex:none;overflow:hidden;background:#181d25;display:grid;place-items:center}
+.profile-archive-page .profile-archive-thumb img{width:100%;height:100%;object-fit:cover}
+.profile-archive-copy{flex:1;min-width:0}
+.profile-archive-copy>b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+.profile-archive-copy>p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0;font-size:12.5px;line-height:1.45}
+.profile-archive-copy>small{display:block;margin-top:3px;font-size:10.5px;line-height:1.4;color:rgba(255,255,255,.4)}
+.is-note .profile-archive-copy>small{font-size:10px}
+.profile-archive-row>button{flex:none;padding:8px 2px;font-size:12px;font-weight:650;color:#9ccbff}
+.profile-archive-row>button:disabled{opacity:.5;cursor:wait}
+.profile-archive-page :is(button,a):focus-visible{outline:2px solid #9ccbff;outline-offset:3px}
+
+.profile-archive-state{padding:44px 0;color:rgba(255,255,255,.42);font-size:14px;text-align:center}
+.profile-archive-state.is-error{color:#ff8a8a}

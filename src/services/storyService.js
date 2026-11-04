@@ -1,3 +1,4 @@
+import { msg as __msg } from "../i18n/runtime.js";
 import axiosInstance from "../api/axiosInstance";
 import { atseenCreators, atseenStories } from "../data/atseenMockData";
 import { STATUS_PRESETS } from "../constants/statusPresets";
@@ -87,11 +88,11 @@ function presetKeyForCreatorStatus(status = "") {
 function timeAgo(value) {
   const created = new Date(value).getTime();
   if (!created) {
-    return "Now";
+    return __msg("storyService.now");
   }
 
   const minutes = Math.max(0, Math.floor((Date.now() - created) / 60000));
-  if (minutes < 1) return "Now";
+  if (minutes < 1) return __msg("storyService.now");
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;
@@ -101,7 +102,7 @@ function timeAgo(value) {
 function normalizeOwner(story = {}) {
   const sourceId = story.owner?.id || story.ownerId || story.creatorId || story.creator?._id || story.creator?.id || story.username || story.id;
   const creator = atseenCreators[sourceId] || {};
-  const name = story.owner?.name || story.owner?.displayName || story.name || creator.name || "Creator";
+  const name = story.owner?.name || story.owner?.displayName || story.name || creator.name || __msg("discover.creator");
 
   return {
     id: sourceId || story.id,
@@ -114,7 +115,7 @@ function normalizeOwner(story = {}) {
 }
 
 function normalizeUser(user = {}) {
-  const name = user.name || user.displayName || user.username || "Account";
+  const name = user.name || user.displayName || user.username || __msg("layouts.account");
   return {
     id: user.id || user._id || user.userId || "",
     name,
@@ -142,6 +143,7 @@ function normalizeStory(story = {}) {
 
   return {
     id,
+    originalStoryId: story.originalStoryId || story.storyId || id,
     owner,
     name: story.name || owner.name,
     username: story.username || owner.username,
@@ -278,7 +280,7 @@ function deleteMockStory(storyId) {
 
 function requireMocks() {
   if (!STORY_MOCKS_ENABLED) {
-    throw new Error("Story API is not enabled.");
+    throw new Error(__msg("storyService.storyApiIsNotEnabled"));
   }
 }
 
@@ -309,6 +311,7 @@ export const storyService = {
     const response = await axiosInstance.get(`/stories/${storyId}`);
     return normalizeStory(response.data?.data?.story || response.data?.data || response.data);
   },
+  searchPeople: (q, signal) => axiosInstance.get("/stories/people", { params: { q }, signal }).then((response) => response.data?.data?.people || []),
 
   getActiveStories: async () => {
     if (STORY_API_ENABLED) {
@@ -376,7 +379,7 @@ export const storyService = {
     requireMocks();
     const media = formData.get("media") || formData.get("image");
     if (!(media instanceof File)) {
-      throw new Error("Story media is required.");
+      throw new Error(__msg("storyService.storyMediaIsRequired"));
     }
 
     onUploadProgress?.({ loaded: 20, total: 100 });
@@ -470,7 +473,7 @@ export const storyService = {
     }
 
     if (!storyId) {
-      throw new Error("Story is required.");
+      throw new Error(__msg("storyService.storyIsRequired"));
     }
 
     const reactions = readStore(REACTIONS_KEY);
@@ -486,7 +489,7 @@ export const storyService = {
       return axiosInstance.post(`/stories/${storyId}/replies`, { body: message });
     }
 
-    throw new Error("Story replies are not enabled in this environment.");
+    throw new Error(__msg("storyService.storyRepliesAreNotEnabledInThisEnvironment"));
   },
   seeStory: (storyId) => axiosInstance.post(`/stories/${storyId}/see-you`),
 

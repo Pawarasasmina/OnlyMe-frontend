@@ -1,4 +1,5 @@
-﻿import { Navigate, Outlet } from "react-router-dom";
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const dashboardFor = (user) => {
@@ -8,6 +9,7 @@ const dashboardFor = (user) => {
 };
 
 function RoleProtectedRoute({ allowedRoles = [], requireCreatorApproval = true }) {
+  __useUiLanguage();
   const { user } = useAuth();
 
   if (!user) {

@@ -1,0 +1,5 @@
+html[dir=rtl] [data-ui-directional=true]{transform:scaleX(-1)}
+html[lang=ar]{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif}
+[dir=auto],bdi{unicode-bidi:isolate}
+input[type=email],input[type=url],input[type=tel],code,pre{direction:ltr;unicode-bidi:isolate}
+.language-sheet,.settings-index-row-copy,.social-center-scroll{overflow-wrap:anywhere}

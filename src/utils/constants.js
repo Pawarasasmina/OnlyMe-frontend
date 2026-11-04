@@ -1,3 +1,5 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
 export const ROLES = {
   FAN: "fan",
   CREATOR: "creator",
@@ -5,5 +7,5 @@ export const ROLES = {
 };
 
 export const NAV_LINKS = [
-  { label: "Creators", to: "/" },
+  { get label() { return __msg("admin.creators"); }, to: "/" },
 ];

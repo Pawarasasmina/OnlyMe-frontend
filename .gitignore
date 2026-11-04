@@ -8,3 +8,7 @@ playwright-report/
 
 # Local PDF inspection dependency
 .codex-pdf-tools/
+.codex-tmp/
+
+# Local-only localization model, tooling, draft checkpoints and audit logs
+tmp/i18n-*

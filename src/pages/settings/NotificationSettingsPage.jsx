@@ -1,3 +1,7 @@
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "../../components/common/Button";
@@ -7,20 +11,21 @@ import { normalizeApiError } from "../../utils/apiErrors";
 import SettingsNav from "./SettingsNav";
 
 const labels = {
-  email: "Email notifications",
-  inApp: "In-app notifications",
-  comments: "Comments",
-  reactions: "Reactions",
-  followers: "New followers",
-  saves: "Saves",
-  reposts: "Reposts",
-  marketing: "Product announcements",
-  security: "Security alerts",
-  messages: "Messages",
-  directAccess: "Direct Access requests",
+  get email() { return __msg("settings.emailNotifications"); },
+  get inApp() { return __msg("settings.inAppNotifications"); },
+  get comments() { return __msg("admin.comments"); },
+  get reactions() { return __msg("fanWeb.reactions"); },
+  get followers() { return __msg("settings.newFollowers"); },
+  get saves() { return __msg("admin.saves"); },
+  get reposts() { return __msg("settings.reposts"); },
+  get marketing() { return __msg("settings.productAnnouncements"); },
+  get security() { return __msg("settings.securityAlerts"); },
+  get messages() { return __msg("share.messages"); },
+  get directAccess() { return __msg("settings.directAccessRequests"); },
 };
 
 function NotificationSettingsPage() {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState({});
   const [dirty, setDirty] = useState(false);
@@ -43,16 +48,16 @@ function NotificationSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       setDirty(false);
       setError("");
-      setMessage("Notification settings saved.");
+      setMessage(__msg("settings.notificationSettingsSaved"));
     },
     onError: (err) => {
       setMessage("");
-      setError(normalizeApiError(err, "Your settings could not be saved. Please try again.").message);
+      setError(normalizeApiError(err, __msg("settings.yourSettingsCouldNotBeSavedPleaseTryAgain")).message);
     },
   });
 
-  if (query.isLoading) return <div className="space-y-6"><SettingsNav /><Loader label="Loading notification settings..." /></div>;
-  if (query.isError) return <div className="space-y-6"><SettingsNav /><p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">Unable to load notification settings.</p></div>;
+  if (query.isLoading) return <div className="space-y-6"><SettingsNav /><Loader label={__msg("settings.loadingNotificationSettings")} /></div>;
+  if (query.isError) return <div className="space-y-6"><SettingsNav /><p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{__msg("settings.unableToLoadNotificationSettings")}</p></div>;
 
   const role = query.data?.role || "fan";
   const keys = role === "admin" ? ["email", "comments", "reactions", "security"] : ["email", "comments", "reactions", "followers", "saves", "reposts", "messages", "directAccess", "marketing"];
@@ -80,15 +85,15 @@ function NotificationSettingsPage() {
       <form className="space-y-6" onSubmit={submit}>
         <section className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
           <div>
-            <h1 className="text-2xl font-semibold">Notification settings</h1>
-            <p className="mt-1 text-sm text-brand-mist/60">Choose the channels Atseen can use for account updates.</p>
+            <h1 className="text-2xl font-semibold">{__msg("settings.notificationSettings")}</h1>
+            <p className="mt-1 text-sm text-brand-mist/60">{__msg("settings.chooseTheChannelsAtseenCanUseForAccountUpdates")}</p>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {keys.map((key) => (
               <label className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3" key={key}>
                 <span>
                   <span className="block text-sm font-medium text-brand-mist/85">{labels[key]}</span>
-                  {role === "admin" && key === "security" ? <span className="text-xs text-brand-mist/45">Required for administrators</span> : null}
+                  {role === "admin" && key === "security" ? <span className="text-xs text-brand-mist/45">{__msg("settings.requiredForAdministrators")}</span> : null}
                 </span>
                 <input checked={role === "admin" && key === "security" ? true : Boolean(preferences[key])} disabled={role === "admin" && key === "security"} name={key} onChange={update} type="checkbox" />
               </label>
@@ -96,9 +101,9 @@ function NotificationSettingsPage() {
           </div>
         </section>
         {message ? <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
-        {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p> : null}
+        {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__systemMessage(error)}</p> : null}
         <div className="flex justify-end">
-          <Button disabled={!dirty || mutation.isPending} type="submit">{mutation.isPending ? "Saving..." : "Save notifications"}</Button>
+          <Button disabled={!dirty || mutation.isPending} type="submit">{mutation.isPending ? __msg("admin.saving") : __msg("settings.saveNotifications")}</Button>
         </div>
       </form>
     </div>

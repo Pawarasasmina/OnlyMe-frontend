@@ -1,0 +1,16 @@
+.profile-owner-world-section { width:calc(100% - 40px);margin:12px 20px 10px; }
+.profile-owner-world-card { display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;border:1px solid rgba(156,203,255,.16);border-radius:18px;background:radial-gradient(120% 170% at 0% 0%,rgba(156,203,255,.12),rgba(255,255,255,.03) 62%);color:#fff;text-decoration:none; }
+.profile-owner-world-planet { position:relative;display:block;width:38px;height:38px;flex:none; }
+.profile-owner-world-planet > span { position:absolute;inset:5px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d6eaff,#6fa9e8 55%,#24406b); }
+.profile-owner-world-planet > i { position:absolute;left:-3px;right:-3px;top:16px;height:8px;border:1.5px solid rgba(156,203,255,.6);border-radius:50%;transform:rotate(-14deg); }
+.profile-owner-world-copy { flex:1;min-width:0; }
+.profile-owner-world-copy > strong { display:block;font-size:13.5px;font-weight:700;letter-spacing:-.15px;line-height:18px; }
+.profile-owner-world-copy > small { display:block;margin-top:1px;color:rgba(255,255,255,.62);font-size:12px;font-weight:400;line-height:17px;overflow-wrap:anywhere; }
+.profile-owner-world-members { display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:5px;color:rgba(255,255,255,.4);font-size:11px;line-height:16px; }
+.profile-owner-world-members > b { color:#bfe3ff;font-size:11px;font-weight:700; }
+.profile-owner-world-faces { display:flex;flex:none; }
+.profile-owner-world-faces > span { display:grid;place-items:center;width:16px;height:16px;overflow:hidden;margin-inline-start:-6px;border-radius:50%;background:#283342;box-shadow:0 0 0 1.5px #0a0c0f;color:#d6eaff;font-size:8px; }
+.profile-owner-world-faces > span:first-child { margin-inline-start:0; }.profile-owner-world-faces img { width:100%;height:100%;object-fit:cover; }
+.profile-owner-world-card > svg { width:12px;height:12px;flex:none;color:rgba(255,255,255,.4); }
+.profile-owner-world-card:focus-visible { outline:2px solid #9ccbff;outline-offset:3px; }
+.profile-owner-world-card.is-empty { background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06); }.profile-owner-world-card.is-empty .profile-owner-world-planet > span { background:radial-gradient(circle at 35% 30%,#3a4a63,#1c2738 60%,#0e141e); }

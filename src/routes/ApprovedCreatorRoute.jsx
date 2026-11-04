@@ -1,7 +1,9 @@
-﻿import { Navigate, Outlet } from "react-router-dom";
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 function ApprovedCreatorRoute() {
+  __useUiLanguage();
   const { user } = useAuth();
   if (!user) return <Navigate replace to="/login" />;
   if (!["fan", "creator"].includes(user.role)) return <Navigate replace to={user.role === "admin" ? "/admin/dashboard" : "/seen"} />;

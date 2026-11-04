@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useRef, useState } from "react";
 import { FiPause, FiPlay } from "react-icons/fi";
 
@@ -8,6 +11,7 @@ function formatDuration(seconds = 0) {
 }
 
 function ChapterVoicePlayer({ duration = 0, transcript = "", url }) {
+  __useUiLanguage();
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [measuredDuration, setMeasuredDuration] = useState(Number(duration) || 0);
@@ -57,7 +61,7 @@ function ChapterVoicePlayer({ duration = 0, transcript = "", url }) {
         ref={audioRef}
         src={url}
       />
-      <button aria-label={playing ? "Pause voice" : "Play voice"} onClick={toggle} type="button">{playing ? <FiPause /> : <FiPlay />}</button>
+      <button aria-label={playing ? __msg("publication.pauseVoice") : __msg("publication.playVoice")} onClick={toggle} type="button">{playing ? <FiPause /> : <FiPlay />}</button>
       <span aria-hidden="true">{Array.from({ length: 20 }, (_, index) => <i key={index} style={{ height: `${7 + ((index * 7) % 19)}px` }} />)}</span>
       <b>{formatDuration(measuredDuration || elapsed)}</b>
     </div>

@@ -1,9 +1,10 @@
+import { msg as __msg } from "../i18n/runtime.js";
 export const fallbackMessages = {
-  validation: "Please check the entered information and try again.",
-  credentials: "The email address or password is incorrect.",
-  network: "Unable to connect to the server. Check your connection and try again.",
-  rateLimit: "Too many attempts. Please wait a moment and try again.",
-  server: "Something went wrong. Please try again.",
+  get validation() { return __msg("apiErrors.pleaseCheckTheEnteredInformationAndTryAgain"); },
+  get credentials() { return __msg("apiErrors.theEmailAddressOrPasswordIsIncorrect"); },
+  get network() { return __msg("apiErrors.unableToConnectToTheServerCheckYour"); },
+  get rateLimit() { return __msg("apiErrors.tooManyAttemptsPleaseWaitAMomentAnd"); },
+  get server() { return __msg("apiErrors.somethingWentWrongPleaseTryAgain"); },
 };
 
 function isHtml(value) {

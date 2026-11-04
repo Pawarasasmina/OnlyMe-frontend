@@ -1,1 +1,6 @@
-import{useQuery}from"@tanstack/react-query";import{walletService}from"../../services/walletService";export default function WalletBalance({compact=false}){const q=useQuery({queryKey:["wallet"],queryFn:()=>walletService.getWallet().then(r=>r.data.data.wallet),retry:false,staleTime:30000});if(q.isLoading)return <span aria-label="Wallet loading">✦…</span>;if(q.isError)return <span className="text-atseen-muted" title="Wallet unavailable">✦ Unavailable</span>;return <span className={compact?"text-xs font-black text-atseen-blue":"text-4xl font-black"}>✦{q.data.balance.toLocaleString()}</span>}
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import{useQuery}from"@tanstack/react-query";import{walletService}from"../../services/walletService";export default function WalletBalance({compact=false}){
+  __useUiLanguage();const q=useQuery({queryKey:["wallet"],queryFn:()=>walletService.getWallet().then(r=>r.data.data.wallet),retry:false,staleTime:30000});if(q.isLoading)return <span aria-label={__msg("financial.walletLoading")}>✦…</span>;if(q.isError)return <span className="text-atseen-muted" title={__msg("financial.walletUnavailable")}>{__msg("financial.unavailable")}</span>;return <span className={compact?"text-xs font-black text-atseen-blue":"text-4xl font-black"}>✦{q.data.balance.toLocaleString(__uiLocale())}</span>}

@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -10,6 +13,7 @@ import { socialCapabilitiesFor } from "../../utils/socialAccess";
 import { useLanguage } from "../../hooks/useLanguage";
 
 function CreateHubPage() {
+  __useUiLanguage();
   const { user } = useAuth();
   const { t } = useLanguage();
   const location = useLocation();
@@ -32,39 +36,40 @@ function CreateHubPage() {
   const cards = [
     { title: t("Free Seen"), text: "Up to 5 chapters · every chapter is open to everyone", to: "/create/seen?type=free" },
     { title: t("Paid Seen"), text: "Up to 5 chapters · chapter 1 is free and the rest unlock once", to: "/create/seen?type=paid" },
-    ...(capabilities.isApprovedCreator ? [{ title: "World", text: `Monthly subscription · private ecosystem · profile only · ${premium ? "Already created" : "Available"}`, to: "/create/premium-world", disabled: premium >= 1 }] : []),
+    ...(capabilities.isApprovedCreator ? [{ title: __msg("create.premiumExperience"), text: __msg("create.multiChapterJourneyFirstChapterFreeOneTime"), to: "/create/experience" }] : []),
+    ...(capabilities.isApprovedCreator ? [{ title: __msg("admin.world"), text: __msg("create.monthlySubscriptionPrivateEcosystemProfileOnlyValue0", { value0: premium ? __msg("create.alreadyCreated") : __msg("social.available") }), to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 
   return (
     <div>
-      <Link className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-atseen-muted transition hover:text-atseen-blue" to="/profile"><FiArrowLeft /> Back to Profile</Link>
-      <h1 className="text-3xl font-black">Create</h1>
+      <Link className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-atseen-muted transition hover:text-atseen-blue" to="/profile"><FiArrowLeft data-ui-directional="true" /> {__msg("create.backToProfile")}</Link>
+      <h1 className="text-3xl font-black">{__msg("fanWeb.create")}</h1>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {canCreate ? (
           <button
-            className="rounded-2xl border border-atseen-blue bg-atseen-blue/10 p-5 text-left transition hover:border-atseen-blue-strong"
+            className="rounded-2xl border border-atseen-blue bg-atseen-blue/10 p-5 text-start transition hover:border-atseen-blue-strong"
             onClick={() => setStoryCreatorOpen(true)}
             type="button"
           >
             <FiPlusCircle className="text-2xl text-atseen-blue" />
-            <strong className="mt-4 block">Story</strong>
-            <p className="mt-2 text-sm text-atseen-muted">Share a 24-hour photo or video update</p>
+            <strong className="mt-4 block">{__msg("activity.story")}</strong>
+            <p className="mt-2 text-sm text-atseen-muted">{__msg("create.shareA24HourPhotoOrVideoUpdate")}</p>
           </button>
         ) : null}
         {cards.map((card) => card.to && !card.disabled ? (
           <Link className="rounded-2xl border border-atseen-blue p-5" key={card.title} to={card.to}>
-            <strong>{card.title}</strong>
-            <p className="mt-2 text-sm text-atseen-muted">{card.text}</p>
+            <strong dir="auto">{card.title}</strong>
+            <p dir="auto" className="mt-2 text-sm text-atseen-muted">{card.text}</p>
           </Link>
         ) : (
           <div aria-disabled="true" className="rounded-2xl border border-atseen-line p-5 opacity-60" key={card.title}>
-            <strong>{card.title}</strong>
-            <p className="mt-2 text-sm text-atseen-muted">{card.text}{card.disabled ? " · Capacity reached" : null}</p>
+            <strong dir="auto">{card.title}</strong>
+            <p dir="auto" className="mt-2 text-sm text-atseen-muted">{card.text}{card.disabled ? __msg("create.capacityReached") : null}</p>
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs text-atseen-muted">Capacity is loaded from the backend and remains authoritative.</p>
-      <Link className="mt-6 inline-block underline" to="/creator/content/new">Legacy content</Link>
+      <p className="mt-4 text-xs text-atseen-muted">{__msg("create.capacityIsLoadedFromTheBackendAndRemainsAuthoritative")}</p>
+      <Link className="mt-6 inline-block underline" to="/creator/content/new">{__msg("create.legacyContent")}</Link>
       <StoryCreator
         initialContent={initialStoryDraft}
         isOpen={storyCreatorOpen}

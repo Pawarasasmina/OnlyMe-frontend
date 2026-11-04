@@ -1,3 +1,6 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -7,9 +10,10 @@ import { storyService } from "../../services/storyService";
 
 // Discover uses the same real story media, progress and actions as other entry points.
 function DiscoverRecommendationStory({ card, onClose, onNext, onPrevious, initialIndex = 0 }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const creatorId = card?.userId || card?.creator?.id || card?.creatorId || card?.id;
-  const name = card?.displayName || card?.name || card?.creator?.name || "Creator";
+  const name = card?.displayName || card?.name || card?.creator?.name || __msg("discover.creator");
   const storiesQuery = useQuery({
     queryKey: ["stories", "creator", creatorId],
     queryFn: () => storyService.getCreatorStories(creatorId),
@@ -22,7 +26,7 @@ function DiscoverRecommendationStory({ card, onClose, onNext, onPrevious, initia
   useEffect(() => {
     if (storiesQuery.isSuccess && !storiesQuery.data?.length) navigate(profileRoute, { replace: true });
   }, [navigate, profileRoute, storiesQuery.data, storiesQuery.isSuccess]);
-  return <section className="discover-rec-story" aria-label={`${name} discover story`}>
+  return <section className="discover-rec-story" aria-label={__msg("discover.discoverStory", { value0: name })}>
     {stories.length ? <StoryViewer
       discover
       initialIndex={initialIndex}
@@ -33,10 +37,10 @@ function DiscoverRecommendationStory({ card, onClose, onNext, onPrevious, initia
       presentation="inline"
       stories={stories}
     /> : <div className="discover-story-status">
-      <button aria-label="Close discover story" onClick={onClose} type="button"><FiX /></button>
-      <p role={storiesQuery.isError ? "alert" : "status"}>{storiesQuery.isPending ? "Loading stories…" : storiesQuery.isError ? "Could not load stories." : "Opening profile?"}</p>
-      {storiesQuery.isError ? <button onClick={() => storiesQuery.refetch()} type="button">Retry</button> : null}
-      {!storiesQuery.isPending ? <button onClick={onNext || onClose} type="button">{onNext ? "Next person" : "Back to Discover"}</button> : null}
+      <button aria-label={__msg("discover.closeDiscoverStory")} onClick={onClose} type="button"><FiX /></button>
+      <p role={storiesQuery.isError ? "alert" : "status"}>{storiesQuery.isPending ? __msg("discover.loadingStories") : storiesQuery.isError ? __msg("discover.couldNotLoadStories") : __msg("discover.openingProfile")}</p>
+      {storiesQuery.isError ? <button onClick={() => storiesQuery.refetch()} type="button">{__msg("activity.retry")}</button> : null}
+      {!storiesQuery.isPending ? <button onClick={onNext || onClose} type="button">{onNext ? __msg("discover.nextPerson") : __msg("discover.backToDiscover")}</button> : null}
     </div>}
   </section>;
 }

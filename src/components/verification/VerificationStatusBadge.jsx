@@ -1,4 +1,6 @@
-﻿const styles = {
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
+const styles = {
   NOT_STARTED: "bg-slate-500/15 text-slate-200",
   DRAFT: "bg-amber-500/15 text-amber-200",
   PENDING_REVIEW: "bg-blue-500/15 text-blue-200",
@@ -8,15 +10,16 @@
 };
 
 const labels = {
-  NOT_STARTED: "Not started",
-  DRAFT: "Draft",
-  PENDING_REVIEW: "Pending review",
-  CHANGES_REQUESTED: "Changes requested",
-  APPROVED: "Approved",
-  REJECTED: "Rejected",
+  get NOT_STARTED() { return __msg("verification.notStarted"); },
+  get DRAFT() { return __msg("verification.draft"); },
+  get PENDING_REVIEW() { return __msg("verification.pendingReview"); },
+  get CHANGES_REQUESTED() { return __msg("content.changesRequested"); },
+  get APPROVED() { return __msg("verification.approved"); },
+  get REJECTED() { return __msg("verification.rejected"); },
 };
 
 function VerificationStatusBadge({ status = "NOT_STARTED" }) {
+  __useUiLanguage();
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${styles[status] || styles.NOT_STARTED}`}>{labels[status] || status}</span>;
 }
 

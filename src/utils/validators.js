@@ -1,3 +1,5 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../i18n/runtime.js";
 export function isEmail(value) {
   return /\S+@\S+\.\S+/.test(value);
 }
@@ -44,13 +46,13 @@ export function normalizeUsername(value) {
 export function validateUsernameFormat(value) {
   const username = normalizeUsername(value);
 
-  if (!username) return { valid: false, username, reason: "required", message: "Username is required." };
+  if (!username) return { valid: false, username, reason: "required", message: __msg("settings.usernameIsRequired") };
   if (username.length < 3 || username.length > 30) {
     return {
       valid: false,
       username,
       reason: "length",
-      message: "Use 3-30 letters, numbers, underscores, or periods.",
+      message: __msg("utils.use330LettersNumbersUnderscoresOrPeriods"),
     };
   }
   if (!/^[a-z0-9_.]+$/.test(username)) {
@@ -58,7 +60,7 @@ export function validateUsernameFormat(value) {
       valid: false,
       username,
       reason: "invalid",
-      message: "Use 3-30 letters, numbers, underscores, or periods.",
+      message: __msg("utils.use330LettersNumbersUnderscoresOrPeriods"),
     };
   }
   if (/^[_.]|[_.]$/.test(username)) {
@@ -66,7 +68,7 @@ export function validateUsernameFormat(value) {
       valid: false,
       username,
       reason: "separator",
-      message: "Username cannot start or end with a separator.",
+      message: __msg("utils.usernameCannotStartOrEndWithASeparator"),
     };
   }
   if (/[_.]{2,}/.test(username)) {
@@ -74,11 +76,11 @@ export function validateUsernameFormat(value) {
       valid: false,
       username,
       reason: "separator",
-      message: "Username cannot contain repeated separators.",
+      message: __msg("utils.usernameCannotContainRepeatedSeparators"),
     };
   }
   if (RESERVED_USERNAMES.has(username)) {
-    return { valid: false, username, reason: "reserved", message: "This username is reserved." };
+    return { valid: false, username, reason: "reserved", message: __msg("settings.thisUsernameIsReserved") };
   }
 
   return { valid: true, username, reason: null, message: "" };

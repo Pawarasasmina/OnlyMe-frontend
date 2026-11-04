@@ -1,7 +1,9 @@
+import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 
 function DashboardLayout({ title, links }) {
+  __useUiLanguage();
   return (
     <div className="mx-auto grid min-h-[calc(100vh-160px)] max-w-7xl gap-6 px-4 py-6 sm:px-6 md:grid-cols-[260px_1fr] md:py-8">
       <Sidebar links={links} />

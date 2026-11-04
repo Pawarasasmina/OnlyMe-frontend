@@ -1,3 +1,5 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -26,6 +28,7 @@ function normalizeSettings(data = {}) {
 }
 
 export default function DirectAccessSettingsPage() {
+  __useUiLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -35,7 +38,7 @@ export default function DirectAccessSettingsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const query = useQuery({
-    queryKey: ["messages", "direct-access-settings"],
+    queryKey: ["messages", "direct-access-settings", creatorId],
     queryFn: () => messageService.getDirectAccessOffer(creatorId).then((response) => response.data.data),
     enabled: Boolean(creatorId),
   });
@@ -55,10 +58,12 @@ export default function DirectAccessSettingsPage() {
         query.refetch(),
         queryClient.invalidateQueries({ queryKey: ["profile", "me"] }),
         queryClient.invalidateQueries({ queryKey: ["unified-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["messages", "direct-access-settings"] }),
+        queryClient.invalidateQueries({ queryKey: ["monetization"] }),
       ]);
       close();
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Could not save Direct Access settings.");
+      setError(requestError.response?.data?.message || __msg("fan.couldNotSaveDirectAccessSettings"));
     } finally {
       setBusy(false);
     }
@@ -67,7 +72,8 @@ export default function DirectAccessSettingsPage() {
   return (
     <div className="relative h-screen min-h-screen">
       <DirectAccessSettingsSheet
-        busy={busy || query.isLoading}
+        busy={busy}
+        saveDisabled={query.isPending || query.isError}
         error={query.isError ? "Could not load Direct Access settings." : error}
         onClose={close}
         onSave={save}

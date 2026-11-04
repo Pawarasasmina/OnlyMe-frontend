@@ -1,4 +1,6 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 export default function ActivitySparkMark({ className = "" }) {
+  __useUiLanguage();
   return (
     <svg
       aria-hidden="true"

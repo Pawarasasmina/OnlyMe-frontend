@@ -1,10 +1,14 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import SeenEyeMark from "../branding/SeenEyeMark";
 
 function OwnSeenPresenceItem({ activeStatus, onOpen }) {
+  __useUiLanguage();
   return (
     <button
       aria-current={activeStatus ? "true" : undefined}
-      aria-label="View the @seen story"
+      aria-label={__msg("stories.viewTheSeenStory")}
       className="wall-story-item wall-story-button own-seen-presence"
       onClick={onOpen}
       type="button"
@@ -14,7 +18,7 @@ function OwnSeenPresenceItem({ activeStatus, onOpen }) {
           <SeenEyeMark className="wall-story-eye-icon" />
         </span>
       </span>
-      <span className="wall-story-name wall-story-name-muted">seen ✓</span>
+      <span className="wall-story-name wall-story-name-muted">{__msg("stories.seen")}</span>
     </button>
   );
 }

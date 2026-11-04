@@ -1,0 +1,10 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import InvitationWorldPage from "../../src/pages/social/InvitationWorldPage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthContext } from "../../src/context/AuthContext";
+import MessagesPage from "../../src/pages/fan/MessagesPage";
+import "../../src/index.css";
+const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+createRoot(document.getElementById("root")).render(<AuthContext.Provider value={{ user: { id: "507f1f77bcf86cd799439011", name: "Max Carter", username: "max", role: "fan" } }}><QueryClientProvider client={client}><BrowserRouter><div className="social-center-scroll" style={{ width: "min(100%,550px)", height: "100dvh", margin: "auto" }}><Routes><Route path="/invitations/:code" element={<InvitationWorldPage />} /><Route path="*" element={<MessagesPage />} /></Routes></div></BrowserRouter></QueryClientProvider></AuthContext.Provider>);

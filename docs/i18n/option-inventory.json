@@ -1,0 +1,1627 @@
+[
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 9,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Spam"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 10,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Harassment"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 11,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Hate"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 12,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Sexual content"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 13,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Violence"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 14,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Scam"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverMoreMenu.jsx",
+    "line": 15,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Other"
+    ]
+  },
+  {
+    "file": "src\\components\\discover\\DiscoverSettingsModal.jsx",
+    "line": 8,
+    "variable": "DEFAULT_TOPICS",
+    "items": [
+      "Photography",
+      "Travel",
+      "Fitness",
+      "Food",
+      "Music",
+      "Gaming",
+      "Fashion",
+      "Art",
+      "Business",
+      "Technology",
+      "Lifestyle",
+      "Education",
+      "Sports",
+      "Pets",
+      "Comedy"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 7,
+    "variable": "types",
+    "items": [
+      "Buy & Sell"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 7,
+    "variable": "types",
+    "items": [
+      "Offering"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 8,
+    "variable": "types",
+    "items": [
+      "Looking for"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 8,
+    "variable": "types",
+    "items": [
+      "Offering"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 9,
+    "variable": "types",
+    "items": [
+      "Need help"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 9,
+    "variable": "types",
+    "items": [
+      "Question"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 9,
+    "variable": "types",
+    "items": [
+      "Question"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 10,
+    "variable": "types",
+    "items": [
+      "Recommendation"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 10,
+    "variable": "types",
+    "items": [
+      "Event"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 10,
+    "variable": "types",
+    "items": [
+      "Event"
+    ]
+  },
+  {
+    "file": "src\\components\\fanWeb\\home\\WallPostTypeBadge.jsx",
+    "line": 11,
+    "variable": "types",
+    "items": [
+      "Right now"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\AccountTypeSetting.jsx",
+    "line": 19,
+    "variable": "categories",
+    "items": [
+      "Digital creator",
+      "Coach",
+      "Traveler",
+      "Artist",
+      "Musician",
+      "Athlete",
+      "Chef",
+      "Educator"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\AccountTypeSetting.jsx",
+    "line": 20,
+    "variable": "categories",
+    "items": [
+      "Shop",
+      "Café & restaurant",
+      "Studio & salon",
+      "Fitness club",
+      "Hotel & travel",
+      "Media & news",
+      "Services",
+      "Brand"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\DirectAccessOfferModal.jsx",
+    "line": 13,
+    "variable": "benefitRows",
+    "items": [
+      "Up to 3 messages from you — a real back-and-forth, not a ticket."
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\DirectAccessOfferModal.jsx",
+    "line": 14,
+    "variable": "benefitRows",
+    "items": [
+      "Top of the priority inbox",
+      "Your message appears above standard conversations so it cannot get lost."
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\DirectAccessOfferModal.jsx",
+    "line": 15,
+    "variable": "benefitRows",
+    "items": [
+      "First reply within 48 hours",
+      "A personal reply, usually much faster — within the guarantee."
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\DirectAccessOfferModal.jsx",
+    "line": 16,
+    "variable": "benefitRows",
+    "items": [
+      "Refunded if unanswered",
+      "No reply in 48 hours? Your coins come back automatically. Every time."
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 11,
+    "variable": "definitions",
+    "items": [
+      "Edit profile"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 12,
+    "variable": "definitions",
+    "items": [
+      "Create content"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 13,
+    "variable": "definitions",
+    "items": [
+      "Creator Studio"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 14,
+    "variable": "definitions",
+    "items": [
+      "Content manager"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 15,
+    "variable": "definitions",
+    "items": [
+      "Verification"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 16,
+    "variable": "definitions",
+    "items": [
+      "Settings"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 17,
+    "variable": "definitions",
+    "items": [
+      "Password & security"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 18,
+    "variable": "definitions",
+    "items": [
+      "Direct Access"
+    ]
+  },
+  {
+    "file": "src\\components\\profile\\ProfileOwnerActions.jsx",
+    "line": 19,
+    "variable": "definitions",
+    "items": [
+      "View public profile"
+    ]
+  },
+  {
+    "file": "src\\components\\search\\SearchDefaultState.jsx",
+    "line": 17,
+    "variable": "fallbackTrending",
+    "items": [
+      "Fitness",
+      "Paris",
+      "Tech",
+      "Business",
+      "Mindset",
+      "Tokyo style"
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 18,
+    "variable": "holds",
+    "items": [
+      "Credited instantly",
+      "The moment someone spends coins on you, the money is on your balance — the same wherever they bought the coins."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 19,
+    "variable": "holds",
+    "items": [
+      "Withdrawable after 14 days",
+      "New creators: 14 days. After 60 days without disputes: 7. Top creators: 3. Levels go up by themselves."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 20,
+    "variable": "holds",
+    "items": [
+      "If a payment is refunded",
+      "When the App Store, Google Play or a bank refunds a fan, the same amount comes off your balance and shows in activity. If the balance is short it goes negative and is covered by future earnings — we never charge your card."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 21,
+    "variable": "holds",
+    "items": [
+      "No reserves",
+      "Nothing is held back beyond the clearing days. If a refund arrives after a payout, it comes off future earnings."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 22,
+    "variable": "holds",
+    "items": [
+      "Direct Access and paid Seens",
+      "Unanswered Direct Access returns to the fan after 48h and is never counted. A paid Seen can be refunded within 24h — it is deducted."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 23,
+    "variable": "holds",
+    "items": [
+      "Gifts and Dream support",
+      "Final for fans — no refunds except store or bank refunds and confirmed fraud."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 24,
+    "variable": "holds",
+    "items": [
+      "Before the first payout"
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 25,
+    "variable": "holds",
+    "items": [
+      "Bonus coins",
+      "Fans get bonus coins with bigger packs and their first pack. They earn you the same as bought coins — @seen covers them."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 26,
+    "variable": "holds",
+    "items": [
+      "Up to $500 before verification",
+      "Earn freely up to $500. After that gifts keep coming for 30 days — verify once to keep receiving and to withdraw."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\IdentityVerificationFlow.jsx",
+    "line": 27,
+    "variable": "holds",
+    "items": [
+      "Fair play",
+      "Gifts between accounts on the same device or network are blocked. New cards on the web have a daily limit. Confirmed fraud is reversed."
+    ]
+  },
+  {
+    "file": "src\\components\\verification\\VerificationStepIndicator.jsx",
+    "line": 4,
+    "variable": "steps",
+    "items": [
+      "Personal",
+      "Identity",
+      "Selfie",
+      "Declaration",
+      "Review"
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 203,
+    "variable": "atseenWorlds",
+    "items": [
+      "Week 1 — Foundations",
+      "Week 2 — Building the habit",
+      "Week 3 — Progressive load"
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 204,
+    "variable": "atseenWorlds",
+    "items": [
+      "This is where it starts: not with motivation, with structure. Here is exactly what the first seven days look like, including the two mornings you will want to quit.",
+      "By now the resistance is gone and the habit is forming. This chapter is about protecting it with calendar tricks, the meal that saves the evening, and travel resets.",
+      "The load goes up, carefully. Form over ego. Every progression here is filmed from two angles so you can check yourself honestly."
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 223,
+    "variable": "atseenWorlds",
+    "items": [
+      "My 6th arrondissement morning",
+      "The cafe list",
+      "Sundays done right"
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 224,
+    "variable": "atseenWorlds",
+    "items": [
+      "Start before the city performs. This walk gives you Paris before the cameras come out, with two stops I still keep for friends.",
+      "These are not the famous places. They are the places where the staff remembers your order and the light lands softly on the tables.",
+      "Sunday is for wandering with one reservation and no second plan. Here is the route."
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 243,
+    "variable": "atseenWorlds",
+    "items": [
+      "Why order matters",
+      "The first three",
+      "When it gets hard"
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 244,
+    "variable": "atseenWorlds",
+    "items": [
+      "The order matters because attention is a muscle. The first book slows you down before the second one opens you up.",
+      "These first three are not impressive dinner-party titles. They are practical mirrors.",
+      "The hard part is when the book disagrees with the identity you like. That is where the rebuild starts."
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 263,
+    "variable": "atseenWorlds",
+    "items": [
+      "The decision",
+      "Paperwork, honestly",
+      "Week one alone"
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 264,
+    "variable": "atseenWorlds",
+    "items": [
+      "I waited for certainty and never got it. The decision became real only after I made the first irreversible booking.",
+      "Here are the boring documents, the timelines, the costs, and the mistake that delayed me by three weeks.",
+      "Week one is quiet. This chapter is about staying open when nobody knows your name yet."
+    ]
+  },
+  {
+    "file": "src\\data\\atseenMockData.js",
+    "line": 344,
+    "variable": "atseenReportReasons",
+    "items": [
+      "Spam",
+      "False information",
+      "Harassment",
+      "Hate",
+      "Nudity",
+      "Illegal content",
+      "Copyright",
+      "Other"
+    ]
+  },
+  {
+    "file": "src\\data\\postOptions.js",
+    "line": 1,
+    "variable": "POST_CONTEXTS",
+    "items": [
+      "Right now",
+      "Buy/Sell",
+      "Recommendation",
+      "Looking for",
+      "Advice",
+      "Need help",
+      "Things to do",
+      "Family",
+      "Events",
+      "Updates",
+      "Shopping",
+      "Book",
+      "Travel",
+      "Business",
+      "Fitness",
+      "Beauty",
+      "Coffee",
+      "Restaurant",
+      "Other"
+    ]
+  },
+  {
+    "file": "src\\data\\postOptions.js",
+    "line": 23,
+    "variable": "POST_LOCATIONS",
+    "items": [
+      "Dubai, UAE",
+      "Paris, France",
+      "Tokyo, Japan",
+      "London, UK",
+      "Warsaw, Poland",
+      "Barcelona, Spain",
+      "New York, USA",
+      "Singapore"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 3,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "France"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 3,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Paris"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 4,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Indonesia"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 4,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Bali"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 5,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Italy"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 5,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Milan",
+      "Rome"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 6,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Japan"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 6,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Tokyo"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 7,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Poland"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 7,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Warsaw"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 8,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Portugal"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 8,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Lisbon",
+      "Porto"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 9,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Spain"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 9,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Barcelona",
+      "Madrid"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 10,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Thailand"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 10,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Bangkok"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 11,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "Dubai",
+      "Abu Dhabi"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 12,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "United Kingdom"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 12,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "London"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 13,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "United States"
+    ]
+  },
+  {
+    "file": "src\\data\\wallLocations.js",
+    "line": 13,
+    "variable": "WALL_LOCATIONS",
+    "items": [
+      "New York",
+      "Miami"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\ContentModerationDetail.jsx",
+    "line": 8,
+    "variable": "checklistItems",
+    "items": [
+      "Content title and description are appropriate",
+      "Uploaded media matches the selected content type",
+      "Media is viewable and not corrupted",
+      "Primary image or thumbnail is appropriate",
+      "Category and tags are relevant",
+      "Access level is appropriate",
+      "Content does not obviously violate platform policy",
+      "Creator information and content appear consistent"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\CreatorVerificationDetail.jsx",
+    "line": 30,
+    "variable": "checklistItems",
+    "items": [
+      "Identity document is readable",
+      "Document appears valid",
+      "Document is not expired",
+      "Legal name matches",
+      "Date of birth matches",
+      "Applicant is 18 or older",
+      "Selfie appears to match the document holder",
+      "Required declarations are accepted",
+      "No obvious fraud concern"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsOnlyPage.jsx",
+    "line": 14,
+    "variable": "outcomes",
+    "items": [
+      "Dismiss",
+      "No violation found"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsOnlyPage.jsx",
+    "line": 14,
+    "variable": "outcomes",
+    "items": [
+      "Send warning",
+      "Notify the account owner"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsOnlyPage.jsx",
+    "line": 14,
+    "variable": "outcomes",
+    "items": [
+      "Restrict messaging",
+      "Temporarily disable messaging"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsPage.jsx",
+    "line": 14,
+    "variable": "outcomes",
+    "items": [
+      "Dismiss",
+      "No violation found"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsPage.jsx",
+    "line": 14,
+    "variable": "outcomes",
+    "items": [
+      "Send warning",
+      "Notify the account owner"
+    ]
+  },
+  {
+    "file": "src\\pages\\admin\\MessageReportsPage.jsx",
+    "line": 14,
+    "variable": "outcomes",
+    "items": [
+      "Restrict login",
+      "Temporarily block platform access"
+    ]
+  },
+  {
+    "file": "src\\pages\\creator\\ContentComposerPage.jsx",
+    "line": 12,
+    "variable": "steps",
+    "items": [
+      "Type",
+      "Details",
+      "Media",
+      "Access",
+      "Review"
+    ]
+  },
+  {
+    "file": "src\\pages\\creator\\SeenComposerPage.jsx",
+    "line": 45,
+    "variable": "fallbackCategories",
+    "items": [
+      "Travel",
+      "Fitness",
+      "Lifestyle",
+      "Business",
+      "Tech",
+      "Psychology",
+      "Fashion",
+      "Beauty",
+      "Wellness",
+      "Food"
+    ]
+  },
+  {
+    "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
+    "line": 47,
+    "variable": "WORLD_CATEGORIES",
+    "items": [
+      "Places",
+      "Moving",
+      "Business",
+      "Growth",
+      "Lifestyle"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 41,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "All"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 42,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "Mentions"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 43,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "Support"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 44,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "Saves"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 45,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "Comments"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 46,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "Follows"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 47,
+    "variable": "RECEIVED_FILTERS",
+    "items": [
+      "Earnings"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 51,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "All"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 52,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "Mentions"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 53,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "Support"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 54,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "Saves"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 55,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "Comments"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 56,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "Follows"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 57,
+    "variable": "SENT_FILTERS",
+    "items": [
+      "Purchases"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 120,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "Your Orbit is tuning to you",
+      "The moment someone sees you, it lands here."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 121,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "No support activity yet.",
+      "Support, gifts and Dream moments will land here."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 122,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "No saves here yet.",
+      "When people save your work, it appears here."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 123,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "No comment activity yet.",
+      "Replies and comments will appear in this filter."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 124,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "No new follows yet.",
+      "New people entering your world will appear here."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 125,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "No earnings activity yet.",
+      "Creator earnings will appear once they settle."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 126,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "You have not sent anything in this category yet.",
+      "Purchases and paid access will appear here."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\ActivityPage.jsx",
+    "line": 127,
+    "variable": "EMPTY_COPY",
+    "items": [
+      "Nothing here yet",
+      "Your world is just waking up."
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 93,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Spam"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 94,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Harassment or bullying"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 95,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Hate speech"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 96,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Sexual content"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 97,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Violence or threats"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 98,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Scam or fraud"
+    ]
+  },
+  {
+    "file": "src\\pages\\fan\\MessagesPage.jsx",
+    "line": 99,
+    "variable": "REPORT_REASONS",
+    "items": [
+      "Something else"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 13,
+    "variable": "definitions",
+    "items": [
+      "Comments",
+      "Named, one by one"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 14,
+    "variable": "definitions",
+    "items": [
+      "Reactions",
+      "Batched - Anna and 26 others"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 15,
+    "variable": "definitions",
+    "items": [
+      "New followers"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 16,
+    "variable": "definitions",
+    "items": [
+      "Saves",
+      "Anonymous counts only"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 17,
+    "variable": "definitions",
+    "items": [
+      "Reposts"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 18,
+    "variable": "definitions",
+    "items": [
+      "Messages"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 19,
+    "variable": "definitions",
+    "items": [
+      "Direct Access & income",
+      "Always in dollars"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+    "line": 20,
+    "variable": "definitions",
+    "items": [
+      "Security alerts",
+      "Required protection for administrator accounts"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 18,
+    "variable": "roleOptions",
+    "items": [
+      "Show online status"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 19,
+    "variable": "roleOptions",
+    "items": [
+      "Show activity status"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 20,
+    "variable": "roleOptions",
+    "items": [
+      "Show location"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 21,
+    "variable": "roleOptions",
+    "items": [
+      "Allow profile discovery"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 22,
+    "variable": "roleOptions",
+    "items": [
+      "Allow direct messages"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 23,
+    "variable": "roleOptions",
+    "items": [
+      "Allow mentions"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 26,
+    "variable": "roleOptions",
+    "items": [
+      "Show online status"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 27,
+    "variable": "roleOptions",
+    "items": [
+      "Show activity status"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 28,
+    "variable": "roleOptions",
+    "items": [
+      "Show location"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 29,
+    "variable": "roleOptions",
+    "items": [
+      "Allow creator discovery"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 30,
+    "variable": "roleOptions",
+    "items": [
+      "Allow direct messages"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 31,
+    "variable": "roleOptions",
+    "items": [
+      "Allow mentions"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 32,
+    "variable": "roleOptions",
+    "items": [
+      "Allow tags"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 33,
+    "variable": "roleOptions",
+    "items": [
+      "Show followers"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 36,
+    "variable": "roleOptions",
+    "items": [
+      "Show online status"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 37,
+    "variable": "roleOptions",
+    "items": [
+      "Show activity status"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\PrivacySettingsPage.jsx",
+    "line": 38,
+    "variable": "roleOptions",
+    "items": [
+      "Allow direct messages"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\ProfileSettingsPage.jsx",
+    "line": 172,
+    "variable": "notificationRows",
+    "items": [
+      "Direct Access requests"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 9,
+    "variable": "helpSections",
+    "items": [
+      "Getting started"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 10,
+    "variable": "helpSections",
+    "items": [
+      "What is @seen?"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 11,
+    "variable": "helpSections",
+    "items": [
+      "Seen · Story · World"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 12,
+    "variable": "helpSections",
+    "items": [
+      "Discover",
+      "Discover shows people worth seeing next — friends first, then people picked for real reasons. We always tell you why. You can reset what Discover learned in Settings → Recommendations."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 14,
+    "variable": "helpSections",
+    "items": [
+      "Coins & money"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 15,
+    "variable": "helpSections",
+    "items": [
+      "How money works",
+      "Fans buy coins (✦10 = $1) and spend them on support, Worlds and Direct Access. The moment coins are spent on a creator, the creator receives real dollars — automatically. Coins never convert back to money. One direction only. That keeps @seen clean and legal everywhere."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 16,
+    "variable": "helpSections",
+    "items": [
+      "Bonus coins",
+      "Bigger packs include bonus coins. They sit in a separate balance, are spent first and can never be withdrawn."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 17,
+    "variable": "helpSections",
+    "items": [
+      "Payouts",
+      "Your earnings live in Wallet in dollars. Withdraw from $20 to your bank in 3–5 business days, transfer fees on us. Or convert your dollars to coins to support others."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 19,
+    "variable": "helpSections",
+    "items": [
+      "Your World"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 19,
+    "variable": "helpSections",
+    "items": [
+      "One creator — one World",
+      "A monthly subscription opens everything inside: chapters, private stories, closeness. Buying a single month works too — it simply opens the world for that month."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 20,
+    "variable": "helpSections",
+    "items": [
+      "Safety"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 20,
+    "variable": "helpSections",
+    "items": [
+      "Your safety controls",
+      "Block, report, mute and unsend live behind ••• on every post, profile and message. Views are always silent. Saves are anonymous. You choose who can message you in Settings. Muted and blocked lists are yours to manage anytime."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 21,
+    "variable": "helpSections",
+    "items": [
+      "Account"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 21,
+    "variable": "helpSections",
+    "items": [
+      "Your account"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 25,
+    "variable": "termsSections",
+    "items": [
+      "Terms of service"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 26,
+    "variable": "termsSections",
+    "items": [
+      "The deal"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 27,
+    "variable": "termsSections",
+    "items": [
+      "Content rules"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 28,
+    "variable": "termsSections",
+    "items": [
+      "Coins & subscriptions",
+      "Coins are a virtual item, not money: non-refundable, non-transferable, never convertible back to currency. World subscriptions renew monthly and cancel anytime — access stays until the paid month ends. Creator payouts: from $20, 3–5 business days."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 29,
+    "variable": "termsSections",
+    "items": [
+      "Age"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 31,
+    "variable": "termsSections",
+    "items": [
+      "Privacy"
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 32,
+    "variable": "termsSections",
+    "items": [
+      "What we collect",
+      "Your profile, your content, and how you use the app — to make Discover honest and payments work. That’s it."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 33,
+    "variable": "termsSections",
+    "items": [
+      "What we never do",
+      "We don’t sell your data. Views are silent and never shown to others. Saves are anonymous. Your messages are yours — we read them only on your report."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 34,
+    "variable": "termsSections",
+    "items": [
+      "Your controls",
+      "Who can message you, muted, blocked, public supporters on/off, delete account — all in Settings, all instant."
+    ]
+  },
+  {
+    "file": "src\\pages\\settings\\SupportPage.jsx",
+    "line": 35,
+    "variable": "termsSections",
+    "items": [
+      "Where we stand",
+      "Atseen operates under European Union law. GDPR applies to everyone, everywhere — one standard, the strictest one."
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 50,
+    "variable": "highlights",
+    "items": [
+      "Earn"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 50,
+    "variable": "highlights",
+    "items": [
+      "Seen"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 50,
+    "variable": "highlights",
+    "items": [
+      "Wall"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 50,
+    "variable": "highlights",
+    "items": [
+      "Discover"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 50,
+    "variable": "highlights",
+    "items": [
+      "Stories"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 50,
+    "variable": "highlights",
+    "items": [
+      "Deeper"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 51,
+    "variable": "earning",
+    "items": [
+      "Direct Access"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 51,
+    "variable": "earning",
+    "items": [
+      "Experiences"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 51,
+    "variable": "earning",
+    "items": [
+      "Your World"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 51,
+    "variable": "earning",
+    "items": [
+      "Gifts",
+      "Gifts"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 51,
+    "variable": "earning",
+    "items": [
+      "Dream support",
+      "Dreams"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 59,
+    "variable": "beliefs",
+    "items": [
+      "Human first",
+      "Real people, real lives. Safe for everyone"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 59,
+    "variable": "beliefs",
+    "items": [
+      "Finished, not endless",
+      "Chapters end. No doomscroll by design"
+    ]
+  },
+  {
+    "file": "src\\pages\\social\\OfficialSeenPage.jsx",
+    "line": 59,
+    "variable": "beliefs",
+    "items": [
+      "Creators keep what they earn",
+      "One clear number — in dollars"
+    ]
+  }
+]

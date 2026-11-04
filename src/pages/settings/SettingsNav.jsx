@@ -1,15 +1,19 @@
+/* i18n-source-migrated */
+import { msg as __msg } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link, useLocation } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import { useLanguage } from "../../hooks/useLanguage";
 
 const settingsTabs = [
-  { label: "Profile", slug: "profile" },
-  { label: "Privacy", slug: "privacy" },
-  { label: "Notifications", slug: "notifications" },
-  { label: "Account", slug: "account" },
+  { get label() { return __msg("social.profile"); }, slug: "profile" },
+  { get label() { return __msg("settings.privacy"); }, slug: "privacy" },
+  { get label() { return __msg("settings.notifications"); }, slug: "notifications" },
+  { get label() { return __msg("layouts.account"); }, slug: "account" },
 ];
 
 function SettingsNav({ showTabs = true }) {
+  __useUiLanguage();
   const location = useLocation();
   const { t } = useLanguage();
   const basePath = location.pathname.startsWith("/creator/settings")
@@ -21,9 +25,8 @@ function SettingsNav({ showTabs = true }) {
   return (
     <div className="space-y-4">
       <Link className="inline-flex items-center gap-2 text-sm font-semibold text-atseen-muted transition hover:text-atseen-blue" to="/settings">
-        <FiArrowLeft aria-hidden="true" /> Back to settings
-      </Link>
-      {showTabs ? <nav aria-label="Settings" className="flex flex-wrap gap-2">
+        <FiArrowLeft data-ui-directional="true" aria-hidden="true" />{__msg("settings.backToSettings")}</Link>
+      {showTabs ? <nav aria-label={__msg("profile.settings")} className="flex flex-wrap gap-2">
         {settingsTabs.map((tab) => {
           const to = `${basePath}/${tab.slug}`;
 
