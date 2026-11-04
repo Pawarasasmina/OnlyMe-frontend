@@ -235,7 +235,11 @@ function normalizeDiscover(data = {}) {
 }
 
 export const discoverService = {
-  getDiscover: (params = {}, signal) => axiosInstance.get("/discover", { params, signal }).then((response) => normalizeDiscover(unpack(response))),
+  // Discover composes recommendations, relationships, stories and publication
+  // access in one response. A cold Atlas query can exceed the global 15s API
+  // timeout even though it completes successfully, so scope the larger timeout
+  // to this endpoint instead of weakening timeout handling application-wide.
+  getDiscover: (params = {}, signal) => axiosInstance.get("/discover", { params, signal, timeout: 30000 }).then((response) => normalizeDiscover(unpack(response))),
   updateSettings: (payload) => axiosInstance.patch("/discover/settings", payload).then((response) => unpack(response).settings || {}),
   resetSettings: () => axiosInstance.post("/discover/settings/reset").then((response) => unpack(response).settings || {}),
   hideCreator: (userId) => axiosInstance.post(`/discover/hidden-creators/${userId}`).then((response) => unpack(response)),
