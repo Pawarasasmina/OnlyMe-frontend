@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
   const [lastUser] = useState(() => { try { return JSON.parse(localStorage.getItem("onlyme_last_user") || "null"); } catch { return null; } });
 
   const submit = async (event) => {
@@ -34,6 +35,7 @@ export default function LoginPage() {
       navigate(requested && requested !== "/login" ? requested : destinationForUser(user), { replace: true });
     } catch (requestError) {
       const status = requestError.response?.status;
+      if (requestError.response?.data?.code === "ADMIN_2FA_REQUIRED") setTwoFactorRequired(true);
       setError(status === 429 ? "Too many attempts. Try again in a few minutes." : requestError.response?.data?.message || "Unable to sign in. Please try again.");
     } finally { setSubmitting(false); }
   };
@@ -47,6 +49,7 @@ export default function LoginPage() {
       <form className={lastUser?.email ? "mt-4" : "mt-10"} onSubmit={submit}>
         <input autoComplete="email" autoFocus className="w-full rounded-[14px] border border-white/10 bg-white/[.055] px-4 py-4 text-[15px] text-white outline-none placeholder:text-white/30 focus:border-[#9CCBFF]/60" onChange={(event) => setForm((value) => ({ ...value, email: event.target.value }))} placeholder="Email or phone" required type="email" value={form.email} />
         <div className="relative mt-3"><input autoComplete="current-password" className="w-full rounded-[14px] border border-white/10 bg-white/[.055] px-4 py-4 pr-12 text-[15px] text-white outline-none placeholder:text-white/30 focus:border-[#9CCBFF]/60" minLength={8} onChange={(event) => setForm((value) => ({ ...value, password: event.target.value }))} placeholder="Password" required type={showPassword ? "text" : "password"} value={form.password} /><button aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword((value) => !value)} type="button">{showPassword ? <FiEyeOff /> : <FiEye />}</button></div>
+        {twoFactorRequired ? <input autoComplete="one-time-code" className="mt-3 w-full rounded-[14px] border border-[#9CCBFF]/40 bg-white/[.055] px-4 py-4 text-center text-xl font-black tracking-[.35em] text-white outline-none" inputMode="numeric" maxLength="6" onChange={(event) => setForm((value) => ({ ...value, twoFactorCode: event.target.value.replace(/\D/g, "") }))} placeholder="000000" required value={form.twoFactorCode || ""} /> : null}
         {error ? <p className="mt-3 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-xs text-red-200">{error}</p> : null}
         <button className="mt-4 w-full rounded-[14px] bg-[#9CCBFF] py-4 text-sm font-black text-[#0A0C0F] active:scale-[.97] disabled:opacity-50" disabled={submitting} type="submit">{submitting ? "Logging in…" : "Log in"}</button>
       </form>

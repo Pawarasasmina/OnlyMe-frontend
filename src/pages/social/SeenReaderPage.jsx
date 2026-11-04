@@ -35,12 +35,11 @@ const DEFAULT_ENGAGEMENT = { reactionCount: 0, commentCount: 0, shareCount: 0, v
 const STAR = "\u2726";
 const SEEN_REPORT_REASONS = [
   { label: "Spam", value: "SPAM" },
-  { label: "False information", value: "FALSE_INFORMATION" },
-  { label: "Harassment", value: "HARASSMENT" },
-  { label: "Hate", value: "HATE" },
-  { label: "Nudity", value: "NUDITY" },
-  { label: "Illegal content", value: "ILLEGAL_CONTENT" },
-  { label: "Copyright", value: "COPYRIGHT" },
+  { label: "Harassment or bullying", value: "HARASSMENT" }, { label: "Hate", value: "HATE" },
+  { label: "Defamation or false claims", value: "DEFAMATION" }, { label: "Nudity or sexual content", value: "SEXUAL_CONTENT" },
+  { label: "Violence", value: "VIOLENCE" }, { label: "Self-harm", value: "SELF_HARM" },
+  { label: "Scam or fraud", value: "SCAM" }, { label: "Copyright or IP", value: "COPYRIGHT" },
+  { label: "Impersonation", value: "IMPERSONATION" }, { label: "Child safety", value: "CHILD_SAFETY" },
   { label: "Other", value: "OTHER" },
 ];
 
@@ -1317,7 +1316,7 @@ export default function SeenReaderPage() {
     <div className="seen-reader-chapter-heading">
       <span>{String(safeChapterIndex + 1).padStart(2, "0")}</span>
       <h2>{chapter?.title || publication.title}</h2>
-      <i aria-hidden="true" />
+      {!isOwner && chapter?.stableChapterId ? <button aria-label="Report this chapter" className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={async () => { const reason = window.prompt("Report category: SPAM, HARASSMENT, HATE, DEFAMATION, NUDITY, VIOLENCE, SELF_HARM, SCAM, COPYRIGHT, IMPERSONATION, CHILD_SAFETY, or OTHER", "OTHER"); if (!reason) return; const details = window.prompt("Add a private note for the moderation team (optional):", "") || ""; try { await publicationService.reportChapter(id, chapter.stableChapterId, { reason: reason.trim().toUpperCase(), details }); setNotice("Chapter report received. Thank you for helping keep OnlyMe safe."); } catch (requestError) { setNotice(requestError.response?.data?.message || "Could not report this chapter."); } }} type="button"><FiFlag /></button> : <i aria-hidden="true" />}
     </div>
 
     <article className={`seen-reader-content ${chapter?.locked ? "is-paid-locked" : ""}`} onClick={handleReaderClick}>

@@ -70,12 +70,11 @@ const PLANET_FACE_OPTIONS = ["💪", "📚", "💅", "✈️", "☕", "🎾", "�
 
 const WORLD_REPORT_REASONS = [
   { label: "Spam", value: "SPAM" },
-  { label: "False information", value: "FALSE_INFORMATION" },
-  { label: "Harassment", value: "HARASSMENT" },
-  { label: "Hate", value: "HATE" },
-  { label: "Nudity", value: "NUDITY" },
-  { label: "Illegal content", value: "ILLEGAL_CONTENT" },
-  { label: "Copyright", value: "COPYRIGHT" },
+  { label: "Harassment or bullying", value: "HARASSMENT" }, { label: "Hate", value: "HATE" },
+  { label: "Defamation or false claims", value: "DEFAMATION" }, { label: "Nudity or sexual content", value: "SEXUAL_CONTENT" },
+  { label: "Violence", value: "VIOLENCE" }, { label: "Self-harm", value: "SELF_HARM" },
+  { label: "Scam or fraud", value: "SCAM" }, { label: "Copyright or IP", value: "COPYRIGHT" },
+  { label: "Impersonation", value: "IMPERSONATION" }, { label: "Child safety", value: "CHILD_SAFETY" },
   { label: "Other", value: "OTHER" },
 ];
 

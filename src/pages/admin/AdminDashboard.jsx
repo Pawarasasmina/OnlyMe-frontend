@@ -7,20 +7,26 @@ import { Link } from "react-router-dom";
 import { FiArrowRight, FiBarChart2, FiCheckCircle, FiCreditCard, FiFileText, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
 import Loader from "../../components/common/Loader";
 import { adminService } from "../../services/adminService";
+import { adminOperationsService } from "../../services/adminOperationsService";
 
 function AdminDashboard() {
   __useUiLanguage();
   const query = useQuery({ queryKey: ["admin", "dashboard"], queryFn: () => adminService.getDashboard().then((response) => response.data.data.stats) });
-  if (query.isLoading) return <div className="text-slate-600"><Loader label={__msg("admin.loadingAdminDashboard")} /></div>;
+  const operationsQuery = useQuery({ queryKey: ["admin", "operations-dashboard"], queryFn: () => adminOperationsService.dashboard().then((response) => response.data.data) });
+  if (query.isLoading || operationsQuery.isLoading) return <div className="text-slate-600"><Loader label={__msg("admin.loadingAdminDashboard")} /></div>;
   if (query.isError) return <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{__msg("admin.unableToLoadDashboard")} <button className="font-bold underline" onClick={() => query.refetch()} type="button">{__msg("activity.retry")}</button></div>;
 
   const stats = query.data;
+  const operations = operationsQuery.data || { reports: {}, appeals: {} };
   const types = stats.accountTypes || {};
   const cards = [
     { label: __msg("admin.totalUsers"), value: stats.totalUsers, detail: `${stats.activeUsers} active`, icon: FiUsers, color: "bg-blue-50 text-blue-600" },
     { label: __msg("admin.creators"), value: stats.creators, detail: __msg("admin.value0AwaitingApproval", { value0: stats.pendingCreators }), icon: FiUserCheck, color: "bg-orange-50 text-orange-600" },
     { label: __msg("admin.published"), value: stats.publishedContent, detail: `${stats.draftContent} drafts`, icon: FiFileText, color: "bg-violet-50 text-violet-600" },
     { label: __msg("admin.subscriptions"), value: stats.activeSubscriptions, detail: __msg("admin.activePlatformSubscriptions"), icon: FiShield, color: "bg-emerald-50 text-emerald-600" },
+    { label: "Open reports", value: operations.reports.open || 0, detail: `${operations.reports.urgent || 0} urgent · ${operations.reports.overdue || 0} overdue`, icon: FiShield, color: "bg-red-50 text-red-600" },
+    { label: "Median action time", value: `${operations.reports.medianActionMinutes || 0}m`, detail: `${operations.reports.within24Percent ?? 100}% handled within 24h`, icon: FiCheckCircle, color: "bg-amber-50 text-amber-600" },
+    { label: "Open appeals", value: operations.appeals.open || 0, detail: `${operations.appeals.reversed || 0} reversed decisions`, icon: FiFileText, color: "bg-violet-50 text-violet-600" },
   ];
 
   return <div className="mx-auto max-w-[1600px]">
@@ -29,6 +35,7 @@ function AdminDashboard() {
     <div className="mt-6 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
       <section className="overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-xl"><div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-orange-400">{__msg("admin.internalAccountClassification")}</p><h2 className="mt-2 text-2xl font-black">{__msg("admin.knowExactlyWhoIsCreatingActivity")}</h2><p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">{__msg("admin.realAndSeedContributeToNormalPlatformTotalsTest")}</p></div><Link className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-orange-50" to="/admin/users">{__msg("admin.manageUsers")} <FiArrowRight data-ui-directional="true" /></Link></div><div className="mt-6 grid gap-3 sm:grid-cols-3">{[["REAL", types.REAL || 0, "Organic accounts", "border-blue-400/20 bg-blue-400/10 text-blue-300"], ["SEED", types.SEED || 0, "Controlled launch accounts", "border-amber-400/20 bg-amber-400/10 text-amber-300"], ["TEST", types.TEST || 0, "QA and automation", "border-violet-400/20 bg-violet-400/10 text-violet-300"]].map(([label, value, detail, color]) => <div className={`rounded-2xl border p-4 ${color}`} key={label}><p className="text-xs font-black tracking-[.18em]">{label}</p><p className="mt-2 text-3xl font-black text-white">{value.toLocaleString(__uiLocale())}</p><p className="mt-1 text-xs opacity-80">{detail}</p></div>)}</div></section>
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><p className="text-xs font-black uppercase tracking-[.16em] text-slate-400">{__msg("admin.accountRoles")}</p><div className="mt-5 space-y-4">{[["Fans", stats.fans], ["Creators", stats.creators], ["Admins", stats.admins]].map(([label, value]) => <div className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0" key={label}><span className="text-sm font-semibold text-slate-600">{label}</span><strong className="text-xl text-slate-950">{value.toLocaleString(__uiLocale())}</strong></div>)}</div></section>
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[.16em] text-red-500">Risk signal</p><h2 className="mt-1 text-xl font-black">Top reported users</h2></div><Link className="text-sm font-black text-orange-600" to="/admin/safety">Open queue <FiArrowRight className="inline" /></Link></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">{(operations.topReportedUsers || []).map((entry) => <Link className="rounded-2xl border border-slate-200 p-4 transition hover:border-orange-300 hover:shadow-sm" key={entry.userId} to={`/admin/users/${entry.userId}`}><p className="truncate text-sm font-black">{entry.user?.name || "Unknown user"}</p><p className="truncate text-xs text-slate-500">@{entry.user?.username || entry.userId}</p><p className="mt-3 text-2xl font-black text-red-600">{entry.count}</p><p className="text-[11px] font-bold uppercase text-slate-400">open reports</p></Link>)}{!(operations.topReportedUsers || []).length && <p className="text-sm text-slate-500">No open reports.</p>}</div></section>
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2"><div><h2 className="font-black">{__msg("admin.quickAccess")}</h2><p className="mt-1 text-sm text-slate-500">{__msg("admin.theMainOperationalAreasInOnePlace")}</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[
         ["All users", `${stats.totalUsers} accounts`, "/admin/users", FiUsers, "bg-blue-50 text-blue-600"],
         ["Creator reviews", `${stats.pendingCreators} waiting`, "/admin/creator-verifications", FiUserCheck, "bg-orange-50 text-orange-600"],

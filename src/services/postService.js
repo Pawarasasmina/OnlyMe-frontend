@@ -41,6 +41,7 @@ function normalizeList(response) {
 }
 
 export const postService = {
+  reportComment: (postId, commentId, payload) => axiosInstance.post(`/posts/${postId}/comments/${commentId}/report`, payload),
   getNeedCounts: async (params = {}) => (await axiosInstance.get("/posts/need-counts", { params })).data.data,
   getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params })),
   getPost: async (postId) => normalizePost((await axiosInstance.get(`/posts/${encodeURIComponent(postId)}`)).data?.data?.post),

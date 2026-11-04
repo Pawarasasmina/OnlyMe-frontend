@@ -57,6 +57,7 @@ export const messageService = {
   reportMessage: (messageId, payload) => axiosInstance.post(`/messages/${messageId}/report`, payload),
   forwardMessage: (messageId, targets) => axiosInstance.post(`/messages/${messageId}/forward`, { targets }),
   reportConversation: (userId, payload) => axiosInstance.post(`/messages/conversations/${userId}/report`, payload),
+  disputeDirectAccess: (windowId, payload) => axiosInstance.post(`/appeals/direct-access/${windowId}`, payload),
   block: (userId) => axiosInstance.put(`/messages/blocks/${userId}`),
   unblock: (userId) => axiosInstance.delete(`/messages/blocks/${userId}`),
   setReaction: (messageId, emoji) => axiosInstance.put(`/messages/${messageId}/reaction`, { emoji }),

@@ -131,9 +131,10 @@ const REPORT_REASONS = [
   ["SPAM", "Spam"],
   ["HARASSMENT", "Harassment or bullying"],
   ["HATE", "Hate speech"],
-  ["SEXUAL_CONTENT", "Sexual content"],
-  ["VIOLENCE", "Violence or threats"],
+  ["DEFAMATION", "Defamation or false claims"], ["SEXUAL_CONTENT", "Nudity or sexual content"],
+  ["VIOLENCE", "Violence or threats"], ["SELF_HARM", "Self-harm"],
   ["SCAM", "Scam or fraud"],
+  ["COPYRIGHT", "Copyright or IP"], ["IMPERSONATION", "Impersonation"], ["CHILD_SAFETY", "Child safety"],
   ["OTHER", "Something else"],
 ];
 
@@ -1894,7 +1895,7 @@ export default function MessagesPage() {
       if (reportTarget.type === "message") {
         if (selected.type === "group") await messageService.reportGroupMessage(reportTarget.message.id, payload);
         else await messageService.reportMessage(reportTarget.message.id, payload);
-      }
+      } else if (reportTarget.type === "direct-access") await messageService.disputeDirectAccess(directAccessWindow.id, payload);
       else await messageService.reportConversation(selected.id, payload);
       setReportTarget(null);
       setReportReason("SPAM");
@@ -2054,6 +2055,7 @@ export default function MessagesPage() {
                 {selected.type === "group" && participant?.admins?.includes(myId) ? <><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={changeSelectedGroupAvatar} ref={groupAvatarInputRef} type="file" /><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => groupAvatarInputRef.current?.click()} type="button"><FiImage /> Change group photo</button></> : null}
                 <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={archiveSelectedConversation} type="button"><FiArchive /> {selected.archived ? "Unarchive chat" : "Archive chat"}</button>
                 {selected.type !== "group" ? <><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setReportTarget({ type: "conversation" }); }} type="button"><FiFlag className="text-atseen-warning" /> Report conversation</button>
+                {directAccessWindow ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setReportTarget({ type: "direct-access" }); }} type="button"><FiShield className="text-atseen-warning" /> Dispute Direct Access</button> : null}
                 <button className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5 ${messagesQuery.data?.blockStatus?.blockedByMe ? "text-atseen-blue" : "text-atseen-danger"}`} disabled={actionBusy} onClick={toggleBlock} type="button"><FiShield /> {messagesQuery.data?.blockStatus?.blockedByMe ? "Unblock account" : "Block account"}</button>
                 <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-atseen-danger hover:bg-atseen-danger/5" disabled={actionBusy} onClick={deleteSelectedConversation} type="button"><FiTrash2 /> Delete chat</button></> : null}
               </div> : null}
