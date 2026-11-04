@@ -38501,6 +38501,33 @@ video.seen-reader-media {
 .settings-delete-sheet button:disabled { opacity: .35; cursor: default; }
 .settings-delete-sheet .settings-delete-error { color: #F17878; }
 
+.ownership-sheet { background:#0A0C0F;border-radius:16px 16px 0 0;padding:8px 20px calc(36px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:16px;line-height:normal; }
+.ownership-sheet .settings-delete-handle { width:32px;height:4px;margin:4px auto 16px; }
+.ownership-sheet h2 { margin:0;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:normal; }
+.ownership-sheet p { margin:8px 0 0;font-size:14px;font-weight:400;line-height:1.6;color:rgba(255,255,255,.62); }
+.ownership-sheet button { font-family:inherit; }
+.ownership-sheet .settings-delete-content { padding:6px 4px 2px; }
+.ownership-ownership { text-align:start; }
+.ownership-ownership .settings-delete-content { padding:0; }
+.ownership-ownership h2 { margin-bottom:2px; }
+.ownership-ownership p { margin:4px 0 8px;line-height:1.45; }
+.ownership-option { display:flex;align-items:flex-start;gap:14px;width:100%;padding:13px 0;border:0;border-bottom:1px solid rgba(255,255,255,.055);background:transparent;text-align:start; }
+.ownership-option > span:first-child { flex:1;min-width:0; }
+.ownership-option b { display:block;color:#fff;font-size:14px;font-weight:600;line-height:normal; }
+.ownership-option small { display:block;color:rgba(255,255,255,.4);font-size:12.5px;font-weight:400;line-height:1.45; }
+.ownership-option > span:last-child { margin-top:4px;color:rgba(255,255,255,.62);font-size:14px;line-height:1.45; }
+.ownership-option.ownership-danger { border-bottom:0; }
+.ownership-danger,.ownership-danger b { color:#F17878 !important; }
+.ownership-sheet .settings-delete-confirm { margin-top:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:15px;font-size:15.5px;font-weight:650;line-height:normal;color:#F17878; }
+.ownership-deactivate .settings-delete-confirm { color:#F2F4F7; }
+.ownership-sheet .settings-delete-cancel { font-size:13px;font-weight:400;line-height:normal;color:rgba(255,255,255,.62);margin-top:12px; }
+.ownership-sheet .ownership-payouts { background:#9CCBFF;color:#0A0C0F;font-size:12.5px;padding:14px;border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.18); }
+.ownership-sheet .ownership-close { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%); }
+.ownership-sheet .ownership-close:focus-visible { position:static;width:auto;height:auto;clip-path:none; }
+.ownership-delete .settings-delete-content { padding:8px 4px; }
+.ownership-logout .settings-delete-content { text-align:center; }
+.ownership-logout h2 { font-size:20px;font-weight:750; }
+
 .settings-index-header {
   display: flex;
   align-items: center;
@@ -38599,6 +38626,49 @@ video.seen-reader-media {
   flex: none;
   color: #535c66;
   stroke-width: 1.5;
+}
+
+.settings-index-footer {
+  margin-top: 32px;
+  padding: 0;
+}
+
+.settings-index-logout {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.08);
+  padding: 15px;
+  color: #F2F4F7;
+  font-family: Arial, sans-serif;
+  font-size: 15.5px;
+  font-weight: 650;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.settings-index-logout:hover,
+.settings-index-logout:focus-visible {
+  color: #d6eaff;
+  outline: 0;
+}
+
+.settings-index-logout:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.settings-index-footer small {
+  display: block;
+  margin-top: 14px;
+  color: rgba(255,255,255,.4);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
 }
 
 @media (max-width: 600px) {
