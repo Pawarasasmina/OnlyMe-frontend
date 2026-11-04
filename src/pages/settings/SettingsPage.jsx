@@ -5,7 +5,7 @@ import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBarChart2, FiBell, FiChevronRight, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiMessageCircle, FiShield, FiUserCheck, FiUserX, FiUsers, FiVolumeX, FiZap } from "react-icons/fi";
+import { FiBarChart2, FiBell, FiChevronLeft, FiChevronRight, FiEdit3, FiFlag, FiGlobe, FiHelpCircle, FiInfo, FiMessageCircle, FiShield, FiUserX, FiUsers, FiVolumeX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
 import NotificationSettingsSheet from "./NotificationSettingsSheet";
@@ -18,6 +18,8 @@ import MemberNumberSetting from "../../components/profile/MemberNumberSetting";
 import AccountTypeSetting from "../../components/profile/AccountTypeSetting";
 import LanguageSetting from "../../components/profile/LanguageSetting";
 import SettingsPayments from "./SettingsPayments";
+import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
+import "./SettingsPage.css";
 
 function SettingsRow({ onClick, subtitle, title, to, trailing, disabled }) {
   __useUiLanguage();
@@ -36,6 +38,15 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { showToast } = useFanToast();
+  const previewStorageKey = `onlyme_creator_preview:${user?.id || user?._id || ""}`;
+  const [previewEnabled, setPreviewEnabled] = useState(() => sessionStorage.getItem(previewStorageKey) === "on");
+  const toggleCreatorPreview = () => {
+    const enabled = !previewEnabled;
+    sessionStorage.setItem(previewStorageKey, enabled ? "on" : "off");
+    setPreviewEnabled(enabled);
+    if (enabled) navigate("/profile?preview=new");
+  };
   const settingsMainRef = useRef(null);
   const [ownershipStep, setOwnershipStep] = useState(null);
   const [earnings, setEarnings] = useState(0);
@@ -45,7 +56,6 @@ export default function SettingsPage() {
   const [verificationView, setVerificationView] = useState(new URLSearchParams(window.location.search).get("verification")?.startsWith("bank") ? (new URLSearchParams(window.location.search).get("verification") === "bank" ? "setup" : new URLSearchParams(window.location.search).get("verification")) : "verify");
   const [privacySheet, setPrivacySheet] = useState(null);
   const [privacyError, setPrivacyError] = useState("");
-  const [supportersSaved, setSupportersSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [error, setError] = useState("");
@@ -91,8 +101,7 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
       setPrivacyError("");
-      setSupportersSaved(true);
-      window.setTimeout(() => setSupportersSaved(false), 2200);
+      showToast(`${__msg("settings.supporters")} ${__msg(response.data.data.privacySettings?.showFollowers ? "admin.shown" : "settings.hidden")}`, { duration: 2200 });
     },
     onError: (requestError) => setPrivacyError(normalizeApiError(requestError, __msg("settings.unableToUpdatePublicSupporters")).message),
   });
@@ -136,22 +145,28 @@ export default function SettingsPage() {
     }
   };
 
-  return <main className="settings-index-page" ref={settingsMainRef}>
-    <header className="settings-index-header"><button aria-label={__msg("profile.backToProfile")} onClick={() => navigate("/profile")} type="button"><FiArrowLeft data-ui-directional="true" /></button><h1>{__msg("profile.settings")}</h1></header>
+  return <main className="settings-index-page settings-prototype-index" ref={settingsMainRef}>
+    <header className="settings-index-header"><button aria-label={__msg("profile.backToProfile")} onClick={() => navigate("/profile")} type="button"><FiChevronLeft data-ui-directional="true" /></button><h1>{__msg("profile.settings")}</h1></header>
 
     <SettingsGroup title={__msg("layouts.account")}>
       <AccountTypeSetting />
       <SettingsRow onClick={() => changeOwnershipStep("ownership")} subtitle={__msg("settings.deactivateOrDelete")} title={__msg("settings.accountOwnershipAndControl")} />
       <SettingsRow title={__msg("settings.monetization")} subtitle={monetizationQuery.isPending ? __msg("fanWeb.loading_5fabab") : monetizationQuery.isError ? __msg("settings.manageEarningAndPayouts") : monetizationQuery.data?.enabled ? __msg("settings.giftsAndDreamOn", { value0: monetizationQuery.data.payoutsReady ? "payouts ready" : "set up payouts" }) : __msg("settings.offCompleteEligibility")} to="/settings/monetization" />
       <SettingsRow icon={FiShield} onClick={() => { setVerificationView("verify"); setCreatorApplyOpen(true); }} subtitle={user?.isVerified ? __msg("settings.verifiedReviewedBySeen") : __msg("settings.identityReviewByTheSeenTeam")} title={__msg("social.verification")} />
-      <SettingsRow icon={FiEdit3} subtitle={__msg("settings.identityPhotosAndContactOptions")} title={__msg("fan.editProfile_15141e")} to="/settings/profile?from=settings" />
+      <SettingsRow icon={FiEdit3} title={__msg("fan.editProfile_15141e")} to="/settings/profile?from=settings" />
       <LanguageSetting />
-      <SettingsRow icon={FiGlobe} subtitle={__msg("settings.timeZoneAndPassword")} title={__msg("settings.accountPreferences")} to="/settings/account" />
       <MemberNumberSetting />
     </SettingsGroup>
 
-    {user?.creatorApprovalStatus === "approved" || ["creator", "business"].includes(user?.profileType) ? <SettingsGroup title={user?.profileType === "business" ? __msg("profile.business") : __msg("discover.creator")}><SettingsRow icon={FiUserCheck} subtitle="Required before selling paid products" title="Seller verification" to="/creator/seller-verification" /><SettingsRow icon={FiMessageCircle} subtitle={__msg("settings.messagesCallsAndPricing")} title="Direct Access" to="/settings/direct-access" /><SettingsRow icon={FiBarChart2} subtitle={__msg("settings.insightsAudienceAndEarnings")} title={__msg("settings.professionalDashboard")} to="/studio" />{user?.creatorApprovalStatus === "approved" ? <SettingsRow icon={FiUsers} subtitle={__msg("settings.seeTheOnboardingAndEarningExamples")} title={__msg("settings.previewAsANewCreator")} to="/profile?preview=new" /> : null}</SettingsGroup> : null}
-    <SettingsGroup title={__msg("orbit.preferences")}><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle={__msg("settings.commentsReactionsMessagesAndIncome")} title={__msg("settings.notifications")} /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.topicsPeopleAndWhatYouSee")} title={__msg("settings.contentPreferences")} to="/settings/content" /><SettingsRow icon={FiZap} subtitle="Allowance, privacy and creation limits" title="AI" to="/settings/ai" /></SettingsGroup>
+    {user?.creatorApprovalStatus === "approved" || ["creator", "business"].includes(user?.profileType) ? <SettingsGroup title={user?.profileType === "business" ? __msg("profile.business") : __msg("discover.creator")}>
+      <SettingsRow icon={FiMessageCircle} subtitle={__msg("settings.messagesCallsAndPricing")} title="Direct Access" to="/settings/direct-access" />
+      <SettingsRow icon={FiBarChart2} subtitle={__msg("settings.insightsAudienceAndEarnings")} title={__msg("settings.professionalDashboard")} to="/studio" />
+      {user?.creatorApprovalStatus === "approved" ? <button className="settings-index-row" role="switch" aria-checked={previewEnabled} onClick={toggleCreatorPreview} type="button">
+        <span className="settings-index-row-copy"><b>{__msg("settings.previewAsANewCreator")}</b><small>{__msg("settings.seeTheOnboardingAndEarningExamples")}</small></span>
+        <span className={`settings-preview-status${previewEnabled ? " is-on" : ""}`}>{previewEnabled ? "On" : "Off"}</span>
+      </button> : null}
+    </SettingsGroup> : null}
+    <SettingsGroup title={__msg("orbit.preferences")}><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle={__msg("settings.commentsReactionsMessagesAndIncome")} title={__msg("settings.notifications")} /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.topicsPeopleAndWhatYouSee")} title={__msg("settings.contentPreferences")} to="/settings/content" /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.timeZoneAndPassword")} title={__msg("settings.accountPreferences")} to="/settings/account" /></SettingsGroup>
     <SettingsPayments />
     <SettingsGroup title={__msg("settings.privacySafety")}>
       <SettingsRow icon={FiUserX} onClick={() => setPrivacySheet("blocked")} subtitle={blockedQuery.isLoading ? __msg("admin.loading") : blockedQuery.data?.length ? __msg("settings.blocked", { value0: blockedQuery.data.length }) : __msg("settings.youHavenTBlockedAnyone")} title={__msg("settings.blockedUsers")} />
@@ -174,6 +189,5 @@ export default function SettingsPage() {
     <NotificationSettingsSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
     {creatorApplyOpen ? <CreatorVerificationPage initialView={verificationView} onClose={() => { setCreatorApplyOpen(false); window.history.replaceState(null, "", "/settings"); }} /> : null}
-    {supportersSaved ? <div className="fixed bottom-6 left-1/2 z-[210] -translate-x-1/2 rounded-full border border-white/10 bg-[#1C212B] px-5 py-3 text-sm font-bold shadow-2xl">{__msg("settings.supporters")} {privacyQuery.data?.privacySettings?.showFollowers ? __msg("admin.shown") : __msg("settings.hidden")}</div> : null}
   </main>;
 }

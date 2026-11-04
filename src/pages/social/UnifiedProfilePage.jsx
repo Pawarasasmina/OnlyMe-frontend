@@ -939,6 +939,7 @@ function ProfileNotes({ isOwner, posts = [] }) {
 
 function ProfileBody({ data, setConnectionsType }) {
   __useUiLanguage();
+  const { showToast } = useFanToast();
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -955,13 +956,9 @@ function ProfileBody({ data, setConnectionsType }) {
   const { profile, publicMetrics, viewerCapabilities } = data;
   const isOwner = viewerCapabilities.isOwner;
   const previewNewCreator = isOwner && searchParams.get("preview") === "new";
-  const [creatorPreviewToast, setCreatorPreviewToast] = useState(false);
   useEffect(() => {
-    if (!previewNewCreator) return undefined;
-    setCreatorPreviewToast(true);
-    const timer = window.setTimeout(() => setCreatorPreviewToast(false), 2800);
-    return () => window.clearTimeout(timer);
-  }, [previewNewCreator]);
+    if (previewNewCreator) showToast(__msg("profile.backToYourAccount"), { duration: 2800, placement: "profile" });
+  }, [previewNewCreator, showToast]);
   const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
   const profileStories = storiesQuery.data?.length ? storiesQuery.data : data.profileStories || [];
   const hasProfileStories = profile.hasActiveStories || profileStories.length > 0;
@@ -1055,7 +1052,6 @@ function ProfileBody({ data, setConnectionsType }) {
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
-      {creatorPreviewToast ? <div className="profile-creator-preview-return" role="status">{__msg("profile.backToYourAccount")}</div> : null}
       <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesCreate={() => setExperienceStoryOpen(true)} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <BusinessContactActions isOwner={isOwner} profile={profile} />
       <StoryHighlights creatorUsername={profile.username} creatorId={profile.ownerUserId} isOwner={isOwner} />

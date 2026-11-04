@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FanToastContext } from "./FanToastContext";
 
 export function FanToastProvider({ children }) {
-  const [toast, setToast] = useState({ message: "", placement: "bottom" });
+  const [toast, setToast] = useState({ message: "" });
   const timeoutRef = useRef(null);
   const sequenceTimerRef = useRef(null);
   const shelfUntilRef = useRef(0);
@@ -19,7 +19,7 @@ export function FanToastProvider({ children }) {
     }
     if (options.variant === "gift-shelf") shelfUntilRef.current = Date.now() + (options.duration || 4400);
     window.clearTimeout(timeoutRef.current);
-    setToast({ ...options, message: nextMessage, placement: options.placement || "bottom" });
+    setToast({ ...options, message: nextMessage });
     timeoutRef.current = window.setTimeout(() => setToast((current) => ({ ...current, message: "" })), options.duration || 2400);
   }, []);
 
@@ -84,7 +84,7 @@ export function FanToastProvider({ children }) {
       </div> : <div
         aria-live="polite"
         className={`pointer-events-none fixed left-1/2 z-[60] max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full border border-atseen-line bg-[#161B24] px-5 py-3 text-center text-xs font-semibold text-atseen-text transition duration-200 ${
-          toast.placement === "profile" ? `profile-draft-saved-toast ${toast.message ? "opacity-100" : "invisible opacity-0"}` : toast.message ? "bottom-8 opacity-100" : "-bottom-12 opacity-0"
+          `profile-draft-saved-toast ${toast.message ? "opacity-100" : "invisible opacity-0"}`
         }`}
         role="status"
       >

@@ -1,24 +1,39 @@
-.support-help-page { box-sizing:border-box;max-width:none;min-height:100dvh;padding:22px 20px 70px;background:#0a0c0f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif; }
-.support-help-page > header { gap:12px; }
-.support-help-page > header > button { width:38px;height:38px;flex:none;background:rgba(255,255,255,.07);font-size:16px; }
-.support-help-page > header h1 { font-size:18px;font-weight:700;letter-spacing:-.3px;line-height:1.2; }
-.support-help-page > div { margin-top:34px; }
+.support-help-page { box-sizing:border-box;width:100%;max-width:none;min-height:100dvh;padding:22px 20px 70px;background:#0a0c0f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:16px;font-weight:400;line-height:normal;-webkit-font-smoothing:antialiased; }
+.support-help-page > header { display:flex;align-items:center;gap:12px;padding-bottom:10px; }
+.support-help-page > header > button { display:flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;border:0;border-radius:50%;background:rgba(255,255,255,.07);color:#fff;font:inherit;cursor:pointer; }
+.support-help-page > header h1 { margin:0;color:#fff;font-size:18px;font-weight:700;letter-spacing:-.3px;line-height:normal; }
+.support-text-sections { display:flow-root; }
 .support-help-page > div > section { margin:24px 0 0; }
-.support-help-page > div > section:first-child { margin-top:0; }
-.support-help-page section > h2 { margin:0 0 2px;color:rgba(255,255,255,.4);font-size:11px;font-weight:700;line-height:1.45;letter-spacing:.12em;text-transform:uppercase; }
-.support-help-page section > div > article { margin:16px 0 0; }
-.support-help-page section > div > article:first-child:has(> p:only-child) { margin-top:9px; }
-.support-help-page article h3 { margin:0;color:#fff;font-size:14.5px;font-weight:750;line-height:1.4; }
-.support-help-page article p { margin:9px 0 0;color:rgba(255,255,255,.65);font-size:13px;font-weight:400;line-height:1.7; }
-.support-help-page article p:only-child { margin-top:0; }
-.support-help-page > a { margin-top:9px;color:#9ccbff;font-size:13px;font-weight:700;line-height:1.7; }
+.support-help-page section > h2 { margin:0;color:rgba(255,255,255,.4);font-size:11px;font-weight:600;line-height:normal;letter-spacing:1.6px;text-transform:uppercase; }
+.support-help-page section > div > article { display:flow-root;margin:0; }
+.support-help-page article h3 { margin:16px 0 0;color:#fff;font-size:14.5px;font-weight:750;line-height:normal; }
+.support-help-page article p { margin:9px 0 0;color:rgba(255,255,255,.62);font-size:13px;font-weight:400;line-height:1.7; }
+.support-help-page > a { display:inline-block;margin-top:9px;color:#9ccbff;font-size:13px;font-weight:700;line-height:1.7; }
 .support-help-page button:focus-visible,.support-help-page a:focus-visible { outline:2px solid #9ccbff;outline-offset:3px; }
-.support-about-page > .support-about-intro { margin-top:28px; }
+.support-about-page > .support-about-intro { margin-top:18px; }
 .support-about-logo { font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:normal; }
 .support-about-logo > span { color:#9ccbff; }
 .support-about-intro > p { margin:4px 0 0;color:rgba(255,255,255,.62);font-size:14px;line-height:normal; }
-.support-about-page > .support-about-intro + div { margin-top:24px; }
 .support-about-page article p { color:rgba(255,255,255,.62); }
 .support-about-contact { margin-top:9px;color:rgba(255,255,255,.62);font-size:13px;line-height:1.7; }
 .support-about-contact a { color:#9ccbff;font-weight:700; }
 .support-about-contact > span { margin-inline-start:4px;color:inherit;font-size:inherit; }
+
+/* Report form uses the prototype's chips, inp and btnG values. */
+.support-report-form { margin:14px 0 0; }
+.support-report-intro { margin:0;color:rgba(255,255,255,.62);font-size:14px;line-height:1.45; }
+.support-report-categories { display:flex;flex-wrap:wrap;gap:8px;margin-top:14px; }
+.support-report-categories > button { border:1px solid rgba(255,255,255,.08);border-radius:999px;background:#181d25;padding:9px 16px;color:#fff;font-family:inherit;font-size:12.5px;font-weight:650;line-height:normal;cursor:pointer; }
+.support-report-categories > button[aria-pressed=true] { border-color:rgba(156,203,255,.45);background:rgba(156,203,255,.16); }
+.support-report-form textarea { display:inline-block;width:100%;margin-top:14px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:#12151b;padding:13px 15px;color:#fff;font-family:inherit;font-size:14.5px;line-height:1.6;resize:none;outline:none;vertical-align:baseline; }
+.support-report-form textarea::placeholder { color:#757575;opacity:1; }
+.support-report-form textarea:focus { border-color:#9ccbff; }
+.support-report-attachment { display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:11px; }
+.support-report-attachment > button { display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.4);font-family:inherit;font-size:12px;line-height:normal;cursor:pointer; }
+.support-report-attachment svg { width:15px;height:15px; }
+.support-report-filename { display:flex;align-items:center;gap:4px;min-width:0;color:#9ccbff;font-size:12px; }
+.support-report-filename > span { max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.support-report-send { display:block;width:100%;margin-top:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#9ccbff,#6fa9e8);padding:14px;color:#0a0c0f;box-shadow:0 4px 16px -6px rgba(94,155,255,.55);font-family:Arial,sans-serif;font-size:12.5px;font-weight:650;line-height:normal;cursor:pointer; }
+.support-report-send:active { transform:scale(.94);filter:brightness(1.08); }
+.support-report-note { margin-top:12px;color:rgba(255,255,255,.4);font-size:10px;line-height:normal;text-align:center; }
+.support-report-sent { margin-top:12px;color:#9ccbff;font-size:12px;text-align:center; }

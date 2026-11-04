@@ -27187,7 +27187,7 @@ video.seen-reader-media {
 /* Merge: structural styles for newly integrated World flows only. Existing project selectors remain authoritative. */
 .world-comment-status-pill {
   position: fixed;
-  top: 218px;
+  top: calc(54px + env(safe-area-inset-top, 0px));
   left: 50%;
   z-index: 90;
   min-width: 136px;
@@ -31734,7 +31734,7 @@ video.seen-reader-media {
 }
 .world-comment-status-pill {
   position: fixed;
-  top: 218px;
+  top: calc(54px + env(safe-area-inset-top, 0px));
   left: 50%;
   z-index: 90;
   min-width: 136px;

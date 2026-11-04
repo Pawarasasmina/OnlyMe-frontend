@@ -4,7 +4,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiChevronLeft, FiImage, FiX } from "react-icons/fi";
+import { FiImage, FiX } from "react-icons/fi";
 import "./SupportPage.css";
 
 const helpSections = [
@@ -38,21 +38,21 @@ const termsSections = [
   ]],
 ];
 
-function PageHeader({ title, prototype = false }) {
+function PageHeader({ title }) {
   __useUiLanguage();
   const navigate = useNavigate();
-  return <header className="flex items-center gap-3"><button aria-label={__msg("settings.backToSettings")} className="grid h-9 w-9 place-items-center rounded-full bg-white/[0.07]" onClick={() => navigate("/settings")} type="button">{prototype ? <FiChevronLeft data-ui-directional="true" /> : <FiArrowLeft data-ui-directional="true" />}</button><h1 className="text-base font-black">{title}</h1></header>;
+  return <header className="support-page-header"><button aria-label={__msg("settings.backToSettings")} onClick={() => navigate("/settings")} type="button"><span aria-hidden="true" data-ui-directional="true">‹</span></button><h1>{title}</h1></header>;
 }
 
 function TextSections({ sections }) {
   __useUiLanguage();
-  return <div className="mt-8 space-y-7">{sections.map(([heading, items]) => <section key={heading}><h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/35">{heading}</h2><div className="space-y-4">{items.map(([title, copy]) => <article key={title}>{title ? <h3 className="text-sm font-black text-white">{title}</h3> : null}<p className="mt-1 text-xs leading-5 text-white/60">{copy}</p></article>)}</div></section>)}</div>;
+  return <div className="support-text-sections">{sections.map(([heading, items]) => <section key={heading}><h2>{heading}</h2><div>{items.map(([title, copy]) => <article key={title}>{title ? <h3>{title}</h3> : null}<p>{copy}</p></article>)}</div></section>)}</div>;
 }
 
 function ReportPage() {
   __useUiLanguage();
   const inputRef = useRef(null);
-  const [category, setCategory] = useState("Bug");
+  const [category, setCategory] = useState("");
   const [details, setDetails] = useState("");
   const [screenshot, setScreenshot] = useState(null);
   const [sent, setSent] = useState(false);
@@ -65,7 +65,19 @@ function ReportPage() {
     window.location.href = `mailto:hello@atseen.com?subject=${subject}&body=${body}`;
     setSent(true);
   };
-  return <><PageHeader title={__msg("settings.reportAProblem")} /><form className="mt-8" onSubmit={send}><p className="text-sm leading-5 text-white/65">{__msg("settings.tellUsWhatBrokeOrWhatFeelsWrongA")}</p><div className="mt-4 flex flex-wrap gap-2">{categories.map((item) => <button className={`rounded-full border px-4 py-2 text-xs font-bold ${category === item ? "border-atseen-blue bg-atseen-blue/15 text-atseen-blue" : "border-atseen-line bg-atseen-surface text-white"}`} key={item} onClick={() => setCategory(item)} type="button">{item}</button>)}</div><textarea aria-label={__msg("settings.whatHappened")} className="mt-3 min-h-32 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface p-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-atseen-blue" maxLength={2000} onChange={(event) => { setDetails(event.target.value); setSent(false); }} placeholder={__msg("settings.whatHappened")} required value={details} /><input accept="image/*" className="hidden" onChange={(event) => setScreenshot(event.target.files?.[0] || null)} ref={inputRef} type="file" /><div className="mt-3 flex items-center gap-3"><button className="flex items-center gap-2 text-xs text-white/50 hover:text-white" onClick={() => inputRef.current?.click()} type="button"><FiImage /> {__msg("settings.attachAScreenshot")}</button>{screenshot ? <span className="flex min-w-0 items-center gap-1 text-xs text-atseen-blue"><span dir="auto" className="max-w-40 truncate">{screenshot.name}</span><button aria-label={__msg("settings.removeScreenshot")} onClick={() => setScreenshot(null)} type="button"><FiX /></button></span> : null}</div><button className="mt-5 w-full rounded-xl bg-atseen-blue py-3.5 text-sm font-black text-black shadow-[0_8px_24px_rgba(143,196,255,.22)] disabled:opacity-40" disabled={!details.trim()} type="submit">{__msg("fanWeb.send")}</button>{sent ? <p className="mt-3 text-center text-xs text-atseen-blue">{__msg("settings.yourEmailAppHasBeenOpenedWithTheReport")}</p> : null}<p className="mt-3 text-center text-[10px] text-white/35">{__msg("settings.badContentReportItFasterViaRightOnThe")}</p></form></>;
+  return <>
+    <PageHeader title={__msg("settings.reportAProblem")} />
+    <form className="support-report-form" onSubmit={send}>
+      <p className="support-report-intro">{__msg("settings.tellUsWhatBrokeOrWhatFeelsWrongA")}</p>
+      <div className="support-report-categories">{categories.map((item) => <button aria-pressed={category === item} key={item} onClick={() => setCategory(item)} type="button">{item}</button>)}</div>
+      <textarea aria-label={__msg("settings.whatHappened")} maxLength={2000} onChange={(event) => { setDetails(event.target.value); setSent(false); }} placeholder={__msg("settings.whatHappened")} required rows={5} value={details} />
+      <input accept="image/*" hidden onChange={(event) => setScreenshot(event.target.files?.[0] || null)} ref={inputRef} type="file" />
+      <div className="support-report-attachment"><button onClick={() => inputRef.current?.click()} type="button"><FiImage />{__msg("settings.attachAScreenshot")}</button>{screenshot ? <span className="support-report-filename"><span dir="auto">{screenshot.name}</span><button aria-label={__msg("settings.removeScreenshot")} onClick={() => setScreenshot(null)} type="button"><FiX /></button></span> : null}</div>
+      <button className="support-report-send" type="submit">{__msg("fanWeb.send")}</button>
+      {sent ? <p className="support-report-sent" role="status">{__msg("settings.yourEmailAppHasBeenOpenedWithTheReport")}</p> : null}
+      <p className="support-report-note">{__msg("settings.badContentReportItFasterViaRightOnThe")}</p>
+    </form>
+  </>;
 }
 
 function AboutPage() {
@@ -76,5 +88,5 @@ function AboutPage() {
 export default function SupportPage() {
   __useUiLanguage();
   const { section } = useParams();
-  return <main className={`mx-auto w-full max-w-xl px-4 pb-14 pt-5${section !== "report" ? ` support-help-page${section === "about" ? " support-about-page" : ""}` : ""}`}>{section === "report" ? <ReportPage /> : section === "about" ? <AboutPage /> : <><PageHeader prototype title={section === "terms" ? __msg("settings.termsPrivacy") : __msg("settings.helpCenter")} /><TextSections sections={section === "terms" ? termsSections : helpSections} /><a className="mt-7 inline-block text-xs font-bold text-atseen-blue" href="mailto:hello@atseen.com">{__msg("settings.helloAtseenCom")}</a></>}</main>;
+  return <main className={`support-help-page${section === "about" ? " support-about-page" : ""}${section === "report" ? " support-report-page" : ""}`}>{section === "report" ? <ReportPage /> : section === "about" ? <AboutPage /> : <><PageHeader title={section === "terms" ? __msg("settings.termsPrivacy") : __msg("settings.helpCenter")} /><TextSections sections={section === "terms" ? termsSections : helpSections} /><a className="support-contact" href="mailto:hello@atseen.com">{__msg("settings.helloAtseenCom")}</a></>}</main>;
 }
