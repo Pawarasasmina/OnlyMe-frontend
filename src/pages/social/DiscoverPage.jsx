@@ -70,7 +70,9 @@ function DiscoverPage() {
   const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
   const activeTopic = searchParams.get("topic") || "";
   const viewerId = user?.id || user?._id || "";
-  const [refreshToken, setRefreshToken] = useState(() => `${Date.now()}-${Math.random()}`);
+  // Keep the initial query key stable so returning to Discover can reuse React
+  // Query's warm cache. A token is still generated for an explicit refresh.
+  const [refreshToken, setRefreshToken] = useState("");
   const [pullDistance, setPullDistance] = useState(0);
   const pullStart = useRef(null);
   const queryParams = useMemo(() => ({ _viewerId: viewerId, filter: activeFilter, limit: 8, refreshToken, topic: activeTopic || undefined, view: "slides" }), [activeFilter, activeTopic, refreshToken, viewerId]);
