@@ -29,6 +29,10 @@
 .home-feed-post .wall-comment-actions svg { width: 12px; height: 12px; }
 .home-feed-post .wall-comment-actions button.is-selected { color: #9ccbff; }
 .home-feed-post .wall-comment-actions button:disabled { opacity: .45; cursor: default; }
+.home-feed-post .wall-comment-actions .wall-comment-more { margin-left: auto; }
+.wall-comment-report-reasons { max-height: min(52dvh, 390px); overflow-y: auto; }
+.wall-comment-report-done { display: grid; gap: 22px; color: rgba(255,255,255,.62); font-size: 14px; line-height: 1.6; }
+.wall-comment-report-done button { justify-self: end; min-width: 88px; border: 1px solid rgba(156,203,255,.5); border-radius: 12px; padding: 10px 18px; color: #9ccbff; font-size: 14px; font-weight: 750; }
 .home-feed-post .wall-comment-thread { margin-top: 6px; padding-left: 9px; border-left: 1px solid rgba(255,255,255,.12); }
 .home-feed-post .wall-comment-thread .wall-comment-row { gap: 8px !important; padding: 7px 0 0 !important; }
 .home-feed-post .wall-comment-thread .fan-avatar { width: 20px; height: 20px; }
