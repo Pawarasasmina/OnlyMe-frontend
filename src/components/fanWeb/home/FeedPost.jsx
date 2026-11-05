@@ -905,7 +905,7 @@ function FeedPost({ post, profileMenu = false }) {
                         {comment.text}
                       </p>
                       {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
-                      {String(commentCreator.id || commentCreator._id || "") !== String(user?.id || user?._id || "") ? <button aria-label="Repost reply" className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingCommentId === comment.id} onClick={() => toggleCommentRepost(comment)} type="button"><FiRepeat /></button> : null}
+                      {String(commentCreator.id || commentCreator._id || "") !== String(user?.id || user?._id || "") ? <><button aria-label="Repost reply" className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingCommentId === comment.id} onClick={() => toggleCommentRepost(comment)} type="button"><FiRepeat /></button><button aria-label="Report comment" onClick={async () => { const reason = window.prompt("Report category: SPAM, HARASSMENT, HATE, DEFAMATION, NUDITY, VIOLENCE, SELF_HARM, SCAM, COPYRIGHT, IMPERSONATION, CHILD_SAFETY, or OTHER", "OTHER"); if (!reason) return; const details = window.prompt("Add a private note for the moderation team (optional):", "") || ""; try { await postService.reportComment(actionPostId, comment.id, { reason: reason.trim().toUpperCase(), details }); showToast("Comment report received"); } catch (requestError) { showToast(requestError.response?.data?.message || "Could not report this comment"); } }} type="button"><FiFlag /></button></> : null}
                     </div>
                   </article>
                 );

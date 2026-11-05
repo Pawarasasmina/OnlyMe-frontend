@@ -8,7 +8,7 @@ import { useState } from "react";
 
 function WelcomePage() {
   __useUiLanguage();
-  const { loading, user } = useAuth();
+  const { loading, resumeTrustedSession, user } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -25,10 +25,20 @@ function WelcomePage() {
     catch (requestError) { setError(requestError.response?.data?.message || "Unable to start onboarding."); }
     finally { setSaving(false); }
   };
+  const continueLastAccount = async () => {
+    setSaving(true); setError("");
+    try {
+      const resumedUser = await resumeTrustedSession();
+      navigate(destinationForUser(resumedUser), { replace: true });
+    } catch {
+      navigate("/login");
+    } finally { setSaving(false); }
+  };
   return (
       <WelcomeCarousel
         error={error}
         onAlreadyHaveAccount={() => navigate("/login")}
+        onContinueLastAccount={continueLastAccount}
         onGetStarted={start}
         saving={saving}
       />

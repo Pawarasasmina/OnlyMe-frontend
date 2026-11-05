@@ -29,7 +29,7 @@ export default function CreatorAppShell() {
   const visibleNav = nav.filter((item) => !item.approval || approved);
   const avatar = resolveMediaUrl(user?.avatar || user?.profilePhoto);
 
-  const signOut = async () => { await logout(); navigate("/login", { replace: true }); };
+  const signOut = async () => { await logout(); navigate("/welcome", { replace: true }); };
   const links = visibleNav.map(({ to, label, icon: Icon }) => (
     <NavLink key={to} onClick={() => setOpen(false)} to={to} className={({ isActive }) => `creator-nav-link ${isActive || (to === "/creator/content" && location.pathname.startsWith("/creator/content")) ? "creator-nav-active" : ""}`}>
       <Icon aria-hidden="true" /><span>{label}</span>

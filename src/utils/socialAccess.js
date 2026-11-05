@@ -26,7 +26,7 @@ export function canAccessAppDuringOnboarding(user) {
 
 export function destinationForUser(user) {
   if (!user) return "/login";
-  if (user.role === "admin") return "/admin/dashboard";
+  if (user.role === "admin") return user.adminTwoFactorEnabled ? (user.adminRole === "FINANCE" ? "/admin/financial" : "/admin/dashboard") : "/admin/security";
   if (!isOnboardingComplete(user)) return onboardingPathFor(user);
   return defaultDestinationFor(user.role);
 }

@@ -87,4 +87,5 @@ export const publicationService = {
   blockSeenCreator: (id) => axiosInstance.put(`/publications/${id}/block-creator`),
   reportSeen: (id, payload) => axiosInstance.post(`/publications/${id}/report`, payload),
   reportWorld: (id, payload) => axiosInstance.post(`/publications/${id}/report`, payload),
+  reportChapter: (id, chapterId, payload) => axiosInstance.post(`/publications/${id}/chapters/${encodeURIComponent(chapterId)}/report`, payload),
 };

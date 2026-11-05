@@ -40,6 +40,14 @@ const ContentComposerPage = lazyPage("../pages/creator/ContentComposerPage");
 const ContentDetailPage = lazyPage("../pages/creator/ContentDetailPage");
 const EarningsPage = lazyPage("../pages/creator/EarningsPage");
 const AdminDashboard = lazyPage("../pages/admin/AdminDashboard");
+const AdminStaffPage = lazyPage("../pages/admin/AdminStaffPage");
+const SafetyCenterPage = lazyPage("../pages/admin/SafetyCenterPage");
+const GovernancePage = lazyPage("../pages/admin/GovernancePage");
+const AdminUserDetailPage = lazyPage("../pages/admin/AdminUserDetailPage");
+const FinanceUserPage = lazyPage("../pages/admin/FinanceUserPage");
+const AdminSecuritySetupPage = lazyPage("../pages/admin/AdminSecuritySetupPage");
+const ModerationAppealPage = lazyPage("../pages/social/ModerationAppealPage");
+const ContentExportPage = lazyPage("../pages/admin/ContentExportPage");
 const AdminAnalyticsPage = lazyPage("../pages/admin/AdminAnalyticsPage");
 const RecommendationSettingsPage = lazyPage("../pages/admin/RecommendationSettingsPage");
 const UserManagement = lazyPage("../pages/admin/UserManagement");
@@ -104,8 +112,8 @@ function RootRedirect() {
   __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user?.role === ROLES.ADMIN) return <Navigate replace to="/admin/dashboard" />;
-  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/login"} />;
+  if (user?.role === ROLES.ADMIN) return <Navigate replace to={!user.adminTwoFactorEnabled ? "/admin/security" : user.adminRole === "FINANCE" ? "/admin/financial" : "/admin/dashboard"} />;
+  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
 function LegacyCreatorProfileRedirect() {
@@ -176,6 +184,7 @@ function AppRoutes() {
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<ActivityPage />} />
+          <Route path="/appeals/:model/:reportId" element={<ModerationAppealPage />} />
           <Route path="/stories/:id" element={<StoryPermalinkPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/saved/:category" element={<SavedPage />} />
@@ -266,9 +275,17 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/security" element={<AdminSecuritySetupPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/recommendations" element={<RecommendationSettingsPage />} />
           <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/users/:userId" element={<AdminUserDetailPage />} />
+          <Route path="/admin/safety" element={<SafetyCenterPage />} />
+          <Route path="/admin/governance" element={<GovernancePage />} />
+          <Route path="/admin/content-export" element={<ContentExportPage />} />
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN"]} />}>
+            <Route path="/admin/staff" element={<AdminStaffPage />} />
+          </Route>
           <Route path="/admin/identity-verifications" element={<IdentityVerificationManagement />} />
           <Route path="/admin/fans" element={<Navigate replace to="/admin/users" />} />
           <Route path="/admin/creators" element={<Navigate replace to="/admin/users" />} />
@@ -282,8 +299,11 @@ function AppRoutes() {
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
-          <Route path="/admin/financial" element={<FinancialAdminPage />} />
-          <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "FINANCE"]} />}>
+            <Route path="/admin/financial" element={<FinancialAdminPage />} />
+            <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
+            <Route path="/admin/finance/users" element={<FinanceUserPage />} />
+          </Route>
           <Route path="/admin/message-reports" element={<AdminReportListPage type="message" />} />
           <Route path="/admin/message-reports/:reportId" element={<AdminReportDetailPage type="message" />} />
           <Route path="/admin/user-reports" element={<AdminReportListPage type="user" />} />

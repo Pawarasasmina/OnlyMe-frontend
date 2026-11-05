@@ -7,8 +7,8 @@ export const adminFinancialService = {
   getPlatformRevenue: () => api.get("/admin/platform-revenue"),
   getExchangeRate: () => api.get("/admin/exchange-rate"),
   updateExchangeRate: (payload) => api.put("/admin/exchange-rate", payload),
+  getCoinTaxRate: () => api.get("/admin/coin-tax-rate"),
+  updateCoinTaxRate: (payload) => api.put("/admin/coin-tax-rate", payload),
   activateWallet: (userId, payload) => api.post(`/admin/wallets/${userId}/activate-ledger`, payload),
   creditStars: (userId, payload) => api.post(`/admin/wallets/${userId}/credit-stars`, payload),
-  refundWorldEntitlement: (id, payload) => api.post(`/admin/world-entitlements/${id}/refund`, payload),
-  refundPremiumMembership: (id, payload) => api.post(`/admin/premium-memberships/${id}/refund-current-period`, payload),
 };

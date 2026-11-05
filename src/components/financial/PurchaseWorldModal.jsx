@@ -13,6 +13,7 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [topUpNeeded, setTopUpNeeded] = useState(0);
   const paidSeen = publication?.kind === "SEEN";
   const experience = publication?.kind === "EXPERIENCE";
   const noun = paidSeen ? "Seen" : experience ? "Experience" : "World";
@@ -20,7 +21,7 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
 
   useEffect(() => {
     if (open && !key) setKey(createIdempotencyKey(paidSeen ? "seen-purchase" : experience ? "experience-purchase" : "world-purchase"));
-    if (!open) { setKey(""); setAccepted(false); setError(""); }
+    if (!open) { setKey(""); setAccepted(false); setError(""); setTopUpNeeded(0); }
   }, [experience, key, open, paidSeen]);
 
   const confirmPurchase = async () => {
@@ -32,9 +33,20 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
     } catch (requestError) {
       const code = financialErrorCode(requestError);
       if (["ALREADY_ENTITLED", "SELF_PURCHASE_NOT_REQUIRED"].includes(code)) { await onSuccess?.(); onClose(); }
-      else if (code === "INSUFFICIENT_STARS") { const short = Math.max(0, Number(publication.pricing?.starsAmount || 0) - Number(wallet.data?.balance || 0)); setError(`You need ✦${short} more Stars.`); }
+      else if (code === "INSUFFICIENT_STARS") { const short = Math.max(0, Number(publication.pricing?.starsAmount || 0) - Number(wallet.data?.balance || 0)); setTopUpNeeded(short); setError(`Add exactly ${short} coins to continue.`); }
       else setError(financialErrorMessage(requestError));
     } finally { setBusy(false); }
+  };
+
+  const topUpAndResume = async () => {
+    setBusy(true); setError("");
+    try {
+      await walletService.topUpExact(topUpNeeded, createIdempotencyKey("purchase-exact-topup"));
+      await purchaseService.purchaseWorld(publication.id, key);
+      await Promise.all([client.invalidateQueries({ queryKey: ["wallet"] }), client.invalidateQueries({ queryKey: ["world-entitlements"] }), client.invalidateQueries({ queryKey: ["world", publication.id] }), client.invalidateQueries({ queryKey: ["unified-profile"] })]);
+      await onSuccess?.(); onClose();
+    } catch (requestError) { setError(financialErrorMessage(requestError)); }
+    finally { setBusy(false); }
   };
 
   const remaining = wallet.data ? wallet.data.balance - Number(publication?.pricing?.starsAmount || 0) : null;
@@ -45,5 +57,6 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
     <div className="mt-4 rounded-xl bg-atseen-bg p-4"><p className="text-xs text-atseen-muted">Current balance</p><WalletBalance /><p className="mt-2 text-xs text-atseen-muted">Estimated remaining balance: {remaining == null ? "Unavailable" : `✦${remaining}`}</p></div>
     <label className="mt-4 flex items-start gap-3 text-sm"><input checked={accepted} className="mt-1" onChange={(event) => setAccepted(event.target.checked)} type="checkbox" /> I confirm this one-time Stars purchase.</label>
     {error ? <p aria-live="assertive" className="mt-4 rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{error}</p> : null}
+    {topUpNeeded > 0 ? <button className="mt-3 w-full rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy} onClick={topUpAndResume} type="button">Add {topUpNeeded} coins and continue</button> : null}
   </FinancialConfirmDialog>;
 }
