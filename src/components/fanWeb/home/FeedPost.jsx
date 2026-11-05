@@ -70,6 +70,15 @@ const commentReportReasons = [
   ["Other", "OTHER"],
 ];
 
+function wallReplyIntent(post) {
+  const type = String(post.postType || post.context || "").trim().toLowerCase();
+  if (type === "need help" || type === "need_help") return "I can help";
+  if (type === "looking for" || type === "looking_for" || post.topic === "Meet people") return "I\u2019m in";
+  if (["offering", "buy & sell", "buy/sell", "buy_sell"].includes(type)) return "Interested";
+  if (["question", "advice"].includes(type)) return "Answer";
+  return "";
+}
+
 const postReactionOptions = [
   { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
   { key: "love", label: "Love", icon: "\u2764\uFE0F" },
@@ -423,6 +432,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     [item.reaction.key]: item.count,
   }), {}), [reactionSummary]);
   const commentCount = Math.max(normalized.commentCount, comments.length);
+  const replyIntent = wallReplyIntent(normalized);
   const visibleReactionSamples = reactionSummary.length
     ? [...reactionSummary].sort((a, b) => Number(b.reaction.key === reaction) - Number(a.reaction.key === reaction) || b.count - a.count).slice(0, 2).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
     : "\u2764\uFE0F \uD83D\uDD25";
@@ -955,7 +965,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             </button>
           </div>
           <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
-            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && (normalized.topic === "Meet people" || normalized.postType === "Need Help" || normalized.context === "Need help") ? <strong className="wall-join-label">{normalized.topic === "Meet people" ? "I\u2019m in" : "I can help"}</strong> : null}
+            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && replyIntent ? <strong className="wall-join-label">{replyIntent}</strong> : null}
           </button>
           {!ownsPost ? <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
