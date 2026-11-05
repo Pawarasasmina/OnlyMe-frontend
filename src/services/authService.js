@@ -20,6 +20,7 @@ export const authService = {
     return axiosInstance.post("/auth/login", request.payload, request.config);
   },
   logout: () => axiosInstance.post("/auth/logout"),
+  refreshSession: () => axiosInstance.post("/auth/refresh"),
   getAccountOwnership: () => axiosInstance.get("/auth/account/ownership"),
   deactivateAccount: () => axiosInstance.post("/auth/account/deactivate"),
   deleteAccount: (payload) => axiosInstance.delete("/auth/account", { data: payload }),

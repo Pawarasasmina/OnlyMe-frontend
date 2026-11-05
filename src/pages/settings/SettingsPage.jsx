@@ -37,7 +37,7 @@ export default function SettingsPage() {
   __useUiLanguage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, trustedDeviceLogout, user } = useAuth();
   const { showToast } = useFanToast();
   const previewStorageKey = `onlyme_creator_preview:${user?.id || user?._id || ""}`;
   const [previewEnabled, setPreviewEnabled] = useState(() => sessionStorage.getItem(previewStorageKey) === "on");
@@ -109,7 +109,10 @@ export default function SettingsPage() {
   const signOut = async () => {
     if (busy) return;
     setBusy(true);
-    try { await logout(); } catch { /* Logout always clears local authentication. */ }
+    try {
+      if (localStorage.getItem("onlyme_one_tap_enabled") === "true") trustedDeviceLogout();
+      else await logout();
+    } catch { /* Logout always clears local authentication. */ }
     finally { queryClient.clear(); navigate("/welcome", { replace: true }); }
   };
 

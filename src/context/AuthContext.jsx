@@ -122,7 +122,25 @@ export function AuthProvider({ children }) {
       const nextUser = response.data?.data?.user ?? null;
       setUser(nextUser);
       return nextUser;
-    },    logout: async () => {
+    },
+    resumeTrustedSession: async () => {
+      const refreshed = await authService.refreshSession();
+      localStorage.setItem(ACCESS_TOKEN_KEY, refreshed.data.data.accessToken);
+      const response = await authService.getProfile();
+      const nextUser = response.data?.data?.user ?? null;
+      if (!nextUser) throw new Error("Saved session is unavailable");
+      localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
+      setUser(nextUser);
+      return nextUser;
+    },
+    trustedDeviceLogout: () => {
+      void analyticsService.endSession().catch(() => {});
+      disconnectMessageSocket();
+      clearStoredAuth();
+      clearAnalyticsSession();
+      setUser(null);
+    },
+    logout: async () => {
       try {
         void analyticsService.endSession().catch(() => {});
         await authService.logout();

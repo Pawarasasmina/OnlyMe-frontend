@@ -36,7 +36,7 @@ function OnboardingVideo({ active, label, src }) {
   return <video aria-label={label} className="pointer-events-none block h-full w-full object-cover" disablePictureInPicture loop muted playsInline preload="metadata" ref={video} src={src} />;
 }
 
-export default function WelcomeCarousel({ error, onAlreadyHaveAccount, onGetStarted, saving }) {
+export default function WelcomeCarousel({ error, onAlreadyHaveAccount: openLogin, onContinueLastAccount, onGetStarted, saving }) {
   const { language, setLanguage } = useLanguage();
   const track = useRef(null);
   const drag = useRef({ active: false, axis: null, startX: 0, startY: 0, startScrollLeft: 0, world: false });
@@ -50,6 +50,7 @@ export default function WelcomeCarousel({ error, onAlreadyHaveAccount, onGetStar
     try { return JSON.parse(localStorage.getItem("onlyme_last_user") || "null"); }
     catch { return null; }
   });
+  const onAlreadyHaveAccount = (event) => event.currentTarget.textContent.includes("Continue as") ? onContinueLastAccount() : openLogin();
 
   const closest = (node) => {
     const center = node.scrollLeft + node.clientWidth / 2;
