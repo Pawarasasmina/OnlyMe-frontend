@@ -15,4 +15,5 @@ test('packs use the backend catalogue and exact backend bonus credits', () => {
   assert.equal(packs.length,1);
   assert.equal(packs[0].total,320);
   assert.equal(packs[0].usd,12.49);
+  assert.equal(packs[0].chargeUsd,12.49);
 });

@@ -2,7 +2,7 @@ import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 import Button from "../common/Button";
@@ -13,6 +13,7 @@ import { resolveMediaUrl } from "../../utils/media";
 function Navbar() {
   __useUiLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const dashboardPath = user?.role === "admin" ? "/admin/dashboard" : "/wall";
   const profilePath = user?.role === "admin" ? "/admin/profile" : "/profile";
@@ -21,6 +22,7 @@ function Navbar() {
   const logoutAndClose = async () => {
     await logout();
     closeMobile();
+    navigate("/welcome", { replace: true });
   };
 
   return (

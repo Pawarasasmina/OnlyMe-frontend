@@ -110,7 +110,7 @@ export default function SettingsPage() {
     if (busy) return;
     setBusy(true);
     try { await logout(); } catch { /* Logout always clears local authentication. */ }
-    finally { queryClient.clear(); navigate("/login", { replace: true }); }
+    finally { queryClient.clear(); navigate("/welcome", { replace: true }); }
   };
 
   const changeOwnershipStep = async (step) => {

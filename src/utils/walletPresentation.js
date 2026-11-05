@@ -10,7 +10,7 @@ export function walletPacks(wallet) {
   return packs.filter(pack => Number.isFinite(Number(pack.usd)) && Number(pack.usd) > 0
     && Number.isSafeInteger(Number(pack.stars)) && Number(pack.stars) > 0
     && Number.isSafeInteger(Number(pack.bonusStars ?? 0)) && Number(pack.bonusStars ?? 0) >= 0)
-    .map(pack => ({ ...pack, usd: Number(pack.usd), bonus: Number(pack.bonusStars ?? 0),
+    .map(pack => ({ ...pack, usd: Number(pack.usd), chargeUsd: Number(pack.totalUsd ?? pack.usd), taxUsd: Number(pack.taxUsd ?? 0), bonus: Number(pack.bonusStars ?? 0),
       total: Number(pack.stars) + Number(pack.bonusStars ?? 0) }));
 }
 

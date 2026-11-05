@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getAnalyticsSessionId } from "../services/analyticsSession";
 import { localizedApiError, localizedValidationErrors } from "../i18n/errors.js";
+import { rememberSessionReturnTo } from "../utils/sessionExpiry.js";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api",
@@ -9,6 +10,16 @@ const axiosInstance = axios.create({
 });
 
 let refreshPromise = null;
+let sessionRedirectStarted = false;
+
+function clearExpiredSessionAndRedirect() {
+  localStorage.removeItem("onlyme_access_token");
+  window.dispatchEvent(new Event("onlyme-auth-cleared"));
+  if (sessionRedirectStarted || window.location.pathname === "/login") return;
+  sessionRedirectStarted = true;
+  rememberSessionReturnTo();
+  window.location.replace("/login");
+}
 
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("onlyme_access_token");
@@ -42,13 +53,11 @@ axiosInstance.interceptors.response.use(
         // A network error or backend 5xx does not prove that the session is
         // invalid. Preserve it so a cold start/outage cannot log the user out.
         if ([401, 403].includes(refreshError.response?.status)) {
-          localStorage.removeItem("onlyme_access_token");
-          window.dispatchEvent(new Event("onlyme-auth-cleared"));
+          clearExpiredSessionAndRedirect();
         }
       }
     } else if (error.response?.status === 401 && isRefreshRequest) {
-      localStorage.removeItem("onlyme_access_token");
-      window.dispatchEvent(new Event("onlyme-auth-cleared"));
+      clearExpiredSessionAndRedirect();
     }
 
     return Promise.reject(error);

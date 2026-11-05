@@ -20,6 +20,4 @@ export const adminOperationsService = {
   financialUser: (id) => api.get(`/admin/finance/users/${id}`),
   holdPayouts: (id, reason) => api.post(`/admin/finance/users/${id}/payout-hold`, { reason }),
   releasePayouts: (id, reason) => api.post(`/admin/finance/users/${id}/payout-release`, { reason }),
-  refundWorld: (id, payload) => api.post(`/admin/world-entitlements/${id}/refund`, payload),
-  refundMembership: (id, payload) => api.post(`/admin/premium-memberships/${id}/refund-current-period`, payload),
 };

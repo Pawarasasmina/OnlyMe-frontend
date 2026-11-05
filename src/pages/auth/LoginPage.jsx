@@ -6,6 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { destinationForUser } from "../../utils/socialAccess";
 import { onboardingService } from "../../services/onboardingService";
 import { clearPreAuthInterests, readPreAuthInterests } from "../../utils/preAuthOnboarding";
+import { consumeSessionReturnTo } from "../../utils/sessionExpiry";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -31,11 +32,11 @@ export default function LoginPage() {
         navigate("/onboarding/account-type", { replace: true });
         return;
       }
-      const requested = location.state?.from?.pathname;
+      const requested = location.state?.from?.pathname || consumeSessionReturnTo();
       navigate(requested && requested !== "/login" ? requested : destinationForUser(user), { replace: true });
     } catch (requestError) {
       const status = requestError.response?.status;
-      if (requestError.response?.data?.code === "ADMIN_2FA_REQUIRED") setTwoFactorRequired(true);
+      if (["ADMIN_2FA_REQUIRED", "TWO_FACTOR_REQUIRED"].includes(requestError.response?.data?.code)) setTwoFactorRequired(true);
       setError(status === 429 ? "Too many attempts. Try again in a few minutes." : requestError.response?.data?.message || "Unable to sign in. Please try again.");
     } finally { setSubmitting(false); }
   };

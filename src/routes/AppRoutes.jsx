@@ -113,7 +113,7 @@ function RootRedirect() {
   const { loading, user } = useAuth();
   if (loading) return null;
   if (user?.role === ROLES.ADMIN) return <Navigate replace to={!user.adminTwoFactorEnabled ? "/admin/security" : user.adminRole === "FINANCE" ? "/admin/financial" : "/admin/dashboard"} />;
-  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/login"} />;
+  return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
 function LegacyCreatorProfileRedirect() {

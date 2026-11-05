@@ -7,7 +7,7 @@ import { useProfileLanguageOptions } from "../../hooks/useProfileLanguageOptions
 import { profileLanguageCode } from "../../utils/profileLanguages";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiClock, FiGlobe } from "react-icons/fi";
+import { FiClock, FiGlobe, FiLock, FiSettings } from "react-icons/fi";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import Loader from "../../components/common/Loader";
@@ -15,6 +15,7 @@ import { profileService } from "../../services/profileService";
 import { normalizeApiError } from "../../utils/apiErrors";
 import SettingsNav from "./SettingsNav";
 import { useLanguage } from "../../hooks/useLanguage";
+import AccountTwoFactorCard from "../../components/settings/AccountTwoFactorCard";
 
 const TIME_ZONES = (() => {
   const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
@@ -129,14 +130,19 @@ function AccountSettingsPage() {
       <SettingsNav showTabs={false} />
       {message ? <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
       {error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{__systemMessage(error)}</p> : null}
-      <form className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5" onSubmit={saveAccount}>
-        <div>
-          <h1 className="text-2xl font-semibold">{t("Account settings")}</h1>
-          <p className="mt-1 text-sm text-brand-mist/60">{t("Account identifiers are shown here as read-only.")}</p>
+      <form className="space-y-6 rounded-3xl border border-white/10 bg-brand-dark/60 p-5 sm:p-6" onSubmit={saveAccount}>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-2xl bg-atseen-blue/10 text-atseen-blue"><FiSettings size={19} /></span>
+          <div>
+            <h1 className="text-2xl font-semibold">{t("Account settings")}</h1>
+            <p className="mt-1 text-sm text-brand-mist/60">{t("Manage your account language and time zone.")}</p>
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-white/[0.07] bg-black/10 p-4">
           <Input disabled label={t("Email")} value={account.email} />
-          <Input disabled label={t("Role")} value={account.role} />
+          <p className="mt-2 text-xs text-brand-mist/50">{t("Your email address cannot be changed here.")}</p>
+        </div>
+        <div className="grid gap-4 border-t border-white/[0.07] pt-5 md:grid-cols-2">
           <label className="block text-sm font-medium text-brand-mist/80">{t("Preferred language")}<select className="mt-2 w-full rounded-xl border border-white/10 bg-brand-dark px-4 py-3 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="preferredLanguage" onChange={updatePreference} value={profileLanguageCode(preferences.preferredLanguage, languageOptions)}>{languageOptions.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}</select></label>
           <TimezoneSelector label={t("Time zone")} onChange={updatePreference} value={preferences.timezone} />
         </div>
@@ -144,15 +150,21 @@ function AccountSettingsPage() {
           <Button disabled={!dirty || accountMutation.isPending} type="submit">{accountMutation.isPending ? t("Saving...") : t("Save account")}</Button>
         </div>
       </form>
-      <form className="space-y-5 rounded-3xl border border-red-400/20 bg-red-500/10 p-5" onSubmit={changePassword}>
-        <div>
-          <h2 className="text-xl font-semibold">{t("Change password")}</h2>
-          <p className="mt-1 text-sm text-brand-mist/70">{t("Your current password is required.")}</p>
+      <AccountTwoFactorCard />
+      <form className="space-y-6 rounded-3xl border border-white/10 bg-brand-dark/60 p-5 sm:p-6" onSubmit={changePassword}>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-2xl bg-atseen-blue/10 text-atseen-blue"><FiLock size={18} /></span>
+          <div>
+            <h2 className="text-xl font-semibold">{t("Change password")}</h2>
+            <p className="mt-1 text-sm text-brand-mist/60">{t("Use your current password to set a new one.")}</p>
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input autoComplete="current-password" label={t("Current password")} name="currentPassword" onChange={updatePassword} required type="password" value={passwords.currentPassword} />
-          <Input autoComplete="new-password" label={t("New password")} name="newPassword" onChange={updatePassword} required type="password" value={passwords.newPassword} />
-          <Input autoComplete="new-password" label={t("Confirm new password")} name="confirmPassword" onChange={updatePassword} required type="password" value={passwords.confirmPassword} />
+        <div className="space-y-4">
+          <div className="md:max-w-[calc(50%-0.5rem)]"><Input autoComplete="current-password" label={t("Current password")} name="currentPassword" onChange={updatePassword} required type="password" value={passwords.currentPassword} /></div>
+          <div className="grid gap-4 border-t border-white/[0.07] pt-4 md:grid-cols-2">
+            <Input autoComplete="new-password" label={t("New password")} name="newPassword" onChange={updatePassword} required type="password" value={passwords.newPassword} />
+            <Input autoComplete="new-password" label={t("Confirm new password")} name="confirmPassword" onChange={updatePassword} required type="password" value={passwords.confirmPassword} />
+          </div>
         </div>
         <div className="flex justify-end">
           <Button disabled={passwordMutation.isPending} type="submit">{passwordMutation.isPending ? t("Changing...") : t("Change password")}</Button>

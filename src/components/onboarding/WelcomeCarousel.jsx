@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiGlobe } from "react-icons/fi";
+import { FiGlobe, FiX } from "react-icons/fi";
 import { useLanguage } from "../../hooks/useLanguage";
 import parisVideo from "../../assets/videos/paris.mp4";
 import gymVideo from "../../assets/videos/gym.mp4";
@@ -46,6 +46,10 @@ export default function WelcomeCarousel({ error, onAlreadyHaveAccount, onGetStar
   const [worldIndex, setWorldIndex] = useState(0);
   const [worldDragOffset, setWorldDragOffset] = useState(0);
   const [worldDragging, setWorldDragging] = useState(false);
+  const [lastUser, setLastUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("onlyme_last_user") || "null"); }
+    catch { return null; }
+  });
 
   const closest = (node) => {
     const center = node.scrollLeft + node.clientWidth / 2;
@@ -174,6 +178,6 @@ export default function WelcomeCarousel({ error, onAlreadyHaveAccount, onGetStar
         <div className="absolute bottom-5 left-4 right-4">{slide.chapter && <p className="text-[10px] font-black tracking-[.16em] text-white/60">{slide.chapter}</p>}{slide.line && <p className="mt-1 text-sm font-bold">{slide.line}</p>}<h1 className={`mt-5 text-[24px] font-black leading-[.98] tracking-[-.035em] ${slide.type === "support" ? "max-w-[210px]" : "max-w-[250px]"}`}>{slide.title}</h1><span className="absolute bottom-0 right-0 text-sm font-black"><i className="not-italic text-[#9CCBFF]">@</i>seen</span></div>
       </article>)}
     </div>
-    <footer className="relative z-10 px-7 pb-[max(24px,env(safe-area-inset-bottom))] pt-3"><div className="mb-5 flex justify-center gap-1.5">{slides.map((slide,index) => <button aria-label={`Open slide ${index + 1}`} className={`h-1.5 rounded-full transition-all ${index === active ? "w-5 bg-[#9CCBFF]" : "w-1.5 bg-white/25"}`} key={slide.title} onClick={() => { setInteractionVersion((value) => value + 1); go(index); }} type="button" />)}</div>{error ? <p className="mb-3 rounded-xl bg-red-400/10 p-3 text-xs text-red-200">{error}</p> : null}<button className="w-full rounded-2xl bg-[#9CCBFF] py-4 text-[15px] font-black text-[#0A0C0F] shadow-[0_12px_28px_rgba(91,166,235,.26),0_0_16px_rgba(91,166,235,.08)] active:scale-[.97] disabled:opacity-50" disabled={saving} onClick={onGetStarted} type="button">{saving ? "Starting…" : "Get started"}</button><button className="mt-3 w-full text-center text-xs text-white/55" onClick={onAlreadyHaveAccount} type="button">Already have an account? <b className="text-white">Log in</b></button></footer>
+    <footer className="relative z-10 px-7 pb-[max(24px,env(safe-area-inset-bottom))] pt-3"><div className="mb-5 flex justify-center gap-1.5">{slides.map((slide,index) => <button aria-label={`Open slide ${index + 1}`} className={`h-1.5 rounded-full transition-all ${index === active ? "w-5 bg-[#9CCBFF]" : "w-1.5 bg-white/25"}`} key={slide.title} onClick={() => { setInteractionVersion((value) => value + 1); go(index); }} type="button" />)}</div>{error ? <p className="mb-3 rounded-xl bg-red-400/10 p-3 text-xs text-red-200">{error}</p> : null}{lastUser ? <><div className="flex w-full items-center gap-3 rounded-2xl bg-[#83BAF2] p-2.5 text-left text-[#07101A] shadow-[0_12px_28px_rgba(91,166,235,.24)]"><button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={onAlreadyHaveAccount} type="button">{lastUser.avatar ? <img alt="" className="h-11 w-11 shrink-0 rounded-full border-2 border-white/70 object-cover" src={lastUser.avatar} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/35 font-black">{lastUser.name?.[0] || "@"}</span>}<span className="min-w-0"><b className="block truncate text-sm">Continue as {lastUser.name || "your account"}</b><small className="block truncate text-[11px] text-[#07101A]/60">{lastUser.username ? `@${lastUser.username}` : lastUser.email}</small></span></button><button aria-label="Forget suggested account" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#07101A]/10" onClick={() => { localStorage.removeItem("onlyme_last_user"); setLastUser(null); }} type="button"><FiX /></button></div><div className="mt-3 flex items-center justify-center gap-5 text-xs"><button className="font-bold text-white" onClick={onGetStarted} type="button">Create new account</button><button className="text-white/55" onClick={onAlreadyHaveAccount} type="button">Log in to another account</button></div></> : <><button className="w-full rounded-2xl bg-[#9CCBFF] py-4 text-[15px] font-black text-[#0A0C0F] shadow-[0_12px_28px_rgba(91,166,235,.26),0_0_16px_rgba(91,166,235,.08)] active:scale-[.97] disabled:opacity-50" disabled={saving} onClick={onGetStarted} type="button">{saving ? "Starting…" : "Get started"}</button><button className="mt-3 w-full text-center text-xs text-white/55" onClick={onAlreadyHaveAccount} type="button">Already have an account? <b className="text-white">Log in</b></button></>}</footer>
   </main>;
 }
