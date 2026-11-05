@@ -26,6 +26,7 @@ import { useRecommendationTracking } from "../../hooks/useRecommendationTracking
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import ContentEmptyState from "../../components/shared/ContentEmptyState";
+import { confirmDialog } from "../../components/shared/AppDialogProvider";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { useAuth } from "../../hooks/useAuth";
 import { useSocialCapabilities } from "../../hooks/useSocialCapabilities";
@@ -1080,8 +1081,13 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     setMenuOpen(false);
     navigate(`/seen/${encodeURIComponent(item.id)}/share/story`, { state: { fromOwnerMenu: true } });
   };
-  const confirmDelete = () => {
-    if (!window.confirm("Delete this Seen?\n\nThis will permanently remove it for everyone.")) return;
+  const confirmDelete = async () => {
+    const accepted = await confirmDialog({
+      title: "Delete Seen",
+      message: "This will permanently remove it for everyone. This action cannot be undone.",
+      confirmLabel: "Delete Seen",
+    });
+    if (!accepted) return;
     deleteMutation.mutate();
   };
   const closeContextMenu = () => setContextMenuOpen(false);

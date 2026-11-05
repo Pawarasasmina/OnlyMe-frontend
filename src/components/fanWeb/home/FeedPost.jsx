@@ -17,6 +17,7 @@ import StoryCreator from "../../stories/StoryCreator";
 import VoiceCommentRecorder from "../../comments/VoiceCommentRecorder";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
+import { confirmDialog } from "../../shared/AppDialogProvider";
 import "./WallNoteMenu.css";
 import "./WallNoteContent.css";
 import WallCommentList from "./WallCommentList";
@@ -398,7 +399,6 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [viewCount, setViewCount] = useState(normalized.viewCount);
   const [moreBusy, setMoreBusy] = useState("");
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
@@ -751,6 +751,22 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     }
   };
 
+  const confirmDeleteNote = async () => {
+    const accepted = await confirmDialog({
+      title: "Delete note",
+      message: "This removes the post from Home and your public posts. This action cannot be undone.",
+      confirmLabel: "Delete note",
+    });
+    if (!accepted || deleteMutation.isPending) return;
+    deleteMutation.mutate(actionPostId, {
+      onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
+      onSuccess: () => {
+        showToast("Note deleted.");
+        navigate("/wall", { replace: true });
+      },
+    });
+  };
+
   const moreAction = (action) => {
     if (action === "resolution") {
       if (moreBusy || resolutionMutation.isPending || !ownsPost || !normalized.canResolve || !requireDatabasePost()) return;
@@ -838,7 +854,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       setEditOpen(true);
     } else if (action === "delete") {
       setMoreOpen(false);
-      setDeleteOpen(true);
+      void confirmDeleteNote();
     } else if (action === "view") {
       void analyticsService.trackContentView({ entityId: actionPostId, entityType: "feed_post", source: "home" });
       window.location.assign(postUrl);
@@ -1167,30 +1183,6 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       />
 
       <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
-
-      <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete note">
-        <p className="text-sm leading-6 text-atseen-muted">This removes the post from Home and your public posts. This action cannot be undone.</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setDeleteOpen(false)} type="button">Cancel</button>
-          <button
-            className="rounded-xl bg-atseen-danger px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
-            disabled={deleteMutation.isPending}
-            onClick={() => {
-              deleteMutation.mutate(actionPostId, {
-                onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
-                onSuccess: () => {
-                  setDeleteOpen(false);
-                  showToast("Note deleted.");
-                  navigate("/wall", { replace: true });
-                },
-              });
-            }}
-            type="button"
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete note"}
-          </button>
-        </div>
-      </FanModal>
 
       <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? "Report received" : "Report post"}>
         {reportDone ? (
