@@ -77,9 +77,12 @@
 .story-reshare-action { position:absolute;z-index:25;bottom:calc(92px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:0;background:rgba(10,13,18,.62);color:#fff;border-radius:999px;backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font-size:13px;line-height:17px;white-space:nowrap;font-weight:750;cursor:pointer; }
 .story-reshare-action svg { width:15px;height:15px;flex:none; }
 .story-reshare-action:focus-visible { outline:2px solid #9CCBFF;outline-offset:3px; }
-.activity-content-tile { display: inline-block; flex: none; width: 48px; height: 60px; border-radius: 8px; overflow: hidden; background: #ffffff10; }
+.activity-content-tile { position:relative;display:block;flex:none;width:42px;height:52px;border-radius:10px;overflow:hidden;background:#181d25;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 4px 12px rgba(0,0,0,.35); }
 .activity-content-tile img, .activity-content-tile video { width: 100%; height: 100%; object-fit: cover; }
-.activity-note-tile { display: block; padding: 5px; font-size: 7px; line-height: 1.3; overflow: hidden; height: 100%; }
+.activity-note-tile { display:block;padding:6px;font-size:6.6px;font-weight:400;line-height:1.32;color:rgba(255,255,255,.78);background:linear-gradient(160deg,#1a2230,#12161d);overflow:hidden;height:100%;box-sizing:border-box;text-align:start; }
+.activity-content-tile.activity-world-tile { display:grid;place-items:center;background:linear-gradient(160deg,#1a2230,#12161d); }
+.activity-world-orb { position:relative;width:23px;height:23px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#e0f3ff,#8cc6f7 38%,#38638b 77%,#233f5d);box-shadow:inset -3px -3px 6px #172b4655,0 0 10px #9ccbff22; }
+.activity-world-orb:after { content:"";position:absolute;width:33px;height:9px;border:1px solid #a8d6ff;top:8px;left:-5px;border-radius:50%;transform:rotate(-18deg); }
 .activity-prototype-right .activity-follow-action { width: auto; height: auto; border-radius: 9px; background: #9CCBFF; color: #0A0C0F; padding: 7px 13px; font-size: 12px; font-weight: 750; white-space: nowrap; }
 .wall-story-ring-status { background: transparent !important; box-shadow: none !important; animation: none !important; }
 .wall-story-presence-label { color: #ffffff80; }

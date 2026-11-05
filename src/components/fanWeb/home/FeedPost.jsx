@@ -301,7 +301,7 @@ function WallPostViewEye() {
   );
 }
 
-function FeedPost({ post, profileMenu = false }) {
+function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
@@ -334,7 +334,7 @@ function FeedPost({ post, profileMenu = false }) {
   const [reaction, setReaction] = useState(normalized.viewerReaction);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [reactionExpanded, setReactionExpanded] = useState(false);
-  const [allComments, setAllComments] = useState(false);
+  const [allComments, setAllComments] = useState(Boolean(focusedCommentId));
   const openReactionPicker = () => { setReactionExpanded(false); setReactionPickerOpen(true); };
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [saved, setSaved] = useState(normalized.viewerSaved);
@@ -347,7 +347,19 @@ function FeedPost({ post, profileMenu = false }) {
   const [shareCaption, setShareCaption] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(Boolean(focusedCommentId));
+  useEffect(() => {
+    if (!focusedCommentId) return undefined;
+    setAllComments(true); setCommentsOpen(true);
+    let target;
+    const frame = requestAnimationFrame(() => {
+      target = [...(articleRef.current?.querySelectorAll("[data-comment-id]") || [])].find(element => element.dataset.commentId === focusedCommentId);
+      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+      target?.classList.add("is-activity-focus");
+    });
+    const timer = setTimeout(() => target?.classList.remove("is-activity-focus"), 4000);
+    return () => { cancelAnimationFrame(frame); clearTimeout(timer); target?.classList.remove("is-activity-focus"); };
+  }, [focusedCommentId]);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [repostingCommentId, setRepostingCommentId] = useState("");
   const toggleCommentRepost = async (comment) => {
