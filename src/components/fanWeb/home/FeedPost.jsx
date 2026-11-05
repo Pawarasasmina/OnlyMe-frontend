@@ -17,6 +17,7 @@ import StoryCreator from "../../stories/StoryCreator";
 import VoiceCommentRecorder from "../../comments/VoiceCommentRecorder";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
+import { confirmDialog } from "../../shared/AppDialogProvider";
 import "./WallNoteMenu.css";
 import "./WallNoteContent.css";
 import WallCommentList from "./WallCommentList";
@@ -68,6 +69,15 @@ const commentReportReasons = [
   ["Child safety", "CHILD_SAFETY"],
   ["Other", "OTHER"],
 ];
+
+function wallReplyIntent(post) {
+  const type = String(post.postType || post.context || "").trim().toLowerCase();
+  if (type === "need help" || type === "need_help") return "I can help";
+  if (type === "looking for" || type === "looking_for" || post.topic === "Meet people") return "I\u2019m in";
+  if (["offering", "buy & sell", "buy/sell", "buy_sell"].includes(type)) return "Interested";
+  if (["question", "advice"].includes(type)) return "Answer";
+  return "";
+}
 
 const postReactionOptions = [
   { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
@@ -398,7 +408,6 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [viewCount, setViewCount] = useState(normalized.viewCount);
   const [moreBusy, setMoreBusy] = useState("");
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
@@ -423,6 +432,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     [item.reaction.key]: item.count,
   }), {}), [reactionSummary]);
   const commentCount = Math.max(normalized.commentCount, comments.length);
+  const replyIntent = wallReplyIntent(normalized);
   const visibleReactionSamples = reactionSummary.length
     ? [...reactionSummary].sort((a, b) => Number(b.reaction.key === reaction) - Number(a.reaction.key === reaction) || b.count - a.count).slice(0, 2).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
     : "\u2764\uFE0F \uD83D\uDD25";
@@ -751,6 +761,22 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     }
   };
 
+  const confirmDeleteNote = async () => {
+    const accepted = await confirmDialog({
+      title: "Delete note",
+      message: "This removes the post from Home and your public posts. This action cannot be undone.",
+      confirmLabel: "Delete note",
+    });
+    if (!accepted || deleteMutation.isPending) return;
+    deleteMutation.mutate(actionPostId, {
+      onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
+      onSuccess: () => {
+        showToast("Note deleted.");
+        navigate("/wall", { replace: true });
+      },
+    });
+  };
+
   const moreAction = (action) => {
     if (action === "resolution") {
       if (moreBusy || resolutionMutation.isPending || !ownsPost || !normalized.canResolve || !requireDatabasePost()) return;
@@ -838,7 +864,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       setEditOpen(true);
     } else if (action === "delete") {
       setMoreOpen(false);
-      setDeleteOpen(true);
+      void confirmDeleteNote();
     } else if (action === "view") {
       void analyticsService.trackContentView({ entityId: actionPostId, entityType: "feed_post", source: "home" });
       window.location.assign(postUrl);
@@ -939,7 +965,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             </button>
           </div>
           <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
-            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && (normalized.topic === "Meet people" || normalized.postType === "Need Help" || normalized.context === "Need help") ? <strong className="wall-join-label">{normalized.topic === "Meet people" ? "I\u2019m in" : "I can help"}</strong> : null}
+            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && replyIntent ? <strong className="wall-join-label">{replyIntent}</strong> : null}
           </button>
           {!ownsPost ? <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
@@ -1167,30 +1193,6 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       />
 
       <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
-
-      <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete note">
-        <p className="text-sm leading-6 text-atseen-muted">This removes the post from Home and your public posts. This action cannot be undone.</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setDeleteOpen(false)} type="button">Cancel</button>
-          <button
-            className="rounded-xl bg-atseen-danger px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
-            disabled={deleteMutation.isPending}
-            onClick={() => {
-              deleteMutation.mutate(actionPostId, {
-                onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
-                onSuccess: () => {
-                  setDeleteOpen(false);
-                  showToast("Note deleted.");
-                  navigate("/wall", { replace: true });
-                },
-              });
-            }}
-            type="button"
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete note"}
-          </button>
-        </div>
-      </FanModal>
 
       <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? "Report received" : "Report post"}>
         {reportDone ? (

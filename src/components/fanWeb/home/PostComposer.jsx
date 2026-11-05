@@ -166,13 +166,10 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
       showToast("Home note creation is only available for creator accounts.");
       return;
     }
-    if (!needLabel && !hasDraft) {
-      setSelectedType(POST_TYPES.find(item => item.value === "Need Help"));
-      setNeedLabel("Need help");
-    }
-    setScreen("compose");
+    // The Wall entry point always starts with intent selection. The composer
+    // is shown only after the user chooses one of the need-type cards.
+    setScreen("needs");
     setComposerOpen(true);
-    window.setTimeout(() => textRef.current?.focus(), 60);
   };
 
   useEffect(() => {
