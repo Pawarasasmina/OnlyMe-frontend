@@ -25,8 +25,9 @@ export default function ActivityContentPreview({ item }) {
     return () => { observer.disconnect(); document.removeEventListener("visibilitychange", sync); reduced.removeEventListener("change", sync); };
   }, [videoUrl]);
   const note = /NOTE|POST/i.test(item.target?.type || "") && (item.target?.preview || item.preview);
+  if (!image && !videoUrl && /WORLD/i.test(item.target?.type || "")) return <span className="activity-content-tile activity-world-tile" aria-label={__msg("activity.worldPreview")}><span className="activity-world-orb" /></span>;
   if (!image && !videoUrl && !note) return null;
   return <span className="activity-content-tile" ref={wrapper}>
-    {videoUrl ? <video aria-label={__msg("activity.contentPreview")} loop muted playsInline poster={image || undefined} preload="metadata" ref={video} src={videoUrl} /> : image ? <img alt={__msg("activity.contentPreview")} loading="lazy" src={image} /> : <small className="activity-note-tile">{note}</small>}
+    {videoUrl ? <video aria-label={__msg("activity.contentPreview")} loop muted playsInline poster={image || undefined} preload="metadata" ref={video} src={videoUrl} /> : image ? <img alt={__msg("activity.contentPreview")} loading="lazy" src={image} /> : <small className="activity-note-tile">{String(note).slice(0, 90)}</small>}
   </span>;
 }

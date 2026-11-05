@@ -16,7 +16,13 @@ export function LanguageProvider({ children }) {
   const account = useRef(accountId);
   account.current = accountId;
   const initialized = useRef(false);
-  if (!initialized.current) { activateLanguage(readLanguage() || deviceUiLanguage()); initialized.current = true; }
+  if (!initialized.current) {
+    const choice = read(CHOICE);
+    const cached = (read(ACCOUNTS) || {})[accountId];
+    const explicitChoice = choice?.explicit && choice.owner === (accountId || "guest") && supportedUiLanguage(choice.language);
+    activateLanguage(explicitChoice || supportedUiLanguage(cached?.language) || readLanguage() || deviceUiLanguage());
+    initialized.current = true;
+  }
   const language = useSyncExternalStore(subscribeLanguage, getLanguage, () => "en");
   const [syncError, setSyncError] = useState(null);
   const saveQueue = useRef(Promise.resolve());
@@ -61,13 +67,18 @@ export function LanguageProvider({ children }) {
     let cancelled = false;
     const cached = (read(ACCOUNTS) || {})[accountId];
     const choice = read(CHOICE);
-    if (cached) activateLanguage(cached.language);
-    if (cached?.pending || choice?.explicit && choice.owner === "guest") {
+    const explicitChoice = choice?.explicit && choice.owner === accountId && supportedUiLanguage(choice.language);
+    if (explicitChoice) {
+      // A choice made on this device must survive refresh and stale server data.
+      activateLanguage(explicitChoice);
+      if (cached?.pending || cached?.language !== explicitChoice) void persist(explicitChoice, accountId);
+    } else if (cached?.pending || choice?.explicit && choice.owner === "guest") {
       const chosen = choice?.explicit && choice.owner === "guest" && (!cached?.pending || choice.at >= (cached.at || 0)) ? choice.language : cached.language;
       activateLanguage(chosen);
       write(CHOICE, { ...choice, language: chosen, owner: accountId });
       void persist(chosen, accountId);
     } else {
+      if (cached) activateLanguage(cached.language);
       const revision = getRevision();
       profileService.getAccountSettings().then(response => {
         if (cancelled || account.current !== accountId || getRevision() !== revision) return;
@@ -77,6 +88,12 @@ export function LanguageProvider({ children }) {
           activateLanguage(stored);
           const accounts = read(ACCOUNTS) || {};
           accounts[accountId] = { language: stored, pending: false }; write(ACCOUNTS, accounts);
+        } else if (preferences?.preferredLanguageExplicit === false) {
+          // Legacy profile-language data is not an app-language selection.
+          activateLanguage(deviceUiLanguage());
+          const accounts = read(ACCOUNTS) || {};
+          delete accounts[accountId];
+          write(ACCOUNTS, accounts);
         }
       }).catch(() => { /* Keep the local language during temporary network failures. */ });
     }

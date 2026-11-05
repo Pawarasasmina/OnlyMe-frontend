@@ -26,9 +26,10 @@ function replacePostInCaches(queryClient, post) {
 }
 
 function removePostFromCaches(queryClient, postId) {
+  queryClient.setQueryData(["wall-note", String(postId)], null);
   queryClient.setQueriesData({ queryKey: ["feed-posts"] }, (current) => {
     if (!current?.items) return current;
-    return { ...current, items: current.items.filter((item) => item.id !== postId) };
+    return { ...current, items: current.items.filter((item) => String(item.originalPostId || item.id) !== String(postId)) };
   });
 }
 
@@ -88,6 +89,7 @@ export function useSetPostResolution() {
     retry: false,
     onSuccess: (post) => {
       queryClient.setQueriesData({ queryKey: postKeys.all }, (current) => patchWallResolution(current, post));
+      queryClient.setQueryData(["wall-note", String(post.originalPostId || post.id)], post);
       // Let the confirmation render before restarting pagination and moving the post.
       if (typeof window !== "undefined") window.setTimeout(() => {
         window.dispatchEvent(new Event("wall-resolution-changed"));
@@ -112,6 +114,25 @@ export function useUpdateFeedPost() {
     },
   });
 }
+
+export function useBumpFeedPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: postService.bumpPost,
+    retry: false,
+    onSuccess: (post) => {
+      replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+      queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
+      if (typeof window !== "undefined") window.setTimeout(() => {
+        window.dispatchEvent(new Event("wall-resolution-changed"));
+        queryClient.resetQueries({ queryKey: ["feed-posts", "feed"] });
+      }, 0);
+    },
+  });
+}
+
 
 export function useDeleteFeedPost() {
   const queryClient = useQueryClient();
@@ -155,12 +176,21 @@ export function useReactToFeedPost() {
 export function useCreateFeedPostComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ postId, text, voice }) => postService.createComment(postId, text, voice),
+    mutationFn: ({ postId, text, voice, parentCommentId }) => postService.createComment(postId, text, voice, parentCommentId),
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
       queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
     },
+  });
+}
+
+export function useReactToFeedPostComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, commentId, reaction }) => postService.reactToComment(postId, commentId, reaction),
+    retry: false,
+    onSuccess: (post) => replacePostInCaches(queryClient, post),
   });
 }
 

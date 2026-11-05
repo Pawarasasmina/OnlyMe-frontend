@@ -1,0 +1,52 @@
+/* design/web.html: noteMenu(), openSheet() and the shared mrow typography. */
+.home-post-more-overlay[role=dialog] {
+  right: auto;
+  left: calc(var(--wall-sheet-center-x, 50vw) - var(--wall-sheet-column-width, 100vw) / 2);
+  width: var(--wall-sheet-column-width, 100vw);
+  padding: 0;
+  background: rgba(4,6,10,.6);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.home-post-more-sheet.home-post-more-sheet {
+  max-height: 88dvh;
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: #0c0f14;
+  padding: 8px 20px calc(36px + env(safe-area-inset-bottom));
+  color: #fff;
+  box-shadow: none;
+  font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  font-size: 16px;
+  line-height: normal;
+}
+.home-post-more-sheet .home-post-more-handle { width:32px;height:4px;margin:4px auto 16px;background:rgba(255,255,255,.28); }
+.home-post-more-sheet h2.home-post-more-title { margin:0 0 10px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:normal; }
+.home-post-more-sheet .home-post-more-list > button {
+  min-height: 0;
+  gap: 14px;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  padding: 11px 0;
+  background: transparent;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: normal;
+  text-align: start;
+}
+.home-post-more-sheet .home-post-more-list > button:last-child { border-bottom:0; }
+.home-post-more-sheet .home-post-more-list .home-post-more-icon { display:flex;align-items:center;justify-content:center;width:28px;flex:0 0 28px; }
+.home-post-more-sheet .home-post-more-icon svg { width:18px;height:18px;color:rgba(255,255,255,.62);stroke-width:1.7; }
+.home-post-more-sheet .home-post-more-icon svg.show-more-eye-icon { width:15px;height:15px;color:#9ccbff;stroke-width:1.7; }
+.home-post-more-sheet .home-post-more-list .home-post-more-copy { display:block;flex:1;min-width:0; }
+.home-post-more-sheet .home-post-more-copy strong { display:block;font-size:13.5px;font-weight:600!important;line-height:normal; }
+.home-post-more-sheet .home-post-more-copy small { display:block;margin:0;color:rgba(255,255,255,.4);font-size:12.5px;font-weight:400!important;line-height:21px; }
+.home-post-more-sheet .home-post-more-list > button.is-danger { color:#ff8080; }
+.home-post-more-sheet .home-post-more-list > button.is-danger svg { color:#ff8080; }
+.home-post-more-sheet .home-post-more-list > button[data-action=report-spam],
+.home-post-more-sheet .home-post-more-list > button[data-action=report-spam] svg { color:#ff8a8a; }
+.home-post-more-sheet .home-post-more-list > button:focus-visible { outline:2px solid #9ccbff;outline-offset:-2px; }
+@media(prefers-reduced-motion:reduce) { .home-post-more-sheet.home-post-more-sheet { animation:none;transform:translateX(-50%); } }
+
+.home-post-more-sheet .home-post-more-list > button[data-action=resolution] svg { color: #8fddaf; width: 15px; height: 15px; stroke-width: 2.2; }

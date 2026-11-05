@@ -32,4 +32,4 @@ export const WALL_FILTER_SORTS = [
   { value: "popular", sourceLabel: "Popular", get label() { return __msg("data.popular"); } },
   { value: "nearby", sourceLabel: "Nearby", get label() { return __msg("discover.nearby"); } },
 ];
-export const DEFAULT_WALL_FILTERS = { type: "all", topic: "all", scope: "worldwide", sort: "recent", location: "", near: "" };
+export const DEFAULT_WALL_FILTERS = { type: "all", topic: "all", rightNow: false, scope: "worldwide", sort: "recent", location: "", near: "" };

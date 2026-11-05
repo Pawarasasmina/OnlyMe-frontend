@@ -1,3 +1,4 @@
+import "./WallNoteStory.css";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
@@ -1235,12 +1236,12 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
               ) : isTextOnlySharedCard(sharedCard) ? (
                 <a
                   aria-label={__msg("contentEntities.open", { value0: sharedCard.title || __msg("stories.voiceNote") })}
-                  className="story-viewer-shared-card is-text-only"
+                  className={`story-viewer-shared-card is-text-only ${sharedCard.kind === "note" ? `is-wall-note is-note-${sharedCard.variant === "long" ? "long" : "compact"}` : ""}`}
                   href={sharedCard.destinationRoute || "/wall"}
                 >
                   <span>
-                    {sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}
-                    <strong>{sharedCard.originalTranscript || sharedCard.title}</strong>
+                    {sharedCard.kind === "note" ? <span className="wall-note-story-byline"><FanAvatar name={sharedCard.authorName || "Creator"} src={sharedCard.authorAvatar} size="h-[15px] w-[15px]" /><em>{sharedCard.eyebrow}</em></span> : sharedCard.eyebrow ? <em>{sharedCard.eyebrow}</em> : null}
+                    <strong>{sharedCard.kind === "note" && sharedCard.variant !== "long" ? `${String(sharedCard.originalTranscript || sharedCard.title).slice(0, 140)}${String(sharedCard.originalTranscript || sharedCard.title).length > 140 ? "\u2026" : ""}` : sharedCard.originalTranscript || sharedCard.title}</strong>
                     {sharedCard.translationText ? (
                       <span className="story-shared-card-translation">
                         <b>{sharedCard.translationLabel ? __msg("stories.translatedTo", { value0: sharedCard.translationLabel }) : __msg("stories.translation")}</b>

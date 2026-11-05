@@ -1,3 +1,5 @@
+import FanAvatar from "../fanWeb/shared/FanAvatar";
+import "./WallNoteStory.css";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -116,7 +118,7 @@ async function renderStoryFile(story, includeInteractive = false) {
   canvas.height = 1920;
   const context = canvas.getContext("2d");
   const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  const colors = STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length];
+  const colors = story.sharedCard?.kind === "note" && story.gradient % STORY_GRADIENTS.length === 0 ? ["#0c1118", "#050608"] : STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length];
   gradient.addColorStop(0, story.photo ? "#263b60" : colors[0]);
   gradient.addColorStop(1, story.photo ? "#07090d" : colors[1]);
   context.fillStyle = gradient;
@@ -365,6 +367,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const draggingMentionIdRef = useRef("");
   const draggingCardRef = useRef(false);
   const sharedCardRef = useRef(null);
+  const cardTapRef = useRef(null);
+  const toggleNoteCard = () => setStory(current => ({ ...current, sharedCard: { ...current.sharedCard, variant: current.sharedCard?.variant === "long" ? "compact" : "long" } }));
   const draggingQuestionRef = useRef(false);
   const drawingRef = useRef(null);
   const photoGestureRef = useRef({ pointers: new Map() });
@@ -768,6 +772,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    if (cardTapRef.current) cardTapRef.current.moved = true;
+    else cardTapRef.current = { x: event.clientX, y: event.clientY, moved: false };
     draggingCardRef.current = true;
     const gesture = objectGesture.current;
     gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -1024,8 +1030,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       else if (!event.shiftKey && (document.activeElement === controls.at(-1) || document.activeElement === stageRef.current)) { event.preventDefault(); controls[0].focus(); }
     }}>
       <section
-        className={`story-composer-stage ${story.sharedCard?.kind === "story" && !story.photo ? "is-story-reshare" : ""}`}
-        onPointerMove={moveDrag}
+        className={`story-composer-stage ${story.sharedCard?.kind === "note" ? `is-wall-note ${story.gradient % STORY_GRADIENTS.length === 0 ? "is-note-default-background" : ""}` : ""} ${story.sharedCard?.kind === "story" && !story.photo ? "is-story-reshare" : ""}`}
+        onPointerMove={(event) => { if (cardTapRef.current && Math.hypot(event.clientX - cardTapRef.current.x, event.clientY - cardTapRef.current.y) > 6) cardTapRef.current.moved = true; moveDrag(event); }}
         onPointerCancel={endDrag}
         onPointerUp={endDrag}
         ref={stageRef}
@@ -1050,9 +1056,9 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         <header className="story-composer-head" hidden={Boolean(editingTextId)}>
           <button aria-label={__msg("stories.closeStoryComposer")} onClick={close} type="button"><FiX /></button>
           <span className="story-composer-lifetime">{__msg("stories.24h")}</span>
-          <button aria-label={__msg("stories.addText")} className={editingTextId ? "is-selected" : ""} onClick={addText} type="button">{story.sharedCard?.kind === "story" ? <FiEdit3 /> : <FiType />}</button>
+          <button aria-label={__msg("stories.addText")} className={editingTextId ? "is-selected" : ""} onClick={addText} type="button">{["story", "note"].includes(story.sharedCard?.kind) ? <FiEdit3 /> : <FiType />}</button>
           <button aria-label={__msg("stories.mentionPeople")} onClick={() => { setEditingTextId(""); setMentionOpen(true); }} type="button">@</button>
-          {(story.photo || story.sharedCard) && story.sharedCard?.kind !== "story" ? <button aria-label={drawingMode ? __msg("stories.stopDrawing") : __msg("stories.drawOnStory")} className={drawingMode ? "is-selected" : ""} onClick={() => { setDrawingMode((current) => !current); setEditingTextId(""); setPaletteOpen(true); }} type="button"><FiEdit3 /></button> : null}
+          {(story.photo || story.sharedCard) && !["story", "note"].includes(story.sharedCard?.kind) ? <button aria-label={drawingMode ? __msg("stories.stopDrawing") : __msg("stories.drawOnStory")} className={drawingMode ? "is-selected" : ""} onClick={() => { setDrawingMode((current) => !current); setEditingTextId(""); setPaletteOpen(true); }} type="button"><FiEdit3 /></button> : null}
           {story.photo || story.sharedCard ? <button aria-label={story.questionSticker ? __msg("stories.removeQuestionSticker") : __msg("stories.addQuestionSticker")} className={story.questionSticker ? "is-selected" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle /></button> : null}
           <button
             aria-label={cameraStatus === "live" ? __msg("stories.switchCamera") : story.photo ? __msg("stories.retakePhoto") : __msg("stories.refreshBackground")}
@@ -1077,7 +1083,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         </header>
         <input accept="image/*,video/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
 
-        {hintOpen && !story.sharedCard && !editingTextId ? (
+        {hintOpen && (!story.sharedCard || story.sharedCard.kind === "note") && !editingTextId ? (
           <div className="story-composer-hint">{__msg("stories.tapToWriteDragToMovePinchToResize")}<button
               aria-label={__msg("stories.dismissComposerHint")}
               onClick={() => {
@@ -1107,21 +1113,24 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
         {story.sharedCard ? (
           <article
-            className={`story-shared-card-preview ${story.sharedCard.kind === "story" ? "is-story-reshare-card" : ""} ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
+            className={`story-shared-card-preview ${story.sharedCard.kind === "note" ? `is-note-${story.sharedCard.variant === "long" ? "long" : "compact"}` : ""} ${story.sharedCard.kind === "story" ? "is-story-reshare-card" : ""} ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
             aria-label={__msg("stories.shared", { value0: story.sharedCard.kind || "post", value1: story.sharedCard.title })}
             onPointerDown={beginCardDrag}
+            onPointerUp={() => { if (story.sharedCard.kind === "note" && cardTapRef.current && !cardTapRef.current.moved) toggleNoteCard(); cardTapRef.current = null; }}
+            onPointerCancel={() => { cardTapRef.current = null; }}
+            aria-expanded={story.sharedCard.kind === "note" ? story.sharedCard.variant === "long" : undefined}
             ref={sharedCardRef}
             tabIndex={0}
-            role="group"
-            onKeyDown={(event) => { if (["+", "=", "-"].includes(event.key)) { event.preventDefault(); setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, (current.sharedCard.scale || 1) + (event.key === "-" ? -.1 : .1))) } })); } }}
+            role={story.sharedCard.kind === "note" ? "button" : "group"}
+            onKeyDown={(event) => { if (story.sharedCard.kind === "note" && ["Enter", " "].includes(event.key)) { event.preventDefault(); toggleNoteCard(); return; } if (["+", "=", "-"].includes(event.key)) { event.preventDefault(); setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, (current.sharedCard.scale || 1) + (event.key === "-" ? -.1 : .1))) } })); } }}
             style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%`, transform: `translate(-50%,-50%) scale(${story.sharedCard.scale || 1})` }}
           >
             {story.sharedCard.kind === "story" ? <StoryReshareCard card={story.sharedCard} /> : story.sharedCard.kind === "question_reply" ? (
               <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<small>{story.sharedCard.subtitle || __msg("fanWeb.question")}</small><strong dir="auto">{story.sharedCard.title}</strong></div>
             ) : isTextOnlySharedCard(story.sharedCard) ? (
               <div>
-                {story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}
-                <strong>{story.sharedCard.originalTranscript || story.sharedCard.title}</strong>
+                {story.sharedCard.kind === "note" ? <span className="wall-note-story-byline"><FanAvatar name={story.sharedCard.authorName || "Creator"} src={story.sharedCard.authorAvatar} size="h-[15px] w-[15px]" /><em>{story.sharedCard.eyebrow}</em></span> : story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}
+                <strong>{story.sharedCard.kind === "note" && story.sharedCard.variant !== "long" ? `${String(story.sharedCard.originalTranscript || story.sharedCard.title).slice(0, 140)}${String(story.sharedCard.originalTranscript || story.sharedCard.title).length > 140 ? "\u2026" : ""}` : story.sharedCard.originalTranscript || story.sharedCard.title}</strong>
                 {story.sharedCard.translationText ? (
                   <span className="story-shared-card-translation">
                     <b>{story.sharedCard.translationLabel ? __msg("stories.translatedTo", { value0: story.sharedCard.translationLabel }) : __msg("stories.translation")}</b>

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-async function fixture(page, { preferredLanguage = "en", fail = false, device = "en-US" } = {}) {
+async function fixture(page, { preferredLanguage = "en", fail = false, device = "en-US", explicit, staleServer = false } = {}) {
   const writes = [];
   await page.addInitScript(value => Object.defineProperty(navigator, "languages", { get: () => [value] }), device);
   await page.route("**/api/**", async route => {
@@ -10,9 +10,9 @@ async function fixture(page, { preferredLanguage = "en", fail = false, device = 
       const body = route.request().postDataJSON();
       writes.push(body);
       if (fail) return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "Unable to save. Try again." }) });
-      preferredLanguage = body.preferredLanguage;
+      if (!staleServer) preferredLanguage = body.preferredLanguage;
     }
-    const data = { account: {}, preferences: { preferredLanguage, timezone: "Asia/Colombo", phoneNumber: "" }, privacySettings: {}, items: [] };
+    const data = { account: {}, preferences: { preferredLanguage, preferredLanguageExplicit: explicit, timezone: "Asia/Colombo", phoneNumber: "" }, privacySettings: {}, items: [] };
     await route.fulfill({ contentType: "application/json", body: JSON.stringify({ success: true, data }) });
   });
   await page.goto("/tests/fixtures/ownership.html");
@@ -76,4 +76,39 @@ test("failed preference save keeps the local language and retries after reconnec
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("atseen_account_languages")).owner.pending)).toBe(false);
   expect(writes.at(-1).preferredLanguage).toBe("fr");
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+});
+
+test("legacy Russian profile language does not replace English after refresh", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("atseen_language", "en");
+    localStorage.setItem("atseen_account_languages", JSON.stringify({ owner: { language: "ru", pending: false } }));
+  });
+  await fixture(page, { preferredLanguage: "ru", explicit: false });
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Language English", exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});
+
+test("confirming already displayed English persists it and stale Russian settings cannot replace it", async ({ page }) => {
+  const writes = await fixture(page, { preferredLanguage: "ru", explicit: false, staleServer: true });
+  await page.getByRole("button", { name: "Language English", exact: true }).click();
+  await page.getByRole("radio", { name: "English", exact: true }).click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0]).toEqual({ preferredLanguage: "en" });
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("atseen_account_languages")).owner.pending)).toBe(false);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Language English", exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});
+
+test("an explicit English choice wins over a conflicting account cache and stale server response", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("atseen_language_choice", JSON.stringify({ owner: "owner", language: "en", explicit: true, at: Date.now() }));
+    localStorage.setItem("atseen_account_languages", JSON.stringify({ owner: { language: "ru", pending: false } }));
+  });
+  await fixture(page, { preferredLanguage: "ru", explicit: true, staleServer: true });
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Language English", exact: true })).toBeVisible();
 });

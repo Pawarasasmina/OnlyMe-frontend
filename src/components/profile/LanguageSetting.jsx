@@ -56,8 +56,9 @@ export default function LanguageSetting({ renderTrigger } = {}) {
     };
   }, [open]);
   const choose = code => {
-    if (code === language) setOpen(false);
-    else { setOpen(false); mutation.mutate(code); }
+    // Confirming the current language is still an explicit preference to save.
+    setOpen(false);
+    mutation.mutate(code);
   };
   const keys = event => {
     if (event.key === "Escape" && !mutation.isPending) { event.preventDefault(); setOpen(false); }
