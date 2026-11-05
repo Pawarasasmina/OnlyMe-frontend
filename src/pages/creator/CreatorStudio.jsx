@@ -9,7 +9,6 @@ import {
   FiArrowLeft,
   FiCheck,
   FiChevronRight,
-  FiCreditCard,
   FiDollarSign,
   FiEye,
   FiMapPin,
@@ -19,6 +18,7 @@ import {
 } from "react-icons/fi";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { creatorService } from "../../services/creatorService";
+import { useAuth } from "../../hooks/useAuth";
 
 const STAR = "\u2726";
 const DOT = "\u00B7";
@@ -104,7 +104,7 @@ function Header({ onBack }) {
         <h1>{__msg("creator.creatorDashboard")}</h1>
         <p>{__msg("admin.thisMonth")} {DOT} {__msg("creator.freeForever")} {STAR}</p>
       </div>
-      <Link aria-label={__msg("profile.wallet")} className="creator-studio-wallet" to="/wallet"><FiCreditCard /></Link>
+      <Link aria-label={__msg("profile.wallet")} className="creator-studio-wallet" to="/wallet"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 7V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-1" /><path d="M21 9h-6a2 2 0 000 6h6a1 1 0 001-1v-4a1 1 0 00-1-1z" /></svg></Link>
     </header>
   );
 }
@@ -422,6 +422,9 @@ function PayoutsSheet({ onClose }) {
 
 export default function CreatorStudio() {
   __useUiLanguage();
+  const { user } = useAuth();
+  const accountType = user?.profileAccountType || (user?.creatorApprovalStatus === "approved" ? "creator" : "personal");
+  const canGrow = ["creator", "business"].includes(accountType);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
@@ -436,6 +439,7 @@ export default function CreatorStudio() {
   const growQuery = useQuery({
     queryKey: ["creator-grow"],
     queryFn: () => creatorService.getGrow().then((response) => response.data.data),
+    enabled: canGrow,
     retry: false,
     staleTime: 30000,
   });
@@ -477,9 +481,9 @@ export default function CreatorStudio() {
     <>
       <main className="creator-studio-prototype">
         <Header onBack={() => navigate(-1)} />
-        {!previewNew ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
+        {!previewNew && canGrow ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
         <Tabs active={activeTab} onChange={setActiveTab} />
-        {previewNew ? <section className="creator-new-preview"><small>{__msg("creator.previewNewCreator")}</small><h2>{__msg("creator.startCreatingStartEarning")}</h2><p>{__msg("creator.linaBeganWithOneUsefulExperienceWelcomedPeopleInto")}</p><div><Link to="/create/experience">{__msg("creator.createAnExperience")}</Link><Link to="/create/world">{__msg("creator.startYourWorld")}</Link><Link to="/grow">{__msg("creator.shareYourGiftLink")}</Link></div><button onClick={() => navigate("/studio", { replace: true })} type="button">{__msg("creator.exitPreview")}</button></section> : null}
+        {previewNew ? <section className="creator-new-preview"><small>{__msg("creator.previewNewCreator")}</small><h2>{__msg("creator.startCreatingStartEarning")}</h2><p>{__msg("creator.linaBeganWithOneUsefulExperienceWelcomedPeopleInto")}</p><div><Link to="/create/experience">{__msg("creator.createAnExperience")}</Link><Link to="/create/world">{__msg("creator.startYourWorld")}</Link>{canGrow ? <Link to="/grow">{__msg("creator.shareYourGiftLink")}</Link> : null}</div><button onClick={() => navigate("/studio", { replace: true })} type="button">{__msg("creator.exitPreview")}</button></section> : null}
         {!previewNew && activeTab === "overview" ? <Overview data={data} onEarnings={() => setActiveTab("earnings")} /> : null}
         {!previewNew && activeTab === "audience" ? <Audience data={data} /> : null}
         {!previewNew && activeTab === "earnings" ? <Earnings data={data} onPayouts={() => setPayoutsOpen(true)} /> : null}

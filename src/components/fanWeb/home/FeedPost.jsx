@@ -1,3 +1,4 @@
+import { wallNoteStoryDraft } from "../../../utils/wallNoteStory";
 import { relativeTime as compactPostAge } from "../../../utils/relativeTime";
 import WallReactionTray from "./WallReactionTray";
 import { wallCloseLabels } from "../../../utils/wallResolution";
@@ -11,12 +12,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiArchive, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMapPin, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
 import FeedPostComposer from "../../posts/FeedPostComposer";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
-import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import ShareSheet from "../../share/ShareSheet";
 import StoryCreator from "../../stories/StoryCreator";
 import VoiceCommentRecorder from "../../comments/VoiceCommentRecorder";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
+import "./WallNoteMenu.css";
+import "./WallNoteContent.css";
+import WallCommentList from "./WallCommentList";
 import VerifiedBadge from "../shared/VerifiedBadge";
 import { useFanToast } from "../shared/FanToastContext";
 import { atseenCreators, atseenReportReasons } from "../../../data/atseenMockData";
@@ -27,9 +30,11 @@ import { repostService } from "../../../services/repostService";
 import { postService } from "../../../services/postService";
 import {
   useSetPostResolution,
+  useBumpFeedPost,
   useBlockFeedPostAuthor,
   useArchiveFeedPost,
   useCreateFeedPostComment,
+  useReactToFeedPostComment,
   useDeleteFeedPost,
   useHideFeedPost,
   useMarkFeedPostViewed,
@@ -215,6 +220,7 @@ function normalizeFeedPost(post = {}) {
   const media = post.media?.length ? post.media : (post.images || []).map((url) => ({ id: url, type: "image", url }));
   const comments = post.comments?.length
     ? post.comments.map((comment) => ({
+      ...comment,
       id: comment.id || comment._id,
       text: comment.text || "",
       audio: comment.audio || null,
@@ -241,6 +247,8 @@ function normalizeFeedPost(post = {}) {
     },
     commentCount: Number(post.commentCount ?? post.comments ?? 0),
     resolvedAt: post.resolvedAt || null,
+    canBump: Boolean(post.canBump),
+    availabilityAge: `${Math.max(0, Math.floor((Date.now() - new Date(post.bumpedAt || post.publishedAt || post.createdAt).getTime()) / 86400000))}d`,
     closedReason: post.closedReason || "",
     isClosed: Boolean(post.isClosed),
     rightNow: Boolean(post.rightNow || post.postType === "Right Now" || post.context === "Right now"),
@@ -257,12 +265,13 @@ function normalizeFeedPost(post = {}) {
     media,
     reactionBreakdown: post.reactionBreakdown || {},
     reactions: post.reactions || [],
+    reactorPreviews: post.reactorPreviews || [],
     result: post.result || "",
     seededComments: comments,
     supportCount: Number(post.supportCount ?? post.handshakes ?? 0),
     shareCount: Number(post.shareCount ?? 0),
     text: post.text || "",
-    timestamp: post.timestamp || compactPostAge(post.publishedAt || post.createdAt),
+    timestamp: post.timestamp || compactPostAge(post.bumpedAt || post.publishedAt || post.createdAt),
     topReactions: post.topReactions || [],
     viewCount: Number(post.viewCount ?? post.views ?? post.viewerCount ?? 0),
     viewerReaction: post.viewerReaction || null,
@@ -304,9 +313,11 @@ function FeedPost({ post, profileMenu = false }) {
   const { showToast } = useFanToast();
   const deleteMutation = useDeleteFeedPost();
   const resolutionMutation = useSetPostResolution();
+  const bumpMutation = useBumpFeedPost();
   const archiveMutation = useArchiveFeedPost();
   const reactionMutation = useReactToFeedPost();
   const commentMutation = useCreateFeedPostComment();
+  const commentReactionMutation = useReactToFeedPostComment();
   const saveMutation = useToggleFeedPostSave();
   const shareMutation = useToggleFeedPostShare();
   const hideMutation = useHideFeedPost();
@@ -330,6 +341,9 @@ function FeedPost({ post, profileMenu = false }) {
   const [shared, setShared] = useState(normalized.viewerShared);
   const [comments, setComments] = useState(normalized.seededComments);
   const [commentText, setCommentText] = useState("");
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [reactingCommentId, setReactingCommentId] = useState("");
+  const commentInputRef = useRef(null);
   const [shareCaption, setShareCaption] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
@@ -361,7 +375,7 @@ function FeedPost({ post, profileMenu = false }) {
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
   const headerName = ownsPost ? "You" : creator.name;
-  const closeLabels = wallCloseLabels(normalized.postType);
+  const closeLabels = wallCloseLabels(normalized.postType, normalized.context);
   const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (normalized.reactions?.length
     ? normalized.reactions
@@ -402,30 +416,15 @@ function FeedPost({ post, profileMenu = false }) {
     canonicalUrl: postUrl,
     contentId: actionPostId,
     contentType: "feed_post",
-    destinationRoute: `/posts/${actionPostId}`,
+    destinationRoute: `/wall?note=${encodeURIComponent(actionPostId)}`,
     imageUrl: isVoiceOnlyPost ? "" : normalized.media?.[0]?.url || "",
     mediaType: firstMediaType,
-    storyDraft: isVoiceOnlyPost ? {
-      caption: voiceTextForStory,
-      imageUrl: "",
-      sharedCard: {
-        destinationRoute: `/posts/${actionPostId}`,
-        displayMode: "text_only",
-        eyebrow: "NOTE",
-        imageUrl: "",
-        kind: "voice_note",
-        originalTranscript: voiceCopyForStory.originalTranscript,
-        subtitle: "from my Wall - tap >",
-        translationLabel: voiceCopyForStory.translationLabel,
-        translationText: voiceCopyForStory.translationText,
-        title: voiceTextForStory || normalized.text || "Voice note",
-      },
-    } : undefined,
+    storyDraft: wallNoteStoryDraft({ id: actionPostId, text: normalized.text, location: normalized.location, own: ownsPost, author: creator, ...(isVoiceOnlyPost ? { transcript: voiceTextForStory, translationText: voiceCopyForStory.translationText, translationLabel: voiceCopyForStory.translationLabel } : {}) }),
     textPreview: normalized.text,
     title: normalized.context
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
       : normalized.text.slice(0, 96) || "Home post",
-  }), [actionPostId, creator.avatar, creator.id, creator.name, creator.username, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.originalTranscript, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory]);
+  }), [actionPostId, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory, ownsPost, creator]);
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
@@ -567,6 +566,7 @@ function FeedPost({ post, profileMenu = false }) {
         onError: (error) => showToast(error?.response?.data?.message || (shared ? "Post could not be unshared." : "Post could not be reposted.")),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
+          queryClient.setQueryData(["wall-note", actionPostId], savedPost);
           showToast(shared ? "Removed from your profile." : "Reposted to your profile.");
         },
       }
@@ -599,12 +599,13 @@ function FeedPost({ post, profileMenu = false }) {
     if (!requireDatabasePost()) return;
 
     commentMutation.mutate(
-      { postId: actionPostId, text: trimmed },
+      { postId: actionPostId, text: trimmed, parentCommentId: replyTarget?.id || null },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Comment could not be saved."),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setCommentText("");
+          setReplyTarget(null);
           showToast("Comment posted.");
         },
       }
@@ -614,12 +615,13 @@ function FeedPost({ post, profileMenu = false }) {
   const submitVoiceComment = (recording) => {
     if (commentMutation.isPending || !requireDatabasePost()) return;
     commentMutation.mutate(
-      { postId: actionPostId, text: recording.text || "Voice comment", voice: recording },
+      { postId: actionPostId, text: recording.text || "Voice comment", voice: recording, parentCommentId: replyTarget?.id || null },
       {
         onError: (error) => showToast(error?.response?.data?.message || "Voice comment could not be saved."),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setVoiceCommentOpen(false);
+          setReplyTarget(null);
           showToast("Voice comment posted.");
         },
       },
@@ -705,6 +707,10 @@ function FeedPost({ post, profileMenu = false }) {
         onSuccess: (savedPost) => {
           setResolvedAt(savedPost.resolvedAt || null);
           setMoreOpen(false);
+          if (savedPost.resolvedAt && (savedPost.postType === "Buy & Sell" || (!savedPost.postType && ["Buy/Sell", "Shopping"].includes(savedPost.context)))) {
+            queryClient.setQueryData(["wall-note", actionPostId], savedPost);
+            navigate(`/wall?note=${encodeURIComponent(actionPostId)}`, { state: { scrollToWallFeed: true } });
+          }
           showToast(savedPost.resolvedAt ? `${closeLabels.state}. Your post and replies stay visible.` : "Post reopened.");
         },
         onError: (error) => showToast(error?.response?.data?.message || "Could not update this request. Please try again."),
@@ -766,6 +772,7 @@ function FeedPost({ post, profileMenu = false }) {
           setMoreBusy("");
           setMoreOpen(false);
           showToast("Note archived. Its statistics are preserved.");
+          navigate("/wall", { replace: true });
         },
       });
     } else if (action === "block") {
@@ -846,8 +853,19 @@ function FeedPost({ post, profileMenu = false }) {
         ) : null}
         </div>
 
-        {ownsPost && normalized.canResolve && !normalized.isClosed && !resolvedAt ? <button className="wall-note-solve" disabled={resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button"><FiCheck aria-hidden="true" />{closeLabels.action}</button> : null}
+        {ownsPost && normalized.canBump && !normalized.isClosed && !resolvedAt ? <div className="wall-note-availability">
+          <span><strong>Still available?</strong><small>Posted {normalized.availabilityAge} ago</small></span>
+          <button className="wall-note-bump" disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => {
+            if (!requireDatabasePost()) return;
+            bumpMutation.mutate(actionPostId, {
+              onSuccess: () => showToast("Bumped — back in front of people nearby"),
+              onError: error => showToast(error?.response?.data?.message || "Could not bump this note. Please try again."),
+            });
+          }} type="button">{bumpMutation.isPending ? "Bumping…" : "Yes, bump"}</button>
+          <button disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button">Close</button>
+        </div> : ownsPost && normalized.canResolve && !normalized.isClosed && !resolvedAt ? <button className="wall-note-solve" disabled={resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button"><FiCheck aria-hidden="true" />{closeLabels.action}</button> : null}
         <div className="home-feed-actions">
+          {normalized.reactorPreviews.length ? <button className="wall-reactor-faces" aria-label="See people who reacted" onClick={() => setReactionsSheetOpen(true)} type="button">{normalized.reactorPreviews.slice(0, 2).map(person => <FanAvatar key={person.id || person._id} name={person.name} size="h-5 w-5" src={person.avatar || person.avatarUrl} />)}</button> : null}
           <div className="relative">
             <button
               aria-label={selectedReaction ? `Change ${selectedReaction.label} reaction` : "React to post"}
@@ -869,7 +887,7 @@ function FeedPost({ post, profileMenu = false }) {
             </button>
           </div>
           <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
-            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{normalized.topic === "Meet people" && !ownsPost && !normalized.isClosed && !resolvedAt ? <strong className="wall-join-label">I’m in</strong> : null}
+            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && (normalized.topic === "Meet people" || normalized.postType === "Need Help" || normalized.context === "Need help") ? <strong className="wall-join-label">{normalized.topic === "Meet people" ? "I\u2019m in" : "I can help"}</strong> : null}
           </button>
           {!ownsPost ? <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
@@ -893,31 +911,21 @@ function FeedPost({ post, profileMenu = false }) {
         {commentsOpen ? (
           <section aria-label="Wall note comments" className="seen-comments-panel wall-comments-panel">
             {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {commentCount} comments</button> : null}
-            <div className="seen-comments-list">
-              {(allComments ? comments : comments.slice(-2)).map((comment) => {
-                const commentCreator = comment.author || (comment.creatorId === "me" ? { name: "You" } : atseenCreators[comment.creatorId]) || { name: "Creator" };
-                return (
-                  <article key={comment.id}>
-                    <FanAvatar alt="" name={commentCreator.name} size="h-6 w-6" src={commentCreator.avatar || commentCreator.avatarUrl} />
-                    <div className="seen-comment-copy">
-                      <p>
-                        <Link to={commentCreator.username ? `/profile/${encodeURIComponent(commentCreator.username)}` : "/wall"}>{commentCreator.name}</Link>
-                        {comment.text}
-                      </p>
-                      {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
-                      {String(commentCreator.id || commentCreator._id || "") !== String(user?.id || user?._id || "") ? <button aria-label="Repost reply" className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingCommentId === comment.id} onClick={() => toggleCommentRepost(comment)} type="button"><FiRepeat /></button> : null}
-                    </div>
-                  </article>
-                );
-              })}
-              {!comments.length ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
-            </div>
-            {normalized.isClosed || resolvedAt ? <p className="wall-replies-closed">Replies are closed. Existing comments stay visible.</p> : null}
-            <form onSubmit={(event) => { event.preventDefault(); if (!normalized.isClosed && !resolvedAt) submitComment(); }}>
+            <WallCommentList comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
+              onReply={(comment) => { setReplyTarget(comment); commentInputRef.current?.focus(); }}
+              onReact={async (comment, value) => {
+                if (reactingCommentId || !requireDatabasePost()) return;
+                setReactingCommentId(comment.id);
+                try { syncSavedPost(await commentReactionMutation.mutateAsync({ postId: actionPostId, commentId: comment.id, reaction: value })); }
+                catch (error) { showToast(error?.response?.data?.message || "Reply reaction could not be saved."); }
+                finally { setReactingCommentId(""); }
+              }} />
+            {replyTarget ? <div className="wall-reply-target" role="status">Replying to <strong>{replyTarget.author?.name || "Creator"}</strong><button aria-label="Cancel reply" onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
+            <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input disabled={normalized.isClosed || Boolean(resolvedAt)} aria-label="Add a Wall note comment" maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder="Add a comment..." value={commentText} />
-              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={normalized.isClosed || Boolean(resolvedAt) || commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
-              <button className="seen-comment-post" disabled={normalized.isClosed || Boolean(resolvedAt) || !commentText.trim() || commentMutation.isPending} type="submit">Post</button>
+              <input ref={commentInputRef} aria-label={replyTarget ? `Reply to ${replyTarget.author?.name || "Creator"}` : "Add a Wall note comment"} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? `Reply to ${replyTarget.author?.name || "Creator"}` : "Add a comment..."} value={commentText} />
+              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
+              <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">Post</button>
             </form>
           </section>
         ) : null}
@@ -1040,15 +1048,16 @@ function FeedPost({ post, profileMenu = false }) {
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              { key: "story", label: "Add to your story", subtitle: "As a card — people tap it and land on your Wall", icon: FiPlusCircle },
+              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen" : closeLabels.action, subtitle: resolvedAt ? "Back among active posts" : "Stays visible with its comments and replies", icon: FiCheck }] : []),
+              { key: "story", label: "Add to your story", subtitle: "as a card \u2014 people tap it and land on your Wall", icon: FiPlusCircle },
+              { key: "repost", label: shared ? "Remove from profile" : "Repost to my profile", subtitle: shared ? "Take it off your showcase" : "Your profile, your list \u2014 add as many as you like", icon: FiRepeat },
               { key: "share", label: "Share", icon: FiSend },
-              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen post" : closeLabels.action, subtitle: "Your post and replies stay visible", icon: FiCheck }] : []),
-              { key: "archive", label: "Archive", subtitle: "Off the showcase, stats stay", icon: FiArchive },
+              { key: "archive", label: "Archive", subtitle: "off the showcase, stats stay", icon: FiArchive },
               { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
             ]
             : [
               { key: "share", label: "Share", icon: FiSend },
-              { key: "show-more", label: "Show more like this", subtitle: "Tunes your feed", icon: ShowMoreEyeIcon },
+              { key: "show-more", label: "Show more like this", subtitle: "tunes your feed", icon: ShowMoreEyeIcon },
               { key: "hide", label: "Hide this note", icon: FiEyeOff },
               { key: "unfollow", label: `Unfollow ${creator.name.split(" ")[0]}`, icon: FiUserMinus },
               { key: "report-spam", label: "Report spam", subtitle: "Spam, misleading links or repeated promotions", icon: FiSlash, danger: true },
@@ -1058,34 +1067,20 @@ function FeedPost({ post, profileMenu = false }) {
             <button
               className={danger || key === "delete" ? "is-danger" : ""}
               disabled={Boolean(moreBusy)}
+              data-action={key}
               key={key}
               onClick={() => moreAction(key)}
               type="button"
             >
-              <Icon aria-hidden="true" />
-              <span><strong>{moreBusy === key ? "Please wait..." : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
+              <span className="home-post-more-icon"><Icon aria-hidden="true" /></span>
+              <span className="home-post-more-copy"><strong>{moreBusy === key ? "Please wait..." : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
             </button>
           ))}
         </div>
       </FanModal>
 
       <StoryCreator
-        initialContent={{
-          sharedCard: {
-            destinationRoute: `/posts/${actionPostId}`,
-            ...(isVoiceOnlyPost ? { displayMode: "text_only" } : {}),
-            eyebrow: isVoiceOnlyPost ? "NOTE" : [creator.name, normalized.context, normalized.location].filter(Boolean).join(" · "),
-            imageUrl: "",
-            kind: isVoiceOnlyPost ? "voice_note" : "post",
-            ...(isVoiceOnlyPost ? {
-              originalTranscript: voiceCopyForStory.originalTranscript,
-              translationLabel: voiceCopyForStory.translationLabel,
-              translationText: voiceCopyForStory.translationText,
-            } : {}),
-            subtitle: isVoiceOnlyPost ? "from my Wall - tap >" : "from the Wall · tap ›",
-            title: isVoiceOnlyPost ? voiceTextForStory || normalized.text || "Voice note" : normalized.text.slice(0, 96) || "View post",
-          },
-        }}
+        initialContent={sharePayload.storyDraft}
         isOpen={storyCreatorOpen}
         onClose={() => setStoryCreatorOpen(false)}
         onPublished={() => {
@@ -1096,7 +1091,7 @@ function FeedPost({ post, profileMenu = false }) {
 
       <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
 
-      <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Post">
+      <FanModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete note">
         <p className="text-sm leading-6 text-atseen-muted">This removes the post from Home and your public posts. This action cannot be undone.</p>
         <div className="mt-5 flex justify-end gap-2">
           <button className="rounded-xl border border-atseen-line px-4 py-3 text-sm font-bold text-atseen-text" onClick={() => setDeleteOpen(false)} type="button">Cancel</button>
@@ -1108,13 +1103,14 @@ function FeedPost({ post, profileMenu = false }) {
                 onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
                 onSuccess: () => {
                   setDeleteOpen(false);
-                  showToast("Post deleted.");
+                  showToast("Note deleted.");
+                  navigate("/wall", { replace: true });
                 },
               });
             }}
             type="button"
           >
-            {deleteMutation.isPending ? "Deleting..." : "Delete Post"}
+            {deleteMutation.isPending ? "Deleting..." : "Delete note"}
           </button>
         </div>
       </FanModal>

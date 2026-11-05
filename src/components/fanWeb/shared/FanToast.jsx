@@ -83,6 +83,7 @@ export function FanToastProvider({ children }) {
         {toast.action ? <button onClick={toast.onAction} type="button">{toast.action}</button> : null}
       </div> : <div
         aria-live="polite"
+        style={toast.variant === "account-switch" ? { zIndex: 260 } : undefined}
         className={`pointer-events-none fixed left-1/2 z-[60] max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full border border-atseen-line bg-[#161B24] px-5 py-3 text-center text-xs font-semibold text-atseen-text transition duration-200 ${
           `profile-draft-saved-toast ${toast.message ? "opacity-100" : "invisible opacity-0"}`
         }`}
