@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiHeart, FiRepeat } from "react-icons/fi";
+import { FiHeart, FiMoreHorizontal, FiRepeat } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import WallReactionTray from "./WallReactionTray";
 
-function CommentRow({ comment, children, onReply, onReact, onRepost, options, userId, repostingId, reactingId }) {
+function CommentRow({ comment, children, onReply, onReact, onRepost, onOpenOptions, options, userId, repostingId, reactingId }) {
   const anchor = useRef(null);
   const [picker, setPicker] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -22,7 +22,10 @@ function CommentRow({ comment, children, onReply, onReact, onRepost, options, us
       <div className="wall-comment-actions">
         <button aria-label={`React to ${name}'s reply`} aria-pressed={Boolean(selected)} className={selected ? "is-selected" : ""} disabled={reactingId === comment.id} onClick={() => setPicker(true)} ref={anchor} type="button">{selected ? <span aria-hidden="true">{selected.icon}</span> : <FiHeart aria-hidden="true" />}<span>{count}</span></button>
         <button onClick={() => onReply(comment)} type="button">Reply</button>
-        {String(author.id || author._id || "") !== String(userId || "") ? <button aria-label="Repost reply" aria-pressed={Boolean(comment.viewerReposted)} className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingId === comment.id} onClick={() => onRepost(comment)} type="button"><FiRepeat aria-hidden="true" /></button> : null}
+        {String(author.id || author._id || "") !== String(userId || "") ? <>
+          <button aria-label="Repost reply" aria-pressed={Boolean(comment.viewerReposted)} className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingId === comment.id} onClick={() => onRepost(comment)} type="button"><FiRepeat aria-hidden="true" /></button>
+          <button aria-label={`More options for ${name}'s comment`} className="wall-comment-more" onClick={() => onOpenOptions(comment)} title="Comment options" type="button"><FiMoreHorizontal aria-hidden="true" /></button>
+        </> : null}
       </div>
       {children ? <div className="wall-comment-thread">{children}</div> : null}
     </div>

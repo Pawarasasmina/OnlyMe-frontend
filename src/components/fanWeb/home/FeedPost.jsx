@@ -54,6 +54,21 @@ const reactions = [
   { key: "fire", label: "Fire", icon: "🔥" },
 ];
 
+const commentReportReasons = [
+  ["Spam", "SPAM"],
+  ["Harassment", "HARASSMENT"],
+  ["Hate", "HATE"],
+  ["Nudity", "NUDITY"],
+  ["Sexual content", "SEXUAL_CONTENT"],
+  ["Violence", "VIOLENCE"],
+  ["Self-harm", "SELF_HARM"],
+  ["Scam", "SCAM"],
+  ["Copyright", "COPYRIGHT"],
+  ["Impersonation", "IMPERSONATION"],
+  ["Child safety", "CHILD_SAFETY"],
+  ["Other", "OTHER"],
+];
+
 const postReactionOptions = [
   { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
   { key: "love", label: "Love", icon: "\u2764\uFE0F" },
@@ -362,6 +377,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   }, [focusedCommentId]);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [repostingCommentId, setRepostingCommentId] = useState("");
+  const [commentReport, setCommentReport] = useState(null);
+  const [commentReportStage, setCommentReportStage] = useState("options");
+  const [commentReportBusy, setCommentReportBusy] = useState(false);
   const toggleCommentRepost = async (comment) => {
     if (!comment?.id || repostingCommentId) return;
     setRepostingCommentId(comment.id);
@@ -376,7 +394,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     }
   };
   const [moreOpen, setMoreOpen] = useState(false);
-  const wallSheetPosition = useWallSheetPosition(moreOpen || reactionPickerOpen || reactionsSheetOpen);
+  const wallSheetPosition = useWallSheetPosition(moreOpen || reactionPickerOpen || reactionsSheetOpen || Boolean(commentReport));
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -711,6 +729,28 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     );
   };
 
+  const closeCommentReport = () => {
+    if (commentReportBusy) return;
+    setCommentReport(null);
+    setCommentReportStage("options");
+  };
+
+  const reportComment = async (reason) => {
+    if (!commentReport?.id || commentReportBusy || !requireDatabasePost()) return;
+    setCommentReportBusy(true);
+    try {
+      await postService.reportComment(actionPostId, commentReport.id, {
+        reason,
+      });
+      setCommentReportStage("done");
+      showToast("Comment report submitted.");
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment report could not be submitted.");
+    } finally {
+      setCommentReportBusy(false);
+    }
+  };
+
   const moreAction = (action) => {
     if (action === "resolution") {
       if (moreBusy || resolutionMutation.isPending || !ownsPost || !normalized.canResolve || !requireDatabasePost()) return;
@@ -924,6 +964,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
           <section aria-label="Wall note comments" className="seen-comments-panel wall-comments-panel">
             {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {commentCount} comments</button> : null}
             <WallCommentList comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
+              onOpenOptions={(comment) => { setCommentReport(comment); setCommentReportStage("options"); }}
               onReply={(comment) => { setReplyTarget(comment); commentInputRef.current?.focus(); }}
               onReact={async (comment, value) => {
                 if (reactingCommentId || !requireDatabasePost()) return;
@@ -944,6 +985,30 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       </article>
 
       {voiceCommentOpen ? <VoiceCommentRecorder busy={commentMutation.isPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={submitVoiceComment} /> : null}
+
+      {commentReport ? (
+        <div className="seen-feed-options-layer" style={wallSheetPosition}>
+          <button aria-label="Close comment options" className="seen-feed-options-scrim" disabled={commentReportBusy} onClick={closeCommentReport} type="button" />
+          <section aria-label="Comment options" aria-modal="true" className="seen-feed-options-sheet" role="dialog">
+            <span aria-hidden="true" className="seen-feed-options-handle" />
+            <h2>{commentReportStage === "options" ? "Comment" : commentReportStage === "done" ? "Report received" : "Report comment"}</h2>
+            {commentReportStage === "options" ? (
+              <div className="seen-feed-options-list">
+                <button className="is-danger" onClick={() => setCommentReportStage("reasons")} type="button"><FiFlag aria-hidden="true" /><span><b>Report</b></span></button>
+              </div>
+            ) : commentReportStage === "done" ? (
+              <div className="wall-comment-report-done">
+                <p>Our team will review this comment. The author will not know who reported it.</p>
+                <button onClick={closeCommentReport} type="button">Done</button>
+              </div>
+            ) : (
+              <div className="seen-feed-options-list wall-comment-report-reasons">
+                {commentReportReasons.map(([label, reason]) => <button disabled={commentReportBusy} key={reason} onClick={() => reportComment(reason)} type="button"><span><b>{label}</b></span></button>)}
+              </div>
+            )}
+          </section>
+        </div>
+      ) : null}
 
       <ShareSheet isOpen={sendOpen} onClose={() => setSendOpen(false)} payload={sharePayload} />
 
