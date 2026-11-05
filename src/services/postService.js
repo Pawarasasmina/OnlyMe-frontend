@@ -66,6 +66,7 @@ export const postService = {
     return normalizePost(response.data?.data?.post);
   },
   setResolution: async (postId, solved) => normalizePost((await axiosInstance.put(`/posts/${encodeURIComponent(postId)}/resolution`, { solved })).data?.data?.post),
+  bumpPost: async (postId) => normalizePost((await axiosInstance.post(`/posts/${encodeURIComponent(postId)}/bump`)).data?.data?.post),
   updatePost: async (postId, payload) => {
     const response = await axiosInstance.put(`/posts/${postId}`, payload);
     return normalizePost(response.data?.data?.post);
@@ -74,10 +75,12 @@ export const postService = {
     const response = await axiosInstance.put(`/posts/${postId}/reaction`, { reaction });
     return normalizePost(response.data?.data?.post);
   },
-  createComment: async (postId, text, voice = null) => {
-    const body = voice?.audioBlob ? new FormData() : { text };
+  reactToComment: async (postId, commentId, reaction) => normalizePost((await axiosInstance.put(`/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}/reaction`, { reaction })).data?.data?.post),
+  createComment: async (postId, text, voice = null, parentCommentId = null) => {
+    const body = voice?.audioBlob ? new FormData() : { text, parentCommentId };
     if (voice?.audioBlob) {
       body.append("voice", voice.audioBlob, "voice-comment.webm");
+      if (parentCommentId) body.append("parentCommentId", parentCommentId);
       if (text) body.append("text", text);
       if (voice.waveform?.length) body.append("waveform", JSON.stringify(voice.waveform));
     }

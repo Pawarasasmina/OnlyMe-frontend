@@ -1,0 +1,33 @@
+/* Wall share layout from web.html: sendSheet(), lnkCard(), sendGrid(). */
+.share-sheet-overlay.is-wall-share { inset: 0 auto 0 calc(var(--share-sheet-center-x,50vw) - var(--share-sheet-column-width,100vw)/2); width: var(--share-sheet-column-width,100vw); align-items: flex-end; justify-content: stretch; padding: 0; background: rgba(4,6,10,.6); backdrop-filter: none; }
+.share-sheet-overlay.is-wall-share .share-sheet-panel { position: relative !important; inset: auto !important; transform: none !important; width: 100% !important; max-width: 100% !important; max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; padding: 20px 20px max(36px,env(safe-area-inset-bottom)); border: 0; border-radius: 16px 16px 0 0; background: #0c0f14; box-shadow: none; animation: none; font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif; }
+.share-sheet-overlay.is-wall-share .share-sheet-handle { display: none; }
+.share-sheet-overlay.is-wall-share .share-sheet-header { min-height: 0; margin: 0 0 2px; }
+.share-sheet-overlay.is-wall-share .share-sheet-header h2 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; line-height: 1.2; }
+.share-sheet-overlay.is-wall-share .share-sheet-close { display: none; }
+.share-sheet-overlay.is-wall-share .share-chat-preview { margin: 10px 0 16px; }
+.share-sheet-overlay.is-wall-share .share-chat-preview > p,.share-sheet-overlay.is-wall-share .share-send-label { margin: 2px 0 8px; color: rgba(255,255,255,.4); font-size: 10.5px; font-weight: 700; letter-spacing: 1px; line-height: normal; }
+.share-sheet-overlay.is-wall-share .share-chat-card { width: 84%; margin: 0 0 0 auto; border-radius: 20px 20px 6px 20px; background: #1b2230; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.share-sheet-overlay.is-wall-share .share-chat-media { height: auto; aspect-ratio: 1.91 / 1; background: radial-gradient(120% 120% at 50% 0%,#24344f,#0e141e); }
+.share-sheet-overlay.is-wall-share .share-chat-card.has-media .share-chat-avatar,.share-sheet-overlay.is-wall-share .share-chat-media-shade { display: none; }
+.share-sheet-overlay.is-wall-share .share-chat-avatar { width: 68px; height: 68px; border: 0; box-shadow: 0 0 0 3px rgba(156,203,255,.45); }
+.share-sheet-overlay.is-wall-share .share-chat-copy { display: block; padding: 10px 13px 11px; background: #1b2230; }
+.share-sheet-overlay.is-wall-share .share-chat-copy strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; color: #fff; font-size: 13.5px; font-weight: 700; line-height: 1.3; }
+.share-sheet-overlay.is-wall-share .share-chat-copy > span { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 400; line-height: 1.4; color: rgba(255,255,255,.62); }
+.share-sheet-overlay.is-wall-share .share-chat-copy small { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 10.5px; font-weight: 400; line-height: normal; color: rgba(255,255,255,.4); }
+.share-sheet-overlay.is-wall-share .share-search { height: auto; min-height: 0; padding: 10px 15px; margin: 0 0 13px; border: 1px solid rgba(255,255,255,.09); border-radius: 999px; background: #101319; }
+.share-sheet-overlay.is-wall-share .share-search input { padding: 0; font-size: 13px; font-weight: 400; line-height: 1.4; }
+.share-sheet-overlay.is-wall-share .share-recipient-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px 6px; margin: 0; padding: 0; }
+.share-sheet-overlay.is-wall-share .share-recipient-item { min-width: 0; padding: 0; }
+.share-sheet-overlay.is-wall-share .share-recipient-ring { width: 58px; height: 58px; margin: 0 auto; padding: 2px; background: linear-gradient(45deg,#6fa9e8,#9ccbff,#d6eaff); box-shadow: none; }
+.share-sheet-overlay.is-wall-share .share-recipient-ring > span:first-child { width: 54px !important; height: 54px !important; border: 2px solid #1c212b; }
+.share-sheet-overlay.is-wall-share .share-recipient-item.is-selected .share-recipient-ring { background: linear-gradient(45deg,#6ecf97,#9ccbff); }
+.share-sheet-overlay.is-wall-share .share-recipient-name { margin-top: 6px; font-size: 10px; font-weight: 400; line-height: normal; color: rgba(255,255,255,.62); }
+.share-sheet-overlay.is-wall-share .share-recipient-badge { right: -2px; bottom: -1px; width: 19px; height: 19px; font-size: 9.5px; }
+.share-sheet-overlay.is-wall-share .share-external-row { display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 8px; overflow-x: auto; margin-top: 16px; padding: 14px 0 0; border-top: 1px solid rgba(255,255,255,.055); scrollbar-width: none; }
+.share-sheet-overlay.is-wall-share .share-external-action { flex: 0 0 52px; width: 52px; min-width: 52px; }
+.share-sheet-overlay.is-wall-share .share-external-action > span { width: 44px; height: 44px; margin: 0 auto; background: #171c24; border: 1px solid rgba(255,255,255,.09); color: rgba(255,255,255,.62); font-size: 19px; }
+.share-sheet-overlay.is-wall-share .share-external-action small { display: block; margin-top: 5px; width: 100%; font-size: 9px; font-weight: 650; color: rgba(255,255,255,.4); white-space: nowrap; }
+.share-sheet-overlay.is-wall-share .share-copy-notice { flex-basis: 100%; }
+@media(max-width:480px) { .share-sheet-overlay.is-wall-share .share-search input { font-size: 16px; } }
+.share-sheet-overlay.is-wall-share .share-external-action > span > svg { width: 19px; height: 19px; flex: 0 0 19px; }

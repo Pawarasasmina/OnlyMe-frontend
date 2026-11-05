@@ -4,7 +4,7 @@ import { readWallDraft, saveWallDraft, clearWallDraft } from "../../../services/
 import WallTopicSheet from "./WallTopicSheet";
 import WallNeedPicker from "./WallNeedPicker";
 import { useEffect, useRef, useState } from "react";
-import { FiMic, FiImage, FiMoreHorizontal, FiX, FiArrowLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
+import { FiMic, FiImage, FiMoreHorizontal, FiX, FiChevronLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
 import { useAuth } from "../../../hooks/useAuth";
@@ -57,7 +57,7 @@ function previewFile(file) {
   };
 }
 
-function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, openSignal = "", defaultLocation = "", onPublished }) {
+function PostComposer({ initialQuestion = null, initialType = null, initialTopic = null, initialRightNow = false, currentUser, onComposeOpened, openSignal = "", defaultLocation = "", onPublished }) {
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const owner = String(user?.id || user?._id || "");
@@ -119,11 +119,20 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
 
   useEffect(() => {
     if (!openSignal) return;
-    setScreen(readWallDraft(owner)?.needLabel || readWallDraft(owner)?.text || readWallDraft(owner)?.files?.length || readWallDraft(owner)?.voice || initialQuestion !== null ? "compose" : "needs");
+    const draft = readWallDraft(owner);
+    const hasDraft = draft?.needLabel || draft?.text || draft?.files?.length || draft?.voice;
+    const requestedType = POST_TYPES.find(item => item.value === initialType);
+    if (!hasDraft) {
+      if (requestedType) { setSelectedType(requestedType); setNeedLabel(requestedType.value); }
+      setRightNow(initialRightNow || requestedType?.value === "Right Now");
+      if (initialTopic) setTopic(initialTopic);
+      setLocation(defaultLocation);
+    }
+    setScreen(hasDraft || requestedType || initialQuestion !== null ? "compose" : "needs");
     setComposerOpen(true);
     onComposeOpened?.();
     window.setTimeout(() => textRef.current?.focus(), 80);
-  }, [onComposeOpened, openSignal, owner, initialQuestion]);
+  }, [onComposeOpened, openSignal, owner, initialQuestion, initialType, initialTopic, initialRightNow, defaultLocation]);
 
   useEffect(() => {
     if (!composerOpen) return;
@@ -157,7 +166,11 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
       showToast("Home note creation is only available for creator accounts.");
       return;
     }
-    setScreen((needLabel || text.trim() || files.length || voiceAttachment) ? "compose" : "needs");
+    if (!needLabel && !hasDraft) {
+      setSelectedType(POST_TYPES.find(item => item.value === "Need Help"));
+      setNeedLabel("Need help");
+    }
+    setScreen("compose");
     setComposerOpen(true);
     window.setTimeout(() => textRef.current?.focus(), 60);
   };
@@ -357,7 +370,7 @@ function PostComposer({ initialQuestion = null, currentUser, onComposeOpened, op
           }}
         >
           <header className="wall-create-header">
-            <button aria-label="Back to needs" disabled={createMutation.isPending} onClick={() => setScreen("needs")} type="button"><FiArrowLeft /></button>
+            <button aria-label="Back to needs" disabled={createMutation.isPending} onClick={() => setScreen("needs")} type="button"><FiChevronLeft data-ui-directional="true" /></button>
             <h1>{categoryLabel}</h1>
             <button className="wall-prototype-post" disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? "Posting..." : "Post"}</button>
           </header>

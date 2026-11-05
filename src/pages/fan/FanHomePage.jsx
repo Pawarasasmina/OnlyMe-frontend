@@ -20,9 +20,10 @@ import { useAuth } from "../../hooks/useAuth";
 import { useDiscoverQuery } from "../../hooks/useDiscoverQuery";
 import { useFeedPosts } from "../../hooks/useFeedPosts";
 import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
+import { postService } from "../../services/postService";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
-import ContentEmptyState from "../../components/shared/ContentEmptyState";
+import WallEmptyState from "../../components/fanWeb/home/WallEmptyState";
 
 const HOME_FILTERS = [
   { key: "all", get label() { return __msg("fanWeb.all"); } },
@@ -48,12 +49,6 @@ function creatorLocation(creator = {}) {
   return [creator.city || creator.location?.city, creator.country || creator.location?.country].filter(Boolean).join(", ");
 }
 
-function HomeEmptyState({ activeFilter, canPost, onShowAll }) {
-  __useUiLanguage();
-  const filtered = activeFilter !== "all";
-  return <ContentEmptyState message={filtered ? __msg("fan.noPostsMatchTheseFiltersYetTryAnotherType") : __msg("fan.giveYourWallSomeLifeWithANoteOr")} primaryAction={filtered ? { label: __msg("fan.showAllPosts"), onClick: onShowAll } : canPost ? { label: __msg("fan.createYourFirstPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} secondaryAction={filtered || canPost ? { label: __msg("profile.discoverPeople"), to: "/discover" } : { label: __msg("fan.viewSeen"), to: "/seen" }} title={filtered ? __msg("fan.nothingHereYet") : __msg("fan.createYourFirstPost")} variant="wall" />;
-}
-
 function FanHomePage() {
   __useUiLanguage();
   const { status, setStatus } = useOutletContext();
@@ -67,7 +62,7 @@ function FanHomePage() {
     ? searchParams.get("composeRequest") || "note"
     : "";
   const consumeCompose = useCallback(() => setSearchParams((current) => {
-    const next = new URLSearchParams(current); next.delete("compose"); next.delete("composeRequest"); next.delete("question"); return next;
+    const next = new URLSearchParams(current); next.delete("compose"); next.delete("composeRequest"); next.delete("question"); next.delete("composeType"); next.delete("composeTopic"); next.delete("composeRightNow"); return next;
   }, { replace: true }), [setSearchParams]);
   const handlePublished = () => {
     setCursor({ scope: JSON.stringify({ ...readWallFilters(new URLSearchParams()), filter: "all" }), page: 1 });
@@ -87,12 +82,22 @@ function FanHomePage() {
     enabled: false,
     initialData: { items: [] },
   });
+  const noteId = searchParams.get("note") || "";
+  const focusedNote = useQuery({
+    queryKey: ["wall-note", noteId],
+    queryFn: () => postService.getPost(noteId),
+    enabled: Boolean(user) && /^[a-f0-9]{24}$/i.test(noteId),
+    retry: false,
+  });
   const feedPosts = useMemo(() => {
     const items = feedState.scope === queryScope ? feedState.items : [];
     const selection = JSON.parse(queryScope);
     const unfiltered = selection.filter === "all" && Object.entries(DEFAULT_WALL_FILTERS).every(([key, value]) => selection[key] === value);
-    return unfiltered ? prependCreatedWallPosts(items, createdQuery.data?.items || []) : items;
-  }, [feedState, queryScope, createdQuery.data]);
+    const list = unfiltered ? prependCreatedWallPosts(items, createdQuery.data?.items || []) : items;
+    const selected = focusedNote.data;
+    if (!selected?.id) return list;
+    return [selected, ...list.filter(item => String(item.originalPostId || item.id) !== String(selected.id))];
+  }, [feedState, queryScope, createdQuery.data, focusedNote.data]);
   const sentinelRef = useRef(null);
 
   const profileQuery = useQuery({
@@ -176,7 +181,7 @@ function FanHomePage() {
   const resetFilters = () => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
-      for (const key of ["type", "topic", "filter", "q"]) next.delete(key);
+      for (const key of ["note", "type", "topic", "rightNow", "filter", "q"]) next.delete(key);
       return next;
     }, { replace: true });
   };
@@ -188,8 +193,9 @@ function FanHomePage() {
       return next;
     }, { replace: true });
   }, [setSearchParams]);
-  const activeCount = Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(activeFilter !== "all") + Number(Boolean(searchParams.get("q")));
+  const activeCount = Number(filters.rightNow) + Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(activeFilter !== "all") + Number(Boolean(searchParams.get("q")));
   const selectedLabels = [
+    filters.rightNow ? __msg("constants.rightNow") : "",
     filters.type !== "all" ? ({ need_help: __msg("fanWeb.needHelp"), right_now: __msg("constants.rightNow"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[filters.type] || WALL_FILTER_TYPES.find((item) => item.value === filters.type)?.label) : "",
     filters.topic !== "all" ? WALL_FILTER_TOPICS.find((item) => item.value === filters.topic)?.label : "",
   ].filter(Boolean);
@@ -213,10 +219,10 @@ function FanHomePage() {
         />
         <StoriesRow currentUser={display} onStatusChange={setStatus} />
         <WallSeenTodayNotice />
-        {canPost ? <PostComposer initialQuestion={searchParams.get("question")} key={user?.id || user?._id} onComposeOpened={consumeCompose} onPublished={handlePublished} defaultLocation={feedLocation || profileCity} currentUser={display} openSignal={composeSignal} /> : null}
+        {canPost ? <PostComposer initialQuestion={searchParams.get("question")} initialType={searchParams.get("composeType")} initialTopic={searchParams.get("composeTopic")} initialRightNow={searchParams.get("composeRightNow") === "true"} key={user?.id || user?._id} onComposeOpened={consumeCompose} onPublished={handlePublished} defaultLocation={feedLocation || profileCity} currentUser={display} openSignal={composeSignal} /> : null}
 
 
-        <WallExploreNeeds location={feedLocation} viewerId={String(user?.id || user?._id || "")} filters={filters} onSelect={(selection) => applyFilters({ ...filters, type: "all", topic: "all", ...selection })} />
+        <WallExploreNeeds location={feedLocation} viewerId={String(user?.id || user?._id || "")} filters={filters} onSelect={applyFilters} />
         <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || __msg("fanWeb.worldwide")}</span>{activeCount ? <button onClick={resetFilters} type="button">{__msg("fan.clear")}</button> : null}</div>
 
         {loading ? <WallFeedSkeleton /> : null}
@@ -226,7 +232,26 @@ function FanHomePage() {
             <button onClick={() => feedQuery.refetch()} type="button">{__msg("activity.retry")}</button>
           </section>
         ) : null}
-        {!loading && !feedQuery.isError && !feedPosts.length ? <HomeEmptyState activeFilter={activeCount ? "filtered" : "all"} canPost={canPost} onShowAll={resetFilters} /> : null}
+        {!loading && feedQuery.isSuccess && feedState.scope === queryScope && !feedPosts.length ? <WallEmptyState
+          location={feedLocation}
+          type={filters.type}
+          label={selectedLabels.length || activeFilter !== "all" ? feedTitle : ""}
+          filtered={Boolean(activeCount)}
+          canPost={canPost}
+          onClear={resetFilters}
+          onWorldwide={() => changeLocation("")}
+          onWrite={() => setSearchParams(current => {
+            const next = new URLSearchParams(current);
+            const postType = { buy_sell: "Buy & Sell", looking_for: "Looking for", offering: "Offering", need_help: "Need Help", question: "Question", recommendation: "Recommendation", event: "Event", right_now: "Right Now" }[filters.type];
+            next.set("compose", "note");
+            next.set("composeRequest", String(Date.now()));
+            if (postType) next.set("composeType", postType);
+            if (filters.rightNow) next.set("composeRightNow", "true");
+            const topic = WALL_FILTER_TOPICS.find(item => item.value === filters.topic);
+            if (topic && filters.topic !== "all") next.set("composeTopic", topic.label);
+            return next;
+          }, { replace: true })}
+        /> : null}
         <div aria-busy={loading ? "true" : "false"} className="home-feed-list">
           {feedPosts.map((post) => <FeedPost key={post.id} post={post} />)}
         </div>

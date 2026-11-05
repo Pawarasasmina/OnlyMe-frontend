@@ -3,16 +3,17 @@ import { msg as __msg } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
 import { postService } from "../../../services/postService";
-import { FiCalendar, FiGift, FiHelpCircle, FiLifeBuoy, FiSearch, FiStar, FiTag, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
+import WallNeedIcon from "./WallNeedIcon";
 
 const NEEDS = [
-  { key: "need_help", get label() { return __msg("fanWeb.needHelp"); }, type: "Need Help", icon: FiLifeBuoy, get description() { return __msg("fanWeb.somethingWentWrongPeopleNearbyCanStepIn"); } },
-  { key: "looking_for", get label() { return __msg("fanWeb.lookingFor"); }, type: "Looking for", icon: FiSearch, get description() { return __msg("fanWeb.aPersonAServiceOrAThing"); } },
-  { key: "offering", get label() { return __msg("fanWeb.offering"); }, type: "Offering", icon: FiGift, get description() { return __msg("fanWeb.yourHelpSkillOrService"); } },
-  { key: "buy_sell", get label() { return __msg("fanWeb.buySell"); }, type: "Buy & Sell", icon: FiTag, get description() { return __msg("fanWeb.sellSomethingOrFindItSecondHand"); } },
-  { key: "question", get label() { return __msg("fanWeb.question"); }, type: "Question", icon: FiHelpCircle, get description() { return __msg("fanWeb.askThePeopleAroundYou"); } },
-  { key: "recommendation", get label() { return __msg("fanWeb.recommendation"); }, type: "Recommendation", icon: FiStar, get description() { return __msg("fanWeb.aPlaceOrPersonWorthIt"); } },
-  { key: "event", get label() { return __msg("fanWeb.event"); }, type: "Event", icon: FiCalendar, get description() { return __msg("fanWeb.invitePeopleSomewhere"); } },
+  { key: "need_help", get label() { return __msg("fanWeb.needHelp"); }, type: "Need Help", get description() { return __msg("fanWeb.somethingWentWrongPeopleNearbyCanStepIn"); } },
+  { key: "looking_for", get label() { return __msg("fanWeb.lookingFor"); }, type: "Looking for", get description() { return __msg("fanWeb.aPersonAServiceOrAThing"); } },
+  { key: "offering", get label() { return __msg("fanWeb.offering"); }, type: "Offering", get description() { return __msg("fanWeb.yourHelpSkillOrService"); } },
+  { key: "buy_sell", get label() { return __msg("fanWeb.buySell"); }, type: "Buy & Sell", get description() { return __msg("fanWeb.sellSomethingOrFindItSecondHand"); } },
+  { key: "question", get label() { return __msg("fanWeb.question"); }, type: "Question", get description() { return __msg("fanWeb.askThePeopleAroundYou"); } },
+  { key: "recommendation", get label() { return __msg("fanWeb.recommendation"); }, type: "Recommendation", get description() { return __msg("fanWeb.aPlaceOrPersonWorthIt"); } },
+  { key: "event", get label() { return __msg("fanWeb.event"); }, type: "Event", get description() { return __msg("fanWeb.invitePeopleSomewhere"); } },
 ];
 
 export default function WallNeedPicker({ onClose, onSelect, location = "", viewerId }) {
@@ -32,8 +33,8 @@ export default function WallNeedPicker({ onClose, onSelect, location = "", viewe
       <p>{__msg("fanWeb.chooseWhatFitsPeopleNearbyWillSeeItAnd")}</p>
       {countsQuery.isError ? <button className="wall-need-retry" onClick={() => countsQuery.refetch()} type="button">{__msg("fanWeb.couldNotLoadActivityRetry")}</button> : null}
       <div className="wall-need-grid">
-        {NEEDS.map(({ icon: Icon, ...need }) => <button className="wall-need-card" key={need.label} onClick={() => onSelect(need)} type="button">
-          <Icon aria-hidden="true" />
+        {NEEDS.map((need) => <button className="wall-need-card" key={need.label} onClick={() => onSelect(need)} type="button">
+          <WallNeedIcon kind={need.key} />
           <strong>{need.label}</strong>
           <span>{need.description}</span>
           <small>{countsQuery.isPending ? __msg("fanWeb.loading_5fabab") : countsQuery.isError ? __msg("fanWeb.countUnavailable") : countsQuery.data?.counts?.[need.key] ? __msg("fanWeb.active_be09be", { value0: countsQuery.data.counts[need.key], value1: location ? "nearby" : "on Wall" }) : location ? __msg("fanWeb.quietNearby") : __msg("fanWeb.quietForNow")}</small>

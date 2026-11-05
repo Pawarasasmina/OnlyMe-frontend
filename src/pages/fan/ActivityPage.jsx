@@ -34,6 +34,7 @@ import { relativeTime } from "../../utils/relativeTime";
 import { GIFT_THANKS_OPEN_EVENT } from "../../components/fanWeb/shared/giftThanksEvent";
 import { storyActivityRoute } from "../../utils/storyPresentation";
 import ActivityContentPreview from "../../components/activity/ActivityContentPreview";
+import CoinIcon from "../../components/branding/CoinIcon";
 import ActivityFollowAction from "../../components/activity/ActivityFollowAction";
 import StoryMentionSheet from "../../components/activity/StoryMentionSheet";
 
@@ -335,6 +336,7 @@ function normalizeLedgerEntry(entry) {
     title: ledgerTitle(entry),
     relatedCreator: creatorForCounterparty(entry.counterparty),
     relatedContent: entry.publication ? { title: previewForLedger(entry), type: entry.publication.kind || "publication" } : null,
+    target: entry.publication ? { id: entry.publication.id, type: entry.publication.kind, imageUrl: entry.publication.imageUrl, videoUrl: entry.publication.videoUrl } : null,
     preview: previewForLedger(entry),
     createdAt: entry.createdAt,
     starsChange: Number(entry.starsChange) || 0,
@@ -450,8 +452,8 @@ function aggregateReceivedActivity(items) {
     passthrough.push({
       ...latest,
       id: `activity-group-${key}`,
-      title: `${lead} ${verbs[action]}`,
-      relatedCreators: people,
+      title: action === "save" ? __msg("activity.savedByPeople", { count: group.length, target: targetLabel }) : `${lead} ${verbs[action]}`,
+      relatedCreators: action === "save" ? [] : people,
       relatedCreator: null,
       actor: null,
       aggregate: { count: group.length, ids: group.map((item) => item.id) },
@@ -589,6 +591,12 @@ function ActivityTitle({ item }) {
   const titleMark = titleMarkFor(item);
   const actionIcon = titleMark && !title.includes(titleMark) ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
 
+  if (item.direction === "received" && item.aggregate?.count && (item.filter === "saves" || item.filterKeys?.includes("saves"))) {
+    const count = Number(item.aggregate.count);
+    const target = item.metadata?.savedComment ? "comment" : /SEEN|WORLD/i.test(item.target?.type || item.relatedContent?.type || "") ? "Seen" : "note";
+    return <p><b>{__msg("activity.savePeopleCount", { count })}</b> {__msg("fan.savedYourValue0", { value0: target })}</p>;
+  }
+
   if (item.type === "profile_seen_group" && item.relatedCreators?.length) {
     const names = item.relatedCreators.map((person) => person.displayName || person.name || person.username || __msg("fan.someone"));
     const leadNames = names.slice(0, 2).join(", ");
@@ -623,6 +631,7 @@ function ActivityTitle({ item }) {
 
 function ActivityItem({ item, onOpen, starsPerUsd }) {
   __useUiLanguage();
+  const navigate = useNavigate();
   const amount = item.direction === "received" ? displayAmount(item, starsPerUsd) : null;
   const route = routeFor(item);
   const interactive = isGiftActivity(item) || Boolean(route);
@@ -642,7 +651,7 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
 
   return (
     <article
-      className={`activity-prototype-row is-${tone} ${item.warning ? "is-warning" : ""}`}
+      className={`activity-prototype-row is-${tone} ${item.warning ? "is-warning" : ""}${item.direction === "received" && tone === "save" && /NOTE|POST/i.test(item.target?.type || "") ? " is-note-save" : ""}`}
       onClick={openItem}
       onKeyDown={handleKeyDown}
       role={interactive ? "button" : undefined}
@@ -658,6 +667,9 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
       </div>
 
       <div className="activity-prototype-right">
+        {item.metadata?.canAnswer ? <button className="activity-follow-action activity-answer-action" onClick={event => { event.stopPropagation(); navigate(route); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.answer")}</button> : null}
+        {item.metadata?.refundCoins ? <span className="activity-refund-coins"><CoinIcon size={16} /><b>{item.metadata.refundCoins}</b></span> : null}
+        {/^premium_renewal_(low_balance|failed)$/.test(item.type || "") ? <button className="activity-follow-action" onClick={event => { event.stopPropagation(); navigate("/wallet"); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.topUp")}</button> : null}
         {item.type === "follow" && item.direction === "received" && item.relatedCreator?.username ? <ActivityFollowAction username={item.relatedCreator.username} /> : null}
         <ActivityContentPreview item={item} />
         {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || __msg("fan.gift")} className="activity-prototype-gift" src={giftImageUrl} /> : null}
@@ -917,7 +929,7 @@ export default function ActivityPage() {
               {todaySeenPeople.slice(0, 3).map((person, index) => <FanAvatar key={person.id || person.username || index} name={creatorName(person)} size="h-[26px] w-[26px]" src={person.avatarUrl || person.avatar} />)}
             </span>
             <span className="activity-today-seen-copy">
-              <span><b>{todaySeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(", ")}</b>{todaySeenCount > 2 ? __msg("fan.andMore", { value0: todaySeenCount - 2 }) : ""} {__msg("profile.saidISeeYou")} <span aria-hidden="true">💫</span></span>
+              <span><b>{todaySeenPeople.slice(0, 2).map((person) => creatorName(person).split(" ")[0]).join(", ")}</b>{todaySeenCount > 2 ? __msg("fan.andMore", { value0: todaySeenCount - 2 }) : ""} {__msg("profile.saidISeeYou")}</span>
               <small>{__msg("fan.today")} {todaySeenCount}</small>
             </span>
             <FiChevronRight data-ui-directional="true" aria-hidden="true" />

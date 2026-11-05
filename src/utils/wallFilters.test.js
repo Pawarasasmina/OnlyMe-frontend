@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readWallFilters, writeWallFilters, mergeWallPages } from "./wallFilters.js";
+import { readWallFilters, writeWallFilters, mergeWallPages, toggleWallFilter } from "./wallFilters.js";
 import { DEFAULT_WALL_FILTERS } from "../data/wallFilters.js";
 
 test("filter URLs roundtrip combined selections and keep unrelated state", () => {
-  const filters = { type: "looking_for", topic: "services", scope: "nearby", sort: "popular", location: "Dubai", near: "Dubai" };
+  const filters = { type: "looking_for", topic: "services", rightNow: true, scope: "nearby", sort: "popular", location: "Dubai", near: "Dubai" };
   const params = writeWallFilters(new URLSearchParams("filter=travel&city=Paris&compose=note&q=plumber"), filters);
   assert.deepEqual(readWallFilters(params), filters);
   assert.equal(params.get("compose"), "note");
@@ -25,4 +25,17 @@ test("page merging preserves server popularity order and replaces duplicates", (
   const posts = mergeWallPages([{ id: "old", text: "popular" }, { id: "new", text: "recent" }], [{ id: "new", text: "updated" }, { id: "share-old" }]);
   assert.deepEqual(posts.map((post) => post.id), ["old", "new", "share-old"]);
   assert.equal(posts[1].text, "updated");
+});
+
+test("Right now, post type and topic toggle independently with legacy URL support", () => {
+  let filters = toggleWallFilter(DEFAULT_WALL_FILTERS, "right_now", "type");
+  filters = toggleWallFilter(filters, "need_help", "type");
+  filters = toggleWallFilter(filters, "meet_people", "topic");
+  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [true, "need_help", "meet_people"]);
+  filters = toggleWallFilter(filters, "question", "type");
+  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [true, "question", "meet_people"]);
+  filters = toggleWallFilter(filters, "right_now", "type");
+  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [false, "question", "meet_people"]);
+  assert.equal(readWallFilters(new URLSearchParams("type=right_now")).rightNow, true);
+  assert.equal(readWallFilters(new URLSearchParams("type=right_now")).type, "all");
 });

@@ -29,7 +29,7 @@ import {
   FiSettings,
   FiSlash,
   FiPhone,
-  FiGlobe,
+  FiLink,
   FiX,
 } from "react-icons/fi";
 import DirectAccessOfferModal from "../../components/profile/DirectAccessOfferModal";
@@ -43,6 +43,7 @@ import ProfileConnectionsModal from "../../components/profile/ProfileConnections
 import MemberTicket from "../../components/profile/MemberTicket";
 import "../../styles/profileCategory.css";
 import "../../styles/publicProfile.css";
+import "../../styles/businessContactActions.css";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
 import ProfileMediaSection from "../../components/profile/ProfilePhotosSection";
@@ -599,13 +600,13 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
 
 function BusinessContactActions({ profile, isOwner }) {
   const navigate = useNavigate();
-  if (profile.profileType !== "business") return null;
+  if ((profile.profileAccountType || profile.profileType) !== "business") return null;
   const contact = profile.businessContact || {};
   const enabled = new Set(contact.enabled || []);
   const actions = [
     { id: "call", label: "Call", Icon: FiPhone, value: contact.call, href: contact.call ? `tel:${String(contact.call).replace(/[^+\d]/g, "")}` : "" },
     { id: "directions", label: "Directions", Icon: FiMapPin, value: contact.directions, href: contact.directions ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.directions)}` : "" },
-    { id: "website", label: __msg("settings.website"), Icon: FiGlobe, value: contact.website, href: contact.website || "" },
+    { id: "website", label: __msg("settings.website"), Icon: FiLink, value: contact.website, href: contact.website || "" },
   ].filter((item) => enabled.has(item.id) && (isOwner || item.value));
   if (!actions.length) return null;
   const open = (item) => {
@@ -613,7 +614,7 @@ function BusinessContactActions({ profile, isOwner }) {
     if (item.id === "call") window.location.href = item.href;
     else window.open(item.href, "_blank", "noopener,noreferrer");
   };
-  return <div className="mt-3 grid grid-cols-3 gap-2">{actions.map(({ Icon, ...item }) => <button className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.07] px-2 text-xs font-black transition hover:bg-white/10 active:scale-[.97]" key={item.id} onClick={() => open(item)} type="button"><Icon />{item.label}</button>)}</div>;
+  return <div className="profile-business-contact-actions">{actions.map(({ Icon, ...item }) => <button key={item.id} onClick={() => open(item)} type="button"><Icon aria-hidden="true" />{item.label}</button>)}</div>;
 }
 
 function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {

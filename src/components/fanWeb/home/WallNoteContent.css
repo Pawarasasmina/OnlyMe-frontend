@@ -1,0 +1,64 @@
+/* Wall note and reply measurements from web.html's wPostHead/wComRows. */
+.home-feed-post {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+.home-feed-post .home-feed-post-head > a .fan-avatar { width: 38px; height: 38px; }
+.home-feed-post .home-feed-author { font-size: 14px; font-weight: 700; letter-spacing: -.15px; }
+.home-feed-post .home-feed-meta { font-size: 11.5px; font-weight: 400; color: rgba(255,255,255,.4); }
+.home-feed-post .home-feed-text { font-size: 15.5px; font-weight: 400 !important; line-height: 1.55; letter-spacing: -.15px; color: #edeff3; }
+.home-feed-post .home-feed-actions { gap: 10px; color: rgba(255,255,255,.62); font-size: 11px; }
+.home-feed-post .home-feed-action-button { gap: 5px; padding: 0; min-width: 0; font-size: 11px; color: inherit; }
+.home-feed-post .home-feed-action-button > svg { width: 17px; height: 17px; stroke-width: 1.9; }
+.home-feed-post .home-feed-action-button.is-selected { color: #9ccbff; }
+.home-feed-post .home-feed-actions .home-reaction-capsule { width: 82px; min-width: 82px; max-width: 82px; height: 30px; padding: 0 8px; gap: 6px; border: 1px solid transparent; background: rgba(255,255,255,.055); color: rgba(255,255,255,.62); font-size: 11px; font-variant-numeric: tabular-nums; }
+.home-feed-post .home-feed-actions .home-reaction-capsule.is-selected { background: rgba(156,203,255,.13); border-color: rgba(156,203,255,.55); color: #bfe3ff; }
+.home-feed-post .home-reaction-samples { gap: 3px; font-size: 13px; }
+.home-feed-post .home-reaction-capsule strong { font-size: 11px; font-weight: 700; }
+.home-feed-post .wall-reactor-faces { display: inline-flex; align-items: center; flex: none; margin-right: -8px; padding: 0; }
+.home-feed-post .wall-reactor-faces .fan-avatar { width: 18px; height: 18px; border: 1.5px solid #0a0c0f; }
+.home-feed-post .wall-reactor-faces .fan-avatar + .fan-avatar { margin-left: -5px; }
+.home-feed-post .wall-reactor-faces .fan-avatar > span { font-size: 7px; line-height: 1; white-space: nowrap; }
+.home-feed-post .wall-reactor-faces .fan-avatar img { max-width: none; }
+.home-feed-post .wall-comments-panel .seen-comments-list .wall-comment-row { display: flex; gap: 9px; align-items: flex-start; padding: 8px 0; }
+.home-feed-post .wall-comments-panel .seen-comment-copy { flex: 1; min-width: 0; }
+.home-feed-post .wall-comments-panel .seen-comments-list { gap: 0; }
+.home-feed-post .wall-comments-panel .seen-comment-copy > p { margin: 0; font-size: 12.5px; line-height: 1.5; font-weight: 400 !important; color: rgba(255,255,255,.9); overflow-wrap: anywhere; }
+.home-feed-post .wall-comments-panel .seen-comment-copy > p > a { font-size: 12px; font-weight: 700 !important; margin-right: 6px; color: inherit; }
+.home-feed-post .wall-comment-actions { display: flex; align-items: center; gap: 15px; margin-top: 3px; color: rgba(255,255,255,.4); }
+.home-feed-post .wall-comment-actions button { display: inline-flex; align-items: center; gap: 4px; min-height: 20px; padding: 0; border: 0; background: transparent; color: inherit; font-size: 11px; line-height: 1.4; font-weight: 600 !important; }
+.home-feed-post .wall-comment-actions svg { width: 12px; height: 12px; }
+.home-feed-post .wall-comment-actions button.is-selected { color: #9ccbff; }
+.home-feed-post .wall-comment-actions button:disabled { opacity: .45; cursor: default; }
+.home-feed-post .wall-comment-thread { margin-top: 6px; padding-left: 9px; border-left: 1px solid rgba(255,255,255,.12); }
+.home-feed-post .wall-comment-thread .wall-comment-row { gap: 8px !important; padding: 7px 0 0 !important; }
+.home-feed-post .wall-comment-thread .fan-avatar { width: 20px; height: 20px; }
+.home-feed-post .wall-comment-thread .seen-comment-copy > p { font-size: 12px; color: rgba(255,255,255,.88); }
+.home-feed-post .wall-comment-thread .seen-comment-copy > p > a { font-size: 11.5px; }
+.home-feed-post .wall-comments-panel form { gap: 9px; margin-top: 4px; align-items: center; }
+.home-feed-post .wall-comments-panel form > .fan-avatar { width: 26px; height: 26px; }
+.home-feed-post .wall-comments-panel form input { min-width: 0; background: #101319; border: 1px solid rgba(255,255,255,.09); border-radius: 999px; padding: 9px 14px; font-size: 12.5px; font-weight: 400 !important; line-height: 1.4; color: #edeff3; }
+.home-feed-post .wall-comments-panel form input::placeholder { color: rgba(255,255,255,.4); opacity: 1; }
+.home-feed-post .wall-comments-panel .seen-comment-mic { padding: 4px; color: rgba(255,255,255,.4); }
+.home-feed-post .wall-comments-panel .seen-comment-mic svg { width: 15px; height: 15px; }
+.home-feed-post .wall-comments-panel .seen-comment-post { font-size: 12.5px; font-weight: 750; color: #9ccbff; }
+.home-feed-post .wall-reply-target { display: flex; align-items: center; gap: 8px; padding: 5px 2px 3px 35px; font-size: 11px; color: rgba(255,255,255,.4); }
+.home-feed-post .wall-reply-target strong { color: rgba(255,255,255,.62); }
+.home-feed-post .wall-reply-target button { padding: 0 4px; }
+.home-feed-post .wall-comment-row:has(> .wall-comment-full-reactions) { flex-wrap: wrap; }
+.home-feed-post .wall-comment-full-reactions { display: flex; flex-basis: 100%; flex-wrap: wrap; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: #101319; }
+.home-feed-post .wall-comment-full-reactions button { padding: 6px; }
+.home-feed-post button:focus-visible { outline: 2px solid #9ccbff; outline-offset: 3px; }
+.home-feed-post .wall-note-availability { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 0 1px rgba(255,255,255,.055); }
+.home-feed-post .wall-note-availability > span { flex: 1; min-width: 0; color: #edeff3; }
+.home-feed-post .wall-note-availability strong { display: block; font-size: 13.5px; font-weight: 650; }
+.home-feed-post .wall-note-availability small { display: block; margin-top: 2px; color: rgba(255,255,255,.4); font-size: 11.5px; font-weight: 500; }
+.home-feed-post .wall-note-availability button { flex: none; padding: 6px 2px; color: rgba(255,255,255,.62); font-size: 12.5px; font-weight: 650; }
+.home-feed-post .wall-note-availability button.wall-note-bump { color: #9ccbff; font-weight: 700; }
+.home-feed-post .wall-note-availability button:disabled { opacity: .45; cursor: default; }
+@media (max-width: 440px) {
+  .home-feed-post .home-feed-actions { gap: 9px; }
+  .home-feed-post .wall-comment-thread .wall-comment-thread { padding-left: 4px; }
+}
+
+.home-feed-post .wall-post-type-link { display: inline-flex; align-items: center; gap: 3px; }
+.home-feed-post .wall-post-type-link > svg { width: 12px; height: 12px; stroke-width: 2.6; }

@@ -134,6 +134,15 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
 }
 
 function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending, onChange, onClose, onReact, onSubmit, onVoiceSubmit, reactionPending, title, voicePending }) {
+  const [activityParams] = useSearchParams();
+  const focusedComment = activityParams.get("comment");
+  useEffect(() => {
+    if (!isOpen || !focusedComment) return undefined;
+    const frame = requestAnimationFrame(() => {
+      [...document.querySelectorAll("[data-seen-comment-id]")].find(node => node.dataset.seenCommentId === focusedComment)?.scrollIntoView({ block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen, focusedComment, engagement.comments]);
   const [replyTo, setReplyTo] = useState(null);
   const [reactionTarget, setReactionTarget] = useState(null);
   const [sheetPosition, setSheetPosition] = useState(null);
@@ -167,7 +176,7 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   const comments = engagement.comments || [];
   const renderComment = (item, isReply = false) => {
     const icons = (item.topReactions || []).map((key) => reactionEmoji[key] || reactionEmoji.LIKE).join("") || reactionEmoji.LIKE;
-    return <article className={isReply ? "is-reply" : ""} key={item.id}>
+    return <article className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
       <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
       <div className="seen-comment-copy">
         <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || "Fan"}</Link> : <strong>{item.author?.name || "Fan"}</strong>}{item.text}</p>
@@ -817,7 +826,7 @@ export default function SeenReaderPage() {
   const requestedChapter = Number(searchParams.get("chapter"));
   const [chapterIndex, setChapterIndex] = useState(Number.isSafeInteger(requestedChapter) && requestedChapter >= 0 ? requestedChapter : 0);
   const [comment, setComment] = useState("");
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(Boolean(searchParams.get("comment")));
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeLink, setNoticeLink] = useState("");
