@@ -22,6 +22,7 @@ const ExplorePage = lazyPage("../pages/public/ExplorePage");
 const LoginPage = lazyPage("../pages/auth/LoginPage");
 const RegisterPage = lazyPage("../pages/auth/RegisterPage");
 const ForgotPasswordPage = lazyPage("../pages/auth/ForgotPasswordPage");
+const ResetPasswordPage = lazyPage("../pages/auth/ResetPasswordPage");
 const FanHomePage = lazyPage("../pages/fan/FanHomePage");
 const MessagesPage = lazyPage("../pages/fan/MessagesPage");
 const ActivityPage = lazyPage("../pages/fan/ActivityPage");
@@ -100,6 +101,7 @@ const DiscoverPage = lazyPage("../pages/social/DiscoverPage");
 const PostDetailPage = lazyPage("../pages/social/PostDetailPage");
 const OnboardingPage = lazyPage("../pages/onboarding/OnboardingPage");
 const WelcomePage = lazyPage("../pages/onboarding/WelcomePage");
+const PublicStoryInterestsPage = lazyPage("../pages/onboarding/PublicStoryInterestsPage");
 const AccountSettingsPage = lazyPage("../pages/settings/AccountSettingsPage");
 const PrivacySettingsPage = lazyPage("../pages/settings/PrivacySettingsPage");
 const NotificationSettingsPage = lazyPage("../pages/settings/NotificationSettingsPage");
@@ -160,9 +162,11 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
     </Route>
 
     <Route path="/welcome" element={<WelcomePage />} />
+    <Route path="/start/interests" element={<PublicStoryInterestsPage />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />
