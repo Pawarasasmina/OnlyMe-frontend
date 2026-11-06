@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
+import CoinIcon from "../../components/branding/CoinIcon";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -1329,7 +1330,16 @@ export default function SeenReaderPage() {
     </div>
 
     <article className={`seen-reader-content ${chapter?.locked ? "is-paid-locked" : ""}`} onClick={handleReaderClick}>
-      {chapter?.locked ? <section className="seen-paid-locked-chapter">
+      {chapter?.locked && chapter?.worldBonus && publication.bonusWorld ? <section className="seen-paid-locked-chapter is-world-bonus">
+        <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
+        <div className="seen-world-bonus-card">
+          <span aria-hidden="true">◉</span>
+          <h3>A bonus chapter for {creatorFirstName(publication.creator)}&apos;s World</h3>
+          <p>Everything {creatorFirstName(publication.creator)} shares inside — every Seen, circles, stories</p>
+          <button onClick={(event) => { event.stopPropagation(); navigate(`/world/${encodeURIComponent(publication.bonusWorld.id)}?join=1`); }} type="button">Join · <CoinIcon size={12} /> {Number(publication.bonusWorld.firstMonthStars || publication.bonusWorld.regularStars || 0).toLocaleString()} first month</button>
+        </div>
+        <button className="seen-world-bonus-back" onClick={(event) => { event.stopPropagation(); closeReader(); }} type="button">‹ <b>Back to overview</b></button>
+      </section> : chapter?.locked ? <section className="seen-paid-locked-chapter">
         <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
         <div className="seen-paid-locked-card">
           <span><FiLock /></span>

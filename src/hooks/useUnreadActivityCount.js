@@ -19,7 +19,12 @@ export function useUnreadActivityCount(enabled = true) {
     if (!enabled) return undefined;
     const socket = getMessageSocket();
     if (!socket) return undefined;
-    const refresh = () => queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+    const refresh = (payload = {}) => {
+      if (Number.isFinite(payload.unreadCount)) {
+        queryClient.setQueryData(["fan", "activity", "unread-count"], Math.max(0, Number(payload.unreadCount)));
+      }
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+    };
     socket.on("activity:updated", refresh);
     return () => socket.off("activity:updated", refresh);
   }, [enabled, queryClient]);

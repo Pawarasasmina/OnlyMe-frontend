@@ -856,6 +856,20 @@ export default function ActivityPage() {
     },
   });
 
+  const acknowledgeVisibleActivity = useMutation({
+    mutationFn: fanService.acknowledgeAllActivity,
+    onSuccess: () => {
+      queryClient.setQueryData(["fan", "activity", "unread-count"], 0);
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+      queryClient.invalidateQueries({ queryKey: ["moderation-warnings"] });
+    },
+  });
+
+  useEffect(() => {
+    if (direction !== "received" || !activityQuery.data?.unreadCount || acknowledgeVisibleActivity.isPending) return;
+    acknowledgeVisibleActivity.mutate();
+  }, [direction, activityQuery.data?.unreadCount, acknowledgeVisibleActivity.isPending]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const acknowledge = (id) => {
     const item = items.find((entry) => entry.id === id);
     setAcknowledged((current) => {
