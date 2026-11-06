@@ -41295,6 +41295,10 @@ html[dir="rtl"] textarea {
 
 /* Profile keeps the quiet prototype treatment: emphasis without an active pill. */
 @media (min-width:1020px){.social-app-shell .fan-web-sidebar .fan-sidebar-nav-link.is-profile-link.is-active,.social-app-shell .fan-web-sidebar .fan-sidebar-nav-link.is-profile-link[aria-current="page"]{background:transparent}}
+
+/* Wall header actions use the prototype's neutral white icons. */
+.home-prototype-top .home-spark-button{color:#fff}
+.home-prototype-top .home-spark-button svg{color:inherit;stroke:currentColor}
 .seen-paid-overview-chapters{display:grid;margin-top:17px}.seen-paid-overview-chapters button{display:grid;min-height:40px;grid-template-columns:27px 14px minmax(0,1fr) 14px;align-items:center;gap:5px;border-bottom:1px solid rgba(255,255,255,.035);color:#fff;text-align:left}.seen-paid-overview-chapters button>span{color:#9ccbff;font-size:10px;font-weight:900}.seen-paid-overview-chapters button>i{display:grid;width:14px;place-items:center;color:rgba(255,255,255,.48);font-style:normal}.seen-paid-overview-chapters button>i svg{width:11px}.seen-paid-overview-chapters button>b{font-size:13px;font-weight:650}.seen-paid-overview-chapters button>svg{width:11px;color:rgba(255,255,255,.55)}.seen-paid-overview-chapters button.is-locked>b{color:rgba(255,255,255,.72)}.seen-paid-overview-engagement{margin-top:22px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px}
 @media(max-width:390px){.seen-paid-overview-page{padding-inline:14px}.seen-paid-overview-hero{gap:11px}.seen-paid-overview-hero h2{font-size:20px}.seen-paid-overview-hero p{font-size:11.5px}}
 
