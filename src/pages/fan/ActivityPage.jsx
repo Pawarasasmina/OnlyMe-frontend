@@ -12,7 +12,6 @@ import {
   FiClock,
   FiCornerUpLeft,
   FiDollarSign,
-  FiEye,
   FiGift,
   FiHeart,
   FiLock,
@@ -37,6 +36,7 @@ import ActivityContentPreview from "../../components/activity/ActivityContentPre
 import CoinIcon from "../../components/branding/CoinIcon";
 import ActivityFollowAction from "../../components/activity/ActivityFollowAction";
 import StoryMentionSheet from "../../components/activity/StoryMentionSheet";
+import { SeenNavIcon } from "../../components/social/socialNavItems";
 
 const RECEIVED_FILTERS = [
   ["All", "all"],
@@ -471,14 +471,24 @@ function normalizeActivity(activity = [], ledger = []) {
     ledger.map(normalizeLedgerEntry),
   );
 
-  const seen = new Set();
-  const deduplicated = normalized
-    .filter((item) => {
-      const key = `${item.direction}:${item.dedupeKey || `${item.reference?.type || item.type}:${item.reference?.id || item.id}`}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+  const dedupeKeyFor = (item) => {
+    const type = String(item.type || "");
+    if (/^(premium_)?membership_cancelled$/.test(type) && item.metadata?.membershipId) {
+      return `${item.direction}:membership-cancelled:${item.metadata.membershipId}`;
+    }
+    return `${item.direction}:${item.dedupeKey || `${item.reference?.type || item.type}:${item.reference?.id || item.id}`}`;
+  };
+  const richness = (item) => Number(Boolean(item.relatedCreator || item.actor)) * 8
+    + Number(Boolean(item.target?.id || item.reference?.id)) * 4
+    + Number(Boolean(item.preview || item.description)) * 2
+    + Number(Boolean(item.actionPath));
+  const byKey = new Map();
+  normalized.forEach((item) => {
+    const key = dedupeKeyFor(item);
+    const current = byKey.get(key);
+    if (!current || richness(item) > richness(current)) byKey.set(key, item);
+  });
+  const deduplicated = [...byKey.values()];
 
   return aggregateReceivedActivity(deduplicated)
     .sort((left, right) => (new Date(right.createdAt) - new Date(left.createdAt)) || (Number(right.priority) - Number(left.priority)));
@@ -498,7 +508,7 @@ function iconFor(item) {
   if (filter === "saves") return FiBookmark;
   if (filter === "comments") return FiMessageCircle;
   if (filter === "earnings" || filter === "purchases") return FiZap;
-  return FiEye;
+  return SeenNavIcon;
 }
 
 function toneFor(item) {
@@ -710,10 +720,7 @@ function ActivityEmptyState({ direction, filter, onOpenOrbit }) {
 
 function ActivityEyeMark() {
   __useUiLanguage();
-  return <svg aria-hidden="true" className="activity-eye-mark" viewBox="0 0 64 40">
-    <path d="M2 20C14 3 50 3 62 20C50 37 14 37 2 20Z" fill="currentColor" />
-    <circle cx="32" cy="20" r="8.5" fill="#0A0C0F" />
-  </svg>;
+  return <SeenNavIcon aria-hidden="true" className="activity-eye-mark" />;
 }
 
 function FilterChips({ filter, filters, onChange }) {
