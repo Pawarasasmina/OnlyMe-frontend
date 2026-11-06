@@ -73,6 +73,7 @@ import { followInvalidationKeys } from "../../utils/savedPeople";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import { canCreateStory } from "../../utils/storyPermissions";
 import { atseenReportReasons } from "../../data/atseenMockData";
+import { WaysToEarnDetailSheet } from "../creator/WaysToEarnPage";
 
 function ReportDoneEyeIcon() {
   __useUiLanguage();
@@ -663,45 +664,54 @@ function NewProfileStarter({ data, onStartSeen }) {
 }
 
 function ProfileWaysToEarn({ data }) {
-  const { profile, viewerCapabilities } = data;
-  const canLoadDashboard = Boolean(viewerCapabilities.isOwner && viewerCapabilities.canAccessStudio);
-  const dashboard = useQuery({
-    queryKey: ["creator-dashboard"],
-    queryFn: () => creatorService.getDashboard().then((response) => response.data.data),
-    enabled: canLoadDashboard,
-    retry: false,
-    staleTime: 30000,
-  });
+  const { profile, publicMetrics, viewerCapabilities } = data;
+  const [activePitch, setActivePitch] = useState("");
+  const hasPublishedContent = Boolean(
+    Number(publicMetrics?.publishedContentCount || 0)
+    || data.seens?.length
+    || data.wallPosts?.length
+    || data.media?.length
+    || data.profileStories?.length
+    || data.experiences?.length
+    || data.planets?.length
+  );
+  const isVerifiedCreator = Boolean(
+    profile.verified
+    || profile.creatorApprovalStatus === "approved"
+    || profile.creatorApplicationStatus === "verified"
+    || viewerCapabilities.canAccessStudio
+  );
+  const showNewCreatorEarnings = Boolean(viewerCapabilities.isOwner && !isVerifiedCreator && !hasPublishedContent);
   const examples = useQuery({
     queryKey: ["ways-to-earn"],
     queryFn: () => creatorService.getWaysToEarn().then((response) => response.data.data),
-    enabled: !canLoadDashboard,
+    enabled: showNewCreatorEarnings,
     retry: false,
     staleTime: 30000,
   });
-  if (!viewerCapabilities.isOwner) return null;
+  if (!showNewCreatorEarnings) return null;
   const example = examples.data?.example;
-  const earnings = dashboard.data?.earnings || {};
-  const sources = earnings.bySource || {};
-  const destination = canLoadDashboard ? "/studio?tab=earnings" : "/ways-to-earn";
   const money = (value) => new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const cards = [
-    { label: "World", value: money(canLoadDashboard ? earnings.residents?.monthlyRecurringRevenue : example?.world?.income), note: `${compact(canLoadDashboard ? earnings.residents?.count : example?.world?.members)} members` },
-    { label: "Paid Seen", value: money(canLoadDashboard ? sources.unlocks : example?.paidSeen?.income), note: `${compact(example?.paidSeen?.owners)} owners` },
-    { label: "Gifts", value: money(canLoadDashboard ? sources.gifts : example?.gifts?.income), note: `${compact(example?.gifts?.count)} gifts` },
+    { key: "world", label: "World", value: money(example?.world?.income), note: `${compact(example?.world?.members)} members` },
+    { key: "seen", label: "Paid Seen", value: money(example?.paidSeen?.income), note: `${compact(example?.paidSeen?.owners)} owners` },
+    { key: "gift", label: "Gifts", value: money(example?.gifts?.income), note: `${compact(example?.gifts?.count)} gifts` },
   ];
   return (
-    <Link aria-label="Open ways to earn" className="profile-ways-to-earn" to={destination}>
-      <header><span><b>Ways to earn</b><small>{canLoadDashboard ? "Your earnings by source" : `What ${example?.name?.split(" ")[0] || "creators"} makes with each`}</small></span><em>How ›</em></header>
-      <div>{cards.map((card) => <article key={card.label}><b>{card.label}</b><strong>{dashboard.isLoading || examples.isLoading ? "…" : card.value}</strong><small>{card.note}</small></article>)}</div>
-    </Link>
+    <>
+      <section aria-label="Ways to earn" className="profile-ways-to-earn">
+        <header><span><b>Ways to earn</b><small>{`What ${example?.name?.split(" ")[0] || "creators"} makes with each`}</small></span><Link to="/ways-to-earn">How ›</Link></header>
+        <div>{cards.map((card) => <button aria-label={`Learn about ${card.label} earnings`} key={card.key} onClick={() => setActivePitch(card.key)} type="button"><article><b>{card.label}</b><strong>{examples.isLoading ? "…" : card.value}</strong><small>{card.note}</small></article></button>)}</div>
+      </section>
+      {activePitch && example ? <WaysToEarnDetailSheet example={example} onClose={() => setActivePitch("")} profile={profile} rate={Number(examples.data?.dashboard?.exchangeRate?.starsPerUsd) || 10} type={activePitch} /> : null}
+    </>
   );
 }
 
 function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
   __useUiLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const shouldOpenGiftPicker = searchParams.get("sendGift") === "1" && !viewerCapabilities.isOwner && Boolean(profile?.ownerUserId);
+  const shouldOpenGiftPicker = searchParams.get("sendGift") === "1" && Boolean(profile?.ownerUserId);
   const [giftsOpen, setGiftsOpen] = useState(false);
   const [sendGiftOpen, setSendGiftOpen] = useState(shouldOpenGiftPicker);
   const [giftRecipient, setGiftRecipient] = useState(() => shouldOpenGiftPicker
@@ -730,7 +740,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
     staleTime: 30000,
   });
   const directGiftPicker = sendGiftOpen && giftRecipient
-    ? <StoryGiftPicker onClose={closeGiftPicker} recipient={giftRecipient} sourceType="DIRECT" />
+    ? <StoryGiftPicker landing onClose={closeGiftPicker} previewOnly={viewerCapabilities.isOwner} recipient={giftRecipient} sourceType="DIRECT" />
     : null;
   const gifts = sortedProfileGifts(receivedQuery.data?.gifts || [], viewerId);
   const count = Number(receivedQuery.data?.total || gifts.length || 0);

@@ -149,6 +149,15 @@ function WallRoute() {
   return post ? <Navigate replace to={`/posts/${encodeURIComponent(post)}`} /> : <FanHomePage />;
 }
 
+function SeenCreationRoute() {
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const paid = searchParams.get("type") === "paid";
+  const approved = user?.creatorApprovalStatus === "approved" || ["creator", "business"].includes(user?.profileType);
+  if (paid && !approved) return <Navigate replace state={{ approvalRequired: true, requestedFeature: "paid-seen" }} to="/creator/verification" />;
+  return <SeenComposerPage />;
+}
+
 function AppRoutes() {
   __useUiLanguage();
   return <Suspense fallback={<div className="grid min-h-[50vh] place-items-center"><Loader label={__msg("routes.loadingPage")} /></div>}><Routes>
@@ -228,7 +237,7 @@ function AppRoutes() {
             <Route path="/creator/seller-verification" element={<SellerVerificationPage />} />
           </Route>
           <Route path="/create" element={<CreateHubPage />} />
-          <Route path="/create/seen" element={<SeenComposerPage />} />
+          <Route path="/create/seen" element={<SeenCreationRoute />} />
           <Route path="/ways-to-earn" element={<WaysToEarnPage />} />
           <Route path="/studio/seens" element={<Navigate replace to="/profile" />} />
           <Route path="/studio/seens/:id" element={<Navigate replace to="/profile" />} />
