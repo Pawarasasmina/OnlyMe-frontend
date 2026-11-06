@@ -1201,7 +1201,30 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     }
   };
 
-  const requestChapterMedia = (mediaType, file, metadata = {}) => {
+  const requestChapterMedia = async (mediaType, file, metadata = {}) => {
+    if (mediaType === "VIDEO") {
+      const url = URL.createObjectURL(file);
+      try {
+        const duration = await new Promise((resolve, reject) => {
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          video.onloadedmetadata = () => resolve(Number(video.duration) || 0);
+          video.onerror = () => reject(new Error("Unable to read this video."));
+          video.src = url;
+        });
+        const limitSeconds = experience ? 30 : 120;
+        if (duration > limitSeconds + 0.1) {
+          setVideoTrimFile({ file, limitSeconds, metadata, target: "chapter", url });
+          return;
+        }
+        URL.revokeObjectURL(url);
+        return uploadChapterMedia(mediaType, file, metadata);
+      } catch (durationError) {
+        URL.revokeObjectURL(url);
+        setError(durationError.message);
+        return;
+      }
+    }
     if (mediaType === "IMAGE") setCropTarget({ kind: "chapter", url: URL.createObjectURL(file) });
     else uploadChapterMedia(mediaType, file, metadata);
   };
@@ -1497,7 +1520,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   if (experience && creationStarted && experienceStep === 1) return (
     <article className="experience-first-step">
       {cropTarget ? <ProfileImageCropper kind={cropTarget.kind} onCancel={closeImageCrop} onSave={useAdjustedImage} saving={uploading} source={cropTarget.url} /> : null}
-      {videoTrimFile ? <VideoTrimSheet enableCrop file={videoTrimFile} limitSeconds={30} onCancel={() => { URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} onUpload={async (file) => { await addStoryPreview({ file, caption: "Preview video", replaceId: videoTrimFile.replaceId }); URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} /> : null}
+      {videoTrimFile ? <VideoTrimSheet enableCrop file={videoTrimFile} limitSeconds={videoTrimFile.limitSeconds || 30} onCancel={() => { URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} onUpload={async (file) => { if (videoTrimFile.target === "chapter") await uploadChapterMedia("VIDEO", file, videoTrimFile.metadata || {}); else await addStoryPreview({ file, caption: "Preview video", replaceId: videoTrimFile.replaceId }); URL.revokeObjectURL(videoTrimFile.url); setVideoTrimFile(null); }} /> : null}
       {voiceSheetOpen ? <ExperienceVoiceSheet onClose={() => setVoiceSheetOpen(false)} onSave={(file) => { const voice = storyPreviews.find((item) => item.file?.type?.startsWith("audio/") || ["AUDIO", "VOICE"].includes(item.media?.mediaType)); return addStoryPreview({ file, caption: "Voice hello", replaceId: voice?.id || "" }); }} onUploadFile={() => voiceInputRef.current?.click()} /> : null}
       <header><button aria-label="Back" onClick={leaveComposer} type="button"><FiArrowLeft /></button><div><h1>Name your Experience</h1><p>A stage of life — with a beginning and a result</p></div><button className="experience-first-preview" onClick={previewExperience} type="button"><FiEye /> Preview</button></header>
       <ExperienceProgress step={1} />

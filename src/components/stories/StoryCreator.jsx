@@ -3,7 +3,7 @@ import "./WallNoteStory.css";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiCamera, FiEdit3, FiEye, FiHelpCircle, FiImage, FiRefreshCw, FiRepeat, FiTrash2, FiType, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { useCreateStory } from "../../hooks/useStories";
@@ -12,6 +12,8 @@ import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import StoryReshareCard from "./StoryReshareCard";
 import StoryMentionPicker from "./StoryMentionPicker";
 import { storyTextStyle } from "../../utils/storyPresentation";
+
+const StoryVideoTrimSheet = lazy(() => import("../../pages/creator/SeenComposerPage").then((module) => ({ default: module.VideoTrimSheet })));
 
 const STORY_COLORS = ["#FFFFFF", "#D6EAFF", "#9CCBFF", "#0A0C0F", "#6ECF97", "#F17878"];
 const STORY_TEXT_STYLES = [
@@ -393,6 +395,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const [drawingMode, setDrawingMode] = useState(false);
   const [drawingColor, setDrawingColor] = useState("#9CCBFF");
   const [mentionOpen, setMentionOpen] = useState(false);
+  const [videoToTrim, setVideoToTrim] = useState(null);
   const publishBusy = useRef(false);
 
   useEffect(() => {
@@ -632,7 +635,15 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     onClose();
   };
 
-  const uploadDeviceImage = (event) => {
+  const applyUploadedMedia = (file, url = URL.createObjectURL(file)) => {
+    setStory((current) => {
+      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
+      return { ...current, drawing: [], photo: true, mediaType: file.type.startsWith("video/") ? "video" : "image", uploadedFile: file, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: url };
+    });
+    setCameraStatus("captured");
+  };
+
+  const uploadDeviceImage = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -644,11 +655,13 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     if (file.type.startsWith("video/") && file.size > 60 * 1024 * 1024) { showToast(__msg("stories.chooseAVideoUpTo60Mb")); return; }
     stopCamera();
     const url = URL.createObjectURL(file);
-    setStory((current) => {
-      if (current.uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(current.uploadedUrl);
-      return { ...current, drawing: [], photo: true, mediaType: file.type.startsWith("video/") ? "video" : "image", uploadedFile: file, transform: { scale: 1, x: 0, y: 0 }, uploadedUrl: url };
-    });
-    setCameraStatus("captured");
+    if (file.type.startsWith("video/")) {
+      try {
+        const duration = await new Promise((resolve, reject) => { const video = document.createElement("video"); video.preload = "metadata"; video.onloadedmetadata = () => resolve(Number(video.duration) || 0); video.onerror = () => reject(new Error("Unable to read this video.")); video.src = url; });
+        if (duration > 15.1) { setVideoToTrim({ file, limitSeconds: 15, url }); return; }
+      } catch (error) { URL.revokeObjectURL(url); showToast(error.message); return; }
+    }
+    applyUploadedMedia(file, url);
   };
 
   const capturePhoto = async () => {
@@ -1029,6 +1042,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
       else if (!event.shiftKey && (document.activeElement === controls.at(-1) || document.activeElement === stageRef.current)) { event.preventDefault(); controls[0].focus(); }
     }}>
+      {videoToTrim ? <Suspense fallback={null}><StoryVideoTrimSheet file={videoToTrim} limitSeconds={15} onCancel={() => { URL.revokeObjectURL(videoToTrim.url); setVideoToTrim(null); }} onUpload={(file) => { URL.revokeObjectURL(videoToTrim.url); setVideoToTrim(null); applyUploadedMedia(file); }} /></Suspense> : null}
       <section
         className={`story-composer-stage ${story.sharedCard?.kind === "note" ? `is-wall-note ${story.gradient % STORY_GRADIENTS.length === 0 ? "is-note-default-background" : ""}` : ""} ${story.sharedCard?.kind === "story" && !story.photo ? "is-story-reshare" : ""}`}
         onPointerMove={(event) => { if (cardTapRef.current && Math.hypot(event.clientX - cardTapRef.current.x, event.clientY - cardTapRef.current.y) > 6) cardTapRef.current.moved = true; moveDrag(event); }}
