@@ -15,6 +15,7 @@ import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import StoryCreator from "../../components/stories/StoryCreator";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import SeenEyeMark from "../../components/branding/SeenEyeMark";
+import CoinIcon from "../../components/branding/CoinIcon";
 import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
@@ -152,7 +153,9 @@ function normalizeSeen(raw = {}) {
       title: chapter.title || `Chapter ${index + 1}`,
       blocks: chapter.blocks || [],
       locked: Boolean(chapter.locked),
+      worldBonus: Boolean(chapter.worldBonus),
     })),
+    bonusWorld: raw.bonusWorld || null,
     pricing: raw.pricing || { mode: "FREE", starsAmount: null },
     paymentAvailable: Boolean(raw.paymentAvailable),
     ownerCount: Number(raw.ownerCount || 0),
@@ -550,7 +553,8 @@ function SeenSummary({ item, onOpenChapter, onPurchase }) {
         {item.description ? <p>{item.description}</p> : null}
       </button>
     </div>
-    {item.pricing?.mode === "ONE_TIME" ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> ✦ {Number(item.pricing.starsAmount || 0).toLocaleString()}</span><small>Chapter 1 free · {item.ownerCount.toLocaleString()} own it</small><b>{item.paymentAvailable ? "Unlock ›" : "Yours"}</b></button> : null}
+    {item.pricing?.mode === "ONE_TIME" && item.access === "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock is-owned" onClick={() => onOpenChapter(0)} type="button"><span>Yours</span><small>Every chapter is open</small><b>Open ›</b></button> : null}
+    {item.pricing?.mode === "ONE_TIME" && item.access !== "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> ✦ {Number(item.pricing.starsAmount || 0).toLocaleString()}</span><small>Chapter 1 free · {item.ownerCount.toLocaleString()} own it</small><b>{item.paymentAvailable ? "Unlock ›" : "Unavailable"}</b></button> : null}
     <ChapterPreviewList chapters={item.chapters} maxVisible={5} onOpenChapter={onOpenChapter} />
   </div>;
 }
@@ -583,9 +587,16 @@ function InlineChapterBlock({ block }) {
   return block?.text || block?.label ? <p>{block.text || block.label}</p> : null;
 }
 
-function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onOverview, onPurchase, onSelect }) {
+function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onJoinWorld, onOverview, onPurchase, onSelect }) {
   const blocks = chapter?.blocks || [];
   const nextChapter = chapters[chapterIndex + 1];
+  if (chapter?.worldBonus && chapter?.locked && item.bonusWorld) return <section className="seen-inline-chapter is-world-bonus" aria-live="polite">
+    <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>Chapter {chapterIndex + 1} of {chapters.length}</span></div>
+    <h2>{chapter.title || item.title}</h2><i className="seen-inline-accent" />
+    <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
+    <div className="seen-world-bonus-card"><span aria-hidden="true">◉</span><h3>A bonus chapter for {item.creator.displayName.split(" ")[0]}&apos;s World</h3><p>Everything {item.creator.displayName.split(" ")[0]} shares inside — every Seen, circles, stories</p><button onClick={onJoinWorld} type="button">Join · <CoinIcon size={12} /> {Number(item.bonusWorld.firstMonthStars || item.bonusWorld.regularStars || 0).toLocaleString()} first month</button></div>
+    <button className="seen-world-bonus-back" onClick={onOverview} type="button">‹ <b>Back to overview</b></button>
+  </section>;
   if (chapter?.locked) return <section className="seen-inline-chapter is-locked" aria-live="polite">
     <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>Chapter {chapterIndex + 1} of {chapters.length}</span></div>
     <h2>{chapter.title || item.title}</h2><i className="seen-inline-accent" />
@@ -1141,7 +1152,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const nextChapterPanel = activeChapter < item.chapters.length - 1 ? activeChapter + 1 : item.chapters.length ? -1 : null;
   const renderInlinePanel = (panel) => panel == null ? <span /> : panel < 0
     ? <SeenSummary item={item} onOpenChapter={selectChapter} onPurchase={() => setPurchaseOpen(true)} />
-    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} onOverview={() => selectChapter(-1, -1)} onPurchase={() => setPurchaseOpen(true)} onSelect={selectChapter} />;
+    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} onJoinWorld={() => navigate(`/world/${encodeURIComponent(item.bonusWorld.id)}?join=1`)} onOverview={() => selectChapter(-1, -1)} onPurchase={() => setPurchaseOpen(true)} onSelect={selectChapter} />;
 
   return <motion.article
     className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
@@ -1236,7 +1247,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     />
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
-    <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => window.location.reload()} publication={rawItem} />
+    <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => onFeedReplace(item.id, { ...rawItem, access: "ENTITLED_SEEN", paymentAvailable: false, ownerCount: Number(rawItem.ownerCount || 0) + 1, chapters: (rawItem.chapters || []).map((chapter) => ({ ...chapter, locked: false })) })} publication={rawItem} />
     <SeenInsightsSheet fallbackViews={item.engagement.views} insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
     <SeriesPickerSheet
       isOpen={seriesOpen}

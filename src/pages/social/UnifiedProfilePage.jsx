@@ -300,7 +300,7 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
           )}
           <Link aria-label={__msg("social.activity")} className="is-activity" to="/activity">
             <ActivitySparkMark className="h-5 w-5" />
-            {unread ? <i className="activity-count-badge">{unread > 99 ? "99+" : unread}</i> : null}
+            {unread > 0 ? <i className="activity-count-badge">{unread > 99 ? "99+" : unread}</i> : null}
           </Link>
         </div>
       </header>
@@ -885,13 +885,13 @@ function ProfileTabs({ tab, setTab }) {
   );
 }
 
-function ProfileMixedContentPanel({ emptyText, owner = false, reposted = false, seens = [], wallPosts = [] }) {
+function ProfileMixedContentPanel({ directSeenNavigation = false, emptyText, owner = false, reposted = false, seens = [], wallPosts = [] }) {
   __useUiLanguage();
   if (!seens.length && !wallPosts.length) return <ContentEmptyState compact message={owner ? __msg("social.itemsYouSaveOrShareWillBeCollectedHere") : __msg("social.thereIsNothingInThisSectionYet")} primaryAction={owner ? { label: __msg("social.exploreContent"), to: "/seen" } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={emptyText} variant="profile" />;
   return <div className="profile-mixed-content">
     {seens.length ? <section className="profile-mixed-section is-seens">
       <header><h2>{__msg("profile.seens")}</h2><span>{seens.length}</span></header>
-      <ProfileContentGrid content={seens} kind="seens" reposted={reposted} />
+      <ProfileContentGrid content={seens} directSeenNavigation={directSeenNavigation} kind="seens" reposted={reposted} />
     </section> : null}
     {wallPosts.length ? <section className="profile-mixed-section is-wall-notes">
       <header><h2>{__msg("social.wallNotes")}</h2><span>{wallPosts.length}</span></header>
@@ -922,7 +922,7 @@ function ContentTabsPanel({ data, isOwner, tab }) {
   if (!isOwner) return <div className="profile-empty-state">{__msg("social.savedItemsArePrivate")}</div>;
   if (saved.isLoading) return <LoadingSkeleton className="h-40" count={1} />;
   if (saved.isError) return <div className="profile-empty-state">{__msg("social.savedItemsCouldNotBeLoaded")}</div>;
-  return <ProfileMixedContentPanel emptyText="No saved Wall notes or Seens yet." owner seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
+  return <ProfileMixedContentPanel directSeenNavigation emptyText="No saved Wall notes or Seens yet." owner seens={saved.data?.seens || []} wallPosts={saved.data?.wallPosts || []} />;
 }
 
 function ProfileNotes({ isOwner, posts = [] }) {

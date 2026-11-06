@@ -8,6 +8,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { getUserDisplay } from "./shared/userDisplay";
 import { socialPrimaryNavItems } from "../social/socialNavItems";
 import { useLanguage } from "../../hooks/useLanguage";
+import { FiPlus } from "react-icons/fi";
 
 function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0, unreadMessageCount = 0 }) {
   __useUiLanguage();
@@ -16,6 +17,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
   const location = useLocation();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate ? { label: __msg("fanWeb.create_66eee2"), onClick: onCreate } : null;
+  const createLabel = createAction ? t(createAction.label).replace(/\s*[✦↓]\s*$/u, "") : "";
 
   return (
     <aside className="social-fixed-rail social-left-rail fan-web-sidebar sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[18px] pb-[22px] pt-[30px] min-[881px]:flex">
@@ -30,7 +32,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
             className={({ isActive }) => {
               const isProfileSection = item.to === "/profile" && location.pathname.startsWith("/saved");
               const active = (isActive || isProfileSection) && location.pathname !== "/profile/seen";
-              return `fan-sidebar-nav-link flex min-h-[46px] items-center justify-start gap-4 rounded-full px-3.5 py-3 text-[15px] font-semibold text-white/60 transition duration-150 hover:translate-x-0.5 hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-atseen-blue ${
+              return `fan-sidebar-nav-link ${item.to === "/profile" ? "is-profile-link" : ""} flex min-h-[46px] items-center justify-start gap-4 rounded-full px-3.5 py-3 text-[15px] font-semibold text-white/60 transition duration-150 hover:translate-x-0.5 hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-atseen-blue ${
                 active ? "is-active text-white !font-extrabold" : ""
               }`;
             }}
@@ -73,7 +75,8 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
           onClick={createAction.onClick}
           type="button"
         >
-          {t(createAction.label)}
+          <FiPlus aria-hidden="true" />
+          {createLabel}
         </button>
       ) : null}
 

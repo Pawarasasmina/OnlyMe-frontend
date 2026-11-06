@@ -42,6 +42,7 @@ import {
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
+import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
@@ -1908,6 +1909,7 @@ export default function WorldReaderPage() {
   const [tagPeopleOpen, setTagPeopleOpen] = useState(false);
   const [sheet, setSheet] = useState(new URLSearchParams(location.search).get("worldPanel") || "");
   const [joinKey, setJoinKey] = useState("");
+  const [joinModalOpen, setJoinModalOpen] = useState(new URLSearchParams(location.search).get("join") === "1");
   const [showJoinSuccess, setShowJoinSuccess] = useState(false);
   const [showExperienceUnlock, setShowExperienceUnlock] = useState(false);
   const [coverProgress, setCoverProgress] = useState(0);
@@ -2269,7 +2271,6 @@ export default function WorldReaderPage() {
   const canViewMemberContent = owner || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_EXPERIENCE"].includes(publication?.access);
   const activeMembership = memberships.data?.find((item) => String(item.premiumPublication?._id || item.premiumPublication?.id) === String(publicationId) && isActivePremiumMembership(item));
   const openPremiumJoin = () => {
-    if (joinPremium.isPending) return;
     if (owner || canViewMemberContent) {
       navigate(`/world/${publicationId}/inside`);
       return;
@@ -2278,7 +2279,7 @@ export default function WorldReaderPage() {
       navigate("/login", { state: { from: { pathname: location.pathname } } });
       return;
     }
-    joinPremium.mutate();
+    setJoinModalOpen(true);
   };
   const openCreatorMessages = (creatorUserId = creatorId) => {
     if (!creatorUserId) return;
@@ -3063,6 +3064,7 @@ export default function WorldReaderPage() {
         </BottomSheet>
       ) : null}
       <PurchaseWorldModal onClose={() => setShowExperienceUnlock(false)} onSuccess={() => query.refetch()} open={showExperienceUnlock} publication={publication} />
+      <JoinPremiumModal authenticated={Boolean(user)} onClose={() => setJoinModalOpen(false)} onRequireAuth={() => navigate("/login", { state: { from: { pathname: location.pathname, search: location.search } } })} onSuccess={async () => { setJoinModalOpen(false); await Promise.all([query.refetch(), memberships.refetch()]); setShowJoinSuccess(true); }} open={joinModalOpen && premium && !owner && !canViewMemberContent} publication={publication} />
       {voiceCommentOpen ? <VoiceCommentRecorder busy={commentPostPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={addVoiceComment} /> : null}
     </>
   );

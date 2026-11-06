@@ -465,6 +465,7 @@ function ProfileContentGrid({
   activeSeriesId = "",
   activeSeenListId = "",
   content = [],
+  directSeenNavigation = false,
   emptyText = "",
   highlightSeenId = "",
   kind = "content",
@@ -624,13 +625,14 @@ function ProfileContentGrid({
               </>
             );
 
-            if (reposted) {
+            if (reposted || directSeenNavigation) {
+              const seenId = item.id || item._id;
               return (
                 <Link
-                  aria-label={`Open reposted Seen ${item.title || "Untitled Seen"}`}
+                  aria-label={`Open Seen ${item.title || "Untitled Seen"}`}
                   className="profile-seen-tile"
-                  key={item.id}
-                  to={`/seen/${item.id}`}
+                  key={seenId}
+                  to={`/seen/${seenId}`}
                 >
                   {tile}
                 </Link>

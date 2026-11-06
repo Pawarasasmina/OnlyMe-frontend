@@ -23256,48 +23256,6 @@ video.seen-reader-media {
   }
 }
 
-/* /seen should not loosen the shared left sidebar spacing. */
-@media (min-width: 881px) {
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] {
-    gap: 2px !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a {
-    min-height: 46px !important;
-    gap: 16px !important;
-    padding: 12px 14px !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a:hover {
-    background: rgba(255,255,255,.05) !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a[aria-current="page"],
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a.is-active {
-    background: transparent !important;
-    font-weight: 800 !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] svg {
-    width: 23px !important;
-    height: 23px !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail .sidebar-create-action,
-  .social-app-shell:has(.seen-shell-main) .social-left-rail a[href="/creator/verification"] {
-    min-height: 52px !important;
-    margin-top: 16px !important;
-    font-size: 14px !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail > div > a {
-    gap: 11px !important;
-    border-radius: 16px !important;
-    padding: 10px 12px !important;
-  }
-}
 /* Prototype-style status publishing screen. */
 .status-picker-page {
   position: fixed;
@@ -33068,6 +33026,53 @@ video.seen-reader-media {
     min-width: var(--social-right-width) !important;
     flex: 0 0 var(--social-right-width) !important;
   }
+
+  /* Seen previously restyled the shared navigation rail. Reset those
+     high-specificity legacy rules to the same sidebar used everywhere else. */
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav {
+    gap: 2px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link {
+    min-height: 50px !important;
+    gap: 17px !important;
+    border-radius: 999px !important;
+    padding: 12px 15px !important;
+    color: #9b9da2 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link:hover {
+    background: rgba(255,255,255,.035) !important;
+    color: #eef1f4 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link[aria-current="page"],
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link.is-active {
+    background: #131517 !important;
+    color: #fff !important;
+    font-weight: 750 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .sidebar-create-action {
+    min-height: 47px !important;
+    margin-top: 16px !important;
+    border-radius: 14px !important;
+    background: #93c4f7 !important;
+    font-size: 14px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .sidebar-identity {
+    gap: 11px !important;
+    border-radius: 14px !important;
+    padding: 8px 12px !important;
+  }
 }
 .social-app-shell .social-center-scroll > main:has(.world-prototype-page), .social-app-shell .social-center-scroll > main:has(.world-actions-page) {
   min-height: 100dvh !important;
@@ -38202,40 +38207,6 @@ video.seen-reader-media {
   }
 }
 
-/* Activity uses the complete prototype canvas as soon as the three fixed
-   columns fit. The generic tablet rule above intentionally hides the context
-   rail, but doing that on desktop made Activity look like a cropped mobile
-   page and left part of the navigation visible at the edge. */
-@media (min-width: 1020px) {
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
-    width: 980px !important;
-    max-width: 100% !important;
-    justify-content: flex-start !important;
-  }
-
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .fan-web-sidebar,
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-fixed-rail:first-child {
-    width: 240px !important;
-    min-width: 240px !important;
-    flex: 0 0 240px !important;
-  }
-
-  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
-    width: 440px !important;
-    min-width: 440px !important;
-    max-width: 440px !important;
-    flex: 0 0 440px !important;
-  }
-
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-shared-right-rail,
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-fixed-rail:last-child {
-    display: grid !important;
-    width: 300px !important;
-    min-width: 300px !important;
-    flex: 0 0 300px !important;
-  }
-}
-
 /* Wall notes must never make the fixed center column wider. Seed/demo notes
    commonly have long locations, contexts, and translated voice transcripts. */
 .home-prototype-page,
@@ -41290,6 +41261,15 @@ html[dir="rtl"] textarea {
 .seen-paid-overview-hero{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr);gap:15px;align-items:start;margin-top:18px}.seen-paid-overview-hero>button{position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:18px;background:#111820}.seen-paid-overview-hero>button :is(img,video){width:100%;height:100%;object-fit:cover}.seen-paid-overview-hero>div{padding-top:4px}.seen-paid-overview-hero>div>small{color:#9ccbff;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.seen-paid-overview-hero h2{margin-top:7px;font-size:24px;font-weight:950;line-height:.98;overflow-wrap:anywhere}.seen-paid-overview-hero>div>span{display:block;margin-top:10px;color:rgba(255,255,255,.43);font-size:10px}.seen-paid-overview-hero p{margin-top:12px;color:rgba(255,255,255,.86);font-size:13px;line-height:1.55}
 .seen-paid-overview-unlock{display:grid;width:100%;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:18px;border-radius:14px;background:#12161b;padding:13px;color:#fff;text-align:left}.seen-paid-overview-unlock>span{display:flex;align-items:center;gap:6px;border:1px solid rgba(156,203,255,.35);border-radius:999px;padding:5px 9px;color:#9ccbff;font-size:11px;font-weight:900}.seen-paid-overview-unlock small{color:rgba(255,255,255,.46);font-size:10px}.seen-paid-overview-unlock b{color:#9ccbff;font-size:11px}.seen-paid-overview-unlock:disabled b{color:rgba(255,255,255,.5)}
 .seen-summary>.seen-paid-overview-unlock{grid-column:1/-1;margin-top:16px}.seen-paid-permalink-header{display:flex;align-items:center;gap:10px;padding:24px 21px 4px}.seen-paid-permalink-header button{display:grid;width:38px;height:38px;place-items:center;border-radius:50%;background:#181d24;color:#fff;font-size:21px}.seen-paid-permalink-header strong{font-size:15px;font-weight:900}.seen-permalink-page:has(.seen-paid-permalink-header) .seen-feed-list{padding-top:10px}.seen-permalink-page:has(.seen-paid-permalink-header) .seen-feed-list>.seen-feed-item:first-child .seen-item-creator{padding-top:0}.seen-summary>.seen-chapter-list{grid-column:1/-1}.seen-chapter-preview strong{display:flex;align-items:center;gap:6px}.seen-chapter-preview strong svg{width:10px;color:rgba(255,255,255,.38)}
+.seen-paid-overview-unlock.is-owned>span{border-color:rgba(121,239,183,.42);background:rgba(121,239,183,.08);color:#79efb7;padding:4px 10px}.seen-paid-overview-unlock.is-owned small{color:rgba(255,255,255,.56)}.seen-paid-overview-unlock.is-owned b{color:#f3f5f7}.seen-paid-overview-unlock.is-owned:hover,.seen-paid-overview-unlock.is-owned:focus-visible{background:#171c21;outline:none}
+.seen-world-bonus-card{display:grid;justify-items:center;margin-top:5px;border:1px solid rgba(156,203,255,.32);border-radius:17px;background:#121820;padding:16px 18px;text-align:center}.seen-world-bonus-card>span{display:grid;width:40px;height:40px;place-items:center;border-radius:50%;background:#202d3c;color:#9ccbff;font-size:18px}.seen-world-bonus-card h3{margin-top:10px;color:#fff;font-size:14px;font-weight:900}.seen-world-bonus-card p{margin-top:3px;color:#7f8da0;font-size:10px}.seen-world-bonus-card button{margin-top:12px;border-radius:999px;background:#93c4f7;padding:11px 23px;color:#071019;font-size:12px;font-weight:900}.seen-world-bonus-back{display:flex;width:100%;min-height:50px;align-items:center;gap:9px;margin-top:20px;border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:0 14px;color:#9ccbff;text-align:left}.seen-world-bonus-back b{color:#fff;font-size:12px}.seen-inline-chapter.is-world-bonus .seen-paid-locked-blur{padding-top:14px;padding-bottom:9px}
+
+/* Profile keeps the quiet prototype treatment: emphasis without an active pill. */
+@media (min-width:1020px){.social-app-shell .fan-web-sidebar .fan-sidebar-nav-link.is-profile-link.is-active,.social-app-shell .fan-web-sidebar .fan-sidebar-nav-link.is-profile-link[aria-current="page"]{background:transparent}}
+
+/* Wall header actions use the prototype's neutral white icons. */
+.home-prototype-top .home-spark-button{color:#fff}
+.home-prototype-top .home-spark-button svg{color:inherit;stroke:currentColor}
 .seen-paid-overview-chapters{display:grid;margin-top:17px}.seen-paid-overview-chapters button{display:grid;min-height:40px;grid-template-columns:27px 14px minmax(0,1fr) 14px;align-items:center;gap:5px;border-bottom:1px solid rgba(255,255,255,.035);color:#fff;text-align:left}.seen-paid-overview-chapters button>span{color:#9ccbff;font-size:10px;font-weight:900}.seen-paid-overview-chapters button>i{display:grid;width:14px;place-items:center;color:rgba(255,255,255,.48);font-style:normal}.seen-paid-overview-chapters button>i svg{width:11px}.seen-paid-overview-chapters button>b{font-size:13px;font-weight:650}.seen-paid-overview-chapters button>svg{width:11px;color:rgba(255,255,255,.55)}.seen-paid-overview-chapters button.is-locked>b{color:rgba(255,255,255,.72)}.seen-paid-overview-engagement{margin-top:22px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px}
 @media(max-width:390px){.seen-paid-overview-page{padding-inline:14px}.seen-paid-overview-hero{gap:11px}.seen-paid-overview-hero h2{font-size:20px}.seen-paid-overview-hero p{font-size:11.5px}}
 
@@ -41317,6 +41297,245 @@ html[dir="rtl"] textarea {
   }
 }
 .seen-comments-list article.is-activity-focus { background: rgba(156,203,255,.1); border-radius: 10px; }
+
+/* Stable desktop social shell. Side rails must never move between routes;
+   Seen and Activity may only replace the content inside the center column. */
+@media (min-width: 1020px) {
+  .social-app-shell {
+    --social-left-width: 276px;
+    --social-center-width: 440px;
+    --social-right-width: 300px;
+  }
+
+  .social-app-shell .social-app-frame,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
+    width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    max-width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    justify-content: flex-start !important;
+  }
+
+  .social-app-shell .social-app-frame > .fan-web-sidebar,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .fan-web-sidebar,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .fan-web-sidebar {
+    width: var(--social-left-width) !important;
+    min-width: var(--social-left-width) !important;
+    flex: 0 0 var(--social-left-width) !important;
+  }
+
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
+    width: var(--social-center-width) !important;
+    min-width: var(--social-center-width) !important;
+    max-width: var(--social-center-width) !important;
+    flex: 0 0 var(--social-center-width) !important;
+    margin: 0 !important;
+  }
+
+  .social-app-shell .social-app-frame > .social-shared-right-rail,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-shared-right-rail,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-shared-right-rail {
+    display: grid !important;
+    width: var(--social-right-width) !important;
+    min-width: var(--social-right-width) !important;
+    flex: 0 0 var(--social-right-width) !important;
+  }
+}
+
+/* Desktop side panels — shared reference treatment.
+   This lives after the legacy shell rules so every social route keeps the
+   same navigation and recommendation-rail geometry. */
+@media (min-width: 1020px) {
+  .social-app-shell {
+    --social-left-width: 276px;
+    --social-center-width: 440px;
+    --social-right-width: 300px;
+    background: #050709;
+  }
+
+  .social-app-shell .social-app-frame > .fan-web-sidebar {
+    width: var(--social-left-width) !important;
+    min-width: var(--social-left-width) !important;
+    flex-basis: var(--social-left-width) !important;
+    border-right: 1px solid #1b1f24;
+    background: #050709;
+    padding: 28px 26px 4px !important;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-brand {
+    margin: 0 0 22px;
+    padding: 10px 12px 7px;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-wordmark > span:not(.sr-only) {
+    color: #f5f7fa;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -.8px;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-nav {
+    gap: 2px;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-nav-link {
+    min-height: 50px;
+    gap: 17px;
+    border-radius: 999px;
+    padding: 12px 15px;
+    color: #9b9da2;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-nav-link:hover {
+    background: rgba(255,255,255,.035);
+    color: #eef1f4;
+    transform: none;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-nav-link[aria-current="page"],
+  .social-app-shell .fan-web-sidebar .fan-sidebar-nav-link.is-active {
+    background: #131517;
+    color: #fff;
+    font-weight: 750;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-nav-link svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.75;
+  }
+
+  .social-app-shell .fan-web-sidebar .sidebar-create-action {
+    min-height: 47px;
+    margin-top: 16px;
+    gap: 8px;
+    border: 0;
+    border-radius: 14px;
+    background: #93c4f7;
+    color: #071019;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: none;
+  }
+
+  .social-app-shell .fan-web-sidebar .sidebar-create-action svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2.2;
+  }
+
+  .social-app-shell .fan-web-sidebar .sidebar-create-action:hover {
+    background: #a4cff9;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .social-app-shell .fan-web-sidebar .sidebar-identity {
+    gap: 11px;
+    border-radius: 14px;
+    padding: 8px 12px;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-user-copy strong {
+    font-size: 13px;
+    font-weight: 750;
+  }
+
+  .social-app-shell .fan-web-sidebar .fan-sidebar-user-copy small {
+    color: #656b73;
+    font-size: 10.5px;
+  }
+
+  .social-app-shell .social-app-frame > .social-shared-right-rail.home-right-rail {
+    width: var(--social-right-width) !important;
+    min-width: var(--social-right-width) !important;
+    flex-basis: var(--social-right-width) !important;
+    align-content: start;
+    gap: 14px;
+    border-left: 1px solid #1b1f24;
+    background: #050709;
+    padding: 30px 20px 22px !important;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-live-card,
+  .social-app-shell .social-shared-right-rail .home-rail-card,
+  .social-app-shell .social-shared-right-rail .home-rail-trending {
+    border: 1px solid #20242a;
+    border-radius: 20px;
+    background: #0b0e11;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-live-card {
+    min-height: 80px;
+    padding: 14px 16px;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-live-card strong,
+  .social-app-shell .social-shared-right-rail .home-rail-card h2 {
+    color: #f5f6f7;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -.15px;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-live-card small,
+  .social-app-shell .social-shared-right-rail .home-rail-suggestion-row small,
+  .social-app-shell .social-shared-right-rail .home-rail-fresh-row small {
+    color: #737981;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-card {
+    padding: 17px 16px;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-suggestion-row {
+    min-height: 58px;
+    padding: 7px 0;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-suggestion-row strong,
+  .social-app-shell .social-shared-right-rail .home-rail-fresh-row strong {
+    color: #f1f3f5;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-follow {
+    min-width: 66px;
+    height: 30px;
+    border: 0;
+    border-radius: 9px;
+    background: #93c4f7;
+    color: #071019;
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-follow:hover {
+    background: #a4cff9;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-follow.is-following {
+    border: 1px solid #30353c;
+    background: #15191e;
+    color: #d9dde2;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-trending {
+    min-height: 145px;
+    padding: 6px;
+  }
+
+  .social-app-shell .social-shared-right-rail .home-rail-footer {
+    color: #676d75;
+    font-size: 9.5px;
+    font-weight: 500;
+  }
+}
 /* Shared confirmation and text-request sheet. Replaces native browser dialogs. */
 .app-dialog-layer { position: fixed; inset: 0; z-index: 1000; }
 .app-dialog-scrim { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(7px); }
