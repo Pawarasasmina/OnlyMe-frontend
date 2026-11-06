@@ -427,7 +427,10 @@ export default function CreatorStudio() {
   const canGrow = ["creator", "business"].includes(accountType);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    const requested = searchParams.get("tab");
+    return ["overview", "audience", "earnings"].includes(requested) ? requested : "overview";
+  });
   const [payoutsOpen, setPayoutsOpen] = useState(false);
   const dashboardQuery = useQuery({
     queryKey: ["creator-dashboard"],

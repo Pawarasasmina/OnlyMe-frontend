@@ -23,6 +23,8 @@ import {
   FiMessageCircle,
   FiMoreHorizontal,
   FiPlus,
+  FiUser,
+  FiFileText,
   FiRefreshCw,
   FiRepeat,
   FiSend,
@@ -61,6 +63,7 @@ import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { useCreatorStories } from "../../hooks/useStories";
 import { messageService } from "../../services/messageService";
 import { analyticsService } from "../../services/analyticsService";
+import { creatorService } from "../../services/creatorService";
 import { sortedProfileGifts } from "../../utils/profileGifts";
 import { profileGiftCopy } from "../../utils/profileGiftCopy";
 import { profileService } from "../../services/profileService";
@@ -269,12 +272,10 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
   const unread = useUnreadActivityCount(Boolean(user));
   const [createOpen, setCreateOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
-  const createTarget = viewerCapabilities.canCreate ? "/create" : "/wall";
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
   const worldTarget = worldCreateTarget(planets);
   const openCreate = () => {
-    if (!viewerCapabilities.canCreate) return;
     setCreateOpen(true);
   };
 
@@ -293,11 +294,7 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
       <header className="profile-prototype-topbar">
         <span dir="auto"><b>@</b>{profile.username}</span>
         <div>
-          {viewerCapabilities.canCreate ? (
-            <button aria-expanded={createOpen} aria-label={__msg("fanWeb.create")} className="profile-top-icon" onClick={openCreate} type="button"><FiPlus /></button>
-          ) : (
-            <Link aria-label={__msg("fanWeb.wall")} to={createTarget}><FiPlus /></Link>
-          )}
+          <button aria-expanded={createOpen} aria-label={__msg("fanWeb.create")} className="profile-top-icon" onClick={openCreate} type="button"><FiPlus /></button>
           <Link aria-label={__msg("social.activity")} className="is-activity" to="/activity">
             <ActivitySparkMark className="h-5 w-5" />
             {unread > 0 ? <i className="activity-count-badge">{unread > 99 ? "99+" : unread}</i> : null}
@@ -615,6 +612,90 @@ function BusinessContactActions({ profile, isOwner }) {
     else window.open(item.href, "_blank", "noopener,noreferrer");
   };
   return <div className="profile-business-contact-actions">{actions.map(({ Icon, ...item }) => <button key={item.id} onClick={() => open(item)} type="button"><Icon aria-hidden="true" />{item.label}</button>)}</div>;
+}
+
+function NewProfileStarter({ data, onStartSeen }) {
+  const navigate = useNavigate();
+  const { profile, viewerCapabilities } = data;
+  const steps = [
+    {
+      key: "photo",
+      title: "Add a profile photo",
+      detail: "People follow faces",
+      done: Boolean(profile.avatar),
+      Icon: FiUser,
+      to: "/settings/profile?from=profile",
+    },
+    {
+      key: "status",
+      title: "Set your status",
+      detail: "What you're up to",
+      done: Boolean(profile.activeStatus?.label),
+      Icon: FiMessageCircle,
+      to: "/profile/status",
+    },
+    {
+      key: "seen",
+      title: "Post your first Seen",
+      detail: "A story in chapters",
+      done: Boolean(data.seens?.length),
+      Icon: FiFileText,
+      to: "/create/seen?type=free",
+    },
+  ];
+  const completed = steps.filter((step) => step.done).length;
+  if (!viewerCapabilities.isOwner || completed === steps.length) return null;
+  return (
+    <section aria-label="Get started" className="profile-get-started">
+      <header><strong>Get started</strong><span>{completed} of {steps.length}</span></header>
+      <div aria-hidden="true" className="profile-get-started-progress"><i style={{ width: `${(completed / steps.length) * 100}%` }} /></div>
+      <div className="profile-get-started-cards">
+        {steps.map(({ Icon, ...step }) => (
+          <button className={step.done ? "is-done" : ""} key={step.key} onClick={() => { if (step.done) return; if (step.key === "seen") onStartSeen?.(); else navigate(step.to); }} type="button">
+            <span className="profile-get-started-icon">{step.done ? "✓" : <Icon aria-hidden="true" />}</span>
+            <b>{step.title}</b><small>{step.detail}</small>
+            <em>{step.done ? "Done" : "Start ›"}</em>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProfileWaysToEarn({ data }) {
+  const { profile, viewerCapabilities } = data;
+  const canLoadDashboard = Boolean(viewerCapabilities.isOwner && viewerCapabilities.canAccessStudio);
+  const dashboard = useQuery({
+    queryKey: ["creator-dashboard"],
+    queryFn: () => creatorService.getDashboard().then((response) => response.data.data),
+    enabled: canLoadDashboard,
+    retry: false,
+    staleTime: 30000,
+  });
+  const examples = useQuery({
+    queryKey: ["ways-to-earn"],
+    queryFn: () => creatorService.getWaysToEarn().then((response) => response.data.data),
+    enabled: !canLoadDashboard,
+    retry: false,
+    staleTime: 30000,
+  });
+  if (!viewerCapabilities.isOwner) return null;
+  const example = examples.data?.example;
+  const earnings = dashboard.data?.earnings || {};
+  const sources = earnings.bySource || {};
+  const destination = canLoadDashboard ? "/studio?tab=earnings" : "/ways-to-earn";
+  const money = (value) => new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0);
+  const cards = [
+    { label: "World", value: money(canLoadDashboard ? earnings.residents?.monthlyRecurringRevenue : example?.world?.income), note: `${compact(canLoadDashboard ? earnings.residents?.count : example?.world?.members)} members` },
+    { label: "Paid Seen", value: money(canLoadDashboard ? sources.unlocks : example?.paidSeen?.income), note: `${compact(example?.paidSeen?.owners)} owners` },
+    { label: "Gifts", value: money(canLoadDashboard ? sources.gifts : example?.gifts?.income), note: `${compact(example?.gifts?.count)} gifts` },
+  ];
+  return (
+    <Link aria-label="Open ways to earn" className="profile-ways-to-earn" to={destination}>
+      <header><span><b>Ways to earn</b><small>{canLoadDashboard ? "Your earnings by source" : `What ${example?.name?.split(" ")[0] || "creators"} makes with each`}</small></span><em>How ›</em></header>
+      <div>{cards.map((card) => <article key={card.label}><b>{card.label}</b><strong>{dashboard.isLoading || examples.isLoading ? "…" : card.value}</strong><small>{card.note}</small></article>)}</div>
+    </Link>
+  );
 }
 
 function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
@@ -950,6 +1031,7 @@ function ProfileBody({ data, setConnectionsType }) {
   const [activeSeriesId, setActiveSeriesId] = useState("");
   const [activeSeenListId, setActiveSeenListId] = useState("");
   const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
+  const [starterSeenOpen, setStarterSeenOpen] = useState(false);
   const [experienceStoryOpen, setExperienceStoryOpen] = useState(false);
   const [profileStoryViewer, setProfileStoryViewer] = useState(null);
   const [draftSavedCount, setDraftSavedCount] = useState(() => Math.min(3, Math.max(0, Number(searchParams.get("draftSaved")) || 0)));
@@ -1055,7 +1137,9 @@ function ProfileBody({ data, setConnectionsType }) {
         : <VisitorProfileBar profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />}
       <IdentitySection hasStories={hasProfileStories} metrics={publicMetrics} onConnectionsOpen={setConnectionsType} onStoriesCreate={() => setExperienceStoryOpen(true)} onStoriesOpen={openProfileStories} planets={data.planets || []} profile={profile} relationship={data.viewerRelationship} viewerCapabilities={viewerCapabilities} />
       <BusinessContactActions isOwner={isOwner} profile={profile} />
+      <NewProfileStarter data={data} onStartSeen={() => setStarterSeenOpen(true)} />
       <StoryHighlights creatorUsername={profile.username} creatorId={profile.ownerUserId} isOwner={isOwner} />
+      <ProfileWaysToEarn data={data} />
       <ProfileOrbit capabilities={viewerCapabilities} planets={data.planets || []} profile={profile} role={profile.role} />
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} viewerId={user?.id || user?._id} />
@@ -1091,6 +1175,12 @@ function ProfileBody({ data, setConnectionsType }) {
         }}
         onStory={() => { setExperienceCreateOpen(false); setExperienceStoryOpen(true); }}
         worldTarget={worldCreateTarget(data.planets || [])}
+      /> : null}
+      {isOwner ? <FanCreateSheet
+        canCreateSeen={viewerCapabilities.canCreate}
+        isOpen={starterSeenOpen}
+        onClose={() => setStarterSeenOpen(false)}
+        variant="seen"
       /> : null}
       <StoryCreator isOpen={experienceStoryOpen} onClose={() => setExperienceStoryOpen(false)} />
       <StoryViewer initialIndex={profileStoryViewer?.index || 0} isOpen={Boolean(profileStoryViewer?.stories?.length)} onClose={() => setProfileStoryViewer(null)} stories={profileStoryViewer?.stories || []} />

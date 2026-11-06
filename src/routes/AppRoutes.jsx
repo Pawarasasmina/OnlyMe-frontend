@@ -28,6 +28,7 @@ const MessagesPage = lazyPage("../pages/fan/MessagesPage");
 const ActivityPage = lazyPage("../pages/fan/ActivityPage");
 const WorldsPage = lazyPage("../pages/fan/WorldsPage");
 const CreatorStudio = lazyPage("../pages/creator/CreatorStudio");
+const WaysToEarnPage = lazyPage("../pages/creator/WaysToEarnPage");
 const GrowPage = lazyPage("../pages/creator/GrowPage");
 const GrowFanPreviewPage = lazyPage("../pages/creator/GrowFanPreviewPage");
 const ReferralLandingPage = lazyPage("../pages/public/ReferralLandingPage");
@@ -228,6 +229,7 @@ function AppRoutes() {
           </Route>
           <Route path="/create" element={<CreateHubPage />} />
           <Route path="/create/seen" element={<SeenComposerPage />} />
+          <Route path="/ways-to-earn" element={<WaysToEarnPage />} />
           <Route path="/studio/seens" element={<Navigate replace to="/profile" />} />
           <Route path="/studio/seens/:id" element={<Navigate replace to="/profile" />} />
           <Route path="/studio/seens/:id/edit" element={<SeenComposerPage />} />
