@@ -23256,48 +23256,6 @@ video.seen-reader-media {
   }
 }
 
-/* /seen should not loosen the shared left sidebar spacing. */
-@media (min-width: 881px) {
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] {
-    gap: 2px !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a {
-    min-height: 46px !important;
-    gap: 16px !important;
-    padding: 12px 14px !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a:hover {
-    background: rgba(255,255,255,.05) !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a[aria-current="page"],
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] a.is-active {
-    background: transparent !important;
-    font-weight: 800 !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail nav[aria-label="Fan navigation"] svg {
-    width: 23px !important;
-    height: 23px !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail .sidebar-create-action,
-  .social-app-shell:has(.seen-shell-main) .social-left-rail a[href="/creator/verification"] {
-    min-height: 52px !important;
-    margin-top: 16px !important;
-    font-size: 14px !important;
-  }
-
-  .social-app-shell:has(.seen-shell-main) .social-left-rail > div > a {
-    gap: 11px !important;
-    border-radius: 16px !important;
-    padding: 10px 12px !important;
-  }
-}
 /* Prototype-style status publishing screen. */
 .status-picker-page {
   position: fixed;
@@ -33068,6 +33026,53 @@ video.seen-reader-media {
     min-width: var(--social-right-width) !important;
     flex: 0 0 var(--social-right-width) !important;
   }
+
+  /* Seen previously restyled the shared navigation rail. Reset those
+     high-specificity legacy rules to the same sidebar used everywhere else. */
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav {
+    gap: 2px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link {
+    min-height: 50px !important;
+    gap: 17px !important;
+    border-radius: 999px !important;
+    padding: 12px 15px !important;
+    color: #9b9da2 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link:hover {
+    background: rgba(255,255,255,.035) !important;
+    color: #eef1f4 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link[aria-current="page"],
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link.is-active {
+    background: #131517 !important;
+    color: #fff !important;
+    font-weight: 750 !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .fan-sidebar-nav-link svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .sidebar-create-action {
+    min-height: 47px !important;
+    margin-top: 16px !important;
+    border-radius: 14px !important;
+    background: #93c4f7 !important;
+    font-size: 14px !important;
+  }
+
+  .social-app-shell:has(.seen-shell-main) .fan-web-sidebar .sidebar-identity {
+    gap: 11px !important;
+    border-radius: 14px !important;
+    padding: 8px 12px !important;
+  }
 }
 .social-app-shell .social-center-scroll > main:has(.world-prototype-page), .social-app-shell .social-center-scroll > main:has(.world-actions-page) {
   min-height: 100dvh !important;
@@ -38202,40 +38207,6 @@ video.seen-reader-media {
   }
 }
 
-/* Activity uses the complete prototype canvas as soon as the three fixed
-   columns fit. The generic tablet rule above intentionally hides the context
-   rail, but doing that on desktop made Activity look like a cropped mobile
-   page and left part of the navigation visible at the edge. */
-@media (min-width: 1020px) {
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
-    width: 980px !important;
-    max-width: 100% !important;
-    justify-content: flex-start !important;
-  }
-
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .fan-web-sidebar,
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-fixed-rail:first-child {
-    width: 240px !important;
-    min-width: 240px !important;
-    flex: 0 0 240px !important;
-  }
-
-  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
-    width: 440px !important;
-    min-width: 440px !important;
-    max-width: 440px !important;
-    flex: 0 0 440px !important;
-  }
-
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-shared-right-rail,
-  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-fixed-rail:last-child {
-    display: grid !important;
-    width: 300px !important;
-    min-width: 300px !important;
-    flex: 0 0 300px !important;
-  }
-}
-
 /* Wall notes must never make the fixed center column wider. Seed/demo notes
    commonly have long locations, contexts, and translated voice transcripts. */
 .home-prototype-page,
@@ -41326,6 +41297,51 @@ html[dir="rtl"] textarea {
   }
 }
 .seen-comments-list article.is-activity-focus { background: rgba(156,203,255,.1); border-radius: 10px; }
+
+/* Stable desktop social shell. Side rails must never move between routes;
+   Seen and Activity may only replace the content inside the center column. */
+@media (min-width: 1020px) {
+  .social-app-shell {
+    --social-left-width: 276px;
+    --social-center-width: 440px;
+    --social-right-width: 300px;
+  }
+
+  .social-app-shell .social-app-frame,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame {
+    width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    max-width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    justify-content: flex-start !important;
+  }
+
+  .social-app-shell .social-app-frame > .fan-web-sidebar,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .fan-web-sidebar,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .fan-web-sidebar {
+    width: var(--social-left-width) !important;
+    min-width: var(--social-left-width) !important;
+    flex: 0 0 var(--social-left-width) !important;
+  }
+
+  .social-app-shell .social-center-scroll,
+  .social-app-shell:has(.seen-shell-main) .social-center-scroll,
+  .social-app-shell:has(.activity-prototype-page) .social-center-scroll {
+    width: var(--social-center-width) !important;
+    min-width: var(--social-center-width) !important;
+    max-width: var(--social-center-width) !important;
+    flex: 0 0 var(--social-center-width) !important;
+    margin: 0 !important;
+  }
+
+  .social-app-shell .social-app-frame > .social-shared-right-rail,
+  .social-app-shell:has(.seen-shell-main) .social-app-frame > .social-shared-right-rail,
+  .social-app-shell:has(.activity-prototype-page) .social-app-frame > .social-shared-right-rail {
+    display: grid !important;
+    width: var(--social-right-width) !important;
+    min-width: var(--social-right-width) !important;
+    flex: 0 0 var(--social-right-width) !important;
+  }
+}
 
 /* Desktop side panels — shared reference treatment.
    This lives after the legacy shell rules so every social route keeps the
