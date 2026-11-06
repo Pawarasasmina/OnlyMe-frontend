@@ -1,0 +1,20 @@
+.auth-legal-layer { position:fixed;inset:0;width:min(100%,470px);margin-inline:auto;z-index:200;isolation:isolate;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:16px;line-height:normal;-webkit-font-smoothing:antialiased; }
+.auth-legal-layer * { box-sizing:border-box; }
+.auth-legal-dim { position:absolute;inset:0;width:100%;border:0;padding:0;background:rgba(4,6,10,.6);cursor:default; }
+.auth-legal-sheet { position:absolute;inset-inline:0;bottom:0;max-height:88%;overflow-y:auto;overscroll-behavior:contain;border-radius:16px 16px 0 0;padding:8px 20px 36px;background:#0C0F14;outline:none;animation:authLegalIn .4s cubic-bezier(.32,.72,0,1); }
+.auth-legal-grab { width:32px;height:4px;background:rgba(255,255,255,.28);border-radius:999px;margin:4px auto 16px; }
+.auth-legal-sheet h2 { margin:0 0 2px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:normal; }
+.auth-legal-effective { margin:0 0 10px;color:rgba(255,255,255,.4);font-size:10px; }
+.auth-legal-copy { max-height:430px;overflow-y:auto;overscroll-behavior:contain;color:rgba(255,255,255,.62);font-size:12.5px;font-weight:400;line-height:1.75;white-space:pre-line;scrollbar-width:auto;scrollbar-color:auto;color-scheme:light; }
+.auth-legal-copy b { font-weight:700; }
+.auth-legal-back { margin-top:13px;text-align:center; }
+.auth-legal-layer button { font-family:inherit; }
+.auth-legal-back button { padding:0;border:0;background:transparent;color:rgba(255,255,255,.4);font-size:12.5px;font-weight:400;line-height:normal;cursor:pointer; }
+.auth-legal-menu { margin-top:10px; }
+.auth-legal-menu button { display:flex;justify-content:space-between;align-items:center;width:100%;border:0;border-bottom:1px solid rgba(255,255,255,.055);background:transparent;padding:12px 0;text-align:start;color:#fff;font-size:13.5px;cursor:pointer; }
+.auth-legal-menu button:last-child { border-bottom:0; }
+.auth-legal-menu button span { color:rgba(255,255,255,.4); }
+.auth-legal-contact { margin:12px 0 0;color:rgba(255,255,255,.4);font-size:10px; }
+.auth-legal-layer button:focus-visible,.auth-legal-copy:focus-visible { outline:2px solid #9CCBFF;outline-offset:3px; }
+@keyframes authLegalIn { from { transform:translateY(105%); } to { transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { .auth-legal-sheet { animation:none; } }

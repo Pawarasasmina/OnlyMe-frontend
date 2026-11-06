@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { FaApple } from "react-icons/fa";
+import LegalDocumentSheet from "../../components/auth/LegalDocumentSheet";
 import AtseenEyeMark from "../../components/onboarding/AtseenEyeMark";
 import { useAuth } from "../../hooks/useAuth";
 import { destinationForUser } from "../../utils/socialAccess";
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [legalDocument, setLegalDocument] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -82,8 +84,8 @@ export default function LoginPage() {
       <div className="my-6 flex items-center gap-3"><i className="h-px flex-1 bg-white/10" /><span className="text-[10px] font-bold text-white/30">OR</span><i className="h-px flex-1 bg-white/10" /></div>
       <button className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[.045] py-3.5 text-sm font-bold active:scale-[.97]" type="button"><FaApple aria-hidden="true" className="shrink-0 text-[17px] text-white" /> Continue with Apple</button>
       <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[.045] py-3.5 text-sm font-bold active:scale-[.97]" onClick={() => { const api = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"; window.location.assign(`${api}/auth/google`); }} type="button"><b className="text-[#9CCBFF]">G</b> Continue with Google</button>
-      <p className="mt-4 text-center text-[10px] leading-4 text-white/30">By continuing you agree to the <Link className="text-[#9CCBFF]" to="/settings/support/terms">Terms</Link> · <Link className="text-[#9CCBFF]" to="/settings/support/terms">Privacy</Link></p>
+      <p className="mt-4 text-center text-[10px] leading-4 text-white/30">By continuing you agree to the <button className="text-[#9CCBFF]" onClick={() => setLegalDocument("tos")} type="button">Terms</button> · <button className="text-[#9CCBFF]" onClick={() => setLegalDocument("priv")} type="button">Privacy</button></p>
     </div>
     <Link className="mt-8 block w-full rounded-[14px] border border-[#9CCBFF]/40 py-3.5 text-center text-sm font-black text-[#9CCBFF] active:scale-[.97]" state={{ fromInterests: Boolean(location.state?.fromInterests) }} to="/register">Create new account</Link>
-  </main>{postLoginTarget ? <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:p-4" role="presentation"><section aria-labelledby="save-login-title" aria-modal="true" className="w-full max-w-[470px] rounded-t-[28px] border border-white/10 bg-[#11161C] px-6 pb-[max(26px,env(safe-area-inset-bottom))] pt-3 text-white shadow-2xl sm:rounded-[28px]" role="dialog"><span className="mx-auto block h-1 w-11 rounded-full bg-white/20" /><div className="mt-6 grid h-12 w-12 place-items-center rounded-2xl bg-[#9CCBFF]/10 text-xl text-[#9CCBFF]">✓</div><h2 className="mt-4 text-xl font-black" id="save-login-title">Save one-tap login?</h2><p className="mt-2 text-sm leading-6 text-white/55">Open this account next time without entering your password. Your password is never stored by OnlyMe. Use this only on a device you trust.</p><button className="mt-6 w-full rounded-2xl bg-[#9CCBFF] py-3.5 text-sm font-black text-[#07101A]" onClick={() => finishLogin(true)} type="button">Save on this device</button><button className="mt-2 w-full py-3 text-sm font-bold text-white/55" onClick={() => finishLogin(false)} type="button">Not now</button></section></div> : null}</>;
+  </main>{legalDocument ? <LegalDocumentSheet documentKey={legalDocument} onChange={setLegalDocument} onClose={() => setLegalDocument(null)} /> : null}{postLoginTarget ? <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:p-4" role="presentation"><section aria-labelledby="save-login-title" aria-modal="true" className="w-full max-w-[470px] rounded-t-[28px] border border-white/10 bg-[#11161C] px-6 pb-[max(26px,env(safe-area-inset-bottom))] pt-3 text-white shadow-2xl sm:rounded-[28px]" role="dialog"><span className="mx-auto block h-1 w-11 rounded-full bg-white/20" /><div className="mt-6 grid h-12 w-12 place-items-center rounded-2xl bg-[#9CCBFF]/10 text-xl text-[#9CCBFF]">✓</div><h2 className="mt-4 text-xl font-black" id="save-login-title">Save one-tap login?</h2><p className="mt-2 text-sm leading-6 text-white/55">Open this account next time without entering your password. Your password is never stored by OnlyMe. Use this only on a device you trust.</p><button className="mt-6 w-full rounded-2xl bg-[#9CCBFF] py-3.5 text-sm font-black text-[#07101A]" onClick={() => finishLogin(true)} type="button">Save on this device</button><button className="mt-2 w-full py-3 text-sm font-bold text-white/55" onClick={() => finishLogin(false)} type="button">Not now</button></section></div> : null}</>;
 }
