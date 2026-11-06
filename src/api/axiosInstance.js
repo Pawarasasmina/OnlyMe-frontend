@@ -37,7 +37,7 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const request = error.config;
     const isRefreshRequest = request?.url?.includes("/auth/refresh");
-    const isPublicAuthRequest = ["/auth/login", "/auth/register", "/auth/refresh"].some((path) => request?.url?.includes(path));
+    const isPublicAuthRequest = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/forgot-password", "/auth/reset-password"].some((path) => request?.url?.includes(path));
     const hasAccessToken = Boolean(localStorage.getItem("onlyme_access_token"));
 
     if (error.response?.status === 401 && hasAccessToken && !request?._retried && !isPublicAuthRequest) {

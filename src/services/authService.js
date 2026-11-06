@@ -19,6 +19,8 @@ export const authService = {
     const request = withAnalytics(payload);
     return axiosInstance.post("/auth/login", request.payload, request.config);
   },
+  forgotPassword: (email) => axiosInstance.post("/auth/forgot-password", { email }),
+  resetPassword: (token, password) => axiosInstance.post(`/auth/reset-password/${encodeURIComponent(token)}`, { password }),
   logout: () => axiosInstance.post("/auth/logout"),
   refreshSession: () => axiosInstance.post("/auth/refresh"),
   getAccountOwnership: () => axiosInstance.get("/auth/account/ownership"),
