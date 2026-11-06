@@ -47,7 +47,7 @@ function useGiftSheetPosition(backdropRef) {
   return position;
 }
 
-export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType = "STORY" }) {
+export default function StoryGiftPicker({ landing = false, onClose, onSent, previewOnly = false, recipient, sourceType = "STORY" }) {
   __useUiLanguage();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -60,14 +60,17 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
   const [sent, setSent] = useState(null);
   const [error, setError] = useState("");
   const [selectedGift, setSelectedGift] = useState(null);
+  const [showAllLandingGifts, setShowAllLandingGifts] = useState(false);
   const [message, setMessage] = useState("");
   const [visibility, setVisibility] = useState("EVERYONE");
   const sheetPosition = useGiftSheetPosition(backdropRef);
   const recipientId = recipient?.id;
   const giftsQuery = useQuery({
-    queryKey: ["messages", "gifts", recipientId],
-    queryFn: () => messageService.getGifts(recipientId).then((response) => response.data.data.gifts),
-    enabled: Boolean(recipientId),
+    queryKey: previewOnly ? ["settings", "gifts", "fan-preview"] : ["messages", "gifts", recipientId],
+    queryFn: () => previewOnly
+      ? profileService.getGiftSettings().then((response) => response.data.data.gifts.filter((gift) => gift.enabled))
+      : messageService.getGifts(recipientId).then((response) => response.data.data.gifts),
+    enabled: previewOnly || Boolean(recipientId),
     retry: false,
     staleTime: 60000,
   });
@@ -158,9 +161,19 @@ export default function StoryGiftPicker({ onClose, onSent, recipient, sourceType
   return (
     <div className="dream-gift-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !sending && !sent && onClose()} ref={backdropRef} style={sheetPosition}>
       {sent ? <GiftCelebration caption={sent.note} gift={sent} recipientName={String(recipient?.name || "them").split(" ")[0]} showSuccessToast={false} variant="is-profile-gift" /> : null}
-      <section aria-label={sourceType === "DIRECT" ? __msg("stories.sendADirectGift") : __msg("stories.sendAStoryGift")} className="dream-gift-sheet">
+      <section aria-label={sourceType === "DIRECT" ? __msg("stories.sendADirectGift") : __msg("stories.sendAStoryGift")} className={`dream-gift-sheet ${landing ? "is-gift-link-landing" : ""}`}>
         <span className="dream-gift-handle" />
-        {!selectedGift ? <>
+        {!selectedGift ? landing ? <div className="gift-link-landing">
+          <button aria-label={__msg("stories.closeGiftPicker")} className="gift-link-landing-close" onClick={onClose} type="button"><FiX /></button>
+          <FanAvatar name={recipient?.name || "Creator"} size="h-24 w-24" src={recipient?.avatar} />
+          <h2>Send {String(recipient?.name || "them").split(" ")[0]} a gift</h2>
+          <p>@{recipient?.username || "creator"}</p>
+          {giftsQuery.isLoading ? <p className="dream-gift-empty">{__msg("stories.loadingGifts")}</p> : giftsQuery.isError ? <p className="dream-gift-empty">{giftsQuery.error?.response?.data?.message || __msg("stories.giftsCouldNotBeLoaded")}</p> : <div className="gift-link-landing-grid">
+            {(showAllLandingGifts ? gifts : gifts.slice(0, 5)).map((gift) => <button disabled={previewOnly} key={gift.id} onClick={() => { setSelectedGift(gift); setError(""); }} type="button"><span><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftTransform(gift) }} /></span><b>{gift.name}</b><small><CoinIcon />{Number(gift.stars || 0).toLocaleString(__uiLocale())}</small></button>)}
+            {!showAllLandingGifts && gifts.length > 5 ? <button className="gift-link-all" onClick={() => setShowAllLandingGifts(true)} type="button"><span>＋</span><b>All gifts</b></button> : null}
+          </div>}
+          <small className="gift-link-landing-note">Your gift appears on {String(recipient?.name || "their").split(" ")[0]}’s profile with your name — or send it privately.</small>
+        </div> : <>
         <div className="dream-gift-header is-direct-profile-gift">
           <FanAvatar name={recipient?.name || "Creator"} size="h-8 w-8" src={recipient?.avatar} />
           <div><h2>{__msg("fanWeb.send")} {String(recipient?.name || "them").split(" ")[0]} {__msg("stories.aGift")}</h2><p>{__msg("stories.giftsAreDirectSupport")} {String(recipient?.name || __msg("stories.they")).split(" ")[0]} {__msg("stories.earnsFromThemInstantly")}</p></div>
