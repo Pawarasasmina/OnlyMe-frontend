@@ -21,16 +21,16 @@ function numberLabel(value, fallback = 0) {
 
 export default function ProfileOrbit({ capabilities, planets = [], profile, role }) {
   __useUiLanguage();
-  if (profile?.profileAccountType === "personal") return null;
+  const owner = Boolean(capabilities.isOwner);
+  if (profile?.profileAccountType === "personal" && !owner) return null;
   const premiumPlanets = planets.filter((planet) => planet.kind === "PREMIUM_WORLD");
-  if ((!profile?.isCreator && role !== "creator") || (!premiumPlanets.length && !capabilities.isOwner)) return null;
+  if ((!profile?.isCreator && role !== "creator" && !owner) || (!premiumPlanets.length && !owner)) return null;
 
   const bySlot = Object.fromEntries(premiumPlanets.map((planet) => [planet.planet?.slot, planet]));
   const primaryPlanet = bySlot.PREMIUM || premiumPlanets[0];
   const creatorName = profile?.displayName?.split(" ")[0] || __msg("discover.creator");
   const title = primaryPlanet?.title || __msg("profile.setUpYourWorld");
-  const worldTarget = primaryPlanet?.id ? `/world/${primaryPlanet.id}` : "/create/premium-world";
-  const owner = Boolean(capabilities.isOwner);
+  const worldTarget = primaryPlanet?.id ? `/world/${primaryPlanet.id}` : profile?.profileAccountType === "personal" ? "/settings/monetization" : "/create/premium-world";
   const price = Number(primaryPlanet?.pricing?.starsAmount || 0);
   const residents = Number(
     primaryPlanet?.memberCount ??
