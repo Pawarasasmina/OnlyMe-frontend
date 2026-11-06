@@ -1282,7 +1282,7 @@ function ChapterBlock({ block, chapterId, publicationId }) {
     <img alt="Chapter attachment" className="world-chapter-reader-image" src={block.media.secureUrl} />
     {overlayText ? <figcaption style={{ "--overlay-fill-color": block.metadata?.overlayFillColor || "", "--overlay-text-color": block.metadata?.overlayColor || "#ffffff" }}>{overlayText}</figcaption> : null}
   </figure>;
-  if (block.type === "VIDEO" && block.media?.secureUrl) return <video className="world-chapter-reader-video" controls playsInline preload="metadata" src={block.media.secureUrl} />;
+  if (block.type === "VIDEO" && block.media?.secureUrl) return <PublicationCoverMedia alt="Chapter video" className="world-chapter-reader-video" controls media={block.media} preload="metadata" />;
   if (["AUDIO", "VOICE"].includes(block.type) && block.media?.secureUrl) {
     const transcript = String(block.metadata?.transcript || "").trim();
     return <ChapterVoicePlayer duration={block.media?.duration} transcript={transcript} url={block.media.secureUrl} />;

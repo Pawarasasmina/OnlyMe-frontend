@@ -336,7 +336,7 @@ function InlineMedia({ block, title }) {
   const url = mediaUrl(block.media);
   if (!url || failed) return <div className="seen-reader-media-fallback">@seen</div>;
   if (["VIDEO", "video"].includes(block.type) || ["VIDEO", "video"].includes(block.media?.mediaType)) {
-    return <video className="seen-reader-media" controls preload="metadata" src={url} title={`${title} video`} />;
+    return <PublicationCoverMedia alt={`${title} video`} className="seen-reader-media" controls media={block.media} preload="metadata" />;
   }
   if (["AUDIO", "VOICE"].includes(block.type) || ["AUDIO", "VOICE"].includes(block.media?.mediaType)) {
     const transcript = String(block.metadata?.transcript || "").trim();
