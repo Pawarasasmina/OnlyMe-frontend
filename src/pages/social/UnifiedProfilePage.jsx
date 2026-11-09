@@ -740,7 +740,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
     staleTime: 30000,
   });
   const directGiftPicker = sendGiftOpen && giftRecipient
-    ? <StoryGiftPicker landing onClose={closeGiftPicker} previewOnly={viewerCapabilities.isOwner} recipient={giftRecipient} sourceType="DIRECT" />
+    ? <StoryGiftPicker onClose={closeGiftPicker} previewOnly={viewerCapabilities.isOwner} recipient={giftRecipient} sourceType="DIRECT" />
     : null;
   const gifts = sortedProfileGifts(receivedQuery.data?.gifts || [], viewerId);
   const count = Number(receivedQuery.data?.total || gifts.length || 0);
