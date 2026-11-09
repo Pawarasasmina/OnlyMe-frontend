@@ -3,11 +3,11 @@ import test from "node:test";
 import { activateLanguage, catalogs, formatCurrency, formatDate, formatNumber, formatRelative, getLanguage, loadLanguage, msg, systemMessage } from "./runtime.js";
 import { localizedValidationErrors } from "./errors.js";
 
-test("all eight locale chunks contain only registered English keys", async () => {
+test("all eight locale chunks contain every registered English key", async () => {
   await Promise.all(["ar", "ru", "uk", "es", "pt", "fr", "de"].map(loadLanguage));
-  const registered = new Set(Object.keys(catalogs.en));
+  const registered = Object.keys(catalogs.en).sort();
   for (const [locale, messages] of Object.entries(catalogs)) {
-    assert.ok(Object.keys(messages).every(key => registered.has(key)), locale);
+    assert.deepEqual(Object.keys(messages).sort(), registered, locale);
   }
 });
 
@@ -75,4 +75,29 @@ test("reviewed activity messages preserve the actor, recipient and amount", () =
   activateLanguage("de");
   assert.equal(msg("fan.value0SentYouAGift", { value0: "@sender" }), "@sender hat dir ein Geschenk gesendet");
   activateLanguage("en");
+});
+
+test("legacy system notification templates translate without changing names or gift titles", () => {
+  for (const locale of ["ar", "ru", "uk", "es", "pt", "fr", "de"]) {
+    activateLanguage(locale);
+    const follow = systemMessage("@original_user started following you");
+    assert.ok(follow.includes("@original_user"), locale);
+    assert.notEqual(follow, "@original_user started following you", locale);
+    const gift = systemMessage("@original_user sent you My custom gift");
+    assert.ok(gift.includes("@original_user"), locale);
+    assert.ok(gift.includes("My custom gift"), locale);
+    assert.equal(systemMessage("A creator wrote this original caption."), "A creator wrote this original caption.");
+  }
+  activateLanguage("en");
+});
+
+test("a slower language download cannot override a newer selection", async () => {
+  const runtime = await import("./runtime.js?language-race-test");
+  const revision = runtime.getRevision();
+  const arabic = runtime.activateLanguage("ar");
+  assert.ok(runtime.getRevision() > revision);
+  const german = runtime.activateLanguage("de");
+  runtime.activateLanguage("en");
+  await Promise.all([arabic, german]);
+  assert.equal(runtime.getLanguage(), "en");
 });

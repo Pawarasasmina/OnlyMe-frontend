@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -12,34 +16,36 @@ import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { financialErrorCode, financialErrorMessage } from "../../utils/financialErrorMessages";
 import "./PurchaseWorldModal.css";
 
-const creatorName = (item) => item?.creator?.displayName || item?.creator?.name || item?.creator?.username || "the creator";
-const creatorFirstName = (item) => creatorName(item).trim().split(/\s+/)[0] || "the creator";
+const creatorName = (item) => item?.creator?.displayName || item?.creator?.name || item?.creator?.username || __msg("context.theCreator");
+const creatorFirstName = (item) => creatorName(item).trim().split(/\s+/)[0] || __msg("context.theCreator");
 const itemId = (item) => item?.id || item?._id;
 
 function PaidSeenPurchaseSheet({ busy, error, onClose, onPurchase, onTopUp, publication, topUpNeeded }) {
+  __useUiLanguage();
   const [previewOpen, setPreviewOpen] = useState(false);
   const chapters = publication?.chapters || [];
   const creator = publication?.creator || {};
   const cover = publication?.coverMedia || publication?.cover || publication?.coverImage;
   const price = Number(publication?.pricing?.starsAmount || 0);
-  return <div aria-modal="true" className="paid-seen-purchase-layer" role="dialog" aria-label={`Unlock ${publication?.title || "this Seen"}`}>
-    <button aria-label="Close purchase" className="paid-seen-purchase-scrim" disabled={busy} onClick={onClose} type="button" />
+  return <div aria-modal="true" className="paid-seen-purchase-layer" role="dialog" aria-label={__msg("social.unlock", { value0: publication?.title || "this Seen" })}>
+    <button aria-label={__msg("system.PurchaseWorldModal.e683c030f8")} className="paid-seen-purchase-scrim" disabled={busy} onClick={onClose} type="button" />
     <section className="paid-seen-purchase-sheet">
-      <span className="paid-seen-purchase-handle" /><button aria-label="Close" className="paid-seen-purchase-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
-      <div className="paid-seen-purchase-hero"><PublicationCoverMedia alt="" media={cover} /><span className="paid-seen-purchase-creator"><FanAvatar name={creatorName(publication)} size="h-7 w-7" src={creator.avatar} /><b>{creatorFirstName(publication)}</b></span><div><small>{publication?.category || "SEEN"} · {chapters.length} CHAPTERS</small><h2>{publication?.title}</h2><p>{publication?.summary || publication?.description}</p></div></div>
-      <div className="paid-seen-purchase-owners"><span>●●●</span><b>{Number(publication?.ownerCount || 0).toLocaleString()} people own this</b><small>Updated recently</small></div>
-      <p className="paid-seen-purchase-inside">INSIDE · chapter 1 is a free preview</p>
-      <div className="paid-seen-purchase-chapters">{chapters.slice(0, 3).map((chapter, index) => index === 0 ? <div className={`paid-seen-inline-preview ${previewOpen ? "is-open" : ""}`} key={chapter.stableChapterId || index}><button aria-expanded={previewOpen} aria-label={`${previewOpen ? "Close" : "Open"} free preview: ${chapter.title || "Chapter 1"}`} className="is-preview" onClick={() => setPreviewOpen((value) => !value)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || "Chapter 1"}</b><em>{previewOpen ? "Close ↑" : "Free preview ›"}</em></button><section aria-hidden={!previewOpen} className="paid-seen-preview-content"><h3>{chapter.title || "Chapter 1"}</h3>{chapter.summary ? <p>{chapter.summary}</p> : null}{(chapter.blocks || []).map((block, blockIndex) => ["IMAGE", "VIDEO"].includes(block.type) && block.media ? <PublicationCoverMedia alt="" key={block.id || blockIndex} media={block.media} /> : block.text ? <p key={block.id || blockIndex}>{block.text}</p> : null)}{!(chapter.blocks || []).some((block) => block.text || block.media) && !chapter.summary ? <p>This free chapter is ready to read after the creator adds its content.</p> : null}</section></div> : <div key={chapter.stableChapterId || index}><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || `Chapter ${index + 1}`}</b><FiLock />{chapter.summary ? <small>{chapter.summary}</small> : null}</div>)}</div>
-      <div className="paid-seen-purchase-benefits"><span><b>∞</b><small>Yours forever</small></span><span><FiTrendingUp /><small>New chapters included</small></span><span><FiDownload /><small>Keep a PDF copy</small></span></div>
-      {publication?.includedInWorld ? <p className="paid-seen-purchase-world">Also inside {creatorFirstName(publication)}&apos;s World — <b>✦ {price}</b> count toward your first month</p> : null}
-      {error ? <p className="paid-seen-purchase-error" role="alert">{error}</p> : null}
-      {topUpNeeded > 0 ? <button className="paid-seen-purchase-primary" disabled={busy} onClick={onTopUp} type="button">{busy ? "Adding…" : `Add ${topUpNeeded} Stars and unlock`}</button> : <button className="paid-seen-purchase-primary" disabled={busy} onClick={onPurchase} type="button">{busy ? "Confirming…" : <>Unlock · <span>✦ {price}</span></>}</button>}
-      <small className="paid-seen-purchase-terms">One-time · yours forever · opens instantly</small>
+      <span className="paid-seen-purchase-handle" /><button aria-label={__msg("activity.close")} className="paid-seen-purchase-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
+      <div className="paid-seen-purchase-hero"><PublicationCoverMedia alt="" media={cover} /><span className="paid-seen-purchase-creator"><FanAvatar name={creatorName(publication)} size="h-7 w-7" src={creator.avatar} /><b>{creatorFirstName(publication)}</b></span><div><small>{publication?.category || __msg("social.seen")} · {chapters.length} {__msg("creator.chapters_84ff9e")}</small><h2>{publication?.title}</h2><p>{publication?.summary || publication?.description}</p></div></div>
+      <div className="paid-seen-purchase-owners"><span>●●●</span><b>{Number(publication?.ownerCount || 0).toLocaleString(__uiLocale())} {__msg("system.PurchaseWorldModal.a7577876f6")}</b><small>{__msg("system.PurchaseWorldModal.151423a541")}</small></div>
+      <p className="paid-seen-purchase-inside">{__msg("system.PurchaseWorldModal.45673e3598")}</p>
+      <div className="paid-seen-purchase-chapters">{chapters.slice(0, 3).map((chapter, index) => index === 0 ? <div className={`paid-seen-inline-preview ${previewOpen ? "is-open" : ""}`} key={chapter.stableChapterId || index}><button aria-expanded={previewOpen} aria-label={__msg("system.PurchaseWorldModal.6e1421465e", { value0: previewOpen ? __msg("activity.close") : __msg("fan.open"), value1: chapter.title || __msg("profile.chapter1") })} className="is-preview" onClick={() => setPreviewOpen((value) => !value)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || __msg("profile.chapter1")}</b><em>{previewOpen ? __msg("system.PurchaseWorldModal.0a15c0f769") : __msg("system.PurchaseWorldModal.886de6a0df")}</em></button><section aria-hidden={!previewOpen} className="paid-seen-preview-content"><h3>{chapter.title || __msg("profile.chapter1")}</h3>{chapter.summary ? <p>{chapter.summary}</p> : null}{(chapter.blocks || []).map((block, blockIndex) => ["IMAGE", "VIDEO"].includes(block.type) && block.media ? <PublicationCoverMedia alt="" key={block.id || blockIndex} media={block.media} /> : block.text ? <p key={block.id || blockIndex}>{block.text}</p> : null)}{!(chapter.blocks || []).some((block) => block.text || block.media) && !chapter.summary ? <p>{__msg("system.PurchaseWorldModal.2e1fd894ab")}</p> : null}</section></div> : <div key={chapter.stableChapterId || index}><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b><FiLock />{chapter.summary ? <small>{chapter.summary}</small> : null}</div>)}</div>
+      <div className="paid-seen-purchase-benefits"><span><b>∞</b><small>{__msg("system.PurchaseWorldModal.ff2c6965dd")}</small></span><span><FiTrendingUp /><small>{__msg("system.PurchaseWorldModal.a94aeaac16")}</small></span><span><FiDownload /><small>{__msg("system.PurchaseWorldModal.09871388d5")}</small></span></div>
+      {publication?.includedInWorld ? <p className="paid-seen-purchase-world">{__msg("system.PurchaseWorldModal.fcc5f54cb1")} {creatorFirstName(publication)}{__msg("system.PurchaseWorldModal.fbc4d86824")} <b>✦ {price}</b> {__msg("system.PurchaseWorldModal.f06353e729")}</p> : null}
+      {error ? <p className="paid-seen-purchase-error" role="alert">{__systemMessage(error)}</p> : null}
+      {topUpNeeded > 0 ? <button className="paid-seen-purchase-primary" disabled={busy} onClick={onTopUp} type="button">{busy ? __msg("stories.adding_ffb2e6") : __msg("system.PurchaseWorldModal.0b4aefcc15", { value0: topUpNeeded })}</button> : <button className="paid-seen-purchase-primary" disabled={busy} onClick={onPurchase} type="button">{busy ? __msg("financial.confirming") : <>{__msg("system.PurchaseWorldModal.c3d96877a2")} <span>✦ {price}</span></>}</button>}
+      <small className="paid-seen-purchase-terms">{__msg("system.PurchaseWorldModal.66db63cf40")}</small>
     </section>
   </div>;
 }
 
 function PaidSeenSuccess({ entitlement, onClose, publication }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const [thanksSent, setThanksSent] = useState(false);
   const [thanksSending, setThanksSending] = useState(false);
@@ -50,9 +56,9 @@ function PaidSeenSuccess({ entitlement, onClose, publication }) {
   const cover = publication?.coverMedia || publication?.cover || publication?.coverImage;
   const firstName = creatorFirstName(publication);
   const startIndex = Math.min(1, Math.max(0, chapters.length - 1));
-  const startTitle = chapters[startIndex]?.title || chapters[0]?.title || "Start reading";
+  const startTitle = chapters[startIndex]?.title || chapters[0]?.title || __msg("financial.startReading");
   const ownerNumber = Number(entitlement?.ownerNumber || publication?.ownerCount || 0) + (entitlement?.ownerNumber ? 0 : 1);
-  const note = publication?.ownerWelcomeNote || `Welcome in. Start with “${startTitle}” — that’s where it gets real. Tell me what you think.`;
+  const note = publication?.ownerWelcomeNote || __msg("financial.welcomeInStartWithValue0ThatSWhere", { value0: startTitle });
   const speak = () => {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -70,27 +76,28 @@ function PaidSeenSuccess({ entitlement, onClose, publication }) {
       await purchaseService.thankSeenCreator(itemId(publication));
       setThanksSent(true);
     } catch (requestError) {
-      setThanksError(requestError?.response?.data?.message || "Could not send thanks. Please try again.");
+      setThanksError(requestError?.response?.data?.message || __msg("financial.couldNotSendThanksPleaseTryAgain"));
     } finally {
       setThanksSending(false);
     }
   };
-  return <div aria-modal="true" className="paid-seen-success-layer" role="dialog" aria-label={`${publication?.title || "Seen"} is yours`}><section className="paid-seen-success">
-    <button aria-label="Close" className="paid-seen-success-close" onClick={onClose} type="button"><FiX /></button>
-    <div className="paid-seen-success-cover"><PublicationCoverMedia alt="" media={cover} /><span><FiCheck /></span></div><h2>It&apos;s yours</h2><p>“{publication?.title}” · by {firstName}</p>
-    <div className="paid-seen-success-owner"><i /> OWNER № {String(ownerNumber).padStart(3, "0")} · {new Date().toLocaleDateString()} <i /></div>
-    <div className="paid-seen-success-chapters">{chapters.slice(0, 5).map((chapter, index) => <div key={chapter.stableChapterId || index}><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || `Chapter ${index + 1}`}</b><i><FiCheck /></i></div>)}</div>
-    <article className="paid-seen-success-note"><header><FanAvatar name={creatorName(publication)} size="h-9 w-9" src={creator.avatar} /><span><b>A note from {firstName}</b><small>for everyone who owns this</small></span></header><p>“{note}”</p><button aria-label={speaking ? "Stop creator note" : "Play creator note"} aria-pressed={speaking} onClick={speak} type="button"><i className={speaking ? "is-playing" : ""}>{speaking ? "■" : "▶"}</i><b>0:14</b><span className="paid-seen-voice-wave" aria-hidden="true">{[5,9,12,7,11,14,8,12,6,10,13,8,5].map((height, index) => <i key={index} style={{ height }} />)}</span></button></article>
-    <p className="paid-seen-success-community">●●● You and {Number(publication?.ownerCount || 0).toLocaleString()} others own this</p><button className="paid-seen-success-start" onClick={openChapter} type="button">Start “{startTitle}”</button>
+  return <div aria-modal="true" className="paid-seen-success-layer" role="dialog" aria-label={__msg("system.PurchaseWorldModal.edf408ff7a", { value0: publication?.title || "Seen" })}><section className="paid-seen-success">
+    <button aria-label={__msg("activity.close")} className="paid-seen-success-close" onClick={onClose} type="button"><FiX /></button>
+    <div className="paid-seen-success-cover"><PublicationCoverMedia alt="" media={cover} /><span><FiCheck /></span></div><h2>{__msg("system.PurchaseWorldModal.c1976f6dca")}</h2><p>“{publication?.title}{__msg("system.PurchaseWorldModal.cc5ab6d689")} {firstName}</p>
+    <div className="paid-seen-success-owner"><i /> {__msg("system.PurchaseWorldModal.ec01f98448")} {String(ownerNumber).padStart(3, "0")} · {new Date().toLocaleDateString(__uiLocale())} <i /></div>
+    <div className="paid-seen-success-chapters">{chapters.slice(0, 5).map((chapter, index) => <div key={chapter.stableChapterId || index}><span>{String(index + 1).padStart(2, "0")}</span><b>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b><i><FiCheck /></i></div>)}</div>
+    <article className="paid-seen-success-note"><header><FanAvatar name={creatorName(publication)} size="h-9 w-9" src={creator.avatar} /><span><b>{__msg("social.aNoteFrom")} {firstName}</b><small>{__msg("system.PurchaseWorldModal.11cf67e0f7")}</small></span></header><p>“{note}”</p><button aria-label={speaking ? __msg("system.PurchaseWorldModal.4456b9bf7b") : __msg("system.PurchaseWorldModal.2743bf40d9")} aria-pressed={speaking} onClick={speak} type="button"><i className={speaking ? "is-playing" : ""}>{speaking ? "■" : "▶"}</i><b>0:14</b><span className="paid-seen-voice-wave" aria-hidden="true">{[5,9,12,7,11,14,8,12,6,10,13,8,5].map((height, index) => <i key={index} style={{ height }} />)}</span></button></article>
+    <p className="paid-seen-success-community">{__msg("system.PurchaseWorldModal.876b689b91")} {Number(publication?.ownerCount || 0).toLocaleString(__uiLocale())} {__msg("system.PurchaseWorldModal.52e8c5d9d4")}</p><button className="paid-seen-success-start" onClick={openChapter} type="button">{__msg("system.PurchaseWorldModal.109685d3ab")}{startTitle}”</button>
     {thanksError ? <p className="paid-seen-success-thanks-error" role="alert">{thanksError}</p> : null}
-    <div className="paid-seen-success-actions"><button className={thanksSent ? "is-sent" : ""} disabled={thanksSent || thanksSending} onClick={openThanks} type="button">{thanksSent ? `Sent to ${firstName} ✓` : thanksSending ? "Sending…" : `Say thanks to ${firstName}`}</button><button onClick={onClose} type="button">Later</button></div>
+    <div className="paid-seen-success-actions"><button className={thanksSent ? "is-sent" : ""} disabled={thanksSent || thanksSending} onClick={openThanks} type="button">{thanksSent ? __msg("share.sentTo", { value0: firstName }) : thanksSending ? __msg("stories.sending") : __msg("system.PurchaseWorldModal.e612dd35b8", { value0: firstName })}</button><button onClick={onClose} type="button">{__msg("verification.later")}</button></div>
   </section></div>;
 }
 
 export default function PurchaseWorldModal({ open, onClose, publication, onSuccess }) {
+  __useUiLanguage();
   const client = useQueryClient();
   const [key, setKey] = useState(""); const [accepted, setAccepted] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [topUpNeeded, setTopUpNeeded] = useState(0); const [entitlement, setEntitlement] = useState(null);
-  const paidSeen = publication?.kind === "SEEN"; const experience = publication?.kind === "EXPERIENCE"; const noun = paidSeen ? "Seen" : experience ? "Experience" : "World"; const id = itemId(publication);
+  const paidSeen = publication?.kind === "SEEN"; const experience = publication?.kind === "EXPERIENCE"; const noun = paidSeen ? "Seen" : experience ? __msg("contentEntities.experience") : __msg("admin.world"); const id = itemId(publication);
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then((response) => response.data.data.wallet), enabled: open && !entitlement, retry: false });
   useEffect(() => { if (open && !key) setKey(createIdempotencyKey(paidSeen ? "seen-purchase" : experience ? "experience-purchase" : "world-purchase")); if (!open) { setKey(""); setAccepted(false); setError(""); setTopUpNeeded(0); setEntitlement(null); } }, [experience, key, open, paidSeen]);
   const finishPurchase = async (response) => {
@@ -99,11 +106,11 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
     if (!paidSeen) { await onSuccess?.(); onClose(); }
   };
   const closeSuccess = () => { onClose(); onSuccess?.(); };
-  const confirmPurchase = async () => { setBusy(true); setError(""); try { await finishPurchase(await purchaseService.purchaseWorld(id, key)); } catch (requestError) { const code = financialErrorCode(requestError); if (["ALREADY_ENTITLED", "SELF_PURCHASE_NOT_REQUIRED"].includes(code)) await finishPurchase(null); else if (code === "INSUFFICIENT_STARS") { const short = Math.max(0, Number(publication.pricing?.starsAmount || 0) - Number(wallet.data?.balance || 0)); setTopUpNeeded(short); setError(`Add exactly ${short} Stars to continue.`); } else setError(financialErrorMessage(requestError)); } finally { setBusy(false); } };
+  const confirmPurchase = async () => { setBusy(true); setError(""); try { await finishPurchase(await purchaseService.purchaseWorld(id, key)); } catch (requestError) { const code = financialErrorCode(requestError); if (["ALREADY_ENTITLED", "SELF_PURCHASE_NOT_REQUIRED"].includes(code)) await finishPurchase(null); else if (code === "INSUFFICIENT_STARS") { const short = Math.max(0, Number(publication.pricing?.starsAmount || 0) - Number(wallet.data?.balance || 0)); setTopUpNeeded(short); setError(__msg("system.PurchaseWorldModal.198907bfa4", { value0: short })); } else setError(financialErrorMessage(requestError)); } finally { setBusy(false); } };
   const topUpAndResume = async () => { setBusy(true); setError(""); try { await walletService.topUpExact(topUpNeeded, createIdempotencyKey("purchase-exact-topup")); await finishPurchase(await purchaseService.purchaseWorld(id, key)); } catch (requestError) { setError(financialErrorMessage(requestError)); } finally { setBusy(false); } };
   const remaining = useMemo(() => wallet.data ? wallet.data.balance - Number(publication?.pricing?.starsAmount || 0) : null, [publication?.pricing?.starsAmount, wallet.data]);
   if (!open) return null;
   if (paidSeen && entitlement) return <PaidSeenSuccess entitlement={entitlement} onClose={closeSuccess} publication={publication} />;
   if (paidSeen) return <PaidSeenPurchaseSheet busy={busy} error={error} onClose={onClose} onPurchase={confirmPurchase} onTopUp={topUpAndResume} publication={publication} topUpNeeded={topUpNeeded} />;
-  return <FinancialConfirmDialog presentation="center-sheet" open={open} onClose={() => !busy && onClose()} title={`Unlock this ${noun}`} actions={<><button className="rounded-full border border-atseen-line px-5 py-3" disabled={busy} onClick={onClose}>Cancel</button><button className="rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy || !accepted || wallet.isError} onClick={confirmPurchase}>{busy ? "Processing…" : `Unlock · ✦${publication?.pricing?.starsAmount}`}</button></>}><p className="font-bold">{publication?.title}</p><p className="mt-1 text-sm text-atseen-muted">Permanent access to this {noun}. One payment, including future chapter updates.</p><div className="mt-4 rounded-xl bg-atseen-bg p-4"><p className="text-xs text-atseen-muted">Current balance</p><WalletBalance /><p className="mt-2 text-xs text-atseen-muted">Estimated remaining balance: {remaining == null ? "Unavailable" : `✦${remaining}`}</p></div><label className="mt-4 flex items-start gap-3 text-sm"><input checked={accepted} className="mt-1" onChange={(event) => setAccepted(event.target.checked)} type="checkbox" /> I confirm this one-time Stars purchase.</label>{error ? <p aria-live="assertive" className="mt-4 rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{error}</p> : null}{topUpNeeded > 0 ? <button className="mt-3 w-full rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy} onClick={topUpAndResume} type="button">Add {topUpNeeded} Stars and continue</button> : null}</FinancialConfirmDialog>;
+  return <FinancialConfirmDialog presentation="center-sheet" open={open} onClose={() => !busy && onClose()} title={__msg("financial.unlockThis", { value0: noun })} actions={<><button className="rounded-full border border-atseen-line px-5 py-3" disabled={busy} onClick={onClose}>{__msg("admin.cancel")}</button><button className="rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy || !accepted || wallet.isError} onClick={confirmPurchase}>{busy ? __msg("financial.processing") : __msg("financial.unlock", { value0: publication?.pricing?.starsAmount })}</button></>}><p className="font-bold">{publication?.title}</p><p className="mt-1 text-sm text-atseen-muted">{__msg("financial.permanentAccessToThis")} {noun}{__msg("financial.onePaymentIncludingFutureChapterUpdates")}</p><div className="mt-4 rounded-xl bg-atseen-bg p-4"><p className="text-xs text-atseen-muted">{__msg("financial.currentBalance")}</p><WalletBalance /><p className="mt-2 text-xs text-atseen-muted">{__msg("financial.estimatedRemainingBalance")} {remaining == null ? __msg("admin.unavailable") : `✦${remaining}`}</p></div><label className="mt-4 flex items-start gap-3 text-sm"><input checked={accepted} className="mt-1" onChange={(event) => setAccepted(event.target.checked)} type="checkbox" /> {__msg("financial.iConfirmThisOneTimeStarsPurchase")}</label>{error ? <p aria-live="assertive" className="mt-4 rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{__systemMessage(error)}</p> : null}{topUpNeeded > 0 ? <button className="mt-3 w-full rounded-full bg-atseen-blue px-5 py-3 font-black text-atseen-bg disabled:opacity-40" disabled={busy} onClick={topUpAndResume} type="button">{__msg("publication.add")} {topUpNeeded} {__msg("system.PurchaseWorldModal.7f542f65f5")}</button> : null}</FinancialConfirmDialog>;
 }

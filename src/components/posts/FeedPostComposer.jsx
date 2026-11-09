@@ -26,7 +26,7 @@ function readError(error) {
 }
 
 function formatBytes(value) {
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  return __msg("posts.value0Mb", { value0: (value / (1024 * 1024)).toFixed(1) });
 }
 
 function makeFilePreview(file) {

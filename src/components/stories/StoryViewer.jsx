@@ -377,21 +377,21 @@ async function drawSharedStoryCard(context, story) {
     context.font = "800 27px system-ui";
     context.textAlign = "left";
     context.textBaseline = "top";
-    context.fillText(String(sharedCard.eyebrow || "NOTE").slice(0, 42), cardX + 42, cardY + 42, cardWidth - 84);
+    context.fillText(String(sharedCard.eyebrow || __msg("social.note_2c924e")).slice(0, 42), cardX + 42, cardY + 42, cardWidth - 84);
     context.fillStyle = cardText;
     context.font = "850 40px system-ui";
     drawWrappedText(context, originalTranscript.slice(0, 190), cardX + 42, cardY + 96, cardWidth - 84, 54, translationText ? 2 : 3);
     if (translationText) {
       context.fillStyle = "rgba(255,255,255,.45)";
       context.font = "800 22px system-ui";
-      context.fillText(`TRANSLATED${translationLabel ? ` TO ${translationLabel.toUpperCase()}` : ""}`.slice(0, 46), cardX + 42, cardY + 236, cardWidth - 84);
+      context.fillText((translationLabel ? __msg("stories.translatedTo", { value0: translationLabel }) : __msg("stories.translation")).slice(0, 46), cardX + 42, cardY + 236, cardWidth - 84);
       context.fillStyle = cardText;
       context.font = "750 34px system-ui";
       drawWrappedText(context, translationText.slice(0, 150), cardX + 42, cardY + 276, cardWidth - 84, 46, 2);
     }
     context.fillStyle = card.cardTextColor ? cardText : "rgba(156,203,255,.9)";
     context.font = "650 23px system-ui";
-    context.fillText(String(card.subtitle || "from my Wall - tap >").slice(0, 64), cardX + 42, cardY + cardHeight - 72, cardWidth - 84);
+    context.fillText(String(card.subtitle || __msg("fanWeb.fromMyWallTap")).slice(0, 64), cardX + 42, cardY + cardHeight - 72, cardWidth - 84);
   } else {
     context.save();
     roundRect(context, cardX, cardY, cardWidth, cardHeight, 44);
@@ -559,10 +559,7 @@ function normalizeInsightViewers(insights) {
 }
 
 function compactCount(value) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return String(count);
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function OwnStoryBottomBar({ count, onHighlight, onMore, onOpenViewers, onShare, story, viewers }) {
@@ -942,7 +939,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       },
       onError: (error) => {
         const status = error?.response?.status;
-        showToast(status === 403 ? "You do not have permission to delete this story." : "Story could not be deleted.");
+        showToast(status === 403 ? __msg("stories.youDoNotHavePermissionToDeleteThisStory") : __msg("system.copy.baebaa5af8c7"));
       },
     });
   };
@@ -1047,7 +1044,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       onSuccess: () => { setReactionTrayOpen(false); queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] }); },
       onError: (error) => {
         setSelectedReaction(activeStory.viewerReaction || "");
-        showToast(error?.response?.data?.message || "Reaction could not be sent.");
+        showToast(error?.response?.data?.message || __msg("system.copy.5e209eb47a67"));
       },
     });
   };
@@ -1102,7 +1099,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       showToast(__msg("stories.isBlocked", { value0: selectedViewer.name }));
       setSelectedViewer(null);
     } catch (error) {
-      showToast(error?.response?.data?.message || "Could not block this viewer.");
+      showToast(error?.response?.data?.message || __msg("system.copy.0c32caad6640"));
     } finally {
       setMenuBusy("");
     }
@@ -1156,7 +1153,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
     mediaType: activeStory.mediaType || activeStory.type || "",
     previewText: activeStory.caption || __msg("stories.storyFromValue0", { value0: activeStory.owner.name }),
     route: `/stories/${activeStory.id}`,
-    title: `${activeStory.owner.name}'s story`,
+    title: __msg("stories.value0SStory", { value0: activeStory.owner.name }),
   };
   const openOwnerProfile = (event) => {
     event.stopPropagation();

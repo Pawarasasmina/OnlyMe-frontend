@@ -6,7 +6,7 @@ const catalogs=Object.fromEntries(locales.map(l=>[l,JSON.parse(fs.readFileSync(`
 const aliases=JSON.parse(fs.readFileSync('src/i18n/aliases.json','utf8'));
 const approved=JSON.parse(fs.readFileSync('src/i18n/approved-identical.json','utf8'));
 const reviewed=JSON.parse(fs.readFileSync('src/i18n/reviewed.json','utf8'));
-const reviewedRows=[...reviewed.sourceOverrides,...['reviewed-labels','reviewed-details','reviewed-final-labels','reviewed-activity','reviewed-verification'].flatMap(name=>JSON.parse(fs.readFileSync(`src/i18n/${name}.json`,'utf8')))];
+const reviewedRows=[...reviewed.sourceOverrides,...['reviewed-labels','reviewed-details','reviewed-final-labels','reviewed-activity','reviewed-verification','reviewed-system'].flatMap(name=>JSON.parse(fs.readFileSync(`src/i18n/${name}.json`,'utf8')))];
 reviewedRows.push(...Object.entries(JSON.parse(fs.readFileSync('src/i18n/reviewed-settings.json','utf8'))).map(([key,translations])=>[catalogs.en[key],...translations]));
 reviewedRows.push(...Object.values(JSON.parse(fs.readFileSync('src/i18n/reviewed-reasons.json','utf8'))));
 const args=nodes=>[...new Set(nodes.flatMap(n=> n.options ? [n.value,...Object.values(n.options).flatMap(o=>args(o.value))] : n.type>0&&n.type<5?[n.value]:[]))].sort();

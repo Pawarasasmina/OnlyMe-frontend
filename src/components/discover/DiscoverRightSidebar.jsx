@@ -9,10 +9,7 @@ import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 
 function formatCount(value = 0) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString(__uiLocale());
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function profileRoute(person = {}) {

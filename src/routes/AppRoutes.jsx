@@ -150,6 +150,7 @@ function WallRoute() {
 }
 
 function SeenCreationRoute() {
+  __useUiLanguage();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const paid = searchParams.get("type") === "paid";

@@ -97,10 +97,7 @@ function relativeTime(value) {
 }
 
 function compact(value) {
-  const number = Number(value) || 0;
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`;
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`;
-  return number.toLocaleString(__uiLocale());
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function groupedProfileGifts(gifts) {
@@ -471,9 +468,9 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
   };
   const seenByCount = metricValue(metrics, "seenBy", 0);
   const identityMetrics = [
-    ["followers", "Followers", metrics.followerCount, () => onConnectionsOpen?.("followers")],
-    ["following", "Following", metrics.followingCount, () => onConnectionsOpen?.("following")],
-    ["seen-by", "Seen by", seenByCount, () => onConnectionsOpen?.("seen-by")],
+    ["followers", __msg("discover.followers"), metrics.followerCount, () => onConnectionsOpen?.("followers")],
+    ["following", __msg("activity.following"), metrics.followingCount, () => onConnectionsOpen?.("following")],
+    ["seen-by", __msg("profile.seenBy"), seenByCount, () => onConnectionsOpen?.("seen-by")],
   ];
 
   return (
@@ -485,7 +482,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
           <button aria-label={hasStories ? __msg("social.viewSStories", { value0: profile.displayName }) : __msg("social.checkSStories", { value0: profile.displayName })} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
             <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
           </button>
-          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={__msg("contentEntities.open", { value0: world.title || `${profile.displayName}'s World` })} className="profile-avatar-world-planet" to={worldTarget} title={world.title || __msg("financial.openWorld")}>{world.planet?.emoji || "🪐"}</Link></span> : null}
+          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={__msg("contentEntities.open", { value0: world.title || __msg("profile.sWorld_9663ba", { value0: profile.displayName }) })} className="profile-avatar-world-planet" to={worldTarget} title={world.title || __msg("financial.openWorld")}>{world.planet?.emoji || "🪐"}</Link></span> : null}
           {activeStatus ? <span aria-label={__msg("social.onlineNow")} className="profile-avatar-now-dot" role="img" /> : null}
           {isOwner ? <button aria-label={__msg("social.createAStory")} className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
         </div>
@@ -556,8 +553,8 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
   if (!viewerCapabilities.isOwner && !profile.directAccess?.enabled && !profile.directAccess?.callEnabled) return null;
   const waiting = (windows.data || []).filter((item) => item.settlementStatus === "HELD").length;
   const meta = [
-    profile.directAccess?.enabled ? `Messages ${String.fromCharCode(10022)}${profile.directAccess.priceStars}` : "",
-    profile.directAccess?.callEnabled ? `Calls ${String.fromCharCode(10022)}${profile.directAccess.callPriceStars} / ${profile.directAccess.callDurationMinutes} min` : "",
+    profile.directAccess?.enabled ? __msg("social.messagesValue0Value1", { value0: String.fromCharCode(10022), value1: profile.directAccess.priceStars }) : "",
+    profile.directAccess?.callEnabled ? __msg("social.callsValue0Value1Value2Min", { value0: String.fromCharCode(10022), value1: profile.directAccess.callPriceStars, value2: profile.directAccess.callDurationMinutes }) : "",
     "chats & requests",
   ].filter(Boolean).join(" - ");
   const open = () => viewerCapabilities.isOwner
@@ -597,13 +594,14 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
 }
 
 function BusinessContactActions({ profile, isOwner }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   if ((profile.profileAccountType || profile.profileType) !== "business") return null;
   const contact = profile.businessContact || {};
   const enabled = new Set(contact.enabled || []);
   const actions = [
-    { id: "call", label: "Call", Icon: FiPhone, value: contact.call, href: contact.call ? `tel:${String(contact.call).replace(/[^+\d]/g, "")}` : "" },
-    { id: "directions", label: "Directions", Icon: FiMapPin, value: contact.directions, href: contact.directions ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.directions)}` : "" },
+    { id: "call", label: __msg("context.call"), Icon: FiPhone, value: contact.call, href: contact.call ? `tel:${String(contact.call).replace(/[^+\d]/g, "")}` : "" },
+    { id: "directions", label: __msg("profile.businessDirections"), Icon: FiMapPin, value: contact.directions, href: contact.directions ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.directions)}` : "" },
     { id: "website", label: __msg("settings.website"), Icon: FiLink, value: contact.website, href: contact.website || "" },
   ].filter((item) => enabled.has(item.id) && (isOwner || item.value));
   if (!actions.length) return null;
@@ -616,29 +614,30 @@ function BusinessContactActions({ profile, isOwner }) {
 }
 
 function NewProfileStarter({ data, onStartSeen }) {
+  __useUiLanguage();
   const navigate = useNavigate();
   const { profile, viewerCapabilities } = data;
   const steps = [
     {
       key: "photo",
-      title: "Add a profile photo",
-      detail: "People follow faces",
+      title: __msg("system.UnifiedProfilePage.8427497b58"),
+      detail: __msg("system.UnifiedProfilePage.78520e8dd5"),
       done: Boolean(profile.avatar),
       Icon: FiUser,
       to: "/settings/profile?from=profile",
     },
     {
       key: "status",
-      title: "Set your status",
-      detail: "What you're up to",
+      title: __msg("system.UnifiedProfilePage.d33bd235db"),
+      detail: __msg("system.UnifiedProfilePage.b112ffdb53"),
       done: Boolean(profile.activeStatus?.label),
       Icon: FiMessageCircle,
       to: "/profile/status",
     },
     {
       key: "seen",
-      title: "Post your first Seen",
-      detail: "A story in chapters",
+      title: __msg("system.UnifiedProfilePage.aa207bc60b"),
+      detail: __msg("system.FanCreateSheet.bb3b97b21f"),
       done: Boolean(data.seens?.length),
       Icon: FiFileText,
       to: "/create/seen?type=free",
@@ -647,15 +646,15 @@ function NewProfileStarter({ data, onStartSeen }) {
   const completed = steps.filter((step) => step.done).length;
   if (!viewerCapabilities.isOwner || completed === steps.length) return null;
   return (
-    <section aria-label="Get started" className="profile-get-started">
-      <header><strong>Get started</strong><span>{completed} of {steps.length}</span></header>
+    <section aria-label={__msg("onboarding.getStarted")} className="profile-get-started">
+      <header><strong>{__msg("onboarding.getStarted")}</strong><span>{completed} {__msg("onboarding.of")} {steps.length}</span></header>
       <div aria-hidden="true" className="profile-get-started-progress"><i style={{ width: `${(completed / steps.length) * 100}%` }} /></div>
       <div className="profile-get-started-cards">
         {steps.map(({ Icon, ...step }) => (
           <button className={step.done ? "is-done" : ""} key={step.key} onClick={() => { if (step.done) return; if (step.key === "seen") onStartSeen?.(); else navigate(step.to); }} type="button">
             <span className="profile-get-started-icon">{step.done ? "✓" : <Icon aria-hidden="true" />}</span>
             <b>{step.title}</b><small>{step.detail}</small>
-            <em>{step.done ? "Done" : "Start ›"}</em>
+            <em>{step.done ? __msg("comments.done") : __msg("system.UnifiedProfilePage.5d80485d17")}</em>
           </button>
         ))}
       </div>
@@ -664,6 +663,7 @@ function NewProfileStarter({ data, onStartSeen }) {
 }
 
 function ProfileWaysToEarn({ data }) {
+  __useUiLanguage();
   const { profile, publicMetrics, viewerCapabilities } = data;
   const [activePitch, setActivePitch] = useState("");
   const hasPublishedContent = Boolean(
@@ -693,15 +693,15 @@ function ProfileWaysToEarn({ data }) {
   const example = examples.data?.example;
   const money = (value) => new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const cards = [
-    { key: "world", label: "World", value: money(example?.world?.income), note: `${compact(example?.world?.members)} members` },
-    { key: "seen", label: "Paid Seen", value: money(example?.paidSeen?.income), note: `${compact(example?.paidSeen?.owners)} owners` },
-    { key: "gift", label: "Gifts", value: money(example?.gifts?.income), note: `${compact(example?.gifts?.count)} gifts` },
+    { key: "world", label: __msg("admin.world"), value: money(example?.world?.income), note: __msg("fan.members", { value0: compact(example?.world?.members) }) },
+    { key: "seen", label: __msg("system.FanCreateSheet.7068381e0b"), value: money(example?.paidSeen?.income), note: __msg("social.value0Owners", { value0: compact(example?.paidSeen?.owners) }) },
+    { key: "gift", label: __msg("creator.gifts"), value: money(example?.gifts?.income), note: __msg("social.value0Gifts", { value0: compact(example?.gifts?.count) }) },
   ];
   return (
     <>
-      <section aria-label="Ways to earn" className="profile-ways-to-earn">
-        <header><span><b>Ways to earn</b><small>{`What ${example?.name?.split(" ")[0] || "creators"} makes with each`}</small></span><Link to="/ways-to-earn">How ›</Link></header>
-        <div>{cards.map((card) => <button aria-label={`Learn about ${card.label} earnings`} key={card.key} onClick={() => setActivePitch(card.key)} type="button"><article><b>{card.label}</b><strong>{examples.isLoading ? "…" : card.value}</strong><small>{card.note}</small></article></button>)}</div>
+      <section aria-label={__msg("creator.waysToEarn")} className="profile-ways-to-earn">
+        <header><span><b>{__msg("creator.waysToEarn")}</b><small>{__msg("system.UnifiedProfilePage.e074562346", { value0: example?.name?.split(" ")[0] || "creators" })}</small></span><Link to="/ways-to-earn">{__msg("system.UnifiedProfilePage.d863358beb")}</Link></header>
+        <div>{cards.map((card) => <button aria-label={__msg("system.UnifiedProfilePage.4bce6c9785", { value0: card.label })} key={card.key} onClick={() => setActivePitch(card.key)} type="button"><article><b>{card.label}</b><strong>{examples.isLoading ? "…" : card.value}</strong><small>{card.note}</small></article></button>)}</div>
       </section>
       {activePitch && example ? <WaysToEarnDetailSheet example={example} onClose={() => setActivePitch("")} profile={profile} rate={Number(examples.data?.dashboard?.exchangeRate?.starsPerUsd) || 10} type={activePitch} /> : null}
     </>
@@ -887,7 +887,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
     const from = fromViewer
       ? "you"
       : gift.sender?.username ? `@${gift.sender.username}` : gift.sender?.name || __msg("social.aSupporter");
-    const parts = [`from ${from}`];
+    const parts = [__msg("system.MessagesPage.9aaebe22d4", { value0: from })];
     if (gift.quantity > 1) parts.push(`×${gift.quantity}`);
     if (gift.visibility === "RECIPIENT_ONLY") parts.push("private");
     if (gift.hiddenFromProfile) parts.push("hidden");
@@ -965,9 +965,9 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
 function ProfileTabs({ tab, setTab }) {
   __useUiLanguage();
   const tabs = [
-    ["seens", "Seens", FiGrid],
-    ["reposts", "Reposts", FiRepeat],
-    ["saved", "Saved", FiBookmark],
+    ["seens", __msg("profile.seens"), FiGrid],
+    ["reposts", __msg("settings.reposts"), FiRepeat],
+    ["saved", __msg("contentEntities.saved"), FiBookmark],
   ];
   return (
     <nav className="profile-icon-tabs" aria-label={__msg("social.profileContent")}>
@@ -992,11 +992,12 @@ function ProfileMixedContentPanel({ directSeenNavigation = false, emptyText, own
 }
 
 function UnifiedRepostGrid({ items = [], owner = false }) {
-  if (!items.length) return <ContentEmptyState compact message={owner ? "Repost a Seen, note, reply, or photo and it will appear here." : "There are no reposts yet."} primaryAction={owner ? { label: __msg("social.exploreContent"), to: "/seen" } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title="No reposts yet" variant="profile" />;
-  return <div className="profile-repost-grid">{items.map((item) => <Link aria-label={`Open reposted ${item.kind} by ${item.author?.name || "author"}`} className="profile-repost-tile" key={item.id} to={item.route || "#"}>
+  __useUiLanguage();
+  if (!items.length) return <ContentEmptyState compact message={owner ? __msg("system.UnifiedProfilePage.01e7764800") : __msg("system.UnifiedProfilePage.c2a1d55149")} primaryAction={owner ? { label: __msg("social.exploreContent"), to: "/seen" } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={__msg("system.UnifiedProfilePage.75ef4096df")} variant="profile" />;
+  return <div className="profile-repost-grid">{items.map((item) => <Link aria-label={__msg("system.UnifiedProfilePage.52ad169479", { value0: item.kind, value1: item.author?.name || "author" })} className="profile-repost-tile" key={item.id} to={item.route || "#"}>
     {item.imageUrl ? <img alt="" src={item.imageUrl} /> : <span className="profile-repost-fallback">{item.kind === "cm" ? "“" : "↻"}</span>}
     <span className="profile-repost-shade" /><span className="profile-repost-mark"><FiRepeat /></span>
-    <span className="profile-repost-author"><FanAvatar name={item.author?.name} size="h-6 w-6" src={item.author?.avatar} /><b>{item.author?.name || "Author"}</b></span><strong>{item.title}</strong>
+    <span className="profile-repost-author"><FanAvatar name={item.author?.name} size="h-6 w-6" src={item.author?.avatar} /><b>{item.author?.name || __msg("fanWeb.author")}</b></span><strong>{item.title}</strong>
   </Link>)}</div>;
 }
 

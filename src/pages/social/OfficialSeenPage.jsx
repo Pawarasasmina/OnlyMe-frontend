@@ -49,8 +49,8 @@ function WorldIcon() {
   __useUiLanguage();
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="6.5" /><ellipse cx="12" cy="12" rx="10.5" ry="4" transform="rotate(-18 12 12)" /></svg>;
 }
-const highlights = [["Earn", EarnIcon, 6], ["Seen", SeenIcon, 1], ["Wall", WallIcon, 2], ["Discover", DiscoverIcon, 3], ["Stories", StoriesIcon, 4], ["Deeper", WorldIcon, 5]];
-const earning = [["Direct Access", "$6.80", "per answer", FiMessageCircle], __uiTuple(["Experiences", "$12.92", { __uiMessage: "social.perUnlock" }, FiLock]), ["Your World", "$12.92", "a month per subscriber", WorldIcon], __uiTuple(["Gifts", { __uiMessage: "creator.gifts" }, { __uiMessage: "social.onStoriesChatsSeens" }, FiGift]), ["Dream support", "Dreams", "fans back your goal", FiStar]];
+const highlights = [__uiTuple([{ __uiMessage: "options.Earn" }, EarnIcon, 6]), __uiTuple([{ __uiMessage: "language.seen" }, SeenIcon, 1]), __uiTuple([{ __uiMessage: "fanWeb.wall" }, WallIcon, 2]), __uiTuple([{ __uiMessage: "discover.discover" }, DiscoverIcon, 3]), __uiTuple([{ __uiMessage: "admin.stories" }, StoriesIcon, 4]), __uiTuple([{ __uiMessage: "options.Deeper" }, WorldIcon, 5])];
+const earning = [__uiTuple([{ __uiMessage: "language.directAccess" }, "$6.80", "per answer", FiMessageCircle]), __uiTuple([{ __uiMessage: "profile.experiences" }, "$12.92", { __uiMessage: "social.perUnlock" }, FiLock]), __uiTuple([{ __uiMessage: "profile.yourWorld" }, "$12.92", "a month per subscriber", WorldIcon]), __uiTuple([{ __uiMessage: "creator.gifts" }, { __uiMessage: "creator.gifts" }, { __uiMessage: "social.onStoriesChatsSeens" }, FiGift]), __uiTuple([{ __uiMessage: "admin.dreamSupport" }, "Dreams", "fans back your goal", FiStar])];
 const modules = [
   { label: "Seen", get title() { return __msg("social.yourStoryInChapters"); }, get text() { return __msg("social.upToFiveShortChaptersPeopleSwipeThrough"); }, Icon: SeenEyeMark, slide: 1 },
   { get label() { return __msg("fanWeb.wall"); }, get title() { return __msg("social.realNeedsRealHelp"); }, get text() { return __msg("social.askForHelpFindAServiceBuySell"); }, Icon: WallIcon, slide: 2 },
@@ -58,14 +58,14 @@ const modules = [
   { get label() { return __msg("social.storiesStatus"); }, get title() { return __msg("social.whatSHappeningNow"); }, get text() { return __msg("social.aRingOnTheAvatarLives24Hours"); }, Icon: StoriesIcon, slide: 4 },
   { get label() { return __msg("social.goDeeper"); }, get title() { return __msg("social.whenYouWantMore"); }, get text() { return __msg("social.creatorsSellPremiumExperiencesAndOpenTheirWorld"); }, Icon: WorldIcon, slide: 5 },
 ];
-const beliefs = [["Human first", "Real people, real lives. Safe for everyone"], ["Finished, not endless", "Chapters end. No doomscroll by design"], ["Creators keep what they earn", "One clear number — in dollars"]];
+const beliefs = [__uiTuple([{ __uiMessage: "options.Human_first" }, { __uiMessage: "options.Real_people_real_lives_Safe_for_everyone" }]), __uiTuple([{ __uiMessage: "options.Finished_not_endless" }, { __uiMessage: "options.Chapters_end_No_doomscroll_by_design" }]), __uiTuple([{ __uiMessage: "options.Creators_keep_what_they_earn" }, { __uiMessage: "options.One_clear_number_in_dollars" }])];
 
 function ModuleArt({ slide }) {
   __useUiLanguage();
   if (slide === 1) return <div className="seen-brand-chapters"><Portrait person="ethan" /><div><b>{__msg("stories.8WeekTransformation")}</b><span className="seen-brand-chapter-steps">{["Cover", "01", "02", "03", "04", "05"].map(label => <i key={label}>{label}</i>)}</span><small>{__msg("social.swipeThroughItRightInTheFeed")}</small></div></div>;
-  if (slide === 2) return <div className="seen-brand-wall">{[["Need help", "Lost a grey cat at Marina", "40m"], ["Looking for", "A babysitter tonight in JLT", "25m"], ["✓ Solved", "Quiet café with good Wi-Fi", "1d"]].map(([kind, text, time], index) => <div className={index === 2 ? "is-solved" : ""} key={kind}><i /><b>{__enumLabel(kind)}</b><span>{text}</span><small>{time}</small></div>)}</div>;
+  if (slide === 2) return <div className="seen-brand-wall">{[["Need help", __msg("system.copy.7977ce5fcc20"), "40m"], ["Looking for", __msg("system.copy.cfe18ef2cc8b"), "25m"], ["✓ Solved", __msg("system.copy.ccea3ec9fa27"), "1d"]].map(([kind, text, time], index) => <div className={index === 2 ? "is-solved" : ""} key={kind}><i /><b>{__enumLabel(kind)}</b><span>{text}</span><small>{time}</small></div>)}</div>;
   if (slide === 3) return <div className="seen-brand-discover"><span>{["lina", "ethan", "mia"].map(person => <Portrait key={person} person={person} />)}</span><div>{__msg("social.bothTrainingForAMarathon")}<small>{__msg("social.whyTheyReHereAlwaysSaid")}</small></div></div>;
-  if (slide === 4) return <div className="seen-brand-statuses">{[["lina", "At seen"], ["ethan", "At the gym"], ["mia", "Celebrating"], ["sofia", "Coffee walk"]].map(([person, label]) => <span key={person}><i><Portrait person={person} /></i><small>{label}</small></span>)}</div>;
+  if (slide === 4) return <div className="seen-brand-statuses">{[["lina", __msg("constants.atSeen")], ["ethan", __msg("constants.atTheGym")], ["mia", __msg("constants.celebrating")], ["sofia", __msg("system.copy.ac5173d9a412")]].map(([person, label]) => <span key={person}><i><Portrait person={person} /></i><small>{label}</small></span>)}</div>;
   return <div className="seen-brand-world"><Planet /><span>{__msg("social.premiumExperiencesUnlockOnce")}<small>{__msg("social.oneWorldPerCreatorASubscriptionToEverythingThey")}</small></span></div>;
 }
 

@@ -51,7 +51,7 @@ export function ticketImage(ticket) {
   ctx.fillText(ticket.city.toUpperCase(), 996, 140, 620);
   ctx.textAlign = "left";
   ctx.font = `700 34px ${font}`;
-  ctx.fillText("MEMBER", 84, 710);
+  ctx.fillText(__msg("system.OnboardingTicket.e6c167fd27"), 84, 710);
   ctx.font = `800 190px ${font}`;
   ctx.fillStyle = "#cce4fa";
   ctx.fillText(ticket.label, 76, 930, 920);

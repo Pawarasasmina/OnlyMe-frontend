@@ -3,8 +3,7 @@ import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
-import { useProfileLanguageOptions } from "../../hooks/useProfileLanguageOptions";
-import { profileLanguageCode } from "../../utils/profileLanguages";
+import { UI_LANGUAGES } from "../../utils/uiLanguages";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiClock, FiGlobe, FiLock, FiSettings } from "react-icons/fi";
@@ -45,8 +44,7 @@ function TimezoneSelector({ label, onChange, value }) {
 function AccountSettingsPage() {
   __useUiLanguage();
   const queryClient = useQueryClient();
-  const { setLanguage, t } = useLanguage();
-  const languageOptions = useProfileLanguageOptions();
+  const { language, setLanguage, t } = useLanguage();
   const [preferences, setPreferences] = useState({ preferredLanguage: "en", timezone: "UTC", phoneNumber: "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [dirty, setDirty] = useState(false);
@@ -100,7 +98,7 @@ function AccountSettingsPage() {
   const updatePreference = ({ target }) => {
     setDirty(true);
     setMessage("");
-    setPreferences((current) => ({ ...current, [target.name]: target.value }));
+    setPreferences((current) => ({ ...current, [target.name]: target.name === "preferredLanguage" && target.value === "pt" ? "pt-PT" : target.value }));
     if (target.name === "preferredLanguage") setLanguage(target.value.split("-")[0]);
   };
   const updatePassword = ({ target }) => setPasswords((current) => ({ ...current, [target.name]: target.value }));
@@ -143,7 +141,7 @@ function AccountSettingsPage() {
           <p className="mt-2 text-xs text-brand-mist/50">{t("Your email address cannot be changed here.")}</p>
         </div>
         <div className="grid gap-4 border-t border-white/[0.07] pt-5 md:grid-cols-2">
-          <label className="block text-sm font-medium text-brand-mist/80">{t("Preferred language")}<select className="mt-2 w-full rounded-xl border border-white/10 bg-brand-dark px-4 py-3 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="preferredLanguage" onChange={updatePreference} value={profileLanguageCode(preferences.preferredLanguage, languageOptions)}>{languageOptions.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}</select></label>
+          <label className="block text-sm font-medium text-brand-mist/80">{t("Preferred language")}<select className="mt-2 w-full rounded-xl border border-white/10 bg-brand-dark px-4 py-3 text-white outline-none transition hover:border-atseen-blue/30 focus:border-atseen-blue focus:ring-2 focus:ring-atseen-blue/10" name="preferredLanguage" onChange={updatePreference} value={language}>{UI_LANGUAGES.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}</select></label>
           <TimezoneSelector label={t("Time zone")} onChange={updatePreference} value={preferences.timezone} />
         </div>
         <div className="flex justify-end">

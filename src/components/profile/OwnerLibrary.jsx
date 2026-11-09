@@ -19,7 +19,7 @@ const date = value => value && Number.isFinite(new Date(value).getTime()) ? new 
 const active = item => ["ACTIVE", "CANCEL_AT_PERIOD_END"].includes(item.status) && new Date(item.currentPeriodEnd) > new Date();
 const cancelled = item => item.cancelAtPeriodEnd || item.status === "CANCEL_AT_PERIOD_END";
 const worldId = item => item.premiumPublication?.id || item.premiumPublication?._id;
-const title = item => item.premiumPublication?.title || `${item.creator?.name?.split(" ")[0] || __msg("discover.creator")}’s World`;
+const title = item => item.premiumPublication?.title || __msg("profile.value0SWorld", { value0: item.creator?.name?.split(" ")[0] || __msg("discover.creator") });
 function State({ query, children }) {
   __useUiLanguage();
   if (query.isPending) return <p className="owner-things-state" role="status">{__msg("financial.loading")}</p>;
@@ -74,7 +74,7 @@ export default function OwnerLibrary({ userId, wallet, onClose, onFullScreen, su
     </> : null}
     {screen === "manage" ? <>
       {who}
-      <State query={detail}><div className="library-recap"><h3>{__msg("profile.yourMonthInside")}</h3><div>{[[detail.data?.recap?.stories, "new stories"], [detail.data?.recap?.chapters, "new chapters"], [detail.data?.recap?.messages, "messages in your circles"]].map(([n, label]) => <div key={label}><b>{n ?? "—"}</b><small>{label}</small></div>)}</div></div></State>
+      <State query={detail}><div className="library-recap"><h3>{__msg("profile.yourMonthInside")}</h3><div>{[[detail.data?.recap?.stories, __msg("system.copy.e131cebf6fe4")], [detail.data?.recap?.chapters, __msg("system.copy.9736f1d145e3")], [detail.data?.recap?.messages, __msg("system.copy.b6949fd239d1")]].map(([n, label]) => <div key={label}><b>{n ?? "—"}</b><small>{label}</small></div>)}</div></div></State>
       {cancelled(membership) ? <div className="library-recap"><b>{__msg("profile.yourMembershipEnds")} {date(membership.currentPeriodEnd)}</b><p>{__msg("profile.everythingStaysOpenUntilThenNoMoreCharges")}</p><button className="library-primary" disabled={busy || !active(membership)} onClick={() => save("resume")} type="button">{busy ? __msg("financial.saving") : __msg("profile.restartMembership")}</button></div> : <div className="library-payment"><div><span><b>{__msg("profile.nextPayment")}</b><small>{__msg("profile.renewsAutomatically")}</small></span><span><b>{date(membership.currentPeriodEnd)}</b> · <img alt={__msg("profile.coins")} src="/brand/goldcoin.png" /> {membership.starsPerPeriod.toLocaleString(__uiLocale())}</span></div>{wallet && wallet.balance < membership.starsPerPeriod ? <Link onClick={onClose} to="/wallet"><b>{__msg("profile.topUpToStay")}</b><small>{__msg("profile.youHave")} {wallet.balance.toLocaleString(__uiLocale())} {__msg("profile.coinsRenewalNeeds")} {membership.starsPerPeriod.toLocaleString(__uiLocale())}</small></Link> : null}<button disabled={busy} onClick={() => changeScreen("cancel")} type="button">{__msg("profile.cancelMembership")}</button></div>}
       <p className="library-footnote">{__msg("profile.cancelAnytimeYouKeepAccessUntilTheEndOf")}</p>
     </> : null}

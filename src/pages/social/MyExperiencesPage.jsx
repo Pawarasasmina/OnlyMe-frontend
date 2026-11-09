@@ -12,7 +12,7 @@ const STAR = "✦";
 
 function updatedLabel(value) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(value || Date.now()).getTime()) / 86400000));
-  return days < 1 ? __msg("social.updToday") : `upd ${days}d`;
+  return days < 1 ? __msg("social.updToday") : __msg("profile.updValue0D", { value0: days });
 }
 
 function ownerDestination(item) {
@@ -52,7 +52,7 @@ export default function MyExperiencesPage() {
   const free = items.filter((item) => item.pricing?.mode === "FREE");
   const paid = items.filter((item) => item.pricing?.mode !== "FREE");
   const destination = (item) => owner ? ownerDestination(item) : `/experience/${item.id}`;
-  const title = owner ? __msg("social.myExperiences") : `${query.data?.creator?.name || __msg("discover.creator")}'s Experiences`;
+  const title = owner ? __msg("social.myExperiences") : __msg("social.value0SExperiences", { value0: query.data?.creator?.name || __msg("discover.creator") });
 
   return <main className="mx-auto min-h-[calc(100dvh-80px)] w-full max-w-xl px-5 py-5 text-white">
     <header className="flex items-center gap-3">

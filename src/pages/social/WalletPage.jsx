@@ -14,6 +14,7 @@ import "./WalletPage.css";
 import PayoutFlow from "../../components/financial/PayoutFlow";
 
 function Coin({ value }) {
+  __useUiLanguage();
   return <span className="wallet-coin"><img alt="" src="/brand/goldcoin.png" />{Number(value).toLocaleString(__uiLocale())}</span>;
 }
 const creatorEvents = new Set(["WORLD_CREATOR_EARNING", "PREMIUM_CREATOR_EARNING", "DREAM_CREATOR_EARNING", "CHAT_GIFT_EARNING", "DA_CREATOR_EARNING", "CALL_CREATOR_EARNING"]);
@@ -26,11 +27,11 @@ function activityTitle(item) {
   if (item.event === "INCOME_CONVERSION_DEBIT") return __msg("social.creatorIncomeConverted");
   if (item.event === "INCOME_CONVERSION_CREDIT") return __msg("social.coinsFromCreatorIncome");
   if (item.event.includes("DA_")) return person ? __msg("social.value0UnlockedYourQuestion", { value0: person }) : __msg("social.directAccessUnlocked");
-  if (item.event.includes("CALL_")) return person ? `${person} booked a call` : __msg("social.paidCall");
-  if (item.event.includes("GIFT")) return person ? `${person} sent a gift` : __msg("social.giftReceived");
+  if (item.event.includes("CALL_")) return person ? __msg("social.value0BookedACall", { value0: person }) : __msg("social.paidCall");
+  if (item.event.includes("GIFT")) return person ? __msg("social.value0SentAGift", { value0: person }) : __msg("social.giftReceived");
   if (item.event.includes("DREAM")) return person ? __msg("social.value0SupportedYourDreamValue1", { value0: person, value1: publication ? ` “${publication}”` : "" }) : publication || __msg("admin.dreamSupport");
   if (item.event.includes("PREMIUM")) return person ? __msg("social.value0SubscribedToYourWorld", { value0: person }) : publication || __msg("social.worldSubscription");
-  if (item.event.includes("WORLD")) return person ? `${person} bought ${publication || "your World"}` : publication || __msg("social.worldUnlock");
+  if (item.event.includes("WORLD")) return person ? __msg("social.value0BoughtValue1", { value0: person, value1: publication || "your World" }) : publication || __msg("social.worldUnlock");
   return item.event.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -89,7 +90,7 @@ export default function WalletPage() {
   const packs = useMemo(() => walletPacks(wallet), [wallet]);
 
   const topUp = async (pack) => {
-    const bonusCopy = pack.bonus ? `, including ${pack.bonus} bonus coins` : "";
+    const bonusCopy = pack.bonus ? __msg("social.includingValue0BonusCoins", { value0: pack.bonus }) : "";
     if (!window.confirm(__msg("social.addValue0Value1ToYourWalletValue2", { value0: "", value1: pack.total.toLocaleString(__uiLocale()), value2: bonusCopy }))) return;
     setTopUpBusy(pack.usd);
     setTopUpMessage("");
@@ -124,7 +125,7 @@ export default function WalletPage() {
       <div className="wallet-month-spending"><span><small>{__msg("wallet.spentThisMonth")}</small><strong>{wallet.spentThisMonthStars != null ? <Coin value={wallet.spentThisMonthStars} /> : "\u2014"} <em>{money(wallet.spentThisMonthUsd)}</em></strong></span><button onClick={() => setLimitOpen(true)} type="button"><small>{__msg("wallet.monthlyLimit")}</small><b>{wallet.monthlySpendingLimitUsd === 0 ? __msg("fanWeb.off") : money(wallet.monthlySpendingLimitUsd)}<FiChevronRight /></b></button></div>
       <h2 className="wallet-prototype-label">{__msg("social.topUp")}</h2>
       {!packs.length ? <p className="wallet-prototype-state">{__msg("wallet.packsUnavailable")}</p> : null}
-      <div className="wallet-prototype-packs">{packs.map((pack) => <button aria-label={__msg("social.addStars", { value0: pack.total })} disabled={topUpBusy !== null} key={pack.usd} onClick={() => topUp(pack)} type="button">{pack.badge === "popular" ? <em>{__msg("data.popular")}</em> : pack.badge === "best_value" ? <em>{__msg("social.bestValue")}</em> : null}<strong><Coin value={pack.stars} /> {pack.bonus ? <small>+ <Coin value={pack.bonus} /> {__msg("social.bonus")}</small> : null}</strong><span>{topUpBusy === pack.usd ? __msg("stories.adding_ffb2e6") : money(pack.chargeUsd)}</span>{pack.taxUsd > 0 ? <small>{money(pack.usd)} + {money(pack.taxUsd)} tax</small> : null}</button>)}</div>
+      <div className="wallet-prototype-packs">{packs.map((pack) => <button aria-label={__msg("social.addStars", { value0: pack.total })} disabled={topUpBusy !== null} key={pack.usd} onClick={() => topUp(pack)} type="button">{pack.badge === "popular" ? <em>{__msg("data.popular")}</em> : pack.badge === "best_value" ? <em>{__msg("social.bestValue")}</em> : null}<strong><Coin value={pack.stars} /> {pack.bonus ? <small>+ <Coin value={pack.bonus} /> {__msg("social.bonus")}</small> : null}</strong><span>{topUpBusy === pack.usd ? __msg("stories.adding_ffb2e6") : money(pack.chargeUsd)}</span>{pack.taxUsd > 0 ? <small>{money(pack.usd)} + {money(pack.taxUsd)} {__msg("system.WalletPage.e8e27c0a09")}</small> : null}</button>)}</div>
       {topUpMessage ? <p className="wallet-prototype-state" role="status">{topUpMessage}</p> : null}
       <p className="wallet-prototype-rate">{__msg("wallet.secureCheckout")}</p>
       <h2 className="wallet-prototype-label">{__msg("social.activity")}</h2>

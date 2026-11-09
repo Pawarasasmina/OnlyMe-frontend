@@ -170,21 +170,21 @@ async function renderStoryFile(story, includeInteractive = false) {
       context.font = "800 27px system-ui";
       context.textAlign = "left";
       context.textBaseline = "top";
-      context.fillText(String(card.eyebrow || "NOTE").slice(0, 42), cardX + 42, cardY + 42, cardWidth - 84);
+      context.fillText(String(card.eyebrow || __msg("social.note_2c924e")).slice(0, 42), cardX + 42, cardY + 42, cardWidth - 84);
       context.fillStyle = "#FFFFFF";
       context.font = "850 40px system-ui";
       drawWrappedText(context, originalTranscript.slice(0, 190), cardX + 42, cardY + 96, cardWidth - 84, 54, translationText ? 2 : 3);
       if (translationText) {
         context.fillStyle = "rgba(255,255,255,.45)";
         context.font = "800 22px system-ui";
-        context.fillText(`TRANSLATED${translationLabel ? ` TO ${translationLabel.toUpperCase()}` : ""}`.slice(0, 46), cardX + 42, cardY + 236, cardWidth - 84);
+        context.fillText((translationLabel ? __msg("stories.translatedTo", { value0: translationLabel }) : __msg("stories.translation")).slice(0, 46), cardX + 42, cardY + 236, cardWidth - 84);
         context.fillStyle = "#FFFFFF";
         context.font = "750 34px system-ui";
         drawWrappedText(context, translationText.slice(0, 150), cardX + 42, cardY + 276, cardWidth - 84, 46, 2);
       }
       context.fillStyle = "rgba(156,203,255,.9)";
       context.font = "650 23px system-ui";
-      context.fillText(String(card.subtitle || "from my Wall - tap >").slice(0, 64), cardX + 42, cardY + cardHeight - 72, cardWidth - 84);
+      context.fillText(String(card.subtitle || __msg("fanWeb.fromMyWallTap")).slice(0, 64), cardX + 42, cardY + cardHeight - 72, cardWidth - 84);
     } else {
       context.save();
       roundRect(context, cardX, cardY, cardWidth, cardHeight, 54);
@@ -657,7 +657,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     const url = URL.createObjectURL(file);
     if (file.type.startsWith("video/")) {
       try {
-        const duration = await new Promise((resolve, reject) => { const video = document.createElement("video"); video.preload = "metadata"; video.onloadedmetadata = () => resolve(Number(video.duration) || 0); video.onerror = () => reject(new Error("Unable to read this video.")); video.src = url; });
+        const duration = await new Promise((resolve, reject) => { const video = document.createElement("video"); video.preload = "metadata"; video.onloadedmetadata = () => resolve(Number(video.duration) || 0); video.onerror = () => reject(new Error(__msg("creator.unableToReadThisVideo"))); video.src = url; });
         if (duration > 15.1) { setVideoToTrim({ file, limitSeconds: 15, url }); return; }
       } catch (error) { URL.revokeObjectURL(url); showToast(error.message); return; }
     }

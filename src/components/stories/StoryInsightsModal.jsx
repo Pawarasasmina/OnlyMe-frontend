@@ -1,3 +1,4 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -10,7 +11,7 @@ import { useStoryInsights } from "../../hooks/useStories";
 
 function viewedTime(value) {
   if (!value) return __msg("stories.viewed");
-  return new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  return new Date(value).toLocaleString(__uiLocale(), { dateStyle: "medium", timeStyle: "short" });
 }
 
 function StoryInsightsModal({ isOpen, onClose, story }) {
@@ -28,10 +29,10 @@ function StoryInsightsModal({ isOpen, onClose, story }) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             {[
-              ["Views", insights.totalViews ?? 0],
-              ["Unique viewers", insights.uniqueViewers ?? 0],
-              ["Replies", insights.replies ?? 0],
-              ["Shares", insights.shares ?? 0],
+              [__msg("fanWeb.views_24be61"), insights.totalViews ?? 0],
+              [__msg("system.copy.dd89755982b9"), insights.uniqueViewers ?? 0],
+              [__msg("fanWeb.replies"), insights.replies ?? 0],
+              [__msg("admin.shares"), insights.shares ?? 0],
             ].map(([label, value]) => (
               <div className="rounded-2xl border border-atseen-line bg-atseen-surface p-4" key={label}>
                 <p className="text-2xl font-black text-atseen-text">{value}</p>

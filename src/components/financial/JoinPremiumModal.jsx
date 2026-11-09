@@ -1,3 +1,7 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,10 +13,11 @@ import { financialErrorCode, financialErrorMessage } from "../../utils/financial
 import "./worldSubscription.css";
 
 const COIN = "🪙";
-const firstNameOf = (creator) => (creator?.name || creator?.displayName || creator?.username || "Creator").trim().split(/\s+/)[0];
-const nextDate = () => new Date(Date.now() + 30 * 86400000).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const firstNameOf = (creator) => (creator?.name || creator?.displayName || creator?.username || __msg("discover.creator")).trim().split(/\s+/)[0];
+const nextDate = () => new Date(Date.now() + 30 * 86400000).toLocaleDateString(__uiLocale(), { month: "short", day: "numeric" });
 
 export default function JoinPremiumModal({ authenticated = true, onClose, onRequireAuth, open, publication, onSuccess }) {
+  __useUiLanguage();
   const client = useQueryClient();
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,7 +55,7 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
     catch (requestError) {
       const code = financialErrorCode(requestError);
       if (code === "MEMBERSHIP_ALREADY_ACTIVE") await onSuccess?.();
-      else if (code === "INSUFFICIENT_STARS") { const missing = Math.max(0, data.charge - Number(wallet.data?.balance || 0)); setTopUpNeeded(missing); setError(`Add exactly ${missing} coins to continue.`); }
+      else if (code === "INSUFFICIENT_STARS") { const missing = Math.max(0, data.charge - Number(wallet.data?.balance || 0)); setTopUpNeeded(missing); setError(__msg("system.JoinPremiumModal.d276a2dd52", { value0: missing })); }
       else setError(financialErrorMessage(requestError));
     } finally { setBusy(false); }
   };
@@ -58,18 +63,18 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
     if (!topUpNeeded || busy) return;
     setBusy(true); setError("");
     try { await walletService.topUpExact(topUpNeeded, createIdempotencyKey("world-exact-topup")); await finish(await membershipService.joinPremiumWorld(publication.id || publication._id, key)); }
-    catch (requestError) { setError(financialErrorMessage(requestError, "Top-up or subscription could not be completed.")); }
+    catch (requestError) { setError(financialErrorMessage(requestError, __msg("financial.topUpOrSubscriptionCouldNotBeCompleted"))); }
     finally { setBusy(false); }
   };
 
-  return <div className="premium-confirm-overlay" onMouseDown={onClose} role="presentation"><section aria-label={`Confirm ${publication.title} membership`} aria-modal="true" className="premium-confirm-sheet" onMouseDown={(event) => event.stopPropagation()} role="dialog">
-    <span className="premium-confirm-handle" /><button aria-label="Close" className="premium-confirm-close" onClick={onClose} type="button"><FiX /></button>
-    <small>JOIN {firstName.toUpperCase()}&apos;S WORLD</small><h2>Confirm membership</h2><p>Everything inside <b>{publication.title}</b> unlocks immediately.</p>
-    <div className="premium-confirm-summary"><p><span>Today</span><b>{COIN} {data.charge}</b></p><p><span>Next payment · {nextDate()}</span><b>{COIN} {data.regular}</b></p><p><span>Billing</span><b>Every 30 days</b></p></div>
-    <ul><li><FiCheck /> Included Paid Seens and all chapters</li><li><FiCheck /> Private stories and Circles</li><li><FiCheck /> One included Direct Access answer monthly</li></ul>
-    {authenticated ? <div className="premium-confirm-balance"><span>Wallet balance</span><b>{COIN} {wallet.data?.balance ?? "—"}</b></div> : null}
-    {limitExceeded ? <p className="premium-join-error">This purchase exceeds your monthly Wallet limit. <Link to="/wallet">Change limit</Link></p> : null}{error ? <p aria-live="assertive" className="premium-join-error">{error}</p> : null}
-    {topUpNeeded ? <button className="premium-confirm-primary" disabled={busy} onClick={topUpAndResume} type="button">{busy ? "Adding coins…" : `Add exactly ${COIN} ${topUpNeeded} & continue`}</button> : <button className="premium-confirm-primary" disabled={busy || limitExceeded || (authenticated && (wallet.isError || wallet.isLoading))} onClick={confirm} type="button">{!authenticated ? "Sign in to join" : busy ? "Joining…" : `Confirm & join · ${COIN}${data.charge}`}</button>}
-    <p className="premium-confirm-terms">Renews at {COIN}{data.regular} every 30 days · cancel anytime</p>
+  return <div className="premium-confirm-overlay" onMouseDown={onClose} role="presentation"><section aria-label={__msg("system.JoinPremiumModal.0f4f9df90a", { value0: publication.title })} aria-modal="true" className="premium-confirm-sheet" onMouseDown={(event) => event.stopPropagation()} role="dialog">
+    <span className="premium-confirm-handle" /><button aria-label={__msg("activity.close")} className="premium-confirm-close" onClick={onClose} type="button"><FiX /></button>
+    <small>{__msg("system.JoinPremiumModal.9a3f6528f2")} {firstName.toUpperCase()}{__msg("system.JoinPremiumModal.6ec321d6e9")}</small><h2>{__msg("system.JoinPremiumModal.9011f129d9")}</h2><p>{__msg("system.JoinPremiumModal.ac8d88aff1")} <b>{publication.title}</b> {__msg("system.JoinPremiumModal.8d0e8c3f37")}</p>
+    <div className="premium-confirm-summary"><p><span>{__msg("profile.today")}</span><b>{COIN} {data.charge}</b></p><p><span>{__msg("system.JoinPremiumModal.074a29f683")} {nextDate()}</span><b>{COIN} {data.regular}</b></p><p><span>{__msg("system.JoinPremiumModal.abaec4522b")}</span><b>{__msg("publication.every30Days")}</b></p></div>
+    <ul><li><FiCheck /> {__msg("system.JoinPremiumModal.914207af96")}</li><li><FiCheck /> {__msg("system.JoinPremiumModal.bb12385ea4")}</li><li><FiCheck /> {__msg("system.JoinPremiumModal.aae5bc7716")}</li></ul>
+    {authenticated ? <div className="premium-confirm-balance"><span>{__msg("fan.walletBalance")}</span><b>{COIN} {wallet.data?.balance ?? "—"}</b></div> : null}
+    {limitExceeded ? <p className="premium-join-error">{__msg("system.JoinPremiumModal.5015bbda18")} <Link to="/wallet">{__msg("system.JoinPremiumModal.d1aa984bcc")}</Link></p> : null}{error ? <p aria-live="assertive" className="premium-join-error">{__systemMessage(error)}</p> : null}
+    {topUpNeeded ? <button className="premium-confirm-primary" disabled={busy} onClick={topUpAndResume} type="button">{busy ? __msg("system.JoinPremiumModal.f4a74a9448") : __msg("system.JoinPremiumModal.0d37aa474c", { value0: COIN, value1: topUpNeeded })}</button> : <button className="premium-confirm-primary" disabled={busy || limitExceeded || (authenticated && (wallet.isError || wallet.isLoading))} onClick={confirm} type="button">{!authenticated ? __msg("system.JoinPremiumModal.6b6b38fab4") : busy ? __msg("system.JoinPremiumModal.f44c1e4259") : __msg("system.JoinPremiumModal.2a87192b60", { value0: COIN, value1: data.charge })}</button>}
+    <p className="premium-confirm-terms">{__msg("system.JoinPremiumModal.8908e1d740")} {COIN}{data.regular} {__msg("system.JoinPremiumModal.5192e0ac96")}</p>
   </section></div>;
 }

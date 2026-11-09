@@ -1,12 +1,15 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { FiBriefcase, FiStar, FiUser } from "react-icons/fi";
 
 const types = [
-  { id: "personal", title: "Personal", icon: FiUser, copy: "Share your life and follow people. Gifts, Dream and paid Seens included." },
-  { id: "creator", title: "Creator", icon: FiStar, copy: "For people building an audience. Adds World, Direct Access, Grow and insights." },
-  { id: "business", title: "Business", icon: FiBriefcase, copy: "For brands, shops and places. Everything creators get, plus contact buttons and offers." },
+  { id: "personal", get title() { return __msg("profile.personal"); }, icon: FiUser, get copy() { return __msg("profile.shareYourLifeAndFollowPeopleGiftsDreamAnd"); } },
+  { id: "creator", get title() { return __msg("discover.creator"); }, icon: FiStar, get copy() { return __msg("profile.forPeopleBuildingAnAudienceAddsWorldDirectAccess"); } },
+  { id: "business", get title() { return __msg("profile.business"); }, icon: FiBriefcase, get copy() { return __msg("profile.forBrandsShopsAndPlacesEverythingCreatorsGetPlus"); } },
 ];
 
 export default function AccountTypePicker({ onChange, value }) {
+  __useUiLanguage();
   return <div className="grid gap-3">{types.map(({ id, title, icon: Icon, copy }) => {
     const selected = value === id;
     return <button aria-pressed={selected} className={`flex min-h-[88px] w-full items-start gap-3 rounded-2xl px-4 py-[14px] text-left transition active:scale-[.97] ${selected ? "border-[1.5px] border-[#9CCBFF]/70 bg-[#9CCBFF]/[.08]" : "border border-white/[.08] bg-white/[.04]"}`} key={id} onClick={() => onChange(id)} type="button">

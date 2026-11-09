@@ -14,7 +14,7 @@ function WallStoryPersonItem({ group, onOpenStory }) {
   const hasStories = group.stories.length > 0;
   const name = readableName(group.user);
   const viewed = hasStories && !group.hasUnseenStories;
-  const label = `View ${name}'s story, ${group.hasUnseenStories ? "unseen" : "viewed"}${group.activeStatus?.label ? `, status ${group.activeStatus.label}` : ""}`;
+  const label = __msg("stories.viewValue0SStoryValue1Value2", { value0: name, value1: group.hasUnseenStories ? "unseen" : "viewed", value2: group.activeStatus?.label ? `, status ${group.activeStatus.label}` : "" });
 
   return (
     <button

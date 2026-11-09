@@ -2,13 +2,18 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncE
 import { LanguageContext } from "./LanguageContext";
 import { AuthContext } from "./AuthContext";
 import { profileService } from "../services/profileService";
-import { activateLanguage, recordLanguageChoice, getLanguage, getRevision, getLocale, msg, subscribeLanguage, formatNumber, formatCurrency, formatDate, formatRelative } from "../i18n/runtime.js";
-import { deviceUiLanguage, supportedUiLanguage } from "../utils/uiLanguages";
+import { activateLanguage, loadLanguage, recordLanguageChoice, getLanguage, getRevision, getLocale, msg, subscribeLanguage, formatNumber, formatCurrency, formatDate, formatRelative } from "../i18n/runtime.js";
+import { UI_LANGUAGES, deviceUiLanguage, supportedUiLanguage } from "../utils/uiLanguages";
 
 const STORAGE = "atseen_language", CHOICE = "atseen_language_choice", ACCOUNTS = "atseen_account_languages";
 const read = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
 const write = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Session language remains usable. */ } };
 const readLanguage = () => { try { return supportedUiLanguage(localStorage.getItem(STORAGE)); } catch { return null; } };
+const restoreLanguage = code => {
+  // During hydration a missing/offline chunk must not crash the app. Explicit
+  // user selections report load failures through syncError below.
+  void Promise.resolve(activateLanguage(code)).catch(() => {});
+};
 
 export function LanguageProvider({ children }) {
   const auth = useContext(AuthContext);
@@ -20,7 +25,7 @@ export function LanguageProvider({ children }) {
     const choice = read(CHOICE);
     const cached = (read(ACCOUNTS) || {})[accountId];
     const explicitChoice = choice?.explicit && choice.owner === (accountId || "guest") && supportedUiLanguage(choice.language);
-    activateLanguage(explicitChoice || supportedUiLanguage(cached?.language) || readLanguage() || deviceUiLanguage());
+    restoreLanguage(explicitChoice || supportedUiLanguage(cached?.language) || readLanguage() || deviceUiLanguage());
     initialized.current = true;
   }
   const language = useSyncExternalStore(subscribeLanguage, getLanguage, () => "en");
@@ -47,13 +52,26 @@ export function LanguageProvider({ children }) {
     saveQueue.current = pending;
     return pending;
   }, []);
-  const setLanguage = useCallback(code => {
+  const setLanguage = useCallback(async code => {
     const chosen = supportedUiLanguage(code) || "en";
-    activateLanguage(chosen);
+    const owner = account.current;
+    const activation = activateLanguage(chosen);
     recordLanguageChoice();
-    write(CHOICE, { language: chosen, owner: account.current || "guest", explicit: true, at: Date.now() });
-    return persist(chosen, account.current);
+    write(CHOICE, { language: chosen, owner: owner || "guest", explicit: true, at: Date.now() });
+    try { await activation; }
+    catch {
+      setSyncError("system.languageLoadError");
+      return { saved: false, loadError: true };
+    }
+    if (getLanguage() !== chosen || account.current !== owner) return { saved: false };
+    setSyncError(null);
+    return persist(chosen, owner);
   }, [persist]);
+
+  useEffect(() => {
+    // Warm supported catalogs so settings changes normally need no download.
+    void Promise.allSettled(UI_LANGUAGES.map(item => loadLanguage(item.code)));
+  }, []);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE, language); } catch { /* Storage can be disabled. */ }
@@ -70,27 +88,27 @@ export function LanguageProvider({ children }) {
     const explicitChoice = choice?.explicit && choice.owner === accountId && supportedUiLanguage(choice.language);
     if (explicitChoice) {
       // A choice made on this device must survive refresh and stale server data.
-      activateLanguage(explicitChoice);
+      restoreLanguage(explicitChoice);
       if (cached?.pending || cached?.language !== explicitChoice) void persist(explicitChoice, accountId);
     } else if (cached?.pending || choice?.explicit && choice.owner === "guest") {
       const chosen = choice?.explicit && choice.owner === "guest" && (!cached?.pending || choice.at >= (cached.at || 0)) ? choice.language : cached.language;
-      activateLanguage(chosen);
+      restoreLanguage(chosen);
       write(CHOICE, { ...choice, language: chosen, owner: accountId });
       void persist(chosen, accountId);
     } else {
-      if (cached) activateLanguage(cached.language);
+      if (cached) restoreLanguage(cached.language);
       const revision = getRevision();
       profileService.getAccountSettings().then(response => {
         if (cancelled || account.current !== accountId || getRevision() !== revision) return;
         const preferences = response.data.data.preferences;
         const stored = preferences?.preferredLanguageExplicit === false ? null : supportedUiLanguage(preferences?.preferredLanguage);
         if (stored) {
-          activateLanguage(stored);
+          restoreLanguage(stored);
           const accounts = read(ACCOUNTS) || {};
           accounts[accountId] = { language: stored, pending: false }; write(ACCOUNTS, accounts);
         } else if (preferences?.preferredLanguageExplicit === false) {
           // Legacy profile-language data is not an app-language selection.
-          activateLanguage(deviceUiLanguage());
+          restoreLanguage(deviceUiLanguage());
           const accounts = read(ACCOUNTS) || {};
           delete accounts[accountId];
           write(ACCOUNTS, accounts);

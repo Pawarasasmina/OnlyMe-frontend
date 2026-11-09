@@ -10,7 +10,7 @@ const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const MAX_SIZE = 10 * 1024 * 1024;
 
 function formatSize(size = 0) {
-  return size < 1024 * 1024 ? `${Math.max(1, Math.round(size / 1024))} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`;
+  return size < 1024 * 1024 ? __msg("verification.value0Kb", { value0: Math.max(1, Math.round(size / 1024)) }) : __msg("posts.value0Mb", { value0: (size / 1024 / 1024).toFixed(1) });
 }
 
 function VerificationDocumentUploader({ documentType, label, metadata, imageOnly = false, disabled, busy, onDelete, onUpload }) {

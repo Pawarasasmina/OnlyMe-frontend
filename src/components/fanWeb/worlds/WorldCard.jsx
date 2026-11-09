@@ -99,7 +99,7 @@ function WorldCard({ onOpenChapter, world }) {
             className={`ms-auto transition hover:text-white ${saved ? "text-atseen-blue" : ""}`}
             onClick={() => {
               setSaved((current) => !current);
-              showToast(saved ? "Removed from your library." : "World saved.");
+              showToast(saved ? __msg("system.copy.d3784c484014") : __msg("system.copy.da387c6da1a4"));
             }}
             type="button"
           >

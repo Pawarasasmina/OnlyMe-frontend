@@ -1,3 +1,5 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FiChevronRight, FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
@@ -28,8 +30,9 @@ function dedupeByProfile(items = []) {
 }
 
 function DiscoverSkeleton() {
+  __useUiLanguage();
   return (
-    <div className="discover-orb-loading" aria-label="Loading Discover">
+    <div className="discover-orb-loading" aria-label={__msg("discover.loadingDiscover")}>
       <div className="discover-skeleton-top">
         <span />
         <span />
@@ -46,23 +49,24 @@ function DiscoverSkeleton() {
 }
 
 function DiscoverEmpty({ onRefresh }) {
-  return <ContentEmptyState message="You’re caught up for now. Refresh suggestions or search for someone you already know." primaryAction={{ label: "Refresh suggestions", onClick: onRefresh }} secondaryAction={{ label: "Search people", to: "/search?from=discover" }} title="No recommendations yet" variant="discover" />;
+  __useUiLanguage();
+  return <ContentEmptyState message={__msg("social.youReCaughtUpForNowRefreshSuggestionsOr")} primaryAction={{ label: __msg("social.refreshSuggestions"), onClick: onRefresh }} secondaryAction={{ label: __msg("stories.searchPeople"), to: "/search?from=discover" }} title={__msg("discover.noRecommendationsYet")} variant="discover" />;
 }
 
 function DiscoverError({ error, onRetry }) {
+  __useUiLanguage();
   return (
     <section className="discover-empty-panel is-error" role="alert">
-      <h1>We could not load Discover.</h1>
-      <p>{error?.response?.data?.message || error?.message || "Something went wrong while loading recommendations."}</p>
+      <h1>{__msg("discover.weCouldNotLoadDiscover")}</h1>
+      <p>{error?.response?.data?.message || error?.message || __msg("social.somethingWentWrongWhileLoadingRecommendations")}</p>
       <button onClick={onRetry} type="button">
-        <FiRefreshCw aria-hidden="true" />
-        Retry
-      </button>
+        <FiRefreshCw aria-hidden="true" />{__msg("activity.retry")}</button>
     </section>
   );
 }
 
 function DiscoverPage() {
+  __useUiLanguage();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useFanToast();
@@ -134,7 +138,7 @@ function DiscoverPage() {
       event.preventDefault();
       refresh();
       sentinelRef.current?.closest(".social-center-scroll")?.scrollTo({ top: 0, behavior: "auto" });
-      showToast("Fresh picks");
+      showToast(__msg("social.freshPicks"));
     };
     document.addEventListener("click", onNavigationClick, true);
     return () => document.removeEventListener("click", onNavigationClick, true);
@@ -157,7 +161,7 @@ function DiscoverPage() {
   const toggleFollow = useCallback((person) => {
     if (!person?.username) return;
     followMutation.mutate(person, {
-      onError: (error) => showToast(error?.response?.data?.message || "Unable to update follow."),
+      onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.50653f3132bf")),
     });
   }, [followMutation, showToast]);
 
@@ -259,8 +263,8 @@ function DiscoverPage() {
 
   return (
     <div className="discover-orb-page" onTouchCancel={endPull} onTouchEnd={endPull} onTouchMove={movePull} onTouchStart={startPull}>
-      {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? "Release for fresh recommendations" : "Pull for fresh recommendations"}</div> : null}
-      <section className="discover-orb-main" aria-label="Discover">
+      {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? __msg("social.releaseForFreshRecommendations") : __msg("social.pullForFreshRecommendations")}</div> : null}
+      <section className="discover-orb-main" aria-label={__msg("discover.discover")}>
         {activeStoryPerson ? (
           <DiscoverRecommendationStory
             key={activeStoryPerson.id}
@@ -292,12 +296,12 @@ function DiscoverPage() {
         ) : (
           <>
             <div className="discover-orb-toolbar">
-              <h1>Discover</h1>
+              <h1>{__msg("discover.discover")}</h1>
               <div>
-                <Link aria-label="Search" className="discover-orb-icon" to="/search?from=discover">
+                <Link aria-label={__msg("discover.search")} className="discover-orb-icon" to="/search?from=discover">
                   <FiSearch aria-hidden="true" />
                 </Link>
-                <Link aria-label="Find people" className="discover-orb-icon" to="/search?from=discover">
+                <Link aria-label={__msg("fan.findPeople")} className="discover-orb-icon" to="/search?from=discover">
                   <FiUserPlus aria-hidden="true" />
                 </Link>
               </div>
@@ -322,9 +326,9 @@ function DiscoverPage() {
             ) : null}
 
             <div className="discover-recommendation-heading">
-              <h2>People worth seeing next</h2>
-              <div className="discover-orb-filters" role="group" aria-label="Discover filters">
-                {[{ id: "for_you", label: "For you" }, { id: "nearby", label: "Nearby" }].map((filter) => (
+              <h2>{__msg("social.peopleWorthSeeingNext")}</h2>
+              <div className="discover-orb-filters" role="group" aria-label={__msg("discover.discoverFilters")}>
+                {[{ id: "for_you", label: __msg("fan.forYou") }, { id: "nearby", label: __msg("discover.nearby") }].map((filter) => (
                   <button
                     aria-pressed={!activeTopic && activeFilter === filter.id}
                     className={`discover-orb-chip ${!activeTopic && activeFilter === filter.id ? "is-selected" : ""}`}

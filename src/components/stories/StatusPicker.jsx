@@ -41,10 +41,10 @@ function StatusPicker({ activeStatus, isOpen, onClose, onStatusChange, profile }
 
   const saveStatus = (payload) => {
     updateStatus.mutate(payload, {
-      onError: (error) => showToast(error?.response?.data?.message || "Status could not be updated."),
+      onError: (error) => showToast(error?.response?.data?.message || __msg("social.statusCouldNotBeUpdated")),
       onSuccess: (nextStatus) => {
         onStatusChange?.(nextStatus?.label || "");
-        showToast(nextStatus ? `Status: ${nextStatus.label}` : "Status cleared.");
+        showToast(nextStatus ? __msg("system.StatusPicker.501428ebba", { value0: nextStatus.label }) : __msg("system.copy.b9549ba51854"));
         onClose();
       },
     });
