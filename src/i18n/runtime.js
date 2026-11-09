@@ -1,20 +1,23 @@
 import { IntlMessageFormat } from "intl-messageformat";
 import en from "./locales/en.json" with { type: "json" };
-import ar from "./locales/ar.json" with { type: "json" };
-import ru from "./locales/ru.json" with { type: "json" };
-import uk from "./locales/uk.json" with { type: "json" };
-import es from "./locales/es.json" with { type: "json" };
-import pt from "./locales/pt.json" with { type: "json" };
-import fr from "./locales/fr.json" with { type: "json" };
-import de from "./locales/de.json" with { type: "json" };
 import aliases from "./aliases.json" with { type: "json" };
 import optionMessages from "./option-messages.json" with { type: "json" };
 import enumMessages from "./enum-messages.json" with { type: "json" };
 import { UI_LANGUAGES, supportedUiLanguage } from "../utils/uiLanguages.js";
 
-export const catalogs = { en, ar, ru, uk, es, pt, fr, de };
+export const catalogs = { en };
+const catalogLoaders = {
+  ar: () => import("./locales/ar.json", { with: { type: "json" } }),
+  ru: () => import("./locales/ru.json", { with: { type: "json" } }),
+  uk: () => import("./locales/uk.json", { with: { type: "json" } }),
+  es: () => import("./locales/es.json", { with: { type: "json" } }),
+  pt: () => import("./locales/pt.json", { with: { type: "json" } }),
+  fr: () => import("./locales/fr.json", { with: { type: "json" } }),
+  de: () => import("./locales/de.json", { with: { type: "json" } }),
+};
+const catalogRequests = new Map();
 const listeners = new Set(), cache = new Map(), missing = new Map(), rendered = new Map();
-let language = "en", revision = 0;
+let language = "en", requestedLanguage = "en", revision = 0;
 export const getLanguage = () => language;
 export const getRevision = () => revision;
 export const recordLanguageChoice = () => { revision += 1; };
@@ -26,8 +29,29 @@ export function enumLabel(value) {
 }
 export const getLocale = () => UI_LANGUAGES.find(item => item.code === language)?.locale || "en-US";
 export function subscribeLanguage(listener) { listeners.add(listener); return () => listeners.delete(listener); }
+export async function loadLanguage(code) {
+  const next = supportedUiLanguage(code) || "en";
+  if (!catalogs[next]) {
+    let request = catalogRequests.get(next);
+    if (!request) {
+      request = catalogLoaders[next]().then(module => {
+        catalogs[next] = module.default;
+        return catalogs[next];
+      });
+      catalogRequests.set(next, request);
+    }
+    await request;
+  }
+  return next;
+}
 export function activateLanguage(code) {
   const next = supportedUiLanguage(code) || "en";
+  requestedLanguage = next;
+  if (!catalogs[next]) {
+    // Keep the current catalog readable while the requested language chunk loads.
+    // The resolved call below publishes exactly one language-change notification.
+    return loadLanguage(next).then(() => requestedLanguage === next ? activateLanguage(next) : undefined);
+  }
   if (next === language) return;
   language = next; revision += 1;
   listeners.forEach(listener => listener());

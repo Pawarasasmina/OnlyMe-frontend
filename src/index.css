@@ -39171,6 +39171,145 @@ video.seen-reader-media {
   }
 }
 
+/* World comment actions and voice notes */
+.social-app-shell :is(.world-prototype-comments,.world-inside-detail__comments,.experience-public-comments) .world-inside-detail__comment {
+  position: relative;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.social-app-shell :is(.world-prototype-comments,.world-inside-detail__comments,.experience-public-comments) .world-inside-detail__comment.can-moderate {
+  padding-inline-end: 32px !important;
+}
+
+.social-app-shell :is(.world-prototype-comments,.world-inside-detail__comments,.experience-public-comments) .world-inside-detail__comment-body {
+  width: 100%;
+  min-width: 0;
+}
+
+.world-comment-menu-trigger {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: 0;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255,255,255,.54);
+  font-size: 17px;
+  transition: background .16s ease, color .16s ease;
+}
+
+.world-comment-menu-trigger:hover,
+.world-comment-menu-trigger:focus-visible {
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  outline: none;
+}
+
+.world-comment-menu-trigger:disabled { opacity: .42; }
+
+.voice-comment-bubble-row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0,1fr);
+  align-items: start;
+  gap: 4px;
+}
+
+.voice-comment-bubble-row .world-voice-comment-player {
+  width: min(100%,300px) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.world-voice-comment-player > div { min-width: 0; }
+
+.world-voice-comment-player button[aria-label*="position"] {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.voice-comment-bubble-row > button {
+  width: max-content;
+  justify-self: start;
+  padding: 2px 0 !important;
+  line-height: 1.2;
+}
+
+.world-bottom-sheet.world-comment-options-sheet {
+  padding: 8px 18px max(20px,env(safe-area-inset-bottom));
+}
+
+.world-comment-options-sheet > .world-sheet-grab { margin-bottom: 12px; }
+
+.world-comment-options-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 2px 14px;
+}
+
+.world-comment-options-head h2 {
+  margin: 0;
+  color: #f7f9fc;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.world-comment-options-head p {
+  margin: 3px 0 0;
+  color: rgba(255,255,255,.48);
+  font-size: 11px;
+}
+
+.world-comment-options-head > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7);
+}
+
+.world-comment-delete-option {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid rgba(255,105,118,.16);
+  border-radius: 15px;
+  background: rgba(255,83,99,.07);
+  padding: 12px 14px;
+  color: #ff8994;
+  text-align: left;
+}
+
+.world-comment-delete-option > svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+}
+
+.world-comment-delete-option > span { display: grid; gap: 3px; }
+.world-comment-delete-option b { font-size: 13px; }
+.world-comment-delete-option small { color: rgba(255,255,255,.48); font-size: 10px; }
+.world-comment-delete-option:disabled { opacity: .48; }
+
+@media (max-width: 480px) {
+  .voice-comment-bubble-row .world-voice-comment-player { width: 100% !important; }
+  .world-bottom-sheet.world-comment-options-sheet { padding-inline: 14px; }
+}
+
 /* Mobile Safari zooms the viewport when a focused form control renders below
    16px. Keep the visual viewport stable across every mobile form. */
 @media (max-width: 880px), (pointer: coarse) {
@@ -39954,7 +40093,7 @@ video.seen-reader-media {
 }
 
 /* Seen is read in place: overview and every chapter share one uninterrupted feed card. */
-.social-app-shell:has(.seen-shell-main) .seen-feed-item { padding-top: 21px; border-bottom: 1px solid rgba(255,255,255,.09); }
+.social-app-shell:has(.seen-shell-main) .seen-feed-item { padding-top: 21px; border-bottom: 0; }
 .seen-action-pill {
   position: absolute;
   top: 4px;
@@ -40015,6 +40154,7 @@ video.seen-reader-media {
 /* Match the roomier prototype treatment for the feed action row. */
 .social-app-shell:has(.seen-shell-main) .seen-engagement-bar {
   margin-top: 8px;
+  border-top: 0;
   padding: 13px 2px 7px;
 }
 .social-app-shell:has(.seen-shell-main) .seen-engagement-left,
@@ -41536,6 +41676,61 @@ html[dir="rtl"] textarea {
     font-weight: 500;
   }
 }
+
+/* Desktop shell invariant. Legacy route-specific :has() rules may style the
+   center page, but must never resize, hide, or reposition either side panel. */
+@media (min-width: 1020px) {
+  html:root body .user-app-shell.social-app-shell {
+    background: var(--feed-outer-bg) !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-app-frame {
+    display: grid !important;
+    grid-template-columns: var(--social-left-width) var(--social-center-width) var(--social-right-width) !important;
+    align-items: stretch !important;
+    width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    max-width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    justify-content: flex-start !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-app-frame > .fan-web-sidebar {
+    display: flex !important;
+    position: sticky !important;
+    top: 0 !important;
+    width: var(--social-left-width) !important;
+    min-width: var(--social-left-width) !important;
+    max-width: var(--social-left-width) !important;
+    height: 100dvh !important;
+    flex: 0 0 var(--social-left-width) !important;
+    align-self: start !important;
+    margin: 0 !important;
+    padding: 28px 26px 4px !important;
+    transform: none !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-center-scroll {
+    width: var(--social-center-width) !important;
+    min-width: var(--social-center-width) !important;
+    max-width: var(--social-center-width) !important;
+    flex: 0 0 var(--social-center-width) !important;
+    margin: 0 !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-app-frame > .social-shared-right-rail {
+    display: grid !important;
+    position: sticky !important;
+    top: 0 !important;
+    width: var(--social-right-width) !important;
+    min-width: var(--social-right-width) !important;
+    max-width: var(--social-right-width) !important;
+    height: 100dvh !important;
+    flex: 0 0 var(--social-right-width) !important;
+    align-self: start !important;
+    margin: 0 !important;
+    padding: 30px 20px 22px !important;
+    transform: none !important;
+  }
+}
 /* Shared confirmation and text-request sheet. Replaces native browser dialogs. */
 .app-dialog-layer { position: fixed; inset: 0; z-index: 1000; }
 .app-dialog-scrim { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(7px); }
@@ -41555,3 +41750,90 @@ html[dir="rtl"] textarea {
 .app-dialog-sheet footer button.is-danger { border-color: transparent; background: #ef777b; color: #090b0e; }
 .app-dialog-sheet footer button.is-primary { border-color: transparent; background: #91c5fa; color: #090b0e; }
 .app-dialog-sheet footer button:disabled { opacity: .45; }
+
+/* World comments use one clear, direct heart reaction. */
+.social-app-shell .world-inside-detail__comment-meta .world-comment-heart {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255,255,255,.45);
+}
+
+.social-app-shell .world-inside-detail__comment-meta .world-comment-heart svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2;
+}
+
+.social-app-shell .world-inside-detail__comment-meta .world-comment-heart.is-active {
+  color: #ff7184 !important;
+}
+
+.social-app-shell .world-inside-detail__comment-meta .world-comment-heart.is-active svg {
+  fill: currentColor;
+}
+
+/* Keep the complete voice control and duration together inside the comment. */
+.social-app-shell .voice-comment-bubble-row .world-voice-comment-player.wall-audio-player {
+  box-sizing: border-box;
+  width: min(100%,210px) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  gap: 7px;
+  padding: 6px 9px;
+  border-color: #33465a;
+  border-radius: 999px;
+  background: #141c25;
+}
+
+.social-app-shell .world-voice-comment-player.wall-audio-player > button {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}
+
+.social-app-shell .world-voice-comment-player .wall-audio-waveform {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.social-app-shell .world-voice-comment-player .wall-audio-duration {
+  min-width: 28px;
+  color: #9ccbff;
+  font-size: 10px;
+  text-align: end;
+  white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+  .social-app-shell .voice-comment-bubble-row .world-voice-comment-player.wall-audio-player {
+    width: 100% !important;
+  }
+}
+.comment-member-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: min(220px, 65vw);
+  margin-inline: 4px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid rgba(156, 203, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(156, 203, 255, 0.1);
+  color: #b9ddff;
+  font-size: 10.5px;
+  font-weight: 750;
+  line-height: 15px;
+  vertical-align: middle;
+}
+.comment-member-badge__icon {
+  flex: none;
+  line-height: 1;
+}
+.comment-member-badge__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

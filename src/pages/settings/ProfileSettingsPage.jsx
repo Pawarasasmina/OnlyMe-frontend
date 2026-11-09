@@ -512,6 +512,7 @@ function ProfileSettingsPage() {
       setForm(profileToForm(data, privacy));
       setDirty(false);
       setError("");
+      queryClient.invalidateQueries({ predicate: query => /seen|wall|post|publication|engagement|comment|world/i.test(String(query.queryKey[0])) });
       setMessage("Profile saved.");
       showToast("Profile updated ✓", { placement: "profile" });
       navigate(backTarget, { replace: true, state: { restoreScroll: true } });
