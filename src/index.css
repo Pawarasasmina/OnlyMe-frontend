@@ -40093,7 +40093,7 @@ video.seen-reader-media {
 }
 
 /* Seen is read in place: overview and every chapter share one uninterrupted feed card. */
-.social-app-shell:has(.seen-shell-main) .seen-feed-item { padding-top: 21px; border-bottom: 1px solid rgba(255,255,255,.09); }
+.social-app-shell:has(.seen-shell-main) .seen-feed-item { padding-top: 21px; border-bottom: 0; }
 .seen-action-pill {
   position: absolute;
   top: 4px;
@@ -40154,6 +40154,7 @@ video.seen-reader-media {
 /* Match the roomier prototype treatment for the feed action row. */
 .social-app-shell:has(.seen-shell-main) .seen-engagement-bar {
   margin-top: 8px;
+  border-top: 0;
   padding: 13px 2px 7px;
 }
 .social-app-shell:has(.seen-shell-main) .seen-engagement-left,
