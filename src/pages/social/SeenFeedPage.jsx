@@ -626,6 +626,7 @@ function PreviewComment({ comment, noteOwner }) {
 
 function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagementChange, value, onChange, onSubmit }) {
   const comments = engagementQuery.data?.comments || [];
+  const [allComments, setAllComments] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [reactionTarget, setReactionTarget] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
@@ -669,9 +670,19 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
       </div>
     </article>;
   };
+  const renderThread = (comment, ancestors = new Set(), nested = false) => {
+    const id = String(comment.id);
+    if (ancestors.has(id)) return null;
+    const next = new Set([...ancestors, id]);
+    return <div className="seen-comment-thread" key={id}>
+      {renderComment(comment, nested)}
+      {(comment.replies || []).map(reply => renderThread(reply, next, true))}
+    </div>;
+  };
   return <section className="seen-comments-panel">
+    {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {engagementQuery.data?.commentCount || item.engagement.comments} comments</button> : null}
     <div className="seen-comments-list">
-      {comments.slice(0, 2).map((comment) => <div className="seen-comment-thread" key={comment.id}>{renderComment(comment)}{(comment.replies || []).slice(0, 2).map((reply) => renderComment(reply, true))}</div>)}
+      {(allComments ? comments : comments.slice(0, 2)).map(comment => renderThread(comment))}
       {!comments.length && !engagementQuery.isLoading ? <p className="seen-comments-empty">Be the first to comment.</p> : null}
     </div>
     {replyTo ? <div className="seen-replying-to"><span>Replying to <b>{replyTo.author?.name || "Fan"}</b></span><button aria-label="Cancel reply" onClick={() => setReplyTo(null)} type="button">×</button></div> : null}
