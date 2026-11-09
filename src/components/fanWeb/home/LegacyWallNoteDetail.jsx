@@ -1,3 +1,4 @@
+import MemberCommentBadge from "../../comments/MemberCommentBadge";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
@@ -16,6 +17,6 @@ export default function LegacyWallNoteDetail({ post }) {
     <p dir="auto" className="my-4 whitespace-pre-wrap text-sm leading-7">{post.text}</p>
     <ContentEntityList entities={post.attachedEntities || []} />
     {post.media?.map((item) => <img alt={__msg("fanWeb.wallNoteAttachment")} className="my-3 max-w-full rounded-xl" key={item.assetId || item.url} src={item.url} />)}
-    <section className="mt-5 border-t border-atseen-line pt-4"><h2 className="text-sm font-bold">{__msg("fanWeb.replies")}</h2>{comments.isLoading ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.loadingReplies")}</p> : comments.isError ? <button className="mt-3 text-sm text-atseen-blue" onClick={() => comments.refetch()} type="button">{__msg("fanWeb.retryLoadingReplies")}</button> : !comments.data?.length ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.noRepliesYet")}</p> : comments.data.map((comment) => <div className="mt-3" key={comment.id}><strong className="text-xs">{comment.author?.name || __msg("fanWeb.member")}</strong><p dir="auto" className="whitespace-pre-wrap text-sm text-atseen-muted">{comment.text}</p></div>)}</section>
+    <section className="mt-5 border-t border-atseen-line pt-4"><h2 className="text-sm font-bold">{__msg("fanWeb.replies")}</h2>{comments.isLoading ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.loadingReplies")}</p> : comments.isError ? <button className="mt-3 text-sm text-atseen-blue" onClick={() => comments.refetch()} type="button">{__msg("fanWeb.retryLoadingReplies")}</button> : !comments.data?.length ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.noRepliesYet")}</p> : comments.data.map((comment) => <div className="mt-3" key={comment.id}><strong className="text-xs">{comment.author?.name || __msg("fanWeb.member")}</strong><MemberCommentBadge author={comment.author} noteOwner={post.creator} /><p dir="auto" className="whitespace-pre-wrap text-sm text-atseen-muted">{comment.text}</p></div>)}</section>
   </FanCard>;
 }

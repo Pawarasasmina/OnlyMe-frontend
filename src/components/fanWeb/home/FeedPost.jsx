@@ -1008,7 +1008,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         {commentsOpen ? (
           <section aria-label="Wall note comments" className="seen-comments-panel wall-comments-panel">
             {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {commentCount} comments</button> : null}
-            <WallCommentList comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
+            <WallCommentList noteOwner={creator} comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
               onOpenOptions={(comment) => { setCommentReport(comment); setCommentReportStage("options"); }}
               onReply={(comment) => { setReplyTarget(comment); commentInputRef.current?.focus(); }}
               onReact={async (comment, value) => {

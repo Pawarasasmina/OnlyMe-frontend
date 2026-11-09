@@ -1,3 +1,4 @@
+import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1400,7 +1401,7 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
   </BottomSheet>;
 }
 
-function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
+function WorldInsideComments({ noteOwner, engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
   const [visibleTexts, setVisibleTexts] = useState({});
   const [menuTarget, setMenuTarget] = useState(null);
   const comments = engagement?.comments || [];
@@ -1414,7 +1415,7 @@ function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemov
     return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${canManage ? "can-moderate" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
       <div className="world-inside-detail__comment-body">
-        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || "User"}</Link> {showText ? item.text : null}</p>
+        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || "User"}</Link><MemberCommentBadge author={item.author} noteOwner={noteOwner} /> {showText ? item.text : null}</p>
         {item.audio ? (
           <div className="voice-comment-bubble-row">
             <VoiceMessageBubble audio={item.audio} className="world-voice-comment-player" compact label="Voice comment" variant="chip" />
@@ -1666,7 +1667,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
 
     <section className="world-inside-detail__comments">
       <h2>Comments · {Number(engagement.commentCount || 0).toLocaleString()}</h2>
-      <WorldInsideComments engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onRemove={removeComment} onReply={setReplyTarget} replyTarget={replyTarget} />
+      <WorldInsideComments noteOwner={creator} engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onRemove={removeComment} onReply={setReplyTarget} replyTarget={replyTarget} />
       {publication.commentsEnabled === false ? <p className="world-inside-detail__comments-empty">Comments are turned off for this World.</p> : <form className="media-comments-composer" onSubmit={submitComment}>
         <FanAvatar name={user?.name || user?.username || "You"} size="h-7 w-7" src={user?.avatar} />
         <div>
@@ -1850,6 +1851,7 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
         </header>
         {engagementQuery?.isLoading ? <p className="world-inside-detail__comments-empty">Loading comments...</p> : (
           <WorldInsideComments
+            noteOwner={publication?.creator}
             engagement={engagement}
             mutationBusy={commentBusy}
             onCommentReact={toggleCommentReaction}
@@ -2954,6 +2956,7 @@ export default function WorldReaderPage() {
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> Comments are turned off.</p>}
           {engagement.isLoading ? <p className="world-prototype-empty-comments">Loading comments...</p> : (
             <WorldInsideComments
+              noteOwner={publication?.creator}
               engagement={engagement.data || {}}
               mutationBusy={commentReactionPending || commentRemovePending}
               onCommentReact={toggleOwnerCommentReaction}

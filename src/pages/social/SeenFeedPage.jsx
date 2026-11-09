@@ -1,3 +1,4 @@
+import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
 import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -189,6 +190,7 @@ function normalizeSeen(raw = {}) {
       saved: Boolean(raw.engagement?.viewerSaved || raw.viewerSaved),
     },
     previewComment: raw.previewComment ? {
+      author: raw.previewComment.author,
       authorName: raw.previewComment.author?.name || "Fan",
       avatarUrl: raw.previewComment.author?.avatar || "",
       text: raw.previewComment.text || "",
@@ -613,10 +615,11 @@ function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onJoinWorld,
   </section>;
 }
 
-function PreviewComment({ comment }) {
+function PreviewComment({ comment, noteOwner }) {
   if (!comment?.text) return null;
   return <div className="seen-preview-comment">
     <FanAvatar alt="" name={comment.authorName} size="h-[17px] w-[17px]" src={comment.avatarUrl} />
+    <MemberCommentBadge author={comment.author} noteOwner={noteOwner} />
     <p>“{comment.text}”</p>
   </div>;
 }
@@ -660,7 +663,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
     return <article className={nested ? "is-reply" : ""} key={comment.id}>
       <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
       <div className="seen-comment-copy">
-        <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link>{comment.text}</p>
+        <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link><MemberCommentBadge author={comment.author} noteOwner={item.creator} />{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
         <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
       </div>
@@ -1275,7 +1278,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
         <button onClick={() => selectChapter(activeChapter < 0 ? 0 : -1)} type="button">{activeChapter < 0 ? "Swipe for chapters" : "Overview"} <FiChevronRight /></button>
       </div> : null}
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
-      {activeChapter < 0 ? <PreviewComment comment={item.previewComment} /> : null}
+      {activeChapter < 0 ? <PreviewComment noteOwner={item.creator} comment={item.previewComment} /> : null}
       {activeChapter < 0 && item.moreFrom ? <Link className="seen-more-from-paid" to={`/seen/${encodeURIComponent(item.moreFrom.id)}`}><span>More from {item.creator?.name?.split(" ")?.[0] || item.creator?.username || "creator"}</span><b>{item.moreFrom.title}</b><strong>✦{Number(item.moreFrom.priceStars || 0).toLocaleString()} ›</strong></Link> : null}
       <EngagementBar commentsOpen={commentsOpen} isOwn={isOwn} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactHold={() => setReactionPickerOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}

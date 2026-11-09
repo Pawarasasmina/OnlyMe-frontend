@@ -1,3 +1,4 @@
+import MemberCommentBadge from "../../comments/MemberCommentBadge";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiHeart, FiMoreHorizontal, FiRepeat } from "react-icons/fi";
@@ -5,7 +6,7 @@ import FanAvatar from "../shared/FanAvatar";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import WallReactionTray from "./WallReactionTray";
 
-function CommentRow({ comment, children, onReply, onReact, onRepost, onOpenOptions, options, userId, repostingId, reactingId }) {
+function CommentRow({ noteOwner, comment, children, onReply, onReact, onRepost, onOpenOptions, options, userId, repostingId, reactingId }) {
   const anchor = useRef(null);
   const [picker, setPicker] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -17,7 +18,7 @@ function CommentRow({ comment, children, onReply, onReact, onRepost, onOpenOptio
   return <article className="wall-comment-row" data-comment-id={comment.id}>
     <FanAvatar alt="" name={name} size="h-6 w-6" src={author.avatar || author.avatarUrl} />
     <div className="seen-comment-copy">
-      <p><Link title={name} to={author.username ? `/profile/${encodeURIComponent(author.username)}` : "/wall"}>{name}</Link>{comment.text}</p>
+      <p><Link title={name} to={author.username ? `/profile/${encodeURIComponent(author.username)}` : "/wall"}>{name}</Link><MemberCommentBadge author={author} noteOwner={noteOwner} />{comment.text}</p>
       {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
       <div className="wall-comment-actions">
         <button aria-label={`React to ${name}'s reply`} aria-pressed={Boolean(selected)} className={selected ? "is-selected" : ""} disabled={reactingId === comment.id} onClick={() => setPicker(true)} ref={anchor} type="button">{selected ? <span aria-hidden="true">{selected.icon}</span> : <FiHeart aria-hidden="true" />}<span>{count}</span></button>
