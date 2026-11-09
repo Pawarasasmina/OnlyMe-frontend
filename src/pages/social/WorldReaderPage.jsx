@@ -93,6 +93,13 @@ function planetFaceEmoji(planet = {}) {
   return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
 }
 
+function withOptimisticWorldCommentHeart(engagement = {}, commentId, active) {
+  const update = (comment) => String(comment.id) === String(commentId)
+    ? { ...comment, viewerReaction: active ? "LOVE" : null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + (active ? 1 : -1)) }
+    : { ...comment, replies: (comment.replies || []).map(update) };
+  return { ...engagement, comments: (engagement.comments || []).map(update) };
+}
+
 function sameIdentity(left, right) {
   const a = String(left || "").trim().replace(/^@/, "").toLowerCase();
   const b = String(right || "").trim().replace(/^@/, "").toLowerCase();
@@ -1530,6 +1537,8 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   };
 
   const toggleCommentReaction = async (comment, reaction = "LIKE") => {
+    const previousEngagement = queryClient.getQueryData(["world-engagement", publication.id]);
+    queryClient.setQueryData(["world-engagement", publication.id], withOptimisticWorldCommentHeart(previousEngagement, comment.id, Boolean(reaction)));
     setCommentBusy(comment.id);
     try {
       const request = !reaction
@@ -1538,6 +1547,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       const response = await request;
       queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
     } catch (error) {
+      if (previousEngagement) queryClient.setQueryData(["world-engagement", publication.id], previousEngagement);
       showToast(error?.response?.data?.message || "Reaction could not be saved.");
     } finally {
       setCommentBusy("");
@@ -1789,12 +1799,15 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
 
   const toggleCommentReaction = async (comment, reaction = "LIKE") => {
     if (!comment?.id || commentBusy || !requireAccount()) return;
+    const previousEngagement = engagementQuery.data;
+    queryClient.setQueryData(engagementQuery.queryKey || ["world-engagement", publicationId], withOptimisticWorldCommentHeart(previousEngagement, comment.id, Boolean(reaction)));
     setCommentBusy(comment.id);
     try {
       if (!reaction) await api.removeSeenCommentReaction(publicationId, comment.id);
       else await api.reactToSeenComment(publicationId, comment.id, reaction);
       await engagementQuery.refetch();
     } catch (error) {
+      if (previousEngagement) queryClient.setQueryData(engagementQuery.queryKey || ["world-engagement", publicationId], previousEngagement);
       showToast(error?.response?.data?.message || "Reaction could not be updated.");
     } finally {
       setCommentBusy("");
@@ -2529,6 +2542,8 @@ export default function WorldReaderPage() {
       return;
     }
     if (!targetComment?.id || commentReactionPending) return;
+    const previousEngagement = queryClient.getQueryData(["world-engagement", id]);
+    queryClient.setQueryData(["world-engagement", id], withOptimisticWorldCommentHeart(previousEngagement, targetComment.id, Boolean(reaction)));
     setCommentReactionPending(targetComment.id);
     try {
       const response = !reaction
@@ -2540,6 +2555,7 @@ export default function WorldReaderPage() {
         await engagement.refetch();
       }
     } catch (error) {
+      if (previousEngagement) queryClient.setQueryData(["world-engagement", id], previousEngagement);
       showToast(error?.response?.data?.message || "Reaction could not be updated.");
     } finally {
       setCommentReactionPending("");
@@ -2674,6 +2690,7 @@ export default function WorldReaderPage() {
       <nav aria-label="World actions">
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>Share</b></span></button>
         <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}?edit=1`); }} type="button"><FiEdit3 /><span><b>Edit</b><small>title, stories, access</small></span></button>
+        <button onClick={() => setSheet("face")} type="button"><FiEdit3 /><span><b>Change World icon</b><small>choose the topic emoji above your planet</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>Change cover</b></span></button>
         <button aria-label={commentsEnabled ? "Turn comments off" : "Turn comments on"} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? "Turn comments off" : "Turn comments on"}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>Moderators</b><small>this product&rsquo;s own cleanup team</small></span></button>
@@ -2697,6 +2714,7 @@ export default function WorldReaderPage() {
           <section className="world-prototype-planet">
             {commentStatusToast ? <div className="world-comment-status-pill" role="status">{commentStatusToast}</div> : null}
             <span className="world-prototype-minimal-icon"><MinimalWorldIcon size={64} /></span>
+            {owner ? <button aria-label={`Change profile World icon. Current icon ${faceEmoji}`} className="world-prototype-selected-icon" onClick={() => setSheet("face")} type="button">{faceEmoji}</button> : <span aria-label={`Selected profile World icon ${faceEmoji}`} className="world-prototype-selected-icon" role="img">{faceEmoji}</span>}
           </section>
         ) : null}
 

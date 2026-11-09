@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
+import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiHeart, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import CoinIcon from "../../components/branding/CoinIcon";
@@ -33,6 +33,13 @@ const reactionEmoji = {
 };
 
 const DEFAULT_ENGAGEMENT = { reactionCount: 0, commentCount: 0, shareCount: 0, viewCount: 0, viewerReaction: null, viewerShared: false, viewerSaved: false, comments: [] };
+
+function withOptimisticCommentHeart(engagement = {}, commentId, active) {
+  const update = (comment) => String(comment.id) === String(commentId)
+    ? { ...comment, viewerReaction: active ? "LOVE" : null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + (active ? 1 : -1)), reactionBreakdown: { ...(comment.reactionBreakdown || {}), LOVE: Math.max(0, Number(comment.reactionBreakdown?.LOVE || 0) + (active ? 1 : -1)) }, topReactions: active ? ["LOVE"] : comment.topReactions || [] }
+    : { ...comment, replies: (comment.replies || []).map(update) };
+  return { ...engagement, comments: (engagement.comments || []).map(update) };
+}
 const STAR = "\u2726";
 const SEEN_REPORT_REASONS = [
   { label: "Spam", value: "SPAM" },
@@ -145,7 +152,6 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
     return () => cancelAnimationFrame(frame);
   }, [isOpen, focusedComment, engagement.comments]);
   const [replyTo, setReplyTo] = useState(null);
-  const [reactionTarget, setReactionTarget] = useState(null);
   const [sheetPosition, setSheetPosition] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [reposted, setReposted] = useState({});
@@ -176,14 +182,13 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   if (!isOpen) return null;
   const comments = engagement.comments || [];
   const renderComment = (item, isReply = false) => {
-    const icons = (item.topReactions || []).map((key) => reactionEmoji[key] || reactionEmoji.LIKE).join("") || reactionEmoji.LIKE;
+    const reacted = Boolean(item.viewerReaction);
     return <article className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
       <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
       <div className="seen-comment-copy">
         <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || "Fan"}</Link> : <strong>{item.author?.name || "Fan"}</strong>}{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label="Voice comment" /> : null}
-        <span><button aria-label={`React to ${item.author?.name || "comment"}`} className={item.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(reactionTarget === item.id ? null : item.id)} type="button"><b aria-hidden="true">{icons}</b>{formatCount(item.reactionCount || 0)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
-        {reactionTarget === item.id ? <div className="seen-sheet-comment-reactions">{Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} disabled={reactionPending} key={key} onClick={() => { onReact(item, item.viewerReaction === key ? "" : key); setReactionTarget(null); }} type="button">{icon}</button>)}</div> : null}
+        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || "comment"}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(item.reactionCount || 0)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
       </div>
     </article>;
   };
@@ -1083,6 +1088,12 @@ export default function SeenReaderPage() {
     mutationFn: ({ commentId, reaction }) => updateEngagement(reaction
       ? publicationService.reactToSeenComment(id, commentId, reaction, accessToken)
       : publicationService.removeSeenCommentReaction(id, commentId, accessToken)),
+    onMutate: ({ commentId, reaction }) => {
+      const previous = engagement;
+      syncSeenEngagementCaches(withOptimisticCommentHeart(previous, commentId, Boolean(reaction)));
+      return { previous };
+    },
+    onError: (_error, _variables, context) => context?.previous && syncSeenEngagementCaches(context.previous),
   });
   const voiceCommentMutation = useMutation({
     mutationFn: ({ parentCommentId, recording }) => updateEngagement(publicationService.voiceCommentOnSeen(id, { ...recording, accessToken, parentCommentId })),
