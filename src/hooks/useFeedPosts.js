@@ -33,11 +33,18 @@ function removePostFromCaches(queryClient, postId) {
   });
 }
 
-export function useFeedPosts(params = {}) {
+export function useFeedPosts(params = {}, options = {}) {
   return useQuery({
     queryKey: postKeys.feed(params),
     queryFn: () => postService.getFeedPosts(params),
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
     retry: false,
+    // Wall pages are accumulated locally while scrolling. Keep each cached
+    // page stable until an explicit Wall action or refresh invalidates it.
+    staleTime: Infinity,
+    ...options,
   });
 }
 

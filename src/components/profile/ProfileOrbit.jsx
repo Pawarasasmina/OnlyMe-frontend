@@ -5,6 +5,7 @@ import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
 import { resolveMediaUrl } from "../../utils/media";
+import MinimalWorldIcon from "../world/MinimalWorldIcon";
 import "./ProfileWorldCard.css";
 
 function numberLabel(value, fallback = 0) {
@@ -41,7 +42,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
       : null;
     return <section className="profile-owner-world-section">
       <Link aria-label={primaryPlanet ? __msg("contentEntities.open", { value0: title }) : __msg("profile.openYourWorld")} className={`profile-owner-world-card ${primaryPlanet ? "" : "is-empty"}`} to={worldTarget}>
-        <span aria-hidden="true" className="profile-owner-world-planet"><span /><i /></span>
+        <MinimalWorldIcon />
         <span className="profile-owner-world-copy">
           <strong>{primaryPlanet ? __msg("profile.yourWorld") : __msg("profile.openYourWorld")}</strong>
           <small>{primaryPlanet ? title : __msg("profile.aMonthlySubscriptionToEverythingYouShare")}</small>
@@ -63,7 +64,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
           <p className="profile-orbit-overline">{creatorName}{__msg("profile.sWorld")}</p>
         </div>
         <Link aria-label={__msg("contentEntities.open", { value0: title })} className="profile-world-member-card" to={worldTarget}>
-          <span aria-hidden="true" className="profile-owner-world-planet"><span /><i /></span>
+          <MinimalWorldIcon />
           <span className="profile-world-member-copy">
             <strong>{title}</strong>
             <small>{__msg("profile.oneWorldWhereYouStepCloser")}</small>
@@ -77,7 +78,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   return (
     <section className="profile-world-compact-section">
       <Link aria-label={__msg("contentEntities.open", { value0: title })} className={`profile-world-compact-card ${owner ? "is-owner-world" : "is-visitor-world"}`} to={worldTarget}>
-        <span className="profile-owner-world-planet" aria-hidden="true"><span /><i /></span>
+        <MinimalWorldIcon />
         <span className="profile-world-compact-copy">
           <strong>{owner ? __msg("profile.yourWorld") : __msg("profile.sWorld_9663ba", { value0: creatorName })}</strong>
           <small>{title}</small>

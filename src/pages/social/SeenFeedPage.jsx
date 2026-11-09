@@ -1326,8 +1326,13 @@ export default function SeenFeedPage() {
     initialPageParam: 1,
     queryFn: ({ pageParam }) => publicationService.listPublishedSeens({ limit: 30, tab, page: pageParam }).then((response) => response.data.data),
     getNextPageParam: nextSeenFeedPage,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
     retry: 1,
-    staleTime: 1000 * 60,
+    // Keep the personalized batch stable for the lifetime of this cached feed.
+    // Pull-to-refresh below remains the explicit way to request a new batch.
+    staleTime: Infinity,
   });
   const worldQuery = useQuery({
     queryKey: ["create-menu-world-target", user?.id],
