@@ -35,6 +35,7 @@ import {
   useBlockFeedPostAuthor,
   useArchiveFeedPost,
   useCreateFeedPostComment,
+  useDeleteFeedPostComment,
   useReactToFeedPostComment,
   useDeleteFeedPost,
   useHideFeedPost,
@@ -342,6 +343,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const archiveMutation = useArchiveFeedPost();
   const reactionMutation = useReactToFeedPost();
   const commentMutation = useCreateFeedPostComment();
+  const commentDeleteMutation = useDeleteFeedPostComment();
   const commentReactionMutation = useReactToFeedPostComment();
   const saveMutation = useToggleFeedPostSave();
   const shareMutation = useToggleFeedPostShare();
@@ -761,6 +763,23 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     }
   };
 
+  const deleteComment = async () => {
+    if (!commentReport?.id || commentReportBusy || !requireDatabasePost()) return;
+    setCommentReportBusy(true);
+    try {
+      const savedPost = await commentDeleteMutation.mutateAsync({ postId: actionPostId, commentId: commentReport.id });
+      syncSavedPost(savedPost);
+      setCommentReport(null);
+      setCommentReportStage("options");
+      if (replyTarget?.id === commentReport.id) setReplyTarget(null);
+      showToast("Comment deleted.");
+    } catch (error) {
+      showToast(error?.response?.data?.message || "Comment could not be deleted.");
+    } finally {
+      setCommentReportBusy(false);
+    }
+  };
+
   const confirmDeleteNote = async () => {
     const accepted = await confirmDialog({
       title: "Delete note",
@@ -1020,7 +1039,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             <h2>{commentReportStage === "options" ? "Comment" : commentReportStage === "done" ? "Report received" : "Report comment"}</h2>
             {commentReportStage === "options" ? (
               <div className="seen-feed-options-list">
-                <button className="is-danger" onClick={() => setCommentReportStage("reasons")} type="button"><FiFlag aria-hidden="true" /><span><b>Report</b></span></button>
+                {String(commentReport.author?.id || commentReport.author?._id || "") === String(user?.id || user?._id || "")
+                  ? <button className="is-danger" disabled={commentReportBusy} onClick={deleteComment} type="button"><FiTrash2 aria-hidden="true" /><span><b>{commentReportBusy ? "Deleting…" : "Delete comment"}</b><small>This removes the comment and its replies.</small></span></button>
+                  : <button className="is-danger" onClick={() => setCommentReportStage("reasons")} type="button"><FiFlag aria-hidden="true" /><span><b>Report</b></span></button>}
               </div>
             ) : commentReportStage === "done" ? (
               <div className="wall-comment-report-done">

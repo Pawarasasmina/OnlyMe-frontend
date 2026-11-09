@@ -201,6 +201,19 @@ export function useReactToFeedPostComment() {
   });
 }
 
+export function useDeleteFeedPostComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, commentId }) => postService.deleteComment(postId, commentId),
+    retry: false,
+    onSuccess: (post) => {
+      replacePostInCaches(queryClient, post);
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
+      queryClient.invalidateQueries({ queryKey: ["saved"] });
+    },
+  });
+}
+
 export function useToggleFeedPostSave() {
   const queryClient = useQueryClient();
   return useMutation({
