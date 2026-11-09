@@ -7,13 +7,6 @@ import { FiChevronRight } from "react-icons/fi";
 import { resolveMediaUrl } from "../../utils/media";
 import "./ProfileWorldCard.css";
 
-const PLANET = String.fromCodePoint(0x1FA90);
-const FLEX = String.fromCodePoint(0x1F4AA);
-
-function planetFaceEmoji(planet = {}) {
-  return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
-}
-
 function numberLabel(value, fallback = 0) {
   const number = Number(value ?? fallback) || 0;
   return number.toLocaleString(__uiLocale());
@@ -37,7 +30,6 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     primaryPlanet?.subscribers ??
     0,
   );
-  const faceEmoji = planetFaceEmoji(primaryPlanet?.planet);
   const isInside = !owner && Boolean(primaryPlanet?.viewer?.isMember || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_WORLD"].includes(primaryPlanet?.access));
   const memberPreview = primaryPlanet?.memberPreview || [];
 
@@ -71,7 +63,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
           <p className="profile-orbit-overline">{creatorName}{__msg("profile.sWorld")}</p>
         </div>
         <Link aria-label={__msg("contentEntities.open", { value0: title })} className="profile-world-member-card" to={worldTarget}>
-          <span className="profile-world-member-planet" aria-hidden="true"><i>{faceEmoji}</i><b>{PLANET}</b></span>
+          <span aria-hidden="true" className="profile-owner-world-planet"><span /><i /></span>
           <span className="profile-world-member-copy">
             <strong>{title}</strong>
             <small>{__msg("profile.oneWorldWhereYouStepCloser")}</small>

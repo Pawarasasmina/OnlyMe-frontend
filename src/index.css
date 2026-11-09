@@ -41536,6 +41536,61 @@ html[dir="rtl"] textarea {
     font-weight: 500;
   }
 }
+
+/* Desktop shell invariant. Legacy route-specific :has() rules may style the
+   center page, but must never resize, hide, or reposition either side panel. */
+@media (min-width: 1020px) {
+  html:root body .user-app-shell.social-app-shell {
+    background: var(--feed-outer-bg) !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-app-frame {
+    display: grid !important;
+    grid-template-columns: var(--social-left-width) var(--social-center-width) var(--social-right-width) !important;
+    align-items: stretch !important;
+    width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    max-width: calc(var(--social-left-width) + var(--social-center-width) + var(--social-right-width)) !important;
+    justify-content: flex-start !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-app-frame > .fan-web-sidebar {
+    display: flex !important;
+    position: sticky !important;
+    top: 0 !important;
+    width: var(--social-left-width) !important;
+    min-width: var(--social-left-width) !important;
+    max-width: var(--social-left-width) !important;
+    height: 100dvh !important;
+    flex: 0 0 var(--social-left-width) !important;
+    align-self: start !important;
+    margin: 0 !important;
+    padding: 28px 26px 4px !important;
+    transform: none !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-center-scroll {
+    width: var(--social-center-width) !important;
+    min-width: var(--social-center-width) !important;
+    max-width: var(--social-center-width) !important;
+    flex: 0 0 var(--social-center-width) !important;
+    margin: 0 !important;
+  }
+
+  html:root body .user-app-shell.social-app-shell .social-app-frame > .social-shared-right-rail {
+    display: grid !important;
+    position: sticky !important;
+    top: 0 !important;
+    width: var(--social-right-width) !important;
+    min-width: var(--social-right-width) !important;
+    max-width: var(--social-right-width) !important;
+    height: 100dvh !important;
+    flex: 0 0 var(--social-right-width) !important;
+    align-self: start !important;
+    margin: 0 !important;
+    padding: 30px 20px 22px !important;
+    transform: none !important;
+  }
+}
 /* Shared confirmation and text-request sheet. Replaces native browser dialogs. */
 .app-dialog-layer { position: fixed; inset: 0; z-index: 1000; }
 .app-dialog-scrim { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(7px); }
