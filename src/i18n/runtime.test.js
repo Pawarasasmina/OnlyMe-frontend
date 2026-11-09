@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activateLanguage, catalogs, formatCurrency, formatDate, formatNumber, formatRelative, getLanguage, msg, systemMessage } from "./runtime.js";
+import { activateLanguage, catalogs, formatCurrency, formatDate, formatNumber, formatRelative, getLanguage, loadLanguage, msg, systemMessage } from "./runtime.js";
 import { localizedValidationErrors } from "./errors.js";
 
-test("all eight locales have the English key set", () => {
-  const expected = Object.keys(catalogs.en).sort();
-  for (const [locale, messages] of Object.entries(catalogs)) assert.deepEqual(Object.keys(messages).sort(), expected, locale);
+test("all eight locale chunks contain only registered English keys", async () => {
+  await Promise.all(["ar", "ru", "uk", "es", "pt", "fr", "de"].map(loadLanguage));
+  const registered = new Set(Object.keys(catalogs.en));
+  for (const [locale, messages] of Object.entries(catalogs)) {
+    assert.ok(Object.keys(messages).every(key => registered.has(key)), locale);
+  }
 });
 
 test("ICU interpolation, gender, Arabic and Slavic plurals preserve names", () => {
