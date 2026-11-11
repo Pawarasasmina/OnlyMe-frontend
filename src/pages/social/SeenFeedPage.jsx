@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
-import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiImage, FiLock, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiHeart, FiImage, FiLock, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -37,9 +37,10 @@ import { atseenReportReasons } from "../../data/atseenMockData";
 import { relativeTime } from "../../utils/relativeTime";
 import { isSeenOwner, normalizeId } from "../../utils/seenOwnership";
 import PurchaseWorldModal from "../../components/financial/PurchaseWorldModal";
+import WallReactionTray from "../../components/fanWeb/home/WallReactionTray";
 
 const seenReactionOptions = [
-  { key: "SEE_YOU", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
+  { key: "SEE_YOU", label: "I see you", icon: "\uD83D\uDC41" },
   { key: "LOVE", label: "Love", icon: "\u2764\uFE0F" },
   { key: "FIRE", label: "Fire", icon: "\uD83D\uDD25" },
   { key: "TEARY", label: "Moved", icon: "\uD83E\uDD79" },
@@ -63,11 +64,29 @@ const reactionMeta = Object.fromEntries(seenReactionOptions.map((item, index) =>
 reactionMeta.INSIGHTFUL = { key: "INSIGHTFUL", label: "Fire", icon: "\uD83D\uDD25", order: 2 };
 reactionMeta.PHONE = { key: "PHONE", label: "Call me", icon: "\uD83D\uDCF1", order: 99 };
 
+function currentSeenReactionKey(reaction) {
+  if (reaction === "INSIGHTFUL") return "FIRE";
+  if (reaction === "PHONE") return "SEE_YOU";
+  return reaction || "";
+}
+
+function SeenReactionIcon({ reaction, className = "" }) {
+  const key = typeof reaction === "string" ? currentSeenReactionKey(reaction) : currentSeenReactionKey(reaction?.key || reaction?.type);
+  return <span className={className}>{typeof reaction === "string" ? reactionLabel[key] || reactionLabel.INSIGHTFUL : reaction?.icon || reactionLabel[key] || reactionLabel.INSIGHTFUL}</span>;
+}
+
 function formatCount(value = 0) {
   const count = Number(value) || 0;
   if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
   if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
   return count.toLocaleString();
+}
+
+function withOptimisticCommentHeart(engagement = {}, commentId, active) {
+  const update = (comment) => String(comment.id) === String(commentId)
+    ? { ...comment, viewerReaction: active ? "LOVE" : null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + (active ? 1 : -1)), reactionBreakdown: { ...(comment.reactionBreakdown || {}), LOVE: Math.max(0, Number(comment.reactionBreakdown?.LOVE || 0) + (active ? 1 : -1)) }, topReactions: active ? ["LOVE"] : comment.topReactions || [] }
+    : { ...comment, replies: (comment.replies || []).map(update) };
+  return { ...engagement, comments: (engagement.comments || []).map(update) };
 }
 
 function formatDuration(seconds) {
@@ -86,8 +105,13 @@ function formatReadTime(chapters = []) {
 }
 
 function orderedReactionCounts(reactionBreakdown = {}) {
-  return Object.entries(reactionBreakdown)
-    .map(([type, count]) => ({ type, count: Number(count) || 0, icon: reactionLabel[type] || reactionLabel.INSIGHTFUL, order: reactionMeta[type]?.order ?? 100 }))
+  const combined = Object.entries(reactionBreakdown).reduce((counts, [type, count]) => {
+    const currentType = currentSeenReactionKey(type);
+    counts[currentType] = (counts[currentType] || 0) + (Number(count) || 0);
+    return counts;
+  }, {});
+  return Object.entries(combined)
+    .map(([type, count]) => ({ type, count, icon: reactionLabel[type] || reactionLabel.INSIGHTFUL, order: reactionMeta[type]?.order ?? 100 }))
     .filter((item) => item.count > 0)
     .sort((first, second) => second.count - first.count || first.order - second.order || first.type.localeCompare(second.type));
 }
@@ -389,7 +413,7 @@ function SeenContextMenu({ busyAction = "", isOpen, isOwn, item, onArchive, onCl
   return <div className="seen-context-layer seen-feed-options-layer" style={sheetPosition}>
     <button aria-label="Close Seen actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
     <section aria-label={`${isOwn ? "Manage" : "Options for"} ${item.title}`} aria-modal="true" className={`seen-context-menu ${isOwn ? "is-owner" : "is-visitor"}`} role="dialog">
-      {!isOwn ? <div aria-label="React to Seen" className="seen-context-reactions">{seenReactionOptions.slice(0, 6).map((reaction) => <button aria-label={reaction.label} className={item.viewerState.reaction === reaction.key ? "is-selected" : ""} disabled={pending} key={reaction.key} onClick={() => onReact(reaction.key)} type="button">{reaction.icon}</button>)}<button aria-label="More reactions" disabled={pending} onClick={onReactionMore} type="button"><FiPlus /></button></div> : null}
+      {!isOwn ? <div aria-label="React to Seen" className="seen-context-reactions">{seenReactionOptions.slice(0, 6).map((reaction) => <button aria-label={reaction.label} className={currentSeenReactionKey(item.viewerState.reaction) === reaction.key ? "is-selected" : ""} disabled={pending} key={reaction.key} onClick={() => onReact(reaction.key)} type="button"><SeenReactionIcon reaction={reaction} /></button>)}<button aria-label="More reactions" disabled={pending} onClick={onReactionMore} type="button"><FiPlus /></button></div> : null}
       <div className="seen-context-preview">
         <span>{item.media.url ? item.media.type === "video" ? <video muted playsInline preload="metadata" src={item.media.url} /> : <img alt="" src={item.media.url} /> : <SeenEyeMark />}</span>
         <div><strong>{item.title}</strong><small>{isOwn ? "" : `${item.creator.displayName} · `}{chapterCount} {chapterCount === 1 ? "chapter" : "chapters"}</small></div>
@@ -628,7 +652,6 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
   const comments = engagementQuery.data?.comments || [];
   const [allComments, setAllComments] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
-  const [reactionTarget, setReactionTarget] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [reposted, setReposted] = useState({});
   const repostCommentMutation = useMutation({
@@ -646,10 +669,15 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
     mutationFn: ({ comment, reaction }) => (reaction
       ? publicationService.reactToSeenComment(item.id, comment.id, reaction)
       : publicationService.removeSeenCommentReaction(item.id, comment.id)),
+    onMutate: ({ comment, reaction }) => {
+      const previous = engagementQuery.data;
+      onEngagementChange(withOptimisticCommentHeart(previous, comment.id, Boolean(reaction)));
+      return { previous };
+    },
     onSuccess: (response) => {
       onEngagementChange(response.data.data.engagement);
-      setReactionTarget(null);
     },
+    onError: (_error, _variables, context) => context?.previous && onEngagementChange(context.previous),
   });
   useEffect(() => {
     if (!mutation.isSuccess) return;
@@ -660,13 +688,14 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
     onChange("");
   };
   const renderComment = (comment, nested = false) => {
-    const reactionIcons = (comment.topReactions || []).map((key) => reactionLabel[key] || reactionLabel.INSIGHTFUL).join("") || "🤝";
+    const reacted = Boolean(comment.viewerReaction);
+    const visibleReactionCount = reacted ? Math.max(1, Number(comment.reactionCount || 0)) : Number(comment.reactionCount || 0);
     return <article className={nested ? "is-reply" : ""} key={comment.id}>
       <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
       <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || "Fan"}</Link><MemberCommentBadge author={comment.author} noteOwner={item.creator} />{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label="Voice comment" /> : null}
-        <span><button aria-label={`React to ${comment.author?.name || "comment"}`} className={comment.viewerReaction ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} onClick={() => setReactionTarget(comment)} type="button"><b aria-hidden="true">{reactionIcons}</b>{formatCount(comment.reactionCount || 0)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
+        <span><button aria-label={reacted ? "Remove heart" : `Heart ${comment.author?.name || "comment"}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onClick={() => commentReactionMutation.mutate({ comment, reaction: reacted ? "" : "LOVE" })} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">Reply</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
       </div>
     </article>;
   };
@@ -695,7 +724,6 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
       <button className="seen-comment-post" disabled={!value.trim() || mutation.isPending} type="submit">Post</button>
     </form>
     {voiceCommentOpen ? <VoiceCommentRecorder busy={voiceCommentMutation.isPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={(recording) => voiceCommentMutation.mutate(recording)} /> : null}
-    {reactionTarget ? <ReactionPicker item={{ title: `Comment by ${reactionTarget.author?.name || "Fan"}`, engagement: { reactionBreakdown: reactionTarget.reactionBreakdown || {} }, viewerState: { reaction: reactionTarget.viewerReaction } }} onClose={() => setReactionTarget(null)} onSelect={(reaction) => commentReactionMutation.mutate({ comment: reactionTarget, reaction })} pending={commentReactionMutation.isPending} /> : null}
   </section>;
 }
 
@@ -745,7 +773,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
       </header>
       <div aria-label="Reaction filters" className="seen-reactors-tabs" role="tablist">
         <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction(null)} role="tab" type="button">All</button>
-        {reactionCounts.map((reaction) => <button aria-selected={activeReaction === reaction.type} className={activeReaction === reaction.type ? "is-active" : ""} key={reaction.type} onClick={() => setActiveReaction(reaction.type)} role="tab" type="button"><span aria-hidden="true">{reaction.icon}</span>{formatCount(reaction.count)}</button>)}
+        {reactionCounts.map((reaction) => <button aria-selected={activeReaction === reaction.type} className={activeReaction === reaction.type ? "is-active" : ""} key={reaction.type} onClick={() => setActiveReaction(reaction.type)} role="tab" type="button"><span aria-hidden="true"><SeenReactionIcon reaction={reaction} /></span>{formatCount(reaction.count)}</button>)}
       </div>
       <div className="seen-reactors-list">
         {query.isLoading ? <p className="seen-reactors-state">Loading reactions...</p> : null}
@@ -759,7 +787,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
               <strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>
               {reactor.user?.username ? <small>@{reactor.user.username}</small> : null}
             </span>
-            <span aria-label={reactionMeta[reactor.reaction]?.label || "Reaction"} className="seen-reactor-emoji">{reactionLabel[reactor.reaction] || reactionLabel.INSIGHTFUL}</span>
+            <span aria-label={reactionMeta[reactor.reaction]?.label || "Reaction"} className="seen-reactor-emoji"><SeenReactionIcon reaction={reactor.reaction} /></span>
           </button>;
         }) : null}
         {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
@@ -771,7 +799,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
 }
 
 function ReactionPicker({ item, onClose, onSelect, pending }) {
-  const selectedReaction = item.viewerState.reaction;
+  const selectedReaction = currentSeenReactionKey(item.viewerState.reaction);
   const sheetPosition = useSeenSheetPosition(true);
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -791,10 +819,12 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
     <span aria-hidden="true" className="seen-reaction-handle" />
     <div aria-label="Choose a Seen reaction" className="seen-reaction-grid" role="group">
       {seenReactionOptions.map((reaction) => {
-        const count = Number(item.engagement.reactionBreakdown?.[reaction.key]) || 0;
-        const selected = selectedReaction === reaction.key || (selectedReaction === "INSIGHTFUL" && reaction.key === "FIRE");
+        const count = (Number(item.engagement.reactionBreakdown?.[reaction.key]) || 0)
+          + (reaction.key === "FIRE" ? Number(item.engagement.reactionBreakdown?.INSIGHTFUL) || 0 : 0)
+          + (reaction.key === "SEE_YOU" ? Number(item.engagement.reactionBreakdown?.PHONE) || 0 : 0);
+        const selected = selectedReaction === reaction.key;
         return <button aria-label={`${selected ? "Remove" : "Send"} ${reaction.label} reaction`} aria-pressed={selected} className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"} disabled={pending} key={reaction.key} onClick={() => onSelect(selected ? "" : reaction.key)} type="button">
-          <span aria-hidden="true">{reaction.icon}</span>
+          <span aria-hidden="true"><SeenReactionIcon reaction={reaction} /></span>
           <small>{count || ""}</small>
         </button>;
       })}
@@ -804,7 +834,7 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
   </div>;
 }
 
-function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReactOpen, onRepost, onSave, commentsOpen, isOwn = false, pending }) {
+function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReactOpen, onRepost, onSave, reactionAnchorRef, commentsOpen, isOwn = false, pending }) {
   const selected = item.viewerState;
   const holdTimer = useRef(null);
   const held = useRef(false);
@@ -812,7 +842,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReact
   const cancelHold = () => window.clearTimeout(holdTimer.current);
   return <div className="seen-engagement-bar">
     <div className="seen-engagement-left">
-      <button aria-label={selected.reaction ? "Change reaction" : "React to Seen"} className={selected.reaction ? "is-selected seen-reactions" : "seen-reactions"} disabled={pending} onClick={() => { if (!held.current) onReactOpen(); held.current = false; }} onPointerCancel={cancelHold} onPointerDown={() => { held.current = false; holdTimer.current = window.setTimeout(() => { held.current = true; onReactHold(); navigator.vibrate?.(12); }, 420); }} onPointerLeave={cancelHold} onPointerUp={cancelHold} type="button">
+      <button aria-label={selected.reaction ? "Change reaction" : "React to Seen"} className={selected.reaction ? "is-selected seen-reactions" : "seen-reactions"} disabled={pending} onClick={() => { if (!held.current) onReactOpen(); held.current = false; }} onPointerCancel={cancelHold} onPointerDown={() => { held.current = false; holdTimer.current = window.setTimeout(() => { held.current = true; onReactHold(); navigator.vibrate?.(12); }, 420); }} onPointerLeave={cancelHold} onPointerUp={cancelHold} ref={reactionAnchorRef} type="button">
         <span>{reactionCluster(item)}</span><b>{formatCount(item.engagement.reactions)}</b>
       </button>
       <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-selected" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><b>{formatCount(item.engagement.comments)}</b></button>
@@ -838,6 +868,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [reactionExpanded, setReactionExpanded] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [seriesOpen, setSeriesOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
@@ -853,6 +884,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const [mobileSwipe, setMobileSwipe] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
   const longPressRef = useRef({ startX: 0, startY: 0, timer: null });
   const lastContentTapRef = useRef({ at: 0, x: 0, y: 0 });
+  const reactionAnchorRef = useRef(null);
   const trackingTopics = useMemo(() => [item.category].filter(Boolean), [item.category]);
   const trackingRef = useRecommendationTracking({ batchId, creatorId: item.creator.id, entityId: item.id, entityType: "seen", position, topics: trackingTopics });
   const engagementQuery = useQuery({
@@ -897,7 +929,6 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     onSuccess: (response) => {
       mergeEngagement(response.data.data.engagement);
       queryClient.invalidateQueries({ queryKey: ["seen-reactors", item.id] });
-      setReactionPickerOpen(false);
     },
     onError: (error) => {
       mergeEngagement({
@@ -1087,11 +1118,12 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   };
   const openReactions = () => {
     setMenuOpen(false);
-    if (item.engagement.reactions > 0) setReactionsSheetOpen(true);
-    else setReactionPickerOpen(true);
+    setReactionExpanded(false);
+    setReactionPickerOpen(true);
   };
   const openPickerFromSheet = () => {
     setReactionsSheetOpen(false);
+    setReactionExpanded(false);
     setReactionPickerOpen(true);
   };
   const menuPending = saveMutation.isPending || repostMutation.isPending || hideMutation.isPending || muteMutation.isPending || blockMutation.isPending || reportMutation.isPending;
@@ -1252,7 +1284,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       onMute={() => runContextAction(() => muteMutation.mutate())}
       onPinToggle={() => runContextAction(() => pinMutation.mutate())}
       onReact={(reaction) => runContextAction(() => reactionMutation.mutate(reaction))}
-      onReactionMore={() => { closeContextMenu(); setReactionPickerOpen(true); }}
+      onReactionMore={() => { closeContextMenu(); setReactionExpanded(true); setReactionPickerOpen(true); }}
       onReport={() => { closeContextMenu(); setReportDone(false); setReportOpen(true); }}
       onRepost={() => runContextAction(() => repostMutation.mutate())}
       onSave={() => runContextAction(() => saveMutation.mutate())}
@@ -1291,9 +1323,10 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       <ContentEntityList entities={item.attachedEntities} onNotice={setNotice} />
       {activeChapter < 0 ? <PreviewComment noteOwner={item.creator} comment={item.previewComment} /> : null}
       {activeChapter < 0 && item.moreFrom ? <Link className="seen-more-from-paid" to={`/seen/${encodeURIComponent(item.moreFrom.id)}`}><span>More from {item.creator?.name?.split(" ")?.[0] || item.creator?.username || "creator"}</span><b>{item.moreFrom.title}</b><strong>✦{Number(item.moreFrom.priceStars || 0).toLocaleString()} ›</strong></Link> : null}
-      <EngagementBar commentsOpen={commentsOpen} isOwn={isOwn} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactHold={() => setReactionPickerOpen(true)} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} />
+      <EngagementBar commentsOpen={commentsOpen} isOwn={isOwn} item={item} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} onReactHold={() => { if (item.engagement.reactions > 0) setReactionsSheetOpen(true); else { setReactionExpanded(true); setReactionPickerOpen(true); } }} onReactOpen={openReactions} onRepost={() => repostMutation.mutate()} onSave={() => saveMutation.mutate()} pending={pending} reactionAnchorRef={reactionAnchorRef} />
       {reactionsSheetOpen ? <SeenReactionsSheet currentUserId={normalizeId(currentUser)} item={item} onAddYours={openPickerFromSheet} onClose={() => setReactionsSheetOpen(false)} /> : null}
-      {reactionPickerOpen ? <ReactionPicker item={item} onClose={() => setReactionPickerOpen(false)} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
+      {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={(reaction) => selectReaction(reaction)} options={seenReactionOptions} quickKeys={["SEE_YOU", "LOVE", "FIRE", "TEARY", "LAUGH", "LIKE"]} selected={currentSeenReactionKey(item.viewerState.reaction)} useEyeIcon={false} /> : null}
+      {reactionPickerOpen && reactionExpanded ? <ReactionPicker item={item} onClose={() => { setReactionPickerOpen(false); setReactionExpanded(false); }} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
       {commentsOpen ? <CommentsPanel currentUser={currentUser} engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onEngagementChange={mergeEngagement} onSubmit={submitComment} value={comment} /> : null}
     </div>

@@ -485,7 +485,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
           <button aria-label={hasStories ? __msg("social.viewSStories", { value0: profile.displayName }) : __msg("social.checkSStories", { value0: profile.displayName })} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
             <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
           </button>
-          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={__msg("contentEntities.open", { value0: world.title || `${profile.displayName}'s World` })} className="profile-avatar-world-planet" to={worldTarget} title={world.title || __msg("financial.openWorld")}>{world.planet?.emoji || "🪐"}</Link></span> : null}
+          {world ? <span className="profile-avatar-world-rotor"><Link aria-label={__msg("contentEntities.open", { value0: world.title || `${profile.displayName}'s World` })} className="profile-avatar-world-planet" to={worldTarget} title={world.title || __msg("financial.openWorld")}>{world.planet?.faceEmoji || (world.planet?.emoji !== "🪐" ? world.planet?.emoji : "") || "💪"}</Link></span> : null}
           {activeStatus ? <span aria-label={__msg("social.onlineNow")} className="profile-avatar-now-dot" role="img" /> : null}
           {isOwner ? <button aria-label={__msg("social.createAStory")} className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
         </div>

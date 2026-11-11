@@ -40,3 +40,34 @@
   filter: drop-shadow(0 0 28px rgba(156, 203, 255, .12));
 }
 
+.world-prototype-planet {
+  position: relative;
+}
+
+.world-prototype-planet .world-prototype-selected-icon,
+.social-app-shell .social-center-scroll>main>.world-prototype-page .world-prototype-planet button.world-prototype-selected-icon {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: calc(50% + 36px);
+  display: grid;
+  width: 30px !important;
+  height: 30px !important;
+  place-items: center;
+  border: 1px solid rgba(156, 203, 255, .28);
+  border-radius: 50%;
+  background: #101820;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .38);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  filter: none !important;
+}
+
+.world-prototype-planet button.world-prototype-selected-icon:hover,
+.world-prototype-planet button.world-prototype-selected-icon:focus-visible {
+  border-color: #9ccbff;
+  background: #192a3a;
+  outline: none;
+}
+

@@ -81,19 +81,21 @@ function wallReplyIntent(post) {
 }
 
 const postReactionOptions = [
-  { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
+  { key: "see_you", label: "I see you", icon: "👁" },
   { key: "love", label: "Love", icon: "\u2764\uFE0F" },
-  { key: "care", label: "Care", icon: "\uD83E\uDD17" },
-  { key: "wow", label: "Wow", icon: "\uD83D\uDE2E" },
-  { key: "useful", label: "Useful", icon: "\uD83D\uDCA1" },
   { key: "fire", label: "Fire", icon: "\uD83D\uDD25" },
-  { key: "clap", label: "Clap", icon: "\uD83D\uDC4F" },
+  { key: "teary", label: "Moved", icon: "🥹" },
   { key: "laugh", label: "Laugh", icon: "\uD83D\uDE02" },
-  { key: "see_you", label: "I see you", icon: "\uD83D\uDC41\uFE0F" },
-  { key: "sad", label: "Feel you", icon: "\uD83E\uDD72" },
-  { key: "phone", label: "Call me", icon: "\uD83D\uDCF1" },
+  { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
+  { key: "clap", label: "Clap", icon: "\uD83D\uDC4F" },
+  { key: "wow", label: "Surprised", icon: "\uD83D\uDE2E" },
+  { key: "admire", label: "Adore", icon: "\uD83D\uDE0D" },
+  { key: "sad", label: "Sad", icon: "\uD83D\uDE22" },
+  { key: "hug", label: "Hug", icon: "🫂" },
   { key: "strong", label: "Strong", icon: "\uD83D\uDCAA" },
   { key: "pray", label: "Respect", icon: "\uD83D\uDE4F" },
+  { key: "hundred", label: "One hundred", icon: "\uD83D\uDCAF" },
+  { key: "sparkles", label: "Sparkles", icon: "\u2728" },
 ];
 
 function useWallSheetPosition(isOpen) {
@@ -359,6 +361,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const impressionTrackedRef = useRef(false);
   const viewTrackedRef = useRef(false);
   const [reaction, setReaction] = useState(normalized.viewerReaction);
+  const [reactionBreakdown, setReactionBreakdown] = useState(normalized.reactionBreakdown || {});
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [reactionExpanded, setReactionExpanded] = useState(false);
   const [allComments, setAllComments] = useState(Boolean(focusedCommentId));
@@ -418,10 +421,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const headerName = ownsPost ? "You" : creator.name;
   const closeLabels = wallCloseLabels(normalized.postType, normalized.context);
   const selectedReaction = reactionDisplayFor(reaction);
-  const reactionSummary = (normalized.reactions?.length
-    ? normalized.reactions
-    : normalized.topReactions?.length && normalized.reactionBreakdown
-      ? normalized.topReactions.map((reactionKey) => ({ count: normalized.reactionBreakdown[reactionKey], reaction: reactionKey }))
+  const reactionSummary = (Object.keys(reactionBreakdown).length
+    ? Object.entries(reactionBreakdown).map(([reactionKey, count]) => ({ count, reaction: reactionKey }))
+    : normalized.reactions?.length
+      ? normalized.reactions
     : normalized.supportCount > 0 ? [{ count: normalized.supportCount, reaction: "like" }] : [])
     .map((item) => ({
       count: Number(item.count) || 0,
@@ -476,6 +479,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   useEffect(() => {
     setReaction(normalized.viewerReaction);
   }, [normalized.viewerReaction]);
+
+  useEffect(() => {
+    setReactionBreakdown(normalized.reactionBreakdown || {});
+  }, [normalized.reactionBreakdown]);
 
   useEffect(() => {
     setComments(normalized.seededComments);
@@ -579,6 +586,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const syncSavedPost = (savedPost) => {
     const next = normalizeFeedPost(savedPost);
     setReaction(next.viewerReaction);
+    setReactionBreakdown(next.reactionBreakdown || {});
     setComments(next.seededComments);
     setSaved(next.viewerSaved);
     setShared(next.viewerShared);
@@ -673,10 +681,25 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const saveReaction = (nextReaction) => {
     if (!requireDatabasePost()) return;
 
+    const previousReaction = reaction;
+    const previousBreakdown = { ...reactionBreakdown };
+    const nextBreakdown = { ...reactionBreakdown };
+    if (previousReaction) {
+      nextBreakdown[previousReaction] = Math.max(0, (Number(nextBreakdown[previousReaction]) || 0) - 1);
+      if (!nextBreakdown[previousReaction]) delete nextBreakdown[previousReaction];
+    }
+    if (nextReaction) nextBreakdown[nextReaction] = (Number(nextBreakdown[nextReaction]) || 0) + 1;
+    setReaction(nextReaction || null);
+    setReactionBreakdown(nextBreakdown);
+
     reactionMutation.mutate(
       { postId: actionPostId, reaction: nextReaction },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Reaction could not be saved."),
+        onError: (error) => {
+          setReaction(previousReaction);
+          setReactionBreakdown(previousBreakdown);
+          showToast(error?.response?.data?.message || "Reaction could not be saved.");
+        },
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           queryClient.invalidateQueries({ queryKey: ["wall-reactions", actionPostId] });
@@ -1013,9 +1036,12 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
               onReply={(comment) => { setReplyTarget(comment); commentInputRef.current?.focus(); }}
               onReact={async (comment, value) => {
                 if (reactingCommentId || !requireDatabasePost()) return;
+                const previousComments = comments;
+                const active = Boolean(value);
+                setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReaction: active ? "love" : null, reactionCount: Math.max(0, Number(item.reactionCount || 0) + (active ? 1 : -1)) } : item));
                 setReactingCommentId(comment.id);
                 try { syncSavedPost(await commentReactionMutation.mutateAsync({ postId: actionPostId, commentId: comment.id, reaction: value })); }
-                catch (error) { showToast(error?.response?.data?.message || "Reply reaction could not be saved."); }
+                catch (error) { setComments(previousComments); showToast(error?.response?.data?.message || "Reply reaction could not be saved."); }
                 finally { setReactingCommentId(""); }
               }} />
             {replyTarget ? <div className="wall-reply-target" role="status">Replying to <strong>{replyTarget.author?.name || "Creator"}</strong><button aria-label="Cancel reply" onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
@@ -1072,7 +1098,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         />
       ) : null}
 
-      {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={(value) => { saveReaction(value); setReactionPickerOpen(false); }} options={postReactionOptions} selected={reaction} /> : null}
+      {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={saveReaction} options={postReactionOptions} quickKeys={["see_you", "love", "fire", "teary", "laugh", "like"]} selected={reaction} useEyeIcon={false} /> : null}
       {reactionPickerOpen && reactionExpanded ? (
         <div className="seen-reactions-layer" style={wallSheetPosition}>
           <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
@@ -1091,7 +1117,6 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                     key={item.key}
                     onClick={() => {
                       saveReaction(selected ? "" : item.key);
-                      setReactionPickerOpen(false);
                     }}
                     type="button"
                   >
