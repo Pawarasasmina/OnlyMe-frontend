@@ -15,6 +15,7 @@ export default function ManualIdentityApplication({ onClose, onAddBank, bankRead
   const client = useQueryClient();
   const [editing, setEditing] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [files, setFiles] = useState({});
+  const [uploading, setUploading] = useState({});
   const [form, setForm] = useState({ legalFullName: "", dateOfBirth: "", country: "", issuingCountry: "", documentType: "passport", expiryDate: "", ageConfirmed: false, informationConfirmed: false, policyAccepted: false, policyVersion: "identity-manual-v1" });
   const query = useQuery({ queryKey: ["manual-identity", user?.id || user?._id], queryFn: () => verificationService.getMine().then(r => r.data.data.verification), refetchInterval: q => q.state.data?.status === "PENDING_REVIEW" ? 15000 : false });
   const verification = query.data, status = verification?.status, approved = verification?.purpose === "IDENTITY" && status === "APPROVED";
@@ -33,18 +34,37 @@ export default function ManualIdentityApplication({ onClose, onAddBank, bankRead
   if (approved) return <><img className="identity-scene" src="/illustrations/verified-confirmation.svg" alt="" /><h2 className="identity-center identity-verified-title">{__msg("profile.youReVerified")}</h2><div className="identity-name"><b>{user?.name || verification.legalFullName || user?.username}</b><VerifiedBadge variant="profile" /></div><p className="identity-center identity-verified-copy">{bankReady ? __msg("verification.yourBadgeIsOnYourBankIsReadyFor") : __msg("profile.yourBadgeIsOnAddABankToWithdraw")}</p>{bankReady ? <button className="identity-primary" onClick={onClose}>{__msg("comments.done")}</button> : <><button className="identity-primary" disabled={bankLoading} onClick={onAddBank}>{bankLoading ? __msg("verification.checkingPayoutSetup") : __msg("verification.addABankForPayouts")}</button><button className="identity-later" onClick={onClose}>{__msg("verification.later")}</button></>}</>;
   if (status === "PENDING_REVIEW") return <div className="manual-identity-status"><FiClock /><h2>{__msg("verification.underReview")}</h2><p>{__msg("verification.theSeenTeamIsReviewingYourIdentityDocumentAnd")}</p><p>{__msg("verification.youCanCloseThisPageAndCheckYourStatus")}</p><button className="identity-primary" onClick={onClose}>{__msg("comments.done")}</button></div>;
   const needsChanges = ["REJECTED", "CHANGES_REQUESTED"].includes(status);
-  const choose = (field, file) => {
+  const choose = async (field, file) => {
     setError("");
     if (!file) return;
     const allowed = field === "selfieWithDocument" ? ["image/jpeg", "image/png", "image/webp"] : ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!file.size) { setError("The selected file is empty. Choose a complete image file."); return; }
     if (!allowed.includes(file.type) || file.size > 10 * 1024 * 1024) { setError(__msg("verification.chooseASupportedFileOf10MbOrSmaller")); return; }
     setFiles(current => ({ ...current, [field]: file }));
+    setUploading(current => ({ ...current, [field]: true }));
+    try {
+      await verificationService.uploadDocument(field, file);
+      setFiles(current => { const next = { ...current }; delete next[field]; return next; });
+      await query.refetch();
+      setNotice("Document uploaded successfully.");
+    } catch (e) {
+      setError(e.response?.data?.message || __msg("verification.weCouldnTSaveYourApplicationPleaseTry"));
+    } finally {
+      setUploading(current => ({ ...current, [field]: false }));
+    }
   };
   const save = async submit => {
     setBusy(true); setError(""); setNotice("");
     try {
       await verificationService.saveIdentityDraft(form);
-      for (const [field, file] of Object.entries(files)) await verificationService.uploadDocument(field, file);
+      for (const [field, file] of Object.entries(files)) {
+        await verificationService.uploadDocument(field, file);
+        setFiles(current => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        });
+      }
       if (submit) {
         if (needsChanges) await verificationService.resubmit(); else await verificationService.submit();
       }
@@ -55,7 +75,7 @@ export default function ManualIdentityApplication({ onClose, onAddBank, bankRead
     finally { setBusy(false); }
   };
   const update = e => setForm(current => ({ ...current, [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
-  const upload = (field, label, imageOnly = false) => <label className="manual-identity-upload"><b>{label}</b><span>{files[field]?.name || verification?.[field]?.originalName || __msg("verification.noFileSelected")}</span><input aria-label={label} type="file" accept={imageOnly ? "image/jpeg,image/png,image/webp" : "image/jpeg,image/png,image/webp,application/pdf"} onChange={e => choose(field, e.target.files?.[0])} /><small>{imageOnly ? __msg("verification.jpegPngOrWebp") : __msg("verification.jpegPngWebpOrPdf")} {__msg("verification.maximum10Mb")}</small></label>;
+  const upload = (field, label, imageOnly = false) => <label className="manual-identity-upload"><b>{label}</b><span>{uploading[field] ? "Uploading…" : files[field]?.name || verification?.[field]?.originalName || __msg("verification.noFileSelected")}</span><input aria-label={label} disabled={busy || uploading[field]} type="file" accept={imageOnly ? "image/jpeg,image/png,image/webp" : "image/jpeg,image/png,image/webp,application/pdf"} onChange={e => choose(field, e.target.files?.[0])} /><small>{uploading[field] ? "Please wait while this file is securely uploaded." : <>{imageOnly ? __msg("verification.jpegPngOrWebp") : __msg("verification.jpegPngWebpOrPdf")} {__msg("verification.maximum10Mb")}</>}</small></label>;
   if (!editing && !needsChanges && !(verification?.purpose === "IDENTITY" && status === "DRAFT")) return <><img className="identity-scene" src="/illustrations/verification-start.svg" alt="" /><h2 className="identity-center">{__msg("verification.getVerified")}</h2><p className="identity-center">{__msg("verification.showPeopleItSReallyYou")}</p><div className="identity-row"><span className="identity-icon"><FiShield /></span><div><b>{__msg("verification.reviewedByTheSeenTeam_87cfbb")}</b><p>{__msg("verification.submitYourIdAndASelfieHoldingItAn")}</p></div></div><div className="identity-row"><span className="identity-icon"><FiCheck /></span><div><b>{__msg("verification.privateIdentityReview")}</b><p>{__msg("verification.yourDocumentsAreVisibleOnlyToYouAndAuthorized")}</p></div></div><button className="identity-primary" onClick={() => setEditing(true)}>{__msg("verification.startVerification")}</button><small className="identity-center">{__msg("verification.freeIdSelfieReviewedBySeen")}</small></>;
   return <><h2>{__msg("verification.verifyYourIdentity")}</h2><p>{__msg("verification.yourInformationAndDocumentsStayPrivateTheSeenTeam")}</p>{needsChanges && <div className="identity-availability" role="status"><div><b>{status === "REJECTED" ? __msg("verification.applicationNotApproved") : __msg("content.changesRequested")}</b><p>{verification.creatorVisibleMessage || verification.rejectionReason || __msg("verification.pleaseUpdateYourDetailsAndResubmit")}</p>{verification.changesRequestedReasons?.map(reason => <p key={reason}>{reason}</p>)}</div></div>}
     <form onSubmit={e => { e.preventDefault(); save(true); }}><fieldset disabled={busy} className="manual-identity-form">
@@ -72,7 +92,7 @@ export default function ManualIdentityApplication({ onClose, onAddBank, bankRead
       <label className="manual-identity-consent"><input type="checkbox" name="ageConfirmed" checked={form.ageConfirmed} onChange={update} required />{__msg("verification.iConfirmThatIAm18OrOlder")}</label>
       <label className="manual-identity-consent"><input type="checkbox" name="informationConfirmed" checked={form.informationConfirmed} onChange={update} required />{__msg("verification.theInformationAndDocumentsBelongToMeAndAre")}</label>
       <label className="manual-identity-consent"><input type="checkbox" name="policyAccepted" checked={form.policyAccepted} onChange={update} required />{__msg("verification.iAgreeToTheSeenTeamReviewingTheseDocuments")}</label>
-      <button className="identity-primary" type="submit">{busy ? __msg("admin.saving") : needsChanges ? __msg("verification.resubmitForReview") : __msg("verification.sendForReview")}</button><button className="identity-later" type="button" onClick={() => save(false)}>{__msg("publication.saveDraft")}</button>
+      <button className="identity-primary" disabled={busy || Object.values(uploading).some(Boolean)} type="submit">{Object.values(uploading).some(Boolean) ? "Uploading documents…" : busy ? __msg("admin.saving") : needsChanges ? __msg("verification.resubmitForReview") : __msg("verification.sendForReview")}</button><button className="identity-later" disabled={Object.values(uploading).some(Boolean)} type="button" onClick={() => save(false)}>{__msg("publication.saveDraft")}</button>
     </fieldset></form>{error && <p className="identity-error" role="alert">{__systemMessage(error)}</p>}{notice && <p role="status">{__systemMessage(notice)}</p>}
   </>;
 }

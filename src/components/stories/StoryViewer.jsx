@@ -693,7 +693,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
   __useUiLanguage();
   const viewerPosition = useStoryViewerPosition(isOpen);
   const { user } = useAuth();
-  const { showToast, showGiftSequence } = useFanToast();
+  const { showToast } = useFanToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const replyInputRef = useRef(null);
@@ -1471,9 +1471,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       {giftOpen ? createPortal((
         <StoryGiftPicker
           onClose={() => setGiftOpen(false)}
-          onSent={(gift) => {
-            const recipient = activeStory.owner;
-            showGiftSequence(gift, recipient, () => navigate(`/profile/${recipient.username || recipient.id || activeStory.ownerId}`));
+          onSent={() => {
             onClose();
           }}
           recipient={{ ...activeStory.owner, id: activeStory.owner.id || activeStory.ownerId }}

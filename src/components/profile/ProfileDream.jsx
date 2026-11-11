@@ -7,21 +7,21 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCheck, FiChevronLeft, FiChevronRight, FiEdit2, FiEye, FiMoreHorizontal, FiRefreshCw, FiTrash2, FiUpload, FiX } from "react-icons/fi";
-import { useAuth } from "../../hooks/useAuth";
 import { walletService } from "../../services/walletService";
 import { dreamService } from "../../services/dreamService";
 import "./ProfileGiftCopy.css";
 import "./ProfileDreamCard.css";
 import { resolveMediaUrl } from "../../utils/media";
+import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
+import GiftArt, { prototypeGiftPreset, resolvedGiftTier } from "../gifts/GiftArt";
 
 const GOALS = [500, 900, 1500, 2500, 5000];
 const SPARKLE = String.fromCharCode(10024);
 const STAR = String.fromCharCode(10022);
-const giftImageTransform = (gift) => `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})`;
 const celebrationParticles = Array.from({ length: 28 }, (_, index) => ({ angle: index * (360 / 28), delay: (index % 7) * 34, distance: 92 + (index % 5) * 18, size: 8 + (index % 4) * 3 }));
 async function croppedDreamPhoto(file, url, crop) {
   const image = await new Promise((resolve, reject) => { const value = new Image(); value.onload = () => resolve(value); value.onerror = reject; value.src = url; });
@@ -34,9 +34,12 @@ async function croppedDreamPhoto(file, url, crop) {
   return new File([blob], "dream-photo.jpg", { type: "image/jpeg" });
 }
 
-export function GiftCelebration({ caption = "", detail, gift, message = __msg("profile.youRePartOfThisDreamNow"), recipientName = "", senderName = "", note = "", showSuccessToast = true, variant = "" }) {
+export function GiftCelebration({ caption = "", detail, gift, message = __msg("profile.youRePartOfThisDreamNow"), onDismiss, recipientName = "", senderName = "", note = "", showSuccessToast = true, variant = "" }) {
   __useUiLanguage();
-  return <div aria-live="polite" className={`gift-celebration-layer ${variant}`}>
+  const tier = resolvedGiftTier(gift);
+  const animation = gift.animationConfigured ? gift : { ...gift, ...prototypeGiftPreset(gift) };
+  const family = animation.objectEffect && animation.objectEffect !== "none" ? `fx2-${animation.objectEffect}` : `fx-${animation.effectFamily || "glass"}`;
+  return <div aria-label={onDismiss ? __msg("activity.close") : undefined} aria-live="polite" className={`gift-celebration-layer gift-tier-${tier.toLowerCase()} ${family} ${variant} ${onDismiss ? "is-dismissible" : ""}`} onClick={onDismiss} onKeyDown={onDismiss ? event => { if (event.key === "Enter" || event.key === " ") onDismiss(); } : undefined} role={onDismiss ? "button" : undefined} tabIndex={onDismiss ? 0 : undefined}>
     <div className="gift-celebration-veil" />
     <div className={variant ? `gift-celebration-scene ${variant}` : "gift-celebration-scene"} />
     {showSuccessToast ? <div className="gift-success-toast"><span className="gift-success-check">✓</span><span><strong>{message}</strong><small>{detail || __msg("profile.sent", { value0: gift.name, value1: STAR, value2: gift.stars.toLocaleString(__uiLocale()) })}</small></span></div> : null}
@@ -45,7 +48,8 @@ export function GiftCelebration({ caption = "", detail, gift, message = __msg("p
       <i className="gift-celebration-ring is-outer" />
       <i className="gift-celebration-ring is-inner" />
       {celebrationParticles.map((particle, index) => <i className="gift-celebration-particle" key={index} style={{ "--angle": `${particle.angle}deg`, "--delay": `${particle.delay}ms`, "--distance": `${particle.distance}px`, "--size": `${particle.size}px` }} />)}
-      <div className="gift-celebration-image"><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></div>
+      {tier === "VAULT" || tier === "LEGENDARY" ? <div className="gift-vault-intro"><i /><i /><strong>{tier === "VAULT" ? "THE VAULT" : "LEGENDARY"}</strong></div> : null}
+      <div className="gift-celebration-image"><GiftArt allowShine className="h-full w-full" gift={gift} imageClassName="h-full w-full" /></div>
       <div className="gift-celebration-copy">
       <strong dir="auto" className="gift-celebration-name">{gift.name}</strong>
       {caption ? <span className="gift-celebration-caption">“{caption}”</span> : null}
@@ -240,28 +244,17 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
   );
 }
 
-function demoDreamProgress(dream, contribution) {
-  if (!dream || !contribution) return dream;
-  return { ...dream,
-    receivedStars: Number(dream.receivedStars || 0) + Number(contribution.coins || 0),
-    supporterCount: Number(dream.supporterCount || 0) + (!dream.viewerHasSupported ? 1 : 0),
-    quietSupporterCount: Number(dream.quietSupporterCount || 0) + (contribution.privateSupport && !dream.viewerHasSupported ? 1 : 0),
-    viewerHasSupported: true,
-  };
-}
-
 export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose }) {
   __useUiLanguage();
-  const { user } = useAuth();
-  const storageKey = `onlyme-dream-demo-v1:${user?.id || user?._id || "guest"}`;
-  const readDemo = () => { try { return JSON.parse(localStorage.getItem(storageKey)) || { spent: 0, dreams: {} }; } catch { return { spent: 0, dreams: {} }; } };
-  const [demo, setDemo] = useState(readDemo);
+  const queryClient = useQueryClient();
+  const [dream, setDream] = useState(initialDream);
   const [needsRecharge, setNeedsRecharge] = useState(false);
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const walletQuery = useQuery({ queryKey: ["wallet"], queryFn: () => walletService.getWallet().then(response => response.data.data.wallet), retry: false });
-  const contribution = demo.dreams?.[initialDream.id];
-  const dream = demoDreamProgress(initialDream, contribution);
   const receiptTimer = useRef(null);
+  const celebrationDismissed = useRef(false);
   const holdTimer = useRef(null);
   const heldGift = useRef(false);
   const [previewGift, setPreviewGift] = useState(null);
@@ -280,6 +273,8 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
       setSheetPosition({
         "--dream-support-column-width": `${bounds.width}px`,
         "--dream-support-center-x": `${bounds.left + (bounds.width / 2)}px`,
+        "--gift-sheet-column-width": `${bounds.width}px`,
+        "--gift-sheet-center-x": `${bounds.left + (bounds.width / 2)}px`,
       });
     };
     updatePosition();
@@ -292,25 +287,48 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
     };
   }, []);
 
-  // Browser-local demo receipts; the real wallet and financial APIs are unchanged.
-  const send = (gift) => {
-    const current = readDemo();
+  const send = async (gift) => {
     const price = Number(gift.stars || 0);
-    if (!walletQuery.isSuccess) return;
-    if (Number(walletQuery.data.balance || 0) - Number(current.spent || 0) < price) { setNeedsRecharge(true); return; }
+    if (sending || !walletQuery.isSuccess) return;
+    if (Number(walletQuery.data.balance || 0) < price) { setNeedsRecharge(true); return; }
+    const previousDream = dream;
+    const previousWallet = queryClient.getQueryData(["wallet"]) || walletQuery.data;
+    const firstSupport = !dream.viewerHasSupported;
+    const optimisticDream = {
+      ...dream,
+      receivedStars: Number(dream.receivedStars || 0) + price,
+      supporterCount: Number(dream.supporterCount || 0) + (firstSupport ? 1 : 0),
+      quietSupporterCount: Number(dream.quietSupporterCount || 0) + (privateSupport && firstSupport ? 1 : 0),
+      viewerHasSupported: true,
+    };
     setNeedsRecharge(false);
-    const previous = current.dreams?.[initialDream.id];
-    const next = { ...current, spent: Number(current.spent || 0) + price, dreams: { ...current.dreams, [initialDream.id]: {
-      coins: Number(previous?.coins || 0) + price,
-      privateSupport: previous ? previous.privateSupport && privateSupport : privateSupport,
-      gifts: [...(previous?.gifts || []), { id: gift.key || gift.id, name: gift.name, coins: price, privateSupport, sentAt: new Date().toISOString() }],
-    } } };
-    localStorage.setItem(storageKey, JSON.stringify(next));
-    setDemo(next);
-    window.dispatchEvent(new Event("onlyme-dream-demo-change"));
+    setError("");
+    setSending(true);
+    setDream(optimisticDream);
+    queryClient.setQueryData(["wallet"], current => ({ ...(current || previousWallet), balance: Math.max(0, Number((current || previousWallet)?.balance || 0) - price) }));
+    queryClient.setQueriesData({ queryKey: ["creator-dream"] }, current => current?.dream?.id === initialDream.id ? { ...current, dream: { ...current.dream, ...optimisticDream } } : current);
+    celebrationDismissed.current = false;
     setSent(gift);
     window.clearTimeout(receiptTimer.current);
-    receiptTimer.current = window.setTimeout(() => setSent(null), 2600);
+    const startedAt = Date.now();
+    try {
+      const response = await dreamService.sendGift(initialDream.id, { giftKey: gift.id || gift.key, privateSupport, idempotencyKey: createIdempotencyKey("dream-gift") });
+      const result = response.data.data;
+      setDream(current => ({ ...current, ...result.dream, viewerHasSupported: true }));
+      if (!celebrationDismissed.current) setSent(result.gift || gift);
+      if (result.wallet) queryClient.setQueryData(["wallet"], result.wallet);
+      void queryClient.invalidateQueries({ queryKey: ["creator-dream"] });
+      receiptTimer.current = window.setTimeout(() => { setSent(null); setSending(false); }, Math.max(350, 4200 - (Date.now() - startedAt)));
+    } catch (requestError) {
+      setDream(previousDream);
+      queryClient.setQueryData(["wallet"], previousWallet);
+      queryClient.setQueriesData({ queryKey: ["creator-dream"] }, current => current?.dream?.id === initialDream.id ? { ...current, dream: previousDream } : current);
+      setSent(null);
+      setSending(false);
+      setError(requestError.response?.data?.message || "Unable to send gift");
+      if (requestError.response?.status === 402) setNeedsRecharge(true);
+      void walletQuery.refetch();
+    }
   };
 
   const progress = Math.min(100, Math.round((Number(dream.receivedStars || 0) / Math.max(1, Number(dream.goalStars || 0))) * 100));
@@ -328,8 +346,8 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
 
   return (
     <div className="dream-gift-backdrop dream-support-backdrop" style={sheetPosition}>
-      <section aria-label={__msg("profile.supportSDream", { value0: creatorName })} aria-modal="true" className="dream-gift-sheet dream-support-sheet" role="dialog">
-        {sent ? <div className="dream-support-sent-toast" role="status">{__msg("profile.youRePartOfThisDreamNow")}</div> : null}
+      {sent ? <GiftCelebration gift={sent} onDismiss={() => { celebrationDismissed.current = true; setSent(null); }} recipientName={firstName} showSuccessToast={false} variant="is-profile-gift" /> : null}
+      {!sent ? <section aria-label={__msg("profile.supportSDream", { value0: creatorName })} aria-modal="true" className="dream-gift-sheet dream-support-sheet" role="dialog">
         <header className="dream-support-header">
           <button aria-label={__msg("profile.closeDreamSupport")} onClick={onClose} type="button"><FiChevronLeft data-ui-directional="true" /></button>
           <h2>{firstName}{__msg("profile.sDream")}</h2>
@@ -376,14 +394,14 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
                 className={`dream-gift-tile ${sent?.key === gift.key ? "is-selected" : ""}`}
                
                 key={gift.key}
-                disabled={!walletQuery.isSuccess}
+                disabled={!walletQuery.isSuccess || sending}
                 onPointerDown={() => { heldGift.current = false; holdTimer.current = window.setTimeout(() => { heldGift.current = true; setPreviewGift(gift); }, 450); }}
                 onPointerUp={stopPreview} onPointerCancel={stopPreview} onPointerLeave={stopPreview}
                 onContextMenu={event => event.preventDefault()}
                 onClick={() => { if (heldGift.current) { heldGift.current = false; return; } send(gift); }}
                 type="button"
               >
-                <span><img alt={gift.name} src={gift.imageUrl} style={{ transform: giftImageTransform(gift) }} /></span>
+                <span><GiftArt className="h-full w-full" gift={gift} imageClassName="h-full w-full" /></span>
                 <strong>{gift.name}</strong>
                 <small><CoinIcon />{Number(gift.stars || 0).toLocaleString(__uiLocale())}</small>
               </button>)}
@@ -393,11 +411,12 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
 
         <p className="dream-support-preview-hint">{__msg("profile.holdGiftPreview")}</p>
         <footer className="dream-support-share-footer">{__msg("profile.dreamMadePossible", { count: supporterCount.toLocaleString(__uiLocale()) })} <span aria-hidden="true">&middot;</span> <button onClick={() => setShareOpen(true)} type="button">{__msg("profile.dreamShare")} &rsaquo;</button></footer>
-        {previewGift ? <div className="dream-hold-preview" aria-live="polite"><img alt={previewGift.name} src={previewGift.imageUrl} style={{ transform: giftImageTransform(previewGift) }} /><strong>{previewGift.name}</strong></div> : null}
+        {error ? <p className="profile-dream-error" role="alert">{__systemMessage(error)}</p> : null}
+        {previewGift ? <div className="dream-hold-preview" aria-live="polite"><GiftArt gift={previewGift} /><strong>{previewGift.name}</strong></div> : null}
         <ShareSheet isOpen={shareOpen} onClose={() => setShareOpen(false)} payload={{ contentType: "dream", contentId: dream.id, title: `${dream.emoji || SPARKLE} ${dream.title}`, previewText: dream.reason, imageUrl: resolveMediaUrl(dream.photo?.url), author: { name: creatorName, username: dream.creator?.username }, route: `/profile/${encodeURIComponent(dream.creator?.username || "")}?dream=${encodeURIComponent(dream.id)}` }} />
-        {needsRecharge ? <div className="dream-demo-recharge" role="status"><span>{__msg("profile.demoInsufficientBalance")}</span><Link to="/wallet">{__msg("stories.recharge")}</Link><button aria-label={__msg("activity.close")} onClick={() => setNeedsRecharge(false)} type="button"><FiX /></button></div> : null}
+        {needsRecharge ? <div className="dream-demo-recharge" role="status"><span>Not enough coins for this gift.</span><Link to="/wallet">{__msg("stories.recharge")}</Link><button aria-label={__msg("activity.close")} onClick={() => setNeedsRecharge(false)} type="button"><FiX /></button></div> : null}
 
-      </section>
+      </section> : null}
     </div>
   );
 }
@@ -434,14 +453,6 @@ function DreamEntryRow({ dream, isOwner, onCreate, onMenu, onSupport, progress }
 export default function ProfileDream({ capabilities, profile, role }) {
   __useUiLanguage();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [, refreshDemo] = useState(0);
-  useEffect(() => {
-    const refresh = () => refreshDemo(value => value + 1);
-    window.addEventListener("onlyme-dream-demo-change", refresh);
-    window.addEventListener("storage", refresh);
-    return () => { window.removeEventListener("onlyme-dream-demo-change", refresh); window.removeEventListener("storage", refresh); };
-  }, []);
   const creatorEnabled = Boolean(profile?.isCreator || role === "creator");
   const [picker, setPicker] = useState(Boolean(new URLSearchParams(window.location.search).get("dream")));
   const [menuOpen, setMenuOpen] = useState(false);
@@ -488,9 +499,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
   if (!creatorEnabled || query.isLoading || query.isError) return null;
 
   const baseDream = query.data?.dream;
-  let savedContribution;
-  try { savedContribution = JSON.parse(localStorage.getItem(`onlyme-dream-demo-v1:${user?.id || user?._id || "guest"}`))?.dreams?.[baseDream?.id]; } catch { /* No saved browser preview. */ }
-  const dream = demoDreamProgress(baseDream, savedContribution);
+  const dream = baseDream;
   const gifts = query.data?.gifts || [];
 
   if (!dream && !capabilities.isOwner) return null;
