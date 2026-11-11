@@ -183,12 +183,13 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   const comments = engagement.comments || [];
   const renderComment = (item, isReply = false) => {
     const reacted = Boolean(item.viewerReaction);
+    const visibleReactionCount = reacted ? Math.max(1, Number(item.reactionCount || 0)) : Number(item.reactionCount || 0);
     return <article className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
       <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
       <div className="seen-comment-copy">
         <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || "Fan"}</Link> : <strong>{item.author?.name || "Fan"}</strong>}{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label="Voice comment" /> : null}
-        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || "comment"}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(item.reactionCount || 0)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
+        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || "comment"}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
       </div>
     </article>;
   };
