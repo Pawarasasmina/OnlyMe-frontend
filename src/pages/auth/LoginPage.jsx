@@ -46,6 +46,12 @@ export default function LoginPage() {
     try {
       const response = await login(form);
       const user = response.data.data.user;
+      const requested = location.state?.from?.pathname || consumeSessionReturnTo();
+      if (user.role === "admin") {
+        const adminTarget = requested?.startsWith("/admin/") ? requested : destinationForUser(user);
+        navigate(adminTarget, { replace: true });
+        return;
+      }
       const interests = readPreAuthInterests();
       if (interests.length >= 3 && !["completed", "skipped"].includes(user.onboarding?.status)) {
         if (!user.onboarding?.welcomeCompleted) await onboardingService.saveWelcomeStep();
@@ -54,10 +60,8 @@ export default function LoginPage() {
         setPostLoginTarget("/onboarding/account-type");
         return;
       }
-      const requested = location.state?.from?.pathname || consumeSessionReturnTo();
       const target = requested && requested !== "/login" ? requested : destinationForUser(user);
-      if (user.role === "admin") navigate(target, { replace: true });
-      else setPostLoginTarget(target);
+      setPostLoginTarget(target);
     } catch (requestError) {
       const status = requestError.response?.status;
       if (["ADMIN_2FA_REQUIRED", "TWO_FACTOR_REQUIRED"].includes(requestError.response?.data?.code)) setTwoFactorRequired(true);

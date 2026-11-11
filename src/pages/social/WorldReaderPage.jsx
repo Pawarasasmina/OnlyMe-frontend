@@ -2,6 +2,7 @@ import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
+import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ import {
   FiEdit3,
   FiFlag,
   FiGift,
+  FiHeart,
   FiImage,
   FiLink,
   FiLock,
@@ -50,6 +52,7 @@ import JoinPremiumModal from "../../components/financial/JoinPremiumModal";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
+import MinimalWorldIcon from "../../components/world/MinimalWorldIcon";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryViewer from "../../components/stories/StoryViewer";
@@ -93,6 +96,13 @@ const WORLD_SPAM_ACTIONS = [
 
 function planetFaceEmoji(planet = {}) {
   return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
+}
+
+function withOptimisticWorldCommentHeart(engagement = {}, commentId, active) {
+  const update = (comment) => String(comment.id) === String(commentId)
+    ? { ...comment, viewerReaction: active ? "LOVE" : null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + (active ? 1 : -1)) }
+    : { ...comment, replies: (comment.replies || []).map(update) };
+  return { ...engagement, comments: (engagement.comments || []).map(update) };
 }
 
 function sameIdentity(left, right) {
@@ -384,7 +394,6 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
   const creatorId = creator.id || creator._id || publication?.creatorId || "";
   const experienceCount = experiences.length;
   const memberNumber = publication?.viewer?.memberNumber || activeMembership?.memberNumber;
-  const worldIcon = PLANET;
   const renewalCopy = activeMembership?.cancelAtPeriodEnd
     ? __msg("social.cancelsAtPeriodEnd")
     : activeMembership?.autoRenew === false
@@ -415,7 +424,7 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
       <section className="world-member-inside-content" onMouseDown={modal ? (event) => event.stopPropagation() : undefined}>
         <span className="world-member-sheet-handle" aria-hidden="true" />
         <header className="world-member-welcome">
-          <span className="world-member-planet" aria-hidden="true">{worldIcon}</span>
+          <span className="world-member-planet"><MinimalWorldIcon size={54} /></span>
           <h1>{__msg("financial.youReInside")}</h1>
           {memberNumber ? <button className="world-member-badge" onClick={() => navigate("/memberships")} type="button">{__msg("profile.member")}{Number(memberNumber).toLocaleString(__uiLocale())}</button> : null}
           <p>{__msg("social.welcomeTo")} {firstName}{__msg("profile.sWorld")}</p>
@@ -440,7 +449,7 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
             <span className="world-member-open">{__msg("social.open")}</span>
           </button>
 
-          <button className="world-member-access-row" onClick={openWorld} type="button"><span className="world-member-access-icon is-planet">{worldIcon}</span><span className="world-member-access-copy"><b>&ldquo;{publication.title}&rdquo;</b><small>{__msg("fanWeb.all")} {experienceCount} {__msg("system.FanCreateSheet.7068381e0b")}{experienceCount === 1 ? "" : "s"} {__msg("system.WorldReaderPage.024ea2c27e")}</small></span><span className="world-member-open">{__msg("social.open")}</span></button>
+          <button className="world-member-access-row" onClick={openWorld} type="button"><span className="world-member-access-icon is-planet"><MinimalWorldIcon size={30} /></span><span className="world-member-access-copy"><b>&ldquo;{publication.title}&rdquo;</b><small>{__msg("fanWeb.all")} {experienceCount} {__msg("system.FanCreateSheet.7068381e0b")}{experienceCount === 1 ? "" : "s"} {__msg("system.WorldReaderPage.024ea2c27e")}</small></span><span className="world-member-open">{__msg("social.open")}</span></button>
 
           <button className="world-member-access-row" onClick={onOpenStories || (() => window.scrollTo({ top: 0, behavior: "smooth" }))} type="button">
             <span className="world-member-access-icon is-ring" aria-hidden="true" />
@@ -510,7 +519,7 @@ function WorldMemberDoorPage({ chapters, creator, onBack, onStepInside, publicat
       <button aria-label={__msg("social.backToMemberAccess")} className="world-member-door-control is-back" onClick={onBack} type="button"><FiArrowLeft /></button>
       <button aria-label={__msg("social.moreWorldOptions")} className="world-member-door-control is-more" onClick={() => setMoreOpen(true)} type="button"><FiMoreHorizontal /></button>
       <section className="world-member-door-copy">
-        <span className="world-member-door-planet" aria-hidden="true">{PLANET}</span>
+        <span className="world-member-door-planet"><MinimalWorldIcon size={64} /></span>
         <h1>{publication.title}</h1>
         <p>{__msg("social.aWorldBy")} {firstName}</p>
         <button className="world-member-door-cta" onClick={onStepInside} type="button">{__msg("publication.stepInside")}</button>
@@ -1081,9 +1090,6 @@ async function copyToClipboard(value) {
 }
 
 const SHARE_REACTIONS = ["💖", "😂", "🔥", "😍", "👏", "😮", "🙏", "🤝"];
-const COMMENT_REACTIONS = [["LIKE", "🤝"], ["LOVE", "❤️"], ["FIRE", "🔥"], ["CLAP", "👏"], ["LAUGH", "😂"], ["SEE_YOU", "👁️"], ["SAD", "🥲"], ["PRAY", "🙏"]];
-const COMMENT_REACTION_ICONS = Object.fromEntries(COMMENT_REACTIONS);
-
 function WorldSharePerson({ onToggle, person, selected }) {
   __useUiLanguage();
   const name = person.displayName || person.name || person.username || __msg("branding.atseen");
@@ -1438,37 +1444,49 @@ function WorldSpamActionSheet({ creator, error, isSubmitting, onClose, onDone })
   </BottomSheet>;
 }
 
-function WorldInsideComments({ engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
+function WorldInsideComments({ noteOwner, engagement, mutationBusy, onCommentReact, onRemove, onReply, replyTarget }) {
   __useUiLanguage();
   const [visibleTexts, setVisibleTexts] = useState({});
-  const [reactionTarget, setReactionTarget] = useState("");
+  const [menuTarget, setMenuTarget] = useState(null);
   const comments = engagement?.comments || [];
   if (!comments.length) return <p className="world-inside-detail__comments-empty">{__msg("social.noCommentsYetBeTheFirstToLeaveA")}</p>;
   const renderComment = (item, isReply = false) => {
     const active = Boolean(item.viewerReaction);
+    const reactionCount = Number(item.reactionCount || 0);
+    const visibleReactionCount = active ? Math.max(1, reactionCount) : reactionCount;
     const showText = !item.audio || visibleTexts[item.id];
-    const reactionIcons = (item.topReactions || []).map((key) => COMMENT_REACTION_ICONS[key] || COMMENT_REACTION_ICONS.LIKE).join("") || COMMENT_REACTION_ICONS.LIKE;
-    return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${engagement.viewerCanModerate ? "can-moderate" : ""}`} key={item.id}>
+    const canManage = Boolean(engagement.viewerCanModerate || item.viewerCanDelete || item.viewerIsAuthor || item.isOwn);
+    return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${canManage ? "can-moderate" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
       <div className="world-inside-detail__comment-body">
-        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || __msg("admin.user")}</Link> {showText ? item.text : null}</p>
+        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || __msg("admin.user")}</Link><MemberCommentBadge author={item.author} noteOwner={noteOwner} /> {showText ? item.text : null}</p>
         {item.audio ? (
           <div className="voice-comment-bubble-row">
-            <VoiceMessageBubble audio={item.audio} label={__msg("comments.voiceComment")} />
-            {item.text ? <button onClick={() => setVisibleTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{showText ? __msg("social.hideText") : __msg("social.showText")}</button> : null}
+            <VoiceMessageBubble audio={item.audio} className="world-voice-comment-player" compact label={__msg("comments.voiceComment")} variant="chip" />
+            {item.text ? <button onClick={() => setVisibleTexts((current) => ({ ...current, [item.id]: !current[item.id] }))} type="button">{showText ? "hide text" : "show text"}</button> : null}
           </div>
         ) : null}
         <div className="world-inside-detail__comment-meta">
-          <button className={active ? "is-active" : ""} disabled={mutationBusy === item.id} onClick={() => setReactionTarget((current) => current === item.id ? "" : item.id)} type="button"><span>{reactionIcons}</span> <span>{Number(item.reactionCount || 0).toLocaleString(__uiLocale())}</span></button>
+          <button aria-label={active ? "Remove heart" : "Heart this comment"} aria-pressed={active} className={`world-comment-heart ${active ? "is-active" : ""}`} disabled={mutationBusy === item.id} onClick={() => onCommentReact(item, active ? "" : "LOVE")} type="button"><FiHeart aria-hidden="true" /> <span>{visibleReactionCount.toLocaleString()}</span></button>
           {!isReply ? <button className={replyTarget?.id === item.id ? "is-active" : ""} onClick={() => onReply(item)} type="button">{__msg("fan.reply")}</button> : null}
         </div>
-        {reactionTarget === item.id ? <div className="world-comment-reaction-picker">{COMMENT_REACTIONS.map(([key, icon]) => <button aria-label={__msg("profile.reactWith", { value0: key.toLowerCase() })} className={item.viewerReaction === key ? "is-active" : ""} disabled={mutationBusy === item.id} key={key} onClick={() => { onCommentReact(item, item.viewerReaction === key ? "" : key); setReactionTarget(""); }} type="button">{icon}</button>)}</div> : null}
         {(item.replies || []).map((reply) => renderComment(reply, true))}
       </div>
-      {engagement.viewerCanModerate ? <button aria-label={__msg("social.deleteComment")} className="is-remove-comment" disabled={mutationBusy === item.id} onClick={() => onRemove(item)} title={__msg("social.deleteComment")} type="button"><FiTrash2 /></button> : null}
+      {canManage ? <button aria-label="Open comment options" className="world-comment-menu-trigger" disabled={mutationBusy === item.id} onClick={() => setMenuTarget(item)} type="button"><FiMoreHorizontal /></button> : null}
     </article>;
   };
-  return <div className="world-inside-detail__comment-list">{comments.map((item) => renderComment(item))}</div>;
+  return <>
+    <div className="world-inside-detail__comment-list">{comments.map((item) => renderComment(item))}</div>
+    {menuTarget ? <BottomSheet labelledBy="world-comment-options-title" onClose={() => setMenuTarget(null)} sheetClassName="world-comment-options-sheet">
+      <header className="world-comment-options-head">
+        <div><h2 id="world-comment-options-title">Comment options</h2><p>{menuTarget.author?.name || menuTarget.author?.username || "Comment"}</p></div>
+        <button aria-label="Close comment options" onClick={() => setMenuTarget(null)} type="button"><FiX /></button>
+      </header>
+      <button className="world-comment-delete-option" disabled={mutationBusy === menuTarget.id} onClick={() => { const target = menuTarget; setMenuTarget(null); onRemove(target); }} type="button">
+        <FiTrash2 /><span><b>Delete comment</b><small>This removes the comment and its replies.</small></span>
+      </button>
+    </BottomSheet> : null}
+  </>;
 }
 
 function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engagementQuery, experiences = [], onBack, onGift, onOpenChapter, onOpenMessages, onOpenStory, publication }) {
@@ -1558,6 +1576,8 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
   };
 
   const toggleCommentReaction = async (comment, reaction = "LIKE") => {
+    const previousEngagement = queryClient.getQueryData(["world-engagement", publication.id]);
+    queryClient.setQueryData(["world-engagement", publication.id], withOptimisticWorldCommentHeart(previousEngagement, comment.id, Boolean(reaction)));
     setCommentBusy(comment.id);
     try {
       const request = !reaction
@@ -1566,6 +1586,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
       const response = await request;
       queryClient.setQueryData(["world-engagement", publication.id], response.data.data.engagement);
     } catch (error) {
+      if (previousEngagement) queryClient.setQueryData(["world-engagement", publication.id], previousEngagement);
       showToast(error?.response?.data?.message || __msg("social.reactionCouldNotBeSaved"));
     } finally {
       setCommentBusy("");
@@ -1646,7 +1667,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
         ? (publication.coverMedia.mediaType === "VIDEO" || publication.coverMedia.resourceType === "video"
           ? <video controls playsInline preload="metadata" src={publication.coverMedia.secureUrl} />
           : <img alt={__msg("discover.cover", { value0: publication.title })} src={publication.coverMedia.secureUrl} />)
-        : <span aria-hidden="true">{planetFaceEmoji(publication.planet)}</span>}
+        : <MinimalWorldIcon size={64} />}
       <div className="world-member-home__hero-copy"><small>{__msg("system.WorldReaderPage.0e3f2dec15")}</small><h2>{publication.title}</h2><p><FanAvatar name={creatorName} size="h-7 w-7" src={creator.avatar} /> {__msg("share.by")} {creatorName} {creator.verified ? "✓" : ""}</p></div>
     </section>
 
@@ -1678,7 +1699,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
           return (
             <article key={experienceId || item.title}>
               <Link className="world-member-home__seen-card" to={experienceId ? `/seen/${experienceId}?returnTo=${encodeURIComponent(`/world/${publication.id || publication._id}/inside?view=detail`)}` : "#"}>
-                <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <i aria-hidden="true">{planetFaceEmoji(publication.planet)}</i>}</span>
+                <span>{item.coverMedia?.secureUrl ? <img alt="" src={item.coverMedia.secureUrl} /> : <MinimalWorldIcon size={34} />}</span>
                 <div><small>{item.category || __msg("system.WorldReaderPage.9a3b98b949")}</small><b>{item.title || __msg("profile.untitledSeen")}</b><em>{chapterCount} {chapterCount === 1 ? __msg("profile.chapter_09d4c7") : __msg("discover.chapters")}</em><p>{item.summary || __msg("system.WorldReaderPage.88cd8ee848")}</p></div>
               </Link>
               <div className="world-member-home__seen-chapters">
@@ -1694,7 +1715,7 @@ function WorldInsideDetailPage({ canViewMemberContent, chapters, creator, engage
 
     <section className="world-inside-detail__comments">
       <h2>{__msg("social.comments")} {Number(engagement.commentCount || 0).toLocaleString(__uiLocale())}</h2>
-      <WorldInsideComments engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onRemove={removeComment} onReply={setReplyTarget} replyTarget={replyTarget} />
+      <WorldInsideComments noteOwner={creator} engagement={engagement} mutationBusy={commentBusy} onCommentReact={toggleCommentReaction} onRemove={removeComment} onReply={setReplyTarget} replyTarget={replyTarget} />
       {publication.commentsEnabled === false ? <p className="world-inside-detail__comments-empty">{__msg("social.commentsAreTurnedOffForThisWorld")}</p> : <form className="media-comments-composer" onSubmit={submitComment}>
         <FanAvatar name={user?.name || user?.username || "You"} size="h-7 w-7" src={user?.avatar} />
         <div>
@@ -1879,6 +1900,7 @@ function ExperienceVisitorOverview({ canView, chapters, engagementQuery, onBack,
         </header>
         {engagementQuery?.isLoading ? <p className="world-inside-detail__comments-empty">{__msg("social.loadingComments")}</p> : (
           <WorldInsideComments
+            noteOwner={publication?.creator}
             engagement={engagement}
             mutationBusy={commentBusy}
             onCommentReact={toggleCommentReaction}
@@ -2367,7 +2389,7 @@ export default function WorldReaderPage() {
     return (
       <><div className="world-member-inside-page">
         <section className="world-member-inside-content world-member-denied">
-          <span className="world-member-planet" aria-hidden="true">{planetFaceEmoji(publication?.planet)}</span>
+          <span className="world-member-planet"><MinimalWorldIcon size={54} /></span>
           <h1>{__msg("social.membersOnly")}</h1>
           <p>{__msg("profile.join")} {creatorFirstName(creator)}{__msg("social.sWorldToEnterThisSpace")}</p>
           <button className="world-member-primary" disabled={joinPremium.isPending || cancelWaitingList.isPending} onClick={waitingListQuery.data ? () => cancelWaitingList.mutate() : openPremiumJoin} type="button">
@@ -2560,6 +2582,8 @@ export default function WorldReaderPage() {
       return;
     }
     if (!targetComment?.id || commentReactionPending) return;
+    const previousEngagement = queryClient.getQueryData(["world-engagement", id]);
+    queryClient.setQueryData(["world-engagement", id], withOptimisticWorldCommentHeart(previousEngagement, targetComment.id, Boolean(reaction)));
     setCommentReactionPending(targetComment.id);
     try {
       const response = !reaction
@@ -2571,6 +2595,7 @@ export default function WorldReaderPage() {
         await engagement.refetch();
       }
     } catch (error) {
+      if (previousEngagement) queryClient.setQueryData(["world-engagement", id], previousEngagement);
       showToast(error?.response?.data?.message || __msg("social.reactionCouldNotBeUpdated"));
     } finally {
       setCommentReactionPending("");
@@ -2705,6 +2730,7 @@ export default function WorldReaderPage() {
       <nav aria-label={__msg("social.worldActions")}>
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>{__msg("admin.share")}</b></span></button>
         <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}?edit=1`); }} type="button"><FiEdit3 /><span><b>{__msg("profile.edit")}</b><small>{__msg("social.titleStoriesAccess")}</small></span></button>
+        <button onClick={() => setSheet("face")} type="button"><FiEdit3 /><span><b>Change World icon</b><small>choose the topic emoji above your planet</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>{__msg("profile.changeCover")}</b></span></button>
         <button aria-label={commentsEnabled ? __msg("social.turnCommentsOff") : __msg("social.turnCommentsOn")} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? __msg("social.turnCommentsOff") : __msg("social.turnCommentsOn")}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>{__msg("social.moderators")}</b><small>{__msg("social.thisProductSOwnCleanupTeam")}</small></span></button>
@@ -2727,10 +2753,8 @@ export default function WorldReaderPage() {
         {!experience ? (
           <section className="world-prototype-planet">
             {commentStatusToast ? <div className="world-comment-status-pill" role="status">{commentStatusToast}</div> : null}
-            <button aria-label={explicitWorldEdit ? __msg("creator.changePlanetFace") : __msg("social.worldIcon")} onClick={() => explicitWorldEdit && setSheet("face")} type="button">
-              <span>{faceEmoji}</span>
-              <span>{PLANET}</span>
-            </button>
+            <span className="world-prototype-minimal-icon"><MinimalWorldIcon size={64} /></span>
+            {owner ? <button aria-label={`Change profile World icon. Current icon ${faceEmoji}`} className="world-prototype-selected-icon" onClick={() => setSheet("face")} type="button">{faceEmoji}</button> : <span aria-label={`Selected profile World icon ${faceEmoji}`} className="world-prototype-selected-icon" role="img">{faceEmoji}</span>}
           </section>
         ) : null}
 
@@ -2987,6 +3011,7 @@ export default function WorldReaderPage() {
           ) : <p className="world-prototype-empty-comments"><FiMessageCircle /> {__msg("creator.commentsAreTurnedOff")}</p>}
           {engagement.isLoading ? <p className="world-prototype-empty-comments">{__msg("social.loadingComments")}</p> : (
             <WorldInsideComments
+              noteOwner={publication?.creator}
               engagement={engagement.data || {}}
               mutationBusy={commentReactionPending || commentRemovePending}
               onCommentReact={toggleOwnerCommentReaction}
