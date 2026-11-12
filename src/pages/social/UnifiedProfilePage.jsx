@@ -48,6 +48,7 @@ import "../../styles/publicProfile.css";
 import "../../styles/businessContactActions.css";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
 import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
+import GiftArt from "../../components/gifts/GiftArt";
 import ProfileMediaSection from "../../components/profile/ProfilePhotosSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
 import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
@@ -926,7 +927,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
     {previewGift ? <GiftCelebration {...profileGiftCopy(previewGift, { isOwner, viewerId })} detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message={__msg("social.giftReceived")} variant="is-profile-gift" /> : null}
     {reportSheet || (detailGift ? <section aria-label={__msg("social.giftDetails", { value0: detailGift.name })} className="profile-gift-detail-sheet">
       <button aria-label={__msg("social.backToReceivedGifts")} className="profile-gift-detail-handle" onClick={() => setDetailGift(null)} type="button" />
-      <button aria-label={__msg("social.replayGiftAnimation")} className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><span aria-hidden="true" /><img alt={detailGift.name} src={detailGift.imageUrl} /></button>
+      <button aria-label={__msg("social.replayGiftAnimation")} className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><span aria-hidden="true" /><GiftArt gift={detailGift} /></button>
       <h2 dir="auto">{detailGift.name}</h2>
       {profileGiftCopy(detailGift, { isOwner, viewerId }).caption ? <p dir="auto" className="profile-gift-detail-tagline">&ldquo;{profileGiftCopy(detailGift, { isOwner, viewerId }).caption}&rdquo;</p> : null}
       {detailGift.message ? <blockquote>&ldquo;{detailGift.message}&rdquo;</blockquote> : null}
@@ -949,11 +950,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
       {!query.isLoading && !query.isError && !gifts.length ? <p className="py-16 text-center text-sm text-white/45">{__msg("social.noGiftsReceivedYet")}</p> : null}
       <div className="profile-received-gifts-grid">
         {displayGifts.map((gift) => <button aria-label={__msg("social.playGiftAnimation", { value0: gift.name })} className={gift.featuredOnProfile ? "profile-received-gift is-featured" : "profile-received-gift"} key={gift.id} onClick={() => setPreviewGift({ ...gift, celebrationId: `${gift.id}-${Date.now()}`, detail: gift.sender?.name ? `From ${gift.sender.name}` : `Received via ${gift.source || "gift"}` })} type="button">
-          <span><img alt={gift.name} onLoad={(event) => {
-            const image = event.currentTarget;
-            const ratio = image.naturalWidth / image.naturalHeight;
-            image.style.setProperty("--profile-gift-art-height", ratio < .85 ? "78px" : ratio > 1.15 ? "60px" : "68px");
-          }} src={resolveMediaUrl(gift.imageUrl)} style={{ transform: `translate(${Number(gift.imagePositionX || 0)}%, ${Number(gift.imagePositionY || 0)}%) scale(${Number(gift.displayScale || 100) / 100})` }} /></span>
+          <span><GiftArt className="h-full w-full" gift={gift} imageClassName="h-full w-full" imageUrl={resolveMediaUrl(gift.imageUrl)} /></span>
           <strong dir="auto">{gift.name}</strong>
           <small>{senderLine(gift)}</small>
         </button>)}
@@ -1206,7 +1203,8 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     queryKey: ["unified-profile", owner ? "me" : username],
     queryFn: () => (owner ? profileService.getUnifiedMe() : profileService.getUnifiedProfile(username)).then((response) => response.data.data),
     enabled: owner || Boolean(username),
-    retry: false,
+    retry: (failureCount, error) => failureCount < 1 && (!error.response || error.response.status >= 500),
+    staleTime: 30_000,
   });
 
   const refetchProfile = profileQuery.refetch;

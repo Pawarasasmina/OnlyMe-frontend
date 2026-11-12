@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { messageService } from "../../services/messageService";
 import { resolveMediaUrl } from "../../utils/media";
 import { FiGift } from "react-icons/fi";
+import GiftArt from "../gifts/GiftArt";
 
 export default function ActivityGiftPreview({ activity, onClose }) {
   __useUiLanguage();
@@ -61,7 +62,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
     <button aria-label={__msg("activity.closeGiftPreview")} className="activity-gift-preview-dismiss" onClick={onClose} ref={closeButton} type="button">
       <span className="activity-gift-preview-art">
         <i aria-hidden="true" />
-        {imageUrl ? <img alt={name} src={imageUrl} style={{ transform: `translate(${Number(gift.imagePositionX || metadata.giftImagePositionX || 0)}%, ${Number(gift.imagePositionY || metadata.giftImagePositionY || 0)}%) scale(${Number(gift.displayScale || metadata.giftDisplayScale || 100) / 100})` }} /> : <FiGift aria-label={name} />}
+        {imageUrl ? <GiftArt gift={gift} imageUrl={imageUrl} /> : <FiGift aria-label={name} />}
       </span>
       <span className="activity-gift-preview-info">
         <strong>{name}</strong>

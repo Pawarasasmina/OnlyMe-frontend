@@ -29,6 +29,7 @@ export const adminService = {
   getGifts: () => axiosInstance.get("/admin/gifts"),
   createGiftCategory: (name) => axiosInstance.post("/admin/gift-categories", { name }),
   updateGiftCategory: (id, payload) => axiosInstance.patch(`/admin/gift-categories/${id}`, payload),
+  reorderGiftCategories: (ids) => axiosInstance.patch("/admin/gift-categories/reorder", { ids }),
   deleteGiftCategory: (id) => axiosInstance.delete(`/admin/gift-categories/${id}`),
   createGift: (formData, onUploadProgress) => axiosInstance.post("/admin/gifts", formData, { onUploadProgress }),
   updateGift: (id, formData, onUploadProgress) => axiosInstance.patch(`/admin/gifts/${id}`, formData, { onUploadProgress }),

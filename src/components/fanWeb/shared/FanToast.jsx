@@ -45,7 +45,7 @@ export function FanToastProvider({ children }) {
     if (!column) return undefined;
     const update = () => {
       const bounds = column.getBoundingClientRect();
-      setThanksPosition({ left: `${bounds.left + bounds.width / 2}px`, width: `${Math.min(520, bounds.width - 28)}px` });
+      setThanksPosition({ left: `${bounds.left + bounds.width / 2}px`, width: `${Math.min(416, bounds.width - 24)}px` });
     };
     update();
     window.addEventListener("resize", update);

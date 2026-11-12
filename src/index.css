@@ -7556,15 +7556,20 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
 /* Keep the picker celebration inside the same right-hand main section. */
 .dream-gift-backdrop .gift-celebration-layer {
+  top: 0;
+  bottom: 0;
   right: auto;
   left: calc(var(--gift-sheet-center-x, 50%) - min(100vw, var(--gift-sheet-column-width, 440px)) / 2);
   width: min(100vw, var(--gift-sheet-column-width, 440px));
+  height: 100dvh;
+  background: #05070a;
 }
 
 .dream-gift-backdrop .gift-celebration-scene {
   display: block;
   left: 50%;
   width: min(100vw, var(--gift-sheet-column-width, 440px));
+  animation: gift-profile-scene-in .5s ease-out forwards;
 }
 
 .dream-gift-backdrop .gift-success-toast,
@@ -7578,7 +7583,15 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 
 .dream-gift-backdrop .gift-celebration-stage {
   width: min(100vw, var(--gift-sheet-column-width, 440px));
+  height: min(760px, 100dvh);
 }
+
+.dream-gift-backdrop .gift-celebration-image { width: min(280px, 64vw); height: min(280px, 64vw); }
+.dream-gift-backdrop .gift-celebration-name { top: calc(50% + 158px); font-size: 20px; }
+.dream-gift-backdrop .gift-celebration-caption { top: calc(50% + 190px); font-size: 13px; }
+.dream-gift-backdrop .gift-celebration-recipient { top: calc(50% + 216px); }
+
+@keyframes gift-profile-scene-in { from { opacity: 0; } to { opacity: 1; } }
 
 .dream-gift-backdrop .gift-celebration-name {
   width: calc(min(100vw, var(--gift-sheet-column-width, 440px)) - 48px);
@@ -25714,6 +25727,7 @@ video.seen-reader-media {
 .dream-gift-confirm-image { display: grid; width: 108px; height: 108px; place-items: center; }
 .dream-gift-confirm-image img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 14px rgba(0,0,0,.5)) drop-shadow(0 0 14px rgba(156,203,255,.22)); }
 .dream-gift-confirm h2 { margin-top: 8px; color: #fff; font-size: 17px; font-weight: 900; }
+.dream-gift-caption { margin-top: 2px !important; color: rgba(255,255,255,.72) !important; font-size: 11px !important; }
 .dream-gift-confirm > p { margin-top: 3px; color: rgba(255,255,255,.7); font-size: 12px; }
 .dream-gift-confirm > small { margin-top: 3px; color: rgba(255,255,255,.48); font-size: 10px; }
 .dream-gift-confirm > small strong { color: rgba(255,255,255,.72); }
@@ -25731,9 +25745,21 @@ video.seen-reader-media {
 .dream-gift-message { display: grid; width: 100%; gap: 7px; margin-top: 12px; color: rgba(255,255,255,.42); font-size: 9px; text-align: left; }
 .dream-gift-message input { width: 100%; min-height: 42px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: #11151b; padding: 0 14px; color: #fff; font-size: 11px; outline: 0; }
 .dream-gift-message input:focus { border-color: rgba(156,203,255,.5); }
-.dream-gift-send { width: 100%; min-height: 43px; margin-top: 17px; border-radius: 999px; background: #8fc5ff; color: #07101a; font-size: 12px; font-weight: 950; box-shadow: 0 10px 28px rgba(111,169,232,.28); }
+.dream-gift-send { width: 100%; min-height: 43px; margin-top: 17px; border-radius: 999px; background: #8fc5ff; color: #07101a; font-size: 13px; font-weight: 800; letter-spacing: -.01em; box-shadow: 0 10px 28px rgba(111,169,232,.28); }
+.dream-gift-send span { font-weight: 800; }
 .dream-gift-send:disabled { opacity: .5; }
 .dream-gift-open-note { margin-top: 10px !important; color: rgba(255,255,255,.3) !important; font-size: 8px !important; }
+
+/* A chosen gift uses the compact prototype confirmation sheet, not the catalog height. */
+.dream-gift-sheet.has-gift-selection {
+  height: auto !important;
+  max-height: min(72dvh, 520px) !important;
+  overflow-y: auto;
+  padding-top: 10px;
+}
+.dream-gift-sheet.has-gift-selection .dream-gift-handle { margin-bottom: 4px; }
+.dream-gift-sheet.has-gift-selection .dream-gift-confirm-image { width: 122px; height: 122px; }
+.dream-gift-sheet.has-gift-selection .dream-gift-change { display: none; }
 
 @media (max-width: 767px) {
   .dream-gift-sheet {
@@ -41254,12 +41280,31 @@ video.seen-reader-media {
 @media (max-width:600px) { .fan-gift-thanks-toast { top:14px; }.fan-gift-thanks-toast > button { gap:12px; }.fan-gift-thanks-avatar { width:44px;height:44px; } }
 @media (prefers-reduced-motion:reduce) { .fan-gift-thanks-toast { transition:none; } }
 
-/* Both post-gift banners share the reference's center-column geometry. */
-.fan-gift-shelf-toast { min-height:74px;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;padding:10px 16px 10px 12px;border:1px solid rgba(255,255,255,.09);border-radius:26px;background:#191e29;box-shadow:0 12px 32px rgba(0,0,0,.22); }
-.fan-gift-shelf-media { width:52px;height:52px; }
-.fan-gift-shelf-media > img:first-child { width:52px;height:52px; }
-.fan-gift-shelf-media > img:last-child:not(:first-child) { width:28px;height:28px;right:-7px;bottom:-4px; }
-@media (max-width:600px) { .fan-gift-shelf-toast { grid-template-columns:44px minmax(0,1fr) auto;gap:12px; }.fan-gift-shelf-media,.fan-gift-shelf-media > img:first-child { width:44px;height:44px; } }
+/* Compact post-gift shelf banner from the profile prototype. */
+.fan-gift-shelf-toast {
+  top:32px;
+  min-height:62px;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:10px;
+  padding:8px 12px 8px 10px;
+  border:1px solid rgba(156,203,255,.14);
+  border-radius:18px;
+  background:#191e29;
+  box-shadow:0 10px 28px rgba(0,0,0,.34);
+}
+.fan-gift-shelf-media { width:42px;height:42px; }
+.fan-gift-shelf-media > img:first-child { width:40px;height:40px; }
+.fan-gift-shelf-media > img:last-child:not(:first-child) { width:22px;height:22px;right:-4px;bottom:-3px; }
+.fan-gift-shelf-copy strong { font-size:13px;line-height:1.2;font-weight:800; }
+.fan-gift-shelf-copy small { margin-top:2px;font-size:11px;line-height:1.25;color:rgba(255,255,255,.62); }
+.fan-gift-shelf-toast > button { padding:8px 0 8px 8px;color:#bfe3ff;font-size:12px;line-height:1;font-weight:800; }
+@media (max-width:600px) {
+  .fan-gift-shelf-toast { top:max(14px,env(safe-area-inset-top));min-height:62px;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;padding:8px 12px 8px 10px;border-radius:18px; }
+  .fan-gift-shelf-media { width:42px;height:42px; }
+  .fan-gift-shelf-media > img:first-child { width:40px;height:40px; }
+  .fan-gift-shelf-copy strong { font-size:13px; }
+  .fan-gift-shelf-copy small { font-size:11px; }
+}
 
 .fan-gift-thanks-avatar { overflow:hidden; }
 .fan-gift-thanks-avatar img { display:block;min-width:0;min-height:0;width:52px;height:52px;max-width:none;object-fit:cover; }
@@ -41850,4 +41895,49 @@ html[dir="rtl"] textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* Admin-configured gift motion. The wrapper moves; animated GIF/WebP content remains intact. */
+.gift-art{position:relative;display:inline-grid;place-items:center;isolation:isolate;max-width:100%;max-height:100%;transform-origin:50% 58%}.gift-art-image{display:contents}.gift-art img{display:block;max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 8px 12px rgba(0,0,0,.4))}.gift-art-shine{position:absolute;inset:0;overflow:hidden;border-radius:12px;pointer-events:none}.gift-art-shine::after{content:"";position:absolute;top:-30%;left:-80%;width:45%;height:160%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);transform:rotate(8deg);animation:gift-sweep 4.6s ease var(--md,0s) infinite}.gift-art.g-halo::before{content:"";position:absolute;inset:10%;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(156,203,255,.5),transparent 68%);animation:gift-halo 2.8s ease-in-out var(--md,0s) infinite}
+.gm-beat{animation:gm-beat 1.9s ease-in-out var(--md,0s) infinite}.gm-sway{animation:gm-sway 2.3s ease-in-out var(--md,0s) infinite}.gm-hover{animation:gm-hover 2.2s ease-in-out var(--md,0s) infinite}.gm-floaty{animation:gm-floaty 2.7s ease-in-out var(--md,0s) infinite}.gm-glowp{animation:gm-glowp 2.1s ease-in-out var(--md,0s) infinite}.gm-rev{animation:gm-rev 2.8s ease-in-out var(--md,0s) infinite}.gm-spin{animation:gm-spin 5.4s linear var(--md,0s) infinite}.gm-coin{animation:gm-coin 2.7s ease-in-out var(--md,0s) infinite}.gm-flick{animation:gm-flick .95s ease-in-out var(--md,0s) infinite alternate}.gm-bob2{animation:gm-bob2 1.8s ease-in-out var(--md,0s) infinite}.gm-pulse{animation:gm-pulse 2s ease-in-out var(--md,0s) infinite}
+@keyframes gm-beat{0%,42%,100%{transform:scale(1)}48%{transform:scale(1.08)}55%{transform:scale(.99)}62%{transform:scale(1.045)}}@keyframes gm-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}@keyframes gm-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}@keyframes gm-floaty{0%,100%{transform:translate(-2px,2px) rotate(-1deg)}50%{transform:translate(3px,-7px) rotate(2deg)}}@keyframes gm-glowp{0%,100%{filter:drop-shadow(0 0 2px rgba(156,203,255,.15))}50%{filter:drop-shadow(0 0 13px rgba(156,203,255,.75));transform:scale(1.035)}}@keyframes gm-rev{0%,100%{transform:rotate(-4deg) translateY(1px)}50%{transform:rotate(4deg) translateY(-4px)}}@keyframes gm-spin{to{transform:rotate(360deg)}}@keyframes gm-coin{0%,100%{transform:rotateY(-18deg)}50%{transform:rotateY(18deg) scale(1.04)}}@keyframes gm-flick{from{filter:brightness(1)}to{filter:brightness(1.17) drop-shadow(0 0 8px rgba(255,166,77,.3))}}@keyframes gm-bob2{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}@keyframes gm-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.065)}}@keyframes gift-sweep{0%,72%{left:-80%}88%,100%{left:130%}}@keyframes gift-halo{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1.2)}}
+@media(prefers-reduced-motion:reduce){.gift-art,.gift-art-shine::after,.gift-art.g-halo::before{animation:none!important}}
+
+/* Price-scaled send scenes. */
+.gift-tier-small .gift-celebration-veil,.gift-tier-small .gift-celebration-scene,.gift-tier-small .gift-celebration-ring,.gift-tier-small .gift-celebration-particle{display:none}.gift-tier-small .gift-celebration-image{animation:gift-small-float 1.4s ease-out forwards}.gift-tier-mid .gift-celebration-image{animation:gift-mid-pop 1.55s cubic-bezier(.16,.8,.3,1) forwards}.gift-tier-big .gift-celebration-image,.gift-tier-legendary .gift-celebration-image,.gift-tier-vault .gift-celebration-image{animation:gift-cinema-in 3.5s cubic-bezier(.23,1,.32,1) both}.gift-tier-big .gift-celebration-stage,.gift-tier-legendary .gift-celebration-stage,.gift-tier-vault .gift-celebration-stage{animation:gift-camera 4.2s cubic-bezier(.25,.6,.3,1) both}.gift-tier-legendary .gift-celebration-image,.gift-tier-vault .gift-celebration-image{animation-delay:1.35s}.gift-vault-intro{position:absolute;inset:0;z-index:6;display:grid;place-items:center;pointer-events:none;animation:gift-vault-out 1.8s ease forwards}.gift-vault-intro strong{color:#dceeff;font-size:12px;letter-spacing:.35em;text-shadow:0 0 24px #9ccbff}.gift-vault-intro i{position:absolute;width:150px;height:150px;border:1px solid rgba(156,203,255,.7);border-radius:50%;animation:gift-vault-ring 1.5s ease-out both}.gift-vault-intro i:nth-child(2){animation-delay:.2s}.gift-tier-vault .gift-celebration-scene{background:radial-gradient(circle at 50% 42%,rgba(156,203,255,.24),rgba(4,6,10,.94) 58%)}
+.fx-glass .gift-celebration-image{filter:drop-shadow(0 0 24px rgba(190,225,255,.5))}.fx-fash .gift-celebration-image{transform-origin:50% 80%}.fx-mech .gift-celebration-image{animation-timing-function:cubic-bezier(.2,.8,.2,1)}.fx-energy .gift-celebration-glow{filter:brightness(1.5)}.fx-lux .gift-celebration-image,.fx-royal .gift-celebration-image{filter:drop-shadow(0 24px 32px rgba(0,0,0,.65)) drop-shadow(0 0 20px rgba(255,220,150,.22))}.fx-soft .gift-celebration-image{filter:drop-shadow(0 12px 30px rgba(156,203,255,.22))}.fx2-car .gift-celebration-image,.fx2-moto .gift-celebration-image{animation-name:gift-object-drive}.fx2-rocketx .gift-celebration-image,.fx2-jetx .gift-celebration-image{animation-name:gift-object-launch}.fx2-boatx .gift-celebration-image{animation-name:gift-object-boat}.fx2-watch .gift-celebration-image,.fx2-spin360 .gift-celebration-image{animation-name:gift-object-turn}.fx2-neon .gift-celebration-image{animation-name:gift-object-neon}
+@keyframes gift-small-float{0%{transform:translate(-50%,55vh) scale(.55);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-48vh) scale(1.1) rotate(8deg);opacity:0}}@keyframes gift-mid-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotateY(-70deg)}45%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotateY(12deg)}100%{transform:translate(-50%,-50%) scale(1) rotateY(0)}}@keyframes gift-cinema-in{from{opacity:0;transform:translate(-50%,calc(-50% + 54px)) scale(.82)}35%{opacity:1;transform:translate(-50%,calc(-50% - 6px)) scale(1.04)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}@keyframes gift-camera{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.055)}}@keyframes gift-vault-out{0%,70%{opacity:1}100%{opacity:0;visibility:hidden}}@keyframes gift-vault-ring{from{opacity:.9;transform:scale(.2)}to{opacity:0;transform:scale(3)}}@keyframes gift-object-drive{from{opacity:0;transform:translate(-180%,-50%) skewX(-7deg)}45%{opacity:1;transform:translate(-46%,-50%) skewX(2deg)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes gift-object-launch{0%{opacity:0;transform:translate(-50%,calc(-50% + 90px)) scale(.85)}30%{opacity:1;transform:translate(-50%,-50%)}72%{transform:translate(-50%,calc(-50% - 7px))}100%{transform:translate(calc(-50% + 45px),calc(-50% - 90px)) scale(1.08)}}@keyframes gift-object-boat{from{opacity:0;transform:translate(-130%,calc(-50% + 46px)) rotate(-5deg)}55%{opacity:1;transform:translate(-47%,calc(-50% - 8px)) rotate(2deg)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes gift-object-turn{from{opacity:0;transform:translate(-50%,calc(-50% + 40px)) rotateY(34deg)}to{opacity:1;transform:translate(-50%,-50%) rotateY(-8deg)}}@keyframes gift-object-neon{0%,12%,20%{opacity:.15;filter:brightness(.4)}16%,26%,100%{opacity:1;filter:brightness(1.25) drop-shadow(0 0 18px #9ccbff)}}
+@media(max-width:640px){.gift-tier-big .gift-celebration-stage,.gift-tier-legendary .gift-celebration-stage,.gift-tier-vault .gift-celebration-stage{width:min(92vw,360px);height:min(92vw,360px)}.gift-tier-big .gift-celebration-image,.gift-tier-legendary .gift-celebration-image,.gift-tier-vault .gift-celebration-image{width:min(48vw,190px);height:min(48vw,190px)}}
+@media(prefers-reduced-motion:reduce){.gift-celebration-layer *{animation-duration:.01ms!important;animation-delay:0s!important}.gift-vault-intro{display:none}}
+
+/* Compact live preview in the admin gift editor. */
+.admin-gift-cinematic{position:relative;height:250px;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 48%,rgba(156,203,255,.14),transparent 58%);perspective:900px}.admin-cine-glow{position:absolute;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(156,203,255,.24),transparent 66%);animation:gfxGlow 2.4s ease-in-out infinite}.admin-cine-art{position:relative;z-index:2;display:grid;width:128px;height:128px;place-items:center;transform-style:preserve-3d}.admin-cine-title{position:absolute;z-index:5;color:#dceeff;font-size:10px;letter-spacing:.34em;text-shadow:0 0 22px #9ccbff;animation:admin-title 1.35s ease forwards}.admin-cine-spark{position:absolute;left:50%;top:50%;z-index:1;color:#bfe3ff}.admin-cine-spark::before{content:"✦";display:block;font-size:10px;animation:admin-spark 1.25s .45s ease-out both;transform:rotate(var(--a)) translateY(calc(-1 * var(--d)))}.admin-gift-cinematic.tier-small .admin-cine-art{animation:admin-small 1.4s ease-out both}.admin-gift-cinematic.tier-mid .admin-cine-art{animation:gift-mid-pop 1.55s cubic-bezier(.16,.8,.3,1) both}.admin-gift-cinematic.tier-big .admin-cine-art{animation:gift-cinema-in 3.5s cubic-bezier(.23,1,.32,1) both}.admin-gift-cinematic.tier-legendary .admin-cine-art,.admin-gift-cinematic.tier-vault .admin-cine-art{animation:gift-cinema-in 3.5s 1.05s cubic-bezier(.23,1,.32,1) both}.admin-gift-cinematic.fx-fash .admin-cine-art{animation-name:fxFash}.admin-gift-cinematic.fx-mech .admin-cine-art{animation-name:fxMech}.admin-gift-cinematic.fx-energy .admin-cine-art{animation-name:fxEnergy}.admin-gift-cinematic.fx-launch .admin-cine-art{animation-name:fxLaunchIn}.admin-gift-cinematic.fx-celebr .admin-cine-art{animation-name:fxCelebr}.admin-gift-cinematic.fx-lux .admin-cine-art{animation-name:fxLux}.admin-gift-cinematic.fx-royal .admin-cine-art{animation-name:fxRoyal}.admin-gift-cinematic.fx-soft .admin-cine-art{animation-name:fxSoft}.admin-gift-cinematic.fx-glass .admin-cine-art{animation-name:fxGlass}.admin-gift-cinematic.fx2-car .admin-cine-art,.admin-gift-cinematic.fx2-moto .admin-cine-art{animation-name:gift-object-drive}.admin-gift-cinematic.fx2-boatx .admin-cine-art{animation-name:gift-object-boat}.admin-gift-cinematic.fx2-rocketx .admin-cine-art,.admin-gift-cinematic.fx2-jetx .admin-cine-art{animation-name:gift-object-launch}.admin-gift-cinematic.fx2-watch .admin-cine-art,.admin-gift-cinematic.fx2-spin360 .admin-cine-art{animation-name:gift-object-turn}.admin-gift-cinematic.fx2-neon .admin-cine-art{animation-name:gift-object-neon}.admin-gift-cinematic[class*="fx2-"] .admin-cine-art{animation-duration:3.4s;animation-timing-function:cubic-bezier(.23,1,.32,1);animation-fill-mode:both}
+@keyframes admin-small{0%{opacity:0;transform:translateY(125px) scale(.6)}18%{opacity:1}100%{opacity:0;transform:translateY(-125px) scale(1.08) rotate(7deg)}}@keyframes admin-title{0%,68%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.1)}}@keyframes admin-spark{0%{opacity:0;transform:rotate(var(--a)) translateY(0) scale(.2)}18%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(1)}}@keyframes fxGlass{from{opacity:0;transform:translateY(46px) scale(.86)}35%{opacity:1}to{transform:none}}@keyframes fxFash{from{opacity:0;transform:translateY(30px) rotate(-4deg) scale(.9)}40%{opacity:1;transform:rotate(2deg)}to{transform:none}}@keyframes fxMech{from{opacity:0;transform:translateY(-45px) scale(.88)}35%{opacity:1;transform:translateY(9px)}60%{transform:translateY(-5px)}to{transform:none}}@keyframes fxEnergy{from{opacity:0;transform:scale(.25)}70%{opacity:1;transform:scale(1.1)}to{transform:scale(1)}}@keyframes fxLaunchIn{from{opacity:0;transform:translateY(100px) scale(.82)}to{opacity:1;transform:none}}@keyframes fxCelebr{from{opacity:0;transform:translateY(65px) scale(.65)}50%{opacity:1;transform:translateY(-12px) scale(1.05)}to{transform:none}}@keyframes fxLux{from{opacity:0;transform:translateX(-100px) scale(.9)}45%{opacity:1;transform:translateX(7px)}to{transform:none}}@keyframes fxRoyal{from{opacity:0;transform:translateY(-80px) scale(.84)}50%{opacity:1;transform:translateY(7px)}to{transform:none}}@keyframes fxSoft{from{opacity:0;transform:translateY(28px) scale(.93)}45%{opacity:1}to{transform:none}}
+@media(prefers-reduced-motion:reduce){.admin-gift-cinematic *{animation-duration:.01ms!important;animation-delay:0s!important}}
+
+/* Keep animated/scaled gift artwork out of the name and coin-value rows. */
+.dream-gift-tile>span{position:relative;margin-bottom:12px!important}.dream-gift-tile>strong,.dream-gift-tile>small{position:relative;z-index:3}.dream-gift-category .dream-gift-tile{min-height:124px}.dream-gift-grid.is-most-gifted .dream-gift-tile{min-height:118px}.dream-support-gifts .dream-gift-tile{min-height:138px}
+@media(max-width:420px){.dream-gift-tile>span{margin-bottom:10px!important}.dream-gift-category .dream-gift-tile{min-height:118px}}
+
+/* Keep the primary gift action heavy after shared sheet typography rules. */
+.dream-gift-sheet .dream-gift-send,
+.dream-gift-sheet .dream-gift-send > strong,
+.dream-gift-sheet .dream-gift-send > span { font-weight: 900 !important; }
+
+/* After the one-shot send effect, settle on the centered gift and let GiftArt's idle motion play. */
+.gift-celebration-layer.is-profile-gift .gift-celebration-image {
+  opacity: 1;
+  transform: translate(-50%,-50%);
+  animation-fill-mode: backwards !important;
+}
+.gift-celebration-layer.is-profile-gift .gift-celebration-stage {
+  animation-fill-mode: backwards !important;
+}
+.gift-celebration-layer.is-profile-gift .gift-celebration-name,
+.gift-celebration-layer.is-profile-gift .gift-celebration-caption,
+.gift-celebration-layer.is-profile-gift .gift-celebration-recipient {
+  animation: gift-profile-copy-hold .7s .55s ease-out both !important;
+}
+@keyframes gift-profile-copy-hold {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
