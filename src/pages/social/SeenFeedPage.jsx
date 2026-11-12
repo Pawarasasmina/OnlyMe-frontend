@@ -1,3 +1,5 @@
+import { useReactionSelection } from "../../hooks/useReactionSelection";
+import { popReactionCapsule } from "../../utils/reactionMotion";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -819,6 +821,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
 
 function ReactionPicker({ item, onClose, onSelect, pending }) {
   __useUiLanguage();
+  const { choose, selecting } = useReactionSelection({ busy: pending, onSelect, onClose });
   const selectedReaction = currentSeenReactionKey(item.viewerState.reaction);
   const sheetPosition = useSeenSheetPosition(true);
   useEffect(() => {
@@ -843,7 +846,7 @@ function ReactionPicker({ item, onClose, onSelect, pending }) {
           + (reaction.key === "FIRE" ? Number(item.engagement.reactionBreakdown?.INSIGHTFUL) || 0 : 0)
           + (reaction.key === "SEE_YOU" ? Number(item.engagement.reactionBreakdown?.PHONE) || 0 : 0);
         const selected = selectedReaction === reaction.key;
-        return <button aria-label={__msg("fanWeb.reaction_bfb553", { value0: selected ? __msg("profile.remove") : __msg("fanWeb.send"), value1: reaction.label })} aria-pressed={selected} className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"} disabled={pending} key={reaction.key} onClick={() => onSelect(selected ? "" : reaction.key)} type="button">
+        return <button aria-label={__msg("fanWeb.reaction_bfb553", { value0: selected ? __msg("profile.remove") : __msg("fanWeb.send"), value1: reaction.label })} aria-pressed={selected} className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"} disabled={pending || selecting} key={reaction.key} onClick={(event) => choose(event, selected ? "" : reaction.key)} type="button">
           <span aria-hidden="true"><SeenReactionIcon reaction={reaction} /></span>
           <small>{count || ""}</small>
         </button>;
@@ -870,7 +873,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReact
       {!isOwn ? <button aria-label={selected.reposted ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat /><b>{formatCount(item.engagement.reposts)}</b></button> : null}
     </div>
     <div className="seen-engagement-right">
-      <button aria-label={selected.saved ? __msg("profile.removeFromSaved") : __msg("publication.saveSeen")} className={selected.saved ? "is-selected" : ""} disabled={pending} onClick={onSave} type="button"><FiBookmark fill={selected.saved ? "currentColor" : "none"} /></button>
+      <button data-first-hint={!selected.saved ? "save" : undefined} aria-label={selected.saved ? __msg("profile.removeFromSaved") : __msg("publication.saveSeen")} className={selected.saved ? "is-selected" : ""} disabled={pending} onClick={onSave} type="button"><FiBookmark fill={selected.saved ? "currentColor" : "none"} /></button>
       <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend /></button>
     </div>
   </div>;
@@ -1117,6 +1120,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   };
   const selectReaction = (reaction) => {
     if (reactionMutation.isPending) return;
+    if (reaction && reaction !== item.viewerState.reaction) popReactionCapsule(reactionAnchorRef.current);
     reactionMutation.mutate(reaction);
   };
   const addHeartFromDoubleTap = () => {
@@ -1124,6 +1128,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     // being toggled off. Any other reaction is replaced, preserving the
     // one-reaction-per-person invariant enforced by the API.
     if (reactionMutation.isPending || item.viewerState.reaction === "LOVE") return;
+    popReactionCapsule(reactionAnchorRef.current);
     reactionMutation.mutate("LOVE");
   };
   const detectTouchDoubleTap = (event) => {
@@ -1336,7 +1341,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
           <div className="seen-inline-panel is-current">{renderInlinePanel(activeChapter)}</div>
           <div aria-hidden="true" className="seen-inline-panel is-neighbor">{renderInlinePanel(nextChapterPanel)}</div>
         </motion.div>
-        <button aria-label={activeChapter < 0 ? __msg("social.openFirstChapter") : activeChapter < item.chapters.length - 1 ? __msg("social.nextChapter") : __msg("social.backToSeenOverview")} className="seen-inline-arrow is-next" disabled={!item.chapters.length} onClick={nextPanel} type="button"><FiChevronRight /></button>
+        <button data-first-hint={item.chapters.length ? "swipe" : undefined} aria-label={activeChapter < 0 ? __msg("social.openFirstChapter") : activeChapter < item.chapters.length - 1 ? __msg("social.nextChapter") : __msg("social.backToSeenOverview")} className="seen-inline-arrow is-next" disabled={!item.chapters.length} onClick={nextPanel} type="button"><FiChevronRight /></button>
       </div>
       {item.chapters.length ? <div className="seen-inline-progress" aria-label={__msg("social.seenChapterNavigation")}>
         <div>{[-1, ...item.chapters.map((_, index) => index)].map((panel) => <button aria-label={panel < 0 ? __msg("social.openOverview") : __msg("creator.openChapter", { value0: panel + 1 })} className={panel === activeChapter ? "is-active" : ""} key={panel} onClick={() => selectChapter(panel)} type="button" />)}</div>

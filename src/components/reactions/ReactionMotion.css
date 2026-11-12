@@ -1,0 +1,16 @@
+/* rxLight() from the supplied prototype; all story entry points share its timing. */
+.story-viewer-surface .story-viewer-heart.is-selected { animation: none; }
+.story-viewer-surface .story-viewer-heart:active::after { content: none; }
+.story-viewer-surface .discover-story-heart-face:not(.has-reaction-motion) :is(.discover-story-heart-lit,.discover-story-heart-emoji) { animation: none; }
+.story-viewer-surface .has-reaction-motion :is(.discover-story-heart-lit,.discover-story-heart-emoji) { animation: discoverStoryHeartBreath .5s cubic-bezier(.2,.8,.2,1); }
+.story-viewer-surface .discover-story-heart-ring { animation-duration: .6s; }
+.story-viewer-surface .story-floating-reaction { animation: reactionEmojiRise 1s cubic-bezier(.2,.7,.3,1) forwards; }
+@keyframes reactionEmojiRise { from { transform: translate(50%,0) scale(.8); opacity: 0; } 20% { opacity: 1; } to { transform: translate(50%,-90px) scale(1.15); opacity: 0; } }
+.message-action-controls { position: absolute; right: 0; bottom: 100%; z-index: 30; display: flex; align-items: center; gap: 2px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 3px; background: #171c25; color: #9aa5b5; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.message-action-controls:focus-within,.message-action-controls.is-open { opacity: 1; pointer-events: auto; }
+@media(hover:hover) { .group:hover .message-action-controls { opacity: 1; pointer-events: auto; } }
+@media(prefers-reduced-motion:reduce) {
+  .story-viewer-surface .has-reaction-motion :is(.discover-story-heart-lit,.discover-story-heart-emoji),.story-viewer-surface .story-floating-reaction { animation: none; }
+  .story-viewer-surface :is(.discover-story-heart-ring,.discover-story-reaction-rise),.story-floating-reaction { display: none; }
+  .message-action-controls { transition: none; }
+}

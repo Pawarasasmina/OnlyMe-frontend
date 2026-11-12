@@ -44,7 +44,7 @@ function BeingSeenNowCard({ activity }) {
         <strong>{title}</strong>
         <small>{actor && total > 1 ? __msg("fanWeb.andOthersAreAtSeen", { value0: creatorName(actor).split(" ")[0], value1: total - 1 }) : subtitle}</small>
       </span>
-      <i aria-label={actor ? __msg("fanWeb.liveNow") : __msg("fanWeb.noLiveActivity")} className={actor ? "is-live" : ""} />
+      <i aria-label={actor ? __msg("fanWeb.liveNow") : __msg("fanWeb.noLiveActivity")} className={actor ? "is-live presence-blink" : ""} />
     </Link>
   );
 }

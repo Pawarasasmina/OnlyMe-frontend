@@ -48,7 +48,7 @@ function DiscoverActivityCard({ activity }) {
         <strong>{__msg("discover.beingSeenRightNow")}</strong>
         <small>{activity.text || __msg("discover.isAtSeen", { value0: actor.displayName || actor.name })}</small>
       </span>
-      {activity.online ? <i aria-label={__msg("discover.online")} /> : null}
+      {activity.online ? <i className="presence-blink" aria-label={__msg("discover.online")} /> : null}
     </Link>
   );
 }

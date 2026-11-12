@@ -1,3 +1,4 @@
+import { popReactionCapsule } from "../../utils/reactionMotion";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -101,6 +102,7 @@ function creatorFirstName(creator = {}) {
 
 function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentToggle, onCopyLink, saved, commentsOpen }) {
   __useUiLanguage();
+  const reactionAnchorRef = useRef(null);
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [reactionFilter, setReactionFilter] = useState("ALL");
   const reactionKeys = engagement.topReactions?.length
@@ -114,12 +116,12 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
 
   return <>
   <div className="seen-compact-engagement" aria-label={__msg("social.seenEngagement")}>
-    <button aria-expanded={reactionsOpen} aria-label={__msg("social.openReactions")} className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
+    <button ref={reactionAnchorRef} aria-expanded={reactionsOpen} aria-label={__msg("social.openReactions")} className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
     <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
     {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button> : null}
     <span aria-label={__msg("fanWeb.views", { value0: formatCount(engagement.viewCount || 0) })}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
     <span className="seen-compact-spacer" />
-    <button aria-label={saved ? __msg("publication.removeSeenFromSaved") : __msg("publication.saveSeen")} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
+    <button data-first-hint={!saved ? "save" : undefined} aria-label={saved ? __msg("publication.removeSeenFromSaved") : __msg("publication.saveSeen")} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
     <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend /></button>
   </div>
   {reactionsOpen ? <div className="seen-reactions-layer">
@@ -136,7 +138,7 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
         {!visibleReactors.length ? <p>{__msg("social.noReactionsInThisGroupYet")}</p> : null}
       </div>
       <footer aria-label={__msg("social.chooseYourReaction")}>
-        {Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={__msg("profile.reactWith", { value0: key.toLowerCase() })} className={engagement.viewerReaction === key ? "is-active" : ""} disabled={mutations.reaction.isPending} key={key} onClick={() => mutations.reaction.mutate(key)} type="button">{icon}</button>)}
+        {Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={__msg("profile.reactWith", { value0: key.toLowerCase() })} className={engagement.viewerReaction === key ? "is-active" : ""} disabled={mutations.reaction.isPending} key={key} onClick={() => { if (key !== engagement.viewerReaction) popReactionCapsule(reactionAnchorRef.current); mutations.reaction.mutate(key); }} type="button">{icon}</button>)}
       </footer>
     </section>
   </div> : null}

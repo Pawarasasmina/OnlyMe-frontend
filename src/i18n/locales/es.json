@@ -1,4 +1,13 @@
 {
+  "activity.seenAcknowledgement": "Seen ✓",
+  "hints.swipe": "Desliza para leer",
+  "hints.ask": "Pregunta — la gente cercana responde",
+  "hints.react": "Toca dos veces para reaccionar",
+  "hints.wall": "Toca una etiqueta para ver solo esas publicaciones",
+  "hints.highlights": "Guarda aquí tus mejores historias — duran más de 24 horas",
+  "hints.gift": "Envía un regalo directamente desde el chat",
+  "hints.photo": "Toca la foto para ver las historias de hoy",
+  "hints.save": "Guárdalo — lo encontrarás luego en tu biblioteca",
   "welcome.stepIntoRealLives": "ENTRA EN VIDAS REALES",
   "welcome.swipeThroughWorlds": "DESLIZA ENTRE MUNDOS",
   "welcome.askTheyAnswer": "PREGUNTA. ELLOS RESPONDEN.",
@@ -7176,5 +7185,7 @@
   "stories.value0SStory": "Historia de {value0}",
   "system.legal.7e63ae6290": "AI en @seen es opcional — desactivar cada función en Settings › AI. La clasificación de su rol de cámara en capítulos y la dictadura ocurre en su dispositivo. Para capciones de fotos y diseños de capítulos, una copia reducida de cada foto y unos cuadros de cada vídeo que seleccione se envían a nuestro proveedor de inteligencia artificial, utilizados sólo para ello y nunca para la formación. La inteligencia artificial está limitada a uno construido por la inteligencia artificial Seen al día con 3 pruebas (3 al día para los vendedores y en su primera semana) y 3 respuestas por día (10 para los vendedores). Para los títulos de capítulos, tidy-up, respuestas, capciones y traducciones sólo enviamos el texto necesario a nuestro proveedor de inteligencia artificial, bajo un contrato que prohíbe la formación en él; se mantiene sólo mientras sea necesario para ejecutar la función y mantenerla segura (hasta 30 días). No usamos tus Seens o mensajes para entrenar modelos de inteligencia artificial. Nunca escribe, envía o responde por ti. Las fotografías o vídeos hechos o modificados de manera realista con AI se etiquetan “Made with AI”.",
   "system.perMonthFull": "/mes",
-  "system.previewUsage": "{count, number} / 1 · 60 s"
+  "system.previewUsage": "{count, number} / 1 · 60 s",
+  "ticket.shareTitle": "Soy {number} en @seen",
+  "ticket.shareDescription": "{location} — únete a mí"
 }

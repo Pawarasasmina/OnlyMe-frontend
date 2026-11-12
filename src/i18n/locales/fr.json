@@ -1,4 +1,13 @@
 {
+  "activity.seenAcknowledgement": "Seen ✓",
+  "hints.swipe": "Glisse pour lire",
+  "hints.ask": "Demande — les gens près de toi répondent",
+  "hints.react": "Touche deux fois pour réagir",
+  "hints.wall": "Touche une étiquette pour ne voir que ces publications",
+  "hints.highlights": "Garde tes meilleures stories ici — elles restent après 24 heures",
+  "hints.gift": "Envoie un cadeau directement depuis la discussion",
+  "hints.photo": "Touche la photo pour voir les stories du jour",
+  "hints.save": "Enregistre-le — retrouve-le plus tard dans ta bibliothèque",
   "welcome.stepIntoRealLives": "ENTREZ DANS DES VIES RÉELLES",
   "welcome.swipeThroughWorlds": "PARCOUREZ LES MONDES",
   "welcome.askTheyAnswer": "DEMANDEZ. ILS RÉPONDENT.",
@@ -7176,5 +7185,7 @@
   "social.banValue0": "Bannir {value0}",
   "system.legal.7e63ae6290": "L'IA dans @seen est facultatif — désactivez chaque fonctionnalité dans Settings › AI. Sortir votre rouleau de caméra en chapitres et la dictation se produit sur votre appareil. Pour les captions photo et les dessins de chapitre, une copie réduite de chaque photo et quelques cadres de chaque vidéo que vous sélectionnez sont envoyés à notre fournisseur d'IA, utilisés uniquement pour cela et jamais pour la formation. L'IA est limitée à un Seen construit par l'IA par jour avec 3 essais (3 par jour pour les vendeurs et dans votre première semaine) et 3 réponses dessins par jour (10 pour les vendeurs). Pour les titres de chapitres, le timing-up, les dessins de réponses, les captions et les traductions, nous n'envoyons que le texte nécessaire à notre fournisseur d'IA, sous un contrat qui interdit la formation sur celui-ci; il n'est conservé que tant que nécessaire pour exécuter la fonctionnalité et le garder en sécurité (jusqu'à 30 jours). Nous n'utilisons pas votre Seens ou vos messages pour former des modèles d'IA. Il n'a jamais posté, envoyé ou répondu pour vous. Les photos ou vidéos réalisées ou réalement modifiées avec l’IA sont étiquetées « Faites avec l’IA ».",
   "system.perMonthFull": "/mois",
-  "system.previewUsage": "{count, number} / 1 · 60 s"
+  "system.previewUsage": "{count, number} / 1 · 60 s",
+  "ticket.shareTitle": "Je suis {number} sur @seen",
+  "ticket.shareDescription": "{location} — rejoins-moi"
 }

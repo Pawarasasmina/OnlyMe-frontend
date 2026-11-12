@@ -1,5 +1,6 @@
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import "./WallNoteStory.css";
+import "./TicketStory.css";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -120,7 +121,7 @@ async function renderStoryFile(story, includeInteractive = false) {
   canvas.height = 1920;
   const context = canvas.getContext("2d");
   const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  const colors = story.sharedCard?.kind === "note" && story.gradient % STORY_GRADIENTS.length === 0 ? ["#0c1118", "#050608"] : STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length];
+  const colors = story.sharedCard?.kind === "ticket" ? ["#182330", "#070a10"] : story.sharedCard?.kind === "note" && story.gradient % STORY_GRADIENTS.length === 0 ? ["#0c1118", "#050608"] : STORY_GRADIENTS[story.gradient % STORY_GRADIENTS.length];
   gradient.addColorStop(0, story.photo ? "#263b60" : colors[0]);
   gradient.addColorStop(1, story.photo ? "#07090d" : colors[1]);
   context.fillStyle = gradient;
@@ -131,6 +132,14 @@ async function renderStoryFile(story, includeInteractive = false) {
     drawCoverImage(context, image, canvas.width, canvas.height, story.transform);
   }
 
+  if (story.sharedCard?.kind === "ticket" && !story.photo) {
+    const image = await loadStoryImage(story.sharedCard.imageUrl);
+    const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) * 1.12;
+    context.save(); context.filter = "blur(60px) brightness(.35)";
+    context.drawImage(image, (canvas.width - image.naturalWidth * scale) / 2, (canvas.height - image.naturalHeight * scale) / 2, image.naturalWidth * scale, image.naturalHeight * scale);
+    context.restore();
+  }
+
   const shade = context.createLinearGradient(0, 0, 0, canvas.height);
   shade.addColorStop(0, "rgba(0,0,0,.28)");
   shade.addColorStop(0.22, "rgba(0,0,0,0)");
@@ -139,7 +148,16 @@ async function renderStoryFile(story, includeInteractive = false) {
   context.fillStyle = shade;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  if (includeInteractive && story.sharedCard) {
+  if (story.sharedCard?.kind === "ticket") {
+    const card = story.sharedCard;
+    const image = await loadStoryImage(card.imageUrl);
+    const width = canvas.width * .78 * (card.scale || 1), height = width * 1260 / 860;
+    context.save(); context.translate(canvas.width * card.x / 100, canvas.height * card.y / 100);
+    context.rotate((card.rotation || 0) * Math.PI / 180);
+    context.drawImage(image, -width / 2, -height / 2, width, height); context.restore();
+  }
+
+  if (includeInteractive && story.sharedCard && story.sharedCard.kind !== "ticket") {
     const card = story.sharedCard;
     const isQuestionReply = card.kind === "question_reply";
     const isTextOnly = isTextOnlySharedCard(card);
@@ -579,7 +597,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   };
 
   const focusTextAt = (event) => {
-    if (story.sharedCard || textDragging || draggingCardRef.current) return;
+    if ((story.sharedCard && story.sharedCard.kind !== "ticket") || textDragging || draggingCardRef.current) return;
     enterTextMode();
     const rect = stageRef.current?.getBoundingClientRect();
     const position = rect ? {
@@ -647,7 +665,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (mode === "compose" && file.type.startsWith("video/")) { showToast(__msg("stories.chooseAnImageForThisSharedCardBackground")); return; }
+    if ((mode === "compose" || story.sharedCard?.kind === "ticket") && file.type.startsWith("video/")) { showToast(__msg("stories.chooseAnImageForThisSharedCardBackground")); return; }
     if (!/^(image|video)\//.test(file.type)) {
       showToast(__msg("stories.chooseAnImageOrVideoFile"));
       return;
@@ -793,7 +811,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     gesture.origin = { x: event.clientX, y: event.clientY, overlayX: story.sharedCard.x / 100, overlayY: story.sharedCard.y / 100 };
     if (gesture.pointers.size === 2) {
       const [a, b] = [...gesture.pointers.values()];
-      gesture.pinch = { distance: Math.max(1, Math.hypot(a.x-b.x, a.y-b.y)), size: story.sharedCard.scale || 1 };
+      gesture.pinch = { distance: Math.max(1, Math.hypot(a.x-b.x, a.y-b.y)), angle: Math.atan2(b.y-a.y, b.x-a.x), rotation: story.sharedCard.rotation || 0, size: story.sharedCard.scale || 1 };
     }
   };
 
@@ -822,7 +840,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
       const pinch = gesture.pinch;
       const ratio = Math.hypot(a.x-b.x,a.y-b.y) / pinch.distance;
       if (draggingCardRef.current) {
-        setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, pinch.size * ratio)) } }));
+        setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, pinch.size * ratio)), ...(current.sharedCard.kind === "ticket" ? { rotation: pinch.rotation + (Math.atan2(b.y-a.y,b.x-a.x)-pinch.angle)*180/Math.PI } : {}) } }));
         return;
       }
       const rotation = Math.max(-180, Math.min(180, pinch.rotation + (Math.atan2(b.y-a.y,b.x-a.x)-pinch.angle)*180/Math.PI));
@@ -957,7 +975,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         } : {}),
         ...((story.photo || story.sharedCard) && story.questionSticker ? { questionSticker: story.questionSticker } : {}),
         ...(story.drawing.length ? { drawing: story.drawing } : {}),
-        ...(story.sharedCard ? { sharedCard: story.sharedCard } : {}),
+        ...(story.sharedCard && story.sharedCard.kind !== "ticket" ? { sharedCard: story.sharedCard } : {}),
         textOverlays: storyTexts.map((item) => ({
           color: item.color,
           fontSize: item.size,
@@ -1044,7 +1062,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     }}>
       {videoToTrim ? <Suspense fallback={null}><StoryVideoTrimSheet file={videoToTrim} limitSeconds={15} onCancel={() => { URL.revokeObjectURL(videoToTrim.url); setVideoToTrim(null); }} onUpload={(file) => { URL.revokeObjectURL(videoToTrim.url); setVideoToTrim(null); applyUploadedMedia(file); }} /></Suspense> : null}
       <section
-        className={`story-composer-stage ${story.sharedCard?.kind === "note" ? `is-wall-note ${story.gradient % STORY_GRADIENTS.length === 0 ? "is-note-default-background" : ""}` : ""} ${story.sharedCard?.kind === "story" && !story.photo ? "is-story-reshare" : ""}`}
+        className={`story-composer-stage ${story.sharedCard?.kind === "ticket" ? "is-ticket-story" : ""} ${story.sharedCard?.kind === "note" ? `is-wall-note ${story.gradient % STORY_GRADIENTS.length === 0 ? "is-note-default-background" : ""}` : ""} ${story.sharedCard?.kind === "story" && !story.photo ? "is-story-reshare" : ""}`}
         onPointerMove={(event) => { if (cardTapRef.current && Math.hypot(event.clientX - cardTapRef.current.x, event.clientY - cardTapRef.current.y) > 6) cardTapRef.current.moved = true; moveDrag(event); }}
         onPointerCancel={endDrag}
         onPointerUp={endDrag}
@@ -1052,6 +1070,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         tabIndex={-1}
       >
         {story.mediaType === "video" ? <video aria-label={__msg("stories.storyVideoPreview")} autoPlay className="story-composer-camera" loop muted onTimeUpdate={(event) => { if (event.currentTarget.currentTime >= 15) event.currentTarget.currentTime = 0; }} playsInline src={story.uploadedUrl} style={{ transform: backgroundStyle.transform }} /> : <div aria-hidden="true" className="story-composer-bg" style={backgroundStyle}>{story.photo ? <><img alt="" className="story-composer-photo-blur" draggable={false} src={story.uploadedUrl} /><img alt="" className="story-composer-photo-image" draggable={false} src={story.uploadedUrl} style={{ width: `${photoWidth * 100}%`, height: `${photoHeight * 100}%`, left: `${50 + (story.transform.x || 0)}%`, top: `${50 + (story.transform.y || 0)}%` }} /></> : null}</div>}
+        {story.sharedCard?.kind === "ticket" && !story.photo ? <img aria-hidden="true" className="ticket-story-backdrop" draggable={false} src={story.sharedCard.imageUrl} /> : null}
         {photoGuides.x ? <span aria-hidden="true" className="story-composer-guide is-x" /> : null}
         {photoGuides.y ? <span aria-hidden="true" className="story-composer-guide is-y" /> : null}
         {editingTextId ? <button aria-label={__msg("stories.finishEditingText")} className="story-composer-scrim" onClick={() => setEditingTextId("")} type="button" /> : null}
@@ -1070,9 +1089,9 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
         <header className="story-composer-head" hidden={Boolean(editingTextId)}>
           <button aria-label={__msg("stories.closeStoryComposer")} onClick={close} type="button"><FiX /></button>
           <span className="story-composer-lifetime">{__msg("stories.24h")}</span>
-          <button aria-label={__msg("stories.addText")} className={editingTextId ? "is-selected" : ""} onClick={addText} type="button">{["story", "note"].includes(story.sharedCard?.kind) ? <FiEdit3 /> : <FiType />}</button>
+          <button aria-label={__msg("stories.addText")} className={editingTextId ? "is-selected" : ""} onClick={addText} type="button">{["story", "note", "ticket"].includes(story.sharedCard?.kind) ? <FiEdit3 /> : <FiType />}</button>
           <button aria-label={__msg("stories.mentionPeople")} onClick={() => { setEditingTextId(""); setMentionOpen(true); }} type="button">@</button>
-          {(story.photo || story.sharedCard) && !["story", "note"].includes(story.sharedCard?.kind) ? <button aria-label={drawingMode ? __msg("stories.stopDrawing") : __msg("stories.drawOnStory")} className={drawingMode ? "is-selected" : ""} onClick={() => { setDrawingMode((current) => !current); setEditingTextId(""); setPaletteOpen(true); }} type="button"><FiEdit3 /></button> : null}
+          {(story.photo || story.sharedCard) && !["story", "note", "ticket"].includes(story.sharedCard?.kind) ? <button aria-label={drawingMode ? __msg("stories.stopDrawing") : __msg("stories.drawOnStory")} className={drawingMode ? "is-selected" : ""} onClick={() => { setDrawingMode((current) => !current); setEditingTextId(""); setPaletteOpen(true); }} type="button"><FiEdit3 /></button> : null}
           {story.photo || story.sharedCard ? <button aria-label={story.questionSticker ? __msg("stories.removeQuestionSticker") : __msg("stories.addQuestionSticker")} className={story.questionSticker ? "is-selected" : ""} onClick={toggleQuestionSticker} type="button"><FiHelpCircle /></button> : null}
           <button
             aria-label={cameraStatus === "live" ? __msg("stories.switchCamera") : story.photo ? __msg("stories.retakePhoto") : __msg("stories.refreshBackground")}
@@ -1095,9 +1114,9 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             {cameraStatus === "live" ? <FiRepeat /> : <FiRefreshCw />}
           </button>
         </header>
-        <input accept="image/*,video/*" className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
+        <input accept={story.sharedCard?.kind === "ticket" ? "image/*" : "image/*,video/*"} className="sr-only" onChange={uploadDeviceImage} ref={uploadInputRef} type="file" />
 
-        {hintOpen && (!story.sharedCard || story.sharedCard.kind === "note") && !editingTextId ? (
+        {hintOpen && (!story.sharedCard || ["note", "ticket"].includes(story.sharedCard.kind)) && !editingTextId ? (
           <div className="story-composer-hint">{__msg("stories.tapToWriteDragToMovePinchToResize")}<button
               aria-label={__msg("stories.dismissComposerHint")}
               onClick={() => {
@@ -1127,7 +1146,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
         {story.sharedCard ? (
           <article
-            className={`story-shared-card-preview ${story.sharedCard.kind === "note" ? `is-note-${story.sharedCard.variant === "long" ? "long" : "compact"}` : ""} ${story.sharedCard.kind === "story" ? "is-story-reshare-card" : ""} ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
+            className={`story-shared-card-preview ${story.sharedCard.kind === "ticket" ? "is-ticket-sticker" : ""} ${story.sharedCard.kind === "note" ? `is-note-${story.sharedCard.variant === "long" ? "long" : "compact"}` : ""} ${story.sharedCard.kind === "story" ? "is-story-reshare-card" : ""} ${story.sharedCard.kind === "question_reply" ? "is-question-response" : ""} ${isTextOnlySharedCard(story.sharedCard) ? "is-text-only" : ""}`}
             aria-label={__msg("stories.shared", { value0: story.sharedCard.kind || "post", value1: story.sharedCard.title })}
             onPointerDown={beginCardDrag}
             onPointerUp={() => { if (story.sharedCard.kind === "note" && cardTapRef.current && !cardTapRef.current.moved) toggleNoteCard(); cardTapRef.current = null; }}
@@ -1136,10 +1155,10 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             ref={sharedCardRef}
             tabIndex={0}
             role={story.sharedCard.kind === "note" ? "button" : "group"}
-            onKeyDown={(event) => { if (story.sharedCard.kind === "note" && ["Enter", " "].includes(event.key)) { event.preventDefault(); toggleNoteCard(); return; } if (["+", "=", "-"].includes(event.key)) { event.preventDefault(); setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, (current.sharedCard.scale || 1) + (event.key === "-" ? -.1 : .1))) } })); } }}
-            style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%`, transform: `translate(-50%,-50%) scale(${story.sharedCard.scale || 1})` }}
+            onKeyDown={(event) => { if (story.sharedCard.kind === "ticket" && event.key.startsWith("Arrow")) { event.preventDefault(); setStory(current => ({ ...current, sharedCard: { ...current.sharedCard, ...(event.altKey ? { rotation: (current.sharedCard.rotation || 0) + (event.key === "ArrowRight" ? 2 : -2) } : { x: current.sharedCard.x + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0), y: current.sharedCard.y + (event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0) }) } })); return; } if (story.sharedCard.kind === "note" && ["Enter", " "].includes(event.key)) { event.preventDefault(); toggleNoteCard(); return; } if (["+", "=", "-"].includes(event.key)) { event.preventDefault(); setStory((current) => ({ ...current, sharedCard: { ...current.sharedCard, scale: Math.max(.4, Math.min(3, (current.sharedCard.scale || 1) + (event.key === "-" ? -.1 : .1))) } })); } }}
+            style={{ left: `${story.sharedCard.x}%`, top: `${story.sharedCard.y}%`, transform: `translate(-50%,-50%) scale(${story.sharedCard.scale || 1}) rotate(${story.sharedCard.rotation || 0}deg)` }}
           >
-            {story.sharedCard.kind === "story" ? <StoryReshareCard card={story.sharedCard} /> : story.sharedCard.kind === "question_reply" ? (
+            {story.sharedCard.kind === "ticket" ? <img alt={story.sharedCard.title} draggable={false} src={story.sharedCard.imageUrl} /> : story.sharedCard.kind === "story" ? <StoryReshareCard card={story.sharedCard} /> : story.sharedCard.kind === "question_reply" ? (
               <div>{story.sharedCard.eyebrow ? <em>{story.sharedCard.eyebrow}</em> : null}<small>{story.sharedCard.subtitle || __msg("fanWeb.question")}</small><strong dir="auto">{story.sharedCard.title}</strong></div>
             ) : isTextOnlySharedCard(story.sharedCard) ? (
               <div>

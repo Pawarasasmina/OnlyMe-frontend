@@ -1,4 +1,13 @@
 {
+  "activity.seenAcknowledgement": "Seen ✓",
+  "hints.swipe": "Desliza para ler",
+  "hints.ask": "Pergunta — pessoas por perto respondem",
+  "hints.react": "Toca duas vezes para reagir",
+  "hints.wall": "Toca numa etiqueta para ver só essas publicações",
+  "hints.highlights": "Guarda aqui as tuas melhores histórias — ficam após 24 horas",
+  "hints.gift": "Envia um presente diretamente na conversa",
+  "hints.photo": "Toca na foto para ver as histórias de hoje",
+  "hints.save": "Guarda — encontra-o mais tarde na tua biblioteca",
   "welcome.stepIntoRealLives": "ENTRE EM VIDAS REAIS",
   "welcome.swipeThroughWorlds": "DESLIZE PELOS MUNDOS",
   "welcome.askTheyAnswer": "PERGUNTE. ELES RESPONDEM.",
@@ -7176,5 +7185,7 @@
   "system.copy.8860cf8e9eee": "O @seen é um lugar para mostrares o que vês e ganhares dinheiro com isso. Um Seen é uma publicação curta sobre uma experiência real: um ritual matinal, uma viagem ou uma rotina, contada em capítulos.",
   "system.legal.7e63ae6290": "A IA em @seen é opcional — desligue cada característica em Settings › AI. Classificar o rolamento da câmera em capítulos e a ditadura ocorre no seu dispositivo. Para capturas de fotos e desenhos de capítulos, uma cópia reduzida de cada foto e alguns quadros de cada vídeo que você seleciona são enviados ao nosso provedor de IA, usados apenas para isso e nunca para treinamento. A inteligência artificial é limitada a um AI-construído Seen por dia com 3 tentativas (3 por dia para os vendedores e na sua primeira semana) e 3 respostas desenhos por dia (10 para os vendedores). Para títulos de capítulos, tidy-up, respostas desenhos, capções e traduções enviamos apenas o texto necessário para o nosso provedor de IA, sob um contrato que proíbe o treinamento sobre ele; ele é mantido apenas enquanto necessário para executar a função e mantê-lo seguro (até 30 dias). Nós não usamos seus Seens ou mensagens para treinar modelos de IA. A AI nunca publica, envia ou responde por você. Fotografias ou vídeos feitos ou mudados de forma realista com AI são etiquetados “Made with AI”.",
   "system.perMonthFull": "/mês",
-  "system.previewUsage": "{count, number} / 1 · 60 s"
+  "system.previewUsage": "{count, number} / 1 · 60 s",
+  "ticket.shareTitle": "Sou {number} no @seen",
+  "ticket.shareDescription": "{location} — junta-te a mim"
 }

@@ -433,7 +433,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
             type="button"
           >
             <FanAvatar name={currentUser.name} size="h-[34px] w-[34px]" src={currentUser.avatar} />
-            <span className="truncate">{__msg("fanWeb.whatDoYouNeedToday")}</span><span aria-hidden="true" className="wall-need-trigger-plus">+</span>
+            <span data-first-hint="ask" className="truncate">{__msg("fanWeb.whatDoYouNeedToday")}</span><span aria-hidden="true" className="wall-need-trigger-plus">+</span>
           </button>
         </div>
       )}

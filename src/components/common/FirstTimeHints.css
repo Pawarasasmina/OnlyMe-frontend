@@ -1,0 +1,9 @@
+.first-time-hint { position: fixed; z-index: 140; pointer-events: none; display: flex; justify-content: flex-start; padding: 0; }
+.first-time-hint.is-above { transform: translateY(-100%); }
+.first-time-hint > span { flex-shrink: 0; }
+.first-time-hint > span { position: relative; display: block; width: max-content; max-width: 100%; padding: 8px 12px; border-radius: 10px; background: #262c38; color: #f2f4f7; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size: 12.5px; font-weight: 600; line-height: 1.35; letter-spacing: -.1px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.07); animation: firstHintIn .22s ease-out; }
+.first-time-hint > span::after { content: ""; position: absolute; left: var(--hint-anchor,50%); width: 12px; height: 12px; background: #262c38; transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
+.first-time-hint.is-below > span::after { top: -5px; }
+.first-time-hint.is-above > span::after { bottom: -5px; }
+@keyframes firstHintIn { from { opacity: 0; transform: translateY(4px) scale(.96); } to { opacity: 1; transform: none; } }
+@media(prefers-reduced-motion:reduce) { .first-time-hint > span { animation: none; } }

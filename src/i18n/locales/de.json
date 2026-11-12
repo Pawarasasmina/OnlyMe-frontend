@@ -1,4 +1,13 @@
 {
+  "activity.seenAcknowledgement": "Seen ✓",
+  "hints.swipe": "Wische zum Lesen",
+  "hints.ask": "Frag — Menschen in der Nähe antworten",
+  "hints.react": "Doppeltippen zum Reagieren",
+  "hints.wall": "Tippe auf ein Label, um nur diese Beiträge zu sehen",
+  "hints.highlights": "Bewahre hier deine besten Storys auf — sie bleiben nach 24 Stunden",
+  "hints.gift": "Sende ein Geschenk direkt im Chat",
+  "hints.photo": "Tippe auf das Foto, um die heutigen Storys zu sehen",
+  "hints.save": "Speichere es — du findest es später in deiner Bibliothek",
   "welcome.stepIntoRealLives": "TAUCHE IN ECHTE LEBEN EIN",
   "welcome.swipeThroughWorlds": "WISCHE DURCH WELTEN",
   "welcome.askTheyAnswer": "FRAG. SIE ANTWORTEN.",
@@ -7176,5 +7185,7 @@
   "system.copy.8860cf8e9eee": "@seen ist ein Ort, an dem du zeigen kannst, was du siehst, und damit Geld verdienst. Ein Seen ist ein kurzer Beitrag über ein echtes Erlebnis: ein Morgenritual, eine Reise oder eine Routine, erzählt in Kapiteln.",
   "system.legal.7e63ae6290": "AI in @seen ist optionalerweise - alle Funktionen in Settings › AI deaktivieren. Das Sortieren Ihrer Kamera-Roll in Kapitel und Diktation auf Ihrem Gerät passiert. Für Fotokoptionen und Kapitel-Designs wird eine verkürzte Kopie jedes Foto und ein paar Frame von jedem gewählten Video an unseren AI-Anbieter gesendet, das nur für das und nie für die Ausbildung verwendet wird. AI ist begrenzt auf eine AI-baute Seen pro Tag mit 3 Versuche (3 pro Tag für Verkäufer und in Ihrer ersten Woche) und 3 Antworten Entwürfe pro Tag (10 für Verkäufer). Für Kapitel-Titel, Tiny-up, Antworten Entwürfe, Kaptionen und Übersetzungen senden wir nur den erforderlichen Text an unseren AI-Anbieter, unter einem Vertrag, der die Ausbildung auf ihm verbietet; es wird nur so lange beibehalten, wie es notwendig ist, um die Funktion zu betreiben und es sicher zu halten (bis zu 30 Tage). Wir verwenden Ihre Seens oder Nachrichten nicht, um AI-Modelle zu trainieren. AI postet, sendet oder antwortet niemals für Sie. Fotos oder Videos, die mit AI gemacht oder realistisch geändert wurden, sind mit dem Etikett „Made with AI“ gekennzeichnet.",
   "system.perMonthFull": "/Monat",
-  "system.previewUsage": "{count, number} / 1 · 60 Sek."
+  "system.previewUsage": "{count, number} / 1 · 60 Sek.",
+  "ticket.shareTitle": "Ich bin {number} auf @seen",
+  "ticket.shareDescription": "{location} — sei dabei"
 }

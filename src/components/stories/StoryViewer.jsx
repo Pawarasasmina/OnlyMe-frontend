@@ -1,3 +1,5 @@
+import "../reactions/ReactionMotion.css";
+import { useStoryPersonTransition } from "../../hooks/useStoryPersonTransition";
 import "./WallNoteStory.css";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
@@ -765,9 +767,13 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
   const paused = externalPaused || manualPaused || holdPaused || systemPaused || ownerMenuOpen || insightsOpen || Boolean(selectedViewer) || giftOpen || shareOpen || highlightOpen || reactionTrayOpen;
 
   const activeStory = stories[index] || null;
+  const transitionOwner = activeStory?.owner?.id || activeStory?.ownerId || activeStory?.creatorId;
+  const { surfaceRef: personSurfaceRef, directionRef: personDirectionRef } = useStoryPersonTransition(isOpen, transitionOwner ? String(transitionOwner) : null);
   const storyTopics = useMemo(() => [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title].filter(Boolean), [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title]);
   const storyTrackingRef = useRecommendationTracking({ creatorId: activeStory?.owner?.id || activeStory?.creatorId || "", enabled: isOpen && !previewOnly, entityId: activeStory?.id || "", entityType: "story", position: index, topics: storyTopics });
+  const attachStorySurface = useCallback(element => { storyTrackingRef.current = element; personSurfaceRef.current = element; }, [storyTrackingRef, personSurfaceRef]);
   const sharedCard = activeStory?.editorMetadata?.sharedCard || null;
+  useEffect(() => { setHeartBurstKey(0); setReactionAnimation(0); setFloatingReaction(null); }, [activeStory?.id]);
   const canReply = !previewOnly && canReplyToStory(user, activeStory);
   const canReact = !previewOnly && canReactToStory(user, activeStory);
   const canDelete = !previewOnly && canDeleteStory(user, activeStory);
@@ -793,6 +799,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
     onError: (error) => showToast(error?.response?.data?.message || __msg("stories.storyReplyCouldNotBeSent")),
   });
   const boundedIndex = useMemo(() => Math.max(0, Math.min(stories.length - 1, initialIndex)), [initialIndex, stories.length]);
+  const storyGroupOwner = stories[0]?.owner?.id || stories[0]?.ownerId || stories[0]?.creatorId || null;
 
   useEffect(() => {
     if (isOpen) {
@@ -815,9 +822,10 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       setSelectedViewer(null);
       setMenuBusy("");
     }
-  }, [boundedIndex, isOpen]);
+  }, [boundedIndex, isOpen, storyGroupOwner]);
 
   const goStory = useCallback((direction) => {
+    personDirectionRef.current = direction;
     setIndex((current) => {
       const next = current + direction;
       if (next < 0) {
@@ -842,7 +850,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       setMenuBusy("");
       return next;
     });
-  }, [onClose, onComplete, onPreviousComplete, stories.length]);
+  }, [onClose, onComplete, onPreviousComplete, stories.length, personDirectionRef]);
 
   useEffect(() => {
     if (!isOpen || !activeStory || previewOnly) {
@@ -864,11 +872,12 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
       return undefined;
     }
 
-    setSelectedReaction(activeStory.viewerReaction || "");
     setProgress(0);
     setDurationMs(activeStory.mediaType === "video" ? Math.min(Number(activeStory.duration) || 15, 15) * 1000 : IMAGE_DURATION_MS);
     return undefined;
-  }, [activeStory]);
+  }, [activeStory?.id, activeStory?.mediaType, activeStory?.duration]);
+
+  useEffect(() => { setSelectedReaction(activeStory?.viewerReaction || ""); }, [activeStory?.id, activeStory?.viewerReaction]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -1039,7 +1048,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
     if (reaction) setHeartBurstKey((current) => current + 1);
     const floatingId = Date.now();
     setFloatingReaction(reaction && reaction !== "❤️" ? { id: floatingId, value: reaction } : null);
-    window.setTimeout(() => setFloatingReaction((current) => current?.id === floatingId ? null : current), 900);
+    window.setTimeout(() => setFloatingReaction((current) => current?.id === floatingId ? null : current), 1050);
     reactMutation.mutate({ storyId: activeStory.id, reaction }, {
       onSuccess: () => { setReactionTrayOpen(false); queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] }); },
       onError: (error) => {
@@ -1199,10 +1208,11 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
             const dx = event.clientX-start.x, dy = event.clientY-start.y;
             if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.4) {
               event.preventDefault(); suppressStoryClick.current = true;
+              personDirectionRef.current = dx < 0 ? 1 : -1;
               if (dx < 0) onNextCreator?.(); else onPreviousCreator?.();
             }
           }}
-          ref={storyTrackingRef}
+          ref={attachStorySurface}
         >
           <StoryMedia
             muted={muted}
@@ -1412,7 +1422,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
                 ref={replyInputRef}
                 value={replyText}
               />
-              {discover ? <button aria-label={activeStory.viewerReaction ? __msg("stories.removeStoryReaction") : __msg("stories.reactToStory")} aria-pressed={Boolean(activeStory.viewerReaction)} className="discover-story-heart" onPointerCancel={() => window.clearTimeout(reactionHold.current)} onPointerDown={() => { suppressReactionClick.current = false; reactionHold.current = window.setTimeout(() => { suppressReactionClick.current = true; setReactionTrayOpen("hold"); }, 420); }} onPointerUp={() => window.clearTimeout(reactionHold.current)} onPointerLeave={() => window.clearTimeout(reactionHold.current)} disabled={activeStory.allowReactions === false || reactionMutation.isPending} onClick={() => { if (suppressReactionClick.current) { suppressReactionClick.current = false; return; } reactToActiveStory(activeStory.viewerReaction ? null : "\u2764\ufe0f"); }} type="button"><span className="discover-story-heart-face" key={`${activeStory.viewerReaction || "empty"}-${reactionAnimation}`}>{activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <span className="discover-story-heart-emoji">{activeStory.viewerReaction}</span> : <StoryHeartIcon active={activeStory.viewerReaction === "\u2764\ufe0f"} />}{reactionAnimation && activeStory.viewerReaction ? <i aria-hidden="true" className="discover-story-heart-ring" /> : null}{reactionAnimation && activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <i aria-hidden="true" className="discover-story-reaction-rise">{activeStory.viewerReaction}</i> : null}</span></button> : <>
+              {discover ? <button aria-label={activeStory.viewerReaction ? __msg("stories.removeStoryReaction") : __msg("stories.reactToStory")} aria-pressed={Boolean(activeStory.viewerReaction)} className="discover-story-heart" onPointerCancel={() => window.clearTimeout(reactionHold.current)} onPointerDown={() => { suppressReactionClick.current = false; reactionHold.current = window.setTimeout(() => { suppressReactionClick.current = true; setReactionTrayOpen("hold"); }, 420); }} onPointerUp={() => window.clearTimeout(reactionHold.current)} onPointerLeave={() => window.clearTimeout(reactionHold.current)} disabled={activeStory.allowReactions === false || reactionMutation.isPending} onClick={() => { if (suppressReactionClick.current) { suppressReactionClick.current = false; return; } reactToActiveStory(activeStory.viewerReaction ? null : "\u2764\ufe0f"); }} type="button"><span className={`discover-story-heart-face ${reactionAnimation ? "has-reaction-motion" : ""}`} key={`${activeStory.viewerReaction || "empty"}-${reactionAnimation}`}>{activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <span className="discover-story-heart-emoji">{activeStory.viewerReaction}</span> : <StoryHeartIcon active={activeStory.viewerReaction === "\u2764\ufe0f"} />}{reactionAnimation && activeStory.viewerReaction ? <i aria-hidden="true" className="discover-story-heart-ring" /> : null}{reactionAnimation && activeStory.viewerReaction && activeStory.viewerReaction !== "\u2764\ufe0f" ? <i aria-hidden="true" className="discover-story-reaction-rise">{activeStory.viewerReaction}</i> : null}</span></button> : <>
               <button
                 aria-label={__msg("stories.reactWithHeartHoldForMoreReactions")}
                 aria-pressed={Boolean(selectedReaction)}
@@ -1425,7 +1435,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
                 onPointerUp={cancelReactionHold}
                 type="button"
               >
-                <span className="discover-story-heart-face" key={`${selectedReaction || "empty"}-${heartBurstKey}`}>
+                <span className={`discover-story-heart-face ${heartBurstKey ? "has-reaction-motion" : ""}`} key={`${selectedReaction || "empty"}-${heartBurstKey}`}>
                   {selectedReaction && selectedReaction !== "❤️" ? <span className="discover-story-heart-emoji">{selectedReaction}</span> : <StoryHeartIcon active={selectedReaction === "❤️"} />}
                   {heartBurstKey && selectedReaction ? <i aria-hidden="true" className="discover-story-heart-ring" /> : null}
                 </span>

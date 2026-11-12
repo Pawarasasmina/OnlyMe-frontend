@@ -267,7 +267,6 @@ function DiscoverPage() {
       <section className="discover-orb-main" aria-label={__msg("discover.discover")}>
         {activeStoryPerson ? (
           <DiscoverRecommendationStory
-            key={activeStoryPerson.id}
             card={activeStoryPerson}
             initialIndex={storyViewer.index}
             onClose={closeFriendStories}
@@ -283,7 +282,6 @@ function DiscoverPage() {
           />
         ) : activeRecommendationStory ? (
           <DiscoverRecommendationStory
-            key={activeRecommendationStory.userId || activeRecommendationStory.id}
             card={activeRecommendationStory}
             followPending={followMutation.isPending}
             onClose={closeRecommendationStory}

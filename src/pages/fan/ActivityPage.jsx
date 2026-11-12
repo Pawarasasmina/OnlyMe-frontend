@@ -27,6 +27,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { fanService } from "../../services/fanService";
 import { walletService } from "../../services/walletService";
 import { getMessageSocket } from "../../services/messageSocket";
+import ActivityAcknowledgement from "../../components/activity/ActivityAcknowledgement";
 import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
 import { isGiftActivity, mergeActivitySources } from "../../utils/activitySources";
 import { relativeTime } from "../../utils/relativeTime";
@@ -639,7 +640,7 @@ function ActivityTitle({ item }) {
   return <p>{title}{actionIcon}</p>;
 }
 
-function ActivityItem({ item, onOpen, starsPerUsd }) {
+function ActivityItem({ item, onOpen, starsPerUsd, acknowledged, onAcknowledge }) {
   __useUiLanguage();
   const navigate = useNavigate();
   const amount = item.direction === "received" ? displayAmount(item, starsPerUsd) : null;
@@ -677,6 +678,8 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
       </div>
 
       <div className="activity-prototype-right">
+        {item.direction === "received" && item.canAcknowledge && !/follow/i.test(item.type || "") && !isGiftActivity(item) && !item.target?.id && !item.metadata?.canAnswer && !item.metadata?.refundCoins ? <ActivityAcknowledgement acknowledged={acknowledged} onAcknowledge={() => onAcknowledge(item.id)} /> : null}
+
         {item.metadata?.canAnswer ? <button className="activity-follow-action activity-answer-action" onClick={event => { event.stopPropagation(); navigate(route); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.answer")}</button> : null}
         {item.metadata?.refundCoins ? <span className="activity-refund-coins"><CoinIcon size={16} /><b>{item.metadata.refundCoins}</b></span> : null}
         {/^premium_renewal_(low_balance|failed)$/.test(item.type || "") ? <button className="activity-follow-action" onClick={event => { event.stopPropagation(); navigate("/wallet"); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.topUp")}</button> : null}
@@ -684,7 +687,7 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
         <ActivityContentPreview item={item} />
         {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || __msg("fan.gift")} className="activity-prototype-gift" src={giftImageUrl} /> : null}
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
-        {item.direction === "received" && (/mutual/i.test(item.type || "") || /see each other/i.test(item.title || "")) ? <span className="activity-mutual-eye" aria-label={__msg("fan.youSeeEachOther")}><ActivityEyeMark /></span> : null}
+
       </div>
     </article>
   );

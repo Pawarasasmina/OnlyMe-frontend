@@ -1,3 +1,4 @@
+import FirstTimeHints from "../components/common/FirstTimeHints";
 /* i18n-source-migrated */
 import { msg as __msg } from "../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
@@ -187,6 +188,7 @@ function SocialAppShell({ children = null }) {
           </div>
           <FanWebRightRail capabilities={capabilities} status={status} user={user} />
         </div>
+        <FirstTimeHints enabled={!ticketVisible && !appModalOpen && !currentWarning} />
         <FanMobileNav capabilities={capabilities} unreadMessageCount={unreadMessageCount} />
       </div>
       <FanModal isOpen={appModalOpen} onClose={() => setAppModalOpen(false)} title={__msg("layouts.getTheApp")}>

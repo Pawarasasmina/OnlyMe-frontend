@@ -310,6 +310,14 @@ export const StoryStrip = memo(function StoryStrip({ groups }) {
         initialIndex={viewer.index}
         isOpen={Boolean(activeGroup)}
         onClose={() => setViewer({ groupId: null, index: 0 })}
+        onComplete={() => {
+          const next = groups[groups.findIndex(group => group.id === viewer.groupId) + 1];
+          setViewer({ groupId: next?.id || null, index: 0 });
+        }}
+        onPreviousComplete={() => {
+          const previous = groups[groups.findIndex(group => group.id === viewer.groupId) - 1];
+          if (previous) setViewer({ groupId: previous.id, index: Math.max(0, previous.stories.length - 1) });
+        }}
         stories={activeGroup?.stories || []}
       />
     </>

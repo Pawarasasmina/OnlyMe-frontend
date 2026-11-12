@@ -1,3 +1,5 @@
+import { useReactionSelection } from "../../../hooks/useReactionSelection";
+import { popReactionCapsule } from "../../../utils/reactionMotion";
 import { localizedTuple as __uiTuple } from "../../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
@@ -675,6 +677,13 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     );
   };
 
+  const { choose: chooseExpandedReaction, selecting: selectingExpandedReaction } = useReactionSelection({
+    enabled: reactionPickerOpen && reactionExpanded,
+    busy: reactionMutation.isPending,
+    onSelect: value => saveReaction(value),
+    onClose: () => { setReactionPickerOpen(false); setReactionExpanded(false); },
+  });
+
   const saveReaction = (nextReaction) => {
     if (!requireDatabasePost()) return;
 
@@ -686,6 +695,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       if (!nextBreakdown[previousReaction]) delete nextBreakdown[previousReaction];
     }
     if (nextReaction) nextBreakdown[nextReaction] = (Number(nextBreakdown[nextReaction]) || 0) + 1;
+    if (nextReaction && nextReaction !== reaction) popReactionCapsule(reactionAnchorRef.current);
     setReaction(nextReaction || null);
     setReactionBreakdown(nextBreakdown);
 
@@ -1110,11 +1120,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                     aria-label={__msg("fanWeb.reaction_bfb553", { value0: selected ? __msg("profile.remove") : __msg("fanWeb.send"), value1: item.label })}
                     aria-pressed={selected}
                     className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"}
-                    disabled={reactionMutation.isPending}
+                    disabled={reactionMutation.isPending || selectingExpandedReaction}
                     key={item.key}
-                    onClick={() => {
-                      saveReaction(selected ? "" : item.key);
-                    }}
+                    onClick={(event) => chooseExpandedReaction(event, selected ? "" : item.key)}
                     type="button"
                   >
                     <span aria-hidden="true">{item.icon}</span>

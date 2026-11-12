@@ -5,6 +5,8 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import "./InvitationShare.css";
 import "./WallShareSheet.css";
+import "./TicketShare.css";
+import TicketChatCard from "./TicketChatCard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
@@ -77,6 +79,7 @@ function ExternalAction({ Icon, label, onClick }) {
 
 function ShareContentPreview({ payload, canonicalUrl }) {
   __useUiLanguage();
+  if (payload.contentType === "ticket") return <section className="share-chat-preview" aria-label={__msg("share.howTheSharedContentLooksInAChat")}><p>{__msg("share.howItLooksInAChat")}</p><TicketChatCard content={payload} /></section>;
   const author = payload.author || {};
   const authorName = author.name || author.displayName || author.username || "@seen";
   const mediaUrl = payload.imageUrl || payload.mediaUrl || payload.thumbnailUrl || "";
@@ -265,6 +268,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   };
 
   const shareToStory = async () => {
+    if (payload?.onShareToStory) { payload.onShareToStory(); return; }
     if (payload?.contentType === "seen" && payload?.contentId) {
       close();
       navigate(`/seen/${encodeURIComponent(payload.contentId)}/share/story`, { state: { fromShareSheet: true } });
@@ -304,7 +308,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   };
 
   const openMessages = () => {
-    if (payload?.contentType === "invitation") {
+    if (["invitation", "ticket"].includes(payload?.contentType)) {
       window.location.href = `sms:?&body=${encodeURIComponent(`${payload.title}. ${payload.previewText || __msg("messages.realStoriesFromRealPeopleJoinMeThere")} ${canonicalUrl}`)}`;
       return;
     }
@@ -395,7 +399,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     <div
       aria-labelledby="share-sheet-title"
       aria-modal="true"
-      className={`${isSeenVariant ? "is-seen-share " : ""}${payload.contentType === "feed_post" ? "is-wall-share " : ""}${payload.contentType === "invitation" ? "is-invitation " : payload.contentType === "dream" ? "is-dream-share " : ""}share-sheet-overlay`}
+      className={`${variant === "ticket" ? "is-ticket-share " : ""}${isSeenVariant ? "is-seen-share " : ""}${payload.contentType === "feed_post" ? "is-wall-share " : ""}${payload.contentType === "invitation" ? "is-invitation " : payload.contentType === "dream" ? "is-dream-share " : ""}share-sheet-overlay`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
@@ -469,11 +473,11 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         ) : (
           <section className="share-external-row" aria-label={__msg("share.externalShareActions")}>
             {copyNotice ? <p className="share-copy-notice" role="status">{copyNotice}</p> : null}
-            {payload.contentType !== "invitation" ? <ExternalAction Icon={payload.contentType === "feed_post" ? WallStoryIcon : FiPlusCircle} label={__msg("activity.story")} onClick={shareToStory} /> : null}
+            {payload.contentType !== "invitation" ? <ExternalAction Icon={["feed_post", "ticket"].includes(payload.contentType) ? WallStoryIcon : FiPlusCircle} label={__msg("activity.story")} onClick={shareToStory} /> : null}
             {instagramImage || payload.contentType === "feed_post" ? <ExternalAction Icon={FiInstagram} label="Instagram" onClick={openInstagram} /> : null}
             <ExternalAction Icon={externalBusy === "copy" ? FiCheck : FiCopy} label={__msg("profile.copyLink")} onClick={() => copyLink()} />
             <ExternalAction Icon={FaWhatsapp} label={__msg("share.whatsapp")} onClick={shareWhatsApp} />
-            <ExternalAction Icon={payload.contentType === "feed_post" ? FiSend : FaTelegramPlane} label={__msg("share.telegram")} onClick={shareTelegram} />
+            <ExternalAction Icon={["feed_post", "ticket"].includes(payload.contentType) ? FiSend : FaTelegramPlane} label={__msg("share.telegram")} onClick={shareTelegram} />
             <ExternalAction Icon={FiMessageCircle} label={__msg("share.messages")} onClick={openMessages} />
             <ExternalAction Icon={FiMoreHorizontal} label={__msg("discover.more")} onClick={nativeShare} />
           </section>
@@ -481,7 +485,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
       </div>
     </div>
   );
-  return payload.contentType === "dream" ? createPortal(sheet, document.body) : sheet;
+  return ["dream", "ticket"].includes(payload.contentType) ? createPortal(sheet, document.body) : sheet;
 }
 
 export default ShareSheet;

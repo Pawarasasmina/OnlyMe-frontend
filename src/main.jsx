@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { LanguageProvider } from "./context/LanguageContext.jsx";
 import "./index.css";
 import "./styles/storyEnhancements.css";
+import "./styles/presenceMotion.css";
 import "./styles/storyHighlights.css";
 import "./styles/profileSeenBy.css";
 import "./styles/localization.css";

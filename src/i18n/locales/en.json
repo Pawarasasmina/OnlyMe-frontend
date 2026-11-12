@@ -1,4 +1,13 @@
 {
+  "activity.seenAcknowledgement": "Seen",
+  "hints.swipe": "Swipe to read",
+  "hints.ask": "Ask — people nearby answer",
+  "hints.react": "Double-tap to react",
+  "hints.wall": "Tap a label to see only those posts",
+  "hints.highlights": "Keep your best stories here — they stay after 24 hours",
+  "hints.gift": "Send a gift right from the chat",
+  "hints.photo": "Tap the photo to see today’s stories",
+  "hints.save": "Save it — find it later in your Library",
   "welcome.stepIntoRealLives": "STEP INTO REAL LIVES",
   "welcome.swipeThroughWorlds": "SWIPE THROUGH WORLDS",
   "welcome.askTheyAnswer": "ASK. THEY ANSWER.",
@@ -7176,5 +7185,7 @@
   "system.label.bug": "Bug",
   "system.label.idea": "Idea",
   "system.perMonthFull": "/month",
-  "system.previewUsage": "{count, number} / 1 · 60s"
+  "system.previewUsage": "{count, number} / 1 · 60s",
+  "ticket.shareTitle": "I’m {number} on @seen",
+  "ticket.shareDescription": "{location} — join me"
 }

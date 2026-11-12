@@ -23,7 +23,7 @@ function WallStoryPersonItem({ group, onOpenStory }) {
       onClick={onOpenStory}
       type="button"
     >
-      <span className={`wall-story-ring ${hasStories ? group.hasUnseenStories ? "wall-story-ring-unseen" : "wall-story-ring-viewed" : "wall-story-ring-status"}`} style={{ "--story-status-color": group.activeStatus?.color || "#9CCBFF" }}>
+      <span className={`wall-story-ring ${hasStories ? "presence-live-ring" : ""} ${hasStories ? group.hasUnseenStories ? "wall-story-ring-unseen" : "wall-story-ring-viewed" : "wall-story-ring-status"}`} style={{ "--story-status-color": group.activeStatus?.color || "#9CCBFF" }}>
         <span className="wall-story-avatar-shell">
           <FanAvatar alt={__msg("fan.avatar", { value0: group.user.name || name })} name={group.user.name || name} size="h-full w-full" src={group.user.avatar || group.user.avatarUrl} />
         </span>
