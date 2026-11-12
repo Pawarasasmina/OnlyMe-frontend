@@ -18,7 +18,6 @@ import {
   worldCompletenessBySection,
 } from "../../utils/worldValidation";
 import PricingSelector from "./PricingSelector";
-import PlanetAppearanceSelector from "./PlanetAppearanceSelector";
 import PreviewChapterSelector from "./PreviewChapterSelector";
 
 const MEDIA_TYPES = ["IMAGE", "VIDEO", "AUDIO", "VOICE"];
@@ -975,13 +974,6 @@ export default function PublicationComposerShell({ kind }) {
           <ValidationMessages messages={validation.details} />
         </section>
         <div className="space-y-5">
-          <section className="rounded-2xl border border-atseen-line p-5">
-            <PlanetAppearanceSelector
-              kind={kind}
-              onChange={(planet) => change({ planet })}
-              planet={p.planet}
-            />
-          </section>
           <section className="rounded-2xl border border-atseen-line p-5">
             <PricingSelector
               kind={kind}

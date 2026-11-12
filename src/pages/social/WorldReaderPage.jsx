@@ -72,9 +72,7 @@ import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import "./worldPurchasePrototype.css";
 
 const PLANET = String.fromCodePoint(0x1FA90);
-const FLEX = String.fromCodePoint(0x1F4AA);
 const STAR = String.fromCharCode(10022);
-const PLANET_FACE_OPTIONS = ["💪", "📚", "💅", "✈️", "☕", "🎾", "🧘", "🎨", "🍳", "📷", "🏄", "🎧", "💼", "🌱", "🍷", "👶"];
 
 const WORLD_REPORT_REASONS = [
   { get label() { return __msg("social.spam"); }, value: "SPAM" },
@@ -94,9 +92,6 @@ const WORLD_SPAM_ACTIONS = [
   { defaultChecked: false, get description() { return __msg("social.accessEndsNowNoRefundForViolations"); }, key: "removeFromWorld", get label() { return __msg("social.removeFromYourWorld"); } },
 ];
 
-function planetFaceEmoji(planet = {}) {
-  return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
-}
 
 function withOptimisticWorldCommentHeart(engagement = {}, commentId, active) {
   const update = (comment) => String(comment.id) === String(commentId)
@@ -786,41 +781,6 @@ function QuickChapterNameSheet({ busy, chapterNumber, error, onClose, onNext, ti
         {error ? <small className="quick-chapter-error">{__systemMessage(error)}</small> : null}
         <button disabled={busy || !trimmed} onClick={onNext} type="button">{__msg("social.createWrite")}</button>
       </section>
-    </BottomSheet>
-  );
-}
-
-function PlanetFaceSheet({ busy, error, onClose, onSave, publication }) {
-  __useUiLanguage();
-  const [selected, setSelected] = useState(planetFaceEmoji(publication?.planet));
-  const [custom, setCustom] = useState("");
-  const value = custom.trim() || selected;
-  return (
-    <BottomSheet labelledBy="world-face-title" onClose={onClose}>
-      <h2 id="world-face-title">{__msg("creator.theFaceOfYourPlanet")}</h2>
-      <p className="world-sheet-copy">{__msg("creator.oneEmojiOnTopTheTopicPeopleSeeFrom")}</p>
-      <div className="world-face-grid" role="listbox" aria-label={__msg("creator.planetFaceOptions")}>
-        {PLANET_FACE_OPTIONS.map((emoji) => (
-          <button
-            aria-label={__msg("creator.useAsPlanetFace", { value0: emoji })}
-            aria-selected={value === emoji}
-            className={value === emoji ? "is-selected" : ""}
-            key={emoji}
-            onClick={() => {
-              setSelected(emoji);
-              setCustom("");
-            }}
-            type="button"
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
-      <div className="world-face-custom">
-        <input aria-label={__msg("creator.customPlanetFaceEmoji")} maxLength={16} onChange={(event) => setCustom(event.target.value)} placeholder={__msg("creator.orAnyEmoji")} value={custom} />
-        <button disabled={busy || !value} onClick={() => onSave({ planetFaceEmoji: value })} type="button">{busy ? __msg("admin.saving") : "OK"}</button>
-      </div>
-      {error ? <p className="world-sheet-error">{__systemMessage(error)}</p> : null}
     </BottomSheet>
   );
 }
@@ -1978,7 +1938,6 @@ export default function WorldReaderPage() {
   const [coverProgress, setCoverProgress] = useState(0);
   const [commentRemovePending, setCommentRemovePending] = useState("");
   const [experienceBusyId, setExperienceBusyId] = useState("");
-  const [optimisticPlanetFaceEmoji, setOptimisticPlanetFaceEmoji] = useState("");
   const [optimisticFirstMonthOfferEnabled, setOptimisticFirstMonthOfferEnabled] = useState(null);
   const [optimisticCommentsEnabled, setOptimisticCommentsEnabled] = useState(null);
   const [introPriceToast, setIntroPriceToast] = useState("");
@@ -2128,11 +2087,9 @@ export default function WorldReaderPage() {
   const updateWorld = useMutation({
     mutationFn: (payload) => api.updateWorldManagement(publicationId, payload),
     onMutate: (payload) => {
-      if (payload?.planetFaceEmoji) setOptimisticPlanetFaceEmoji(payload.planetFaceEmoji);
       if (payload && "firstMonthOfferEnabled" in payload) setOptimisticFirstMonthOfferEnabled(Boolean(payload.firstMonthOfferEnabled));
     },
     onError: (_error, payload) => {
-      if (payload?.planetFaceEmoji) setOptimisticPlanetFaceEmoji("");
       if (payload && "firstMonthOfferEnabled" in payload) setOptimisticFirstMonthOfferEnabled(null);
       if (payload && "commentsEnabled" in payload) {
         setOptimisticCommentsEnabled(null);
@@ -2141,8 +2098,6 @@ export default function WorldReaderPage() {
       }
     },
     onSuccess: async (response, payload) => {
-      const nextEmoji = planetFaceEmoji(response?.data?.data?.publication?.planet);
-      if (nextEmoji) setOptimisticPlanetFaceEmoji(nextEmoji);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["world", id] }),
         queryClient.invalidateQueries({ queryKey: ["world-management", publicationId] }),
@@ -2527,7 +2482,6 @@ export default function WorldReaderPage() {
   const seatProgress = capacity ? Math.min(100, Math.round((residents / capacity) * 100)) : 0;
   const steppedInside = Number(management.analytics?.views || managedPublication?.viewCount || managedPublication?.views || publication?.viewCount || publication?.views || residents || 0);
   const priceStars = Number(managedPublication?.pricing?.starsAmount || management.subscription?.priceStars || 0);
-  const faceEmoji = optimisticPlanetFaceEmoji || planetFaceEmoji(managedPublication.planet);
   const includedExperiences = management.includedExperiences || [];
   const commentsEnabled = optimisticCommentsEnabled ?? (managedPublication?.commentsEnabled !== false && management.comments?.enabled !== false);
   const firstMonthOfferEnabled = optimisticFirstMonthOfferEnabled ?? Boolean(management.subscription?.firstMonthOfferEnabled);
@@ -2730,7 +2684,6 @@ export default function WorldReaderPage() {
       <nav aria-label={__msg("social.worldActions")}>
         <button onClick={() => setSheet("share")} type="button"><FiShare2 /><span><b>{__msg("admin.share")}</b></span></button>
         <button onClick={() => { setSheet(""); navigate(`/world/${publicationId}?edit=1`); }} type="button"><FiEdit3 /><span><b>{__msg("profile.edit")}</b><small>{__msg("social.titleStoriesAccess")}</small></span></button>
-        <button onClick={() => setSheet("face")} type="button"><FiEdit3 /><span><b>Change World icon</b><small>choose the topic emoji above your planet</small></span></button>
         <button onClick={() => setSheet("cover")} type="button"><FiImage /><span><b>{__msg("profile.changeCover")}</b></span></button>
         <button aria-label={commentsEnabled ? __msg("social.turnCommentsOff") : __msg("social.turnCommentsOn")} disabled={updateWorld.isPending} onClick={toggleCommentsEnabled} type="button"><FiMessageCircle /><span><b>{commentsEnabled ? __msg("social.turnCommentsOff") : __msg("social.turnCommentsOn")}</b></span></button>
         <button onClick={() => setSheet("moderators")} type="button"><FiShield /><span><b>{__msg("social.moderators")}</b><small>{__msg("social.thisProductSOwnCleanupTeam")}</small></span></button>
@@ -2754,7 +2707,6 @@ export default function WorldReaderPage() {
           <section className="world-prototype-planet">
             {commentStatusToast ? <div className="world-comment-status-pill" role="status">{commentStatusToast}</div> : null}
             <span className="world-prototype-minimal-icon"><MinimalWorldIcon size={64} /></span>
-            {owner ? <button aria-label={`Change profile World icon. Current icon ${faceEmoji}`} className="world-prototype-selected-icon" onClick={() => setSheet("face")} type="button">{faceEmoji}</button> : <span aria-label={`Selected profile World icon ${faceEmoji}`} className="world-prototype-selected-icon" role="img">{faceEmoji}</span>}
           </section>
         ) : null}
 
@@ -3052,7 +3004,6 @@ export default function WorldReaderPage() {
         />
       ) : null}
       {sheet === "seats" ? <SeatsSheet busy={waveMutation.isPending} management={management} onClose={() => setSheet("")} onOpenPrice={() => setSheet("price")} onOpenWave={() => waveMutation.mutate()} /> : null}
-      {sheet === "face" ? <PlanetFaceSheet busy={updateWorld.isPending} error={updateWorld.error?.response?.data?.message} onClose={() => setSheet("")} onSave={(payload) => updateWorld.mutate(payload)} publication={{ ...managedPublication, planet: { ...(managedPublication.planet || {}), faceEmoji } }} /> : null}
       {sheet === "cover" ? <CoverSheet busy={coverUpload.isPending} error={coverUpload.error?.response?.data?.message} onClose={() => setSheet("")} onUpload={(file) => coverUpload.mutate(file)} progress={coverProgress} publication={managedPublication} /> : null}
       {sheet === "access" ? <ExperienceAccessSheet data={accessLinkQuery.data} error={accessLinkQuery.error?.response?.data?.message || (accessLinkQuery.isError ? "The access-link service could not be reached." : "")} loading={accessLinkQuery.isLoading || accessLinkQuery.isFetching} onClose={() => setSheet("")} onCopy={async () => { try { await copyToClipboard(accessLinkQuery.data?.url || ""); showToast(__msg("social.accessLinkCopied")); } catch { showToast(__msg("social.accessLinkCouldNotBeCopied")); } }} onDecide={(requestId, approved) => accessDecision.mutate({ requestId, approved })} onRetry={() => accessLinkQuery.refetch()} pendingId={accessDecision.isPending ? accessDecision.variables?.requestId : ""} /> : null}
       {sheet === "include" ? <IncludeExperienceSheet busyId={experienceBusyId} experiences={ownerExperiences.data || []} included={includedExperiences} onClose={() => setSheet("")} onCreate={() => navigate(`/create/seen?returnTo=${encodeURIComponent(`/world/${publicationId}?edit=1&worldPanel=include`)}`)} onToggle={toggleExperience} /> : null}

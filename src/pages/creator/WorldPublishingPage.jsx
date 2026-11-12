@@ -38,9 +38,7 @@ import { worldCompletenessBySection } from "../../utils/worldValidation";
 import { SeenChapterEditor, VideoTrimSheet, chapterBlocksWithStory, chapterStoryText } from "./SeenComposerPage";
 
 const PLANET = "\uD83E\uDE90";
-const FLEX = "\uD83D\uDCAA";
 const STAR = "\u2726";
-const PLANET_FACE_OPTIONS = ["💪", "📚", "💅", "✈️", "☕", "🎾", "🧘", "🎨", "🍳", "📷", "🏄", "🎧", "💼", "🌱", "🍷", "👶"];
 const STORY_PREVIEW_LIMIT = 3;
 const SUBSCRIBER_STORY_LIMIT = 3;
 const MEDIA_BLOCK_TYPES = new Set(["IMAGE", "VIDEO", "AUDIO", "VOICE"]);
@@ -48,9 +46,6 @@ const TEXT_BLOCK_TYPES = new Set(["TEXT", "KEY_POINT", "HIGHLIGHT"]);
 const WORLD_CATEGORIES = __uiTuple(["Places", { __uiMessage: "creator.moving" }, { __uiMessage: "profile.business" }, { __uiMessage: "admin.growth" }, { __uiMessage: "profile.lifestyle" }]);
 const MONTHLY_PRICES = [190, 490, 990];
 
-function planetFaceEmoji(planet = {}) {
-  return planet.faceEmoji || (planet.emoji && planet.emoji !== PLANET ? planet.emoji : "") || FLEX;
-}
 
 function freshWorld(experience = false) {
   return {
@@ -66,7 +61,7 @@ function freshWorld(experience = false) {
     experiencePath: "",
     experienceLocation: "",
     kind: experience ? "EXPERIENCE" : "PREMIUM_WORLD",
-    ...(experience ? {} : { planet: { accent: "ice-white", emoji: PLANET, faceEmoji: FLEX } }),
+    ...(experience ? {} : { planet: { accent: "ice-white", emoji: PLANET, faceEmoji: "" } }),
     pricing: experience ? { mode: "ONE_TIME", presetId: "ONE_TIME_190", starsAmount: 190 } : { mode: "MONTHLY", presetId: "MONTHLY_190", starsAmount: 190 },
     status: "DRAFT",
     summary: "",
@@ -220,43 +215,6 @@ function ExperienceVoiceSheet({ onClose, onSave, onUploadFile }) {
       <small className="experience-voice-hint">{__msg("creator.mp3WavM4aOggOrWebmMaximum2Minutes")}</small>
     </section>
   </div>;
-}
-
-function PlanetFaceSheet({ busy, onClose, onSave, planet }) {
-  __useUiLanguage();
-  const [selected, setSelected] = useState(planetFaceEmoji(planet));
-  const [custom, setCustom] = useState("");
-  const value = custom.trim() || selected;
-  return (
-    <div aria-labelledby="world-editor-face-title" aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
-      <section className="world-bottom-sheet" onMouseDown={(event) => event.stopPropagation()}>
-        <span className="world-sheet-grab" />
-        <h2 id="world-editor-face-title">{__msg("creator.theFaceOfYourPlanet")}</h2>
-        <p className="world-sheet-copy">{__msg("creator.oneEmojiOnTopTheTopicPeopleSeeFrom")}</p>
-        <div aria-label={__msg("creator.planetFaceOptions")} className="world-face-grid" role="listbox">
-          {PLANET_FACE_OPTIONS.map((emoji) => (
-            <button
-              aria-label={__msg("creator.useAsPlanetFace", { value0: emoji })}
-              aria-selected={value === emoji}
-              className={value === emoji ? "is-selected" : ""}
-              key={emoji}
-              onClick={() => {
-                setSelected(emoji);
-                setCustom("");
-              }}
-              type="button"
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-        <div className="world-face-custom">
-          <input aria-label={__msg("creator.customPlanetFaceEmoji")} maxLength={16} onChange={(event) => setCustom(event.target.value)} placeholder={__msg("creator.orAnyEmoji")} value={custom} />
-          <button disabled={busy || !value} onClick={() => onSave(value)} type="button">{busy ? __msg("admin.saving") : "OK"}</button>
-        </div>
-      </section>
-    </div>
-  );
 }
 
 function WorldCreateTextSheet({ busy, description, label, maxLength, onClose, onSave, placeholder, title, value }) {
@@ -446,7 +404,6 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
   const [experiencePreviewOpen, setExperiencePreviewOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
-  const [faceSheetOpen, setFaceSheetOpen] = useState(false);
   const [worldCreateSheet, setWorldCreateSheet] = useState("");
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || __msg("creator.max");
@@ -1728,7 +1685,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       <header><button aria-label={__msg("discover.back")} onClick={() => nav(-1)} type="button"><FiArrowLeft /></button><div><span>{experience ? __msg("creator.experienceCreation") : __msg("creator.worldCreation")}</span><h1>{__msg("fanWeb.create")} {experience ? __msg("creator.anExperience") : __msg("creator.aWorld")}</h1></div></header>
       <p className="planet-create-intro">{experience ? __msg("creator.experiencesArePremiumStructuredJourneysMadeOfChaptersUnlocked") : __msg("creator.aWorldIsYourPrivateSpaceOnYourProfile")}</p>
       <button className="planet-choice-card is-selected" onClick={() => setCreationStarted(true)} type="button">
-        <span className="planet-choice-orbit"><i>{FLEX}</i><b>{experience ? STAR : PLANET}</b></span>
+        <span className="planet-choice-orbit"><i>✦</i><b>{experience ? STAR : PLANET}</b></span>
         <span><strong>{experience ? __msg("contentEntities.experience") : __msg("profile.yourWorld")}</strong><small>{experience ? __msg("creator.unlimitedPremiumExperiencesOneTimeUnlock") : __msg("creator.onePerCreatorMonthlySubscriptionProfileOnly")}</small><em>{experience ? __msg("creator.aFocusedPremiumJourneyThatUnlocksPermanentlyAfterPurchase") : __msg("creator.premiumChaptersPrivateStoriesAndCloserAccessAllTogether")}</em></span>
         <FiArrowUpRight />
       </button>
@@ -1752,10 +1709,9 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {!experience ? (
         <section className="world-prototype-planet world-publish-planet world-create-brand">
-          <button aria-label={__msg("creator.changePlanetFace")} onClick={() => setFaceSheetOpen(true)} type="button">
-            <span>{planetFaceEmoji(world.planet)}</span>
+          <span aria-hidden="true">
             <span>{PLANET}</span>
-          </button>
+          </span>
           <p>{__msg("profile.yourWorld")}</p>
         </section>
       ) : null}
@@ -1773,8 +1729,6 @@ export default function WorldPublishingPage({ experience = false, publicationId 
       ) : null}
 
       {!experience ? <>
-      {faceSheetOpen ? <PlanetFaceSheet busy={saving} onClose={() => setFaceSheetOpen(false)} onSave={(emoji) => { updateWorld({ planet: { ...world.planet, emoji: world.planet?.emoji || PLANET, faceEmoji: emoji } }); setFaceSheetOpen(false); }} planet={world.planet} /> : null}
-
       <section className="world-prototype-story-previews" id="world-preview-stories">
         <div className="world-prototype-section-head is-compact">
           <h2>{__msg("admin.stories")}</h2>

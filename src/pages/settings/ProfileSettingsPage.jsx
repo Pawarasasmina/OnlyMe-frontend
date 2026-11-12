@@ -678,7 +678,6 @@ function ProfileSettingsPage() {
         <h2>{__msg("settings.privacy")}</h2>
         <Segmented label={__msg("settings.whoCanSeeYourSavedPlaces")} onChange={setSavedVisibility} value={form.savedPlacesVisibility} />
         <Segmented label={__msg("settings.showYourMemberBadgeOnComments")} onChange={setMemberBadgeVisibility} options={[["everyone", "Everyone"], ["only_me", "Only me"]]} value={form.showMemberBadgeOnComments ? "everyone" : "only_me"} />
-        <p>{__msg("settings.yourMemberNumberIsAlwaysPrivateOnlyYouSee")}</p>
       </section>
 
       <section className="edit-profile-verification">
