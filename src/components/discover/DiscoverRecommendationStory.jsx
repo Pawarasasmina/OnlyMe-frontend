@@ -27,21 +27,23 @@ function DiscoverRecommendationStory({ card, onClose, onNext, onPrevious, initia
     if (storiesQuery.isSuccess && !storiesQuery.data?.length) navigate(profileRoute, { replace: true });
   }, [navigate, profileRoute, storiesQuery.data, storiesQuery.isSuccess]);
   return <section className="discover-rec-story" aria-label={__msg("discover.discoverStory", { value0: name })}>
-    {stories.length ? <StoryViewer
+    <StoryViewer
       discover
       initialIndex={initialIndex}
       isOpen
       onClose={onClose}
+      onComplete={onNext || onClose}
+      onPreviousComplete={onPrevious}
       onNextCreator={onNext}
       onPreviousCreator={onPrevious}
       presentation="inline"
       stories={stories}
-    /> : <div className="discover-story-status">
+    />{!stories.length ? <div className="discover-story-status">
       <button aria-label={__msg("discover.closeDiscoverStory")} onClick={onClose} type="button"><FiX /></button>
       <p role={storiesQuery.isError ? "alert" : "status"}>{storiesQuery.isPending ? __msg("discover.loadingStories") : storiesQuery.isError ? __msg("discover.couldNotLoadStories") : __msg("discover.openingProfile")}</p>
       {storiesQuery.isError ? <button onClick={() => storiesQuery.refetch()} type="button">{__msg("activity.retry")}</button> : null}
       {!storiesQuery.isPending ? <button onClick={onNext || onClose} type="button">{onNext ? __msg("discover.nextPerson") : __msg("discover.backToDiscover")}</button> : null}
-    </div>}
+    </div> : null}
   </section>;
 }
 export default memo(DiscoverRecommendationStory);

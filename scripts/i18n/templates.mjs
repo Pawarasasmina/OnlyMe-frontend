@@ -4,10 +4,10 @@ const css=/(?:^| )(?:inline-|flex |grid |h-|w-|gap-|media-|ms-|me-|absolute|rela
 let total=0;
 for(const file of filesIn('src').filter(f=>/\.[jt]sx?$/.test(f)&&!/test\.|atseenMockData|[\\/]i18n[\\/]|LanguageContext/.test(f))){let source=fs.readFileSync(file,'utf8'),edits=[],arrays=new Map(),tuple=false;traverse(parse(source,{sourceType:'module',plugins:['jsx']}),{TemplateLiteral(p){
  const n=p.node,raw=n.quasis.map(q=>q.value.cooked||'').join('{}');
- if(!/[A-Za-z]{2,}\s[A-Za-z]{2,}/.test(raw)||css.test(raw)||/[#<>]|https?:|\brgba\b/.test(raw))return;
+if(!/[A-Za-z]{2}\s|\s[A-Za-z]{2}/.test(raw)||css.test(raw)||/[#<>]|https?:|\brgba\b|\bBearer\b|\btranslate(?:X|Y)?\(|\bscale\(|\brotate\(|\b\d*px\b/.test(raw))return;
  const attr=p.findParent(a=>a.isJSXAttribute());if(attr&&!['title','aria-label','alt','placeholder','label','subtitle','description'].includes(attr.node.name.name))return;
  // These are generated author drafts, not application UI messages.
- if(file.endsWith('WorldPublishingPage.jsx')&&raw.startsWith('A structured Experience'))return;
+if(file.endsWith('WorldPublishingPage.jsx')&&raw.startsWith('A structured Experience'))return;
  let text='';const args=[];
  n.quasis.forEach((q,i)=>{text+=q.value.cooked||'';if(i<n.expressions.length){text+=`{value${i}}`;const expr=n.expressions[i],value=source.slice(expr.start,expr.end);args.push(`value${i}: ${value}`);}});
  let key=registry[text]||aliases[text];if(!key){const ns=file.replaceAll('\\','/').split('/')[2]?.replace(/\.[^.]+$/,'')||'common';const words=text.match(/[A-Za-z0-9]+/g)||['message'];key=ns+'.'+words.slice(0,8).map((w,i)=>i?w[0].toUpperCase()+w.slice(1).toLowerCase():w.toLowerCase()).join('');if(Object.values(registry).includes(key))key+='_'+crypto.createHash('sha1').update(text).digest('hex').slice(0,6);registry[text]=key;}

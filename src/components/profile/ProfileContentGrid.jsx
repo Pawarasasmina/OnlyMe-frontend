@@ -1,3 +1,6 @@
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,7 +61,7 @@ function viewsFor(item) {
 
 function creatorNameFor(item) {
   const creator = item?.creator || item?.author || {};
-  return creator.name || creator.displayName || creator.username || item?.creatorName || "Creator";
+  return creator.name || creator.displayName || creator.username || item?.creatorName || __msg("discover.creator");
 }
 
 function seriesFor(item) {
@@ -81,10 +84,7 @@ function formatReadTime(chapters = []) {
 }
 
 function compactCount(value = 0) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString();
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 const profileReactionLabel = {
@@ -129,6 +129,7 @@ function profileReactionCluster(engagement) {
 }
 
 function ProfileSeenEngagementBar({ item }) {
+  __useUiLanguage();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -172,28 +173,28 @@ function ProfileSeenEngagementBar({ item }) {
     <>
     <div className="seen-engagement-bar profile-seen-engagement-bar">
       <div className="seen-engagement-left">
-        <button aria-expanded={reactionsOpen} aria-label={`Open reactions for ${item.title || "Seen"}`} className="seen-reactions" onClick={() => setReactionsOpen((value) => !value)} type="button">
+        <button aria-expanded={reactionsOpen} aria-label={__msg("profile.openReactionsFor", { value0: item.title || "Seen" })} className="seen-reactions" onClick={() => setReactionsOpen((value) => !value)} type="button">
           <span>{profileReactionCluster(engagement)}</span>
           <b>{compactCount(engagement.reactions)}</b>
         </button>
-        <button aria-expanded={commentsOpen} aria-label={`Open comments for ${item.title || "Seen"}`} onClick={() => setCommentsOpen((value) => !value)} type="button">
+        <button aria-expanded={commentsOpen} aria-label={__msg("profile.openCommentsFor", { value0: item.title || "Seen" })} onClick={() => setCommentsOpen((value) => !value)} type="button">
           <FiMessageSquare />
           <b>{compactCount(engagement.comments)}</b>
         </button>
-        <button aria-label={engagementQuery.data?.viewerShared ? "Remove repost" : `Repost ${item.title || "Seen"}`} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate()} type="button">
+        <button aria-label={engagementQuery.data?.viewerShared ? __msg("fanWeb.removeRepost") : __msg("profile.repost", { value0: item.title || "Seen" })} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate()} type="button">
           <FiRepeat />
           <b>{compactCount(engagement.reposts)}</b>
         </button>
       </div>
       <div className="seen-engagement-right">
-        <button aria-label={engagement.saved ? "Remove from Saved" : `Save ${item.title || "Seen"}`} className={engagement.saved ? "is-selected" : ""} disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()} type="button"><FiBookmark fill={engagement.saved ? "currentColor" : "none"} /></button>
-        <button aria-label={`Share ${item.title || "Seen"}`} onClick={() => setShareOpen(true)} type="button"><FiSend /></button>
+        <button aria-label={engagement.saved ? __msg("profile.removeFromSaved") : __msg("contentEntities.save", { value0: item.title || "Seen" })} className={engagement.saved ? "is-selected" : ""} disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()} type="button"><FiBookmark fill={engagement.saved ? "currentColor" : "none"} /></button>
+        <button aria-label={__msg("profile.share", { value0: item.title || "Seen" })} onClick={() => setShareOpen(true)} type="button"><FiSend /></button>
       </div>
     </div>
-    {reactionsOpen ? <div className="profile-seen-reaction-picker">{Object.entries(profileReactionLabel).slice(0, 8).map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} disabled={reactionMutation.isPending} key={key} onClick={() => reactionMutation.mutate(key)} type="button">{icon}</button>)}</div> : null}
+    {reactionsOpen ? <div className="profile-seen-reaction-picker">{Object.entries(profileReactionLabel).slice(0, 8).map(([key, icon]) => <button aria-label={__msg("profile.reactWith", { value0: key.toLowerCase() })} disabled={reactionMutation.isPending} key={key} onClick={() => reactionMutation.mutate(key)} type="button">{icon}</button>)}</div> : null}
     {commentsOpen ? <section className="profile-seen-comments-panel">
-      <div>{(engagementQuery.data?.comments || []).map((entry) => <article key={entry.id}><strong>{entry.author?.name || "Fan"}</strong><p>{entry.text}</p></article>)}{!engagementQuery.data?.comments?.length ? <p>No comments yet.</p> : null}</div>
-      <form onSubmit={submitComment}><input aria-label="Add a Seen comment" maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment..." value={comment} /><button disabled={!comment.trim() || commentMutation.isPending} type="submit">Post</button></form>
+      <div>{(engagementQuery.data?.comments || []).map((entry) => <article key={entry.id}><strong>{entry.author?.name || __msg("profile.fan")}</strong><p>{entry.text}</p></article>)}{!engagementQuery.data?.comments?.length ? <p>{__msg("profile.noCommentsYet")}</p> : null}</div>
+      <form onSubmit={submitComment}><input aria-label={__msg("profile.addASeenComment")} maxLength={500} onChange={(event) => setComment(event.target.value)} placeholder={__msg("fanWeb.addAComment")} value={comment} /><button disabled={!comment.trim() || commentMutation.isPending} type="submit">{__msg("fanWeb.post")}</button></form>
     </section> : null}
     {shareOpen ? <SeenShareSheet item={item} onClose={() => setShareOpen(false)} shareUrl={shareUrl} /> : null}
     </>
@@ -201,6 +202,7 @@ function ProfileSeenEngagementBar({ item }) {
 }
 
 function ProfileSeenActionRow({ danger = false, icon: Icon, onClick, subtitle = "", title, to = "" }) {
+  __useUiLanguage();
   const content = (
     <>
       <Icon aria-hidden="true" />
@@ -217,6 +219,7 @@ function ProfileSeenActionRow({ danger = false, icon: Icon, onClick, subtitle = 
 }
 
 function ProfileSeenActionsSheet({ item, onClose }) {
+  __useUiLanguage();
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -230,7 +233,7 @@ function ProfileSeenActionsSheet({ item, onClose }) {
     };
   }, [onClose]);
 
-  const title = item?.title || "Untitled Seen";
+  const title = item?.title || __msg("profile.untitledSeen");
   const chapterCount = item?.chapters?.length || Number(item?.chapterCount || 0);
   const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
   const seriesName = seriesFor(item);
@@ -239,23 +242,23 @@ function ProfileSeenActionsSheet({ item, onClose }) {
 
   return (
     <div className="seen-feed-options-layer seen-owner-options-layer profile-seen-actions-layer">
-      <button aria-label="Close Seen owner actions" className="seen-feed-options-scrim" onClick={onClose} type="button" />
-      <section aria-label={`Manage ${title}`} aria-modal="true" className="seen-owner-actions-sheet" role="dialog">
+      <button aria-label={__msg("profile.closeSeenOwnerActions")} className="seen-feed-options-scrim" onClick={onClose} type="button" />
+      <section aria-label={__msg("profile.manage_4047c4", { value0: title })} aria-modal="true" className="seen-owner-actions-sheet" role="dialog">
         <span className="seen-feed-options-handle" aria-hidden="true" />
         <header className="seen-owner-actions-header">
           <h2>{title}</h2>
           <p>{metadata}</p>
         </header>
         <div className="seen-owner-actions-list">
-          <ProfileSeenActionRow icon={FiUploadCloud} onClick={onClose} title="Share" to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow icon={FiPlusCircle} onClick={onClose} title="Add to your story" to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow icon={FiBarChart2} onClick={onClose} title="Insights" to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow icon={FiEdit3} onClick={onClose} title="Edit" to={editTarget} />
-          <ProfileSeenActionRow icon={FiImage} onClick={onClose} title="Change cover" to={`${editTarget}&focus=cover`} />
-          <ProfileSeenActionRow icon={FiZap} onClick={onClose} title={isPinnedSeen(item) ? "Unpin" : "Pin to profile"} to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow icon={FiGrid} onClick={onClose} title={seriesName ? `Series: ${seriesName}` : "Add to a series"} to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow icon={FiArchive} onClick={onClose} subtitle="hidden from profile, stats stay" title="Archive" to={`/seen/${item.id}`} />
-          <ProfileSeenActionRow danger icon={FiTrash2} onClick={onClose} subtitle="gone for everyone" title="Delete" to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiUploadCloud} onClick={onClose} title={__msg("admin.share")} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiPlusCircle} onClick={onClose} title={__msg("activity.addToYourStory")} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiBarChart2} onClick={onClose} title={__msg("profile.insights")} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiEdit3} onClick={onClose} title={__msg("profile.edit")} to={editTarget} />
+          <ProfileSeenActionRow icon={FiImage} onClick={onClose} title={__msg("profile.changeCover")} to={`${editTarget}&focus=cover`} />
+          <ProfileSeenActionRow icon={FiZap} onClick={onClose} title={isPinnedSeen(item) ? __msg("profile.unpin") : __msg("profile.pinToProfile")} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiGrid} onClick={onClose} title={seriesName ? __msg("profile.series", { value0: seriesName }) : __msg("profile.addToASeries")} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow icon={FiArchive} onClick={onClose} subtitle={__msg("profile.hiddenFromProfileStatsStay")} title={__msg("fanWeb.archive")} to={`/seen/${item.id}`} />
+          <ProfileSeenActionRow danger icon={FiTrash2} onClick={onClose} subtitle={__msg("profile.goneForEveryone")} title={__msg("posts.delete")} to={`/seen/${item.id}`} />
         </div>
       </section>
     </div>
@@ -276,6 +279,7 @@ function isPinnedSeen(item = {}) {
 }
 
 function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
+  __useUiLanguage();
   const media = findMedia(item);
   const chapters = item.chapters || [];
   const chapterCount = chapters.length || Number(item.chapterCount || 0);
@@ -290,18 +294,18 @@ function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
     <article className="profile-series-feed-item" data-profile-seen-row={item.id}>
       <div className="profile-series-feed-top">
         <Link className="profile-series-feed-cover" to={seenTarget}>
-          {media?.secureUrl ? <img alt={`${item.title} cover`} loading="lazy" src={media.secureUrl} /> : <span><FiBookOpen /></span>}
+          {media?.secureUrl ? <img alt={__msg("discover.cover", { value0: item.title })} loading="lazy" src={media.secureUrl} /> : <span><FiBookOpen /></span>}
         </Link>
         <div className="profile-series-feed-copy">
           <div className="profile-series-feed-actions">
             <span><FiEye /> {compactCount(views)}</span>
             {owner ? <span aria-hidden="true"><FiBookmark /></span> : null}
-            <button aria-label={`More actions for ${item.title || "Seen"}`} onClick={() => onMore(item)} type="button"><FiMoreHorizontal /></button>
+            <button aria-label={__msg("profile.moreActionsFor", { value0: item.title || "Seen" })} onClick={() => onMore(item)} type="button"><FiMoreHorizontal /></button>
           </div>
           <Link to={seenTarget}>
-            {pinned ? <span className="profile-series-feed-pinned">PINNED</span> : null}
-            <h3>{item.title || "Untitled Seen"}</h3>
-            <small>{[item.category, `${chapterCount} ${chapterWord}`, `~${formatReadTime(chapters)} min`].filter(Boolean).join(" - ")}</small>
+            {pinned ? <span className="profile-series-feed-pinned">{__msg("profile.pinned")}</span> : null}
+            <h3>{item.title || __msg("profile.untitledSeen")}</h3>
+            <small>{[item.category, `${chapterCount} ${chapterWord}`, __msg("profile.value0Min", { value0: formatReadTime(chapters) })].filter(Boolean).join(" - ")}</small>
             {description ? <p>{description}</p> : null}
           </Link>
         </div>
@@ -311,17 +315,18 @@ function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
           {chapters.slice(0, 3).map((chapter, index) => (
             <Link className="profile-series-feed-chapter" key={chapter.stableChapterId || `${item.id}-${index}`} to={`${seenTarget}?chapter=${index}`}>
               <span>{String(index + 1).padStart(2, "0")}</span>
-              <b>{chapter.title || `Chapter ${index + 1}`}</b>
+              <b>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b>
             </Link>
           ))}
         </div>
-      ) : firstChapter ? <Link className="profile-series-feed-chapter" to={`${seenTarget}?chapter=0`}><span>01</span><b>{firstChapter.title || "Chapter 1"}</b></Link> : null}
+      ) : firstChapter ? <Link className="profile-series-feed-chapter" to={`${seenTarget}?chapter=0`}><span>01</span><b>{firstChapter.title || __msg("profile.chapter1")}</b></Link> : null}
       <ProfileSeenEngagementBar item={item} />
     </article>
   );
 }
 
 function SeenListDetailView({ currentUser, focusSeenId = "", items, onBack, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
+  __useUiLanguage();
   useEffect(() => {
     if (!focusSeenId || focusSeenId === "all") return undefined;
     const frame = window.requestAnimationFrame(() => {
@@ -334,39 +339,41 @@ function SeenListDetailView({ currentUser, focusSeenId = "", items, onBack, onFe
   return (
     <section className="profile-series-feed-view profile-seen-list-feed-view seen-shell-main">
       <header className="profile-series-feed-head">
-        <button aria-label="Back to Seens" className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
-        <h2>My Seens</h2>
+        <button aria-label={__msg("profile.backToSeens")} className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
+        <h2>{__msg("profile.mySeens")}</h2>
         <b>{items.length}</b>
       </header>
       <div className="seen-feed-list profile-my-seens-feed">
         {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={currentUser} item={item} key={item.id} onFeedRemove={onFeedRemove} onFeedRemoveByCreator={onFeedRemoveByCreator} onFeedReplace={onFeedReplace} onFeedUpdate={onFeedUpdate} />)}
       </div>
-      {!items.length ? <p className="profile-empty-state">No Seens yet.</p> : null}
+      {!items.length ? <p className="profile-empty-state">{__msg("profile.noSeensYet")}</p> : null}
     </section>
   );
 }
 
 function SeriesDetailView({ activeSeries, items, onBack, onMore, owner }) {
-  const name = activeSeries?.name || activeSeries?.title || "Untitled Series";
+  __useUiLanguage();
+  const name = activeSeries?.name || activeSeries?.title || __msg("profile.untitledSeries");
   return (
     <section className="profile-series-feed-view">
       <header className="profile-series-feed-head">
-        <button aria-label="Back to Seens" className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
+        <button aria-label={__msg("profile.backToSeens")} className="profile-series-feed-back" onClick={onBack} type="button"><FiChevronLeft /></button>
         <h2>{name}</h2>
-        <span>SERIES</span>
+        <span>{__msg("profile.series_fc5b04")}</span>
         <b>{items.length}</b>
       </header>
       {activeSeries?.description ? <p className="profile-series-feed-description">{activeSeries.description}</p> : null}
       <div className="profile-series-feed-list">
         {items.map((item) => <SeriesSeenRow item={item} key={item.id} onMore={onMore} owner={owner} />)}
       </div>
-      {!items.length ? <p className="profile-empty-state">No Seens in this Series yet.</p> : null}
+      {!items.length ? <p className="profile-empty-state">{__msg("profile.noSeensInThisSeriesYet")}</p> : null}
     </section>
   );
 }
 
 function SeenShareSheet({ item, onClose, shareUrl }) {
-  const title = item?.title || "Untitled Seen";
+  __useUiLanguage();
+  const title = item?.title || __msg("profile.untitledSeen");
   const creatorName = creatorNameFor(item);
   const media = findMedia(item);
   return <AppShareSheet isOpen onClose={onClose} payload={{
@@ -383,6 +390,7 @@ function SeenShareSheet({ item, onClose, shareUrl }) {
 }
 
 function SeenPreviewSheet({ item, onClose, onSeriesChanged, owner }) {
+  __useUiLanguage();
   const [seriesOpen, setSeriesOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [localItem, setLocalItem] = useState(item);
@@ -401,17 +409,16 @@ function SeenPreviewSheet({ item, onClose, onSeriesChanged, owner }) {
         <span className="profile-seen-preview-handle" />
         <div className="profile-seen-preview-media">
           {media?.secureUrl ? (
-            isVideo ? <video muted playsInline src={media.secureUrl} /> : <img alt={`${item.title} cover`} src={media.secureUrl} />
+            isVideo ? <video muted playsInline src={media.secureUrl} /> : <img alt={__msg("discover.cover", { value0: item.title })} src={media.secureUrl} />
           ) : <span className="profile-seen-preview-fallback"><FiBookOpen /></span>}
           <span className="profile-seen-preview-shade" />
           {isVideo ? <em><FiVideo /> 0:15</em> : null}
-          <h2>{item.title || "Untitled Seen"}</h2>
+          <h2>{item.title || __msg("profile.untitledSeen")}</h2>
         </div>
 
         <p className="profile-seen-preview-views">
           <FiEye aria-hidden="true" />
-          <b>{views ? views.toLocaleString() : "0"}</b> stepped inside
-        </p>
+          <b>{views ? views.toLocaleString(__uiLocale()) : "0"}</b>{__msg("discover.steppedInside")}</p>
         <p className="profile-seen-preview-description">{descriptionFor(item)}</p>
 
         {chapters.length ? (
@@ -419,7 +426,7 @@ function SeenPreviewSheet({ item, onClose, onSeriesChanged, owner }) {
             {chapters.slice(0, 3).map((chapter, index) => (
               <Link className="profile-seen-preview-chapter" key={chapter.stableChapterId || `${item.id}-${index}`} to={seenTarget}>
                 <span>{index + 1}</span>
-                <b>{chapter.title || `Chapter ${index + 1}`}</b>
+                <b>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b>
               </Link>
             ))}
           </div>
@@ -428,18 +435,18 @@ function SeenPreviewSheet({ item, onClose, onSeriesChanged, owner }) {
         {owner || localSeries ? <button className="profile-seen-preview-series" disabled={!owner} onClick={() => owner && setSeriesOpen(true)} type="button">
           <span><FiGrid /></span>
           <span>
-            <b>{localSeries ? `Series: ${localSeries}` : "Add to a series"}</b>
-            <small>{owner ? (localSeries ? "Tap to change or remove" : "Group Seens into one book") : "Part of this creator's Series"}</small>
+            <b>{localSeries ? __msg("profile.series", { value0: localSeries }) : __msg("profile.addToASeries")}</b>
+            <small>{owner ? (localSeries ? __msg("profile.tapToChangeOrRemove") : __msg("profile.groupSeensIntoOneBook")) : __msg("profile.partOfThisCreatorSSeries")}</small>
           </span>
           {owner ? <i aria-hidden="true">&rsaquo;</i> : null}
         </button> : null}
 
-        <button className="profile-seen-preview-story" type="button"><FiScissors /> Add to your story</button>
+        <button className="profile-seen-preview-story" type="button"><FiScissors /> {__msg("activity.addToYourStory")}</button>
 
         <div className="profile-seen-preview-actions">
-          {owner ? <Link to={editTarget}>Edit</Link> : <Link to={seenTarget}>Open</Link>}
-          <button onClick={() => setShareOpen(true)} type="button">Share</button>
-          <button aria-label="Close Seen preview" className="is-close" onClick={onClose} type="button"><FiX /></button>
+          {owner ? <Link to={editTarget}>{__msg("profile.edit")}</Link> : <Link to={seenTarget}>{__msg("fan.open")}</Link>}
+          <button onClick={() => setShareOpen(true)} type="button">{__msg("admin.share")}</button>
+          <button aria-label={__msg("profile.closeSeenPreview")} className="is-close" onClick={onClose} type="button"><FiX /></button>
         </div>
         {shareOpen ? <SeenShareSheet item={item} onClose={() => setShareOpen(false)} shareUrl={shareUrl} /> : null}
         {seriesOpen ? (
@@ -475,6 +482,7 @@ function ProfileContentGrid({
   reposted = false,
   series = [],
 }) {
+  __useUiLanguage();
   const { user: currentUser } = useAuth();
   const [activeSeen, setActiveSeen] = useState(null);
   const [actionSeen, setActionSeen] = useState(null);
@@ -488,7 +496,7 @@ function ProfileContentGrid({
   }, [visibleContent]);
 
   if (kind === "seens") {
-    if (!effectiveContent.length && !series.length) return <ContentEmptyState compact message={owner ? "Publish a Seen to start sharing your stories and ideas." : "Published Seens will appear here when this creator shares one."} primaryAction={owner ? { label: "Create a Seen", to: "/create/seen" } : { label: "Explore Seens", to: "/seen" }} secondaryAction={{ label: "Discover people", to: "/discover" }} title={owner ? "Create your first Seen" : (emptyText || "No Seens yet")} variant="seen" />;
+    if (!effectiveContent.length && !series.length) return <ContentEmptyState compact message={owner ? __msg("profile.publishASeenToStartSharingYourStoriesAnd") : __msg("profile.publishedSeensWillAppearHereWhenThisCreatorShares")} primaryAction={owner ? { label: __msg("profile.createASeen"), to: "/create/seen" } : { label: __msg("profile.exploreSeens"), to: "/seen" }} secondaryAction={{ label: __msg("profile.discoverPeople"), to: "/discover" }} title={owner ? __msg("profile.createYourFirstSeen") : (emptyText || __msg("profile.noSeensYet_1d5d33"))} variant="seen" />;
     const drafts = owner ? effectiveContent.filter((item) => item.status === "DRAFT") : [];
     const publishedContent = effectiveContent.filter((item) => item.status !== "DRAFT").sort((left, right) => Number(right.pricing?.mode === "ONE_TIME") - Number(left.pricing?.mode === "ONE_TIME"));
     const seriesGroups = new Map(series.map((item) => [String(item.id), { ...item, seens: [] }]));
@@ -577,14 +585,14 @@ function ProfileContentGrid({
       const restrictedPaidDrafts = drafts.filter((item) => item.pricing?.mode === "ONE_TIME");
       return (
         <section className="profile-seen-drafts is-open">
-          <header><button onClick={() => setDraftsOpen(false)} type="button">‹ My Seens</button><i>·</i><b>Drafts {drafts.length}</b></header>
-          {restrictedPaidDrafts.length ? <div className="mx-3 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.05] p-3 text-left"><span><b className="block text-sm">Only you can see this</b><small className="mt-1 block text-xs text-white/45">Add seller info to publish paid content.</small></span><Link className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[#0A0C0F] active:scale-[.97]" to="/creator/seller-verification">Add info</Link></div> : null}
+          <header><button onClick={() => setDraftsOpen(false)} type="button">{__msg("profile.mySeens_b0cde5")}</button><i>·</i><b>{__msg("posts.drafts")} {drafts.length}</b></header>
+          {restrictedPaidDrafts.length ? <div className="mx-3 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.05] p-3 text-left"><span><b className="block text-sm">{__msg("system.ProfileContentGrid.5bd0cb89b4")}</b><small className="mt-1 block text-xs text-white/45">{__msg("system.ProfileContentGrid.8674a9b54b")}</small></span><Link className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[#0A0C0F] active:scale-[.97]" to="/creator/seller-verification">{__msg("system.ProfileContentGrid.311136805e")}</Link></div> : null}
           <div className="profile-seens-grid">
             {drafts.map((item) => <Link className="profile-seen-tile is-draft" key={item.id} to={`/studio/seens/${item.id}/edit?from=drafts`}>
-              {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title || "Untitled Seen"} draft cover`} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+              {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={__msg("profile.draftCover", { value0: item.title || __msg("profile.untitledSeen") })} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
               <span className="profile-seen-shade" />
-              <span className="profile-seen-badge">{item.pricing?.mode === "ONE_TIME" ? "Only you" : "DRAFT"}</span>
-              <span className="profile-seen-copy"><strong>{item.title || "Untitled Seen"}</strong></span>
+              <span className="profile-seen-badge">{item.pricing?.mode === "ONE_TIME" ? __msg("system.ProfileContentGrid.64fe846abb") : __msg("profile.draft")}</span>
+              <span className="profile-seen-copy"><strong>{item.title || __msg("profile.untitledSeen")}</strong></span>
             </Link>)}
           </div>
         </section>
@@ -594,20 +602,20 @@ function ProfileContentGrid({
       <>
         <div className="profile-seens-grid">
           {drafts.length ? <button className="profile-seen-tile profile-drafts-tile" onClick={() => setDraftsOpen(true)} type="button">
-            {drafts[0]?.coverMedia?.secureUrl ? <PublicationCoverMedia alt="Seen drafts" autoPlay loop media={drafts[0].coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+            {drafts[0]?.coverMedia?.secureUrl ? <PublicationCoverMedia alt={__msg("profile.seenDrafts")} autoPlay loop media={drafts[0].coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
             <span className="profile-seen-shade" />
             <span className="profile-draft-count">{drafts.length}</span>
-            <span className="profile-seen-copy"><strong>Drafts</strong></span>
+            <span className="profile-seen-copy"><strong>{__msg("posts.drafts")}</strong></span>
           </button> : null}
           {seriesTiles.map((seriesItem) => {
             const media = seriesItem.coverMedia || findMedia(seriesItem.seens?.[0]) || seriesItem.previewSeens?.find((item) => item.coverMedia)?.coverMedia;
             const count = seriesItem.seenCount ?? seriesItem.seens?.length ?? 0;
-            const name = seriesItem.name || seriesItem.title || "Untitled Series";
+            const name = seriesItem.name || seriesItem.title || __msg("profile.untitledSeries");
             return <button className="profile-seen-tile profile-series-tile" key={seriesItem.id} onClick={() => openSeries(seriesItem)} type="button">
-              {media?.secureUrl ? <PublicationCoverMedia alt={`${name} series cover`} autoPlay loop media={media} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+              {media?.secureUrl ? <PublicationCoverMedia alt={__msg("profile.seriesCover", { value0: name })} autoPlay loop media={media} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
               <span className="profile-seen-shade" />
-              <span className="profile-seen-badge">SERIES <b>{count}</b></span>
-              <span className="profile-seen-copy"><strong>{name}</strong><small>{count} {count === 1 ? "Seen" : "Seens"}</small></span>
+              <span className="profile-seen-badge">{__msg("profile.series_fc5b04")} <b>{count}</b></span>
+              <span className="profile-seen-copy"><strong>{name}</strong><small>{count} {count === 1 ? "Seen" : __msg("profile.seens")}</small></span>
             </button>;
           })}
           {featuredSeens.map((item) => {
@@ -615,12 +623,12 @@ function ProfileContentGrid({
             const paid = item.pricing?.mode === "ONE_TIME";
             const tile = (
               <>
-                {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={`${item.title} cover`} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+                {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: item.title })} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
-                <span className="profile-seen-badge">{paid ? <>🔒 PAID · ✦{Number(item.pricing?.starsAmount || 0).toLocaleString()}</> : reposted ? <><FiRepeat /> REPOST</> : "PINNED"}</span>
+                <span className="profile-seen-badge">{paid ? <>{__msg("system.ProfileContentGrid.645017bd05")}{Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</> : reposted ? <><FiRepeat /> {__msg("profile.repost_ed0fe2")}</> : __msg("profile.pinned")}</span>
                 <span className="profile-seen-copy">
                   <strong>{item.title}</strong>
-                  <small>{chapters} {chapters === 1 ? "chapter" : "chapters"}</small>
+                  <small>{chapters} {chapters === 1 ? __msg("profile.chapter_09d4c7") : __msg("discover.chapters")}</small>
                 </span>
               </>
             );
@@ -629,7 +637,7 @@ function ProfileContentGrid({
               const seenId = item.id || item._id;
               return (
                 <Link
-                  aria-label={`Open Seen ${item.title || "Untitled Seen"}`}
+                  aria-label={__msg("search.openSeen", { value0: item.title || __msg("profile.untitledSeen") })}
                   className="profile-seen-tile"
                   key={seenId}
                   to={`/seen/${seenId}`}
@@ -642,7 +650,7 @@ function ProfileContentGrid({
             if (paid && !owner) {
               return (
                 <Link
-                  aria-label={`Open Paid Seen ${item.title || "Untitled Seen"}`}
+                  aria-label={__msg("system.ProfileContentGrid.3ef1e09d30", { value0: item.title || __msg("profile.untitledSeen") })}
                   className={`profile-seen-tile is-paid ${String(highlightSeenId) === String(item.id || item._id) ? "is-newly-published" : ""}`}
                   key={item.id}
                   to={`/seen/${item.id || item._id}`}
@@ -667,7 +675,7 @@ function ProfileContentGrid({
     );
   }
 
-  if (!visibleContent.length) return <ContentEmptyState compact message={owner ? "Create something new and it will appear on your profile." : "There is no published content in this section yet."} primaryAction={owner ? { label: "Create", to: "/create" } : { label: "Discover people", to: "/discover" }} title={owner ? "Share your first creation" : (emptyText || "No content yet")} variant="profile" />;
+  if (!visibleContent.length) return <ContentEmptyState compact message={owner ? __msg("profile.createSomethingNewAndItWillAppearOnYour") : __msg("profile.thereIsNoPublishedContentInThisSectionYet")} primaryAction={owner ? { label: __msg("fanWeb.create"), to: "/create" } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={owner ? __msg("profile.shareYourFirstCreation") : (emptyText || __msg("profile.noContentYet"))} variant="profile" />;
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {visibleContent.map((item) => {
@@ -679,7 +687,7 @@ function ProfileContentGrid({
             {image ? <img alt="" className="h-full w-full object-cover" src={image} /> : <Icon className="text-3xl text-atseen-blue/60" />}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3">
               <p className="line-clamp-2 text-xs font-bold text-white">{item.title}</p>
-              {item.locked ? <p className="mt-1 text-[10px] text-atseen-muted">Locked content</p> : null}
+              {item.locked ? <p className="mt-1 text-[10px] text-atseen-muted">{__msg("profile.lockedContent")}</p> : null}
             </div>
           </article>
         );

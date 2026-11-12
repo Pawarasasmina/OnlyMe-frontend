@@ -39,6 +39,7 @@ function StoriesRow({ currentUser }) {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [seenStoryOpen, setSeenStoryOpen] = useState(false);
   const [viewer, setViewer] = useState({ groupId: null, index: 0 });
+  const [playbackOrder, setPlaybackOrder] = useState([]);
 
   const wallData = storiesQuery.data || { items: [], viewer: ownUser(currentUser, user) };
   const me = ownUser(currentUser, user, wallData.viewer);
@@ -49,6 +50,14 @@ function StoriesRow({ currentUser }) {
     .map((group, position) => ({ group, position }))
     .sort((left, right) => Number(Boolean(right.group.hasUnseenStories)) - Number(Boolean(left.group.hasUnseenStories)) || left.position - right.position)
     .map(({ group }) => group), [me.id, wallData.items]);
+
+  const navigationGroups = viewer.groupId
+    ? playbackOrder.map(id => peopleGroups.find(group => String(group.id || group.user?.id) === id)).filter(Boolean)
+    : peopleGroups;
+  const openViewer = (next) => {
+    setPlaybackOrder(peopleGroups.map(group => String(group.id || group.user?.id)));
+    setViewer(next);
+  };
 
   const activeGroup = useMemo(() => {
     if (viewer.groupId === "own") return { id: "own", stories: ownStories };
@@ -69,25 +78,25 @@ function StoriesRow({ currentUser }) {
       return;
     }
     const index = ownStories.findIndex((story) => !story.viewed);
-    setViewer({ groupId: "own", index: index >= 0 ? index : 0 });
+    openViewer({ groupId: "own", index: index >= 0 ? index : 0 });
   };
 
   const openStoryAfterSeen = () => {
     setSeenStoryOpen(false);
     if (ownStories.length) {
       const ownIndex = ownStories.findIndex((story) => !story.viewed);
-      setViewer({ groupId: "own", index: ownIndex >= 0 ? ownIndex : 0 });
+      openViewer({ groupId: "own", index: ownIndex >= 0 ? ownIndex : 0 });
       return;
     }
     const firstGroup = peopleGroups[0];
     if (!firstGroup) return;
     const firstIndex = firstGroup.stories.findIndex((story) => !story.viewed);
-    setViewer({ groupId: firstGroup.id || firstGroup.user.id, index: firstIndex >= 0 ? firstIndex : 0 });
+    openViewer({ groupId: firstGroup.id || firstGroup.user.id, index: firstIndex >= 0 ? firstIndex : 0 });
   };
 
   const openNextStoryGroup = () => {
-    const currentIndex = peopleGroups.findIndex((group) => group.id === viewer.groupId || group.user?.id === viewer.groupId);
-    const nextGroup = viewer.groupId === "own" ? peopleGroups[0] : peopleGroups[currentIndex + 1];
+    const currentIndex = navigationGroups.findIndex((group) => group.id === viewer.groupId || group.user?.id === viewer.groupId);
+    const nextGroup = viewer.groupId === "own" ? navigationGroups[0] : navigationGroups[currentIndex + 1];
     if (!nextGroup) {
       setViewer({ groupId: null, index: 0 });
       return;
@@ -100,8 +109,8 @@ function StoriesRow({ currentUser }) {
   };
 
   const openPreviousStoryGroup = () => {
-    const currentIndex = peopleGroups.findIndex((group) => group.id === viewer.groupId || group.user?.id === viewer.groupId);
-    const previousGroup = currentIndex > 0 ? peopleGroups[currentIndex - 1] : null;
+    const currentIndex = navigationGroups.findIndex((group) => group.id === viewer.groupId || group.user?.id === viewer.groupId);
+    const previousGroup = currentIndex > 0 ? navigationGroups[currentIndex - 1] : null;
     if (!previousGroup) return;
     setViewer({
       groupId: previousGroup.id || previousGroup.user.id,
@@ -139,7 +148,7 @@ function StoriesRow({ currentUser }) {
             <WallStoryPersonItem
               group={group}
               key={group.id || group.user.id}
-              onOpenStory={() => setViewer({ groupId: group.id || group.user.id, index: firstUnseenIndex >= 0 ? firstUnseenIndex : 0 })}
+              onOpenStory={() => openViewer({ groupId: group.id || group.user.id, index: firstUnseenIndex >= 0 ? firstUnseenIndex : 0 })}
             />
           );
         })}

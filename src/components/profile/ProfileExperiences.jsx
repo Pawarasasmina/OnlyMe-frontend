@@ -8,7 +8,7 @@ import { FiPlus } from "react-icons/fi";
 const STAR = "✦";
 function updatedLabel(value) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(value || Date.now()).getTime()) / 86400000));
-  return days < 1 ? __msg("profile.updToday") : `upd ${days}d`;
+  return days < 1 ? __msg("profile.updToday") : __msg("profile.updValue0D", { value0: days });
 }
 
 export default function ProfileExperiences({ creatorUsername = "", experiences = [], onCreate, owner = false }) {

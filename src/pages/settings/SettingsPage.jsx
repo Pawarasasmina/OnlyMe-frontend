@@ -166,7 +166,7 @@ export default function SettingsPage() {
       <SettingsRow icon={FiBarChart2} subtitle={__msg("settings.insightsAudienceAndEarnings")} title={__msg("settings.professionalDashboard")} to="/studio" />
       {user?.creatorApprovalStatus === "approved" ? <button className="settings-index-row" role="switch" aria-checked={previewEnabled} onClick={toggleCreatorPreview} type="button">
         <span className="settings-index-row-copy"><b>{__msg("settings.previewAsANewCreator")}</b><small>{__msg("settings.seeTheOnboardingAndEarningExamples")}</small></span>
-        <span className={`settings-preview-status${previewEnabled ? " is-on" : ""}`}>{previewEnabled ? "On" : "Off"}</span>
+        <span className={`settings-preview-status${previewEnabled ? " is-on" : ""}`}>{previewEnabled ? __msg("fanWeb.on") : __msg("fanWeb.off")}</span>
       </button> : null}
     </SettingsGroup> : null}
     <SettingsGroup title={__msg("orbit.preferences")}><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle={__msg("settings.commentsReactionsMessagesAndIncome")} title={__msg("settings.notifications")} /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.topicsPeopleAndWhatYouSee")} title={__msg("settings.contentPreferences")} to="/settings/content" /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.timeZoneAndPassword")} title={__msg("settings.accountPreferences")} to="/settings/account" /></SettingsGroup>

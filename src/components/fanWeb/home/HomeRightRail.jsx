@@ -10,10 +10,7 @@ import VerifiedBadge from "../shared/VerifiedBadge";
 import PublicationCoverMedia from "../../publication/PublicationCoverMedia";
 
 function formatCount(value = 0) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString(__uiLocale());
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function profileRoute(person = {}) {
@@ -47,7 +44,7 @@ function BeingSeenNowCard({ activity }) {
         <strong>{title}</strong>
         <small>{actor && total > 1 ? __msg("fanWeb.andOthersAreAtSeen", { value0: creatorName(actor).split(" ")[0], value1: total - 1 }) : subtitle}</small>
       </span>
-      <i aria-label={actor ? __msg("fanWeb.liveNow") : __msg("fanWeb.noLiveActivity")} className={actor ? "is-live" : ""} />
+      <i aria-label={actor ? __msg("fanWeb.liveNow") : __msg("fanWeb.noLiveActivity")} className={actor ? "is-live presence-blink" : ""} />
     </Link>
   );
 }
@@ -161,11 +158,11 @@ function FreshSeensCard({ seens = [] }) {
 function HomeRailFooter() {
   __useUiLanguage();
   const links = [
-    ["About", "/settings/support/about"],
-    ["Creators", "/discover"],
-    ["Terms", "/settings/support/terms"],
-    ["Privacy", "/settings/privacy"],
-    ["Help", "/settings/support/help"],
+    [__msg("settings.about"), "/settings/support/about"],
+    [__msg("admin.creators"), "/discover"],
+    [__msg("system.LoginPage.a55a275aa6"), "/settings/support/terms"],
+    [__msg("settings.privacy"), "/settings/privacy"],
+    [__msg("profile.help"), "/settings/support/help"],
   ];
 
   return (

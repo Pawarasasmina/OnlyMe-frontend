@@ -50,7 +50,7 @@ export default function BringFriendsFlow({ user, onClose, onFullScreen }) {
   const data = query.data || {}, friends = data.friends || [], count = data.joinedCount || 0;
   const inviteUrl = data.code ? `${window.location.origin}/invite/${data.code}` : "";
   const payload = { contentType: "invitation", contentId: user?.id || user?._id, canonicalUrl: inviteUrl, destinationRoute: `/invite/${data.code}`, title: __msg("messages.value0InvitedYouToSeen", { value0: firstName(user) }), author: user };
-  if (preview) return <InviteLanding inviter={user} onClose={onClose} onJoin={visible => { onClose(); showToast(visible ? "This is what your friend sees ✓" : `Joined — ${firstName(user)} won’t be told`, { variant: "archive", duration: 1600 }); }} />;
+  if (preview) return <InviteLanding inviter={user} onClose={onClose} onJoin={visible => { onClose(); showToast(visible ? __msg("system.copy.76a417772044") : __msg("system.BringFriendsFlow.d75a9886b1", { value0: firstName(user) }), { variant: "archive", duration: 1600 }); }} />;
   return <InvitationState query={query}><div className="bring-friends-home">
     <div className="bring-friends-faces">{Array.from({ length: 3 }, (_, i) => friends[i] ? <div key={friends[i].id}><FanAvatar name={friends[i].name} src={friends[i].avatar} size="h-[56px] w-[56px]" /><small>{firstName(friends[i])}</small></div> : <span aria-label={__msg("profile.inviteAFriend")} className="bring-friends-placeholder" key={i}><FiPlus /></span>)}</div>
     {count ? <button className="invite-text-link invite-see-all" onClick={() => { onClose(); navigate("/invitations"); }} type="button">{__msg("profile.seeAll")}{count}) ›</button> : null}

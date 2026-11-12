@@ -11,7 +11,7 @@ import { callService } from "../../services/callService";
 import { messageService } from "../../services/messageService";
 
 const benefitRows = [
-  __uiTuple([FiMessageCircle, "A 48-hour private window", { __uiMessage: "profile.upTo3MessagesFromYouAReal" }]),
+  __uiTuple([FiMessageCircle, { __uiMessage: "system.copy.795014181b4b" }, { __uiMessage: "profile.upTo3MessagesFromYouAReal" }]),
   __uiTuple([FiInbox, { __uiMessage: "profile.topOfThePriorityInbox" }, { __uiMessage: "profile.yourMessageAppearsAboveStandardConversationsSoIt" }]),
   __uiTuple([FiClock, { __uiMessage: "profile.firstReplyWithin48Hours" }, { __uiMessage: "profile.aPersonalReplyUsuallyMuchFasterWithinThe" }]),
   __uiTuple([FiRefreshCw, { __uiMessage: "profile.refundedIfUnanswered" }, { __uiMessage: "profile.noReplyIn48HoursYourCoinsCome" }]),

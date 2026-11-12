@@ -24,9 +24,9 @@ export default function WallPostTypeBadge({ postType, topic, context, rightNow, 
     params.set(field, value);
     return `/wall?${params}`;
   };
-  if (topicOnly) return topicKey && topicLabel.toLowerCase() !== type.toLowerCase() ? <Link className="wall-post-topic-link wall-note-topic" aria-label={__msg("fanWeb.filterWallByTopic", { value0: topicLabel })} to={target("topic",topicKey)}>{__optionLabel(topicLabel)}</Link> : null;
+  if (topicOnly) return topicKey && topicLabel.toLowerCase() !== type.toLowerCase() ? <Link data-first-hint="wall" className="wall-post-topic-link wall-note-topic" aria-label={__msg("fanWeb.filterWallByTopic", { value0: topicLabel })} to={target("topic",topicKey)}>{__optionLabel(topicLabel)}</Link> : null;
   return <span className={`wall-post-type ${closedLabel ? "is-closed" : ""}`} data-closed-good={["Solved", "Sold", "Found"].includes(closedLabel) ? "true" : "false"}>
-    <Link aria-label={__msg("fanWeb.filterWallBy", { value0: type })} className="wall-post-type-link" to={target(typeKey ? "type" : "topic",typeKey || topicKey || "community")}>{["Sold", "Solved", "Found"].includes(closedLabel) ? <FiCheck aria-hidden="true" /> : null}{__optionLabel(closedLabel || type)}</Link>
+    <Link data-first-hint="wall" aria-label={__msg("fanWeb.filterWallBy", { value0: type })} className="wall-post-type-link" to={target(typeKey ? "type" : "topic",typeKey || topicKey || "community")}>{["Sold", "Solved", "Found"].includes(closedLabel) ? <FiCheck aria-hidden="true" /> : null}{__optionLabel(closedLabel || type)}</Link>
     {rightNow && !closedLabel ? <span className="wall-now-badge">{__msg("fanWeb.now")}</span> : null}
   </span>;
 }

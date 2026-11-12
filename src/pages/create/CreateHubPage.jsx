@@ -34,8 +34,8 @@ function CreateHubPage() {
     ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "PUBLISHED"].includes(item.status));
   const premium = active.filter((item) => item.kind === "PREMIUM_WORLD").length;
   const cards = [
-    { title: t("Free Seen"), text: "Up to 5 chapters · every chapter is open to everyone", to: "/create/seen?type=free" },
-    { title: t("Paid Seen"), text: "Up to 5 chapters · chapter 1 is free and the rest unlock once", to: "/create/seen?type=paid" },
+    { title: t("Free Seen"), text: __msg("create.upTo5ChaptersEveryChapterIsOpen"), to: "/create/seen?type=free" },
+    { title: t("Paid Seen"), text: __msg("create.upTo5ChaptersChapter1IsFree"), to: "/create/seen?type=paid" },
     ...(capabilities.isApprovedCreator ? [{ title: __msg("create.premiumExperience"), text: __msg("create.multiChapterJourneyFirstChapterFreeOneTime"), to: "/create/experience" }] : []),
     ...(capabilities.isApprovedCreator ? [{ title: __msg("admin.world"), text: __msg("create.monthlySubscriptionPrivateEcosystemProfileOnlyValue0", { value0: premium ? __msg("create.alreadyCreated") : __msg("social.available") }), to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];

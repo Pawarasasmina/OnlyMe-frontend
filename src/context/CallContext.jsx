@@ -1,3 +1,4 @@
+import { getLocale as __uiLocale } from "../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../i18n/runtime.js";
@@ -166,7 +167,7 @@ export function CallProvider({ children }) {
         await peer.setLocalDescription(offer);
         socket.emit("call:signal", { callId, description: peer.localDescription });
         updateCall((current) => current ? { ...current, state: "CONNECTING" } : current);
-      } catch (requestError) { setError(requestError.message || "Call connection failed."); closeCall("FAILED"); }
+      } catch (requestError) { setError(requestError.message || __msg("system.copy.6023ff6edc8a")); closeCall("FAILED"); }
     };
     const joinReady = ({ callId }) => { if (callRef.current?.id === callId) updateCall((current) => current ? { ...current, state: "CONNECTING" } : current); };
     const signal = async ({ callId, description, candidate }) => {
@@ -185,7 +186,7 @@ export function CallProvider({ children }) {
           if (peer.remoteDescription) await peer.addIceCandidate(candidate);
           else pendingCandidatesRef.current.push(candidate);
         }
-      } catch (requestError) { setError(requestError.message || "Call connection failed."); }
+      } catch (requestError) { setError(requestError.message || __msg("system.copy.6023ff6edc8a")); }
     };
     const ended = ({ callId, status }) => {
       if (callRef.current?.id !== callId) return;
@@ -226,7 +227,7 @@ export function CallProvider({ children }) {
       if (!offer.enabled) throw new Error("This creator is not accepting calls right now.");
       updateCall((current) => current ? { ...current, paid: true, offerLoading: false, ...offer } : current);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || "Could not load this call offer.");
+      setError(requestError.response?.data?.message || requestError.message || __msg("system.copy.35a3f857d107"));
       updateCall((current) => current ? { ...current, offerLoading: false, offerUnavailable: true } : current);
     }
   }, [updateCall]);
@@ -245,7 +246,7 @@ export function CallProvider({ children }) {
       const result = await callService.requestPaidCall(current.person.id, current.type, key, callTopic.trim(), priority).then((response) => response.data.data);
       updateCall((value) => ({ ...value, id: result.call.id, state: "REQUESTED", topic: callTopic.trim(), priority, priceStars: result.call.priceStars, settlementStatus: result.call.settlementStatus, durationLimitSeconds: result.call.durationLimitSeconds }));
     } catch (requestError) {
-      setError(requestError.response?.data?.code === "INSUFFICIENT_STARS" ? "Not enough Stars. Add Stars in Wallet and try again." : requestError.response?.data?.message || requestError.message || "Could not request this call.");
+      setError(requestError.response?.data?.code === "INSUFFICIENT_STARS" ? __msg("system.copy.67d811337879") : requestError.response?.data?.message || requestError.message || __msg("system.copy.e50057942981"));
       updateCall((value) => value ? { ...value, state: "OFFER" } : value);
     } finally {
       setRequestBusy(false);
@@ -260,15 +261,15 @@ export function CallProvider({ children }) {
       await ensureMedia(current.type);
       const peer = await createPeer();
       getMessageSocket()?.emit("call:join", { callId: current.id }, async (response) => {
-        if (!response?.ok) { setError(response?.message || "This call is no longer available."); closeCall("MISSED"); return; }
+        if (!response?.ok) { setError(response?.message || __msg("system.copy.b1cbf1011bb4")); closeCall("MISSED"); return; }
         try {
           const offer = await peer.createOffer();
           await peer.setLocalDescription(offer);
           getMessageSocket()?.emit("call:signal", { callId: current.id, description: peer.localDescription });
           updateCall((value) => value ? { ...value, state: "CONNECTING" } : value);
-        } catch (requestError) { setError(requestError.message || "Call connection failed."); closeCall("FAILED"); }
+        } catch (requestError) { setError(requestError.message || __msg("system.copy.6023ff6edc8a")); closeCall("FAILED"); }
       });
-    } catch (requestError) { setError(requestError.name === "NotAllowedError" ? "Allow microphone and camera access to join." : "Could not join this call."); closeCall("FAILED"); }
+    } catch (requestError) { setError(requestError.name === "NotAllowedError" ? __msg("system.copy.f5d1e12f7236") : __msg("system.copy.27f618b572fc")); closeCall("FAILED"); }
   };
 
   const acceptCall = async () => {
@@ -276,7 +277,7 @@ export function CallProvider({ children }) {
       await ensureMedia(callRef.current.type);
       await createPeer();
       getMessageSocket()?.emit("call:accept", { callId: callRef.current.id }, (response) => response?.ok ? updateCall((current) => ({ ...current, state: response.waitingForJoin ? "WAITING_FOR_JOIN" : "CONNECTING" })) : closeCall("MISSED"));
-    } catch (requestError) { setError(requestError.name === "NotAllowedError" ? "Allow microphone and camera access to answer." : "Could not answer this call."); getMessageSocket()?.emit("call:decline", { callId: callRef.current.id }); closeCall("FAILED"); }
+    } catch (requestError) { setError(requestError.name === "NotAllowedError" ? __msg("system.copy.2245b89e86c3") : __msg("system.copy.ff95d26477fe")); getMessageSocket()?.emit("call:decline", { callId: callRef.current.id }); closeCall("FAILED"); }
   };
   const declineCall = () => { if (callRef.current?.direction === "INCOMING") getMessageSocket()?.emit("call:decline", { callId: callRef.current.id }); else getMessageSocket()?.emit("call:end", { callId: callRef.current?.id, reason: "CANCELED" }); closeCall(); };
   const endCall = () => { getMessageSocket()?.emit("call:end", { callId: callRef.current?.id, reason: "HANGUP" }); closeCall(); };
@@ -318,7 +319,7 @@ export function CallProvider({ children }) {
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#193b39] text-[24px] text-[#59d89b]"><FiClock /></span>
         <p className="mt-5 text-[10px] font-black uppercase tracking-[.18em] text-[#59d89b]">{__msg("context.callReminder")}</p>
         <h2 className="mt-2 text-xl font-black" id="call-reminder-title">{__msg("profile.callWith")} {callReminder.person?.displayName || __msg("context.yourContact")} {__msg("context.in10Minutes")}</h2>
-        <p className="mt-2 text-xs text-[#7898bd]">{new Date(callReminder.scheduledFor).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} {__msg("context.openSeenAndBeReadyToConnect")}</p>
+        <p className="mt-2 text-xs text-[#7898bd]">{new Date(callReminder.scheduledFor).toLocaleTimeString(__uiLocale(), { hour: "2-digit", minute: "2-digit" })} {__msg("context.openSeenAndBeReadyToConnect")}</p>
         <div className="mt-5 rounded-xl border border-[#2c745b]/60 bg-[#193b39]/35 px-4 py-3 text-[10px] leading-4 text-[#9ab5c5]">{__msg("context.bothOfYouWillReceiveTheCallPromptAutomatically")}</div>
         <button className="mt-5 w-full rounded-xl bg-[#8fc5ff] py-3 text-sm font-black text-[#07101a]" onClick={dismissReminder} type="button">{__msg("context.gotIt")}</button>
       </section>

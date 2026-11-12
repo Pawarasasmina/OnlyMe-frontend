@@ -2,6 +2,22 @@
 
 Status: implementation and linguistic review in progress. Full translation-key coverage is not approval of every translation or a completed production release.
 
+## System-interface update — 9 November 2026
+
+The frontend now has 7,178 registered messages in each of its eight catalogs. Coverage checks report no missing messages, invalid ICU argument sets, unregistered literal message calls, raw English JSX text, or unapproved English copies. Attribute source contracts also cover placeholders, labels, and accessibility text. These are source/data checks, not a claim that every server response or successful-data screen has been manually inspected.
+
+This update covers the newer authentication and onboarding flows, settings, help and bundled legal documents, publishing controls, feed/readers, messaging, purchase dialogs, administration, system notification templates, and exported ticket/story-card labels. Creator-written content, names, entered form values, and submitted API identifiers are preserved. Known system notification templates interpolate original names and titles into localized sentences; arbitrary server-authored text still needs a registered message/template to be translated.
+
+Language catalogs warm in the background and switching uses shared reactive state. The Vite browser loader uses JavaScript module imports rather than native JSON import attributes; Node tests retain a native JSON loader. Account settings offer only the eight supported interface languages, independently of profile/spoken-language choices. Arabic onboarding scroll offsets and keyboard navigation account for right-to-left direction and preserve the selected slide/interest codes across changes.
+
+Current verification: 10 localization unit/source tests and 33 application unit tests pass; frontend lint has zero errors and 25 warnings. The production build passes. Eleven browser checks passed for mounted-screen switching in every language, credential preservation, onboarding codes, and mobile Arabic settings. Additional checks passed for the Arabic welcome carousel and preservation of authored moderation feedback/API reason codes. All 111 active routes passed their API-unavailable/error-state checks in English, Russian, and Arabic (333 route visits). Those checks do not replace authenticated, successful-data testing against a live backend.
+
+New drafts were generated locally and supplemented with explicit wording/plural corrections. They were not translated through Lara. [system-translation-review.json](system-translation-review.json) lists drafts still requiring native-speaker review, particularly legal, payment, and security wording. No backend emails, production deployment, live financial transactions, or creator-content translation were changed by this frontend update.
+
+## Historical implementation record
+
+The metrics and runs below describe the earlier implementation and are superseded by the current update above.
+
 ## Architecture and storage
 
 The existing `LanguageContext` remains the application-wide source of truth. `src/i18n/runtime.js` provides shared semantic-key translation, ICU MessageFormat, reactive language subscriptions and locale-aware formatting. There is no DOM replacement, runtime machine translation or translation of private user content.

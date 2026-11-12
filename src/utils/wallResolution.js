@@ -10,7 +10,7 @@ export function patchWallResolution(current, post) {
 }
 
 export function wallCloseLabels(postType, context = "") {
-  if (!postType && ["Buy/Sell", "Shopping"].includes(context)) postType = "Buy & Sell";
+  if (!postType && ["Buy/Sell", "Shopping"].includes(context)) postType = __msg("fanWeb.buySell");
   return ({
     "Buy & Sell": { action: __msg("wallResolution.markAsSold"), state: __msg("wallResolution.sold") },
     Offering: { action: __msg("wallResolution.noLongerAvailable"), state: __msg("admin.notAvailable") },

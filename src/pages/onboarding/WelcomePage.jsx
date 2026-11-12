@@ -1,3 +1,4 @@
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { Navigate, useNavigate } from "react-router-dom";
 import WelcomeCarousel from "../../components/onboarding/WelcomeCarousel";
@@ -22,7 +23,7 @@ function WelcomePage() {
     if (user.onboarding?.currentStep !== "welcome") return navigate(onboardingPathFor(user));
     setSaving(true); setError("");
     try { await onboardingService.saveWelcomeStep(); navigate("/onboarding/interests"); }
-    catch (requestError) { setError(requestError.response?.data?.message || "Unable to start onboarding."); }
+    catch (requestError) { setError(requestError.response?.data?.message || __msg("onboarding.unableToStartOnboarding")); }
     finally { setSaving(false); }
   };
   const continueLastAccount = async () => {

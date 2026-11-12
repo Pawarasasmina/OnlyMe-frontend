@@ -14,7 +14,7 @@ function StoryStatusBadge({ status }) {
   return (
     <span
       aria-label={status.label ? __msg("stories.status", { value0: status.label }) : __msg("financial.status")}
-      className="wall-story-status-badge is-online"
+      className="wall-story-status-badge is-online presence-blink"
       style={{ "--story-status-color": color }}
     >
       <span className="sr-only">{__msg("discover.online")}</span>

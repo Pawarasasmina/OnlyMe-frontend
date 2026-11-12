@@ -1,5 +1,5 @@
 /* i18n-source-migrated */
-import { msg as __msg } from "../../i18n/runtime.js";
+import { msg as __msg, optionLabel } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useMemo, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
@@ -89,7 +89,7 @@ function DiscoverSettingsModal({ interestTags = [], isOpen, onClose, onReset, on
           <div className="mt-3 flex flex-wrap gap-2">
             {(draft.topics || []).map((topic) => (
               <button className={`rounded-full border px-3 py-2 text-xs font-extrabold transition ${topicClasses(topic.preference)}`} key={topic.label} onClick={() => toggleTopic(topic.label)} type="button">
-                {topic.label}{topic.preference === "interested" ? __msg("discover.interested") : topic.preference === "less" ? __msg("discover.less") : ""}
+                {optionLabel(topic.label)}{topic.preference === "interested" ? __msg("discover.interested") : topic.preference === "less" ? __msg("discover.less") : ""}
               </button>
             ))}
           </div>

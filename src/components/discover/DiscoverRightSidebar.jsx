@@ -9,10 +9,7 @@ import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 
 function formatCount(value = 0) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString(__uiLocale());
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function profileRoute(person = {}) {
@@ -51,7 +48,7 @@ function DiscoverActivityCard({ activity }) {
         <strong>{__msg("discover.beingSeenRightNow")}</strong>
         <small>{activity.text || __msg("discover.isAtSeen", { value0: actor.displayName || actor.name })}</small>
       </span>
-      {activity.online ? <i aria-label={__msg("discover.online")} /> : null}
+      {activity.online ? <i className="presence-blink" aria-label={__msg("discover.online")} /> : null}
     </Link>
   );
 }

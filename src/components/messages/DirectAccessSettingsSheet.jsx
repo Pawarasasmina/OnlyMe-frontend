@@ -14,6 +14,7 @@ import { walletService } from "../../services/walletService";
 import "./DirectAccessSettingsSheet.css";
 
 function CoinAmount({ value }) {
+  __useUiLanguage();
   return <><img className="direct-settings-coin" src="/brand/goldcoin.png" alt="" />{value.toLocaleString(__uiLocale())}</>;
 }
 

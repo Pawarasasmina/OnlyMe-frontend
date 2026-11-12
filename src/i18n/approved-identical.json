@@ -46,7 +46,21 @@
     "London",
     "New York",
     "Miami",
-    " · {value0} MB"
+    " · {value0} MB",
+    "© OpenStreetMap",
+    "· Seen",
+    "Spotlight",
+    "{value0} MB",
+    "{value0} KB",
+    "James Carter",
+    "Dario Conte",
+    "Zoe Miller",
+    "Nora Wells",
+    "Elsa Berg",
+    "Ana Patel",
+    "Luca Romano",
+    "Lina · Paris",
+    "Maya · Dubai"
   ],
   "es": [
     "Original",
@@ -89,7 +103,8 @@
     "Mentions",
     "Image",
     "Standard",
-    "Conversation"
+    "Conversation",
+    "Date"
   ],
   "de": [
     "Global",
@@ -112,6 +127,9 @@
     "{value0} Premium",
     "Test",
     "Moderator",
-    "(optional)"
+    "(optional)",
+    "Status: {value0}",
+    "Start ›",
+    "~{value0} min"
   ]
 }

@@ -17,7 +17,11 @@ async function setup(page, language, route = "/settings", role = "creator") {
   });
   const concrete = route.replace(/:username/g, "original-user").replace(/:section/g, "help").replace(/:[a-zA-Z]+/g, "507f1f77bcf86cd799439011");
   await page.goto(`/tests/fixtures/i18n-app.html?route=${encodeURIComponent(concrete)}&role=${role}`);
-  await expect(page.getByTestId("active-language")).toHaveText(language);
+  await expect(page.getByTestId("active-language")).toHaveText(language, { timeout: 15000 });
+  const loading = await page.evaluate(() => window.i18nTest.msg("routes.loadingPage"));
+  // Route modules are loaded lazily; wait for the route itself, not just the
+  // shared shell, especially on a cold development server.
+  await expect(page.getByRole("status", { name: loading, exact: true })).toHaveCount(0, { timeout: 20000 });
 }
 
 for (const language of ["en", "ru", "ar"]) {
@@ -39,8 +43,8 @@ for (const language of ["en", "ru", "ar"]) {
 for (const language of ["en", "ar", "ru", "uk", "es", "pt", "fr", "de"]) {
   test(`switching to ${language} updates mounted screens and preserves data`, async ({ page }) => {
     await setup(page, "en");
-    await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
-    const expected = await page.evaluate(lang => { window.i18nTest.setLanguage(lang); return window.i18nTest.msg("Settings"); }, language);
+    await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible({ timeout: 20000 });
+    const expected = await page.evaluate(async lang => { await window.i18nTest.setLanguage(lang); return window.i18nTest.msg("Settings"); }, language);
     await expect(page.getByRole("heading", { name: expected, exact: true })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", language);
     await expect(page.locator("html")).toHaveAttribute("dir", language === "ar" ? "rtl" : "ltr");
@@ -49,6 +53,38 @@ for (const language of ["en", "ar", "ru", "uk", "es", "pt", "fr", "de"]) {
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
   });
 }
+
+test("login labels switch in every language without clearing typed credentials", async ({ page }) => {
+  await setup(page, "en", "/login", "guest");
+  const email = page.locator('input[autocomplete="email"]');
+  const password = page.locator('input[autocomplete="current-password"]');
+  await email.fill("original@example.com");
+  await password.fill("Unchanged-password-123");
+  for (const language of ["ar", "ru", "uk", "es", "pt", "fr", "de", "en"]) {
+    const labels = await page.evaluate(async language => {
+      await window.i18nTest.setLanguage(language);
+      return { email: window.i18nTest.msg("system.LoginPage.5a698f5f3b"), password: window.i18nTest.msg("Password") };
+    }, language);
+    await expect(email).toHaveAttribute("placeholder", labels.email);
+    await expect(password).toHaveAttribute("placeholder", labels.password);
+    await expect(email).toHaveValue("original@example.com");
+    await expect(password).toHaveValue("Unchanged-password-123");
+    await expect(page.locator("html")).toHaveAttribute("dir", language === "ar" ? "rtl" : "ltr");
+  }
+});
+
+test("onboarding keeps saved interest codes when the display language changes", async ({ page }) => {
+  await setup(page, "en", "/start/interests", "guest");
+  const add = await page.evaluate(() => `${window.i18nTest.msg("publication.add")} Travel`);
+  await page.getByRole("button", { name: add, exact: true }).first().click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("atseen_pre_auth_interests") || "[]"))).toContain("Travel");
+  await page.evaluate(async () => { await window.i18nTest.setLanguage("ar"); });
+  await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("atseen_pre_auth_interests") || "[]"))).toEqual(["Travel"]);
+  const heading = await page.evaluate(() => window.i18nTest.msg("system.InterestStoryPicker.a041eddb3b"));
+  await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+  await expect(page.getByTestId("route-crash")).toHaveCount(0);
+});
 
 test("mobile Arabic settings fit the viewport and keep the language sheet usable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -60,21 +96,24 @@ test("mobile Arabic settings fit the viewport and keep the language sheet usable
   await page.screenshot({ path: "tmp/i18n-settings-arabic.png" });
 });
 
-test("welcome navigation mirrors in Arabic and the picker does not move the slide behind it", async ({ page }) => {
+test("welcome navigation mirrors in Arabic and language changes preserve the active slide", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("atseen_language", "ar"));
   await page.goto("/tests/fixtures/i18n-app.html?role=guest&view=welcome");
-  const tabs = page.getByRole("tab");
-  await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+  const tabs = page.locator("footer button[aria-pressed]");
+  await page.locator("main").focus();
+  await page.keyboard.press("Home");
+  await expect(tabs.nth(0)).toHaveAttribute("aria-pressed", "true");
   await page.keyboard.press("ArrowLeft");
-  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-  await page.getByRole("button", { name: "العربية", exact: true }).click();
-  await page.getByRole("radio").first().focus();
-  await page.keyboard.press("ArrowLeft");
-  await page.keyboard.press("Escape");
-  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-  await page.evaluate(() => window.i18nTest.setLanguage("en"));
+  await expect(tabs.nth(1)).toHaveAttribute("aria-pressed", "true");
+  const picker = page.getByRole("combobox");
+  await picker.focus();
+  await picker.selectOption("en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(tabs.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await page.locator("main").focus();
   await page.keyboard.press("ArrowRight");
-  await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.nth(2)).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
 });
 

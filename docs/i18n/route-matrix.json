@@ -9,7 +9,7 @@
     "path": "/creators/:username",
     "component": "LegacyCreatorProfileRedirect",
     "role": "creator",
-    "redirect": false
+    "redirect": true
   },
   {
     "path": "/invite/:code",
@@ -36,8 +36,20 @@
     "redirect": false
   },
   {
+    "path": "/reset-password/:token",
+    "component": "ResetPasswordPage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
     "path": "/welcome",
     "component": "WelcomePage",
+    "role": "guest",
+    "redirect": false
+  },
+  {
+    "path": "/start/interests",
+    "component": "PublicStoryInterestsPage",
     "role": "guest",
     "redirect": false
   },
@@ -140,6 +152,12 @@
   {
     "path": "/activity",
     "component": "ActivityPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/appeals/:model/:reportId",
+    "component": "ModerationAppealPage",
     "role": "creator",
     "redirect": false
   },
@@ -312,6 +330,12 @@
     "redirect": false
   },
   {
+    "path": "/memberships/:id/cancel",
+    "component": "MembershipCancellationPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
     "path": "/experiences",
     "component": "MyExperiencesPage",
     "role": "creator",
@@ -330,6 +354,12 @@
     "redirect": false
   },
   {
+    "path": "/creator/seller-verification",
+    "component": "SellerVerificationPage",
+    "role": "creator",
+    "redirect": false
+  },
+  {
     "path": "/create",
     "component": "CreateHubPage",
     "role": "creator",
@@ -337,7 +367,13 @@
   },
   {
     "path": "/create/seen",
-    "component": "SeenComposerPage",
+    "component": "SeenCreationRoute",
+    "role": "creator",
+    "redirect": false
+  },
+  {
+    "path": "/ways-to-earn",
+    "component": "WaysToEarnPage",
     "role": "creator",
     "redirect": false
   },
@@ -458,7 +494,7 @@
   {
     "path": "/fan/worlds",
     "component": "WorldsPage",
-    "role": "creator",
+    "role": "fan",
     "redirect": false
   },
   {
@@ -552,6 +588,12 @@
     "redirect": false
   },
   {
+    "path": "/admin/security",
+    "component": "AdminSecuritySetupPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
     "path": "/admin/analytics",
     "component": "AdminAnalyticsPage",
     "role": "admin",
@@ -566,6 +608,36 @@
   {
     "path": "/admin/users",
     "component": "UserManagement",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/users/:userId",
+    "component": "AdminUserDetailPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/safety",
+    "component": "SafetyCenterPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/governance",
+    "component": "GovernancePage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/content-export",
+    "component": "ContentExportPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/staff",
+    "component": "AdminStaffPage",
     "role": "admin",
     "redirect": false
   },
@@ -656,6 +728,12 @@
   {
     "path": "/admin/bank-reviews",
     "component": "BankReviewPage",
+    "role": "admin",
+    "redirect": false
+  },
+  {
+    "path": "/admin/finance/users",
+    "component": "FinanceUserPage",
     "role": "admin",
     "redirect": false
   },

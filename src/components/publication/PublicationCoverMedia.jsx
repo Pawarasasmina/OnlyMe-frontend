@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useRef, useState } from "react";
 import { resolveMediaUrl } from "../../utils/media";
 import { readVideoDataSaver, VIDEO_DATA_SAVER_EVENT } from "../../utils/videoDelivery";
@@ -15,6 +16,7 @@ function isVideoCover(media) {
 }
 
 export default function PublicationCoverMedia({ alt = "", autoPlay = false, className = "", controls = false, loading, loop = false, maxPlaybackSeconds = 0, media, muted, preload = "metadata" }) {
+  __useUiLanguage();
   const videoRef = useRef(null);
   const [mobileData, setMobileData] = useState(readVideoDataSaver);
   useEffect(() => {

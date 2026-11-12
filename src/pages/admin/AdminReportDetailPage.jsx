@@ -1,3 +1,4 @@
+import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
@@ -12,7 +13,7 @@ import PostReportPreview from "../../components/admin/PostReportPreview";
 import { adminService } from "../../services/adminService";
 import { EMPTY_REVIEW_CHECKS, reviewIsComplete } from "../../utils/moderationReview";
 
-const durations = [["1_HOUR", "1 hour"], ["5_HOURS", "5 hours"], ["24_HOURS", "1 day"], ["7_DAYS", "7 days"], ["30_DAYS", "1 month"]];
+const durations = [__uiTuple(["1_HOUR", { __uiMessage: "system.copy.f030c3d66765" }]), __uiTuple(["5_HOURS", { __uiMessage: "system.copy.1fe288aa5f69" }]), __uiTuple(["24_HOURS", { __uiMessage: "system.copy.2d8a6f7c3446" }]), __uiTuple(["7_DAYS", { __uiMessage: "system.copy.0a8dd6adce7a" }]), __uiTuple(["30_DAYS", { __uiMessage: "system.copy.42fa50c1524a" }])];
 const label = (value = "") => value.replaceAll("_", " ").toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 
 function MessagePreview({ report }) {
@@ -34,7 +35,7 @@ export default function AdminReportDetailPage({ type }) {
   const query = useQuery({ queryKey: ["admin", type, "report", reportId], queryFn: () => adminService.getReportDetail(type, reportId).then((response) => response.data.data.report) });
   const report = query.data;
   const restrictionAction = type === "message" ? "MESSAGING_RESTRICTED" : "ACCOUNT_RESTRICTED";
-  const outcomes = [["NO_ACTION", "Dismiss", "No violation found"], ["WARNING", "Send warning", "Notify the account owner"], [restrictionAction, type === "message" ? __msg("admin.restrictMessaging") : __msg("admin.restrictLogin"), "Apply a temporary restriction"]];
+  const outcomes = [["NO_ACTION", __msg("admin.dismiss"), __msg("admin.noViolationFound")], ["WARNING", __msg("admin.sendWarning"), __msg("admin.notifyTheAccountOwner")], [restrictionAction, type === "message" ? __msg("admin.restrictMessaging") : __msg("admin.restrictLogin"), __msg("system.copy.f476983ac962")]];
   const decide = async () => { if (!reviewIsComplete(checks)) return setError(__msg("admin.completeAllFourChecks")); if (!note.trim()) return setError(__msg("admin.addAnAdminDecisionNote")); if (action === restrictionAction && !window.confirm(__msg("admin.applyThisRestrictionForValue0", { value0: label(duration) }))) return; setBusy(true); setError(""); try { const payload = { action, note: note.trim(), ...(action === restrictionAction ? { duration } : {}) }; if (type === "message") await adminService.resolveMessageReport(reportId, payload); else if (type === "post") await adminService.resolvePostReport(reportId, payload); else await adminService.resolveUserReport(reportId, payload); await query.refetch(); await client.invalidateQueries({ queryKey: ["admin", `${type}-reports-list`] }); } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.couldNotSaveDecision")); } finally { setBusy(false); } };
   if (query.isLoading) return <p>{__msg("admin.loadingReport")}</p>;
   if (!report) return <p className="rounded-2xl border bg-white p-8">{__msg("admin.reportNotFound")}</p>;

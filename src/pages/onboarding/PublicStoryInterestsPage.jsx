@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import PrototypeInterestPicker from "../../components/onboarding/PrototypeInterestPicker";
@@ -9,6 +10,7 @@ const publicCategories = [
 ].map((name) => ({ id: name, name }));
 
 export default function PublicStoryInterestsPage() {
+  __useUiLanguage();
   const { loading, user } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState(readPreAuthInterests);

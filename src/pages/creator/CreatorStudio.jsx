@@ -45,10 +45,7 @@ const SOURCE_LABELS = {
 
 function compact(value) {
   if (value == null) return "--";
-  const number = Number(value) || 0;
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`;
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}K`;
-  return number.toLocaleString(__uiLocale());
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function money(value) {
@@ -91,8 +88,8 @@ function initialsFor(user = {}) {
 
 function medianLabel(minutes) {
   if (minutes == null) return __msg("creator.noRequestsYet");
-  if (minutes < 60) return `~${minutes}m median`;
-  return `~${Math.round(minutes / 60)}h median`;
+  if (minutes < 60) return __msg("creator.value0MMedian", { value0: minutes });
+  return __msg("creator.value0HMedian", { value0: Math.round(minutes / 60) });
 }
 
 function Header({ onBack }) {

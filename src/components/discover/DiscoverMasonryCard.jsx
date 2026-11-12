@@ -24,9 +24,9 @@ function recommendationReason(card) {
   const legacyReasons = new Set(["POPULAR_NEARBY", "FOLLOW_GRAPH", "RISING_CREATOR", "RECENT_ACTIVITY", "WORLD_MATCH"]);
   if (!legacyReasons.has(card.reason?.code) && card.recommendationReason) return card.recommendationReason;
   const seen = card.featuredSeen || card.latestSeen;
-  if (seen?.title) return `Shares ${seen.category || __msg("profile.seens")}`;
-  if (card.featuredOffer?.title) return `Shares ${card.featuredOffer.title}`;
-  return card.category ? `Explore ${card.category}` : __msg("discover.discoverTheirProfile");
+  if (seen?.title) return __msg("discover.sharesValue0", { value0: seen.category || __msg("profile.seens") });
+  if (card.featuredOffer?.title) return __msg("discover.sharesValue0", { value0: card.featuredOffer.title });
+  return card.category ? __msg("discover.exploreValue0", { value0: card.category }) : __msg("discover.discoverTheirProfile");
 }
 
 function DiscoverMasonryCard({ card, index = 0, onOpen }) {

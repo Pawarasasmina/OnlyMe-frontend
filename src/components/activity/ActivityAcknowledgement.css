@@ -1,0 +1,4 @@
+.activity-prototype-right .activity-presence-ack,.activity-presence-ack { display: inline-flex; align-items: center; justify-content: center; flex: none; min-height: 0; padding: 2px 7px; border: 0; border-radius: 8px; background: transparent; color: #9CCBFF; font-size: 14px; line-height: normal; cursor: pointer; }
+.activity-prototype-right .activity-presence-ack svg,.activity-presence-ack svg { display: block; width: 15px; height: 9.375px; flex: none; }
+.activity-prototype-right .activity-presence-ack[aria-pressed="true"],.activity-presence-ack[aria-pressed="true"] { width: auto; padding: 0 11px; font-size: 9.5px; font-weight: 650; color: rgba(255,255,255,.4); letter-spacing: .2px; }
+.activity-prototype-right .activity-presence-ack:hover { background: transparent; }

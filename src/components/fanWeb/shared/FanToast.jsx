@@ -1,7 +1,11 @@
+import { systemMessage as __systemMessage } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
+import { msg as __msg } from "../../../i18n/runtime.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FanToastContext } from "./FanToastContext";
 
 export function FanToastProvider({ children }) {
+  __useUiLanguage();
   const [toast, setToast] = useState({ message: "" });
   const timeoutRef = useRef(null);
   const sequenceTimerRef = useRef(null);
@@ -25,11 +29,11 @@ export function FanToastProvider({ children }) {
 
   const showGiftSequence = useCallback((gift, recipient, onProfile) => {
     window.clearTimeout(sequenceTimerRef.current);
-    const firstName = String(recipient.name || recipient.displayName || "The creator").split(" ")[0];
+    const firstName = String(recipient.name || recipient.displayName || __msg("context.theCreator_b2ecc4")).split(" ")[0];
     const avatar = recipient.avatar || recipient.avatarUrl;
-    showToast(`Your ${gift.name} is first on the shelf`, {
-      variant: "gift-shelf", title: `On ${firstName}\u2019s profile`, avatar,
-      giftImage: gift.imageUrl, action: "View", onAction: onProfile, duration: 4400,
+    showToast(__msg("fanWeb.yourIsFirstOnTheShelf", { value0: gift.name }), {
+      variant: "gift-shelf", title: __msg("fanWeb.onValue0SProfile", { value0: firstName }), avatar,
+      giftImage: gift.imageUrl, action: __msg("verification.view"), onAction: onProfile, duration: 4400,
     });
     // Creator thanks are announced only by GiftThanksNotice after a real creator action.
   }, [showToast]);
@@ -79,8 +83,8 @@ export function FanToastProvider({ children }) {
           <img alt="" src={toast.avatar} />
           {toast.giftImage ? <img alt="" src={toast.giftImage} /> : null}
         </span>
-        <span className="fan-gift-shelf-copy"><strong>{toast.title}</strong><small>{toast.message}</small></span>
-        {toast.action ? <button onClick={toast.onAction} type="button">{toast.action}</button> : null}
+        <span className="fan-gift-shelf-copy"><strong>{__systemMessage(toast.title)}</strong><small>{__systemMessage(toast.message)}</small></span>
+        {toast.action ? <button onClick={toast.onAction} type="button">{__systemMessage(toast.action)}</button> : null}
       </div> : <div
         aria-live="polite"
         style={toast.variant === "account-switch" ? { zIndex: 260 } : undefined}
@@ -89,7 +93,7 @@ export function FanToastProvider({ children }) {
         }`}
         role="status"
       >
-        {toast.message}
+        {__systemMessage(toast.message)}
       </div>}
     </FanToastContext.Provider>
   );

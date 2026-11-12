@@ -14,7 +14,7 @@ function WallStoryPersonItem({ group, onOpenStory }) {
   const hasStories = group.stories.length > 0;
   const name = readableName(group.user);
   const viewed = hasStories && !group.hasUnseenStories;
-  const label = `View ${name}'s story, ${group.hasUnseenStories ? "unseen" : "viewed"}${group.activeStatus?.label ? `, status ${group.activeStatus.label}` : ""}`;
+  const label = __msg("stories.viewValue0SStoryValue1Value2", { value0: name, value1: group.hasUnseenStories ? "unseen" : "viewed", value2: group.activeStatus?.label ? `, status ${group.activeStatus.label}` : "" });
 
   return (
     <button
@@ -23,7 +23,7 @@ function WallStoryPersonItem({ group, onOpenStory }) {
       onClick={onOpenStory}
       type="button"
     >
-      <span className={`wall-story-ring ${hasStories ? group.hasUnseenStories ? "wall-story-ring-unseen" : "wall-story-ring-viewed" : "wall-story-ring-status"}`} style={{ "--story-status-color": group.activeStatus?.color || "#9CCBFF" }}>
+      <span className={`wall-story-ring ${hasStories ? "presence-live-ring" : ""} ${hasStories ? group.hasUnseenStories ? "wall-story-ring-unseen" : "wall-story-ring-viewed" : "wall-story-ring-status"}`} style={{ "--story-status-color": group.activeStatus?.color || "#9CCBFF" }}>
         <span className="wall-story-avatar-shell">
           <FanAvatar alt={__msg("fan.avatar", { value0: group.user.name || name })} name={group.user.name || name} size="h-full w-full" src={group.user.avatar || group.user.avatarUrl} />
         </span>

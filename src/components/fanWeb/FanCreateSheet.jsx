@@ -1,9 +1,12 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiAperture, FiChevronRight, FiLock, FiMonitor } from "react-icons/fi";
 import { useLanguage } from "../../hooks/useLanguage";
 
 function ThinSeenEyeIcon() {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className="seen-create-eye-mark" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 64 40">
       <path d="M4 20C12.5 10.6 22.2 7 32 7s19.5 3.6 28 13c-8.5 9.4-18.2 13-28 13S12.5 29.4 4 20Z" />
@@ -28,12 +31,12 @@ function FanCreateSheet({
   const [position, setPosition] = useState(undefined);
   const [panel, setPanel] = useState("create");
   const primaryOptions = [
-    { description: "Gone in 24 hours", disabled: !canCreateStoryNow, icon: FiAperture, label: "Story", onClick: onStory },
-    { description: "A story in chapters", disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", onClick: () => setPanel("seen") },
-    { description: "Ask, offer, recommend", disabled: !canPostNote, icon: FiMonitor, label: "Wall post", onClick: onNote },
+    { description: __msg("fanWeb.goneIn24Hours"), disabled: !canCreateStoryNow, icon: FiAperture, label: __msg("activity.story"), onClick: onStory },
+    { description: __msg("system.FanCreateSheet.bb3b97b21f"), disabled: !canCreateSeen, icon: ThinSeenEyeIcon, label: "Seen", onClick: () => setPanel("seen") },
+    { description: __msg("fanWeb.askOfferRecommend"), disabled: !canPostNote, icon: FiMonitor, label: __msg("fanWeb.wallPost"), onClick: onNote },
   ];
   const creatorOptions = [
-    { description: "Your subscription — everything you share", disabled: !canCreateWorld, icon: ThinSeenEyeIcon, label: "Open my World", to: worldTarget || "/create/premium-world" },
+    { description: __msg("fanWeb.yourSubscriptionEverythingYouShare"), disabled: !canCreateWorld, icon: ThinSeenEyeIcon, label: __msg("fanWeb.openMyWorld"), to: worldTarget || "/create/premium-world" },
   ];
 
   useEffect(() => {
@@ -91,26 +94,26 @@ function FanCreateSheet({
 
   return (
     <div aria-modal="true" className="seen-create-layer" role="dialog" style={position}>
-      <button aria-label="Close create menu" className="seen-create-dim" onClick={onClose} type="button" />
-      <section aria-label={variant === "seen" || panel === "seen" ? "Choose Seen type" : "Create"} className={`seen-create-sheet ${variant === "seen" || panel === "seen" ? "is-seen-type-picker" : ""}`}>
+      <button aria-label={__msg("fanWeb.closeCreateMenu")} className="seen-create-dim" onClick={onClose} type="button" />
+      <section aria-label={variant === "seen" || panel === "seen" ? __msg("system.FanCreateSheet.308d5b2c12") : __msg("fanWeb.create")} className={`seen-create-sheet ${variant === "seen" || panel === "seen" ? "is-seen-type-picker" : ""}`}>
         <span className="seen-create-handle" aria-hidden="true" />
         {variant === "seen" || panel === "seen" ? <>
           <h2>{t("Seen")}</h2>
-          <p className="seen-type-picker-intro">Pick the format first — they&apos;re built differently.</p>
+          <p className="seen-type-picker-intro">{__msg("system.FanCreateSheet.43fdf1cc82")}</p>
           <div className="seen-type-picker-options">
             <Link className={`seen-type-picker-card ${!canCreateSeen ? "is-disabled" : ""}`} onClick={(event) => { if (!canCreateSeen) event.preventDefault(); else onClose(); }} to="/create/seen?type=free">
               <span className="seen-type-picker-icon"><ThinSeenEyeIcon /></span>
-              <span className="seen-type-picker-copy"><b>{t("Free Seen")}</b><small>Up to 5 short chapters</small><small>Everyone reads every chapter</small><em>Grows your audience</em></span>
+              <span className="seen-type-picker-copy"><b>{t("Free Seen")}</b><small>{__msg("system.FanCreateSheet.a98c2a7bb1")}</small><small>{__msg("system.FanCreateSheet.9214d65e63")}</small><em>{__msg("system.FanCreateSheet.97628851a2")}</em></span>
               <FiChevronRight aria-hidden="true" />
             </Link>
             <Link className={`seen-type-picker-card ${!canCreateSeen ? "is-disabled" : ""}`} onClick={(event) => { if (!canCreateSeen) event.preventDefault(); else onClose(); }} to="/create/seen?type=paid">
               <span className="seen-type-picker-icon"><FiLock /></span>
-              <span className="seen-type-picker-copy"><b>{t("Paid Seen")}</b><small>Up to 5 chapters — deeper, more detailed</small><small>Chapter 1 is a free preview, the rest unlock once</small><em>You get $19 per unlock at 190 Stars</em></span>
+              <span className="seen-type-picker-copy"><b>{t("Paid Seen")}</b><small>{__msg("system.FanCreateSheet.1fa050df9f")}</small><small>{__msg("system.FanCreateSheet.c18c2154a1")}</small><em>{__msg("system.FanCreateSheet.d09f5546d5")}</em></span>
               <FiChevronRight aria-hidden="true" />
             </Link>
           </div>
         </> : <>
-        <h2>Create</h2>
+        <h2>{__msg("fanWeb.create")}</h2>
         <div className="seen-create-primary">
           {primaryOptions.map((option) => {
             const Icon = option.icon;
@@ -148,7 +151,7 @@ function FanCreateSheet({
             );
           })}
         </div>
-        <p className="seen-create-section-label">For creators</p>
+        <p className="seen-create-section-label">{__msg("fanWeb.forCreators")}</p>
         <div className="seen-create-creator-list">
           {creatorOptions.map((option) => {
             const Icon = option.icon;

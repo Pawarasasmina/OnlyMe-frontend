@@ -1,3 +1,9 @@
+import { useReactionSelection } from "../../../hooks/useReactionSelection";
+import { popReactionCapsule } from "../../../utils/reactionMotion";
+import { localizedTuple as __uiTuple } from "../../../i18n/runtime.js";
+import { getLocale as __uiLocale } from "../../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
+import { msg as __msg } from "../../../i18n/runtime.js";
 import { wallNoteStoryDraft } from "../../../utils/wallNoteStory";
 import { relativeTime as compactPostAge } from "../../../utils/relativeTime";
 import WallReactionTray from "./WallReactionTray";
@@ -48,54 +54,54 @@ import {
 import { canManageFeedPost } from "../../../utils/postPermissions";
 
 const reactions = [
-  { key: "like", label: "Like", icon: "👍" },
-  { key: "love", label: "Love", icon: "❤️" },
-  { key: "care", label: "Care", icon: "🤗" },
-  { key: "wow", label: "Wow", icon: "😮" },
-  { key: "useful", label: "Useful", icon: "💡" },
-  { key: "fire", label: "Fire", icon: "🔥" },
+  { key: "like", get label() { return __msg("fanWeb.like"); }, icon: "👍" },
+  { key: "love", get label() { return __msg("fanWeb.love"); }, icon: "❤️" },
+  { key: "care", get label() { return __msg("fanWeb.care"); }, icon: "🤗" },
+  { key: "wow", get label() { return __msg("fanWeb.wow"); }, icon: "😮" },
+  { key: "useful", get label() { return __msg("fanWeb.useful"); }, icon: "💡" },
+  { key: "fire", get label() { return __msg("fanWeb.fire"); }, icon: "🔥" },
 ];
 
 const commentReportReasons = [
-  ["Spam", "SPAM"],
-  ["Harassment", "HARASSMENT"],
-  ["Hate", "HATE"],
-  ["Nudity", "NUDITY"],
-  ["Sexual content", "SEXUAL_CONTENT"],
-  ["Violence", "VIOLENCE"],
-  ["Self-harm", "SELF_HARM"],
-  ["Scam", "SCAM"],
-  ["Copyright", "COPYRIGHT"],
-  ["Impersonation", "IMPERSONATION"],
-  ["Child safety", "CHILD_SAFETY"],
-  ["Other", "OTHER"],
+  __uiTuple([{ __uiMessage: "social.spam" }, "SPAM"]),
+  __uiTuple([{ __uiMessage: "social.harassment" }, "HARASSMENT"]),
+  __uiTuple([{ __uiMessage: "social.hate" }, "HATE"]),
+  __uiTuple([{ __uiMessage: "social.nudity" }, "NUDITY"]),
+  __uiTuple([{ __uiMessage: "discover.sexualContent" }, "SEXUAL_CONTENT"]),
+  __uiTuple([{ __uiMessage: "discover.violence" }, "VIOLENCE"]),
+  __uiTuple([{ __uiMessage: "system.SeenReaderPage.bea5831470" }, "SELF_HARM"]),
+  __uiTuple([{ __uiMessage: "discover.scam" }, "SCAM"]),
+  __uiTuple([{ __uiMessage: "social.copyright" }, "COPYRIGHT"]),
+  __uiTuple([{ __uiMessage: "system.SeenReaderPage.a66546f650" }, "IMPERSONATION"]),
+  __uiTuple([{ __uiMessage: "system.SeenReaderPage.4873074e0d" }, "CHILD_SAFETY"]),
+  __uiTuple([{ __uiMessage: "admin.other" }, "OTHER"]),
 ];
 
 function wallReplyIntent(post) {
   const type = String(post.postType || post.context || "").trim().toLowerCase();
-  if (type === "need help" || type === "need_help") return "I can help";
+  if (type === "need help" || type === "need_help") return __msg("fanWeb.iCanHelp");
   if (type === "looking for" || type === "looking_for" || post.topic === "Meet people") return "I\u2019m in";
-  if (["offering", "buy & sell", "buy/sell", "buy_sell"].includes(type)) return "Interested";
-  if (["question", "advice"].includes(type)) return "Answer";
+  if (["offering", "buy & sell", "buy/sell", "buy_sell"].includes(type)) return __msg("fanWeb.interested");
+  if (["question", "advice"].includes(type)) return __msg("fanWeb.answer");
   return "";
 }
 
 const postReactionOptions = [
-  { key: "see_you", label: "I see you", icon: "👁" },
-  { key: "love", label: "Love", icon: "\u2764\uFE0F" },
-  { key: "fire", label: "Fire", icon: "\uD83D\uDD25" },
-  { key: "teary", label: "Moved", icon: "🥹" },
-  { key: "laugh", label: "Laugh", icon: "\uD83D\uDE02" },
-  { key: "like", label: "Support", icon: "\uD83E\uDD1D" },
-  { key: "clap", label: "Clap", icon: "\uD83D\uDC4F" },
-  { key: "wow", label: "Surprised", icon: "\uD83D\uDE2E" },
-  { key: "admire", label: "Adore", icon: "\uD83D\uDE0D" },
-  { key: "sad", label: "Sad", icon: "\uD83D\uDE22" },
-  { key: "hug", label: "Hug", icon: "🫂" },
-  { key: "strong", label: "Strong", icon: "\uD83D\uDCAA" },
-  { key: "pray", label: "Respect", icon: "\uD83D\uDE4F" },
-  { key: "hundred", label: "One hundred", icon: "\uD83D\uDCAF" },
-  { key: "sparkles", label: "Sparkles", icon: "\u2728" },
+  { key: "see_you", get label() { return __msg("discover.iSeeYou"); }, icon: "👁" },
+  { key: "love", get label() { return __msg("fanWeb.love"); }, icon: "\u2764\uFE0F" },
+  { key: "fire", get label() { return __msg("fanWeb.fire"); }, icon: "\uD83D\uDD25" },
+  { key: "teary", get label() { return __msg("social.moved"); }, icon: "🥹" },
+  { key: "laugh", get label() { return __msg("fanWeb.laugh"); }, icon: "\uD83D\uDE02" },
+  { key: "like", get label() { return __msg("fanWeb.support"); }, icon: "\uD83E\uDD1D" },
+  { key: "clap", get label() { return __msg("fanWeb.clap"); }, icon: "\uD83D\uDC4F" },
+  { key: "wow", get label() { return __msg("social.surprised"); }, icon: "\uD83D\uDE2E" },
+  { key: "admire", get label() { return __msg("social.adore"); }, icon: "\uD83D\uDE0D" },
+  { key: "sad", get label() { return __msg("social.sad"); }, icon: "\uD83D\uDE22" },
+  { key: "hug", get label() { return __msg("social.hug"); }, icon: "🫂" },
+  { key: "strong", get label() { return __msg("fanWeb.strong"); }, icon: "\uD83D\uDCAA" },
+  { key: "pray", get label() { return __msg("fanWeb.respect"); }, icon: "\uD83D\uDE4F" },
+  { key: "hundred", get label() { return __msg("social.oneHundred"); }, icon: "\uD83D\uDCAF" },
+  { key: "sparkles", get label() { return __msg("social.sparkles"); }, icon: "\u2728" },
 ];
 
 function useWallSheetPosition(isOpen) {
@@ -136,18 +142,18 @@ function reactionDisplayFor(key) {
 }
 
 const commentEmojiGroups = [
-  { key: "recent", label: "Recent", emojis: ["😀", "😂", "🥰", "😍", "😎", "😭", "😮", "😅", "🙂", "🙃"] },
-  { key: "gestures", label: "Gestures", emojis: ["👍", "❤️", "👏", "🙏", "🤝", "💪", "👌", "🙌", "✌️", "🤞"] },
-  { key: "vibes", label: "Vibes", emojis: ["✨", "🔥", "💯", "🎉", "⭐", "🌙", "☀️", "💡", "🎶", "📌"] },
-  { key: "food", label: "Food", emojis: ["☕", "🍕", "🍔", "🍰", "🍓", "🍉", "🍜", "🍟", "🥗", "🍿"] },
+  { key: "recent", get label() { return __msg("fanWeb.recent"); }, emojis: ["😀", "😂", "🥰", "😍", "😎", "😭", "😮", "😅", "🙂", "🙃"] },
+  { key: "gestures", get label() { return __msg("fanWeb.gestures"); }, emojis: ["👍", "❤️", "👏", "🙏", "🤝", "💪", "👌", "🙌", "✌️", "🤞"] },
+  { key: "vibes", get label() { return __msg("fanWeb.vibes"); }, emojis: ["✨", "🔥", "💯", "🎉", "⭐", "🌙", "☀️", "💡", "🎶", "📌"] },
+  { key: "food", get label() { return __msg("fanWeb.food"); }, emojis: ["☕", "🍕", "🍔", "🍰", "🍓", "🍉", "🍜", "🍟", "🥗", "🍿"] },
 ];
 
 const mongoIdPattern = /^[a-f\d]{24}$/i;
 const homeCommentEmojiGroups = [
-  { key: "recent", label: "Recent", emojis: ["\uD83D\uDE00", "\uD83D\uDE02", "\uD83E\uDD70", "\uD83D\uDE0D", "\uD83D\uDE0E", "\uD83D\uDE2D", "\uD83D\uDE2E", "\uD83D\uDE05", "\uD83D\uDE42", "\uD83D\uDE43"] },
-  { key: "gestures", label: "Gestures", emojis: ["\uD83D\uDC4D", "\u2764\uFE0F", "\uD83D\uDC4F", "\uD83D\uDE4F", "\uD83E\uDD1D", "\uD83D\uDCAA", "\uD83D\uDC4C", "\uD83D\uDE4C", "\u270C\uFE0F", "\uD83E\uDD1E"] },
-  { key: "vibes", label: "Vibes", emojis: ["\u2728", "\uD83D\uDD25", "\uD83D\uDCAF", "\uD83C\uDF89", "\u2B50", "\uD83C\uDF19", "\u2600\uFE0F", "\uD83D\uDCA1", "\uD83C\uDFB6", "\uD83D\uDCCC"] },
-  { key: "food", label: "Food", emojis: ["\u2615", "\uD83C\uDF55", "\uD83C\uDF54", "\uD83C\uDF70", "\uD83C\uDF53", "\uD83C\uDF49", "\uD83C\uDF5C", "\uD83C\uDF5F", "\uD83E\uDD57", "\uD83C\uDF7F"] },
+  { key: "recent", get label() { return __msg("fanWeb.recent"); }, emojis: ["\uD83D\uDE00", "\uD83D\uDE02", "\uD83E\uDD70", "\uD83D\uDE0D", "\uD83D\uDE0E", "\uD83D\uDE2D", "\uD83D\uDE2E", "\uD83D\uDE05", "\uD83D\uDE42", "\uD83D\uDE43"] },
+  { key: "gestures", get label() { return __msg("fanWeb.gestures"); }, emojis: ["\uD83D\uDC4D", "\u2764\uFE0F", "\uD83D\uDC4F", "\uD83D\uDE4F", "\uD83E\uDD1D", "\uD83D\uDCAA", "\uD83D\uDC4C", "\uD83D\uDE4C", "\u270C\uFE0F", "\uD83E\uDD1E"] },
+  { key: "vibes", get label() { return __msg("fanWeb.vibes"); }, emojis: ["\u2728", "\uD83D\uDD25", "\uD83D\uDCAF", "\uD83C\uDF89", "\u2B50", "\uD83C\uDF19", "\u2600\uFE0F", "\uD83D\uDCA1", "\uD83C\uDFB6", "\uD83D\uDCCC"] },
+  { key: "food", get label() { return __msg("fanWeb.food"); }, emojis: ["\u2615", "\uD83C\uDF55", "\uD83C\uDF54", "\uD83C\uDF70", "\uD83C\uDF53", "\uD83C\uDF49", "\uD83C\uDF5C", "\uD83C\uDF5F", "\uD83E\uDD57", "\uD83C\uDF7F"] },
 ];
 
 // Retained for compatibility with previously persisted comment-composer preferences.
@@ -155,39 +161,30 @@ void commentEmojiGroups;
 void homeCommentEmojiGroups;
 
 function relativeTime(value, fallback = "now") {
-  if (!value) return fallback;
-  const timestamp = new Date(value).getTime();
-  if (!timestamp) return fallback;
-  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-  if (minutes < 1) return "now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  return compactPostAge(value, fallback);
 }
 
 function formatCount(value = 0) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString();
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function MediaItem({ item, title, postId, postText }) {
+  __useUiLanguage();
   const [failed, setFailed] = useState(false);
   if (!item?.url || failed) {
-    return <span className="home-feed-media-fallback" role="img" aria-label="Media unavailable">Media unavailable</span>;
+    return <span className="home-feed-media-fallback" role="img" aria-label={__msg("fanWeb.mediaUnavailable")}>{__msg("fanWeb.mediaUnavailable")}</span>;
   }
   if (String(item.type || "").toLowerCase() === "audio") {
     return <WallVoiceNote item={item} postId={postId} postText={postText} />;
   }
   if (String(item.type || "").toLowerCase().startsWith("video")) {
-    return <video controls preload="metadata" src={item.url} title={`${title} video`} />;
+    return <video controls preload="metadata" src={item.url} title={__msg("fanWeb.video", { value0: title })} />;
   }
-  return <img alt={`${title} attachment`} loading="lazy" onError={() => setFailed(true)} src={item.url} />;
+  return <img alt={__msg("fanWeb.attachment", { value0: title })} loading="lazy" onError={() => setFailed(true)} src={item.url} />;
 }
 
 function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style }) {
+  __useUiLanguage();
   const [activeReaction, setActiveReaction] = useState("");
   const query = useQuery({
     enabled: Boolean(postId),
@@ -213,30 +210,30 @@ function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style 
 
   return (
     <div className="seen-reactions-layer" style={style}>
-      <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={onClose} type="button" />
-      <section aria-label="Wall note reactions" aria-modal="true" className="seen-reactors-sheet" role="dialog">
+      <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={onClose} type="button" />
+      <section aria-label={__msg("fanWeb.wallNoteReactions")} aria-modal="true" className="seen-reactors-sheet" role="dialog">
         <span aria-hidden="true" className="seen-reactors-handle" />
-        <header className="seen-reactors-header"><h2>Reactions</h2><span>{formatCount(query.data?.total || 0)}</span></header>
-        <div aria-label="Reaction filters" className="seen-reactors-tabs" role="tablist">
-          <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction("")} role="tab" type="button">All</button>
+        <header className="seen-reactors-header"><h2>{__msg("fanWeb.reactions")}</h2><span>{formatCount(query.data?.total || 0)}</span></header>
+        <div aria-label={__msg("fanWeb.reactionFilters")} className="seen-reactors-tabs" role="tablist">
+          <button aria-selected={!activeReaction} className={!activeReaction ? "is-active" : ""} onClick={() => setActiveReaction("")} role="tab" type="button">{__msg("fanWeb.all")}</button>
           {reactionTabs.map((item) => <button aria-selected={activeReaction === item.key} className={activeReaction === item.key ? "is-active" : ""} key={item.key} onClick={() => setActiveReaction(item.key)} role="tab" type="button"><span aria-hidden="true">{item.icon}</span>{formatCount(counts[item.key])}</button>)}
         </div>
         <div className="seen-reactors-list">
-          {query.isLoading ? <p className="seen-reactors-state">Loading reactions...</p> : null}
-          {query.isError ? <div className="seen-reactors-state"><p>Could not load reactions</p><button onClick={() => query.refetch()} type="button">Retry</button></div> : null}
+          {query.isLoading ? <p className="seen-reactors-state">{__msg("fanWeb.loadingReactions")}</p> : null}
+          {query.isError ? <div className="seen-reactors-state"><p>{__msg("fanWeb.couldNotLoadReactions")}</p><button onClick={() => query.refetch()} type="button">{__msg("activity.retry")}</button></div> : null}
           {!query.isLoading && !query.isError ? reactors.map((reactor) => {
             const isCurrentUser = String(reactor.user?.id || "") === String(currentUserId || "");
-            const name = isCurrentUser ? "You" : reactor.user?.name || reactor.user?.username || "Atseen user";
+            const name = isCurrentUser ? __msg("fanWeb.you") : reactor.user?.name || reactor.user?.username || __msg("social.atseenUser");
             const meta = reactionDisplayFor(reactor.reaction);
             return <Link className="seen-reactor-row" key={reactor.id} onClick={onClose} to={reactor.user?.username ? `/profile/${encodeURIComponent(reactor.user.username)}` : "/profile"}>
-              <FanAvatar alt={`${name} avatar`} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatar} />
+              <FanAvatar alt={__msg("fan.avatar", { value0: name })} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatar} />
               <span className="seen-reactor-copy"><strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>{reactor.user?.username ? <small>@{reactor.user.username}</small> : null}</span>
-              <span aria-label={meta?.label || "Reaction"} className="seen-reactor-emoji">{meta?.icon || "🤝"}</span>
+              <span aria-label={meta?.label || __msg("fanWeb.reaction")} className="seen-reactor-emoji">{meta?.icon || "🤝"}</span>
             </Link>;
           }) : null}
-          {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">No reactions yet</p> : null}
+          {!query.isLoading && !query.isError && !reactors.length ? <p className="seen-reactors-state">{__msg("fanWeb.noReactionsYet")}</p> : null}
         </div>
-        <button className="seen-reactors-add" onClick={onAddYours} type="button">Add yours &gt;</button>
+        <button className="seen-reactors-add" onClick={onAddYours} type="button">{__msg("fanWeb.addYours")}</button>
       </section>
     </div>
   );
@@ -269,7 +266,7 @@ function normalizeFeedPost(post = {}) {
     author: {
       id: author.id || author._id || post.creatorId,
       avatar: author.avatar || "",
-      name: author.name || "Creator",
+      name: author.name || __msg("discover.creator"),
       username: author.username || "creator",
       verified: Boolean(author.verified || author.isVerified),
     },
@@ -321,6 +318,7 @@ function voiceStoryCopy(media = {}, fallback = "") {
 }
 
 function WallPostViewEye() {
+  __useUiLanguage();
   return (
     <svg aria-hidden="true" className="home-feed-head-eye" fill="none" viewBox="0 0 16 10">
       <path d="M1 5c1.85-2.05 4.2-3.05 7-3.05s5.15 1 7 3.05c-1.85 2.05-4.2 3.05-7 3.05S2.85 7.05 1 5Z" />
@@ -330,6 +328,7 @@ function WallPostViewEye() {
 }
 
 function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
+  const { language: __uiLanguage } = __useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
@@ -401,9 +400,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     try {
       const response = await repostService.toggle("cm", comment.id, "FeedPost");
       setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReposted: response.data.data.reposted } : item));
-      showToast(response.data.data.reposted ? "Reposted to your profile." : "Repost removed.");
+      showToast(response.data.data.reposted ? __msg("social.repostedToYourProfile") : __msg("fanWeb.repostRemoved"));
     } catch (error) {
-      showToast(error.response?.data?.message || "Could not update repost.");
+      showToast(error.response?.data?.message || __msg("fanWeb.couldNotUpdateRepost"));
     } finally {
       setRepostingCommentId("");
     }
@@ -418,7 +417,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
-  const headerName = ownsPost ? "You" : creator.name;
+  const headerName = ownsPost ? __msg("fanWeb.you") : creator.name;
   const closeLabels = wallCloseLabels(normalized.postType, normalized.context);
   const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (Object.keys(reactionBreakdown).length
@@ -468,8 +467,8 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     textPreview: normalized.text,
     title: normalized.context
       ? [normalized.context, normalized.location].filter(Boolean).join(" - ")
-      : normalized.text.slice(0, 96) || "Home post",
-  }), [actionPostId, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory, ownsPost, creator]);
+      : normalized.text.slice(0, 96) || __msg("fanWeb.homePost"),
+  }), [actionPostId, firstMediaType, isVoiceOnlyPost, normalized.context, normalized.location, normalized.media, normalized.text, postUrl, voiceCopyForStory.translationLabel, voiceCopyForStory.translationText, voiceTextForStory, ownsPost, creator, __uiLanguage]);
   const mediaLayout = normalized.media?.length === 1 && firstMediaType === "audio"
     ? "audio"
     : normalized.media?.length === 1 && firstMediaType.startsWith("video")
@@ -594,16 +593,16 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
   const requireDatabasePost = () => {
     if (mongoIdPattern.test(String(actionPostId || ""))) return true;
-    showToast("This post is not available yet.");
+    showToast(__msg("system.FeedPost.eb517f4f8d"));
     return false;
   };
 
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(postUrl);
-      showToast("Post link copied.");
+      showToast(__msg("fanWeb.postLinkCopied"));
     } catch {
-      showToast("Could not copy the link. Try again from your browser.");
+      showToast(__msg("fanWeb.couldNotCopyTheLinkTryAgainFromYour"));
     }
   };
 
@@ -613,11 +612,11 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     shareMutation.mutate(
       { postId: actionPostId },
       {
-        onError: (error) => showToast(error?.response?.data?.message || (shared ? "Post could not be unshared." : "Post could not be reposted.")),
+        onError: (error) => showToast(error?.response?.data?.message || (shared ? __msg("system.copy.ad2e8a42b6df") : __msg("system.copy.7287585f3a5a"))),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           queryClient.setQueryData(["wall-note", actionPostId], savedPost);
-          showToast(shared ? "Removed from your profile." : "Reposted to your profile.");
+          showToast(shared ? __msg("fanWeb.removedFromYourProfile") : __msg("social.repostedToYourProfile"));
         },
       }
     );
@@ -628,12 +627,12 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     shareMutation.mutate(
       { caption: shareCaption.trim(), postId: actionPostId },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Post could not be reposted."),
+        onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.7287585f3a5a")),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setShareOpen(false);
           setShareCaption("");
-          showToast("Reposted to your profile.");
+          showToast(__msg("social.repostedToYourProfile"));
         },
       },
     );
@@ -642,7 +641,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const submitComment = () => {
     const trimmed = commentText.trim();
     if (!trimmed) {
-      showToast("Write one line first.");
+      showToast(__msg("fanWeb.writeOneLineFirst"));
       return;
     }
     if (commentMutation.isPending) return;
@@ -651,12 +650,12 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     commentMutation.mutate(
       { postId: actionPostId, text: trimmed, parentCommentId: replyTarget?.id || null },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Comment could not be saved."),
+        onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.7da534f3c979")),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setCommentText("");
           setReplyTarget(null);
-          showToast("Comment posted.");
+          showToast(__msg("fanWeb.commentPosted"));
         },
       }
     );
@@ -667,16 +666,23 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     commentMutation.mutate(
       { postId: actionPostId, text: recording.text || "Voice comment", voice: recording, parentCommentId: replyTarget?.id || null },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Voice comment could not be saved."),
+        onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.c0f41d1f6549")),
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
           setVoiceCommentOpen(false);
           setReplyTarget(null);
-          showToast("Voice comment posted.");
+          showToast(__msg("fanWeb.voiceCommentPosted"));
         },
       },
     );
   };
+
+  const { choose: chooseExpandedReaction, selecting: selectingExpandedReaction } = useReactionSelection({
+    enabled: reactionPickerOpen && reactionExpanded,
+    busy: reactionMutation.isPending,
+    onSelect: value => saveReaction(value),
+    onClose: () => { setReactionPickerOpen(false); setReactionExpanded(false); },
+  });
 
   const saveReaction = (nextReaction) => {
     if (!requireDatabasePost()) return;
@@ -689,6 +695,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       if (!nextBreakdown[previousReaction]) delete nextBreakdown[previousReaction];
     }
     if (nextReaction) nextBreakdown[nextReaction] = (Number(nextBreakdown[nextReaction]) || 0) + 1;
+    if (nextReaction && nextReaction !== reaction) popReactionCapsule(reactionAnchorRef.current);
     setReaction(nextReaction || null);
     setReactionBreakdown(nextBreakdown);
 
@@ -698,7 +705,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         onError: (error) => {
           setReaction(previousReaction);
           setReactionBreakdown(previousBreakdown);
-          showToast(error?.response?.data?.message || "Reaction could not be saved.");
+          showToast(error?.response?.data?.message || __msg("social.reactionCouldNotBeSaved"));
         },
         onSuccess: (savedPost) => {
           syncSavedPost(savedPost);
@@ -713,11 +720,11 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     if (!requireDatabasePost()) return;
 
     saveMutation.mutate(actionPostId, {
-      onError: (error) => showToast(error?.response?.data?.message || "Post could not be saved."),
+      onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.973556fd7dbb")),
       onSuccess: (savedPost) => {
         const next = normalizeFeedPost(savedPost);
         setSaved(next.viewerSaved);
-        showToast(next.viewerSaved ? "Saved to your library." : "Removed from your library.");
+        showToast(next.viewerSaved ? __msg("system.copy.0b1c15edc891") : __msg("system.copy.d3784c484014"));
       },
     });
   };
@@ -729,10 +736,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     hideMutation.mutate(
       { postId: actionPostId, reason: "NOT_USEFUL" },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Post could not be hidden."),
+        onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.466de5f1c1fc")),
         onSuccess: () => {
           void analyticsService.trackRecommendationSignal({ creatorId: creator.id, entityId: actionPostId, entityType: "feed_post", eventType: "NOT_INTERESTED", reason: "not_useful", topics: [normalized.context, normalized.location].filter(Boolean) });
-          showToast("Thanks. We will tune your feed.");
+          showToast(__msg("fanWeb.thanksWeWillTuneYourFeed"));
         },
       }
     );
@@ -743,8 +750,8 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     if (!requireDatabasePost()) return;
 
     blockMutation.mutate(actionPostId, {
-      onError: (error) => showToast(error?.response?.data?.message || "Account could not be blocked."),
-      onSuccess: () => showToast(`${creator.name.split(" ")[0]} is blocked. They will not know.`),
+      onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.21a85920d87a")),
+      onSuccess: () => showToast(__msg("fanWeb.isBlockedTheyWillNotKnow", { value0: creator.name.split(" ")[0] })),
     });
   };
 
@@ -755,10 +762,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     reportMutation.mutate(
       { postId: actionPostId, payload: { reason } },
       {
-        onError: (error) => showToast(error?.response?.data?.message || "Report could not be submitted."),
+        onError: (error) => showToast(error?.response?.data?.message || __msg("social.reportCouldNotBeSubmitted")),
         onSuccess: () => {
           setReportDone(true);
-          showToast("Report submitted.");
+          showToast(__msg("fanWeb.reportSubmitted"));
         },
       }
     );
@@ -778,9 +785,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         reason,
       });
       setCommentReportStage("done");
-      showToast("Comment report submitted.");
+      showToast(__msg("system.FeedPost.61ff742230"));
     } catch (error) {
-      showToast(error?.response?.data?.message || "Comment report could not be submitted.");
+      showToast(error?.response?.data?.message || __msg("fanWeb.commentReportCouldNotBeSubmitted"));
     } finally {
       setCommentReportBusy(false);
     }
@@ -805,15 +812,15 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
   const confirmDeleteNote = async () => {
     const accepted = await confirmDialog({
-      title: "Delete note",
-      message: "This removes the post from Home and your public posts. This action cannot be undone.",
-      confirmLabel: "Delete note",
+      title: __msg("fanWeb.deleteNote"),
+      message: __msg("fanWeb.thisRemovesThePostFromHomeAndYourPublic"),
+      confirmLabel: __msg("fanWeb.deleteNote"),
     });
     if (!accepted || deleteMutation.isPending) return;
     deleteMutation.mutate(actionPostId, {
-      onError: (error) => showToast(error?.response?.data?.message || "Post could not be deleted."),
+      onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.c1027a54c0b9")),
       onSuccess: () => {
-        showToast("Note deleted.");
+        showToast(__msg("system.FeedPost.cd7e7590cd"));
         navigate("/wall", { replace: true });
       },
     });
@@ -831,9 +838,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             queryClient.setQueryData(["wall-note", actionPostId], savedPost);
             navigate(`/wall?note=${encodeURIComponent(actionPostId)}`, { state: { scrollToWallFeed: true } });
           }
-          showToast(savedPost.resolvedAt ? `${closeLabels.state}. Your post and replies stay visible.` : "Post reopened.");
+          showToast(savedPost.resolvedAt ? __msg("fanWeb.value0YourPostAndRepliesStayVisible", { value0: closeLabels.state }) : __msg("system.copy.f299214ce87b"));
         },
-        onError: (error) => showToast(error?.response?.data?.message || "Could not update this request. Please try again."),
+        onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.0d705e31e0f2")),
         onSettled: () => setMoreBusy(""),
       });
       return;
@@ -856,7 +863,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       setMoreOpen(false);
     } else if (action === "show-more") {
       saveReaction("useful");
-      showToast("Thanks. We will show you more notes like this.");
+      showToast(__msg("fanWeb.thanksWeWillShowYouMoreNotesLikeThis"));
       setMoreOpen(false);
     } else if (action === "hide") {
       hidePost();
@@ -869,10 +876,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
           queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
           queryClient.invalidateQueries({ queryKey: ["discover"] });
           queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-          showToast(`Unfollowed ${creator.name.split(" ")[0]}.`);
+          showToast(__msg("fanWeb.unfollowed", { value0: creator.name.split(" ")[0] }));
           setMoreOpen(false);
         })
-        .catch((error) => showToast(error?.response?.data?.message || "Could not unfollow this account."))
+        .catch((error) => showToast(error?.response?.data?.message || __msg("fanWeb.couldNotUnfollowThisAccount")))
         .finally(() => setMoreBusy(""));
     } else if (action === "report-spam") {
       reportPost("SPAM");
@@ -886,12 +893,12 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       archiveMutation.mutate(actionPostId, {
         onError: (error) => {
           setMoreBusy("");
-          showToast(error?.response?.data?.message || "Note could not be archived.");
+          showToast(error?.response?.data?.message || __msg("system.copy.f52be8d8cbf4"));
         },
         onSuccess: () => {
           setMoreBusy("");
           setMoreOpen(false);
-          showToast("Note archived. Its statistics are preserved.");
+          showToast(__msg("system.FeedPost.17219f1010"));
           navigate("/wall", { replace: true });
         },
       });
@@ -926,7 +933,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
           <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
             <span className="font-bold text-atseen-text">{normalized.sharedBy.name || `@${normalized.sharedBy.username}`}</span>
-            <span>shared this &middot; {relativeTime(normalized.feedCreatedAt)}</span>
+            <span>{__msg("fanWeb.sharedThis")} {relativeTime(normalized.feedCreatedAt)}</span>
           </div>
         ) : null}
         {normalized.shareCaption ? (
@@ -944,11 +951,11 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             </Link>
             <div className="home-feed-meta wall-note-meta"><WallPostTypeBadge closedLabel={resolvedAt ? closeLabels.state : normalized.isClosed ? normalized.closedReason === "ended" ? "Ended" : "Expired" : ""} rightNow={normalized.rightNow && !normalized.isClosed && !resolvedAt} postType={normalized.postType} context={normalized.context} /><span className="wall-note-age">&middot; {normalized.timestamp}</span>{normalized.location ? <span className="wall-note-place" title={normalized.location}>&middot; <FiMapPin aria-hidden="true" />{normalized.location.split(",")[0]}</span> : null}</div>
           </div>
-          <span aria-label={`${formatCount(viewCount)} views`} className="home-feed-head-views" title="Views">
+          <span aria-label={__msg("fanWeb.views", { value0: formatCount(viewCount) })} className="home-feed-head-views" title={__msg("fanWeb.views_24be61")}>
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>
           <button
-            aria-label={`More actions for ${creator.name}'s post`}
+            aria-label={__msg("fanWeb.moreActionsForSPost", { value0: creator.name })}
             className="rounded-full p-1.5 text-atseen-dim transition hover:bg-atseen-surface-2 hover:text-white"
             onClick={() => setMoreOpen((current) => profileMenu ? !current : true)}
             type="button"
@@ -967,28 +974,28 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         {normalized.media?.length ? (
           <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
             {normalized.media.map((mediaItem) => (
-              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || "Home post"} />
+              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} />
             ))}
           </div>
         ) : null}
         </div>
 
         {ownsPost && normalized.canBump && !normalized.isClosed && !resolvedAt ? <div className="wall-note-availability">
-          <span><strong>Still available?</strong><small>Posted {normalized.availabilityAge} ago</small></span>
+          <span><strong>{__msg("system.FeedPost.ead062ce71")}</strong><small>{__msg("system.FeedPost.301777fff4")} {normalized.availabilityAge} {__msg("profile.ago")}</small></span>
           <button className="wall-note-bump" disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => {
             if (!requireDatabasePost()) return;
             bumpMutation.mutate(actionPostId, {
-              onSuccess: () => showToast("Bumped — back in front of people nearby"),
-              onError: error => showToast(error?.response?.data?.message || "Could not bump this note. Please try again."),
+              onSuccess: () => showToast(__msg("system.FeedPost.67773e32b8")),
+              onError: error => showToast(error?.response?.data?.message || __msg("system.copy.5e9038a11032")),
             });
-          }} type="button">{bumpMutation.isPending ? "Bumping…" : "Yes, bump"}</button>
-          <button disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button">Close</button>
+          }} type="button">{bumpMutation.isPending ? __msg("system.FeedPost.94fdea95ad") : __msg("system.FeedPost.1d22547907")}</button>
+          <button disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button">{__msg("activity.close")}</button>
         </div> : ownsPost && normalized.canResolve && !normalized.isClosed && !resolvedAt ? <button className="wall-note-solve" disabled={resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button"><FiCheck aria-hidden="true" />{closeLabels.action}</button> : null}
         <div className="home-feed-actions">
-          {normalized.reactorPreviews.length ? <button className="wall-reactor-faces" aria-label="See people who reacted" onClick={() => setReactionsSheetOpen(true)} type="button">{normalized.reactorPreviews.slice(0, 2).map(person => <FanAvatar key={person.id || person._id} name={person.name} size="h-5 w-5" src={person.avatar || person.avatarUrl} />)}</button> : null}
+          {normalized.reactorPreviews.length ? <button className="wall-reactor-faces" aria-label={__msg("system.FeedPost.5833158617")} onClick={() => setReactionsSheetOpen(true)} type="button">{normalized.reactorPreviews.slice(0, 2).map(person => <FanAvatar key={person.id || person._id} name={person.name} size="h-5 w-5" src={person.avatar || person.avatarUrl} />)}</button> : null}
           <div className="relative">
             <button
-              aria-label={selectedReaction ? `Change ${selectedReaction.label} reaction` : "React to post"}
+              aria-label={selectedReaction ? __msg("fanWeb.changeReaction", { value0: selectedReaction.label }) : __msg("fanWeb.reactToPost")}
               className={`home-reaction-capsule ${selectedReaction ? "is-selected" : ""}`}
               disabled={reactionMutation.isPending}
               onClick={() => { if (!reactionHeldRef.current) openReactionPicker(); reactionHeldRef.current = false; }}
@@ -998,7 +1005,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
               onPointerCancel={() => window.clearTimeout(reactionHoldRef.current)}
               onContextMenu={(event) => { event.preventDefault(); setReactionsSheetOpen(true); }}
               ref={reactionAnchorRef}
-              title="React"
+              title={__msg("admin.react")}
               type="button"
             >
               <span className="home-reaction-samples" aria-hidden="true">{visibleReactionSamples}</span>
@@ -1006,31 +1013,31 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
             </button>
           </div>
-          <button aria-expanded={commentsOpen} aria-label="Open comments" className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title="Comment" type="button">
+          <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title={__msg("admin.comment")} type="button">
             <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && replyIntent ? <strong className="wall-join-label">{replyIntent}</strong> : null}
           </button>
-          {!ownsPost ? <button aria-label={shared ? "Remove repost" : "Repost"} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title="Repost" type="button">
+          {!ownsPost ? <button aria-label={shared ? __msg("fanWeb.removeRepost") : __msg("fanWeb.repost")} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title={__msg("fanWeb.repost")} type="button">
             <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
           </button> : null}
           <button
-            aria-label={saved ? "Remove saved post" : "Save post"}
+            aria-label={saved ? __msg("fanWeb.removeSavedPost") : __msg("fanWeb.savePost")}
             className={`home-feed-action-button ml-auto ${saved ? "is-selected" : ""}`}
             disabled={saveMutation.isPending}
             onClick={toggleSave}
-            title={saved ? "Unsave" : "Save"}
+            title={saved ? __msg("fanWeb.unsave") : __msg("contentEntities.save_efc007")}
             type="button"
           >
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
-          <button aria-label="Send post" className="home-feed-action-button" onClick={openSendSheet} title="Send" type="button">
+          <button aria-label={__msg("fanWeb.sendPost")} className="home-feed-action-button" onClick={openSendSheet} title={__msg("fanWeb.send")} type="button">
             <FiSend aria-hidden="true" />
           </button>
         </div>
 
-        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={() => { setAllComments(true); setCommentsOpen(true); }} type="button">View all {commentCount} comments</button> : null}
+        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={() => { setAllComments(true); setCommentsOpen(true); }} type="button">{__msg("fanWeb.viewAll")} {commentCount} {__msg("fanWeb.comments")}</button> : null}
         {commentsOpen ? (
-          <section aria-label="Wall note comments" className="seen-comments-panel wall-comments-panel">
-            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {commentCount} comments</button> : null}
+          <section aria-label={__msg("fanWeb.wallNoteComments")} className="seen-comments-panel wall-comments-panel">
+            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">{__msg("fanWeb.viewAll")} {commentCount} {__msg("fanWeb.comments")}</button> : null}
             <WallCommentList noteOwner={creator} comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
               onOpenOptions={(comment) => { setCommentReport(comment); setCommentReportStage("options"); }}
               onReply={(comment) => { setReplyTarget(comment); commentInputRef.current?.focus(); }}
@@ -1041,15 +1048,15 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                 setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReaction: active ? "love" : null, reactionCount: Math.max(0, Number(item.reactionCount || 0) + (active ? 1 : -1)) } : item));
                 setReactingCommentId(comment.id);
                 try { syncSavedPost(await commentReactionMutation.mutateAsync({ postId: actionPostId, commentId: comment.id, reaction: value })); }
-                catch (error) { setComments(previousComments); showToast(error?.response?.data?.message || "Reply reaction could not be saved."); }
+                catch (error) { setComments(previousComments); showToast(error?.response?.data?.message || __msg("system.copy.1f1cb99a02e2")); }
                 finally { setReactingCommentId(""); }
               }} />
-            {replyTarget ? <div className="wall-reply-target" role="status">Replying to <strong>{replyTarget.author?.name || "Creator"}</strong><button aria-label="Cancel reply" onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
+            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>{replyTarget.author?.name || __msg("discover.creator")}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
             <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input ref={commentInputRef} aria-label={replyTarget ? `Reply to ${replyTarget.author?.name || "Creator"}` : "Add a Wall note comment"} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? `Reply to ${replyTarget.author?.name || "Creator"}` : "Add a comment..."} value={commentText} />
-              <button aria-label="Record a voice comment" className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
-              <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">Post</button>
+              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: replyTarget.author?.name || __msg("discover.creator") }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: replyTarget.author?.name || __msg("discover.creator") }) : __msg("fanWeb.addAComment")} value={commentText} />
+              <button aria-label={__msg("fanWeb.recordAVoiceComment")} className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
+              <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">{__msg("fanWeb.post")}</button>
             </form>
           </section>
         ) : null}
@@ -1059,20 +1066,20 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
       {commentReport ? (
         <div className="seen-feed-options-layer" style={wallSheetPosition}>
-          <button aria-label="Close comment options" className="seen-feed-options-scrim" disabled={commentReportBusy} onClick={closeCommentReport} type="button" />
-          <section aria-label="Comment options" aria-modal="true" className="seen-feed-options-sheet" role="dialog">
+          <button aria-label={__msg("system.FeedPost.f5508161f2")} className="seen-feed-options-scrim" disabled={commentReportBusy} onClick={closeCommentReport} type="button" />
+          <section aria-label={__msg("system.FeedPost.dc57782ca4")} aria-modal="true" className="seen-feed-options-sheet" role="dialog">
             <span aria-hidden="true" className="seen-feed-options-handle" />
-            <h2>{commentReportStage === "options" ? "Comment" : commentReportStage === "done" ? "Report received" : "Report comment"}</h2>
+            <h2>{commentReportStage === "options" ? __msg("admin.comment") : commentReportStage === "done" ? __msg("fanWeb.reportReceived") : __msg("system.FeedPost.018f970ebb")}</h2>
             {commentReportStage === "options" ? (
               <div className="seen-feed-options-list">
                 {String(commentReport.author?.id || commentReport.author?._id || "") === String(user?.id || user?._id || "")
                   ? <button className="is-danger" disabled={commentReportBusy} onClick={deleteComment} type="button"><FiTrash2 aria-hidden="true" /><span><b>{commentReportBusy ? "Deleting…" : "Delete comment"}</b><small>This removes the comment and its replies.</small></span></button>
-                  : <button className="is-danger" onClick={() => setCommentReportStage("reasons")} type="button"><FiFlag aria-hidden="true" /><span><b>Report</b></span></button>}
+                  : <button className="is-danger" onClick={() => setCommentReportStage("reasons")} type="button"><FiFlag aria-hidden="true" /><span><b>{__msg("discover.report")}</b></span></button>}
               </div>
             ) : commentReportStage === "done" ? (
               <div className="wall-comment-report-done">
-                <p>Our team will review this comment. The author will not know who reported it.</p>
-                <button onClick={closeCommentReport} type="button">Done</button>
+                <p>{__msg("system.FeedPost.5b74a3346f")}</p>
+                <button onClick={closeCommentReport} type="button">{__msg("comments.done")}</button>
               </div>
             ) : (
               <div className="seen-feed-options-list wall-comment-report-reasons">
@@ -1101,23 +1108,21 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={saveReaction} options={postReactionOptions} quickKeys={["see_you", "love", "fire", "teary", "laugh", "like"]} selected={reaction} useEyeIcon={false} /> : null}
       {reactionPickerOpen && reactionExpanded ? (
         <div className="seen-reactions-layer" style={wallSheetPosition}>
-          <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
-          <section aria-label={`Choose a reaction for ${creator.name}'s post`} aria-modal="true" className="seen-reaction-sheet" role="dialog">
+          <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={() => setReactionPickerOpen(false)} type="button" />
+          <section aria-label={__msg("fanWeb.chooseAReactionForSPost", { value0: creator.name })} aria-modal="true" className="seen-reaction-sheet" role="dialog">
             <span aria-hidden="true" className="seen-reaction-handle" />
-            <div aria-label="Choose a Wall note reaction" className="seen-reaction-grid" role="group">
+            <div aria-label={__msg("fanWeb.chooseAWallNoteReaction")} className="seen-reaction-grid" role="group">
               {postReactionOptions.map((item) => {
                 const count = reactionCountsByKey[item.key] || 0;
                 const selected = reaction === item.key;
                 return (
                   <button
-                    aria-label={`${selected ? "Remove" : "Send"} ${item.label} reaction`}
+                    aria-label={__msg("fanWeb.reaction_bfb553", { value0: selected ? __msg("profile.remove") : __msg("fanWeb.send"), value1: item.label })}
                     aria-pressed={selected}
                     className={selected ? "is-selected seen-reaction-option" : "seen-reaction-option"}
-                    disabled={reactionMutation.isPending}
+                    disabled={reactionMutation.isPending || selectingExpandedReaction}
                     key={item.key}
-                    onClick={() => {
-                      saveReaction(selected ? "" : item.key);
-                    }}
+                    onClick={(event) => chooseExpandedReaction(event, selected ? "" : item.key)}
                     type="button"
                   >
                     <span aria-hidden="true">{item.icon}</span>
@@ -1126,7 +1131,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                 );
               })}
             </div>
-            <p>One reaction — make it yours</p>
+            <p>{__msg("fanWeb.oneReactionMakeItYours")}</p>
           </section>
         </div>
       ) : null}
@@ -1137,16 +1142,15 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
           setShareOpen(false);
           setShareCaption("");
         }}
-        title="Share to profile"
+        title={__msg("fanWeb.shareToProfile")}
       >
-        <p className="text-sm leading-6 text-atseen-muted">Add your own note before this appears on your profile and in the Home feed.</p>
-        <label className="mt-4 block text-xs font-bold text-atseen-muted">
-          Caption <span className="font-normal">(optional)</span>
+        <p className="text-sm leading-6 text-atseen-muted">{__msg("fanWeb.addYourOwnNoteBeforeThisAppearsOnYour")}</p>
+        <label className="mt-4 block text-xs font-bold text-atseen-muted">{__msg("fanWeb.caption")}<span className="font-normal">{__msg("admin.optional")}</span>
           <textarea
             className="mt-2 min-h-28 w-full resize-y rounded-xl border border-atseen-line bg-atseen-bg p-3 text-sm text-white outline-none focus:border-atseen-blue"
             maxLength={500}
             onChange={(event) => setShareCaption(event.target.value)}
-            placeholder="Say something about this post..."
+            placeholder={__msg("fanWeb.saySomethingAboutThisPost")}
             value={shareCaption}
           />
         </label>
@@ -1155,17 +1159,17 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             <FanAvatar name={creator.name} size="h-9 w-9" src={creator.avatar} />
             <div className="min-w-0">
               <p className="flex items-center gap-1 truncate text-xs font-bold">{creator.name}{creator.verified ? <VerifiedBadge /> : null}</p>
-              <p className="text-[10px] text-atseen-muted">@{creator.username} · Original post</p>
+              <p className="text-[10px] text-atseen-muted">@{creator.username} {__msg("fanWeb.originalPost")}</p>
             </div>
           </div>
           <div className="border-t border-atseen-line p-3">
             <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-white/90">{normalized.text}</p>
-            {normalized.media?.[0]?.url ? <img alt="Post preview" className="mt-3 max-h-52 w-full rounded-xl object-cover" src={normalized.media[0].url} /> : null}
+            {normalized.media?.[0]?.url ? <img alt={__msg("fanWeb.postPreview")} className="mt-3 max-h-52 w-full rounded-xl object-cover" src={normalized.media[0].url} /> : null}
           </div>
         </div>
         <div className="mt-4 flex flex-wrap justify-end gap-2">
-          <button className="rounded-xl border border-atseen-blue/40 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/posts/${actionPostId}`)}`)} type="button">Send in message</button>
-          <button className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text" onClick={copyLink} type="button">Copy Link</button>
+          <button className="rounded-xl border border-atseen-blue/40 px-4 py-2 text-sm font-bold text-atseen-blue" onClick={() => navigate(`/messages?share=${encodeURIComponent(`${window.location.origin}/posts/${actionPostId}`)}`)} type="button">{__msg("fanWeb.sendInMessage")}</button>
+          <button className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text" onClick={copyLink} type="button">{__msg("discover.copyLink")}</button>
           <button
             className="rounded-xl border border-atseen-line px-4 py-2 text-sm font-bold text-atseen-text"
             onClick={() => {
@@ -1173,11 +1177,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
               setShareCaption("");
             }}
             type="button"
-          >
-            Cancel
-          </button>
+          >{__msg("admin.cancel")}</button>
           <button className="rounded-xl bg-atseen-blue px-4 py-2 text-sm font-bold text-atseen-bg disabled:opacity-60" disabled={shareMutation.isPending} onClick={submitShare} type="button">
-            {shareMutation.isPending ? "Sharing..." : "Share"}
+            {shareMutation.isPending ? __msg("fanWeb.sharing") : __msg("admin.share")}
           </button>
         </div>
       </FanModal>
@@ -1190,28 +1192,28 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         overlayClassName="home-post-more-overlay"
         overlayStyle={wallSheetPosition}
         portal
-        title={ownsPost ? "Your note" : "This note"}
+        title={ownsPost ? __msg("fanWeb.yourNote") : __msg("fanWeb.thisNote")}
       >
         <span className="home-post-more-handle" aria-hidden="true" />
-        <h2 className="home-post-more-title">{ownsPost ? "Your note" : "This note"}</h2>
+        <h2 className="home-post-more-title">{ownsPost ? __msg("fanWeb.yourNote") : __msg("fanWeb.thisNote")}</h2>
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? "Reopen" : closeLabels.action, subtitle: resolvedAt ? "Back among active posts" : "Stays visible with its comments and replies", icon: FiCheck }] : []),
-              { key: "story", label: "Add to your story", subtitle: "as a card \u2014 people tap it and land on your Wall", icon: FiPlusCircle },
-              { key: "repost", label: shared ? "Remove from profile" : "Repost to my profile", subtitle: shared ? "Take it off your showcase" : "Your profile, your list \u2014 add as many as you like", icon: FiRepeat },
-              { key: "share", label: "Share", icon: FiSend },
-              { key: "archive", label: "Archive", subtitle: "off the showcase, stats stay", icon: FiArchive },
-              { key: "delete", label: "Delete note", icon: FiTrash2, danger: true },
+              ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? __msg("fanWeb.reopen") : closeLabels.action, subtitle: resolvedAt ? __msg("fanWeb.backAmongActivePosts") : __msg("fanWeb.staysVisibleWithItsCommentsAndReplies"), icon: FiCheck }] : []),
+              { key: "story", label: __msg("activity.addToYourStory"), subtitle: __msg("system.FeedPost.1acf81ee86"), icon: FiPlusCircle },
+              { key: "repost", label: shared ? __msg("fan.removeFromProfile") : __msg("fanWeb.repostToMyProfile"), subtitle: shared ? __msg("fanWeb.takeItOffYourShowcase") : __msg("fanWeb.yourProfileYourListAddAsManyAsYou"), icon: FiRepeat },
+              { key: "share", label: __msg("admin.share"), icon: FiSend },
+              { key: "archive", label: __msg("fanWeb.archive"), subtitle: __msg("system.FeedPost.286f4ff649"), icon: FiArchive },
+              { key: "delete", label: __msg("fanWeb.deleteNote"), icon: FiTrash2, danger: true },
             ]
             : [
-              { key: "share", label: "Share", icon: FiSend },
-              { key: "show-more", label: "Show more like this", subtitle: "tunes your feed", icon: ShowMoreEyeIcon },
-              { key: "hide", label: "Hide this note", icon: FiEyeOff },
-              { key: "unfollow", label: `Unfollow ${creator.name.split(" ")[0]}`, icon: FiUserMinus },
-              { key: "report-spam", label: "Report spam", subtitle: "Spam, misleading links or repeated promotions", icon: FiSlash, danger: true },
-              { key: "report", label: "Report", icon: FiFlag },
-              { key: "block", label: `Block ${creator.name.split(" ")[0]}`, icon: FiSlash, danger: true },
+              { key: "share", label: __msg("admin.share"), icon: FiSend },
+              { key: "show-more", label: __msg("fanWeb.showMoreLikeThis"), subtitle: __msg("system.FeedPost.365aacfae4"), icon: ShowMoreEyeIcon },
+              { key: "hide", label: __msg("fanWeb.hideThisNote"), icon: FiEyeOff },
+              { key: "unfollow", label: __msg("social.unfollow", { value0: creator.name.split(" ")[0] }), icon: FiUserMinus },
+              { key: "report-spam", label: __msg("fanWeb.reportSpam"), subtitle: __msg("fanWeb.spamMisleadingLinksOrRepeatedPromotions"), icon: FiSlash, danger: true },
+              { key: "report", label: __msg("discover.report"), icon: FiFlag },
+              { key: "block", label: __msg("social.block", { value0: creator.name.split(" ")[0] }), icon: FiSlash, danger: true },
             ]).map(({ danger, icon: Icon, key, label, subtitle }) => (
             <button
               className={danger || key === "delete" ? "is-danger" : ""}
@@ -1222,7 +1224,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
               type="button"
             >
               <span className="home-post-more-icon"><Icon aria-hidden="true" /></span>
-              <span className="home-post-more-copy"><strong>{moreBusy === key ? "Please wait..." : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
+              <span className="home-post-more-copy"><strong>{moreBusy === key ? __msg("fanWeb.pleaseWait") : label}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
             </button>
           ))}
         </div>
@@ -1234,16 +1236,16 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         onClose={() => setStoryCreatorOpen(false)}
         onPublished={() => {
           setStoryCreatorOpen(false);
-          showToast("Note added to your story.");
+          showToast(__msg("fanWeb.noteAddedToYourStory"));
         }}
       />
 
       <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
 
-      <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? "Report received" : "Report post"}>
+      <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? __msg("fanWeb.reportReceived") : __msg("fanWeb.reportPost")}>
         {reportDone ? (
           <div className="text-center">
-            <p className="text-sm leading-6 text-atseen-muted">Our team reviews every report. You will not be revealed as the reporter.</p>
+            <p className="text-sm leading-6 text-atseen-muted">{__msg("fanWeb.ourTeamReviewsEveryReportYouWillNotBe")}</p>
             <button
               className="mt-5 rounded-xl border border-atseen-line px-5 py-3 text-sm font-bold text-atseen-text"
               onClick={() => {
@@ -1251,13 +1253,11 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                 setReportDone(false);
               }}
               type="button"
-            >
-              Done
-            </button>
+            >{__msg("comments.done")}</button>
           </div>
         ) : (
           <div>
-            <p className="text-xs text-atseen-muted">Why are you reporting this?</p>
+            <p className="text-xs text-atseen-muted">{__msg("fanWeb.whyAreYouReportingThis")}</p>
             <div className="mt-2 divide-y divide-white/[0.05]">
               {atseenReportReasons.map((reason) => (
                 <button

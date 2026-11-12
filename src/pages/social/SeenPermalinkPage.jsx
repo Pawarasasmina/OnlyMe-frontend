@@ -85,7 +85,7 @@ export default function SeenPermalinkPage() {
       <button aria-label={__msg("social.backToSearchFor", { value0: searchLabel })} onClick={returnToSearch} type="button"><FiChevronLeft data-ui-directional="true" /></button>
       <strong>{searchLabel === "Search" ? searchLabel : `“${searchLabel}”`}</strong>
     </header> : null}
-    {!searchOrigin && paidSeen ? <header className="seen-paid-permalink-header"><button aria-label="Back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate(`/profile/${encodeURIComponent(publication.creator?.username || "")}`)} type="button"><FiChevronLeft /></button><strong>{String(publication.creator?.name || publication.creator?.username || "Creator").split(" ")[0]} · Seen</strong></header> : null}
+    {!searchOrigin && paidSeen ? <header className="seen-paid-permalink-header"><button aria-label={__msg("discover.back")} onClick={() => window.history.length > 1 ? navigate(-1) : navigate(`/profile/${encodeURIComponent(publication.creator?.username || "")}`)} type="button"><FiChevronLeft /></button><strong>{String(publication.creator?.name || publication.creator?.username || __msg("discover.creator")).split(" ")[0]} {__msg("system.SeenPermalinkPage.9947c72274")}</strong></header> : null}
     <div className="seen-feed-list">
       <SeenFeedItem
         animateOnScroll={false}

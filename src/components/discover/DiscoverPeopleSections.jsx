@@ -33,7 +33,7 @@ function FriendAvatarContent({ friend }) {
   const ringClass = active ? unseen ? "has-unseen-story" : "has-seen-story" : "has-no-story";
   return (
     <>
-      <span className={`discover-friend-avatar ${ringClass}`}>
+      <span className={`discover-friend-avatar ${active ? "presence-live-ring" : ""} ${ringClass}`}>
         <FanAvatar name={friendDisplayName(friend)} size="h-[52px] w-[52px]" src={friend.avatar} />
         {friend.hasPremiumOffering && !friend.activeStatus ? <i aria-label={__msg("discover.premiumAccessAvailable")} /> : null}
         <StoryStatusBadge status={friend.activeStatus} />

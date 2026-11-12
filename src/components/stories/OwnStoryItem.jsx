@@ -11,7 +11,7 @@ function OwnStoryItem({ activeStatus, hasStories, hasUnseen = false, onAdd, onOp
   return (
     <div className="wall-story-item wall-story-own-story">
       <button aria-label={label} className="wall-story-button" onClick={hasStories ? onOpen : onAdd} type="button">
-        <span className={`wall-story-ring ${hasStories ? hasUnseen ? "wall-story-ring-unseen" : "wall-story-ring-viewed" : "wall-story-ring-empty"}`}>
+        <span className={`wall-story-ring ${hasStories ? "presence-live-ring" : ""} ${hasStories ? hasUnseen ? "wall-story-ring-unseen" : "wall-story-ring-viewed" : "wall-story-ring-empty"}`}>
           <span className="wall-story-avatar-shell">
             <FanAvatar alt={__msg("stories.yourAvatar")} name={user?.name || "You"} size="h-full w-full" src={user?.avatar || user?.avatarUrl} />
           </span>

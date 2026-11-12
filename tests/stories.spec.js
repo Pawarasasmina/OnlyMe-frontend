@@ -141,6 +141,9 @@ test("Story reaction lights cold blue, toggles off and displays the chosen emoji
   await heart.dispatchEvent("pointerup");
   await laugh.click();
   await expect(heart).toHaveText("😂");
+  await expect(heart.locator(".discover-story-heart-emoji")).toHaveCSS("animation-duration", "0.5s");
+  await expect(heart.locator(".discover-story-heart-ring")).toHaveCSS("animation-duration", "0.6s");
+  await expect(page.locator(".story-floating-reaction")).toHaveCSS("animation-duration", "1s");
   expect(state.reactions.map((entry) => entry.reaction)).toEqual(["❤️", null, "😂"]);
 });
 
