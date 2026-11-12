@@ -414,8 +414,7 @@ function FanWorldPreview({ publication, onClose }) {
                 <h3 dir="auto" className="mt-4 font-black">{chapter.title}</h3>
                 <p className="mt-2 text-sm text-atseen-muted">{__msg("publication.fansMustUnlockThisWorldToContinueTheJourney")}</p>
                 <span className="mt-5 inline-flex rounded-full bg-atseen-blue px-6 py-3 text-sm font-black text-atseen-bg">
-                  {publication.kind === "PREMIUM_WORLD" ? __msg("profile.join") : __msg("publication.unlockOnce")} · ✦
-                  {publication.pricing?.starsAmount || 0}
+                  {publication.kind === "PREMIUM_WORLD" ? __msg("profile.join") : __msg("publication.unlockOnce")} · <img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{publication.pricing?.starsAmount || 0}
                 </span>
               </section>
             ) : chapter ? (

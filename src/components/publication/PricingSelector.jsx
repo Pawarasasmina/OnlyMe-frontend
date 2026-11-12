@@ -14,7 +14,7 @@ export default function PricingSelector({ kind, pricing, onChange, disabled }) {
       {PREMIUM_PRESETS.map((amount) => {
         const selected = pricing?.starsAmount === amount;
         return <button aria-pressed={selected} className={`premium-price-option ${selected ? "is-selected" : ""}`} key={amount} onClick={() => onChange({ mode: "MONTHLY", starsAmount: amount, presetId: `MONTHLY_${amount}` })} type="button">
-          <span className="premium-price-stars">✦{amount}</span><small>{__msg("publication.every30Days")}</small><span className="premium-price-check" aria-hidden="true">{selected ? "✓" : ""}</span>
+          <span className="premium-price-stars"><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{amount}</span><small>{__msg("publication.every30Days")}</small><span className="premium-price-check" aria-hidden="true">{selected ? "✓" : ""}</span>
         </button>;
       })}
     </div>

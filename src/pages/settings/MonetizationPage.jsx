@@ -66,6 +66,8 @@ export default function MonetizationPage() {
     setSetup(true);
   };
   const openSetup = () => {
+    if (data.accountType === "personal") { navigate("/settings"); return; }
+    if (!data.verified) { setSheet("verify"); return; }
     if (!data.eligibility.terms || !data.eligibility.age || !data.eligibility.standing || !data.policy.enabled) {
       openEligibility("verify");
       return;

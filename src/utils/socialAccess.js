@@ -6,6 +6,17 @@ export function isConsumerRole(role) {
   return role === "fan" || role === "creator";
 }
 
+export function professionalProfileType(user) {
+  return user?.profileAccountType || user?.profileType || (user?.creatorApprovalStatus === "approved" ? "creator" : "personal");
+}
+
+export function hasCreatorAccess(user) {
+  return isConsumerRole(user?.role) && (
+    user?.creatorApprovalStatus === "approved"
+    || ["creator", "business"].includes(professionalProfileType(user))
+  );
+}
+
 export function isOnboardingComplete(user) {
   if (!isConsumerRole(user?.role)) return true;
   const status = user?.onboarding?.status;
@@ -34,15 +45,15 @@ export function destinationForUser(user) {
 export function socialCapabilitiesFor(user) {
   const isAuthenticated = Boolean(user);
   const isConsumer = isConsumerRole(user?.role);
-  const hasProfessionalType = ["creator", "business"].includes(user?.profileType);
-  const isApprovedCreator = isConsumer && (user?.creatorApprovalStatus === "approved" || hasProfessionalType);
+  const profileType = professionalProfileType(user);
+  const isApprovedCreator = isConsumer && hasCreatorAccess(user);
 
   return {
     isAuthenticated,
     role: user?.role || null,
     isCreator: isApprovedCreator,
-    profileType: user?.profileType || "personal",
-    isBusiness: user?.profileType === "business",
+    profileType,
+    isBusiness: profileType === "business",
     isApprovedCreator,
     canCreate: isConsumer,
     canAccessStudio: isApprovedCreator,

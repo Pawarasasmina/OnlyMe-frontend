@@ -123,7 +123,7 @@ function PaidSeenBuyerView({ chapters = [], coverKind, coverUrl, creatorAvatar, 
       <div className="seen-buyer-view-chapters">{chapters.map((chapter, index) => { const preview = Boolean(chapter.isPreview); const chapterId = chapter.stableChapterId || chapter.id || String(index); return <button className={selectedChapter === chapter ? "is-active" : ""} key={chapterId} onClick={() => preview ? setSelectedChapterId(chapterId) : onUnlock()} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{chapter.title?.trim() || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong><em className={preview ? "is-preview" : "is-locked"}>{preview ? __msg("publication.freePreview") : <><FiLock /> {__msg("fanWeb.locked")}</>}</em></button>; })}</div>
       {selectedChapter ? <div className="seen-buyer-view-excerpt"><b>{selectedChapter.title || __msg("publication.freePreview")}</b><p>{chapterStoryText(selectedChapter) || __msg("system.SeenComposerPage.3ee7a6c2ca")}</p></div> : null}
       <div className="seen-buyer-view-benefits"><span><FiCheck /><small>{__msg("system.PurchaseWorldModal.ff2c6965dd")}</small></span><span><FiArrowRight /><small>{__msg("system.PurchaseWorldModal.a94aeaac16")}</small></span></div>
-      <button className="seen-buyer-view-unlock" onClick={onUnlock} type="button">{__msg("system.SeenComposerPage.1526a17ee7")} <span>·</span> <b>✦ {Number(price || 0).toLocaleString(__uiLocale())}</b></button>
+      <button className="seen-buyer-view-unlock" onClick={onUnlock} type="button">{__msg("system.SeenComposerPage.1526a17ee7")} <span>·</span> <b><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(price || 0).toLocaleString(__uiLocale())}</b></button>
       <small className="seen-buyer-view-footnote">{__msg("system.SeenComposerPage.71d5c4c22f")}</small>
     </section>
   </div>;
@@ -3788,7 +3788,7 @@ export default function SeenComposerPage() {
               </button>
               <div className="seen-about-preview-copy">
                 <strong className={p.title.trim() ? "" : "is-placeholder"}>{p.title.trim() || __msg("creator.yourTitle")}</strong>
-                <small>{__msg("system.SeenComposerPage.c341286f9c")} {maxChapters} {__msg("discover.chapters")}{paidSeen ? ` · ✦${p.pricing?.starsAmount || 190}` : ""}</small>
+                <small>{__msg("system.SeenComposerPage.c341286f9c")} {maxChapters} {__msg("discover.chapters")}{paidSeen ? <> · <img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{p.pricing?.starsAmount || 190}</> : ""}</small>
                 {description ? <p>{description}</p> : null}
               </div>
             </div>
@@ -4035,7 +4035,7 @@ export default function SeenComposerPage() {
 
         {paidSeen ? <>
           <section className="seen-paid-pricing-panel" aria-label={__msg("system.SeenComposerPage.44e9bab02a")}>
-            <div className="seen-paid-price-presets">{[90, 190, 290, 490].map((amount) => <button className={(Number(p.pricing?.starsAmount) || 190) === amount ? "is-selected" : ""} key={amount} onClick={() => change({ pricing: { mode: "ONE_TIME", starsAmount: amount, presetId: `paid-seen-${amount}` } })} type="button"><span>✦</span>{amount}</button>)}</div>
+            <div className="seen-paid-price-presets">{[90, 190, 290, 490].map((amount) => <button className={(Number(p.pricing?.starsAmount) || 190) === amount ? "is-selected" : ""} key={amount} onClick={() => change({ pricing: { mode: "ONE_TIME", starsAmount: amount, presetId: `paid-seen-${amount}` } })} type="button"><span><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /></span>{amount}</button>)}</div>
             <p><b>{__msg("system.SeenComposerPage.6e9893e7c1")}</b><span>{__msg("system.SeenComposerPage.ad24508f50")}</span></p>
             <div className="seen-paid-earnings"><span><small>{__msg("system.SeenComposerPage.a52bb8e5fb")}</small><strong>{paidPriceUsd == null ? "—" : usd(paidPriceUsd)}</strong></span><span><b>{__msg("system.SeenComposerPage.dd1176ba68")} <strong>{paidPriceUsd == null ? "—" : usd(paidPriceUsd * 100)}</strong></b><small>{starsPerUsd ? __msg("system.SeenComposerPage.18f0138a7f", { value0: Number(starsPerUsd).toLocaleString(__uiLocale()) }) : __msg("system.SeenComposerPage.ae9301f2fe")}</small></span></div>
           </section>
@@ -4048,7 +4048,7 @@ export default function SeenComposerPage() {
           </section>
         </> : null}
         <div className={`seen-compose-settings ${paidSeen ? "is-paid-publish" : ""}`} aria-label={__msg("creator.seenSettings")}>
-          {paidSeen ? <label className="seen-review-paid-price"><span><FiLock /><b>{__msg("system.SeenComposerPage.15ef26f902")}</b><small>{__msg("system.SeenComposerPage.8f2aa9764d")}</small></span><span>✦ <input aria-label={__msg("system.SeenComposerPage.ea521c947c")} min="10" onChange={(event) => change({ pricing: { mode: "ONE_TIME", starsAmount: Math.max(10, Math.round(Number(event.target.value) || 10)), presetId: "paid-seen" } })} type="number" value={Number(p.pricing?.starsAmount) || 190} /></span></label> : null}
+          {paidSeen ? <label className="seen-review-paid-price"><span><FiLock /><b>{__msg("system.SeenComposerPage.15ef26f902")}</b><small>{__msg("system.SeenComposerPage.8f2aa9764d")}</small></span><span><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /> <input aria-label={__msg("system.SeenComposerPage.ea521c947c")} min="10" onChange={(event) => change({ pricing: { mode: "ONE_TIME", starsAmount: Math.max(10, Math.round(Number(event.target.value) || 10)), presetId: "paid-seen" } })} type="number" value={Number(p.pricing?.starsAmount) || 190} /></span></label> : null}
           <SettingsRow Icon={FiTag} label={__msg("content.category")} onClick={() => setSettingsSheet("category")} value={p.category || (paidSeen ? "Choose" : "-")} />
           {!paidSeen ? <SettingsRow Icon={FiGrid} label={__msg("publication.series")} onClick={() => { setSeriesError(""); setSettingsSheet("series"); }} value={selectedSeriesLabel} /> : null}
           {!paidSeen ? <SettingsRow Icon={FiUsers} label={__msg("creator.tagPeople")} onClick={() => setSettingsSheet("people")} value={p.taggedPeople?.length ? `${p.taggedPeople.length} tagged` : "None"} /> : null}

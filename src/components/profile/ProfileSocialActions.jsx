@@ -51,7 +51,7 @@ export default function ProfileSocialActions({ capabilities, profile, relationsh
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-3">
             <span className="font-black">Direct Access</span>
-            <span className="shrink-0 rounded-full bg-atseen-blue px-3 py-1 text-xs font-black text-atseen-bg">{profile.directAccess.enabled ? `✦${profile.directAccess.priceStars}` : __msg("profile.call", { value0: profile.directAccess.callPriceStars })}</span>
+            <span className="shrink-0 rounded-full bg-atseen-blue px-3 py-1 text-xs font-black text-atseen-bg">{profile.directAccess.enabled ? <span className="inline-flex items-center gap-1"><img alt="coins" className="h-3.5 w-3.5 object-contain" src="/brand/goldcoin.png" />{profile.directAccess.priceStars}</span> : __msg("profile.call", { value0: profile.directAccess.callPriceStars })}</span>
           </span>
           <span className="mt-1 block text-xs leading-5 text-atseen-muted">{__msg("profile.priorityMessagesAndCallsWithADeliveryGuaranteeOr")}</span>
         </span>

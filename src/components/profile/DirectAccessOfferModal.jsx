@@ -16,7 +16,7 @@ const benefitRows = [
   __uiTuple([FiClock, { __uiMessage: "profile.firstReplyWithin48Hours" }, { __uiMessage: "profile.aPersonalReplyUsuallyMuchFasterWithinThe" }]),
   __uiTuple([FiRefreshCw, { __uiMessage: "profile.refundedIfUnanswered" }, { __uiMessage: "profile.noReplyIn48HoursYourCoinsCome" }]),
 ];
-const STAR = String.fromCharCode(10022);
+const CoinAmount = ({ value }) => <span className="inline-flex items-center gap-1 whitespace-nowrap"><img alt="coins" className="h-3.5 w-3.5 object-contain" src="/brand/goldcoin.png" />{value}</span>;
 
 export default function DirectAccessOfferModal({ onClose, profile }) {
   __useUiLanguage();
@@ -94,7 +94,7 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
 
         {callOffer.isLoading ? <div className="direct-access-call is-loading" /> : paidCall?.enabled ? <section className="direct-access-call">
           <FiPhone />
-          <span><strong>{__msg("profile.callWith")} {firstName}</strong><small>{__msg("profile.aRealVoiceJustYouAnd")} {firstName}</small><em>{STAR}{paidCall.priceStars} · {paidCall.durationMinutes} {__msg("profile.minGuaranteedOrRefunded")}</em></span>
+          <span><strong>{__msg("profile.callWith")} {firstName}</strong><small>{__msg("profile.aRealVoiceJustYouAnd")} {firstName}</small><em><CoinAmount value={paidCall.priceStars} /> · {paidCall.durationMinutes} {__msg("profile.minGuaranteedOrRefunded")}</em></span>
           <button onClick={() => requestCall("AUDIO")} type="button">{__msg("profile.request")}</button>
         </section> : null}
 
@@ -107,7 +107,7 @@ export default function DirectAccessOfferModal({ onClose, profile }) {
         <section className="direct-access-benefits">{benefitRows.map(([Icon, title, copy]) => <article key={title}><span><Icon /></span><div><h4>{title}</h4><p>{copy}</p></div></article>)}</section>
 
         {messageOffer.isError ? <p className="direct-access-error">{messageOffer.error?.response?.data?.message || __msg("profile.directAccessIsUnavailableRightNow")}</p> : offer ? <section className="direct-access-price-card">
-          <div><span>{__msg("fan.price")}</span><b>{offer.premiumAllowance?.available ? __msg("profile.included") : `${STAR}${offer.priceStars}`}</b></div>
+          <div><span>{__msg("fan.price")}</span><b>{offer.premiumAllowance?.available ? __msg("profile.included") : <CoinAmount value={offer.priceStars} />}</b></div>
           <div><span>{__msg("profile.usuallyReplies")}</span><b>{__msg("profile.within")} {replyHours}{__msg("profile.h")}</b></div>
           <div><span>{__msg("profile.guarantee")}</span><b>{__msg("profile.48hOrRefunded")}</b></div>
         </section> : null}
