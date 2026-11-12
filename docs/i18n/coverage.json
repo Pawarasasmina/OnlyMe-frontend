@@ -1,16 +1,16 @@
 {
   "locales": {
     "en": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [],
       "unexpectedEnglish": []
     },
     "ar": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -89,13 +89,69 @@
         {
           "key": "settings.franAis",
           "source": "Français"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
         }
       ],
       "unexpectedEnglish": []
     },
     "ru": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -158,13 +214,69 @@
         {
           "key": "settings.franAis",
           "source": "Français"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
         }
       ],
       "unexpectedEnglish": []
     },
     "uk": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -239,13 +351,69 @@
         {
           "key": "settings.franAis",
           "source": "Français"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
         }
       ],
       "unexpectedEnglish": []
     },
     "es": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -404,13 +572,77 @@
         {
           "key": "options.Bangkok",
           "source": "Bangkok"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.WelcomeCarousel.3895894ce1",
+          "source": "Surf"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
+        },
+        {
+          "key": "system.label.idea",
+          "source": "Idea"
         }
       ],
       "unexpectedEnglish": []
     },
     "pt": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -553,13 +785,73 @@
         {
           "key": "wallLocations.abuDhabi",
           "source": "Abu Dhabi"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.WelcomeCarousel.3895894ce1",
+          "source": "Surf"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
         }
       ],
       "unexpectedEnglish": []
     },
     "fr": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -938,13 +1230,97 @@
         {
           "key": "states.conversation",
           "source": "Conversation"
+        },
+        {
+          "key": "payout.standard",
+          "source": "Standard"
+        },
+        {
+          "key": "settings.muteScope.stories",
+          "source": "Stories"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.WelcomeCarousel.3895894ce1",
+          "source": "Surf"
+        },
+        {
+          "key": "system.FinanceUserPage.eb9a4bc1c0",
+          "source": "Date"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.tech",
+          "source": "Tech"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
+        },
+        {
+          "key": "settings.messagesValue0",
+          "source": "messages {value0}"
+        },
+        {
+          "key": "system.label.bug",
+          "source": "Bug"
         }
       ],
       "unexpectedEnglish": []
     },
     "de": {
-      "keys": 5826,
-      "required": 5826,
+      "keys": 7178,
+      "required": 7178,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -1267,14 +1643,94 @@
         {
           "key": "verification.bankEnding",
           "source": "Bank •• {value0}"
+        },
+        {
+          "key": "payout.standard",
+          "source": "Standard"
+        },
+        {
+          "key": "system.UniversalLocationPicker.b9eafa8510",
+          "source": "© OpenStreetMap"
+        },
+        {
+          "key": "system.StatusPicker.501428ebba",
+          "source": "Status: {value0}"
+        },
+        {
+          "key": "system.SeenPermalinkPage.9947c72274",
+          "source": "· Seen"
+        },
+        {
+          "key": "system.UnifiedProfilePage.5d80485d17",
+          "source": "Start ›"
+        },
+        {
+          "key": "onboarding.jamesCarter",
+          "source": "James Carter"
+        },
+        {
+          "key": "onboarding.darioConte",
+          "source": "Dario Conte"
+        },
+        {
+          "key": "onboarding.noraWells",
+          "source": "Nora Wells"
+        },
+        {
+          "key": "onboarding.zoeMiller",
+          "source": "Zoe Miller"
+        },
+        {
+          "key": "onboarding.elsaBerg",
+          "source": "Elsa Berg"
+        },
+        {
+          "key": "onboarding.anaPatel",
+          "source": "Ana Patel"
+        },
+        {
+          "key": "onboarding.tech",
+          "source": "Tech"
+        },
+        {
+          "key": "onboarding.lucaRomano",
+          "source": "Luca Romano"
+        },
+        {
+          "key": "onboarding.linaParis",
+          "source": "Lina · Paris"
+        },
+        {
+          "key": "onboarding.mayaDubai",
+          "source": "Maya · Dubai"
+        },
+        {
+          "key": "system.copy.14ab8041d739",
+          "source": "Spotlight"
+        },
+        {
+          "key": "posts.value0Mb",
+          "source": "{value0} MB"
+        },
+        {
+          "key": "profile.value0Min",
+          "source": "~{value0} min"
+        },
+        {
+          "key": "verification.value0Kb",
+          "source": "{value0} KB"
+        },
+        {
+          "key": "statusPresets.value0Tennis",
+          "source": "{value0} Tennis?"
         }
       ],
       "unexpectedEnglish": []
     }
   },
   "source": {
-    "modules": 448,
-    "routeDeclarations": 123,
+    "modules": 489,
+    "routeDeclarations": 136,
     "routes": [
       "/explore",
       "/creators/:username",
@@ -1282,7 +1738,9 @@
       "/login",
       "/register",
       "/forgot-password",
+      "/reset-password/:token",
       "/welcome",
+      "/start/interests",
       "/onboarding",
       "/onboarding/:step",
       "/wall",
@@ -1300,6 +1758,7 @@
       "/orbit",
       "/messages",
       "/activity",
+      "/appeals/:model/:reportId",
       "/stories/:id",
       "/saved",
       "/saved/:category",
@@ -1328,11 +1787,14 @@
       "/wallet/ledger",
       "/purchases",
       "/memberships",
+      "/memberships/:id/cancel",
       "/experiences",
       "/profile/:username/experiences",
       "/creator/verification",
+      "/creator/seller-verification",
       "/create",
       "/create/seen",
+      "/ways-to-earn",
       "/studio/seens",
       "/studio/seens/:id",
       "/studio/seens/:id/edit",
@@ -1368,9 +1830,15 @@
       "/creator/content/:id",
       "/creator/earnings",
       "/admin/dashboard",
+      "/admin/security",
       "/admin/analytics",
       "/admin/recommendations",
       "/admin/users",
+      "/admin/users/:userId",
+      "/admin/safety",
+      "/admin/governance",
+      "/admin/content-export",
+      "/admin/staff",
       "/admin/identity-verifications",
       "/admin/fans",
       "/admin/creators",
@@ -1386,6 +1854,7 @@
       "/admin/profile",
       "/admin/financial",
       "/admin/bank-reviews",
+      "/admin/finance/users",
       "/admin/message-reports",
       "/admin/message-reports/:reportId",
       "/admin/user-reports",

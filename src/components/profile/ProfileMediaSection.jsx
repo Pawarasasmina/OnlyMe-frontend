@@ -300,9 +300,9 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
       onPatchActive?.((current) => current?.id === item.id ? patchItem(current) : current);
       queryClient.setQueryData(queryKey, (current) => current?.media ? { ...current, media: current.media.map(patchItem) } : current);
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      setNotice(result.reposted ? "Reposted to your profile." : "Repost removed.");
+      setNotice(result.reposted ? __msg("social.repostedToYourProfile") : __msg("fanWeb.repostRemoved"));
     },
-    onError: (error) => setNotice(error.response?.data?.message || "Could not update repost."),
+    onError: (error) => setNotice(error.response?.data?.message || __msg("fanWeb.couldNotUpdateRepost")),
   });
   useEffect(() => {
     if (!active) return undefined;
@@ -373,7 +373,7 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
         {active.likeCount ? <span>{active.likeCount}</span> : null}
       </button>
       {!isOwner && !video ? <button
-        aria-label={active.viewerReposted ? "Remove photo repost" : "Repost photo"}
+        aria-label={active.viewerReposted ? __msg("system.ProfileMediaSection.128941bb21") : __msg("system.ProfileMediaSection.704c4e73a7")}
         aria-pressed={Boolean(active.viewerReposted)}
         className={active.viewerReposted ? "profile-media-viewer-repost is-reposted" : "profile-media-viewer-repost"}
         disabled={repostMutation.isPending}

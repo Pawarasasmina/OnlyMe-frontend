@@ -1,0 +1,8 @@
+/* Prototype livep, eyep and spkin: animate only actual live/acknowledged state. */
+/* Final prototype ring463 overrides the earlier blurred livep glow. */
+.wall-story-ring.presence-live-ring,.discover-friend-avatar.presence-live-ring { box-shadow: none; animation: none; }
+.wall-story-ring-unseen.presence-live-ring,.discover-friend-avatar.has-unseen-story.presence-live-ring { background: linear-gradient(45deg,#6FA9E8,#9CCBFF,#D6EAFF); animation: presenceStoryPulse 3s ease-in-out infinite; }
+@keyframes presenceStoryPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(156,203,255,.35); } 50% { box-shadow: 0 0 0 5px rgba(156,203,255,0); } }
+.presence-blink { animation: presenceEye 2.2s ease-in-out infinite; }
+@keyframes presenceEye { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+@media(prefers-reduced-motion:reduce) { .presence-live-ring,.presence-blink { animation: none !important; } }

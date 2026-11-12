@@ -645,7 +645,7 @@ export default function PublicationComposerShell({ kind }) {
         ? (await api.getMyPublication(p.id)).data.data.publication
         : await ensure();
       await api.addChapter(publication.id, {
-        title: `Chapter ${publication.chapters.length + 1}`,
+        title: __msg("profile.chapter_7c635d", { value0: publication.chapters.length + 1 }),
         blocks: [],
         isPreview: kind === "WORLD" || publication.chapters.length === 0,
         releaseMode: "IMMEDIATE",
@@ -667,7 +667,7 @@ export default function PublicationComposerShell({ kind }) {
       ),
     });
   const removeChapter = async () => {
-    if (!confirm(`Delete ${chapter.title}?`)) return;
+    if (!confirm(__msg("system.PublicationComposerShell.fc685be191", { value0: chapter.title }))) return;
     if (hasPendingMedia)
       return setError(
         __msg("publication.uploadOrRemoveTheEmptyMediaBlockBeforeDeleting"),

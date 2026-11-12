@@ -1,6 +1,6 @@
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
-import { msg as __msg } from "../../i18n/runtime.js";
+import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +27,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { fanService } from "../../services/fanService";
 import { walletService } from "../../services/walletService";
 import { getMessageSocket } from "../../services/messageSocket";
+import ActivityAcknowledgement from "../../components/activity/ActivityAcknowledgement";
 import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
 import { isGiftActivity, mergeActivitySources } from "../../utils/activitySources";
 import { relativeTime } from "../../utils/relativeTime";
@@ -399,7 +400,7 @@ function aggregateReceivedActivity(items) {
       ...latest,
       id: `profile-seen-group-${dayKey}`,
       type: "profile_seen_group",
-      title: __msg("fan.value0Value1SaidISeeYou", { value0: leadNames, value1: more ? ` and ${more} more` : "" }),
+      title: __msg("fan.value0Value1SaidISeeYou", { value0: leadNames, value1: more ? __msg("fan.andMore", { value0: more }) : "" }),
       relatedCreator: null,
       relatedCreators: people,
       actor: null,
@@ -441,7 +442,7 @@ function aggregateReceivedActivity(items) {
     const targetLabel = aggregateTargetLabel(latest);
     const people = group.map((item) => item.relatedCreator).filter(Boolean);
     const names = people.slice(0, 2).map((person) => person.displayName || person.name || person.username).filter(Boolean);
-    const lead = names.length ? `${names.join(", ")}${group.length > 2 ? ` and ${group.length - 2} others` : ""}` : `${group.length} people`;
+    const lead = names.length ? `${names.join(", ")}${group.length > 2 ? __msg("fan.andValue0Others", { value0: group.length - 2 }) : ""}` : __msg("fan.people", { value0: group.length });
     const verbs = {
       save: __msg("fan.savedYourValue0", { value0: targetLabel }),
       reaction: __msg("fan.reactedToYourValue0", { value0: targetLabel }),
@@ -596,7 +597,7 @@ function ActivityAvatar({ item }) {
 
 function ActivityTitle({ item }) {
   __useUiLanguage();
-  const title = item.title || __msg("social.activity");
+  const title = __systemMessage(item.title) || __msg("social.activity");
   const actorName = item.relatedCreator?.displayName || item.relatedCreator?.name || item.relatedCreator?.username || "";
   const titleMark = titleMarkFor(item);
   const actionIcon = titleMark && !title.includes(titleMark) ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
@@ -639,7 +640,7 @@ function ActivityTitle({ item }) {
   return <p>{title}{actionIcon}</p>;
 }
 
-function ActivityItem({ item, onOpen, starsPerUsd }) {
+function ActivityItem({ item, onOpen, starsPerUsd, acknowledged, onAcknowledge }) {
   __useUiLanguage();
   const navigate = useNavigate();
   const amount = item.direction === "received" ? displayAmount(item, starsPerUsd) : null;
@@ -677,6 +678,8 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
       </div>
 
       <div className="activity-prototype-right">
+        {item.direction === "received" && item.canAcknowledge && !/follow/i.test(item.type || "") && !isGiftActivity(item) && !item.target?.id && !item.metadata?.canAnswer && !item.metadata?.refundCoins ? <ActivityAcknowledgement acknowledged={acknowledged} onAcknowledge={() => onAcknowledge(item.id)} /> : null}
+
         {item.metadata?.canAnswer ? <button className="activity-follow-action activity-answer-action" onClick={event => { event.stopPropagation(); navigate(route); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.answer")}</button> : null}
         {item.metadata?.refundCoins ? <span className="activity-refund-coins"><CoinIcon size={16} /><b>{item.metadata.refundCoins}</b></span> : null}
         {/^premium_renewal_(low_balance|failed)$/.test(item.type || "") ? <button className="activity-follow-action" onClick={event => { event.stopPropagation(); navigate("/wallet"); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.topUp")}</button> : null}
@@ -684,7 +687,7 @@ function ActivityItem({ item, onOpen, starsPerUsd }) {
         <ActivityContentPreview item={item} />
         {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || __msg("fan.gift")} className="activity-prototype-gift" src={giftImageUrl} /> : null}
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
-        {item.direction === "received" && (/mutual/i.test(item.type || "") || /see each other/i.test(item.title || "")) ? <span className="activity-mutual-eye" aria-label={__msg("fan.youSeeEachOther")}><ActivityEyeMark /></span> : null}
+
       </div>
     </article>
   );
@@ -736,7 +739,7 @@ function FilterChips({ filter, filters, onChange }) {
           type="button"
         >
           {value === "seen" ? <ActivityEyeMark /> : null}
-          {label}
+          {__systemMessage(label)}
         </button>
       ))}
     </div>
@@ -744,7 +747,7 @@ function FilterChips({ filter, filters, onChange }) {
 }
 
 export default function ActivityPage() {
-  __useUiLanguage();
+  const { language: __uiLanguage } = __useUiLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -824,7 +827,7 @@ export default function ActivityPage() {
     const apiActivity = activityQuery.data?.items || activityQuery.data?.activity || [];
     const ledgerItems = ledgerQuery.data?.items || [];
     return normalizeActivity(apiActivity, ledgerItems);
-  }, [activityQuery.data, ledgerQuery.data]);
+  }, [activityQuery.data, ledgerQuery.data, __uiLanguage]);
   const visible = items.filter((item) => item.direction === direction && (filter === "all" || item.filterKeys?.includes(filter) || item.filter === filter));
   const sentSeen = direction === "sent" && filter === "all"
     ? visible.filter((item) => item.type === "profile_seen" && item.relatedCreator)

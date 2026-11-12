@@ -4,90 +4,131 @@
     "sections": [
       {
         "title": "1 · Who we are",
-        "text": "The @seen app is operated by Atseen. Questions: legal@atseen.com."
+        "text": "The @seen app is operated by Atseen. Questions: legal@atseen.com.",
+        "titleKey": "system.legal.2a0f8116f1",
+        "textKey": "system.legal.4e1c604528"
       },
       {
         "title": "2 · Who can use @seen",
-        "text": "You must be 16 or older and use your real name. One account per person."
+        "text": "You must be 16 or older and use your real name. One account per person.",
+        "titleKey": "system.legal.295fea5288",
+        "textKey": "system.legal.a5a6cfc8ff"
       },
       {
         "title": "3 · Your content",
-        "text": "Everything you post stays yours. You give @seen a licence to show it inside the app so the product can work. You can delete it any time."
+        "text": "Everything you post stays yours. You give @seen a licence to show it inside the app so the product can work. You can delete it any time.",
+        "titleKey": "system.legal.ce9a555035",
+        "textKey": "system.legal.4b328d9525"
       },
       {
         "title": "4 · Coins & gifts",
-        "text": "Coins are a virtual item, not money: non-refundable and never convertible back to currency. A gift is voluntary appreciation for content — not a donation or an investment. Payments are processed by Apple, Google or our licensed partners."
+        "text": "Coins are a virtual item, not money: non-refundable and never convertible back to currency. A gift is voluntary appreciation for content — not a donation or an investment. Payments are processed by Apple, Google or our licensed partners.",
+        "titleKey": "system.legal.6a5ccc07dc",
+        "textKey": "system.legal.8d2fd69300"
       },
       {
         "title": "5 · Creator earnings",
-        "text": "When coins are spent on a creator, the creator automatically receives their share in dollars. Payouts go through our licensed partner after identity verification."
+        "text": "When coins are spent on a creator, the creator automatically receives their share in dollars. Payouts go through our licensed partner after identity verification.",
+        "titleKey": "system.legal.2474da204b",
+        "textKey": "system.legal.33270d156a"
       },
       {
         "title": "6 · What is not allowed",
-        "text": "Nudity or sexual content, harassment, hate, spam, illegal content, impersonation."
+        "text": "Nudity or sexual content, harassment, hate, spam, illegal content, impersonation.",
+        "titleKey": "system.legal.1434203030",
+        "textKey": "system.legal.88d9781893"
       },
       {
         "title": "7 · Enforcement",
-        "text": "We may remove content or restrict accounts. Appeals: legal@atseen.com."
+        "text": "We may remove content or restrict accounts. Appeals: legal@atseen.com.",
+        "titleKey": "system.legal.c6d7c1a8fd",
+        "textKey": "system.legal.a859f3c1f1"
       },
       {
         "title": "8 · Ending things",
-        "text": "Delete your account any time in Settings. Governed by Estonian law."
+        "text": "Delete your account any time in Settings. Governed by Estonian law.",
+        "titleKey": "system.legal.b5d77f037b",
+        "textKey": "system.legal.b333655a54"
       }
-    ]
+    ],
+    "titleKey": "system.RegisterPage.0c8a9a95e2"
   },
   "priv": {
     "title": "Privacy Policy",
     "sections": [
       {
         "title": "1 · What we collect",
-        "text": "Account data, the content you post, and how you use the app — to make your Seen relevant."
+        "text": "Account data, the content you post, and how you use the app — to make your Seen relevant.",
+        "titleKey": "system.legal.aad02bbe28",
+        "textKey": "system.legal.3fa9d51a36"
       },
       {
         "title": "2 · What we never do",
-        "text": "We do not sell your data. We do not read private messages for advertising."
+        "text": "We do not sell your data. We do not read private messages for advertising.",
+        "titleKey": "system.legal.1efa3e18ef",
+        "textKey": "system.legal.2d1fb5f56e"
       },
       {
         "title": "3 · Payments & identity",
-        "text": "Card details go directly to Apple, Google or Stripe — we never see them. Identity documents for payouts go to our licensed partner; we store only the result."
+        "text": "Card details go directly to Apple, Google or Stripe — we never see them. Identity documents for payouts go to our licensed partner; we store only the result.",
+        "titleKey": "system.legal.335001a955",
+        "textKey": "system.legal.f274afdb84"
       },
       {
         "title": "4 · Where data lives",
-        "text": "EU servers under GDPR. UAE users: handled in line with the UAE PDPL."
+        "text": "EU servers under GDPR. UAE users: handled in line with the UAE PDPL.",
+        "titleKey": "system.legal.defef9d93f",
+        "textKey": "system.legal.40b8005cc5"
       },
       {
         "title": "5 · Your rights",
-        "text": "Export or delete everything any time — Settings or privacy@atseen.com. Deletion completes within 30 days."
+        "text": "Export or delete everything any time — Settings or privacy@atseen.com. Deletion completes within 30 days.",
+        "titleKey": "system.legal.f92883290e",
+        "textKey": "system.legal.0ea57b1171"
       },
       {
         "title": "6 · AI features",
-        "text": "AI in @seen is optional — turn each feature off in Settings › AI. Sorting your camera roll into chapters and dictation happen on your device. For photo captions and chapter drafts, a reduced copy of each photo and a few frames of each video you select are sent to our AI provider, used only for that and never for training. AI is limited to one AI-built Seen a day with 3 tries (3 a day for sellers and in your first week) and 3 reply drafts a day (10 for sellers). For chapter titles, tidy-up, reply drafts, captions and translations we send only the text needed to our AI provider, under a contract that forbids training on it; it is kept only as long as needed to run the feature and keep it safe (up to 30 days). We do not use your Seens or messages to train AI models. AI never posts, sends or replies for you. Photos or video made or realistically changed with AI are labeled “Made with AI”."
+        "text": "AI in @seen is optional — turn each feature off in Settings › AI. Sorting your camera roll into chapters and dictation happen on your device. For photo captions and chapter drafts, a reduced copy of each photo and a few frames of each video you select are sent to our AI provider, used only for that and never for training. AI is limited to one AI-built Seen a day with 3 tries (3 a day for sellers and in your first week) and 3 reply drafts a day (10 for sellers). For chapter titles, tidy-up, reply drafts, captions and translations we send only the text needed to our AI provider, under a contract that forbids training on it; it is kept only as long as needed to run the feature and keep it safe (up to 30 days). We do not use your Seens or messages to train AI models. AI never posts, sends or replies for you. Photos or video made or realistically changed with AI are labeled “Made with AI”.",
+        "titleKey": "system.legal.e0197fdf33",
+        "textKey": "system.legal.7e63ae6290"
       }
-    ]
+    ],
+    "titleKey": "system.RegisterPage.9db108ba6b"
   },
   "comm": {
     "title": "Community Guidelines",
     "sections": [
       {
         "title": "Real people",
-        "text": "Real name, real face. Impersonation is removed."
+        "text": "Real name, real face. Impersonation is removed.",
+        "titleKey": "system.legal.738e5a85b0",
+        "textKey": "system.legal.ad09a2a384"
       },
       {
         "title": "Safe for everyone",
-        "text": "No nudity or sexual content — @seen is SFW, always. No harassment, hate or threats."
+        "text": "No nudity or sexual content — @seen is SFW, always. No harassment, hate or threats.",
+        "titleKey": "system.legal.3d38b03ccc",
+        "textKey": "system.legal.f1faa892e8"
       },
       {
         "title": "Honest wall",
-        "text": "No spam, no external links. The community can hide what isn’t useful; our team removes what isn’t safe."
+        "text": "No spam, no external links. The community can hide what isn’t useful; our team removes what isn’t safe.",
+        "titleKey": "system.legal.ad11e8ca89",
+        "textKey": "system.legal.27ff1f8b22"
       },
       {
         "title": "Report anything",
-        "text": "Every screen has ⋯ → Report. Every report is reviewed by a human."
+        "text": "Every screen has ⋯ → Report. Every report is reviewed by a human.",
+        "titleKey": "system.legal.cb718ea953",
+        "textKey": "system.legal.01bca137e5"
       },
       {
         "title": "Appeals",
-        "text": "legal@atseen.com — a person will re-review."
+        "text": "legal@atseen.com — a person will re-review.",
+        "titleKey": "system.legal.cc0db48fa6",
+        "textKey": "system.legal.1abb759e35"
       }
-    ]
+    ],
+    "titleKey": "system.legal.75343669fd"
   }
 }

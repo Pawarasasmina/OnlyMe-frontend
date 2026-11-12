@@ -1,0 +1,10 @@
+.story-composer-stage.is-ticket-story .story-composer-bg { background: linear-gradient(160deg,#182330,#070a10) !important; }
+.story-composer-stage.is-ticket-story .ticket-story-backdrop { position: absolute; inset: -6%; width: 112%; height: 112%; max-width: none; object-fit: cover; filter: blur(30px) brightness(.35); pointer-events: none; }
+.story-composer-stage.is-ticket-story .story-shared-card-preview.is-ticket-sticker { width: 78%; max-width: none; aspect-ratio: 860/1260; border: 0; border-radius: 0; overflow: visible; background: transparent; box-shadow: none; }
+.story-composer-stage.is-ticket-story .story-shared-card-preview.is-ticket-sticker > img { display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; pointer-events: none; filter: drop-shadow(0 16px 30px rgba(0,0,0,.25)); }
+.story-composer-stage.is-ticket-story .story-shared-card-preview.is-ticket-sticker:focus-visible { outline: 1px dashed rgba(156,203,255,.7); outline-offset: -12px; }
+.story-composer-stage.is-ticket-story .story-composer-head > button:last-child { display: none; }
+.story-composer-stage.is-ticket-story .story-composer-head .story-composer-lifetime { flex: none; margin-right: auto; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 4px 9px; background: rgba(10,13,18,.5); color: rgba(255,255,255,.7); font-size: 9.5px; font-weight: 700; line-height: 1.2; }
+.story-composer-stage.is-ticket-story .story-composer-hint { top: 15%; }
+.story-composer-stage.is-ticket-story .story-composer-head > button:not(:first-child) { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; background: rgba(10,13,18,.45); }
+.story-composer-stage.is-ticket-story .story-composer-share { min-width: 80px; padding: 10px 26px; border-radius: 999px; background: #9ccbff; color: #0a0c0f; }

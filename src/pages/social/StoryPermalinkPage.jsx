@@ -10,14 +10,14 @@ import { storyService } from "../../services/storyService";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function StoryPermalinkPage() {
-  __useUiLanguage();
+  const { language: __uiLanguage } = __useUiLanguage();
   const { id } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const story = useQuery({ queryKey: ["stories", "detail", id], queryFn: () => storyService.getStory(id), retry: false });
   const close = () => { if (window.history.state?.idx > 0) navigate(-1); else navigate("/wall", { replace: true }); };
-  const initialContent = useMemo(() => story.data ? { sourceStoryId: story.data.id, sharedCard: { destinationRoute: `/stories/${story.data.id}`, kind: "story", username: story.data.owner.username, avatarUrl: story.data.owner.avatar, imageUrl: story.data.mediaUrl, mediaType: story.data.mediaType, title: story.data.owner.name, subtitle: __msg("social.value0OriginalStory", { value0: story.data.owner.username }), x: 50, y: 44 } } : null, [story.data]);
+  const initialContent = useMemo(() => story.data ? { sourceStoryId: story.data.id, sharedCard: { destinationRoute: `/stories/${story.data.id}`, kind: "story", username: story.data.owner.username, avatarUrl: story.data.owner.avatar, imageUrl: story.data.mediaUrl, mediaType: story.data.mediaType, title: story.data.owner.name, subtitle: __msg("social.value0OriginalStory", { value0: story.data.owner.username }), x: 50, y: 44 } } : null, [story.data, __uiLanguage]);
   const canReshare = story.data?.allowSharing && story.data.audience === "everyone" && !story.data.editorMetadata?.sourceStoryId && story.data.editorMetadata?.mentions?.some((item) => item.userId === String(user?.id || user?._id));
   if (story.isPending) return <div className="p-8" role="status">{__msg("activity.loadingStory")}</div>;
   if (story.isError) {

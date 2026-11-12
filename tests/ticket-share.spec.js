@@ -1,0 +1,126 @@
+import { test, expect } from "@playwright/test";
+
+for (const width of [1440, 390]) test(`ticket story sticker at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 925 });
+  await page.route("**/api/**", async route => {
+    if (!new URL(route.request().url()).pathname.startsWith("/api/")) return route.continue();
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ success: true, data: { people: [] } }) });
+  });
+  await page.goto("/tests/fixtures/ticket-share.html");
+  await page.getByRole("button", { name: /Open your member ticket/ }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await page.locator(".is-ticket-share").getByRole("button", { name: "Story", exact: true }).click();
+  const stage = page.locator(".story-composer-stage.is-ticket-story");
+  const sticker = stage.locator(".is-ticket-sticker");
+  await expect(sticker).toBeVisible();
+  await expect(sticker.locator("img")).toHaveAttribute("alt", "№1,292");
+  expect(await sticker.evaluate(el => el.style.transform)).toContain("rotate(-4deg)");
+  const bounds = await stage.boundingBox(), card = await sticker.boundingBox();
+  expect(card.width / bounds.width).toBeGreaterThan(.78);
+  expect(card.width / bounds.width).toBeLessThan(.9);
+  const pixels = await sticker.locator("img").evaluate(async img => {
+    await img.decode(); const canvas = document.createElement("canvas"); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0);
+    return { width: canvas.width, height: canvas.height, edge: ctx.getImageData(0, 0, 1, 1).data[3], cutout: ctx.getImageData(40, 1000, 1, 1).data[3], inside: ctx.getImageData(400, 400, 1, 1).data[3] };
+  });
+  expect(pixels).toEqual({ width: 860, height: 1260, edge: 0, cutout: 0, inside: 255 });
+  await page.screenshot({ path: test.info().outputPath("ticket-story-composer.png"), animations: "disabled" });
+  const before = await sticker.evaluate(el => el.style.left);
+  const drag = await sticker.boundingBox();
+  await page.mouse.move(drag.x + drag.width / 2, drag.y + drag.height / 2);
+  await page.mouse.down(); await page.mouse.move(drag.x + drag.width / 2 + 20, drag.y + drag.height / 2 + 12, { steps: 5 }); await page.mouse.up();
+  expect(await sticker.evaluate(el => el.style.left)).not.toBe(before);
+  await sticker.focus(); await page.keyboard.press("Alt+ArrowRight");
+  expect(await sticker.evaluate(el => el.style.transform)).toContain("rotate(-2deg)");
+  await page.keyboard.press("+");
+  expect(await sticker.evaluate(el => el.style.transform)).toContain("scale(1.1)");
+  await stage.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByAltText("Saved ticket story")).toBeVisible();
+  const saved = JSON.parse(await page.getByTestId("saved-story").textContent());
+  expect(saved.editorMetadata.sharedCard).toBeUndefined();
+  expect(saved.size).toBeGreaterThan(20000);
+  expect(await page.getByAltText("Saved ticket story").evaluate(async img => { await img.decode(); return [img.naturalWidth, img.naturalHeight]; })).toEqual([1080, 1920]);
+  const imageColors = await page.getByAltText("Saved ticket story").evaluate(img => { const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1920; const ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0); return [ctx.getImageData(540, 650, 1, 1).data[2], ctx.getImageData(10, 650, 1, 1).data[2]]; });
+  expect(imageColors[0]).toBeGreaterThan(imageColors[1] + 10);
+});
+
+for (const width of [1440, 390]) test(`ticket sharing at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  let sent;
+  await page.route("**/api/**", async route => {
+    const url = new URL(route.request().url());
+    if (!url.pathname.startsWith("/api/")) return route.continue();
+    let data = {};
+    if (url.pathname.endsWith("/share/recipients")) data = { people: Array.from({ length: 8 }, (_, i) => ({ id: `507f1f77bcf86cd79943902${i}`, name: ["Lina", "Mia", "Zoe", "Ethan", "Anna", "Omar", "Sofia", "Luca"][i], statusEmoji: "☕" })) };
+    if (url.pathname.endsWith("/messages/share")) { sent = route.request().postDataJSON(); data = { sent: [{ recipientId: sent.recipientIds[0] }], failed: [] }; }
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ success: true, data }) });
+  });
+  await page.goto("/tests/fixtures/ticket-share.html");
+  await page.getByRole("button", { name: /Open your member ticket/ }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  const sheet = page.locator(".is-ticket-share");
+  await expect(sheet.getByText("I’m №1,292 on @seen", { exact: true })).toBeVisible();
+  await expect(sheet.getByText("One of the first in Dubai — join me")).toBeVisible();
+  await expect(sheet.locator(".share-recipient-item")).toHaveCount(8);
+  await expect(sheet.locator(".share-external-action")).toHaveCount(7);
+  const center = await page.locator(".social-center-scroll").boundingBox();
+  const box = await sheet.boundingBox();
+  expect(Math.abs(box.x - center.x)).toBeLessThan(1);
+  expect(Math.abs(box.width - center.width)).toBeLessThan(1);
+  expect(await sheet.locator(".share-external-row").evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath(`ticket-share-${width}.png`), animations: "disabled" });
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(page.locator(".member-ticket-screen")).toBeVisible();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await sheet.getByRole("button", { name: "Select Lina" }).click();
+  await sheet.getByPlaceholder("Write a message...").fill("Join me!");
+  await sheet.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  expect(sent.sharedContent).toEqual({ contentType: "ticket", contentId: "507f1f77bcf86cd799439011" });
+  expect(sent.text).toBe("Join me!");
+});
+
+for (const width of [1440, 390]) for (const incoming of [false, true]) test(`shared ticket opens from ${incoming ? "incoming" : "outgoing"} chat at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 1000 });
+  const viewer = "507f1f77bcf86cd799439011", other = "507f1f77bcf86cd799439012";
+  const owner = incoming ? other : viewer;
+  const title = "I’m №1,292 on @seen";
+  const content = { contentType: "ticket", contentId: owner, title, previewText: "One of the first in Dubai — join me", route: "/profile/ticket-owner", ticket: { number: 1292, city: "Dubai", joinedAt: "2026-11-11T08:00:00Z" }, author: { id: owner, name: "Ticket Owner", username: "ticket-owner" } };
+  const participant = { id: other, name: "Lina Moreau", displayName: "Lina Moreau", username: "lina", role: "fan" };
+  const message = { id: "ticket-message", senderId: incoming ? other : viewer, recipientId: incoming ? viewer : other, body: "Shared a ticket", mediaType: "text", disappearAfterSeconds: null, createdAt: new Date().toISOString(), sharedContent: content };
+  await page.route("**/api/**", async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (!path.startsWith("/api/")) return route.continue();
+    let data = { items: [], people: [], groups: [], windows: [], calls: [] };
+    if (path === "/api/messages/conversations") data = { conversations: [{ id: other, type: "direct", status: "ACTIVE", participant, lastMessage: message }] };
+    if (path === `/api/messages/conversations/${other}`) data = { participant, messages: [message], conversation: { status: "ACTIVE" }, blockStatus: {}, pageInfo: { hasMore: false } };
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ success: true, data }) });
+  });
+  await page.goto("/tests/fixtures/invitation-messages.html");
+  await page.getByRole("button", { name: /Lina Moreau.*Shared a ticket/ }).click();
+  const card = page.getByRole("button", { name: title, exact: true });
+  await expect(card).toBeVisible();
+  await expect(card).toHaveCSS("width", "244px");
+  await expect(page.locator(".has-ticket-card")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(card.getByText("One of the first in Dubai — join me")).toBeVisible();
+  await expect(page.locator(".has-ticket-card").getByText("Shared a ticket", { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: test.info().outputPath("ticket-in-chat.png"), animations: "disabled" });
+  const chatUrl = page.url();
+  await card.click();
+  const ticket = page.getByRole("dialog", { name: "Your ticket", exact: true });
+  await expect(ticket).toBeVisible();
+  await expect(ticket.locator(".member-ticket-identity strong")).toHaveText("№1,292");
+  await expect(ticket.locator("time")).toHaveText("November 11, 2026");
+  await expect(ticket.locator("footer")).toHaveText("One of the first in Dubai.");
+  await expect(page).toHaveURL(chatUrl);
+  await page.screenshot({ path: test.info().outputPath("ticket-opened-from-chat.png"), animations: "disabled" });
+  await ticket.getByRole("button", { name: "Share", exact: true }).click();
+  await expect(page.locator(".is-ticket-share").getByText(title, { exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(ticket).toBeVisible();
+  await ticket.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(ticket).toHaveCount(0);
+  await expect(card).toBeFocused();
+  await expect(page).toHaveURL(chatUrl);
+});

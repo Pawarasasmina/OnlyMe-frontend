@@ -51,7 +51,7 @@ export function ticketImage(ticket) {
   ctx.fillText(ticket.city.toUpperCase(), 996, 140, 620);
   ctx.textAlign = "left";
   ctx.font = `700 34px ${font}`;
-  ctx.fillText("MEMBER", 84, 710);
+  ctx.fillText(__msg("system.OnboardingTicket.e6c167fd27"), 84, 710);
   ctx.font = `800 190px ${font}`;
   ctx.fillStyle = "#cce4fa";
   ctx.fillText(ticket.label, 76, 930, 920);
@@ -68,4 +68,49 @@ export function ticketImage(ticket) {
     ctx.beginPath(); ctx.arc(x, 1500, 32, 0, Math.PI * 2); ctx.fill();
   }
   return canvas.toDataURL("image/png");
+}
+
+// The prototype's ticketCardPNG: transparent margins and punched ticket edges.
+export function ticketStoryImage(ticket) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 860; canvas.height = 1260;
+  const ctx = canvas.getContext("2d");
+  const x = 40, y = 40, width = 780, height = 1180;
+  const shape = () => { ctx.beginPath(); ctx.roundRect(x, y, width, height, 64); };
+  shape();
+  const fill = ctx.createLinearGradient(x, y, x + width, y + height);
+  fill.addColorStop(0, "#2A3A55"); fill.addColorStop(.5, "#141C2B"); fill.addColorStop(1, "#1B2A40");
+  ctx.fillStyle = fill; ctx.fill();
+  ctx.save(); shape(); ctx.clip();
+  const glow = ctx.createRadialGradient(x + width / 2, y + 420, 10, x + width / 2, y + 420, 520);
+  glow.addColorStop(0, "rgba(156,203,255,.30)"); glow.addColorStop(1, "rgba(156,203,255,0)");
+  ctx.fillStyle = glow; ctx.fillRect(x, y, width, height); ctx.restore();
+  shape(); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,.22)"; ctx.stroke();
+  const font = 'system-ui, sans-serif';
+  ctx.font = `800 64px ${font}`; ctx.fillStyle = "#9CCBFF"; ctx.fillText("@", x + 64, y + 128);
+  const atWidth = ctx.measureText("@").width;
+  ctx.fillStyle = "#FFFFFF"; ctx.fillText("seen", x + 64 + atWidth, y + 128);
+  ctx.font = `700 34px ${font}`; ctx.fillStyle = "rgba(255,255,255,.55)";
+  ctx.textAlign = "right"; ctx.fillText(ticket.city.toUpperCase(), x + width - 64, y + 124, 430); ctx.textAlign = "left";
+  ctx.font = `700 36px ${font}`; ctx.fillStyle = "rgba(255,255,255,.5)";
+  ctx.fillText(__msg("fanWeb.member").toUpperCase(), x + 64, y + 470);
+  let size = 200;
+  do { ctx.font = `800 ${size}px ${font}`; size -= 6; } while (ctx.measureText(ticket.label).width > width - 128 && size > 90);
+  const ink = ctx.createLinearGradient(0, y + 500, 0, y + 690);
+  ink.addColorStop(0, "#FFFFFF"); ink.addColorStop(.55, "#BFD9F2"); ink.addColorStop(1, "#7FA3C6");
+  ctx.fillStyle = ink; ctx.fillText(ticket.label, x + 60, y + 680);
+  ctx.font = `500 40px ${font}`; ctx.fillStyle = "rgba(255,255,255,.55)";
+  ctx.fillText(ticket.date, x + 64, y + 790, width - 128);
+  ctx.setLineDash([18, 14]); ctx.strokeStyle = "rgba(255,255,255,.2)"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x + 40, y + height - 220); ctx.lineTo(x + width - 40, y + height - 220); ctx.stroke(); ctx.setLineDash([]);
+  ctx.save(); ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "#000";
+  for (const edge of [x, x + width]) { ctx.beginPath(); ctx.arc(edge, y + height - 220, 28, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  ctx.font = `500 44px ${font}`; ctx.fillStyle = "rgba(255,255,255,.78)";
+  ctx.fillText(ticket.city ? __msg("profile.oneOfTheFirstIn", { value0: ticket.city }) : __msg("profile.oneOfTheFirstOnSeen"), x + 64, y + height - 110, width - 128);
+  return canvas.toDataURL("image/png");
+}
+
+export function ticketStoryDraft(ticket, author = {}) {
+  return { sharedCard: { kind: "ticket", imageUrl: ticketStoryImage(ticket), title: ticket.label, destinationRoute: `/profile/${encodeURIComponent(author.username || "")}`, x: 50, y: 46, scale: 1, rotation: -4 } };
 }

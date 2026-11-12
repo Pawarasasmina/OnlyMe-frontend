@@ -53,3 +53,30 @@ test("saved comments show anonymous counts and the comment preview", async ({ pa
   await expect(page.locator(".activity-prototype-copy p")).toHaveText("3 people saved your comment");
   await expect(page.locator(".activity-note-tile")).toHaveText(text);
 });
+
+test("follow-back has no eye; mutual acknowledgement matches prototype", async ({page})=>{
+ await page.emulateMedia({reducedMotion:"no-preference"});
+ await page.addInitScript(()=>{window.ackMotion=[];const animate=Element.prototype.animate;Element.prototype.animate=function(frames,options){window.ackMotion.push(options.duration);return animate.call(this,frames,options)}});
+ await fixture(page, [
+ {id:"follow-eye-test",type:"follow",title:"Max started following you",direction:"received",filter:"follows",relatedCreator:{id:"max",name:"Max",username:"max"},canAcknowledge:true,createdAt:new Date().toISOString()},
+ {id:"mutual-eye-test",type:"mutual",title:"You and Mia see each other",direction:"received",filter:"all",relatedCreator:{id:"mia",name:"Mia"},canAcknowledge:true,createdAt:new Date().toISOString()}
+ ]);
+ await page.getByRole("button",{name:"All",exact:true}).click();
+ const follow=page.locator(".activity-prototype-row").filter({hasText:"Max started following you"});
+ await expect(follow.locator(".activity-presence-ack,.activity-mutual-eye")).toHaveCount(0);
+ await expect(follow.getByRole("button",{name:"Follow back"})).toBeVisible();
+ const mutual=page.locator(".activity-prototype-row").filter({hasText:"You and Mia see each other"});
+ const button=mutual.locator(".activity-presence-ack");
+ await expect(button.locator("svg")).toHaveCSS("width","15px");
+ await expect(button.locator("svg")).toHaveCSS("height","9.375px");
+ await button.click();
+ await expect(button).toHaveText("Seen \u2713");
+ await expect(button).toHaveCSS("font-size","9.5px");
+ expect(await page.evaluate(()=>window.ackMotion)).toContain(500);
+ await button.click();
+ await expect(button.locator("svg")).toHaveCount(1);
+ await page.emulateMedia({reducedMotion:"reduce"});
+ await page.evaluate(()=>window.ackMotion=[]);
+ await button.click();
+ expect(await page.evaluate(()=>window.ackMotion)).toHaveLength(0);
+});

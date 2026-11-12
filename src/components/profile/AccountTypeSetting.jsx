@@ -14,6 +14,7 @@ import { profileService } from "../../services/profileService";
 import "./AccountTypeSetting.css";
 
 function BusinessIcon() {
+  __useUiLanguage();
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5" /></svg>;
 }
 
@@ -96,10 +97,10 @@ export default function AccountTypeSetting({ renderTrigger } = {}) {
             <h2>{__msg("profile.personalSwitchTitle")}</h2>
             <div className="account-type-effects">
               {[
-                ["world", "profile.personalSwitchWorld", "profile.personalSwitchSubscribers"],
-                ["grow", "profile.personalSwitchGrow"],
-                ["category", "profile.personalSwitchCategory"],
-                ["earnings", "profile.personalSwitchEarningTools"],
+                ["world", __msg("system.copy.6225fcf09f54"), __msg("system.copy.64fbecb6ec2c")],
+                ["grow", __msg("system.copy.4f44ef075450")],
+                ["category", __msg("system.copy.f59104285d83")],
+                ["earnings", __msg("system.copy.ca88cc983d9d")],
               ].map(([key, title, description]) => <div className="account-type-effect" key={key}>
                 <span className={`account-type-effect-icon${key === "earnings" ? " is-kept" : ""}`} aria-hidden="true">{key === "earnings" ? <FiCheck /> : <FiMinus />}</span>
                 <div><b>{__msg(title)}</b>{description ? <p>{__msg(description)}</p> : null}</div>
@@ -144,7 +145,7 @@ export default function AccountTypeSetting({ renderTrigger } = {}) {
           <button className="account-type-cancel" onClick={() => setStep("")} type="button">{__msg("comments.done")}</button>
         </div> : step === "contacts" ? <>
           <h2>{__msg("profile.businessContactTitle")}</h2><p>{__msg("profile.businessContactDescription")}</p>
-          <div className="account-type-contact-list">{[["call", FiPhone, "profile.businessCall"], ["directions", FiMapPin, "profile.businessDirections"], ["website", FiLink, "settings.website"]].map(([key, Icon, label]) => <button className="account-type-contact-row" key={key} role="switch" aria-checked={draftButtons.includes(key)} disabled={mutation.isPending} onClick={() => setDraftButtons(previous => previous.includes(key) ? previous.filter(button => button !== key) : [...previous, key])} type="button"><Icon aria-hidden="true" /><b>{__msg(label)}</b><span className={`account-type-toggle${draftButtons.includes(key) ? " is-on" : ""}`} aria-hidden="true"><i /></span></button>)}</div>
+          <div className="account-type-contact-list">{[["call", FiPhone, __msg("system.copy.e33c837a3d57")], ["directions", FiMapPin, __msg("system.copy.362a5ddf1433")], ["website", FiLink, __msg("system.copy.3f22c9da02f4")]].map(([key, Icon, label]) => <button className="account-type-contact-row" key={key} role="switch" aria-checked={draftButtons.includes(key)} disabled={mutation.isPending} onClick={() => setDraftButtons(previous => previous.includes(key) ? previous.filter(button => button !== key) : [...previous, key])} type="button"><Icon aria-hidden="true" /><b>{__msg(label)}</b><span className={`account-type-toggle${draftButtons.includes(key) ? " is-on" : ""}`} aria-hidden="true"><i /></span></button>)}</div>
           <button className="account-type-primary" disabled={mutation.isPending} onClick={() => mutation.mutate({ type: "business", category: draftCategory, buttons: draftButtons })} type="button">{mutation.isPending ? __msg("financial.saving") : current === "business" ? __msg("contentEntities.save_efc007") : __msg("profile.businessSwitchAction")}</button>
           <button className="account-type-cancel" disabled={mutation.isPending} onClick={() => { setError(""); setStep(current === "business" ? "types" : "category"); }} type="button">{__msg(current === "business" ? "admin.cancel" : "discover.back")}</button>
         </> : <>

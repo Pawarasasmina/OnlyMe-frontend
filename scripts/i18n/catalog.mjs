@@ -33,7 +33,7 @@ for(const [key,values] of Object.entries({...reviewed.messages,...counts})){
  for(const [i,locale] of locales.entries())resources[locale][key]=values[i];
  aliases[values[0]]=key;
 }
-const extraLabels=['reviewed-labels','reviewed-details','reviewed-final-labels','reviewed-activity','reviewed-verification'].flatMap(name=>JSON.parse(fs.readFileSync(`src/i18n/${name}.json`,'utf8')));
+const extraLabels=['reviewed-labels','reviewed-details','reviewed-final-labels','reviewed-activity','reviewed-verification','reviewed-system'].flatMap(name=>JSON.parse(fs.readFileSync(`src/i18n/${name}.json`,'utf8')));
 extraLabels.push(...Object.values(reasonMessages));
 const settingsReview=JSON.parse(fs.readFileSync('src/i18n/reviewed-settings.json','utf8'));
 for(const [key,translations] of Object.entries(settingsReview)){

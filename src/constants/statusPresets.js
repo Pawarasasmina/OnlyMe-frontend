@@ -23,18 +23,18 @@ export const STATUS_LABEL_MAX_LENGTH = 120;
 
 const cp = (...values) => String.fromCodePoint(...values);
 
-export const PROFILE_STATUS_SUGGESTIONS = Object.freeze(__uiTuple([
+export const PROFILE_STATUS_SUGGESTIONS = Object.freeze(__uiTuple(__uiTuple([
   { __uiMessage: "statusPresets.value0AtSeen", values: { value0: cp(0x1F441) } },
-  `${cp(0x1F3BE)} Tennis?`,
+  { __uiMessage: "statusPresets.value0Tennis", values: { value0: cp(0x1F3BE) } },
   { __uiMessage: "statusPresets.value0MorningPerson", values: { value0: cp(0x1F305) } },
   { __uiMessage: "statusPresets.value0AtTheGym", values: { value0: cp(0x1F4AA) } },
-  `${cp(0x1F4DA)} Reading`,
+  { __uiMessage: "statusPresets.value0Reading", values: { value0: cp(0x1F4DA) } },
   { __uiMessage: "statusPresets.value0CoffeeWalk", values: { value0: cp(0x2615) } },
   { __uiMessage: "statusPresets.value0DeepWork", values: { value0: cp(0x1F3A7) } },
-  `${cp(0x2708, 0xFE0F)} Traveling`,
+  { __uiMessage: "statusPresets.value0Traveling", values: { value0: cp(0x2708, 0xFE0F) } },
   { __uiMessage: "statusPresets.value0NewSeenSoon", values: { value0: cp(0x270D, 0xFE0F) } },
-  `${cp(0x1F4D6)} Writing a chapter`,
+  { __uiMessage: "statusPresets.value0WritingAChapter", values: { value0: cp(0x1F4D6) } },
   { __uiMessage: "statusPresets.value0ReplyingToEveryone", values: { value0: cp(0x1F4AC) } },
   { __uiMessage: "statusPresets.value0OpenForCalls", values: { value0: cp(0x1F4DE) } },
   { __uiMessage: "statusPresets.value0MyWorldIsOpen", values: { value0: cp(0x1F30D) } },
-]));
+])));

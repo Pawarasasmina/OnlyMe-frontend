@@ -210,12 +210,12 @@ export default function AdminAnalyticsPage() {
   const visiblePeakUsageRows = activePeakUsageRows.length ? activePeakUsageRows : (data?.platformActivity?.hours || []).slice(0, 8);
   const funnelRateText = (value, fallback = "N/A") => value == null ? fallback : rate(value);
   const kpis = [
-    { label: __msg("admin.totalUsers"), value: formatNumber(summary.totalUsers), icon: FiUsers, detail: `${formatNumber(summary.totalFans)} fans` },
+    { label: __msg("admin.totalUsers"), value: formatNumber(summary.totalUsers), icon: FiUsers, detail: __msg("admin.value0Fans", { value0: formatNumber(summary.totalFans) }) },
     { label: __msg("admin.newUsers"), value: formatNumber(summary.newUsers), icon: FiTrendingUp, change: data?.changes?.newUsers },
     { label: __msg("admin.activeUsers"), value: formatNumber(summary.activeUsers), icon: FiActivity, change: data?.changes?.activeUsers, detail: __msg("admin.fromLastSeenAndStoredInteractions") },
     { label: __msg("admin.sessions"), value: formatNumber(summary.sessions), icon: FiActivity, detail: __msg("admin.value0ReturningUsers", { value0: formatNumber(summary.returningUsers) }) },
     { label: __msg("admin.dauWauMau"), value: `${formatNumber(summary.dau)} / ${formatNumber(summary.wau)} / ${formatNumber(summary.mau)}`, icon: FiUsers, detail: __msg("admin.dailyWeeklyMonthlyActiveUsers") },
-    { label: __msg("admin.totalCreators"), value: formatNumber(summary.totalCreators), icon: FiUsers, detail: `${formatNumber(summary.verifiedCreators)} verified` },
+    { label: __msg("admin.totalCreators"), value: formatNumber(summary.totalCreators), icon: FiUsers, detail: __msg("admin.value0Verified", { value0: formatNumber(summary.verifiedCreators) }) },
     { label: __msg("admin.publishedContent"), value: formatNumber(summary.totalPublishedContent), icon: FiFileText },
     { label: __msg("admin.postsCreated"), value: formatNumber(summary.postsCreated), icon: FiFileText },
     { label: __msg("admin.totalEngagements"), value: formatNumber(summary.totalEngagements), icon: FiBarChart2, change: data?.changes?.totalEngagements },

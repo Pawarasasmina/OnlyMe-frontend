@@ -1,3 +1,5 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg, systemMessage } from "../../i18n/runtime.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiAlertTriangle, FiX } from "react-icons/fi";
@@ -21,6 +23,7 @@ export function promptDialog(options, defaultValue = "") {
 }
 
 export default function AppDialogProvider() {
+  __useUiLanguage();
   const [dialog, setDialog] = useState(null);
   const [value, setValue] = useState("");
   const [sheetPosition, setSheetPosition] = useState(undefined);
@@ -84,12 +87,12 @@ export default function AppDialogProvider() {
   const destructive = dialog.danger !== false && dialog.kind === "confirm";
   return createPortal(
     <div aria-modal="true" className="app-dialog-layer" role="dialog">
-      <button aria-label="Close confirmation" className="app-dialog-scrim" onClick={() => close(dialog.kind === "confirm" ? false : null)} type="button" />
+      <button aria-label={__msg("system.AppDialogProvider.5c461d1518")} className="app-dialog-scrim" onClick={() => close(dialog.kind === "confirm" ? false : null)} type="button" />
       <section className="app-dialog-sheet" style={sheetPosition}>
         <span aria-hidden="true" className="app-dialog-handle" />
-        <header><span className={destructive ? "is-danger" : ""}><FiAlertTriangle /></span><div><h2>{dialog.title || (dialog.kind === "prompt" ? "Additional information" : "Please confirm")}</h2>{dialog.message ? <p>{dialog.message}</p> : null}</div><button aria-label="Close" onClick={() => close(dialog.kind === "confirm" ? false : null)} type="button"><FiX /></button></header>
-        {dialog.kind === "prompt" ? <label>{dialog.label || "Your response"}<textarea maxLength={dialog.maxLength || 1000} onChange={(event) => setValue(event.target.value)} placeholder={dialog.placeholder || ""} ref={inputRef} rows={3} value={value} /></label> : null}
-        <footer><button disabled={dialog.busy} onClick={() => close(dialog.kind === "confirm" ? false : null)} type="button">{dialog.cancelLabel || "Cancel"}</button><button className={destructive ? "is-danger" : "is-primary"} disabled={dialog.kind === "prompt" && !value.trim()} onClick={finish} type="button">{dialog.confirmLabel || (dialog.kind === "prompt" ? "Continue" : "Confirm")}</button></footer>
+        <header><span className={destructive ? "is-danger" : ""}><FiAlertTriangle /></span><div><h2>{systemMessage(dialog.title) || (dialog.kind === "prompt" ? __msg("system.AppDialogProvider.911a0b354b") : __msg("system.AppDialogProvider.3a799cc037"))}</h2>{dialog.message ? <p>{systemMessage(dialog.message)}</p> : null}</div><button aria-label={__msg("activity.close")} onClick={() => close(dialog.kind === "confirm" ? false : null)} type="button"><FiX /></button></header>
+        {dialog.kind === "prompt" ? <label>{systemMessage(dialog.label) || __msg("system.AppDialogProvider.195759356a")}<textarea maxLength={dialog.maxLength || 1000} onChange={(event) => setValue(event.target.value)} placeholder={systemMessage(dialog.placeholder) || ""} ref={inputRef} rows={3} value={value} /></label> : null}
+        <footer><button disabled={dialog.busy} onClick={() => close(dialog.kind === "confirm" ? false : null)} type="button">{systemMessage(dialog.cancelLabel) || __msg("admin.cancel")}</button><button className={destructive ? "is-danger" : "is-primary"} disabled={dialog.kind === "prompt" && !value.trim()} onClick={finish} type="button">{systemMessage(dialog.confirmLabel) || (dialog.kind === "prompt" ? __msg("profile.continue") : __msg("social.confirm"))}</button></footer>
       </section>
     </div>,
     document.body

@@ -66,6 +66,11 @@
       "strings": []
     },
     {
+      "file": "src/components/admin/GovernanceTargetPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/admin/ModerationChecklist.jsx",
       "count": 0,
       "strings": []
@@ -93,7 +98,17 @@
       "strings": []
     },
     {
+      "file": "src/components/auth/LegalDocumentSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/branding/AtseenLogo.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/branding/CoinIcon.jsx",
       "count": 0,
       "strings": []
     },
@@ -316,7 +331,7 @@
         {
           "text": "Seen",
           "file": "src/components/fanWeb/FanCreateSheet.jsx",
-          "line": 44,
+          "line": 35,
           "kind": "copy-property"
         }
       ]
@@ -377,6 +392,16 @@
       "strings": []
     },
     {
+      "file": "src/components/fanWeb/home/WallCommentList.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallEmptyState.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/fanWeb/home/WallExploreNeeds.jsx",
       "count": 0,
       "strings": []
@@ -393,6 +418,11 @@
     },
     {
       "file": "src/components/fanWeb/home/WallLocationPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallNeedIcon.jsx",
       "count": 0,
       "strings": []
     },
@@ -527,6 +557,11 @@
       "strings": []
     },
     {
+      "file": "src/components/financial/HoldsRefundRules.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/financial/JoinPremiumModal.jsx",
       "count": 0,
       "strings": []
@@ -538,6 +573,11 @@
     },
     {
       "file": "src/components/financial/MembershipCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/financial/PayoutFlow.jsx",
       "count": 0,
       "strings": []
     },
@@ -572,13 +612,18 @@
       "strings": []
     },
     {
+      "file": "src/components/location/UniversalLocationPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/messages/DirectAccessSettingsSheet.jsx",
       "count": 1,
       "strings": [
         {
           "text": "Direct Access",
           "file": "src/components/messages/DirectAccessSettingsSheet.jsx",
-          "line": 35,
+          "line": 53,
           "kind": "jsx-text"
         }
       ]
@@ -609,6 +654,11 @@
       "strings": []
     },
     {
+      "file": "src/components/onboarding/AccountTypePicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/onboarding/AtseenEyeMark.jsx",
       "count": 0,
       "strings": []
@@ -624,7 +674,29 @@
       "strings": []
     },
     {
+      "file": "src/components/onboarding/InterestStoryPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/onboarding/LightYourWorldChecklist.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/OnboardingTicket.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "seen",
+          "file": "src/components/onboarding/OnboardingTicket.jsx",
+          "line": 29,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/onboarding/PrototypeInterestPicker.jsx",
       "count": 0,
       "strings": []
     },
@@ -635,8 +707,21 @@
     },
     {
       "file": "src/components/onboarding/WelcomeCarousel.jsx",
-      "count": 0,
-      "strings": []
+      "count": 2,
+      "strings": [
+        {
+          "text": "seen",
+          "file": "src/components/onboarding/WelcomeCarousel.jsx",
+          "line": 189,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "seen",
+          "file": "src/components/onboarding/WelcomeCarousel.jsx",
+          "line": 206,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/components/orbit/OrbitCanvas.jsx",
@@ -722,8 +807,21 @@
     },
     {
       "file": "src/components/profile/AccountTypeSetting.jsx",
-      "count": 0,
-      "strings": []
+      "count": 2,
+      "strings": [
+        {
+          "text": "Direct Access",
+          "file": "src/components/profile/AccountTypeSetting.jsx",
+          "line": 116,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Direct Access",
+          "file": "src/components/profile/AccountTypeSetting.jsx",
+          "line": 130,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/components/profile/BringFriendsFlow.jsx",
@@ -779,15 +877,8 @@
     },
     {
       "file": "src/components/profile/PlanetSlot.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "/month",
-          "file": "src/components/profile/PlanetSlot.jsx",
-          "line": 22,
-          "kind": "render-expression"
-        }
-      ]
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/components/profile/ProfileCompletionCard.jsx",
@@ -806,7 +897,7 @@
         {
           "text": "Seen",
           "file": "src/components/profile/ProfileContentGrid.jsx",
-          "line": 623,
+          "line": 618,
           "kind": "render-expression"
         }
       ]
@@ -894,6 +985,11 @@
       "strings": []
     },
     {
+      "file": "src/components/publication/AiSeenGuide.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/publication/ChapterVoicePlayer.jsx",
       "count": 0,
       "strings": []
@@ -954,15 +1050,8 @@
     },
     {
       "file": "src/components/publication/WorldCard.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "/month",
-          "file": "src/components/publication/WorldCard.jsx",
-          "line": 5,
-          "kind": "render-expression"
-        }
-      ]
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/components/saved/SavedCategoryCard.jsx",
@@ -1022,7 +1111,24 @@
       "strings": []
     },
     {
+      "file": "src/components/settings/AccountTwoFactorCard.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/share/ShareSheet.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Instagram",
+          "file": "src/components/share/ShareSheet.jsx",
+          "line": 473,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/components/shared/AppDialogProvider.jsx",
       "count": 0,
       "strings": []
     },
@@ -1550,7 +1656,27 @@
       "strings": []
     },
     {
+      "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminStaffPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/AdminUserDetailPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/pages/admin/BankReviewPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/ContentExportPage.jsx",
       "count": 0,
       "strings": []
     },
@@ -1575,12 +1701,22 @@
       "strings": []
     },
     {
+      "file": "src/pages/admin/FinanceUserPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/pages/admin/FinancialAdminPage.jsx",
       "count": 0,
       "strings": []
     },
     {
       "file": "src/pages/admin/GiftManagementPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/admin/GovernancePage.jsx",
       "count": 0,
       "strings": []
     },
@@ -1615,6 +1751,11 @@
       "strings": []
     },
     {
+      "file": "src/pages/admin/SafetyCenterPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/pages/admin/SimpleCreatorVerificationDetail.jsx",
       "count": 0,
       "strings": []
@@ -1641,32 +1782,36 @@
     },
     {
       "file": "src/pages/auth/LoginPage.jsx",
+      "count": 2,
+      "strings": [
+        {
+          "text": "seen",
+          "file": "src/pages/auth/LoginPage.jsx",
+          "line": 76,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "G",
+          "file": "src/pages/auth/LoginPage.jsx",
+          "line": 90,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/auth/RegisterPage.jsx",
       "count": 0,
       "strings": []
     },
     {
-      "file": "src/pages/auth/RegisterPage.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "Choose your unique username",
-          "file": "src/pages/auth/RegisterPage.jsx",
-          "line": 19,
-          "kind": "copy-property"
-        }
-      ]
+      "file": "src/pages/auth/ResetPasswordPage.jsx",
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/pages/create/CreateHubPage.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "Seen",
-          "file": "src/pages/create/CreateHubPage.jsx",
-          "line": 36,
-          "kind": "copy-property"
-        }
-      ]
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/pages/create/PlanetComingSoonPage.jsx",
@@ -1715,7 +1860,7 @@
         {
           "text": "Seen",
           "file": "src/pages/creator/CreatorStudio.jsx",
-          "line": 230,
+          "line": 227,
           "kind": "copy-property"
         }
       ]
@@ -1742,11 +1887,70 @@
     },
     {
       "file": "src/pages/creator/SeenComposerPage.jsx",
+      "count": 8,
+      "strings": [
+        {
+          "text": "B",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1641,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "I",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1649,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "S",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1656,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "L",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1664,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "B",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1865,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "I",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1873,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "S",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1880,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "L",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 1888,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/pages/creator/SellerVerificationPage.jsx",
       "count": 0,
       "strings": []
     },
     {
       "file": "src/pages/creator/VerifiedCreatorPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/creator/WaysToEarnPage.jsx",
       "count": 0,
       "strings": []
     },
@@ -1762,37 +1966,24 @@
     },
     {
       "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "/month",
-          "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
-          "line": 26,
-          "kind": "render-expression"
-        }
-      ]
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/pages/creator/WorldPublishingPage.jsx",
-      "count": 3,
+      "count": 2,
       "strings": [
         {
-          "text": "/month",
+          "text": "OK",
           "file": "src/pages/creator/WorldPublishingPage.jsx",
-          "line": 1820,
+          "line": 255,
           "kind": "render-expression"
         },
         {
-          "text": "/mo",
+          "text": "Direct Access",
           "file": "src/pages/creator/WorldPublishingPage.jsx",
-          "line": 1821,
-          "kind": "render-expression"
-        },
-        {
-          "text": "/mo",
-          "file": "src/pages/creator/WorldPublishingPage.jsx",
-          "line": 1821,
-          "kind": "render-expression"
+          "line": 1878,
+          "kind": "jsx-text"
         }
       ]
     },
@@ -1818,13 +2009,19 @@
     },
     {
       "file": "src/pages/fan/MessagesPage.jsx",
-      "count": 1,
+      "count": 2,
       "strings": [
         {
           "text": "Direct Access",
           "file": "src/pages/fan/MessagesPage.jsx",
-          "line": 1767,
+          "line": 1950,
           "kind": "copy-property"
+        },
+        {
+          "text": "Admin",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "jsx-text"
         }
       ]
     },
@@ -1855,6 +2052,11 @@
     },
     {
       "file": "src/pages/onboarding/OnboardingPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/onboarding/PublicStoryInterestsPage.jsx",
       "count": 0,
       "strings": []
     },
@@ -1894,6 +2096,18 @@
       "strings": []
     },
     {
+      "file": "src/pages/settings/AiSettingsPage.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "AI",
+          "file": "src/pages/settings/AiSettingsPage.jsx",
+          "line": 14,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
       "file": "src/pages/settings/ContentPreferencesPage.jsx",
       "count": 0,
       "strings": []
@@ -1909,13 +2123,25 @@
       "strings": []
     },
     {
+      "file": "src/pages/settings/FirstWeekNotifications.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "@seen",
+          "file": "src/pages/settings/FirstWeekNotifications.jsx",
+          "line": 32,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
       "file": "src/pages/settings/MonetizationPage.jsx",
       "count": 1,
       "strings": [
         {
           "text": "Direct Access",
           "file": "src/pages/settings/MonetizationPage.jsx",
-          "line": 87,
+          "line": 101,
           "kind": "attribute"
         }
       ]
@@ -1942,15 +2168,28 @@
         {
           "text": "Seen",
           "file": "src/pages/settings/PrivacySettingsPage.jsx",
-          "line": 306,
+          "line": 310,
           "kind": "jsx-text"
         }
       ]
     },
     {
       "file": "src/pages/settings/ProfileSettingsPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 2,
+      "strings": [
+        {
+          "text": "Email",
+          "file": "src/pages/settings/ProfileSettingsPage.jsx",
+          "line": 653,
+          "kind": "attribute"
+        },
+        {
+          "text": "WhatsApp",
+          "file": "src/pages/settings/ProfileSettingsPage.jsx",
+          "line": 655,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/pages/settings/SettingsNav.jsx",
@@ -1964,10 +2203,15 @@
         {
           "text": "Direct Access",
           "file": "src/pages/settings/SettingsPage.jsx",
-          "line": 128,
+          "line": 165,
           "kind": "attribute"
         }
       ]
+    },
+    {
+      "file": "src/pages/settings/SettingsPayments.jsx",
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/pages/settings/SupportPage.jsx",
@@ -2022,7 +2266,17 @@
       "strings": []
     },
     {
+      "file": "src/pages/social/MembershipCancellationPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/pages/social/MembershipsPage.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/pages/social/ModerationAppealPage.jsx",
       "count": 0,
       "strings": []
     },
@@ -2080,13 +2334,13 @@
         {
           "text": "Seen",
           "file": "src/pages/social/SeenFeedPage.jsx",
-          "line": 223,
+          "line": 229,
           "kind": "jsx-text"
         },
         {
           "text": "@seen",
           "file": "src/pages/social/SeenFeedPage.jsx",
-          "line": 541,
+          "line": 547,
           "kind": "jsx-text"
         }
       ]
@@ -2098,30 +2352,42 @@
     },
     {
       "file": "src/pages/social/SeenReaderPage.jsx",
-      "count": 4,
+      "count": 6,
       "strings": [
         {
           "text": "@seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 329,
+          "line": 342,
           "kind": "jsx-text"
         },
         {
           "text": "Spam",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 714,
+          "line": 727,
           "kind": "copy-property"
         },
         {
           "text": "@seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 754,
+          "line": 767,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "@seen",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1306,
           "kind": "jsx-text"
         },
         {
           "text": "Seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 1324,
+          "line": 1308,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Seen",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1399,
           "kind": "jsx-text"
         }
       ]
@@ -2148,7 +2414,7 @@
         {
           "text": "Direct Access",
           "file": "src/pages/social/UnifiedProfilePage.jsx",
-          "line": 565,
+          "line": 568,
           "kind": "jsx-text"
         }
       ]
@@ -2180,19 +2446,61 @@
     },
     {
       "file": "src/pages/social/WorldReaderPage.jsx",
-      "count": 2,
+      "count": 9,
       "strings": [
         {
-          "text": "Spam",
+          "text": "s",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 447,
-          "kind": "copy-property"
+          "line": 241,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "s",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 438,
+          "kind": "render-expression"
+        },
+        {
+          "text": "s",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 443,
+          "kind": "render-expression"
         },
         {
           "text": "Spam",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 1487,
+          "line": 488,
           "kind": "copy-property"
+        },
+        {
+          "text": "OK",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 812,
+          "kind": "render-expression"
+        },
+        {
+          "text": "WhatsApp",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1232,
+          "kind": "attribute"
+        },
+        {
+          "text": "Spam",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1609,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Direct Access",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 2846,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "s",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 2932,
+          "kind": "render-expression"
         }
       ]
     },
@@ -2233,6 +2541,11 @@
     },
     {
       "file": "src/services/adminFinancialService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/adminOperationsService.js",
       "count": 0,
       "strings": []
     },
@@ -2352,6 +2665,11 @@
       "strings": []
     },
     {
+      "file": "src/services/repostService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/services/savedService.js",
       "count": 0,
       "strings": []
@@ -2447,6 +2765,11 @@
       "strings": []
     },
     {
+      "file": "src/utils/firstWeekActivity.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/utils/formatCurrency.js",
       "count": 0,
       "strings": []
@@ -2477,6 +2800,11 @@
       "strings": []
     },
     {
+      "file": "src/utils/messagePresentation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/utils/moderationReview.js",
       "count": 0,
       "strings": []
@@ -2488,6 +2816,11 @@
     },
     {
       "file": "src/utils/postPermissions.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/preAuthOnboarding.js",
       "count": 0,
       "strings": []
     },
@@ -2537,6 +2870,11 @@
       "strings": []
     },
     {
+      "file": "src/utils/sessionExpiry.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/utils/sharedSeenStoryCard.js",
       "count": 0,
       "strings": []
@@ -2572,12 +2910,27 @@
       "strings": []
     },
     {
+      "file": "src/utils/videoDelivery.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/utils/wallCreatedPosts.js",
       "count": 0,
       "strings": []
     },
     {
+      "file": "src/utils/walletPresentation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/utils/wallFilters.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallNoteStory.js",
       "count": 0,
       "strings": []
     },
@@ -2628,7 +2981,15 @@
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
+      "path": "/reset-password/:token",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
       "path": "/welcome",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/start/interests",
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
@@ -2697,6 +3058,10 @@
     },
     {
       "path": "/activity",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/appeals/:model/:reportId",
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
@@ -2812,6 +3177,10 @@
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
+      "path": "/memberships/:id/cancel",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
       "path": "/experiences",
       "file": "src\\routes\\AppRoutes.jsx"
     },
@@ -2824,11 +3193,19 @@
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
+      "path": "/creator/seller-verification",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
       "path": "/create",
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
       "path": "/create/seen",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/ways-to-earn",
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
@@ -2972,6 +3349,10 @@
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
+      "path": "/admin/security",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
       "path": "/admin/analytics",
       "file": "src\\routes\\AppRoutes.jsx"
     },
@@ -2981,6 +3362,26 @@
     },
     {
       "path": "/admin/users",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/users/:userId",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/safety",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/governance",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/content-export",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/staff",
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
@@ -3041,6 +3442,10 @@
     },
     {
       "path": "/admin/bank-reviews",
+      "file": "src\\routes\\AppRoutes.jsx"
+    },
+    {
+      "path": "/admin/finance/users",
       "file": "src\\routes\\AppRoutes.jsx"
     },
     {
@@ -3110,7 +3515,7 @@
       },
       {
         "file": "src/components/fanWeb/FanCreateSheet.jsx",
-        "line": 44,
+        "line": 35,
         "kind": "copy-property"
       },
       {
@@ -3120,7 +3525,7 @@
       },
       {
         "file": "src/components/profile/ProfileContentGrid.jsx",
-        "line": 623,
+        "line": 618,
         "kind": "render-expression"
       },
       {
@@ -3134,18 +3539,13 @@
         "kind": "copy-property"
       },
       {
-        "file": "src/pages/create/CreateHubPage.jsx",
-        "line": 36,
-        "kind": "copy-property"
-      },
-      {
         "file": "src/pages/creator/CreatorStudio.jsx",
-        "line": 230,
+        "line": 227,
         "kind": "copy-property"
       },
       {
         "file": "src/pages/settings/PrivacySettingsPage.jsx",
-        "line": 306,
+        "line": 310,
         "kind": "jsx-text"
       },
       {
@@ -3160,19 +3560,34 @@
       },
       {
         "file": "src/pages/social/SeenFeedPage.jsx",
-        "line": 223,
+        "line": 229,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 1324,
+        "line": 1308,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1399,
         "kind": "jsx-text"
       }
     ],
     "Direct Access": [
       {
         "file": "src/components/messages/DirectAccessSettingsSheet.jsx",
-        "line": 35,
+        "line": 53,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/profile/AccountTypeSetting.jsx",
+        "line": 116,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/profile/AccountTypeSetting.jsx",
+        "line": 130,
         "kind": "jsx-text"
       },
       {
@@ -3191,46 +3606,56 @@
         "kind": "jsx-text"
       },
       {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1878,
+        "kind": "jsx-text"
+      },
+      {
         "file": "src/pages/fan/MessagesPage.jsx",
-        "line": 1767,
+        "line": 1950,
         "kind": "copy-property"
       },
       {
         "file": "src/pages/settings/MonetizationPage.jsx",
-        "line": 87,
+        "line": 101,
         "kind": "attribute"
       },
       {
         "file": "src/pages/settings/SettingsPage.jsx",
-        "line": 128,
+        "line": 165,
         "kind": "attribute"
       },
       {
         "file": "src/pages/social/UnifiedProfilePage.jsx",
-        "line": 565,
+        "line": 568,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 2846,
         "kind": "jsx-text"
       }
     ],
-    "/month": [
+    "seen": [
       {
-        "file": "src/components/profile/PlanetSlot.jsx",
-        "line": 22,
-        "kind": "render-expression"
+        "file": "src/components/onboarding/OnboardingTicket.jsx",
+        "line": 29,
+        "kind": "jsx-text"
       },
       {
-        "file": "src/components/publication/WorldCard.jsx",
-        "line": 5,
-        "kind": "render-expression"
+        "file": "src/components/onboarding/WelcomeCarousel.jsx",
+        "line": 189,
+        "kind": "jsx-text"
       },
       {
-        "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
-        "line": 26,
-        "kind": "render-expression"
+        "file": "src/components/onboarding/WelcomeCarousel.jsx",
+        "line": 206,
+        "kind": "jsx-text"
       },
       {
-        "file": "src/pages/creator/WorldPublishingPage.jsx",
-        "line": 1820,
-        "kind": "render-expression"
+        "file": "src/pages/auth/LoginPage.jsx",
+        "line": 76,
+        "kind": "jsx-text"
       }
     ],
     "https://": [
@@ -3247,19 +3672,36 @@
         "kind": "jsx-text"
       },
       {
+        "file": "src/pages/settings/FirstWeekNotifications.jsx",
+        "line": 32,
+        "kind": "jsx-text"
+      },
+      {
         "file": "src/pages/social/SeenFeedPage.jsx",
-        "line": 541,
+        "line": 547,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 329,
+        "line": 342,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 754,
+        "line": 767,
         "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1306,
+        "kind": "jsx-text"
+      }
+    ],
+    "Instagram": [
+      {
+        "file": "src/components/share/ShareSheet.jsx",
+        "line": 473,
+        "kind": "attribute"
       }
     ],
     "Real people. Real worlds.": [
@@ -3388,40 +3830,143 @@
         "kind": "copy-property"
       }
     ],
-    "Choose your unique username": [
+    "G": [
       {
-        "file": "src/pages/auth/RegisterPage.jsx",
-        "line": 19,
-        "kind": "copy-property"
+        "file": "src/pages/auth/LoginPage.jsx",
+        "line": 90,
+        "kind": "jsx-text"
       }
     ],
-    "/mo": [
+    "B": [
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1641,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1865,
+        "kind": "jsx-text"
+      }
+    ],
+    "I": [
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1649,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1873,
+        "kind": "jsx-text"
+      }
+    ],
+    "S": [
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1656,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1880,
+        "kind": "jsx-text"
+      }
+    ],
+    "L": [
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1664,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 1888,
+        "kind": "jsx-text"
+      }
+    ],
+    "OK": [
       {
         "file": "src/pages/creator/WorldPublishingPage.jsx",
-        "line": 1821,
+        "line": 255,
         "kind": "render-expression"
       },
       {
-        "file": "src/pages/creator/WorldPublishingPage.jsx",
-        "line": 1821,
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 812,
         "kind": "render-expression"
+      }
+    ],
+    "Admin": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "jsx-text"
+      }
+    ],
+    "AI": [
+      {
+        "file": "src/pages/settings/AiSettingsPage.jsx",
+        "line": 14,
+        "kind": "jsx-text"
+      }
+    ],
+    "Email": [
+      {
+        "file": "src/pages/settings/ProfileSettingsPage.jsx",
+        "line": 653,
+        "kind": "attribute"
+      }
+    ],
+    "WhatsApp": [
+      {
+        "file": "src/pages/settings/ProfileSettingsPage.jsx",
+        "line": 655,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1232,
+        "kind": "attribute"
       }
     ],
     "Spam": [
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 714,
+        "line": 727,
         "kind": "copy-property"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 447,
+        "line": 488,
         "kind": "copy-property"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 1487,
+        "line": 1609,
         "kind": "copy-property"
+      }
+    ],
+    "s": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 241,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 438,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 443,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 2932,
+        "kind": "render-expression"
       }
     ]
   },

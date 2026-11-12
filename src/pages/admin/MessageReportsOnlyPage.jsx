@@ -11,7 +11,7 @@ import ModerationChecklist from "../../components/admin/ModerationChecklist";
 import { EMPTY_REVIEW_CHECKS, reviewIsComplete } from "../../utils/moderationReview";
 import { adminService } from "../../services/adminService";
 
-const durations = [["1_HOUR", "1 hour"], ["5_HOURS", "5 hours"], ["24_HOURS", "1 day"], ["7_DAYS", "7 days"], ["30_DAYS", "1 month"]];
+const durations = [__uiTuple(["1_HOUR", { __uiMessage: "system.copy.f030c3d66765" }]), __uiTuple(["5_HOURS", { __uiMessage: "system.copy.1fe288aa5f69" }]), __uiTuple(["24_HOURS", { __uiMessage: "system.copy.2d8a6f7c3446" }]), __uiTuple(["7_DAYS", { __uiMessage: "system.copy.0a8dd6adce7a" }]), __uiTuple(["30_DAYS", { __uiMessage: "system.copy.42fa50c1524a" }])];
 const outcomes = [__uiTuple(["NO_ACTION", { __uiMessage: "admin.dismiss" }, { __uiMessage: "admin.noViolationFound" }]), __uiTuple(["WARNING", { __uiMessage: "admin.sendWarning" }, { __uiMessage: "admin.notifyTheAccountOwner" }]), __uiTuple(["MESSAGING_RESTRICTED", { __uiMessage: "admin.restrictMessaging" }, { __uiMessage: "admin.temporarilyDisableMessaging" }])];
 const title = (value = "") => value.replaceAll("_", " ").toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 

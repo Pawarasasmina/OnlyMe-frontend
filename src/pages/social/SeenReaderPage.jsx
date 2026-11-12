@@ -1,3 +1,8 @@
+import { popReactionCapsule } from "../../utils/reactionMotion";
+import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,20 +47,17 @@ function withOptimisticCommentHeart(engagement = {}, commentId, active) {
 }
 const STAR = "\u2726";
 const SEEN_REPORT_REASONS = [
-  { label: "Spam", value: "SPAM" },
-  { label: "Harassment or bullying", value: "HARASSMENT" }, { label: "Hate", value: "HATE" },
-  { label: "Defamation or false claims", value: "DEFAMATION" }, { label: "Nudity or sexual content", value: "SEXUAL_CONTENT" },
-  { label: "Violence", value: "VIOLENCE" }, { label: "Self-harm", value: "SELF_HARM" },
-  { label: "Scam or fraud", value: "SCAM" }, { label: "Copyright or IP", value: "COPYRIGHT" },
-  { label: "Impersonation", value: "IMPERSONATION" }, { label: "Child safety", value: "CHILD_SAFETY" },
-  { label: "Other", value: "OTHER" },
+  { get label() { return __msg("social.spam"); }, value: "SPAM" },
+  { get label() { return __msg("fan.harassmentOrBullying"); }, value: "HARASSMENT" }, { get label() { return __msg("social.hate"); }, value: "HATE" },
+  { get label() { return __msg("system.SeenReaderPage.be4acdd0d2"); }, value: "DEFAMATION" }, { get label() { return __msg("system.SeenReaderPage.415eeccf09"); }, value: "SEXUAL_CONTENT" },
+  { get label() { return __msg("discover.violence"); }, value: "VIOLENCE" }, { get label() { return __msg("system.SeenReaderPage.bea5831470"); }, value: "SELF_HARM" },
+  { get label() { return __msg("fan.scamOrFraud"); }, value: "SCAM" }, { get label() { return __msg("system.SeenReaderPage.0d9eff1da0"); }, value: "COPYRIGHT" },
+  { get label() { return __msg("system.SeenReaderPage.a66546f650"); }, value: "IMPERSONATION" }, { get label() { return __msg("system.SeenReaderPage.4873074e0d"); }, value: "CHILD_SAFETY" },
+  { get label() { return __msg("admin.other"); }, value: "OTHER" },
 ];
 
 function formatCount(value = 0) {
-  const count = Number(value) || 0;
-  if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
-  return count.toLocaleString();
+  return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function formatDuration(seconds) {
@@ -66,9 +68,9 @@ function formatDuration(seconds) {
 }
 
 function actionError(error) {
-  if (error.response?.status === 401) return "Log in to use this Seen action.";
-  if (error.response?.status === 403) return "This Seen action is not available for your account.";
-  return error.response?.data?.message || "Unable to complete this action.";
+  if (error.response?.status === 401) return __msg("social.logInToUseThisSeenAction");
+  if (error.response?.status === 403) return __msg("social.thisSeenActionIsNotAvailableForYour");
+  return error.response?.data?.message || __msg("social.unableToCompleteThisAction");
 }
 
 function mediaUrl(media) {
@@ -91,14 +93,16 @@ function blockKey(block) {
 
 
 function creatorName(creator = {}) {
-  return creator.name || creator.displayName || creator.username || "Creator";
+  return creator.name || creator.displayName || creator.username || __msg("discover.creator");
 }
 
 function creatorFirstName(creator = {}) {
-  return creatorName(creator).split(" ")[0] || "Creator";
+  return creatorName(creator).split(" ")[0] || __msg("discover.creator");
 }
 
 function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentToggle, onCopyLink, saved, commentsOpen }) {
+  __useUiLanguage();
+  const reactionAnchorRef = useRef(null);
   const [reactionsOpen, setReactionsOpen] = useState(false);
   const [reactionFilter, setReactionFilter] = useState("ALL");
   const reactionKeys = engagement.topReactions?.length
@@ -111,30 +115,30 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
   const filterKeys = Object.keys(engagement.reactionBreakdown || {}).sort((left, right) => (engagement.reactionBreakdown[right] || 0) - (engagement.reactionBreakdown[left] || 0));
 
   return <>
-  <div className="seen-compact-engagement" aria-label="Seen engagement">
-    <button aria-expanded={reactionsOpen} aria-label="Open reactions" className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
-    <button aria-expanded={commentsOpen} aria-label="Open comments" className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
-    {!isOwn ? <button aria-label={engagement.viewerShared ? "Remove repost" : "Repost Seen"} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button> : null}
-    <span aria-label={`${formatCount(engagement.viewCount || 0)} views`}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
+  <div className="seen-compact-engagement" aria-label={__msg("social.seenEngagement")}>
+    <button ref={reactionAnchorRef} aria-expanded={reactionsOpen} aria-label={__msg("social.openReactions")} className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
+    <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
+    {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button> : null}
+    <span aria-label={__msg("fanWeb.views", { value0: formatCount(engagement.viewCount || 0) })}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
     <span className="seen-compact-spacer" />
-    <button aria-label={saved ? "Remove Seen from Saved" : "Save Seen"} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
-    <button aria-label="Share Seen link" onClick={onCopyLink} type="button"><FiSend /></button>
+    <button data-first-hint={!saved ? "save" : undefined} aria-label={saved ? __msg("publication.removeSeenFromSaved") : __msg("publication.saveSeen")} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
+    <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend /></button>
   </div>
   {reactionsOpen ? <div className="seen-reactions-layer">
-    <button aria-label="Close reactions" className="seen-reactions-scrim" onClick={() => setReactionsOpen(false)} type="button" />
-    <section aria-label="Seen reactions" aria-modal="true" className="seen-reactions-sheet" role="dialog">
+    <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={() => setReactionsOpen(false)} type="button" />
+    <section aria-label={__msg("social.seenReactions")} aria-modal="true" className="seen-reactions-sheet" role="dialog">
       <span className="seen-reactions-handle" />
-      <header><h2>Reactions <small>{formatCount(engagement.reactionCount)}</small></h2><button aria-label="Close reactions" onClick={() => setReactionsOpen(false)} type="button"><FiX /></button></header>
-      <nav aria-label="Filter reactions">
-        <button className={reactionFilter === "ALL" ? "is-active" : ""} onClick={() => setReactionFilter("ALL")} type="button">All</button>
+      <header><h2>{__msg("fanWeb.reactions")} <small>{formatCount(engagement.reactionCount)}</small></h2><button aria-label={__msg("fanWeb.closeReactions")} onClick={() => setReactionsOpen(false)} type="button"><FiX /></button></header>
+      <nav aria-label={__msg("profile.filterReactions")}>
+        <button className={reactionFilter === "ALL" ? "is-active" : ""} onClick={() => setReactionFilter("ALL")} type="button">{__msg("fanWeb.all")}</button>
         {filterKeys.map((key) => <button className={reactionFilter === key ? "is-active" : ""} key={key} onClick={() => setReactionFilter(key)} type="button">{reactionEmoji[key] || reactionEmoji.LIKE} <small>{formatCount(engagement.reactionBreakdown[key])}</small></button>)}
       </nav>
       <div className="seen-reactions-list">
-        {visibleReactors.map((item) => <article key={item.id}><FanAvatar className="seen-reaction-avatar" name={item.user?.name} size="h-[34px] w-[34px]" src={item.user?.avatar} /><span className="seen-reaction-person-copy"><strong>{item.user?.name || "User"}</strong>{item.user?.username ? <small>@{item.user.username}</small> : null}</span><i>{reactionEmoji[item.reaction] || reactionEmoji.LIKE}</i></article>)}
-        {!visibleReactors.length ? <p>No reactions in this group yet.</p> : null}
+        {visibleReactors.map((item) => <article key={item.id}><FanAvatar className="seen-reaction-avatar" name={item.user?.name} size="h-[34px] w-[34px]" src={item.user?.avatar} /><span className="seen-reaction-person-copy"><strong>{item.user?.name || __msg("admin.user")}</strong>{item.user?.username ? <small>@{item.user.username}</small> : null}</span><i>{reactionEmoji[item.reaction] || reactionEmoji.LIKE}</i></article>)}
+        {!visibleReactors.length ? <p>{__msg("social.noReactionsInThisGroupYet")}</p> : null}
       </div>
-      <footer aria-label="Choose your reaction">
-        {Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={`React with ${key.toLowerCase()}`} className={engagement.viewerReaction === key ? "is-active" : ""} disabled={mutations.reaction.isPending} key={key} onClick={() => mutations.reaction.mutate(key)} type="button">{icon}</button>)}
+      <footer aria-label={__msg("social.chooseYourReaction")}>
+        {Object.entries(reactionEmoji).filter(([key]) => key !== "INSIGHTFUL").map(([key, icon]) => <button aria-label={__msg("profile.reactWith", { value0: key.toLowerCase() })} className={engagement.viewerReaction === key ? "is-active" : ""} disabled={mutations.reaction.isPending} key={key} onClick={() => { if (key !== engagement.viewerReaction) popReactionCapsule(reactionAnchorRef.current); mutations.reaction.mutate(key); }} type="button">{icon}</button>)}
       </footer>
     </section>
   </div> : null}
@@ -142,6 +146,7 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
 }
 
 function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending, onChange, onClose, onReact, onSubmit, onVoiceSubmit, reactionPending, title, voicePending }) {
+  __useUiLanguage();
   const [activityParams] = useSearchParams();
   const focusedComment = activityParams.get("comment");
   useEffect(() => {
@@ -187,30 +192,30 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
     return <article className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
       <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
       <div className="seen-comment-copy">
-        <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || "Fan"}</Link> : <strong>{item.author?.name || "Fan"}</strong>}{item.text}</p>
-        {item.audio ? <VoiceMessageBubble audio={item.audio} label="Voice comment" /> : null}
-        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || "comment"}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">Reply</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label="Repost reply" className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
+        <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || __msg("profile.fan")}</Link> : <strong>{item.author?.name || __msg("profile.fan")}</strong>}{item.text}</p>
+        {item.audio ? <VoiceMessageBubble audio={item.audio} label={__msg("comments.voiceComment")} /> : null}
+        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
       </div>
     </article>;
   };
 
   return <div className="seen-comments-layer">
-    <button aria-label="Close comments" className="seen-comments-scrim" onClick={onClose} type="button" />
-    <section aria-label={`Comments on ${title}`} aria-modal="true" className="seen-comments-sheet" role="dialog" style={sheetPosition || undefined}>
+    <button aria-label={__msg("social.closeComments")} className="seen-comments-scrim" onClick={onClose} type="button" />
+    <section aria-label={__msg("social.commentsOn", { value0: title })} aria-modal="true" className="seen-comments-sheet" role="dialog" style={sheetPosition || undefined}>
       <span aria-hidden="true" className="seen-comments-handle" />
       <header>
-        <div><h2>Comments</h2><small>{title}</small></div>
-        <button aria-label="Close comments" onClick={onClose} type="button"><FiX /></button>
+        <div><h2>{__msg("admin.comments")}</h2><small>{title}</small></div>
+        <button aria-label={__msg("social.closeComments")} onClick={onClose} type="button"><FiX /></button>
       </header>
       <div className="seen-comments-list">
         {comments.map((item) => <div className="seen-comment-thread" key={item.id}>{renderComment(item)}{(item.replies || []).map((reply) => renderComment(reply, true))}</div>)}
-        {!comments.length ? <p className="seen-comments-empty">No comments yet. Start the conversation.</p> : null}
+        {!comments.length ? <p className="seen-comments-empty">{__msg("social.noCommentsYetStartTheConversation")}</p> : null}
       </div>
-      {replyTo ? <div className="seen-sheet-replying"><span>Replying to <b>{replyTo.author?.name || "Fan"}</b></span><button aria-label="Cancel reply" onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+      {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b>{replyTo.author?.name || __msg("profile.fan")}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
       <form onSubmit={(event) => { onSubmit(event, replyTo?.id || ""); if (comment.trim()) setReplyTo(null); }}>
         <FanAvatar className="seen-sheet-composer-avatar" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
-        <label><input aria-label="Add a Seen comment" autoFocus maxLength={500} onChange={onChange} placeholder="Add a comment..." value={comment} /><button aria-label="Record a voice comment" disabled={isPending || voicePending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button></label>
-        <button disabled={!comment.trim() || isPending} type="submit">Post</button>
+        <label><input aria-label={__msg("profile.addASeenComment")} autoFocus maxLength={500} onChange={onChange} placeholder={__msg("fanWeb.addAComment")} value={comment} /><button aria-label={__msg("fanWeb.recordAVoiceComment")} disabled={isPending || voicePending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button></label>
+        <button disabled={!comment.trim() || isPending} type="submit">{__msg("fanWeb.post")}</button>
       </form>
       {voiceCommentOpen ? <VoiceCommentRecorder busy={voicePending} onClose={() => setVoiceCommentOpen(false)} onSubmit={(recording) => { onVoiceSubmit(recording, replyTo?.id || ""); setReplyTo(null); setVoiceCommentOpen(false); }} /> : null}
     </section>
@@ -250,7 +255,7 @@ function normalizeSeenDetail(publication, engagement) {
       chapterIndex: 0,
       id: `root-${index}`,
       thumbnailUrl: mediaUrl(media?.thumbnailUrl) || (type === "video" ? coverUrl : url),
-      title: publication?.title || "Seen preview",
+      title: publication?.title || __msg("social.seenPreview"),
       type,
       url,
     });
@@ -265,7 +270,7 @@ function normalizeSeenDetail(publication, engagement) {
   return {
     id: publication?.id,
     access: publication?.access || "",
-    title: publication?.title || "Untitled Seen",
+    title: publication?.title || __msg("profile.untitledSeen"),
     description: publication?.description || publication?.summary || "",
     creator: publication?.creator || {},
     attachedEntities: publication?.attachedEntities || [],
@@ -306,16 +311,17 @@ function seenProfileMediaCandidates(publication) {
       url,
     });
   };
-  addCandidate({ label: "Cover", media: publication?.coverMedia, sourceMediaId: "cover" });
+  addCandidate({ label: __msg("creator.cover"), media: publication?.coverMedia, sourceMediaId: "cover" });
   (publication?.chapters || []).forEach((chapter) => {
     (chapter.blocks || []).forEach((block) => {
-      addCandidate({ label: chapter.title || "Seen media", media: block.media, sourceMediaId: block.id });
+      addCandidate({ label: chapter.title || __msg("social.seenMedia"), media: block.media, sourceMediaId: block.id });
     });
   });
   return candidates;
 }
 
 function MarkedText({ text, highlight, tone = "blue" }) {
+  __useUiLanguage();
   if (!highlight || !text?.includes(highlight)) return text;
   const [before, after] = text.split(highlight);
   return <>
@@ -338,11 +344,12 @@ function imageOverlayFillColor(block = {}) {
 }
 
 function InlineMedia({ block, title }) {
+  __useUiLanguage();
   const [failed, setFailed] = useState(false);
   const url = mediaUrl(block.media);
   if (!url || failed) return <div className="seen-reader-media-fallback">@seen</div>;
   if (["VIDEO", "video"].includes(block.type) || ["VIDEO", "video"].includes(block.media?.mediaType)) {
-    return <PublicationCoverMedia alt={`${title} video`} className="seen-reader-media" controls media={block.media} preload="metadata" />;
+    return <PublicationCoverMedia alt={__msg("fanWeb.video", { value0: title })} className="seen-reader-media" controls media={block.media} preload="metadata" />;
   }
   if (["AUDIO", "VOICE"].includes(block.type) || ["AUDIO", "VOICE"].includes(block.media?.mediaType)) {
     const transcript = String(block.metadata?.transcript || "").trim();
@@ -350,12 +357,13 @@ function InlineMedia({ block, title }) {
   }
   const overlayText = imageOverlayText(block);
   return <figure className={overlayText ? "seen-reader-image-frame has-overlay" : "seen-reader-image-frame"}>
-    <img alt={`${title} chapter media`} className="seen-reader-media" loading="lazy" onError={() => setFailed(true)} src={url} />
+    <img alt={__msg("social.chapterMedia", { value0: title })} className="seen-reader-media" loading="lazy" onError={() => setFailed(true)} src={url} />
     {overlayText ? <figcaption style={{ "--overlay-fill-color": imageOverlayFillColor(block), "--overlay-text-color": imageOverlayColor(block) }}>{overlayText}</figcaption> : null}
   </figure>;
 }
 
 function PollBlock({ accessToken = "", block, chapterId, publicationId }) {
+  __useUiLanguage();
   const options = Array.isArray(block.metadata?.options) ? block.metadata.options : [];
   const queryClient = useQueryClient();
   const pollQuery = useQuery({
@@ -375,7 +383,7 @@ function PollBlock({ accessToken = "", block, chapterId, publicationId }) {
   const error = pollQuery.error || voteMutation.error;
 
   return <section className="world-chapter-reader-poll">
-    <h3>{block.metadata?.question || "Poll"}</h3>
+    <h3>{block.metadata?.question || __msg("admin.poll")}</h3>
     <div>
       {options.map((option, index) => {
         const count = Number(counts[index] || 0);
@@ -383,15 +391,16 @@ function PollBlock({ accessToken = "", block, chapterId, publicationId }) {
         return <button className={selected === index ? "is-selected" : ""} disabled={voteMutation.isPending} key={`${block.id}-${option}-${index}`} onClick={() => voteMutation.mutate(index)} type="button">
           {data.resultsVisible ? <span className="world-poll-fill" style={{ width: `${percent}%` }} /> : null}
           <span>{option}</span>
-          {data.resultsVisible ? <b>{percent}%</b> : selected === index ? <b>Chosen</b> : null}
+          {data.resultsVisible ? <b>{percent}%</b> : selected === index ? <b>{__msg("social.chosen")}</b> : null}
         </button>;
       })}
     </div>
-    <p>{error ? actionError(error) : data.resultsVisible ? `${total.toLocaleString()} vote${total === 1 ? "" : "s"}` : selected == null ? "Choose one answer" : "Your answer is saved"}</p>
+    <p>{error ? actionError(error) : data.resultsVisible ? __msg("social.vote", { value0: total.toLocaleString(__uiLocale()), value1: total === 1 ? "" : "s" }) : selected == null ? __msg("social.chooseOneAnswer") : __msg("social.yourAnswerIsSaved")}</p>
   </section>;
 }
 
 function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
+  __useUiLanguage();
   if (block.metadata?.location?.label) return <span className="chapter-location-prototype"><FiMapPin />{block.metadata.location.label}</span>;
   if (block.type === "LIST" || block.type === "KEY_POINT") {
     const listItems = Array.isArray(block.metadata?.listItems) ? block.metadata.listItems.filter(Boolean) : [];
@@ -401,7 +410,7 @@ function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
   }
   if (block.type === "KEY_POINT") {
     return <section className="seen-reader-keypoint">
-      <span>Key point</span>
+      <span>{__msg("social.keyPoint")}</span>
       <p><MarkedText highlight={block.metadata?.highlight} text={block.text} tone={block.metadata?.highlightTone || "gold"} /></p>
     </section>;
   }
@@ -422,8 +431,9 @@ function ReaderBlock({ accessToken, block, chapterId, publicationId, title }) {
 }
 
 function ChapterChecklist({ points = [] }) {
+  __useUiLanguage();
   if (points.length < 2) return null;
-  return <section className="seen-reader-checklist" aria-label="Chapter checklist">
+  return <section className="seen-reader-checklist" aria-label={__msg("social.chapterChecklist")}>
     {points.map((point) => <p key={point.id || point.text}>
       <FiCheck />
       <span><MarkedText highlight={point.metadata?.highlight} text={point.text} tone={point.metadata?.highlightTone || "green"} /></span>
@@ -432,6 +442,7 @@ function ChapterChecklist({ points = [] }) {
 }
 
 function ReaderSkeleton() {
+  __useUiLanguage();
   return <div className="seen-reader-page seen-reader-loading-page">
     <div className="seen-reader-skeleton-head" />
     <div className="seen-reader-skeleton-card" />
@@ -441,11 +452,11 @@ function ReaderSkeleton() {
 }
 
 const SPAM_ACTIONS = [
-  { defaultChecked: true, description: "", key: "reportSpam", label: "Report spam", required: true },
-  { defaultChecked: true, description: "every post and comment by this creator", key: "deleteMessages", label: "Delete all messages" },
-  { defaultChecked: false, description: "", key: "deleteReactions", label: "Delete all reactions" },
-  { defaultChecked: false, description: "they won't see you or write to you", key: "banCreator", label: "Ban creator" },
-  { defaultChecked: false, description: "access ends now · no refund for violations", key: "removeFromWorld", label: "Remove from your World" },
+  { defaultChecked: true, description: "", key: "reportSpam", get label() { return __msg("fanWeb.reportSpam"); }, required: true },
+  { defaultChecked: true, get description() { return __msg("social.everyPostAndCommentByThisCreator"); }, key: "deleteMessages", get label() { return __msg("social.deleteAllMessages"); } },
+  { defaultChecked: false, description: "", key: "deleteReactions", get label() { return __msg("social.deleteAllReactions"); } },
+  { defaultChecked: false, get description() { return __msg("social.theyWonTSeeYouOrWriteToYou"); }, key: "banCreator", get label() { return __msg("social.banCreator"); } },
+  { defaultChecked: false, get description() { return __msg("social.accessEndsNowNoRefundForViolations"); }, key: "removeFromWorld", get label() { return __msg("social.removeFromYourWorld"); } },
 ];
 
 function creatorActionName(creator = {}) {
@@ -453,6 +464,7 @@ function creatorActionName(creator = {}) {
 }
 
 function SeenDetailMoreMenu({ canAddToMedia, creator, title, onAddToMedia, onClose, onReport, onReportSpam, onShare }) {
+  __useUiLanguage();
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -462,36 +474,37 @@ function SeenDetailMoreMenu({ canAddToMedia, creator, title, onAddToMedia, onClo
   }, [onClose]);
 
   return <div className="seen-detail-sheet-layer">
-    <button aria-label="Close More menu" className="seen-detail-sheet-scrim" onClick={onClose} type="button" />
-    <section aria-label="More Seen actions" aria-modal="true" className="seen-detail-more-sheet" role="dialog">
+    <button aria-label={__msg("social.closeMoreMenu")} className="seen-detail-sheet-scrim" onClick={onClose} type="button" />
+    <section aria-label={__msg("social.moreSeenActions")} aria-modal="true" className="seen-detail-more-sheet" role="dialog">
       <span className="seen-detail-sheet-handle" aria-hidden="true" />
       <div className="seen-detail-more-heading">
         <h2>{title}</h2>
-        <p>Experience · {creatorFirstName(creator)}</p>
+        <p>{__msg("social.experience")} {creatorFirstName(creator)}</p>
       </div>
       <button onClick={onShare} type="button">
         <FiSend aria-hidden="true" />
-        <span>Share</span>
+        <span>{__msg("admin.share")}</span>
       </button>
       {canAddToMedia ? (
         <button onClick={onAddToMedia} type="button">
           <FiPlus aria-hidden="true" />
-          <span>Add to Profile Media</span>
+          <span>{__msg("social.addToProfileMedia")}</span>
         </button>
       ) : null}
       <button className="is-danger" onClick={onReportSpam} type="button">
         <FiSlash aria-hidden="true" />
-        <span><strong>Report spam</strong><small>delete messages · reactions · ban</small></span>
+        <span><strong>{__msg("fanWeb.reportSpam")}</strong><small>{__msg("social.deleteMessagesReactionsBan")}</small></span>
       </button>
       <button className="is-danger" onClick={onReport} type="button">
         <FiFlag aria-hidden="true" />
-        <span>Report</span>
+        <span>{__msg("discover.report")}</span>
       </button>
     </section>
   </div>;
 }
 
 function SeenToMediaPicker({ addedKeys, candidates, isOpen, isSubmitting, onClose, onSubmit }) {
+  __useUiLanguage();
   const [selected, setSelected] = useState([]);
 
   useEffect(() => {
@@ -508,15 +521,15 @@ function SeenToMediaPicker({ addedKeys, candidates, isOpen, isSubmitting, onClos
   };
 
   return <div className="seen-detail-sheet-layer">
-    <button aria-label="Close Add to Profile Media" className="seen-detail-sheet-scrim" disabled={isSubmitting} onClick={onClose} type="button" />
-    <section aria-label="Add to Profile Media" aria-modal="true" className="seen-profile-media-sheet" role="dialog">
+    <button aria-label={__msg("social.closeAddToProfileMedia")} className="seen-detail-sheet-scrim" disabled={isSubmitting} onClick={onClose} type="button" />
+    <section aria-label={__msg("social.addToProfileMedia")} aria-modal="true" className="seen-profile-media-sheet" role="dialog">
       <span className="seen-detail-sheet-handle" aria-hidden="true" />
       <div className="seen-profile-media-head">
         <div>
-          <h2>Add to Profile Media</h2>
-          <p>Choose what you want to keep on your profile.</p>
+          <h2>{__msg("social.addToProfileMedia")}</h2>
+          <p>{__msg("social.chooseWhatYouWantToKeepOnYourProfile")}</p>
         </div>
-        <button aria-label="Close Add to Profile Media" disabled={isSubmitting} onClick={onClose} type="button"><FiX /></button>
+        <button aria-label={__msg("social.closeAddToProfileMedia")} disabled={isSubmitting} onClick={onClose} type="button"><FiX /></button>
       </div>
       <div className="seen-profile-media-grid">
         {candidates.map((candidate) => {
@@ -524,7 +537,7 @@ function SeenToMediaPicker({ addedKeys, candidates, isOpen, isSubmitting, onClos
           const checked = selected.includes(candidate.sourceMediaId);
           return (
             <button
-              aria-label={`${alreadyAdded ? "Already in Media" : checked ? "Deselect" : "Select"} ${candidate.type} from ${candidate.label}`}
+              aria-label={__msg("social.from", { value0: alreadyAdded ? __msg("social.alreadyInMedia") : checked ? __msg("social.deselect") : __msg("content.select"), value1: candidate.type, value2: candidate.label })}
               aria-pressed={checked || alreadyAdded}
               className={`${checked ? "is-selected " : ""}${alreadyAdded ? "is-added " : ""}seen-profile-media-tile`}
               disabled={isSubmitting || alreadyAdded}
@@ -533,20 +546,21 @@ function SeenToMediaPicker({ addedKeys, candidates, isOpen, isSubmitting, onClos
               type="button"
             >
               <img alt="" loading="lazy" src={candidate.thumbnailUrl || candidate.url} />
-              {candidate.type === "video" ? <span className="seen-profile-media-video"><FiPlay />{candidate.duration ? formatDuration(candidate.duration) : "Video"}</span> : null}
-              <strong>{alreadyAdded ? "✓ In Media" : checked ? "Selected" : candidate.label}</strong>
+              {candidate.type === "video" ? <span className="seen-profile-media-video"><FiPlay />{candidate.duration ? formatDuration(candidate.duration) : __msg("profile.video")}</span> : null}
+              <strong>{alreadyAdded ? __msg("social.inMedia") : checked ? __msg("onboarding.selected") : candidate.label}</strong>
             </button>
           );
         })}
       </div>
       <button className="seen-profile-media-submit" disabled={!selected.length || isSubmitting} onClick={() => onSubmit(selected)} type="button">
-        {isSubmitting ? "Adding..." : "Add selected"}
+        {isSubmitting ? __msg("stories.adding") : __msg("social.addSelected")}
       </button>
     </section>
   </div>;
 }
 
 function SeenSpamActionSheet({ creator, error, isOpen, isSubmitting, onBack, onClose, onDone }) {
+  __useUiLanguage();
   const [selected, setSelected] = useState(() => SPAM_ACTIONS.filter((action) => action.defaultChecked).map((action) => action.key));
 
   useEffect(() => {
@@ -572,15 +586,15 @@ function SeenSpamActionSheet({ creator, error, isOpen, isSubmitting, onBack, onC
   const actionName = creatorActionName(creator);
 
   return <div className="seen-detail-sheet-layer">
-    <button aria-label="Close spam report options" className="seen-detail-sheet-scrim" disabled={isSubmitting} onClick={onClose} type="button" />
-    <section aria-label="Spam report options" aria-modal="true" className="seen-detail-spam-sheet" role="dialog">
+    <button aria-label={__msg("social.closeSpamReportOptions")} className="seen-detail-sheet-scrim" disabled={isSubmitting} onClick={onClose} type="button" />
+    <section aria-label={__msg("social.spamReportOptions")} aria-modal="true" className="seen-detail-spam-sheet" role="dialog">
       <span className="seen-detail-sheet-handle" aria-hidden="true" />
-      <h2>Looks like spam?</h2>
-      <p>Choose what to do about {actionName}</p>
+      <h2>{__msg("social.looksLikeSpam")}</h2>
+      <p>{__msg("social.chooseWhatToDoAbout")} {actionName}</p>
       <div className="seen-detail-spam-options">
         {SPAM_ACTIONS.map((action) => {
           const checked = selected.includes(action.key);
-          const label = action.key === "banCreator" ? `Ban ${actionName}` : action.key === "removeFromWorld" ? "Remove from your World" : action.label;
+          const label = action.key === "banCreator" ? __msg("social.banValue0", { value0: actionName }) : action.key === "removeFromWorld" ? __msg("social.removeFromYourWorld") : action.label;
           return <button aria-pressed={checked} disabled={isSubmitting || action.required} key={action.key} onClick={() => toggle(action)} type="button">
             <span className={checked ? "is-checked" : ""}>{checked ? <FiCheck /> : <FiSquare />}</span>
             <b>{label}</b>
@@ -588,16 +602,17 @@ function SeenSpamActionSheet({ creator, error, isOpen, isSubmitting, onBack, onC
           </button>;
         })}
       </div>
-      {error ? <p className="seen-detail-report-error" role="alert">{error}</p> : null}
+      {error ? <p className="seen-detail-report-error" role="alert">{__systemMessage(error)}</p> : null}
       <button className="seen-detail-spam-submit" disabled={isSubmitting || !selectedActions.length} onClick={() => onDone(selectedActions)} type="button">
-        {isSubmitting ? "Sending..." : `Done · ${selectedActions.length}`}
+        {isSubmitting ? __msg("profile.sending") : __msg("social.done", { value0: selectedActions.length })}
       </button>
-      <button className="seen-detail-spam-back" disabled={isSubmitting} onClick={onBack} type="button">Report options</button>
+      <button className="seen-detail-spam-back" disabled={isSubmitting} onClick={onBack} type="button">{__msg("social.reportOptions")}</button>
     </section>
   </div>;
 }
 
 function SeenReportSheet({ error, isDone, isOpen, isSubmitting, onClose, onDone, onSelectReason }) {
+  __useUiLanguage();
   useEffect(() => {
     if (!isOpen) return undefined;
     const onKeyDown = (event) => {
@@ -610,20 +625,20 @@ function SeenReportSheet({ error, isDone, isOpen, isSubmitting, onClose, onDone,
   if (!isOpen) return null;
 
   return <div className="seen-detail-sheet-layer">
-    <button aria-label="Close report dialog" className="seen-detail-sheet-scrim" onClick={onClose} type="button" />
-    <section aria-label={isDone ? "Report received" : "Report Experience"} aria-modal="true" className={isDone ? "seen-detail-report-sheet is-done" : "seen-detail-report-sheet"} role="dialog">
+    <button aria-label={__msg("social.closeReportDialog")} className="seen-detail-sheet-scrim" onClick={onClose} type="button" />
+    <section aria-label={isDone ? __msg("fanWeb.reportReceived") : __msg("social.reportExperience")} aria-modal="true" className={isDone ? "seen-detail-report-sheet is-done" : "seen-detail-report-sheet"} role="dialog">
       <span className="seen-detail-sheet-handle" aria-hidden="true" />
       {isDone ? (
         <div className="seen-detail-report-done">
           <FiEye aria-hidden="true" />
-          <h2>Thank you</h2>
-          <p>Our team will review this shortly.</p>
-          <button onClick={onDone} type="button">Done</button>
+          <h2>{__msg("social.thankYou")}</h2>
+          <p>{__msg("social.ourTeamWillReviewThisShortly")}</p>
+          <button onClick={onDone} type="button">{__msg("comments.done")}</button>
         </div>
       ) : (
         <>
-          <h2>Report Experience</h2>
-          <p>Why are you reporting this?</p>
+          <h2>{__msg("social.reportExperience")}</h2>
+          <p>{__msg("fanWeb.whyAreYouReportingThis")}</p>
           <div className="seen-detail-report-reasons">
             {SEEN_REPORT_REASONS.map((reason) => (
               <button disabled={isSubmitting} key={reason.value} onClick={() => onSelectReason(reason)} type="button">
@@ -632,7 +647,7 @@ function SeenReportSheet({ error, isDone, isOpen, isSubmitting, onClose, onDone,
               </button>
             ))}
           </div>
-          {error ? <p className="seen-detail-report-error" role="alert">{error}</p> : null}
+          {error ? <p className="seen-detail-report-error" role="alert">{__systemMessage(error)}</p> : null}
         </>
       )}
     </section>
@@ -661,6 +676,7 @@ function SeenOverview({
   sharePayload,
   shareSheetOpen,
 }) {
+  __useUiLanguage();
   const [moreOpen, setMoreOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [spamOpen, setSpamOpen] = useState(false);
@@ -670,7 +686,7 @@ function SeenOverview({
   const canAddToMedia = detail.access === "OWNER" && detail.mediaCandidates.length > 0;
   const saved = Boolean(engagement.viewerSaved);
   const chapterWord = detail.chapters.length === 1 ? "chapter" : "chapters";
-  const metadata = `${creatorFirstName(creator)} \u00b7 ${detail.chapters.length} ${chapterWord} \u00b7 ${formatCount(detail.metrics.views)} saw this`;
+  const metadata = __msg("social.value0Value1Value2Value3SawThis", { value0: creatorFirstName(creator), value1: detail.chapters.length, value2: chapterWord, value3: formatCount(detail.metrics.views) });
   const share = () => {
     setMoreOpen(false);
     onCopyLink();
@@ -728,7 +744,7 @@ function SeenOverview({
           setReportDone(true);
           const creatorLabel = creatorFirstName(creator);
           const actionText = selectedActions.some((action) => action.key === "deleteMessages") ? "messages deleted · " : "";
-          onNotice(`${creatorLabel} — ${actionText}report sent ✓`);
+          onNotice(__msg("social.reportSent", { value0: creatorLabel, value1: actionText }));
         },
       },
     );
@@ -742,12 +758,12 @@ function SeenOverview({
   return <>
   <section className="seen-detail-page is-screen-clickable" onClick={startSeenFromScreen}>
     <header className="seen-detail-header seen-detail-prototype-header">
-      <span className="seen-detail-type">SEEN</span>
+      <span className="seen-detail-type">{__msg("social.seen")}</span>
       <div className="seen-detail-title">
         <h1>{detail.title}</h1>
         <p>{metadata}</p>
       </div>
-      <button aria-label="Close Seen" className="seen-detail-close" onClick={onBack} type="button"><FiX /></button>
+      <button aria-label={__msg("social.closeSeen")} className="seen-detail-close" onClick={onBack} type="button"><FiX /></button>
       <div className="seen-detail-more-wrap">
         {moreOpen ? <SeenDetailMoreMenu canAddToMedia={canAddToMedia} creator={creator} title={detail.title} onAddToMedia={addToMedia} onClose={() => setMoreOpen(false)} onReport={report} onReportSpam={reportSpam} onShare={share} /> : null}
       </div>
@@ -755,10 +771,10 @@ function SeenOverview({
 
     <div className="seen-detail-body seen-detail-prototype-body">
       <div className="seen-detail-overview">
-        <button aria-label={`Start ${detail.title}`} className="seen-detail-cover" onClick={() => onOpenChapter(0)} type="button">
-          {detail.heroMedia?.url ? <PublicationCoverMedia alt={`${detail.title} cover`} autoPlay loop media={detail.heroMedia} /> : detail.heroMedia?.thumbnailUrl ? <img alt={`${detail.title} cover`} src={detail.heroMedia.thumbnailUrl} /> : <span aria-hidden="true">@seen</span>}
+        <button aria-label={__msg("social.start", { value0: detail.title })} className="seen-detail-cover" onClick={() => onOpenChapter(0)} type="button">
+          {detail.heroMedia?.url ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: detail.title })} autoPlay loop media={detail.heroMedia} /> : detail.heroMedia?.thumbnailUrl ? <img alt={__msg("discover.cover", { value0: detail.title })} src={detail.heroMedia.thumbnailUrl} /> : <span aria-hidden="true">@seen</span>}
         </button>
-        <div><h2>{detail.title}</h2><p>{creatorFirstName(creator)} · {detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</p></div>
+        <div><h2>{detail.title}</h2><p>{creatorFirstName(creator)} · {detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} {__msg("messages.min")}</p></div>
       </div>
 
       {detail.description ? <p className="seen-detail-description">{detail.description}</p> : null}
@@ -768,7 +784,7 @@ function SeenOverview({
           const locked = Boolean(chapter.locked);
           return (
             <button
-              aria-label={locked ? `${chapter.title} is locked` : `Open ${chapter.title}`}
+              aria-label={locked ? __msg("social.isLocked", { value0: chapter.title }) : __msg("contentEntities.open", { value0: chapter.title })}
               className={locked ? "is-locked" : ""}
               disabled={locked}
               key={chapter.stableChapterId || index}
@@ -776,17 +792,17 @@ function SeenOverview({
               type="button"
             >
               <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{chapter.title || `Chapter ${index + 1}`}</strong>
+              <strong>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong>
               {locked ? <FiLock aria-hidden="true" /> : null}
             </button>
           );
         })}
-      </div> : <p className="seen-detail-empty">No chapters yet.</p>}
+      </div> : <p className="seen-detail-empty">{__msg("social.noChaptersYet")}</p>}
 
-      {notice ? <p className="seen-detail-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
+      {notice ? <p className="seen-detail-notice" role="status">{__systemMessage(notice)}{noticeLink ? <Link to={noticeLink}>{__msg("social.viewReposts")}</Link> : null}</p> : null}
 
       <footer className="seen-detail-engagement">
-        <div className="seen-detail-start-meta"><span>{detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} min</span><span>Tap to start ›</span></div>
+        <div className="seen-detail-start-meta"><span>{detail.chapters.length} {chapterWord} · ~{Math.max(1, detail.chapters.length)} {__msg("messages.min")}</span><span>{__msg("social.tapToStart")}</span></div>
         <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={detail.access === "OWNER"} mutations={mutations} onCommentToggle={onCommentToggle} onCopyLink={onCopyLink} saved={saved} />
       </footer>
     </div>
@@ -819,6 +835,7 @@ function SeenOverview({
 }
 
 export default function SeenReaderPage() {
+  __useUiLanguage();
   const { user: currentUser } = useAuth();
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1051,10 +1068,10 @@ export default function SeenReaderPage() {
     mutationFn: () => updateEngagement(engagement.viewerShared ? publicationService.removeSeenShare(id, accessToken) : publicationService.shareSeen(id, "", accessToken)),
     onSuccess: (next) => {
       if (next.viewerShared) {
-        setNotice("Reposted to your profile.");
+        setNotice(__msg("social.repostedToYourProfile"));
         setNoticeLink("/profile?tab=reposts");
       } else {
-        setNotice("Removed from your profile.");
+        setNotice(__msg("fanWeb.removedFromYourProfile"));
       }
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
     },
@@ -1105,7 +1122,7 @@ export default function SeenReaderPage() {
       const count = Number(result?.added?.length) || 0;
       const duplicateCount = Number(result?.skippedDuplicates?.length) || 0;
       setMediaPickerOpen(false);
-      setNotice(count > 1 ? `Added ${count} items to Profile Media ✓` : count === 1 ? "Added to Profile Media ✓" : duplicateCount ? "Already in Profile Media ✓" : "No Media added.");
+      setNotice(count > 1 ? __msg("social.addedValue0ItemsToProfileMedia", { value0: count }) : count === 1 ? __msg("social.addedToProfileMedia") : duplicateCount ? __msg("social.alreadyInProfileMedia") : __msg("social.noMediaAdded"));
       setNoticeLink("/profile?tab=media");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["profile-media"] }),
@@ -1113,7 +1130,7 @@ export default function SeenReaderPage() {
       ]);
     },
     onError: (error) => {
-      setNotice(error?.response?.data?.message || "Some selected media could not be added");
+      setNotice(error?.response?.data?.message || __msg("social.someSelectedMediaCouldNotBeAdded"));
       setNoticeLink("");
     },
   });
@@ -1134,7 +1151,7 @@ export default function SeenReaderPage() {
   const openMediaAdd = () => {
     const candidates = detail.mediaCandidates.filter((candidate) => !addedSeenMediaIds.has(candidate.sourceMediaId));
     if (!candidates.length) {
-      setNotice("Already in Profile Media ✓");
+      setNotice(__msg("social.alreadyInProfileMedia"));
       setNoticeLink("/profile?tab=media");
       return;
     }
@@ -1283,30 +1300,30 @@ export default function SeenReaderPage() {
   };
 
   if (publicationQuery.isLoading) return <ReaderSkeleton />;
-  if (publicationQuery.isError || !publication) return <div className="seen-reader-page"><section className="seen-reader-error"><h1>This Seen is not available.</h1><Link to="/seen">Back to Seen</Link></section></div>;
+  if (publicationQuery.isError || !publication) return <div className="seen-reader-page"><section className="seen-reader-error"><h1>{__msg("social.thisSeenIsNotAvailable")}</h1><Link to="/seen">{__msg("social.backToSeen")}</Link></section></div>;
 
   if (searchParams.get("overview") === "1") {
     const paid = publication.pricing?.mode === "ONE_TIME";
     const creator = publication.creator || {};
     return <section className="seen-paid-overview-page" ref={readerTopRef}>
       <header className="seen-paid-overview-nav">
-        <button aria-label="Back to profile" onClick={closeReader} type="button"><FiChevronRight /></button>
-        <h1>{creatorFirstName(creator)} · Seen</h1>
+        <button aria-label={__msg("profile.backToProfile")} onClick={closeReader} type="button"><FiChevronRight /></button>
+        <h1>{creatorFirstName(creator)} {__msg("system.SeenPermalinkPage.9947c72274")}</h1>
       </header>
       <section className="seen-paid-overview-author">
         <FanAvatar name={creatorName(creator)} size="h-9 w-9" src={creator.avatar} />
-        <span><b>{creatorName(creator)}</b><small>{publication.experienceLocation || publication.category || "Seen creator"}</small></span>
+        <span><b>{creatorName(creator)}</b><small>{publication.experienceLocation || publication.category || __msg("system.SeenReaderPage.bb372a53a2")}</small></span>
         <em><FiEye /> {formatCount(engagement.viewCount || 0)}</em>
       </section>
       <section className="seen-paid-overview-hero">
-        <button aria-label="Open free preview" onClick={() => openOverviewChapter(0)} type="button">
-          {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={`${publication.title} cover`} autoPlay loop media={publication.coverMedia} /> : <span aria-hidden="true">@seen</span>}
+        <button aria-label={__msg("system.SeenReaderPage.ca86092945")} onClick={() => openOverviewChapter(0)} type="button">
+          {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: publication.title })} autoPlay loop media={publication.coverMedia} /> : <span aria-hidden="true">@seen</span>}
         </button>
-        <div><small>{publication.category || "Seen"}</small><h2>{publication.title}</h2><span>{chapters.length} chapters · ~{Math.max(1, chapters.length)} min</span><p>{publication.description || publication.summary}</p></div>
+        <div><small>{publication.category || "Seen"}</small><h2>{publication.title}</h2><span>{chapters.length} {__msg("system.SeenReaderPage.4fbee6d40b")}{Math.max(1, chapters.length)} {__msg("messages.min")}</span><p>{publication.description || publication.summary}</p></div>
       </section>
-      {paid ? <button className="seen-paid-overview-unlock" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> {Number(publication.pricing?.starsAmount || 0).toLocaleString()}</span><small>Chapter 1 free · {Number(publication.ownerCount || 0).toLocaleString()} own it</small><b>{publication.paymentAvailable ? "Unlock ›" : "Yours"}</b></button> : null}
-      <nav className="seen-paid-overview-chapters" aria-label="Seen chapters">
-        {chapters.map((item, index) => <button className={item.locked ? "is-locked" : ""} key={item.stableChapterId || index} onClick={() => openOverviewChapter(index)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><i>{item.locked ? <FiLock /> : null}</i><b>{item.title || `Chapter ${index + 1}`}</b><FiChevronRight /></button>)}
+      {paid ? <button className="seen-paid-overview-unlock" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> {Number(publication.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</span><small>{__msg("system.SeenFeedPage.fc2d3a48d2")} {Number(publication.ownerCount || 0).toLocaleString(__uiLocale())} {__msg("profile.ownIt")}</small><b>{publication.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("system.SeenFeedPage.755844bc39")}</b></button> : null}
+      <nav className="seen-paid-overview-chapters" aria-label={__msg("social.seenChapters")}>
+        {chapters.map((item, index) => <button className={item.locked ? "is-locked" : ""} key={item.stableChapterId || index} onClick={() => openOverviewChapter(index)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><i>{item.locked ? <FiLock /> : null}</i><b>{item.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b><FiChevronRight /></button>)}
       </nav>
       <footer className="seen-paid-overview-engagement"><SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={isOwner} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen(true)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} /></footer>
       <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
@@ -1327,18 +1344,18 @@ export default function SeenReaderPage() {
 
   return <section className="seen-reader-page" ref={readerTopRef}>
     <header className="seen-reader-header">
-      <button aria-expanded={chapterListOpen} aria-label="Open chapter list" className="seen-reader-brand-pill" onClick={() => setChapterListOpen(true)} type="button"><FiList /> SEEN</button>
+      <button aria-expanded={chapterListOpen} aria-label={__msg("social.openChapterList")} className="seen-reader-brand-pill" onClick={() => setChapterListOpen(true)} type="button"><FiList /> {__msg("social.seen")}</button>
       <div className="seen-reader-titleblock">
         <h1>{publication.title}</h1>
-        <span>{[publication.category, `${chapters.length || 1} ${chapters.length === 1 ? "chapter" : "chapters"}`, `~${Math.max(1, chapters.length)} min`, `${safeChapterIndex + 1}/${chapters.length || 1}`].filter(Boolean).join(" · ")}</span>
+        <span>{[publication.category, `${chapters.length || 1} ${chapters.length === 1 ? "chapter" : "chapters"}`, __msg("profile.value0Min", { value0: Math.max(1, chapters.length) }), `${safeChapterIndex + 1}/${chapters.length || 1}`].filter(Boolean).join(" · ")}</span>
       </div>
-      <button aria-label="Close Seen reader" className="seen-reader-close" onClick={closeReader} type="button"><FiX /></button>
+      <button aria-label={__msg("social.closeSeenReader")} className="seen-reader-close" onClick={closeReader} type="button"><FiX /></button>
     </header>
 
     <div className="seen-reader-chapter-heading">
       <span>{String(safeChapterIndex + 1).padStart(2, "0")}</span>
       <h2>{chapter?.title || publication.title}</h2>
-      {!isOwner && chapter?.stableChapterId ? <button aria-label="Report this chapter" className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={async () => { const reason = window.prompt("Report category: SPAM, HARASSMENT, HATE, DEFAMATION, NUDITY, VIOLENCE, SELF_HARM, SCAM, COPYRIGHT, IMPERSONATION, CHILD_SAFETY, or OTHER", "OTHER"); if (!reason) return; const details = window.prompt("Add a private note for the moderation team (optional):", "") || ""; try { await publicationService.reportChapter(id, chapter.stableChapterId, { reason: reason.trim().toUpperCase(), details }); setNotice("Chapter report received. Thank you for helping keep OnlyMe safe."); } catch (requestError) { setNotice(requestError.response?.data?.message || "Could not report this chapter."); } }} type="button"><FiFlag /></button> : <i aria-hidden="true" />}
+      {!isOwner && chapter?.stableChapterId ? <button aria-label={__msg("system.SeenReaderPage.9713f9218c")} className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={async () => { const reason = window.prompt("Report category: SPAM, HARASSMENT, HATE, DEFAMATION, NUDITY, VIOLENCE, SELF_HARM, SCAM, COPYRIGHT, IMPERSONATION, CHILD_SAFETY, or OTHER", "OTHER"); if (!reason) return; const details = window.prompt("Add a private note for the moderation team (optional):", "") || ""; try { await publicationService.reportChapter(id, chapter.stableChapterId, { reason: reason.trim().toUpperCase(), details }); setNotice(__msg("system.SeenReaderPage.cd83da62bc")); } catch (requestError) { setNotice(requestError.response?.data?.message || __msg("system.copy.c1ab3e66c148")); } }} type="button"><FiFlag /></button> : <i aria-hidden="true" />}
     </div>
 
     <article className={`seen-reader-content ${chapter?.locked ? "is-paid-locked" : ""}`} onClick={handleReaderClick}>
@@ -1346,60 +1363,60 @@ export default function SeenReaderPage() {
         <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
         <div className="seen-world-bonus-card">
           <span aria-hidden="true">◉</span>
-          <h3>A bonus chapter for {creatorFirstName(publication.creator)}&apos;s World</h3>
-          <p>Everything {creatorFirstName(publication.creator)} shares inside — every Seen, circles, stories</p>
-          <button onClick={(event) => { event.stopPropagation(); navigate(`/world/${encodeURIComponent(publication.bonusWorld.id)}?join=1`); }} type="button">Join · <CoinIcon size={12} /> {Number(publication.bonusWorld.firstMonthStars || publication.bonusWorld.regularStars || 0).toLocaleString()} first month</button>
+          <h3>{__msg("system.SeenFeedPage.34ab070662")} {creatorFirstName(publication.creator)}{__msg("profile.sWorld")}</h3>
+          <p>{__msg("system.SeenFeedPage.4a66d14807")} {creatorFirstName(publication.creator)} {__msg("system.SeenFeedPage.d1ae84013a")}</p>
+          <button onClick={(event) => { event.stopPropagation(); navigate(`/world/${encodeURIComponent(publication.bonusWorld.id)}?join=1`); }} type="button">{__msg("system.SeenFeedPage.70ba407056")} <CoinIcon size={12} /> {Number(publication.bonusWorld.firstMonthStars || publication.bonusWorld.regularStars || 0).toLocaleString(__uiLocale())} {__msg("social.firstMonth")}</button>
         </div>
-        <button className="seen-world-bonus-back" onClick={(event) => { event.stopPropagation(); closeReader(); }} type="button">‹ <b>Back to overview</b></button>
+        <button className="seen-world-bonus-back" onClick={(event) => { event.stopPropagation(); closeReader(); }} type="button">‹ <b>{__msg("creator.backToOverview")}</b></button>
       </section> : chapter?.locked ? <section className="seen-paid-locked-chapter">
         <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
         <div className="seen-paid-locked-card">
           <span><FiLock /></span>
-          <h2>Unlock the rest</h2>
-          <p>One-time &middot; yours forever &middot; {Number(publication.ownerCount || 0).toLocaleString()} own it</p>
-          <button onClick={(event) => { event.stopPropagation(); setPurchaseOpen(true); }} type="button">Unlock &middot; {STAR} {Number(publication.pricing?.starsAmount || 0).toLocaleString()}</button>
+          <h2>{__msg("system.SeenFeedPage.7898d6a540")}</h2>
+          <p>{__msg("system.SeenFeedPage.1446710a0d")} {Number(publication.ownerCount || 0).toLocaleString(__uiLocale())} {__msg("profile.ownIt")}</p>
+          <button onClick={(event) => { event.stopPropagation(); setPurchaseOpen(true); }} type="button">{__msg("system.PurchaseWorldModal.c3d96877a2")} {STAR} {Number(publication.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</button>
         </div>
-        {chapters[safeChapterIndex + 1] ? <button className="seen-paid-locked-next" onClick={(event) => { event.stopPropagation(); changeChapter(safeChapterIndex + 1); }} type="button"><small>NEXT</small><b>{String(safeChapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> <FiLock /> {chapters[safeChapterIndex + 1].title}</b><FiChevronRight /></button> : null}
+        {chapters[safeChapterIndex + 1] ? <button className="seen-paid-locked-next" onClick={(event) => { event.stopPropagation(); changeChapter(safeChapterIndex + 1); }} type="button"><small>{__msg("system.SeenReaderPage.1992d5e8d5")}</small><b>{String(safeChapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> <FiLock /> {chapters[safeChapterIndex + 1].title}</b><FiChevronRight /></button> : null}
       </section> : hasChapterContent ? <>
         {chapterContent}
       </> : <section className="seen-reader-empty-chapter">
-        {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={`${publication.title} cover`} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
-        <h2>{isOwner ? "This chapter needs content" : "This chapter is empty"}</h2>
-        <p>{isOwner ? "Add text, key points, highlights, links, or media so readers have something to step through." : "The creator has not added anything to this chapter yet."}</p>
-        {isOwner ? <Link to={`/studio/seens/${encodeURIComponent(id)}/edit?from=seen`}>Edit this Seen</Link> : null}
+        {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: publication.title })} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
+        <h2>{isOwner ? __msg("social.thisChapterNeedsContent") : __msg("social.thisChapterIsEmpty")}</h2>
+        <p>{isOwner ? __msg("social.addTextKeyPointsHighlightsLinksOrMediaSo") : __msg("social.theCreatorHasNotAddedAnythingToThisChapter")}</p>
+        {isOwner ? <Link to={`/studio/seens/${encodeURIComponent(id)}/edit?from=seen`}>{__msg("social.editThisSeen")}</Link> : null}
       </section>}
     </article>
 
     <footer className="seen-reader-footer">
-      {publication.pricing?.mode === "ONE_TIME" ? <button className="seen-paid-unlock-row" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> <b>✦ {Number(publication.pricing?.starsAmount || 0).toLocaleString()} · one-time</b></span><small>{Number(publication.ownerCount || 0).toLocaleString()} own it{publication.paymentAvailable ? ` · chapter 1 is free` : " · owned"}</small><strong>{publication.paymentAvailable ? "Unlock ›" : "Yours"}</strong></button> : null}
+      {publication.pricing?.mode === "ONE_TIME" ? <button className="seen-paid-unlock-row" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> <b>✦ {Number(publication.pricing?.starsAmount || 0).toLocaleString(__uiLocale())} {__msg("profile.oneTime")}</b></span><small>{Number(publication.ownerCount || 0).toLocaleString(__uiLocale())} {__msg("profile.ownIt")}{publication.paymentAvailable ? __msg("system.SeenReaderPage.425623c6c3") : __msg("system.SeenReaderPage.2a419895f5")}</small><strong>{publication.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("system.SeenFeedPage.755844bc39")}</strong></button> : null}
       {safeChapterIndex === chapters.length - 1 && nextSeen ? <button className="seen-reader-up-next" onClick={openNextSeen} type="button">
         {mediaUrl(nextSeen.coverMedia) ? <PublicationCoverMedia alt="" autoPlay loop media={nextSeen.coverMedia} /> : <span aria-hidden="true"><FiEye /></span>}
-        <span><small>Up next from {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || "Next Seen"}</strong><em>{nextSeen.chapters?.length || 0} chapters</em></span>
+        <span><small>{__msg("social.upNextFrom")} {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || __msg("social.nextSeen")}</strong><em>{nextSeen.chapters?.length || 0} {__msg("discover.chapters")}</em></span>
         <FiChevronRight aria-hidden="true" />
       </button> : null}
       <div className="seen-reader-progress-wrap">
-        <div className="seen-reader-progress" aria-label="Chapter progress">
-          {(chapters.length ? chapters : [chapter]).map((item, index) => <button aria-label={`Open chapter ${index + 1}`} className={index <= safeChapterIndex ? "is-active" : ""} key={item?.stableChapterId || index} onClick={() => changeChapter(index)} type="button" />)}
+        <div className="seen-reader-progress" aria-label={__msg("social.chapterProgress")}>
+          {(chapters.length ? chapters : [chapter]).map((item, index) => <button aria-label={__msg("creator.openChapter", { value0: index + 1 })} className={index <= safeChapterIndex ? "is-active" : ""} key={item?.stableChapterId || index} onClick={() => changeChapter(index)} type="button" />)}
         </div>
-        <div className="seen-reader-progress-meta"><span>Chapter {safeChapterIndex + 1} of {chapters.length || 1}</span><button onClick={continueReader} type="button">{safeChapterIndex < chapters.length - 1 ? "Tap to continue ›" : "Complete"}</button></div>
+        <div className="seen-reader-progress-meta"><span>{__msg("profile.chapter")} {safeChapterIndex + 1} {__msg("onboarding.of")} {chapters.length || 1}</span><button onClick={continueReader} type="button">{safeChapterIndex < chapters.length - 1 ? __msg("social.tapToContinue") : __msg("social.complete")}</button></div>
       </div>
       <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={isOwner} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
-      {notice ? <p className="seen-reader-notice" role="status">{notice}{noticeLink ? <Link to={noticeLink}>View reposts</Link> : null}</p> : null}
+      {notice ? <p className="seen-reader-notice" role="status">{__systemMessage(notice)}{noticeLink ? <Link to={noticeLink}>{__msg("social.viewReposts")}</Link> : null}</p> : null}
     </footer>
     <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
     {chapterListOpen ? <div className="seen-chapter-list-layer">
-      <button aria-label="Close chapter list" className="seen-chapter-list-scrim" onClick={() => setChapterListOpen(false)} type="button" />
-      <section aria-label={`Chapters in ${publication.title}`} aria-modal="true" className="seen-chapter-list-sheet" role="dialog" style={chapterSheetPosition || undefined}>
+      <button aria-label={__msg("social.closeChapterList")} className="seen-chapter-list-scrim" onClick={() => setChapterListOpen(false)} type="button" />
+      <section aria-label={__msg("social.chaptersIn", { value0: publication.title })} aria-modal="true" className="seen-chapter-list-sheet" role="dialog" style={chapterSheetPosition || undefined}>
         <span aria-hidden="true" className="seen-chapter-list-handle" />
         <header>
           {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt="" className="seen-chapter-list-cover" media={publication.coverMedia} /> : <span className="seen-chapter-list-cover is-fallback"><FiEye /></span>}
           <div><small>Seen</small><h2>{publication.title}</h2>{detail.description ? <p>{detail.description}</p> : null}</div>
-          <button aria-label="Close chapter list" onClick={() => setChapterListOpen(false)} type="button"><FiX /></button>
+          <button aria-label={__msg("social.closeChapterList")} onClick={() => setChapterListOpen(false)} type="button"><FiX /></button>
         </header>
-        <nav aria-label="Seen chapters">
-          {(chapters.length ? chapters : [{ title: publication.title }]).map((item, index) => <button aria-current={index === safeChapterIndex ? "page" : undefined} className={`${index === safeChapterIndex ? "is-active" : ""} ${item.locked ? "is-locked" : ""}`} key={item.stableChapterId || index} onClick={() => { changeChapter(index); if (!item.locked) setChapterListOpen(false); }} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title || `Chapter ${index + 1}`}</strong>{item.locked ? <FiLock /> : index === safeChapterIndex ? <small>Reading</small> : <FiChevronRight />}</button>)}
+        <nav aria-label={__msg("social.seenChapters")}>
+          {(chapters.length ? chapters : [{ title: publication.title }]).map((item, index) => <button aria-current={index === safeChapterIndex ? "page" : undefined} className={`${index === safeChapterIndex ? "is-active" : ""} ${item.locked ? "is-locked" : ""}`} key={item.stableChapterId || index} onClick={() => { changeChapter(index); if (!item.locked) setChapterListOpen(false); }} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong>{item.locked ? <FiLock /> : index === safeChapterIndex ? <small>{__msg("social.reading")}</small> : <FiChevronRight />}</button>)}
         </nav>
-        {isOwner && detail.mediaCandidates.length ? <button className="seen-chapter-list-media-action" disabled={addSeenMediaMutation.isPending} onClick={() => { setChapterListOpen(false); openMediaAdd(); }} type="button"><FiPlus /> Add Seen media to profile</button> : null}
+        {isOwner && detail.mediaCandidates.length ? <button className="seen-chapter-list-media-action" disabled={addSeenMediaMutation.isPending} onClick={() => { setChapterListOpen(false); openMediaAdd(); }} type="button"><FiPlus /> {__msg("social.addSeenMediaToProfile")}</button> : null}
       </section>
     </div> : null}
     <SeenToMediaPicker

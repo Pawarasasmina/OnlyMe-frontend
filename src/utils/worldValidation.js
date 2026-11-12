@@ -56,7 +56,7 @@ export function worldCompletenessBySection(publication) {
   const previews = chapters.filter((chapter) => chapter.isPreview).length;
   if (chapters.length < config.min || (config.max && chapters.length > config.max))
     errors.chapters.push(
-      config.max ? `${config.label} requires ${config.min}-${config.max} chapters` : __msg("worldValidation.value0RequiresAtLeastValue1Chapters", { value0: config.label, value1: config.min }),
+      config.max ? __msg("worldValidation.value0RequiresValue1Value2Chapters", { value0: config.label, value1: config.min, value2: config.max }) : __msg("worldValidation.value0RequiresAtLeastValue1Chapters", { value0: config.label, value1: config.min }),
     );
   if (publication.kind !== "EXPERIENCE" && (previews < config.previewMin || previews > config.previewMax))
     errors.preview.push(
@@ -81,7 +81,7 @@ export function worldCompletenessBySection(publication) {
     publication.kind === "PREMIUM_WORLD" &&
     !PREMIUM_PRESETS.includes(Number(publication.pricing?.starsAmount))
   )
-    errors.pricing.push(`Choose a supported ${publication.kind === "EXPERIENCE" ? "one-time" : "monthly"} price`);
+    errors.pricing.push(__msg("worldValidation.chooseASupportedValue0Price", { value0: publication.kind === "EXPERIENCE" ? "one-time" : "monthly" }));
   if (publication.kind === "EXPERIENCE" && publication.pricing?.mode !== "FREE" && (!Number.isSafeInteger(Number(publication.pricing?.starsAmount)) || Number(publication.pricing?.starsAmount) < 10))
     errors.pricing.push(__msg("worldValidation.experiencePriceMustBeAtLeast10Stars"));
   if (publication.kind === "EXPERIENCE" && publication.pricing?.mode === "FREE" && previews !== chapters.length)

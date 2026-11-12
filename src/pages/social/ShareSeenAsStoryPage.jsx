@@ -394,7 +394,7 @@ function ShareSeenAsStoryPage() {
         navigate("/wall");
       },
       onError: (error) => {
-        showToast(error?.response?.data?.message || "Could not share this Seen to Story.");
+        showToast(error?.response?.data?.message || __msg("system.copy.419997b7d9b1"));
       },
     });
   };

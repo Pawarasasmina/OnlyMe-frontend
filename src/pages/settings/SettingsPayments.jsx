@@ -1,3 +1,4 @@
+import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -9,6 +10,7 @@ import './SettingsPayments.css';
 import OwnerThingsSheet from '../../components/profile/OwnerThingsSheet';
 
 function Row({ title, subtitle, to, onClick }) {
+  __useUiLanguage();
   const content=<><span className="settings-index-row-copy"><b>{title}</b><small>{subtitle}</small></span><FiChevronRight data-ui-directional="true" /></>;
   return to ? <Link className="settings-index-row" to={to}>{content}</Link> : <button className="settings-index-row" onClick={onClick} type="button">{content}</button>;
 }

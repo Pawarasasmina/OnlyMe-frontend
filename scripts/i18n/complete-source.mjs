@@ -18,6 +18,9 @@ for(const file of filesIn('src').filter(f=>/\.[jt]sx?$/.test(f)&&!/test\.|atseen
   StringLiteral(p){
    const text=p.node.value;if(!natural(text)||['Seen','Direct Access'].includes(text))return;
    const par=p.parentPath;
+   // Display labels may change language; identifiers and native names must not.
+   if(par.isObjectProperty()&&['value','key','id','code','type','name','sourceLabel','context','purpose','category','kind','role','className','color','path','to','url','method'].includes(par.node.key.name||par.node.key.value))return;
+   if(par.isCallExpression()&&par.node.callee.type==='MemberExpression'&&par.node.callee.object.name==='repostService'&&par.node.callee.property.name==='toggle')return;
    if(par.isImportDeclaration()||par.isExportNamedDeclaration()||par.isBinaryExpression()||par.isSwitchCase()||par.isMemberExpression()||(par.isObjectProperty()||par.isObjectMethod())&&p.key==='key')return;
    if(par.isJSXAttribute())return;
    if(par.isCallExpression()&&/^(t|msg|__msg|label|includes|startsWith|endsWith|replace|replaceAll|test|match|split|join|add|has|remove|querySelector|querySelectorAll)$/.test(par.node.callee.name||par.node.callee.property?.name||''))return;
@@ -28,6 +31,8 @@ for(const file of filesIn('src').filter(f=>/\.[jt]sx?$/.test(f)&&!/test\.|atseen
     // Only the display slots of key/label(/description) tuples, never API enum arrays.
     const first=par.node.elements[0];
     const variable=par.findParent(a=>a.isVariableDeclarator())?.node.id.name;
+    if(variable==='languages')return;
+    if(variable==='definitions'&&p.key!==1)return;
     const displayTuple=['definitions','holds','benefitRows'].includes(variable)||first?.type==='Identifier'||first?.type==='MemberExpression';
     if(!module||(!displayTuple&&(p.key===0||first?.type!=='StringLiteral'||!/^[a-zA-Z][a-zA-Z_-]*$/.test(first.value)))||par.node.elements.length>5)return;
     const key=register(text,file,p.node.loc.start.line);
