@@ -1,0 +1,7 @@
+.ticket-motion-card{position:relative;isolation:isolate;animation:ticketCardIn 1s cubic-bezier(.2,.9,.25,1) both}
+.onboarding-ticket-screen.is-overlay{animation:ticketScreenIn .35s ease both}
+@keyframes ticketScreenIn{from{opacity:0}to{opacity:1}}
+.ticket-motion-card::after{content:"";position:absolute;top:-30%;left:-90%;width:50%;height:160%;z-index:2;background:linear-gradient(105deg,transparent,rgba(255,255,255,.22),transparent);transform:rotate(14deg);pointer-events:none;animation:ticketCardSweep 5s ease 1s infinite}
+@keyframes ticketCardIn{from{opacity:0;transform:translateY(40px) rotateX(18deg) scale(.94)}to{opacity:1;transform:none}}
+@keyframes ticketCardSweep{0%,60%{left:-90%}85%,100%{left:140%}}
+@media(prefers-reduced-motion:reduce){.ticket-motion-card{animation:none!important}.ticket-motion-card::after{display:none;animation:none!important}.onboarding-ticket-screen{animation:none!important;transition:none!important}}

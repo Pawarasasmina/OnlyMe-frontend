@@ -53,6 +53,7 @@ import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
 import MinimalWorldIcon from "../../components/world/MinimalWorldIcon";
+import { JoinMoment, WorldOrb } from "../../components/publication/SuccessMoment";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryViewer from "../../components/stories/StoryViewer";
@@ -365,14 +366,14 @@ function PremiumWorldPreviewPage({ activeMembership, canViewMemberContent, chapt
     <header className="world-proto-hero">
       {media?.secureUrl ? (media.resourceType === "video" || media.mediaType === "VIDEO" ? <video autoPlay loop muted playsInline src={media.secureUrl} /> : <img alt="" src={media.secureUrl} />) : <div className="world-preview-media-empty"><span>{PLANET}</span></div>}
       <div className="world-proto-shade" /><button aria-label={__msg("system.WorldReaderPage.3c3d4b1890")} className="world-proto-close" onClick={onBack} type="button"><FiX /></button>
-      <div className="world-proto-title"><small>⌁ {displayName}{__msg("profile.sWorld")}</small><h1>{publication.title}</h1><p>{__msg("system.WorldReaderPage.f85274b03a")} {firstName} {__msg("system.WorldReaderPage.2ece2907b2")}</p><b><span className="world-join-price-icon" /> {regularPrice} {__msg("profile.aMonth")} <em>{__msg("system.WorldReaderPage.837f593b83")}</em></b></div>
+      <div className="world-proto-title"><small><WorldOrb /> {displayName}{__msg("profile.sWorld")}</small><h1>{publication.title}</h1><p>{__msg("system.WorldReaderPage.f85274b03a")} {firstName} {__msg("system.WorldReaderPage.2ece2907b2")}</p><b><span className="world-join-price-icon" /> {regularPrice} {__msg("profile.aMonth")} <em>{__msg("system.WorldReaderPage.837f593b83")}</em></b></div>
     </header>
     <main className="world-proto-body">
       <p className="world-proto-active"><i /> {firstName} {__msg("system.WorldReaderPage.7abaf5dde8")} <span>{__msg("system.WorldReaderPage.ea8ae8761e")}</span></p>
       <div className="world-proto-members">{memberAvatars.length ? <span>{memberAvatars.map((member, index) => <FanAvatar key={member.id || index} name={member.displayName || member.name || member.username} size="h-6 w-6" src={member.avatar || member.avatarUrl} />)}</span> : null}<b>{memberCount ? __msg("system.WorldReaderPage.da8d48a08a", { value0: memberCount }) : __msg("system.WorldReaderPage.0e655f4a32")}</b></div>
       <h2>{__msg("system.WorldReaderPage.f31727ff20")}</h2><section className="world-proto-perks">{perks.map(([icon, title, copy]) => <div key={title}>{icon}<span><b>{title}</b><small>{copy}</small>{title === "Your member badge" ? <em>⌁ {firstName} #{nextMemberNumber}</em> : null}</span></div>)}</section>
       {stories.length ? <section className="world-proto-stories">{stories.map((story, index) => <div key={story.assetId || index}><span>{story.resourceType === "video" ? <video muted playsInline src={story.secureUrl} /> : <img alt={__msg("profile.privateStory")} src={story.secureUrl} />}<i><FiLock /></i></span><small>{__msg("social.private")}</small></div>)}</section> : null}
-      <h2>{__msg("system.WorldReaderPage.9f6b5fd0b2")}</h2><section className="world-proto-circles">{circles.length ? circles.slice(0, 4).map((circle) => <div key={circle.id}><span>{(circle.memberPreview || []).slice(0, 3).map((member, index) => <FanAvatar key={member.id || index} name={member.name || member.username} size="h-6 w-6" src={member.avatar} />)}</span><b>{circle.name}<small>{circle.memberCount || 0} {__msg("system.WorldReaderPage.0c3cbc60e6")} <i>{circle.talkingNow || 0} {__msg("system.WorldReaderPage.ee94993eb4")}</i></small></b><FiLock /></div>) : <div className="world-proto-circle-placeholder"><span><FiUsers /></span><b>{__msg("system.WorldReaderPage.d283b53ce8")}<small>{__msg("system.WorldReaderPage.27771e2781")}</small></b><FiLock /></div>}</section>
+      <h2>{__msg("system.WorldReaderPage.9f6b5fd0b2")}</h2><section className="world-proto-circles">{circles.length ? circles.slice(0, 4).map((circle) => <div key={circle.id}><span>{(circle.memberPreview || []).slice(0, 3).map((member, index) => <FanAvatar key={member.id || index} name={member.name || member.username} size="h-6 w-6" src={member.avatar} />)}</span><b>{circle.name}<small>{circle.memberCount || 0} {__msg("system.WorldReaderPage.0c3cbc60e6")} {Number(circle.talkingNow) > 0 ? <i><span className="world-live-dot" aria-hidden="true" />{circle.talkingNow} {__msg("system.WorldReaderPage.ee94993eb4")}</i> : null}</small></b><FiLock /></div>) : <div className="world-proto-circle-placeholder"><span><FiUsers /></span><b>{__msg("system.WorldReaderPage.d283b53ce8")}<small>{__msg("system.WorldReaderPage.27771e2781")}</small></b><FiLock /></div>}</section>
       <h2>{__msg("system.WorldReaderPage.daa36604ca")}</h2><section className="world-proto-chapters">{chapters.slice(0, 4).map((chapter, index) => <div className={index === 0 ? "is-free" : ""} key={chapter.id || chapter.stableChapterId || index}><b>{index + 1}</b><span><strong>{chapter.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong><small>{chapter.summary || __msg("system.WorldReaderPage.9213f1c39a")}</small></span>{index === 0 ? <em>{__msg("system.WorldReaderPage.d152c5cdc7")}</em> : <FiLock />}</div>)}</section>
       {includedExperiences.length ? <><h2>{__msg("system.WorldReaderPage.8b95d2baa5")}</h2><section className="world-proto-included">{includedExperiences.slice(0, 3).map((item) => <article key={item.id || item._id}><div>{item.coverMedia?.secureUrl ? <PublicationCoverMedia alt="" media={item.coverMedia} /> : <span>{PLANET}</span>}<small><span className="world-join-price-icon" />{item.pricing?.starsAmount || __msg("system.WorldReaderPage.00f554d678")}</small></div><b>{item.title}</b></article>)}</section></> : null}
       <section className="world-proto-founders"><p><FiCheck /><span><b>{__msg("system.WorldReaderPage.e33232163a")}</b><small>{__msg("system.WorldReaderPage.871aab8b0b")}</small></span></p>{nextMemberNumber <= foundingCapacity ? <p><FiCheck /><span><b>{__msg("system.WorldReaderPage.8825807427")}{nextMemberNumber}</b><small>{__msg("system.WorldReaderPage.e0996a37c1")} {foundingCapacity} {__msg("system.WorldReaderPage.6628240119")}</small></span></p> : null}</section>
@@ -422,7 +423,7 @@ function WorldMemberInsidePage({ activeMembership, chapters, creator, experience
         <header className="world-member-welcome">
           <span className="world-member-planet"><MinimalWorldIcon size={54} /></span>
           <h1>{__msg("financial.youReInside")}</h1>
-          {memberNumber ? <button className="world-member-badge" onClick={() => navigate("/memberships")} type="button">{__msg("profile.member")}{Number(memberNumber).toLocaleString(__uiLocale())}</button> : null}
+          {memberNumber ? <button className="world-member-badge" onClick={() => navigate("/memberships")} type="button">{__msg("profile.member")} #{Number(memberNumber).toLocaleString(__uiLocale())}{Number(memberNumber) <= Number(publication.worldFoundingCapacity || 250) ? <strong> · {__msg("celebrations.foundingCircle")}</strong> : null}</button> : null}
           <p>{__msg("social.welcomeTo")} {firstName}{__msg("profile.sWorld")}</p>
         </header>
 
@@ -2069,7 +2070,7 @@ export default function WorldReaderPage() {
         ]);
         await Promise.all([query.refetch(), memberships.refetch()]);
         setJoinKey("");
-        setShowJoinSuccess(true);
+        setShowJoinSuccess(false);
         return;
       }
       setJoinKey("");
@@ -2322,7 +2323,7 @@ export default function WorldReaderPage() {
         owner={false}
         publication={publication}
       />
-      <WorldMemberInsidePage
+      <JoinMoment><WorldMemberInsidePage
         activeMembership={activeMembership}
         chapters={chapters}
         creator={creator}
@@ -2337,7 +2338,7 @@ export default function WorldReaderPage() {
           else navigate(`/world/${publicationId}/inside?view=detail`);
         }}
         publication={{ ...publication, ...(memberWorldPublication || {}), privateCircles: publication.privateCircles || [] }}
-      />
+      /></JoinMoment>
       {activeStory ? <WorldStoryViewer creator={creator} onClose={() => setActiveStory(null)} story={activeStory} title={publication.title} /> : null}
     </>;
   }
@@ -3081,7 +3082,14 @@ export default function WorldReaderPage() {
         </BottomSheet>
       ) : null}
       <PurchaseWorldModal onClose={() => setShowExperienceUnlock(false)} onSuccess={() => query.refetch()} open={showExperienceUnlock} publication={publication} />
-      <JoinPremiumModal authenticated={Boolean(user)} onClose={() => setJoinModalOpen(false)} onRequireAuth={() => navigate("/login", { state: { from: { pathname: location.pathname, search: location.search } } })} onSuccess={async () => { setJoinModalOpen(false); await Promise.all([query.refetch(), memberships.refetch()]); setShowJoinSuccess(true); }} open={joinModalOpen && premium && !owner && !canViewMemberContent} publication={publication} />
+      <JoinPremiumModal authenticated={Boolean(user)} onClose={() => setJoinModalOpen(false)} onRequireAuth={() => navigate("/login", { state: { from: { pathname: location.pathname, search: location.search } } })} onSuccess={async (payload) => {
+        setJoinModalOpen(false);
+        if (payload?.queued) {
+          queryClient.setQueryData(["world-waiting-list", publicationId], payload.waitingList);
+          showToast(__msg("social.youReOnTheWaitingListYourStarsAre", { value0: payload.waitingList?.position || 1 }));
+        } else setShowJoinSuccess(!payload?.alreadyActive);
+        await Promise.allSettled([query.refetch(), memberships.refetch()]);
+      }} open={joinModalOpen && premium && !owner && !canViewMemberContent} publication={publication} />
       {voiceCommentOpen ? <VoiceCommentRecorder busy={commentPostPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={addVoiceComment} /> : null}
     </>
   );

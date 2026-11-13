@@ -1,0 +1,12 @@
+.welcome-eye{display:block;width:58px;height:auto;flex:none;color:#9ccbff;transform-origin:center;filter:drop-shadow(0 0 26px rgba(156,203,255,.35))}
+.welcome-eye--opening{animation:welcomeEyeOpen 1.7s cubic-bezier(.2,.75,.2,1) .5s both}
+.welcome-eye--returning{animation:welcomeEyeBlink .55s ease both}
+@keyframes welcomeEyeOpen{0%{opacity:0;transform:scaleY(.03)}45%{opacity:.9;transform:scaleY(.03)}78%{transform:scaleY(1.06)}100%{opacity:1;transform:scaleY(1)}}
+@keyframes welcomeEyeBlink{0%{opacity:0;transform:scaleY(.12)}55%{opacity:1;transform:scaleY(1.06)}100%{opacity:1;transform:scaleY(1)}}
+.welcome-moment{position:absolute;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 50% 30%,#0b0e13,#06080b);color:#fff}
+.welcome-moment-line{margin-top:30px;font-size:21.5px;font-weight:750;letter-spacing:-.4px;animation:welcomeLineIn 1s ease 2s both}
+.welcome-moment-cta{margin-top:38px;padding:11px 30px;border:1px solid rgba(156,203,255,.24);border-radius:999px;background:rgba(156,203,255,.07);color:#9ccbff;font-size:13.5px;font-weight:650;letter-spacing:.2px;animation:welcomeLineIn 1s ease 2.9s both}
+.welcome-moment-mark{position:absolute;bottom:44px;color:rgba(255,255,255,.28);font-size:13px;font-weight:800;letter-spacing:-.3px;animation:welcomeLineIn 1.2s ease 3.5s both}.welcome-moment-mark em{color:rgba(156,203,255,.45);font-style:normal}
+.welcome-moment-cta:focus-visible{animation:none;outline:2px solid #9ccbff;outline-offset:4px}
+@keyframes welcomeLineIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.welcome-eye,.welcome-moment *{animation:none!important;transition:none!important}}

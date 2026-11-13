@@ -33,7 +33,7 @@ export const publicationService = {
   setWorldBonusChapter: (id, chapterId, worldBonus, statusVersion) => axiosInstance.patch(`/publications/mine/${id}/chapters/${chapterId}/world-bonus`, { worldBonus, statusVersion }),
   deleteChapter: (id, chapterId, statusVersion) => axiosInstance.delete(`/publications/mine/${id}/chapters/${chapterId}`, { data: { statusVersion } }),
   reorderChapters: (id, chapterIds, statusVersion) => axiosInstance.post(`/publications/mine/${id}/reorder-chapters`, { chapterIds, statusVersion }),
-  uploadMedia: (id, file, fields, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/media-upload`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : 0) }); },
+  uploadMedia: (id, file, fields, onProgress) => { const body = new FormData(); body.append("file", file); Object.entries(fields).forEach(([key, value]) => body.append(key, value)); return axiosInstance.post(`/publications/mine/${id}/media-upload`, body, { onUploadProgress: (event) => onProgress?.(event.total ? Math.round(event.loaded * 100 / event.total) : undefined) }); },
   deleteMedia: (id, purpose, statusVersion) => axiosInstance.delete(`/publications/mine/${id}/media/${purpose}`, { data: { statusVersion } }),
   submitPublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/submit`, { statusVersion }),
   resubmitPublication: (id, statusVersion) => axiosInstance.post(`/publications/mine/${id}/resubmit`, { statusVersion }),

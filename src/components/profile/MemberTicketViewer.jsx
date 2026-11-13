@@ -7,6 +7,7 @@ import { FiShare } from "react-icons/fi";
 import ShareSheet from "../share/ShareSheet";
 import { ticketImage, ticketStoryDraft } from "../../utils/memberTicket";
 import "./MemberTicket.css";
+import "../onboarding/TicketMotion.css";
 
 export default function MemberTicketViewer({ ticket, author, isOpen: open, onClose }) {
   __useUiLanguage();
@@ -68,7 +69,7 @@ export default function MemberTicketViewer({ ticket, author, isOpen: open, onClo
 
   return createPortal(<>{open ? <section aria-label={__msg("profile.yourTicket")} aria-modal="true" className="member-ticket-screen" role="dialog" ref={viewerRef} style={position}>
       <p className="member-ticket-heading">{__msg("profile.yourTicket")}</p>
-      <div className="member-ticket-card">
+      <div className="member-ticket-card ticket-motion-card">
         <header><b><em>@</em>{__msg("branding.seen")}</b><span>{ticket.city}</span></header>
         <div className="member-ticket-identity"><span>{__msg("fanWeb.member")}</span><strong>{ticket.label}</strong>{ticket.date ? <time>{ticket.date}</time> : null}</div>
         <footer>{ticket.city ? __msg("profile.oneOfTheFirstIn", { value0: ticket.city }) : __msg("profile.oneOfTheFirstOnSeen")}</footer>
