@@ -221,7 +221,7 @@ export function SearchResultRow({ item, position = 0, searchCategory = "" }) {
         {content}
       </Link>
       <span className="flex shrink-0 items-center gap-2">
-        {searchCategory === "worlds" && item.metadata?.price ? <span className="text-xs font-black text-[#78baff]">✦{item.metadata.price}</span> : null}
+        {searchCategory === "worlds" && item.metadata?.price ? <span className="inline-flex items-center gap-1 text-xs font-black text-[#78baff]"><img alt={__msg("profile.coins")} className="h-3 w-3 object-contain" src="/brand/goldcoin.png" />{item.metadata.price}</span> : null}
         {saveTarget ? (
           <button
             aria-label={__msg("search.saved", { value0: saved ? __msg("search.removeFrom") : __msg("search.saveTo") })}

@@ -41,3 +41,12 @@ test("approved unified accounts receive creator capabilities without changing ro
   assert.equal(capabilities.isApprovedCreator, true);
   assert.equal(capabilities.canAccessStudio, true);
 });
+
+test("converted creator and business accounts use profileAccountType capabilities", () => {
+  for (const profileAccountType of ["creator", "business"]) {
+    const capabilities = socialCapabilitiesFor({ role: "fan", profileAccountType });
+    assert.equal(capabilities.isApprovedCreator, true);
+    assert.equal(capabilities.canAccessStudio, true);
+    assert.equal(capabilities.profileType, profileAccountType);
+  }
+});

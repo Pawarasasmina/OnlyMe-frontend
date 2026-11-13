@@ -17,6 +17,7 @@ import UniversalLocationPicker from "../../components/location/UniversalLocation
 import { useAuth } from "../../hooks/useAuth";
 import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
+import { hasCreatorAccess } from "../../utils/socialAccess";
 
 const emptyForm = {
   firstName: "",
@@ -300,7 +301,7 @@ export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
         <span aria-hidden="true" className="profile-notification-grab" />
         <h2 className="text-[18px] font-black text-white" id="gift-settings-title">{__msg("creator.gifts")}</h2>
         <p className="mt-1 text-[11px] text-white/45">{__msg("settings.whatFansCanSendYouCoinsGoToYour")}</p>
-        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-left disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted">✦{Number(gift.stars).toLocaleString(__uiLocale())}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
+        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-left disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted"><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(gift.stars).toLocaleString(__uiLocale())}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
         {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{__systemMessage(error)}</p> : null}
       </section>
     </div>
@@ -374,7 +375,8 @@ function ProfileSettingsPage() {
 
   const account = profileQuery.data?.account || {};
   const profile = profileQuery.data?.profile || {};
-  const role = account.role === "admin" ? "admin" : profile.socialLinks !== undefined ? "creator" : "fan";
+  const accountCapabilities = { ...user, ...account };
+  const role = account.role === "admin" ? "admin" : hasCreatorAccess(accountCapabilities) ? "creator" : "fan";
   const activeStatus = account.activeStatus || null;
   const profilePhoto = account.profilePhoto;
 
@@ -522,6 +524,7 @@ function ProfileSettingsPage() {
         status: data.account.status,
         creatorApprovalStatus: user?.creatorApprovalStatus,
         profileType: data.account.profileType || user?.profileType,
+        profileAccountType: data.account.profileAccountType || user?.profileAccountType,
       });
       setForm(profileToForm(data, privacy));
       setDirty(false);
@@ -556,6 +559,8 @@ function ProfileSettingsPage() {
         isVerified: data.account.isVerified,
         status: data.account.status,
         creatorApprovalStatus: user?.creatorApprovalStatus,
+        profileType: data.account.profileType || user?.profileType,
+        profileAccountType: data.account.profileAccountType || user?.profileAccountType,
       });
       setError("");
       setMessage(text);
@@ -665,7 +670,7 @@ function ProfileSettingsPage() {
           </span>
           <FiChevronRight />
         </button>
-        <SettingsRow subtitle={directSummary} title={__msg("settings.directAccessSettings")} to="/settings/direct-access" />
+        {role === "creator" ? <SettingsRow subtitle={directSummary} title={__msg("settings.directAccessSettings")} to="/settings/direct-access" /> : null}
         <button className="edit-profile-settings-row" onClick={() => setGiftSettingsOpen(true)} type="button">
           <span><b>{__msg("settings.giftSettings")}</b><small>{giftSummary}</small></span><FiChevronRight />
         </button>
@@ -678,13 +683,12 @@ function ProfileSettingsPage() {
         <h2>{__msg("settings.privacy")}</h2>
         <Segmented label={__msg("settings.whoCanSeeYourSavedPlaces")} onChange={setSavedVisibility} value={form.savedPlacesVisibility} />
         <Segmented label={__msg("settings.showYourMemberBadgeOnComments")} onChange={setMemberBadgeVisibility} options={[["everyone", "Everyone"], ["only_me", "Only me"]]} value={form.showMemberBadgeOnComments ? "everyone" : "only_me"} />
-        <p>{__msg("settings.yourMemberNumberIsAlwaysPrivateOnlyYouSee")}</p>
       </section>
 
-      <section className="edit-profile-verification">
+      {role === "creator" ? <section className="edit-profile-verification">
         <h2>{__msg("social.verification")}</h2>
-        <Link to={role === "creator" ? "/creator/verified" : "/settings"}><FiCheckCircle /><span><b>{account.isVerified ? __msg("settings.verified") : __msg("verification.getVerified")}</b><small>{account.isVerified ? __msg("settings.theBadgeShowsNextToYourName") : __msg("settings.learnAboutProfileVerification")}</small></span><FiChevronRight /></Link>
-      </section>
+        <Link to="/creator/verified"><FiCheckCircle /><span><b>{account.isVerified ? __msg("settings.verified") : __msg("verification.getVerified")}</b><small>{account.isVerified ? __msg("settings.theBadgeShowsNextToYourName") : __msg("settings.learnAboutProfileVerification")}</small></span><FiChevronRight /></Link>
+      </section> : null}
       <section className="edit-profile-privacy">
         <Segmented label={__msg("settings.whoCanSeeYourOrbit")} value={form.orbitVisibility} onChange={(value) => {
           setDirty(true);

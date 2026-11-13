@@ -13,7 +13,7 @@ import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
 import { ROLES } from "../utils/constants";
 import { useAuth } from "../hooks/useAuth";
-import { defaultDestinationFor } from "../utils/socialAccess";
+import { defaultDestinationFor, hasCreatorAccess } from "../utils/socialAccess";
 import Loader from "../components/common/Loader";
 
 const pageModules = import.meta.glob("../pages/**/*.jsx");
@@ -154,7 +154,7 @@ function SeenCreationRoute() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const paid = searchParams.get("type") === "paid";
-  const approved = user?.creatorApprovalStatus === "approved" || ["creator", "business"].includes(user?.profileType);
+  const approved = hasCreatorAccess(user);
   if (paid && !approved) return <Navigate replace state={{ approvalRequired: true, requestedFeature: "paid-seen" }} to="/creator/verification" />;
   return <SeenComposerPage />;
 }
@@ -214,9 +214,7 @@ function AppRoutes() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/monetization" element={<MonetizationPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
-          <Route element={<ApprovedCreatorRoute />}>
-            <Route path="/settings/direct-access" element={<DirectAccessSettingsPage />} />
-          </Route>
+          <Route path="/settings/direct-access" element={<DirectAccessSettingsPage />} />
           <Route path="/settings/account" element={<AccountSettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationSettingsPage />} />

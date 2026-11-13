@@ -969,6 +969,7 @@
   "messaging.uploadingVoiceMessage": "Die Aufrufung der Stimmnachricht...",
   "messaging.preview": "Vorheriger Beitrag: {value0}",
   "messaging.retryUpload": "Rückzug upload",
+  "onboarding.showYourFace":"Zeig dein Gesicht","onboarding.showYourFaceCopy":"Menschen folgen Gesichtern. Ein echtes Foto und was du gerade machst – das ist alles.","onboarding.addPhoto":"Foto hinzufügen","onboarding.addAPhoto":"Foto hinzufügen","onboarding.peopleSeeYouLikeThis":"So werden dich andere sehen","onboarding.rightNow":"GERADE JETZT","onboarding.yourOwn":"Eigener Status…","onboarding.whatAreYouUpTo":"Was machst du gerade?","onboarding.later":"Später","onboarding.couldnTSaveYourProfile":"Profil konnte nicht gespeichert werden","onboarding.couldnTSaveYourPhoto":"Foto konnte nicht gespeichert werden","onboarding.couldnTSaveYourStatus":"Status konnte nicht gespeichert werden",
   "onboarding.chooseYourMainSignal": "Wählen Sie Ihr Hauptzeichen",
   "onboarding.freshTrending": "Frisch & Trend",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "Neue Stimmen, neue Kreatoren und was jetzt passiert.",

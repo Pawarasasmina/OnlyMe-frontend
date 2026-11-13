@@ -19,6 +19,7 @@ import AccountTypeSetting from "../../components/profile/AccountTypeSetting";
 import LanguageSetting from "../../components/profile/LanguageSetting";
 import SettingsPayments from "./SettingsPayments";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
+import { hasCreatorAccess, professionalProfileType } from "../../utils/socialAccess";
 import "./SettingsPage.css";
 
 function SettingsRow({ onClick, subtitle, title, to, trailing, disabled }) {
@@ -59,6 +60,7 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [error, setError] = useState("");
+  const professionalProfile = hasCreatorAccess(user);
 
   const monetizationQuery = useQuery({ queryKey: ["monetization"], queryFn: () => authService.getMonetization().then(response => response.data.data) });
   const privacyQuery = useQuery({
@@ -155,13 +157,13 @@ export default function SettingsPage() {
       <AccountTypeSetting />
       <SettingsRow onClick={() => changeOwnershipStep("ownership")} subtitle={__msg("settings.deactivateOrDelete")} title={__msg("settings.accountOwnershipAndControl")} />
       <SettingsRow title={__msg("settings.monetization")} subtitle={monetizationQuery.isPending ? __msg("fanWeb.loading_5fabab") : monetizationQuery.isError ? __msg("settings.manageEarningAndPayouts") : monetizationQuery.data?.enabled ? __msg("settings.giftsAndDreamOn", { value0: monetizationQuery.data.payoutsReady ? "payouts ready" : "set up payouts" }) : __msg("settings.offCompleteEligibility")} to="/settings/monetization" />
-      <SettingsRow icon={FiShield} onClick={() => { setVerificationView("verify"); setCreatorApplyOpen(true); }} subtitle={user?.isVerified ? __msg("settings.verifiedReviewedBySeen") : __msg("settings.identityReviewByTheSeenTeam")} title={__msg("social.verification")} />
+      {professionalProfile ? <SettingsRow icon={FiShield} onClick={() => { setVerificationView("verify"); setCreatorApplyOpen(true); }} subtitle={user?.isVerified ? __msg("settings.verifiedReviewedBySeen") : __msg("settings.identityReviewByTheSeenTeam")} title={__msg("social.verification")} /> : null}
       <SettingsRow icon={FiEdit3} title={__msg("fan.editProfile_15141e")} to="/settings/profile?from=settings" />
       <LanguageSetting />
       <MemberNumberSetting />
     </SettingsGroup>
 
-    {user?.creatorApprovalStatus === "approved" || ["creator", "business"].includes(user?.profileType) ? <SettingsGroup title={user?.profileType === "business" ? __msg("profile.business") : __msg("discover.creator")}>
+    {professionalProfile ? <SettingsGroup title={professionalProfileType(user) === "business" ? __msg("profile.business") : __msg("discover.creator")}>
       <SettingsRow icon={FiMessageCircle} subtitle={__msg("settings.messagesCallsAndPricing")} title="Direct Access" to="/settings/direct-access" />
       <SettingsRow icon={FiBarChart2} subtitle={__msg("settings.insightsAudienceAndEarnings")} title={__msg("settings.professionalDashboard")} to="/studio" />
       {user?.creatorApprovalStatus === "approved" ? <button className="settings-index-row" role="switch" aria-checked={previewEnabled} onClick={toggleCreatorPreview} type="button">
@@ -191,6 +193,6 @@ export default function SettingsPage() {
     {ownershipStep ? <DeleteAccountSheet anchorRef={settingsMainRef} busy={busy || checkingEarnings} error={__systemMessage(error)} step={ownershipStep} earnings={earnings} loading={checkingEarnings} onRetry={() => changeOwnershipStep("check")} onStep={changeOwnershipStep} onClose={() => { setOwnershipStep(null); setError(""); }} onConfirm={deleteAccount} onPayouts={() => { setOwnershipStep(null); setVerificationView("payouts"); setCreatorApplyOpen(true); }} /> : null}
     <NotificationSettingsSheet anchorRef={settingsMainRef} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     <PrivacyQuickSettingsSheet anchorRef={settingsMainRef} isOpen={Boolean(privacySheet)} onClose={() => setPrivacySheet(null)} type={privacySheet} />
-    {creatorApplyOpen ? <CreatorVerificationPage initialView={verificationView} onClose={() => { setCreatorApplyOpen(false); window.history.replaceState(null, "", "/settings"); }} /> : null}
+    {creatorApplyOpen && professionalProfile ? <CreatorVerificationPage initialView={verificationView} onClose={() => { setCreatorApplyOpen(false); window.history.replaceState(null, "", "/settings"); }} /> : null}
   </main>;
 }

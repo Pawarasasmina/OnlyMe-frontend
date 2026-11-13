@@ -1395,6 +1395,7 @@
   "messaging.uploadingVoiceMessage": "Скачать голосовые сообщения...",
   "messaging.preview": "Предыдущая запись: {value0}",
   "messaging.retryUpload": "Ретроверт upload",
+  "onboarding.showYourFace":"Покажите своё лицо","onboarding.showYourFaceCopy":"Люди подписываются на лица. Настоящее фото и чем вы заняты — вот и всё.","onboarding.addPhoto":"Добавить фото","onboarding.addAPhoto":"Добавьте фото","onboarding.peopleSeeYouLikeThis":"Так вас увидят другие","onboarding.rightNow":"ПРЯМО СЕЙЧАС","onboarding.yourOwn":"Свой вариант…","onboarding.whatAreYouUpTo":"Чем вы заняты?","onboarding.later":"Позже","onboarding.couldnTSaveYourProfile":"Не удалось сохранить профиль","onboarding.couldnTSaveYourPhoto":"Не удалось сохранить фото","onboarding.couldnTSaveYourStatus":"Не удалось сохранить статус",
   "onboarding.chooseYourMainSignal": "Выберите свой главный сигнал",
   "onboarding.freshTrending": "Свежий и тренд",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "Новые голоса, появляющиеся создатели и то, что происходит сейчас.",
