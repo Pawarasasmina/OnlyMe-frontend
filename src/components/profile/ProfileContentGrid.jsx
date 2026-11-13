@@ -114,6 +114,7 @@ function normalizeProfileEngagement(item = {}, liveEngagement = null) {
     reactions: Number(source.reactionCount ?? source.reactions ?? item.reactionCount ?? item.reactions) || 0,
     comments: Number(source.commentCount ?? source.comments ?? item.commentCount) || 0,
     reposts: Number(source.shareCount ?? source.reposts ?? item.shareCount) || 0,
+    privateShares: Number(source.privateShareCount ?? item.privateShareCount) || 0,
     saved: Boolean(source.viewerSaved || item.viewerSaved),
     topReactions: source.topReactions || item.topReactions || [],
   };
@@ -184,12 +185,12 @@ function ProfileSeenEngagementBar({ item }) {
         </button>
         <button aria-label={engagementQuery.data?.viewerShared ? __msg("fanWeb.removeRepost") : __msg("profile.repost", { value0: item.title || "Seen" })} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate()} type="button">
           <FiRepeat />
-          <b>{compactCount(engagement.reposts)}</b>
+          {engagement.reposts > 0 ? <b>{compactCount(engagement.reposts)}</b> : null}
         </button>
       </div>
       <div className="seen-engagement-right">
         <button aria-label={engagement.saved ? __msg("profile.removeFromSaved") : __msg("contentEntities.save", { value0: item.title || "Seen" })} className={engagement.saved ? "is-selected" : ""} disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()} type="button"><FiBookmark fill={engagement.saved ? "currentColor" : "none"} /></button>
-        <button aria-label={__msg("profile.share", { value0: item.title || "Seen" })} onClick={() => setShareOpen(true)} type="button"><FiSend /></button>
+        <button aria-label={__msg("profile.share", { value0: item.title || "Seen" })} onClick={() => setShareOpen(true)} type="button"><FiSend />{engagement.privateShares > 0 ? <b>{compactCount(engagement.privateShares)}</b> : null}</button>
       </div>
     </div>
     {reactionsOpen ? <div className="profile-seen-reaction-picker">{Object.entries(profileReactionLabel).slice(0, 8).map(([key, icon]) => <button aria-label={__msg("profile.reactWith", { value0: key.toLowerCase() })} disabled={reactionMutation.isPending} key={key} onClick={() => reactionMutation.mutate(key)} type="button">{icon}</button>)}</div> : null}

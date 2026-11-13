@@ -6,6 +6,8 @@ import { FiHeart, FiMoreHorizontal, FiRepeat } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 
+const compactRepostCount = (value) => Number(value) >= 1000 ? new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(Number(value)) : String(Number(value) || 0);
+
 function CommentRow({ noteOwner, comment, children, onReply, onReact, onRepost, onOpenOptions, userId, repostingId, reactingId }) {
   __useUiLanguage();
   const author = comment.author || { name: "Creator" };
@@ -22,7 +24,7 @@ function CommentRow({ noteOwner, comment, children, onReply, onReact, onRepost, 
         <button aria-label={`${selected ? "Remove heart from" : "Heart"} ${name}'s reply`} aria-pressed={selected} className={selected ? "is-selected" : ""} disabled={reactingId === comment.id} onClick={() => onReact(comment, selected ? "" : "love")} type="button"><FiHeart aria-hidden="true" fill={selected ? "currentColor" : "none"} /><span>{visibleCount}</span></button>
         <button onClick={() => onReply(comment)} type="button">{__msg("fan.reply")}</button>
         {String(author.id || author._id || "") !== String(userId || "") ?
-          <button aria-label={__msg("system.WallCommentList.eab1801d81")} aria-pressed={Boolean(comment.viewerReposted)} className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingId === comment.id} onClick={() => onRepost(comment)} type="button"><FiRepeat aria-hidden="true" /></button>
+          <button aria-label={__msg("system.WallCommentList.eab1801d81")} aria-pressed={Boolean(comment.viewerReposted)} className={comment.viewerReposted ? "is-selected" : ""} disabled={repostingId === comment.id} onClick={() => onRepost(comment)} type="button"><FiRepeat aria-hidden="true" />{Number(comment.repostCount) > 0 ? <span>{compactRepostCount(comment.repostCount)}</span> : null}</button>
         : null}
         <button aria-label={`More options for ${name}'s comment`} className="wall-comment-more" onClick={() => onOpenOptions(comment)} title={__msg("system.FeedPost.dc57782ca4")} type="button"><FiMoreHorizontal aria-hidden="true" /></button>
       </div>

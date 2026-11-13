@@ -726,6 +726,32 @@ function ActivityEyeMark() {
   return <SeenNavIcon aria-hidden="true" className="activity-eye-mark" />;
 }
 
+function firstWeekNudgeFor(user) {
+  const joined = new Date(user?.createdAt || user?.joinedAt || 0).getTime();
+  if (!Number.isFinite(joined) || joined <= 0) return null;
+  const day = Math.floor((Date.now() - joined) / 86_400_000);
+  if (day < 0 || day > 6) return null;
+  const nudges = [
+    { title: "Add a profile photo", copy: "People follow faces. Make your profile recognizable.", action: "Add photo", to: "/settings/profile" },
+    { title: "Set your status", copy: "Tell people what you're up to right now.", action: "Set status", to: "/profile/status" },
+    { title: "Follow people you care about", copy: "A few good follows make your feed feel alive.", action: "Find people", to: "/discover" },
+    { title: "Post your first Seen", copy: "Share one real moment to start your story.", action: "Create Seen", to: "/create/seen" },
+    { title: "Write a note on the Wall", copy: "A short thought is enough to start a conversation.", action: "Write note", to: "/wall?compose=note" },
+    { title: "See who's around", copy: "Open your Orbit to discover people near your world.", action: "Open Orbit", to: "/orbit" },
+    { title: "Your first week on @seen", copy: "Keep showing up as yourself. Your profile grows one real moment at a time.", action: "View profile", to: `/profile/${encodeURIComponent(user?.username || "")}` },
+  ];
+  return { ...nudges[day], day: day + 1 };
+}
+
+function FirstWeekNudge({ nudge, onOpen }) {
+  __useUiLanguage();
+  return <article className="activity-first-week-card">
+    <span className="activity-first-week-mark"><ActivityEyeMark /></span>
+    <div><small>{__msg("Your first week")} · {__msg("Day")} {nudge.day}</small><b>{__msg(nudge.title)}</b><p>{__msg(nudge.copy)}</p></div>
+    <button onClick={() => onOpen(nudge.to)} type="button">{__msg(nudge.action)} <FiChevronRight /></button>
+  </article>;
+}
+
 function FilterChips({ filter, filters, onChange }) {
   __useUiLanguage();
   return (
@@ -851,6 +877,7 @@ export default function ActivityPage() {
   const loading = activityQuery.isLoading;
   const failed = activityQuery.isError && ledgerQuery.isError;
   const hasMore = Boolean(activityQuery.data?.pageInfo?.hasMore || (ledgerQuery.data?.pagination && page < ledgerQuery.data.pagination.pages));
+  const firstWeekNudge = direction === "received" && filter === "all" ? firstWeekNudgeFor(user) : null;
 
   const updateSearch = (nextDirection, nextFilter = "all") => {
     const params = new URLSearchParams();
@@ -1014,9 +1041,9 @@ export default function ActivityPage() {
             starsPerUsd={walletQuery.data?.starsPerUsd}
           />
         )) : null}
-        {!loading && !failed && !listItems.length && !todaySeenCount && !sentSeenPeople.length ? (
-          <ActivityEmptyState direction={direction} filter={filter} onOpenOrbit={() => navigate("/orbit")} />
-        ) : null}
+        {!loading && !failed && !listItems.length && !todaySeenCount && !sentSeenPeople.length ? firstWeekNudge
+          ? <FirstWeekNudge nudge={firstWeekNudge} onOpen={navigate} />
+          : <ActivityEmptyState direction={direction} filter={filter} onOpenOrbit={() => navigate("/orbit")} /> : null}
         {!loading && !failed && visible.length && hasMore ? (
           <button className="activity-load-more" onClick={() => setPage((current) => current + 1)} type="button">{__msg("fan.loadMore")}</button>
         ) : null}

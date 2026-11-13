@@ -9,6 +9,7 @@ import "./TicketShare.css";
 import TicketChatCard from "./TicketChatCard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
 import { FiCheck, FiCopy, FiInstagram, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiSearch, FiSend, FiX } from "react-icons/fi";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
@@ -16,7 +17,7 @@ import { useFanToast } from "../fanWeb/shared/FanToastContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useShareRecipients } from "../../hooks/share/useShareRecipients";
 import { useSendSharedContent } from "../../hooks/share/useSendSharedContent";
-import { canonicalShareUrl } from "../../services/shareService";
+import { canonicalShareUrl, shareService } from "../../services/shareService";
 
 const quickEmojis = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDD25", "\uD83D\uDE0D", "\uD83D\uDC4F", "\uD83D\uDE2E", "\uD83D\uDE4F", "\uD83E\uDD1D"];
 const MAX_VISIBLE_DIRECT_CHATS = 8;
@@ -151,6 +152,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
   const showToast = message => notify(message, payload?.contentType === "invitation" ? { variant: "archive", duration: 1600 } : {});
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const inputRef = useRef(null);
   const panelRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -228,6 +230,30 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     if (canClose) onClose();
   };
 
+  const publishShareCount = (privateShareCount) => {
+    const count = Number(privateShareCount);
+    if (!Number.isFinite(count) || !["feed_post", "seen"].includes(payload?.contentType) || !payload?.contentId) return;
+    window.dispatchEvent(new CustomEvent("atseen:private-share", {
+      detail: { contentId: String(payload.contentId), contentType: payload.contentType, privateShareCount: count },
+    }));
+  };
+
+  const recordShare = async (route) => {
+    if (!["feed_post", "seen"].includes(payload?.contentType) || !payload?.contentId) return;
+    try {
+      const response = await shareService.record(payload.contentType, payload.contentId, route);
+      const privateShareCount = response.data?.data?.privateShareCount;
+      publishShareCount(privateShareCount);
+      queryClient.invalidateQueries({ queryKey: ["seen"] });
+      queryClient.invalidateQueries({ queryKey: ["seen-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["seen-engagement", payload.contentId] });
+      queryClient.invalidateQueries({ queryKey: ["wall"] });
+      queryClient.invalidateQueries({ queryKey: ["post", payload.contentId] });
+      queryClient.invalidateQueries({ queryKey: ["fan", "home"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+    } catch { /* Sharing must still work if analytics is temporarily unavailable. */ }
+  };
+
   const toggleRecipient = (person) => {
     setSelected((current) => {
       const next = new Map(current);
@@ -256,6 +282,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     setExternalBusy("copy");
     try {
       await copyText(value);
+      await recordShare("COPY_LINK");
       setCopyNotice(__msg("profile.linkCopied"));
       showToast(toast);
       if (payload?.contentType === "invitation") close();
@@ -298,12 +325,14 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
     const title = payload?.title || payload?.textPreview || "this";
     const text = payload?.contentType === "invitation" ? __msg("share.value0RealStoriesFromRealPeopleJoinMe", { value0: title, value1: canonicalUrl }) : __msg("share.checkThisOutOnSeenValue0Value1", { value0: title, value1: canonicalUrl });
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    void recordShare("WHATSAPP");
     showToast(__msg("share.openingWhatsapp"));
   };
 
   const shareTelegram = () => {
     const title = payload?.title || payload?.textPreview || __msg("share.seeThisOnSeen");
     window.open(`https://t.me/share/url?url=${encodeURIComponent(canonicalUrl)}&text=${encodeURIComponent(title)}`, "_blank", "noopener,noreferrer");
+    void recordShare("TELEGRAM");
     showToast(__msg("share.openingTelegram"));
   };
 
@@ -329,6 +358,7 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         text: payload?.textPreview || payload?.previewText || __msg("share.seeThisOnSeen"),
         url: canonicalUrl,
       });
+      await recordShare("SYSTEM_SHARE");
     } catch (error) {
       if (error?.name !== "AbortError") showToast(__msg("share.couldnTOpenSharing"));
     } finally {
@@ -344,6 +374,8 @@ function ShareSheet({ isOpen, onClose, payload, variant = "default" }) {
         showToast(data.sent?.length ? __msg("share.someSharesCouldNotBeSent") : __msg("share.couldnTSendThisPost"));
         return;
       }
+      publishShareCount(data.privateShareCount);
+      await recordShare("CHAT");
       showToast(__msg("share.sentTo", { value0: selectedLabel(selectedRecipients) }));
       close();
     } catch (error) {

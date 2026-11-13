@@ -295,6 +295,7 @@ function normalizeFeedPost(post = {}) {
     seededComments: comments,
     supportCount: Number(post.supportCount ?? post.handshakes ?? 0),
     shareCount: Number(post.shareCount ?? 0),
+    privateShareCount: Number(post.privateShareCount ?? 0),
     text: post.text || "",
     timestamp: post.timestamp || compactPostAge(post.bumpedAt || post.publishedAt || post.createdAt),
     topReactions: post.topReactions || [],
@@ -332,6 +333,17 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
+  const [livePrivateShareCount, setLivePrivateShareCount] = useState(normalized.privateShareCount);
+  useEffect(() => setLivePrivateShareCount(normalized.privateShareCount), [normalized.privateShareCount]);
+  useEffect(() => {
+    const update = (event) => {
+      if (event.detail?.contentType === "feed_post" && String(event.detail.contentId) === String(normalized.id)) {
+        setLivePrivateShareCount(Number(event.detail.privateShareCount) || 0);
+      }
+    };
+    window.addEventListener("atseen:private-share", update);
+    return () => window.removeEventListener("atseen:private-share", update);
+  }, [normalized.id]);
   const [resolvedAt, setResolvedAt] = useState(normalized.resolvedAt);
   useEffect(() => { setResolvedAt(normalized.resolvedAt); }, [normalized.resolvedAt]);
   const caption = wallPostCaption(normalized.text, normalized.media);
@@ -399,7 +411,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     setRepostingCommentId(comment.id);
     try {
       const response = await repostService.toggle("cm", comment.id, "FeedPost");
-      setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReposted: response.data.data.reposted } : item));
+      setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReposted: response.data.data.reposted, repostCount: response.data.data.repostCount } : item));
       showToast(response.data.data.reposted ? __msg("social.repostedToYourProfile") : __msg("fanWeb.repostRemoved"));
     } catch (error) {
       showToast(error.response?.data?.message || __msg("fanWeb.couldNotUpdateRepost"));
@@ -1017,7 +1029,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && replyIntent ? <strong className="wall-join-label">{replyIntent}</strong> : null}
           </button>
           {!ownsPost ? <button aria-label={shared ? __msg("fanWeb.removeRepost") : __msg("fanWeb.repost")} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title={__msg("fanWeb.repost")} type="button">
-            <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
+            <FiRepeat aria-hidden="true" />{normalized.shareCount > 0 ? <span>{formatCount(normalized.shareCount)}</span> : null}
           </button> : null}
           <button
             aria-label={saved ? __msg("fanWeb.removeSavedPost") : __msg("fanWeb.savePost")}
@@ -1030,7 +1042,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
           <button aria-label={__msg("fanWeb.sendPost")} className="home-feed-action-button" onClick={openSendSheet} title={__msg("fanWeb.send")} type="button">
-            <FiSend aria-hidden="true" />
+            <FiSend aria-hidden="true" />{livePrivateShareCount > 0 ? <span className="wall-private-share-count">{formatCount(livePrivateShareCount)}</span> : null}
           </button>
         </div>
 

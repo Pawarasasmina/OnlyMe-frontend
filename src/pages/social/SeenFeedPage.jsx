@@ -208,6 +208,7 @@ function normalizeSeen(raw = {}) {
       topReactions: raw.engagement?.topReactions || raw.topReactions || [],
       comments: Number(raw.engagement?.commentCount ?? raw.commentCount) || 0,
       reposts: Number(raw.engagement?.shareCount ?? raw.shareCount) || 0,
+      privateShares: Number(raw.engagement?.privateShareCount ?? raw.privateShareCount) || 0,
       saveCount: Number(raw.engagement?.saveCount ?? raw.saveCount) || 0,
       views: Number(raw.engagement?.viewCount ?? raw.viewCount) || 0,
     },
@@ -870,11 +871,11 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReact
         <span>{reactionCluster(item)}</span><b>{formatCount(item.engagement.reactions)}</b>
       </button>
       <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={commentsOpen ? "is-selected" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><b>{formatCount(item.engagement.comments)}</b></button>
-      {!isOwn ? <button aria-label={selected.reposted ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat /><b>{formatCount(item.engagement.reposts)}</b></button> : null}
+      {!isOwn ? <button aria-label={selected.reposted ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={selected.reposted ? "is-selected" : ""} disabled={pending} onClick={onRepost} type="button"><FiRepeat />{item.engagement.reposts > 0 ? <b>{formatCount(item.engagement.reposts)}</b> : null}</button> : null}
     </div>
     <div className="seen-engagement-right">
       <button data-first-hint={!selected.saved ? "save" : undefined} aria-label={selected.saved ? __msg("profile.removeFromSaved") : __msg("publication.saveSeen")} className={selected.saved ? "is-selected" : ""} disabled={pending} onClick={onSave} type="button"><FiBookmark fill={selected.saved ? "currentColor" : "none"} /></button>
-      <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend /></button>
+      <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend />{item.engagement.privateShares > 0 ? <b>{formatCount(item.engagement.privateShares)}</b> : null}</button>
     </div>
   </div>;
 }
@@ -882,6 +883,16 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReact
 export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser = null, item: rawItem, onFeedMove = () => {}, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate, position = 0 }) {
   __useUiLanguage();
   const item = normalizeSeen(rawItem);
+  const [livePrivateShares, setLivePrivateShares] = useState(item.engagement.privateShares);
+  useEffect(() => setLivePrivateShares(item.engagement.privateShares), [item.engagement.privateShares]);
+  useEffect(() => {
+    const update = (event) => {
+      if (event.detail?.contentType === "seen" && String(event.detail.contentId) === String(item.id)) setLivePrivateShares(Number(event.detail.privateShareCount) || 0);
+    };
+    window.addEventListener("atseen:private-share", update);
+    return () => window.removeEventListener("atseen:private-share", update);
+  }, [item.id]);
+  item.engagement.privateShares = livePrivateShares;
   const reduceMotion = useReducedMotion();
   const target = `/seen/${encodeURIComponent(item.id)}`;
   const queryClient = useQueryClient();

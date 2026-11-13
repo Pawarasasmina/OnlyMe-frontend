@@ -14,4 +14,6 @@ export function canonicalShareUrl(payload = {}) {
 export const shareService = {
   getRecipients: (params = {}) => axiosInstance.get("/messages/share/recipients", { params }),
   sendSharedContent: (payload) => axiosInstance.post("/messages/share", payload),
+  record: (contentType, contentId, route) => axiosInstance.post("/shares", { contentType, contentId, route }),
+  weeklySummary: () => axiosInstance.get("/shares/weekly-summary"),
 };

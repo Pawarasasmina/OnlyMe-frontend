@@ -118,11 +118,11 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
   <div className="seen-compact-engagement" aria-label={__msg("social.seenEngagement")}>
     <button ref={reactionAnchorRef} aria-expanded={reactionsOpen} aria-label={__msg("social.openReactions")} className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
     <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
-    {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button> : null}
+    {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat />{Number(engagement.shareCount) > 0 ? <small>{formatCount(engagement.shareCount)}</small> : null}</button> : null}
     <span aria-label={__msg("fanWeb.views", { value0: formatCount(engagement.viewCount || 0) })}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
     <span className="seen-compact-spacer" />
     <button data-first-hint={!saved ? "save" : undefined} aria-label={saved ? __msg("publication.removeSeenFromSaved") : __msg("publication.saveSeen")} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
-    <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend /></button>
+    <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend />{Number(engagement.privateShareCount) > 0 ? <small>{formatCount(engagement.privateShareCount)}</small> : null}</button>
   </div>
   {reactionsOpen ? <div className="seen-reactions-layer">
     <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={() => setReactionsOpen(false)} type="button" />
@@ -160,9 +160,13 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   const [sheetPosition, setSheetPosition] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [reposted, setReposted] = useState({});
+  const [repostCounts, setRepostCounts] = useState({});
   const repostMutation = useMutation({
     mutationFn: (item) => repostService.toggle("cm", item.id, "SeenEngagement").then((response) => ({ item, ...response.data.data })),
-    onSuccess: ({ item, reposted: value }) => setReposted((current) => ({ ...current, [item.id]: value })),
+    onSuccess: ({ item, reposted: value, repostCount }) => {
+      setReposted((current) => ({ ...current, [item.id]: value }));
+      setRepostCounts((current) => ({ ...current, [item.id]: Number(repostCount) || 0 }));
+    },
   });
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -194,7 +198,7 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
       <div className="seen-comment-copy">
         <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || __msg("profile.fan")}</Link> : <strong>{item.author?.name || __msg("profile.fan")}</strong>}{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label={__msg("comments.voiceComment")} /> : null}
-        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
+        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat />{Number(repostCounts[item.id] ?? item.repostCount) > 0 ? <small>{formatCount(repostCounts[item.id] ?? item.repostCount)}</small> : null}</button> : null}</span>
       </div>
     </article>;
   };

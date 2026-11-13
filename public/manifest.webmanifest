@@ -1,0 +1,14 @@
+{
+  "name": "@seen",
+  "short_name": "@seen",
+  "description": "We see you. Every day.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A0C0F",
+  "theme_color": "#0A0C0F",
+  "icons": [
+    { "src": "/seen-eye.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/seen-eye.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

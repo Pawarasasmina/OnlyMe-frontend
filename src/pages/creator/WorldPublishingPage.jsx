@@ -5,7 +5,7 @@ import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
   FiArrowUpRight,
@@ -35,6 +35,7 @@ import MinimalWorldIcon from "../../components/world/MinimalWorldIcon";
 import StoryCreator from "../../components/stories/StoryCreator";
 import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import { publicationService as api } from "../../services/publicationService";
+import { authService } from "../../services/authService";
 import { normalizeTags, publicationError } from "../../utils/publicationValidation";
 import { worldCompletenessBySection } from "../../utils/worldValidation";
 import { SeenChapterEditor, VideoTrimSheet, chapterBlocksWithStory, chapterStoryText } from "./SeenComposerPage";
@@ -459,6 +460,14 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [experiencePreviewOpen, setExperiencePreviewOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [worldCreateSheet, setWorldCreateSheet] = useState("");
+  const monetizationQuery = useQuery({
+    queryKey: ["monetization"],
+    queryFn: () => authService.getMonetization().then((response) => response.data.data),
+    enabled: !experience,
+    staleTime: 30_000,
+  });
+  const monetization = monetizationQuery.data;
+  const paidWorldRestricted = !experience && monetization && (!monetization.sellerReady || !monetization.verified);
   const chapters = world.chapters || [];
   const ownerName = user?.name || user?.displayName || user?.username || __msg("creator.max");
   const coverUrl = coverPreviewUrl || world.coverMedia?.secureUrl;
@@ -1825,6 +1834,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
           <p>{__msg("profile.yourWorld")}</p>
         </section>
       ) : null}
+
+      {paidWorldRestricted ? <aside className="world-seller-readiness" role="note">
+        <FiLock aria-hidden="true" />
+        <span><b>{monetization.sellerReady ? __msg("social.verification") : __msg("system.SellerVerificationPage.f730c577bc")}</b><small>{monetization.sellerReady ? __msg("Paid items stay Only you until Verification") : __msg("Seller info once — takes a minute")}</small><em>{__msg("Your draft remains Only you until you can sell")}</em></span>
+        <button onClick={() => nav("/settings/monetization", { state: { returnTo: window.location.pathname } })} type="button">{__msg("Set up")}</button>
+      </aside> : null}
 
       {!experience ? (
         <section className={`world-top-cover-preview ${coverUrl ? "has-cover" : ""}`}>
