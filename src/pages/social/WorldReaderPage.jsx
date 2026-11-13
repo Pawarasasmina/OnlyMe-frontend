@@ -591,38 +591,59 @@ function WelcomeMessageSheet({ busy, error, onClose, onRemoveVoice, onSave, onUp
   __useUiLanguage();
   const [message, setMessage] = useState(publication?.ownerWelcomeNote || "");
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceMethod, setVoiceMethod] = useState("");
   const fileInput = useRef(null);
   const recorder = useVoiceRecorder({ maxDurationSeconds: 120 });
   const trimmed = message.trim();
   const unchanged = trimmed === String(publication?.ownerWelcomeNote || "").trim();
   const attachedVoice = publication?.worldWelcomeVoiceMedia?.secureUrl;
+  const hasWelcomeMessage = Boolean(trimmed || attachedVoice);
+  const toggleVoice = () => {
+    if (voiceBusy) return;
+    if (voiceOpen || attachedVoice) {
+      recorder.resetRecording();
+      setVoiceMethod("");
+      setVoiceOpen(false);
+      if (attachedVoice) onRemoveVoice();
+      return;
+    }
+    setVoiceOpen(true);
+  };
   const saveRecording = () => {
     if (!recorder.audioBlob) return;
     const extension = recorder.audioBlob.type.includes("mp4") ? "m4a" : recorder.audioBlob.type.includes("ogg") ? "ogg" : "webm";
     onUploadVoice(new File([recorder.audioBlob], `world-welcome-${Date.now()}.${extension}`, { type: recorder.audioBlob.type || "audio/webm" }));
+  };
+  const startVoiceRecording = () => {
+    setVoiceMethod("record");
+    recorder.startRecording();
+  };
+  const recordAgain = () => {
+    recorder.resetRecording();
+    window.setTimeout(() => recorder.startRecording(), 0);
   };
   return (
     <BottomSheet labelledBy="world-welcome-message-title" onClose={onClose} sheetClassName="is-description-sheet world-welcome-message-sheet">
       <h2 id="world-welcome-message-title">{__msg("admin.welcomeMessage")}</h2>
       <p className="world-sheet-copy">{__msg("system.WorldPublishingPage.c0334dd9a5")}</p>
       <label className="world-welcome-message-field"><span className="sr-only">{__msg("admin.welcomeMessage")}</span><textarea autoFocus maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder={__msg("system.WorldPublishingPage.43748899bc")} rows={5} value={message} /><small>{message.length}/500</small></label>
-      <button aria-pressed={Boolean(attachedVoice || voiceOpen)} className="world-welcome-voice-toggle" disabled={voiceBusy} onClick={() => setVoiceOpen((open) => !open)} type="button"><FiMic /><b>{attachedVoice ? __msg("system.SeenComposerPage.f99c511ff6") : __msg("system.WorldReaderPage.ecbf8fdb41")}</b><i className={attachedVoice || voiceOpen ? "is-on" : ""}><u /></i></button>
+      <button aria-pressed={Boolean(attachedVoice || voiceOpen)} className="world-welcome-voice-toggle" disabled={voiceBusy} onClick={toggleVoice} type="button"><FiMic /><b>{attachedVoice ? __msg("system.SeenComposerPage.f99c511ff6") : __msg("system.WorldReaderPage.ecbf8fdb41")}</b><i className={attachedVoice || voiceOpen ? "is-on" : ""}><u /></i></button>
       {voiceOpen ? <div className="world-welcome-recorder">
-        {attachedVoice ? <><audio controls src={attachedVoice} /><button className="is-remove" disabled={voiceBusy} onClick={onRemoveVoice} type="button">{__msg("creator.removeVoiceHello")}</button></> : null}
+        {attachedVoice ? <><audio controls src={attachedVoice} /><button className="is-remove" disabled={voiceBusy} onClick={toggleVoice} type="button">{__msg("creator.removeVoiceHello")}</button></> : null}
         {!attachedVoice && recorder.audioUrl ? <audio controls src={recorder.audioUrl} /> : null}
-        {!attachedVoice ? <div className="world-welcome-recorder-actions">
-          {recorder.status === "idle" || recorder.status === "error" ? <button disabled={voiceBusy} onClick={recorder.startRecording} type="button"><FiMic /> {__msg("messaging.startRecording")}</button> : null}
+        {!attachedVoice ? <div className={`world-welcome-recorder-actions ${!voiceMethod ? "is-method-choice" : "is-record-flow"} ${recorder.status === "preview" ? "is-preview" : ""}`}>
+          {!voiceMethod ? <><button className="is-method" disabled={voiceBusy} onClick={startVoiceRecording} type="button"><FiMic /><span><b>{__msg("messaging.startRecording")}</b><small>{__msg("creator.addAVoiceHelloRecordLiveOrUploadAudio")}</small></span></button><button className="is-method" disabled={voiceBusy} onClick={() => { setVoiceMethod("upload"); fileInput.current?.click(); }} type="button"><FiUpload /><span><b>{__msg("system.SeenComposerPage.66d375e583")}</b><small>{__msg("creator.uploadAudioFile")}</small></span></button></> : null}
+          {voiceMethod === "record" && (recorder.status === "idle" || recorder.status === "error") ? <button disabled={voiceBusy} onClick={recorder.startRecording} type="button"><FiMic /> {__msg("messaging.startRecording")}</button> : null}
           {recorder.status === "requesting-permission" ? <button disabled type="button">{__msg("creator.allowMicrophone")}</button> : null}
-          {recorder.status === "recording" ? <button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("system.WorldReaderPage.4fd07d13a0")} {formatVoiceTime(recorder.elapsedMs / 1000)}</button> : null}
+          {recorder.status === "recording" ? <div className="world-voice-live"><div className="world-voice-live-head"><span><i />{__msg("publication.recordingVoice")}</span><time>{formatVoiceTime(recorder.elapsedMs / 1000)}</time></div><div aria-hidden="true" className="world-voice-live-wave">{Array.from({ length: 24 }, (_, index) => { const level = recorder.levels[Math.max(0, recorder.levels.length - 24) + index] || 0.1 + ((index * 7) % 5) * 0.04; return <i key={index} style={{ "--voice-level": Math.max(.12, level) }} />; })}</div><button className="is-stop world-voice-live-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("publication.stopRecording")}</button></div> : null}
           {recorder.status === "paused" ? <button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("creator.finish")}</button> : null}
-          {recorder.status === "preview" ? <><button disabled={voiceBusy} onClick={recorder.resetRecording} type="button">{__msg("creator.recordAgain")}</button><button className="is-use" disabled={voiceBusy} onClick={saveRecording} type="button">{voiceBusy ? __msg("stories.adding_ffb2e6") : __msg("publication.useRecording")}</button></> : null}
-          <button disabled={voiceBusy || recorder.status === "recording"} onClick={() => fileInput.current?.click()} type="button"><FiUpload /> {__msg("system.SeenComposerPage.66d375e583")}</button>
-          <input accept="audio/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) onUploadVoice(file); }} ref={fileInput} type="file" />
+          {recorder.status === "preview" ? <><button disabled={voiceBusy} onClick={recordAgain} type="button">{__msg("creator.recordAgain")}</button><button className="is-use" disabled={voiceBusy} onClick={saveRecording} type="button">{voiceBusy ? __msg("stories.adding_ffb2e6") : __msg("publication.useRecording")}</button></> : null}
+          <input accept="audio/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) onUploadVoice(file); else setVoiceMethod(""); }} ref={fileInput} type="file" />
         </div> : null}
         {recorder.error ? <p className="world-sheet-error">{recorder.error}</p> : null}
       </div> : null}
       {error ? <p className="world-sheet-error">{__systemMessage(error)}</p> : null}
-      <button className="world-sheet-primary" disabled={busy || unchanged} onClick={() => onSave({ ownerWelcomeNote: trimmed })} type="button">{busy ? __msg("admin.saving") : __msg("contentEntities.save_efc007")}</button>
+      <button className="world-sheet-primary" disabled={!hasWelcomeMessage} onClick={() => unchanged ? onClose() : onSave({ ownerWelcomeNote: trimmed })} type="button">{busy ? __msg("admin.saving") : __msg("contentEntities.save_efc007")}</button>
     </BottomSheet>
   );
 }

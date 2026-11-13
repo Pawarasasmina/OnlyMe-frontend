@@ -65,6 +65,7 @@ import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
 import { useCreatorStories } from "../../hooks/useStories";
 import { messageService } from "../../services/messageService";
 import { analyticsService } from "../../services/analyticsService";
+import { authService } from "../../services/authService";
 import { creatorService } from "../../services/creatorService";
 import { sortedProfileGifts } from "../../utils/profileGifts";
 import { profileGiftCopy } from "../../utils/profileGiftCopy";
@@ -580,13 +581,21 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
   __useUiLanguage();
   const canShowDashboard = profile.isCreator && viewerCapabilities.isOwner && viewerCapabilities.canAccessStudio;
   const canShowDirect = profile.profileAccountType !== "personal" && profile.isCreator && (viewerCapabilities.isOwner || viewerCapabilities.canMessage) && (viewerCapabilities.isOwner || profile.directAccess?.enabled || profile.directAccess?.callEnabled);
+  const monetization = useQuery({
+    queryKey: ["monetization"],
+    queryFn: () => authService.getMonetization().then((response) => response.data.data),
+    enabled: canShowDashboard,
+    retry: false,
+    staleTime: 30000,
+  });
+  const dashboardPath = monetization.data?.verified && monetization.data?.enabled ? "/studio" : "/ways-to-earn";
   if (!canShowDashboard && !canShowDirect) return null;
   return (
     <section className="profile-access-group">
       {canShowDirect ? <DirectAccessRow profile={profile} viewerCapabilities={viewerCapabilities} /> : null}
       {canShowDashboard ? (
         <>
-          <Link className="profile-row profile-dashboard-row" to="/studio"><FiBarChart2 /><span>{profile.profileAccountType === "business" ? __msg("social.businessDashboard") : profile.profileAccountType === "personal" ? __msg("layouts.earnings") : __msg("social.creatorDashboard")}</span><FiChevronRight data-ui-directional="true" /></Link>
+          <Link className="profile-row profile-dashboard-row" to={dashboardPath}><FiBarChart2 /><span>{profile.profileAccountType === "business" ? __msg("social.businessDashboard") : profile.profileAccountType === "personal" ? __msg("layouts.earnings") : __msg("social.creatorDashboard")}</span><FiChevronRight data-ui-directional="true" /></Link>
         </>
       ) : null}
     </section>
@@ -664,24 +673,17 @@ function NewProfileStarter({ data, onStartSeen }) {
 
 function ProfileWaysToEarn({ data }) {
   __useUiLanguage();
-  const { profile, publicMetrics, viewerCapabilities } = data;
+  const { profile, viewerCapabilities } = data;
   const [activePitch, setActivePitch] = useState("");
-  const hasPublishedContent = Boolean(
-    Number(publicMetrics?.publishedContentCount || 0)
-    || data.seens?.length
-    || data.wallPosts?.length
-    || data.media?.length
-    || data.profileStories?.length
-    || data.experiences?.length
-    || data.planets?.length
-  );
-  const isVerifiedCreator = Boolean(
-    profile.verified
-    || profile.creatorApprovalStatus === "approved"
-    || profile.creatorApplicationStatus === "verified"
-    || viewerCapabilities.canAccessStudio
-  );
-  const showNewCreatorEarnings = Boolean(viewerCapabilities.isOwner && !isVerifiedCreator && !hasPublishedContent);
+  const monetization = useQuery({
+    queryKey: ["monetization"],
+    queryFn: () => authService.getMonetization().then((response) => response.data.data),
+    enabled: viewerCapabilities.isOwner,
+    retry: false,
+    staleTime: 30000,
+  });
+  const monetizationActive = Boolean(monetization.data?.verified && monetization.data?.enabled);
+  const showNewCreatorEarnings = Boolean(viewerCapabilities.isOwner && !monetizationActive);
   const examples = useQuery({
     queryKey: ["ways-to-earn"],
     queryFn: () => creatorService.getWaysToEarn().then((response) => response.data.data),

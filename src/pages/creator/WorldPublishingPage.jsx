@@ -24,12 +24,14 @@ import {
   FiSettings,
   FiSquare,
   FiTrash2,
+  FiUpload,
   FiX,
   FiZap,
 } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { formatVoiceTime, useVoiceRecorder } from "../../hooks/useVoiceRecorder";
 import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
+import MinimalWorldIcon from "../../components/world/MinimalWorldIcon";
 import StoryCreator from "../../components/stories/StoryCreator";
 import UniversalLocationPicker from "../../components/location/UniversalLocationPicker";
 import { publicationService as api } from "../../services/publicationService";
@@ -239,17 +241,67 @@ function WorldCreateTextSheet({ busy, description, label, maxLength, onClose, on
   );
 }
 
-function WorldWelcomeMessageSheet({ busy, onClose, onSave, value }) {
+function WorldWelcomeMessageSheet({ busy, error, onClose, onRemoveVoice, onSave, onUploadVoice, value, voiceMedia, voiceBusy }) {
   __useUiLanguage();
   const [message, setMessage] = useState(value || "");
+  const [voiceOpen, setVoiceOpen] = useState(Boolean(voiceMedia?.secureUrl || voiceMedia?.url));
+  const [voiceMethod, setVoiceMethod] = useState("");
+  const fileInput = useRef(null);
+  const recorder = useVoiceRecorder({ maxDurationSeconds: 120 });
   const cleanMessage = message.trim();
-  return <div className="world-create-sheet-layer">
-    <button aria-label={__msg("system.WorldPublishingPage.e2c2142204")} className="world-create-sheet-scrim" disabled={busy} onClick={onClose} type="button" />
-    <section aria-labelledby="world-welcome-message-title" aria-modal="true" className="world-create-option-sheet world-welcome-message-sheet" role="dialog">
-      <span className="world-create-sheet-handle" aria-hidden="true" />
-      <header><div><h2 id="world-welcome-message-title">{__msg("admin.welcomeMessage")}</h2><p>{__msg("system.WorldPublishingPage.c0334dd9a5")}</p></div><button aria-label={__msg("activity.close")} disabled={busy} onClick={onClose} type="button"><FiX /></button></header>
+  const messageChanged = cleanMessage !== (value || "").trim();
+  const attachedVoice = voiceMedia?.secureUrl || voiceMedia?.url;
+  const hasWelcomeMessage = Boolean(cleanMessage || attachedVoice);
+  const toggleVoice = async () => {
+    if (voiceBusy) return;
+    if (voiceOpen || attachedVoice) {
+      recorder.resetRecording();
+      setVoiceMethod("");
+      setVoiceOpen(false);
+      if (attachedVoice) await onRemoveVoice();
+      return;
+    }
+    setVoiceOpen(true);
+  };
+  const saveRecording = () => {
+    if (!recorder.audioBlob) return;
+    const extension = recorder.audioBlob.type.includes("mp4") ? "m4a" : recorder.audioBlob.type.includes("ogg") ? "ogg" : "webm";
+    onUploadVoice(new File([recorder.audioBlob], `world-welcome-${Date.now()}.${extension}`, { type: recorder.audioBlob.type || "audio/webm" }));
+  };
+  const startVoiceRecording = () => {
+    setVoiceMethod("record");
+    recorder.startRecording();
+  };
+  const recordAgain = () => {
+    recorder.resetRecording();
+    window.setTimeout(() => recorder.startRecording(), 0);
+  };
+  return <div aria-labelledby="world-welcome-message-title" aria-modal="true" className="world-sheet-overlay" onMouseDown={onClose} role="dialog">
+    <section className="world-bottom-sheet is-description-sheet world-welcome-message-sheet" onMouseDown={(event) => event.stopPropagation()}>
+      <span className="world-sheet-grab" aria-hidden="true" />
+      <h2 id="world-welcome-message-title">{__msg("admin.welcomeMessage")}</h2>
+      <p className="world-sheet-copy">{__msg("system.WorldPublishingPage.c0334dd9a5")}</p>
       <label className="world-welcome-message-field"><span className="sr-only">{__msg("admin.welcomeMessage")}</span><textarea autoFocus maxLength={500} onChange={(event) => setMessage(event.target.value)} placeholder={__msg("system.WorldPublishingPage.43748899bc")} rows={5} value={message} /><small>{message.length}/500</small></label>
-      <button className="world-create-sheet-done" disabled={busy || cleanMessage === (value || "").trim()} onClick={() => onSave(cleanMessage)} type="button">{busy ? __msg("financial.saving") : __msg("contentEntities.save_efc007")}</button>
+      <button aria-pressed={Boolean(attachedVoice || voiceOpen)} className="world-welcome-voice-toggle" disabled={voiceBusy} onClick={toggleVoice} type="button"><FiMic /><b>{attachedVoice ? __msg("system.SeenComposerPage.f99c511ff6") : __msg("system.WorldReaderPage.ecbf8fdb41")}</b><i className={attachedVoice || voiceOpen ? "is-on" : ""}><u /></i></button>
+      {voiceOpen ? <div className="world-welcome-recorder">
+        {attachedVoice ? <><audio controls src={attachedVoice} /><button className="is-remove" disabled={voiceBusy} onClick={toggleVoice} type="button">{__msg("creator.removeVoiceHello")}</button></> : null}
+        {!attachedVoice && recorder.audioUrl ? <audio controls src={recorder.audioUrl} /> : null}
+        {!attachedVoice ? <div className={`world-welcome-recorder-actions ${!voiceMethod ? "is-method-choice" : "is-record-flow"} ${recorder.status === "preview" ? "is-preview" : ""}`}>
+          {!voiceMethod ? <>
+            <button className="is-method" disabled={voiceBusy} onClick={startVoiceRecording} type="button"><FiMic /><span><b>{__msg("messaging.startRecording")}</b><small>{__msg("creator.addAVoiceHelloRecordLiveOrUploadAudio")}</small></span></button>
+            <button className="is-method" disabled={voiceBusy} onClick={() => { setVoiceMethod("upload"); fileInput.current?.click(); }} type="button"><FiUpload /><span><b>{__msg("system.SeenComposerPage.66d375e583")}</b><small>{__msg("creator.uploadAudioFile")}</small></span></button>
+          </> : null}
+          {voiceMethod === "record" && (recorder.status === "idle" || recorder.status === "error") ? <button disabled={voiceBusy} onClick={recorder.startRecording} type="button"><FiMic /> {__msg("messaging.startRecording")}</button> : null}
+          {recorder.status === "requesting-permission" ? <button disabled type="button">{__msg("creator.allowMicrophone")}</button> : null}
+          {recorder.status === "recording" ? <div className="world-voice-live"><div className="world-voice-live-head"><span><i />{__msg("publication.recordingVoice")}</span><time>{formatVoiceTime(recorder.elapsedMs / 1000)}</time></div><div aria-hidden="true" className="world-voice-live-wave">{Array.from({ length: 24 }, (_, index) => { const level = recorder.levels[Math.max(0, recorder.levels.length - 24) + index] || 0.1 + ((index * 7) % 5) * 0.04; return <i key={index} style={{ "--voice-level": Math.max(.12, level) }} />; })}</div><button className="is-stop world-voice-live-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("publication.stopRecording")}</button></div> : null}
+          {recorder.status === "paused" ? <button className="is-stop" onClick={recorder.stopRecording} type="button"><FiSquare /> {__msg("creator.finish")}</button> : null}
+          {recorder.status === "preview" ? <><button disabled={voiceBusy} onClick={recordAgain} type="button">{__msg("creator.recordAgain")}</button><button className="is-use" disabled={voiceBusy} onClick={saveRecording} type="button">{voiceBusy ? __msg("stories.adding_ffb2e6") : __msg("publication.useRecording")}</button></> : null}
+          <input accept="audio/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) onUploadVoice(file); else setVoiceMethod(""); }} ref={fileInput} type="file" />
+        </div> : null}
+        {recorder.error ? <p className="world-sheet-error">{recorder.error}</p> : null}
+      </div> : null}
+      {error ? <p className="world-sheet-error">{__systemMessage(error)}</p> : null}
+      <button className="world-sheet-primary" disabled={!hasWelcomeMessage} onClick={() => onSave(cleanMessage, messageChanged)} type="button">{busy ? __msg("financial.saving") : __msg("contentEntities.save_efc007")}</button>
     </section>
   </div>;
 }
@@ -390,6 +442,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [welcomeVoiceBusy, setWelcomeVoiceBusy] = useState(false);
+  const [welcomeMessageBusy, setWelcomeMessageBusy] = useState(false);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
   const [, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -604,7 +658,12 @@ export default function WorldPublishingPage({ experience = false, publicationId 
     const next = response.data.data.publication;
     setWorld((current) => preserveNewerLocalEdits(
       current,
-      { ...current, ...next, coverMedia: next.coverMedia || null },
+      {
+        ...current,
+        ...next,
+        coverMedia: next.coverMedia || null,
+        worldWelcomeVoiceMedia: next.worldWelcomeVoiceMedia || null,
+      },
       requestEditVersion,
     ));
     return next;
@@ -780,6 +839,59 @@ export default function WorldPublishingPage({ experience = false, publicationId 
   };
 
   saveDraftRef.current = saveDraft;
+
+  const saveWelcomeMessage = async (ownerWelcomeNote, messageChanged = true) => {
+    if (!messageChanged) {
+      setWorldCreateSheet("");
+      return;
+    }
+    if (welcomeMessageBusy || welcomeVoiceBusy) return;
+    setWelcomeMessageBusy(true);
+    const snapshot = { ...world, ownerWelcomeNote };
+    worldEditVersionRef.current += 1;
+    setWorld(snapshot);
+    try {
+      const saved = await saveDraft(false, snapshot);
+      if (saved) setWorldCreateSheet("");
+    } finally {
+      setWelcomeMessageBusy(false);
+    }
+  };
+
+  const uploadWelcomeVoice = async (file) => {
+    if (!file || welcomeVoiceBusy) return;
+    setWelcomeVoiceBusy(true);
+    setError("");
+    try {
+      const saved = await saveDraft();
+      if (!saved) return;
+      await api.uploadWorldWelcomeVoice(saved.id, file);
+      await refreshWorld(saved.id);
+      setNotice(__msg("system.WorldReaderPage.3acddf17a1"));
+    } catch (requestError) {
+      setError(requestError?.response?.data?.message || __msg("social.voiceHelloCouldNotBeAdded"));
+    } finally {
+      setWelcomeVoiceBusy(false);
+    }
+  };
+
+  const removeWelcomeVoice = async () => {
+    if (!world.id || welcomeVoiceBusy) return;
+    const previousVoiceMedia = world.worldWelcomeVoiceMedia || null;
+    setWelcomeVoiceBusy(true);
+    setError("");
+    setWorld((current) => ({ ...current, worldWelcomeVoiceMedia: null }));
+    try {
+      await api.removeWorldWelcomeVoice(world.id);
+      await refreshWorld(world.id);
+      setNotice(__msg("system.WorldReaderPage.aec0a171ce"));
+    } catch (requestError) {
+      setWorld((current) => ({ ...current, worldWelcomeVoiceMedia: previousVoiceMedia }));
+      setError(requestError?.response?.data?.message || __msg("social.voiceHelloCouldNotBeRemoved"));
+    } finally {
+      setWelcomeVoiceBusy(false);
+    }
+  };
 
   const openWorldManagement = async (panel = "") => {
     const saved = await saveDraft();
@@ -1709,9 +1821,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {!experience ? (
         <section className="world-prototype-planet world-publish-planet world-create-brand">
-          <span aria-hidden="true">
-            <span>{PLANET}</span>
-          </span>
+          <MinimalWorldIcon size={72} />
           <p>{__msg("profile.yourWorld")}</p>
         </section>
       ) : null}
@@ -1833,8 +1943,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         </span>
         <button className="world-create-welcome-row" onClick={() => setWorldCreateSheet("welcome")} type="button">
           <span className="world-create-welcome-icon" aria-hidden="true">∞</span>
-          <span><b>{__msg("admin.welcomeMessage")}</b><small>{world.ownerWelcomeNote ? __msg("system.WorldPublishingPage.52a176d87e") : __msg("system.WorldPublishingPage.427def9395")}</small></span>
-          <strong>{world.ownerWelcomeNote ? __msg("profile.edit") : __msg("publication.add")} <FiArrowUpRight /></strong>
+          <span><b>{__msg("admin.welcomeMessage")}</b><small>{world.ownerWelcomeNote || world.worldWelcomeVoiceMedia ? __msg("system.WorldPublishingPage.52a176d87e") : __msg("system.WorldPublishingPage.427def9395")}</small></span>
+          <strong>{world.ownerWelcomeNote || world.worldWelcomeVoiceMedia ? __msg("profile.edit") : __msg("publication.add")} <FiArrowUpRight /></strong>
         </button>
         <button aria-controls="world-create-settings-list" aria-expanded={worldCreateSheet === "settings"} className={`world-prototype-settings-row ${worldCreateSheet === "settings" ? "is-expanded" : ""}`} onClick={() => setWorldCreateSheet((current) => current === "settings" ? "" : "settings")} type="button">
           <FiSettings /><b>{__msg("creator.worldSettings")}</b><FiArrowUpRight className="world-settings-chevron" />
@@ -1865,7 +1975,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {worldCreateSheet === "name" ? <WorldCreateTextSheet busy={saving} description={__msg("creator.oneWorldPerCreatorTheNameCarriesYourStories")} label={__msg("creator.name")} maxLength={30} onClose={() => setWorldCreateSheet("")} onSave={(title) => { updateWorld({ title }); setWorldCreateSheet(""); }} placeholder={__msg("creator.nameYourWorld")} title={__msg("creator.nameYourWorld")} value={world.title} /> : null}
       {worldCreateSheet === "description" ? <WorldCreateTextSheet busy={saving} description={__msg("creator.oneHonestParagraphPeopleSeeItRightUnderYour")} label={__msg("creator.description")} maxLength={300} onClose={() => setWorldCreateSheet("")} onSave={(description) => { updateWorld({ description, summary: description }); setWorldCreateSheet(""); }} placeholder={__msg("creator.describeWhatMembersWillExperience")} title={__msg("creator.describeYourWorld")} value={world.description} /> : null}
-      {worldCreateSheet === "welcome" ? <WorldWelcomeMessageSheet busy={saving} onClose={() => setWorldCreateSheet("")} onSave={(ownerWelcomeNote) => { updateWorld({ ownerWelcomeNote }); setWorldCreateSheet(""); }} value={world.ownerWelcomeNote} /> : null}
+      {worldCreateSheet === "welcome" ? <WorldWelcomeMessageSheet busy={welcomeMessageBusy} error={error} onClose={() => !welcomeMessageBusy && !welcomeVoiceBusy && setWorldCreateSheet("")} onRemoveVoice={removeWelcomeVoice} onSave={saveWelcomeMessage} onUploadVoice={uploadWelcomeVoice} value={world.ownerWelcomeNote} voiceBusy={welcomeVoiceBusy} voiceMedia={world.worldWelcomeVoiceMedia} /> : null}
       {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(experienceLocation) => updateWorld({ experienceLocation })} value={world.experienceLocation || ""} /> : null}
 
       {worldCreateSheet === "price" ? (

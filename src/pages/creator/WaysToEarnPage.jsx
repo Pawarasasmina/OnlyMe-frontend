@@ -7,6 +7,7 @@ import { FiArrowLeft, FiChevronRight, FiCreditCard, FiEye, FiGift, FiTrendingUp,
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
+import { authService } from "../../services/authService";
 import { creatorService } from "../../services/creatorService";
 import { profileService } from "../../services/profileService";
 import "./WaysToEarnPage.css";
@@ -54,9 +55,9 @@ export function WaysToEarnDetailSheet({ type, onClose, profile, example, rate })
     retry: false,
     staleTime: 60000,
   });
-  const copy = type === __msg("creator.world")
+  const copy = type === "world"
     ? [__msg("system.copy.e5865c3391e7"), __msg("system.copy.b9be4e0fbfee"), __msg("fanWeb.openMyWorld")]
-    : type === __msg("branding.seen")
+    : type === "seen"
       ? [__msg("system.copy.3b4ef0281bd7"), __msg("system.copy.fc2effa65404"), __msg("system.copy.bdf67f3b2763")]
       : [__msg("system.copy.048c0c365f83"), __msg("system.copy.e48e03b79ace"), __msg("system.copy.95184493ac0b")];
   const act = async () => {
@@ -79,6 +80,7 @@ export default function WaysToEarnPage() {
   const [detail, setDetail] = useState("");
   const earnQuery = useQuery({ queryKey: ["ways-to-earn"], queryFn: () => creatorService.getWaysToEarn().then(response => response.data.data) });
   const profileQuery = useQuery({ queryKey: ["unified-profile", "me"], queryFn: () => profileService.getUnifiedMe().then(response => response.data.data) });
+  const monetizationQuery = useQuery({ queryKey: ["monetization"], queryFn: () => authService.getMonetization().then(response => response.data.data), retry: false, staleTime: 30000 });
   const own = earnQuery.data?.dashboard || {};
   const profile = profileQuery.data?.profile || {};
   const example = earnQuery.data?.example || { name: profile.displayName, username: profile.username, avatar: profile.avatar, followers: 0, paidSeen: {}, world: {}, gifts: {} };
@@ -88,25 +90,10 @@ export default function WaysToEarnPage() {
     { type: "seen", Icon: FiTrendingUp, title: __msg("system.WaysToEarnPage.f6485c28ac"), note: __msg("creator.whatYouKnowPackedIntoChapters") },
     { type: "gift", Icon: FiGift, title: __msg("system.WaysToEarnPage.bdd98cf2cd"), note: __msg("creator.oneLinkInYourBioFansGiftIn") },
   ], [__uiLanguage]);
-  if (earnQuery.isLoading || profileQuery.isLoading) return <main className="ways-to-earn-page"><LoadingSkeleton className="h-20" count={1}/><LoadingSkeleton className="mt-5 h-72" count={2}/></main>;
+  if (earnQuery.isLoading || profileQuery.isLoading || monetizationQuery.isLoading) return <main className="ways-to-earn-page"><LoadingSkeleton className="h-20" count={1}/><LoadingSkeleton className="mt-5 h-72" count={2}/></main>;
   if (earnQuery.isError || profileQuery.isError) return <main className="ways-to-earn-page"><h1>{__msg("creator.waysToEarn")}</h1><p>{__msg("system.WaysToEarnPage.7f232b41bd")}</p></main>;
-  const profileData = profileQuery.data || {};
-  const hasPublishedContent = Boolean(
-    Number(profileData.publicMetrics?.publishedContentCount || 0)
-    || profileData.seens?.length
-    || profileData.wallPosts?.length
-    || profileData.media?.length
-    || profileData.profileStories?.length
-    || profileData.experiences?.length
-    || profileData.planets?.length
-  );
-  const isVerifiedCreator = Boolean(
-    profile.verified
-    || profile.creatorApprovalStatus === "approved"
-    || profile.creatorApplicationStatus === "verified"
-    || profileData.viewerCapabilities?.canAccessStudio
-  );
-  if (isVerifiedCreator || hasPublishedContent) return <Navigate replace to={isVerifiedCreator ? "/studio" : "/profile"} />;
+  const monetizationActive = Boolean(monetizationQuery.data?.verified && monetizationQuery.data?.enabled);
+  if (monetizationActive) return <Navigate replace to="/studio" />;
   const rate = Number(own.exchangeRate?.starsPerUsd) || 10;
   return <main className="ways-to-earn-page"><header className="earn-page-head"><button onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><span><b>{__msg("creator.creatorDashboard")}</b><small>{__msg("admin.thisMonth")}</small></span><Link to="/wallet"><FiCreditCard /></Link></header><h1>{__msg("creator.waysToEarn")}</h1><p className="earn-lead">{__msg("system.WaysToEarnPage.2fb179d8fa")}</p><ExampleCard example={example}/><Calculator people={people} price={price} rate={rate} setPeople={setPeople} setPrice={setPrice}/><h3 className="earn-section-title">{__msg("system.WaysToEarnPage.5c9f9ad79c")}</h3><section className="earn-start-list">{steps.map(({ Icon, ...step }) => <button key={step.type} onClick={() => setDetail(step.type)} type="button"><span><Icon /></span><b>{step.title}<small>{step.note}</small></b><FiChevronRight /></button>)}</section><nav className="earn-dashboard-tabs"><b>{__msg("stories.overview")}</b><span>{__msg("creator.audience")}</span><span>{__msg("layouts.earnings")}</span></nav><section className="earn-path"><header><b>{__msg("creator.creatorPath")}</b><strong>{path.completed || 0}/{path.total || 4}</strong></header><p className={path.publishedSeen ? "is-done" : ""}>{path.publishedSeen ? "✓" : "○"} {__msg("creator.publishYourFirstSeen")}</p><p className={path.wallPost ? "is-done" : ""}>{path.wallPost ? "✓" : "○"} {__msg("system.WaysToEarnPage.4eb1baec89")}</p><p className={path.followsThree ? "is-done" : ""}>{path.followsThree ? "✓" : "○"} {__msg("creator.follow3People")}</p><p className={path.profilePhotos ? "is-done" : ""}>{path.profilePhotos ? "✓" : "○"} {__msg("creator.addPhotosToYourProfile")}</p></section><section className="earn-reach"><span>{__msg("creator.reachThisMonth")}</span><strong>{Number(own.overview?.reach?.value || 0).toLocaleString(__uiLocale())}</strong><small>{__msg("system.WaysToEarnPage.176bfaad8a")}</small></section>{detail ? <WaysToEarnDetailSheet example={example} onClose={() => setDetail("")} profile={profile} rate={rate} type={detail}/> : null}</main>;
 }
