@@ -1,7 +1,8 @@
+import "../publication/PublishBanner.css";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -491,6 +492,14 @@ function ProfileContentGrid({
   const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt || (owner && item.status === "DRAFT")) : content || [], [content, kind, owner]);
   const [localContent, setLocalContent] = useState(null);
   const effectiveContent = localContent || visibleContent;
+  const highlighted = useRef("");
+  useEffect(() => {
+    if (!highlightSeenId || highlighted.current === highlightSeenId) return;
+    const tile = document.querySelector(".profile-seen-tile.is-newly-published");
+    if (!tile) return;
+    highlighted.current = highlightSeenId;
+    tile.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }, [highlightSeenId, effectiveContent]);
   useEffect(() => {
     setLocalContent(null);
   }, [visibleContent]);

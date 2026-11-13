@@ -15,6 +15,7 @@ import { dreamService } from "../../services/dreamService";
 import "./ProfileGiftCopy.css";
 import "./ProfileDreamCard.css";
 import { resolveMediaUrl } from "../../utils/media";
+import { dreamFallbackCover, dreamProgress } from "../../utils/dreamPresentation";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import GiftArt, { prototypeGiftPreset, resolvedGiftTier } from "../gifts/GiftArt";
@@ -331,7 +332,7 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
     }
   };
 
-  const progress = Math.min(100, Math.round((Number(dream.receivedStars || 0) / Math.max(1, Number(dream.goalStars || 0))) * 100));
+  const progress = dreamProgress(dream);
   const remaining = Math.max(0, Number(dream.goalStars || 0) - Number(dream.receivedStars || 0));
   const firstName = String(creatorName || __msg("profile.their")).trim().split(/\s+/)[0];
   const supporterCount = Number(dream.supporterCount || 0);
@@ -368,7 +369,7 @@ export function GiftPicker({ creatorName, dream: initialDream, gifts, onClose })
         <div className="dream-gift-progress"><i style={{ width: `${progress}%` }} /></div>
         <div className="dream-support-progress-copy">
           <span><CoinIcon /> {Number(dream.receivedStars || 0).toLocaleString(__uiLocale())} / {Number(dream.goalStars || 0).toLocaleString(__uiLocale())}</span>
-          <strong className={progress > 0 ? "is-near-goal" : ""}>{remaining === 0 ? __msg("profile.itHappened") : progress === 0 ? __msg("profile.beFirstToBelieve") : __msg("profile.dreamCoinsRemaining", { count: remaining.toLocaleString(__uiLocale()) })}</strong>
+          <strong className={progress > 0 ? "is-near-goal" : ""}>{dream.status === "COMPLETED" ? __msg("profile.itHappened") : remaining === 0 ? __msg("profile.dreamFullyFunded") : progress === 0 ? __msg("profile.beFirstToBelieve") : __msg("profile.dreamCoinsRemaining", { count: remaining.toLocaleString(__uiLocale()) })}</strong>
         </div>
 
         <div className="dream-support-people">
@@ -433,13 +434,13 @@ function DreamEntryRow({ dream, isOwner, onCreate, onMenu, onSupport, progress }
   }
 
   return (
-    <div className="dream-compact-row">
+    <div className={`dream-compact-row ${dream.status === "COMPLETED" ? "is-complete" : "is-active"}`}>
       <button aria-label={isOwner ? __msg("profile.editDream") : __msg("profile.openDream", { value0: dream.title })} className="dream-compact-content" disabled={!isOwner && dream.status !== "ACTIVE"} onClick={isOwner ? onCreate : onSupport} type="button">
-        <span className="dream-compact-cover">{dream.photo?.url ? <img alt="" src={resolveMediaUrl(dream.photo.url)} /> : <span aria-hidden="true">{dream.emoji || SPARKLE}</span>}</span>
+        <span className="dream-compact-cover"><img alt="" src={dream.photo?.url ? resolveMediaUrl(dream.photo.url) : dreamFallbackCover(dream.title)} onError={event => { const fallback = dreamFallbackCover(dream.title); if (event.currentTarget.getAttribute("src") !== fallback) event.currentTarget.src = fallback; }} /></span>
         <span className="dream-compact-copy">
-          <span className="dream-compact-title"><b dir="auto" title={dream.title}>{dream.title}</b><strong className={dream.status === "COMPLETED" ? "is-complete" : ""}>{dream.status === "COMPLETED" ? __msg("profile.cameTrue") : `${progress}%`}</strong></span>
+          <span className="dream-compact-title"><b dir="auto" title={dream.title}>{dream.title}</b><strong className={dream.status === "COMPLETED" ? "is-complete" : progress >= 75 ? "is-near-goal" : ""}>{dream.status === "COMPLETED" ? __msg("profile.cameTrue") : `${progress}%`}</strong></span>
           {dream.status === "COMPLETED" ? <small className="dream-compact-supporters">{__msg("profile.thanksTo")} {dream.supporterCount || 0} {__msg("profile.people")}</small> : <>
-            <span aria-label={__msg("profile.dreamProgress")} aria-valuemax={100} aria-valuemin={0} aria-valuenow={progress} className="dream-compact-progress" role="progressbar"><i style={{ width: `${progress}%` }} /></span>
+            <span aria-label={__msg("profile.dreamProgress")} aria-valuemax={100} aria-valuemin={0} aria-valuenow={progress} className="dream-compact-progress" role="progressbar"><i style={{ width: `${progress}%` }}><span aria-hidden="true" className="dream-compact-shimmer" /></i></span>
             <span className="dream-compact-supporters"><span className="dream-compact-faces">{(dream.supporters || []).filter((person, index, all) => all.findIndex(other => other.username === person.username) === index).slice(0, 3).map(person => <FanAvatar key={person.username} name={person.name} size="h-[15px] w-[15px]" src={resolveMediaUrl(person.avatar)} />)}</span>{dream.supporterCount || 0} {__msg("profile.inThisStory")}</span>
           </>}
         </span>
@@ -504,7 +505,7 @@ export default function ProfileDream({ capabilities, profile, role }) {
 
   if (!dream && !capabilities.isOwner) return null;
 
-  const progress = dream ? Math.max(0, Math.min(100, Math.round((Number(dream.receivedStars || 0) / Math.max(1, Number(dream.goalStars || 0))) * 100))) : 0;
+  const progress = dreamProgress(dream);
   const update = () => {
     query.refetch();
     setPicker(false);

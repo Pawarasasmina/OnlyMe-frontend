@@ -37,3 +37,15 @@
 .paid-seen-inline-preview>.is-preview em:after{content:"Free preview";font-size:10px}
 .paid-seen-success-thanks-error{margin:10px 0 0!important;color:#ff9f9f!important;font-size:10px!important;animation:none!important}
 .paid-seen-preview-content img,.paid-seen-preview-content video{width:100%;max-height:210px;margin-top:12px;border-radius:12px;object-fit:cover}
+
+.paid-seen-success-cover{animation:paidSeenCoverPop .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes paidSeenCoverPop{0%{transform:translateY(30px) scale(.84) rotate(-5deg);opacity:0}60%{transform:scale(1.03) rotate(.8deg);opacity:1}100%{transform:none;opacity:1}}
+.paid-seen-success-chapters i{position:relative;background:transparent}
+.paid-seen-success-chapters i svg{position:absolute}
+.paid-seen-success-chapters .paid-seen-chapter-lock{color:#78818e;animation:paidSeenLockOut .3s var(--unlock-delay) forwards}
+.paid-seen-success-chapters .paid-seen-chapter-check{box-sizing:content-box;padding:4px;border-radius:50%;background:#9ccbff;color:#0a0c0f;opacity:0;animation:paidSeenUnlocked .3s cubic-bezier(.2,.8,.2,1.4) var(--unlock-delay) forwards}
+@keyframes paidSeenLockOut{to{opacity:0;transform:translateY(-6px) rotate(-20deg)}}
+@keyframes paidSeenUnlocked{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+.paid-seen-success-note audio{width:100%;height:36px;margin-top:12px}
+.paid-seen-purchase-primary:disabled:before{content:"";display:inline-block;width:13px;height:13px;margin-right:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:successWorldSpin .8s linear infinite}
+@media(prefers-reduced-motion:reduce){.paid-seen-success-cover,.paid-seen-purchase-primary:disabled:before{animation:none!important}.paid-seen-success-chapters .paid-seen-chapter-lock{display:none}.paid-seen-success-chapters .paid-seen-chapter-check{opacity:1}}
