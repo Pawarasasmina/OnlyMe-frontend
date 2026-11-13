@@ -1,3 +1,4 @@
+import PublishBanner from "../../components/publication/PublishBanner";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
@@ -1082,10 +1083,14 @@ function ProfileBody({ data, setConnectionsType }) {
     return () => window.clearTimeout(timer);
   }, [draftSavedCount, setSearchParams]);
   useEffect(() => {
-    if (!publishedSeen) return undefined;
-    const timer = window.setTimeout(() => setPublishedSeen(null), 4200);
-    return () => window.clearTimeout(timer);
-  }, [publishedSeen]);
+    const feedback = location.state?.publishedSeen;
+    if (!feedback) return;
+    setPublishedSeen(feedback);
+    setTabState("seens");
+    const nextState = { ...location.state };
+    delete nextState.publishedSeen;
+    navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: nextState });
+  }, [location.state, location.pathname, location.search, navigate]);
   useEffect(() => {
     if (tab !== "seens") {
       setActiveSeriesId("");
@@ -1138,7 +1143,7 @@ function ProfileBody({ data, setConnectionsType }) {
   }
   return (
     <div className={`profile-prototype ${isOwner ? "is-owner-profile" : "is-public-profile"}`}>
-      {publishedSeen ? <div className="profile-published-seen-banner" role="status"><span>{__msg("admin.published")}</span><button onClick={async () => { const url = `${window.location.origin}/seen/${publishedSeen.id}`; if (navigator.share) await navigator.share({ title: publishedSeen.title || "Seen", url }).catch(() => {}); else await navigator.clipboard?.writeText(url); }} type="button">{__msg("admin.share")}</button></div> : null}
+      {publishedSeen ? <PublishBanner key={publishedSeen.id} publication={publishedSeen} onDismiss={() => setPublishedSeen(null)} onNotify={showToast} /> : null}
       {draftSavedCount ? <p className="profile-draft-saved-toast" role="status">{__msg("social.savedForLater")} {draftSavedCount}/3 ✍️</p> : null}
       {isOwner
         ? <TopProfileBar planets={data.planets || []} profile={profile} viewerCapabilities={viewerCapabilities} />
@@ -1158,7 +1163,7 @@ function ProfileBody({ data, setConnectionsType }) {
           <ProfileContentGrid
             content={data.seens || []}
             emptyText={isOwner ? "Your Seens live here - create one with +" : "No Seens yet."}
-            highlightSeenId={publishedSeen?.id || ""}
+            highlightSeenId={publishedSeen?.updated ? "" : publishedSeen?.id || ""}
             kind="seens"
             onActiveSeriesChange={setSeriesFocus}
             onActiveSeenListChange={setSeenListFocus}

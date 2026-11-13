@@ -2,7 +2,7 @@ import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiCheck, FiX } from "react-icons/fi";
@@ -19,6 +19,7 @@ const nextDate = () => new Date(Date.now() + 30 * 86400000).toLocaleDateString(_
 export default function JoinPremiumModal({ authenticated = true, onClose, onRequireAuth, open, publication, onSuccess }) {
   __useUiLanguage();
   const client = useQueryClient();
+  const joining = useRef(false);
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,31 +45,31 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
   const limitExceeded = wallet.data?.monthlySpendingLimit && Number(wallet.data.monthlySpent || 0) + data.charge > wallet.data.monthlySpendingLimit;
 
   const finish = async (response) => {
-    await Promise.all([client.invalidateQueries({ queryKey: ["wallet"] }), client.invalidateQueries({ queryKey: ["memberships"] }), client.invalidateQueries({ queryKey: ["world", publication.id || publication._id] }), client.invalidateQueries({ queryKey: ["unified-profile"] })]);
+    void Promise.allSettled([client.invalidateQueries({ queryKey: ["wallet"] }), client.invalidateQueries({ queryKey: ["memberships"] }), client.invalidateQueries({ queryKey: ["world", publication.id || publication._id] }), client.invalidateQueries({ queryKey: ["unified-profile"] })]);
     await onSuccess?.(response?.data?.data);
   };
   const confirm = async () => {
-    if (busy) return;
+    if (joining.current) return;
     if (!authenticated) { onRequireAuth?.(); return; }
-    setBusy(true); setError(""); setTopUpNeeded(0);
+    joining.current = true; setBusy(true); setError(""); setTopUpNeeded(0);
     try { await finish(await membershipService.joinPremiumWorld(publication.id || publication._id, key)); }
     catch (requestError) {
       const code = financialErrorCode(requestError);
-      if (code === "MEMBERSHIP_ALREADY_ACTIVE") await onSuccess?.();
+      if (code === "MEMBERSHIP_ALREADY_ACTIVE") await onSuccess?.({ alreadyActive: true });
       else if (code === "INSUFFICIENT_STARS") { const missing = Math.max(0, data.charge - Number(wallet.data?.balance || 0)); setTopUpNeeded(missing); setError(__msg("system.JoinPremiumModal.d276a2dd52", { value0: missing })); }
       else setError(financialErrorMessage(requestError));
-    } finally { setBusy(false); }
+    } finally { joining.current = false; setBusy(false); }
   };
   const topUpAndResume = async () => {
-    if (!topUpNeeded || busy) return;
-    setBusy(true); setError("");
+    if (!topUpNeeded || joining.current) return;
+    joining.current = true; setBusy(true); setError("");
     try { await walletService.topUpExact(topUpNeeded, createIdempotencyKey("world-exact-topup")); await finish(await membershipService.joinPremiumWorld(publication.id || publication._id, key)); }
-    catch (requestError) { setError(financialErrorMessage(requestError, __msg("financial.topUpOrSubscriptionCouldNotBeCompleted"))); }
-    finally { setBusy(false); }
+    catch (requestError) { if (financialErrorCode(requestError) === "MEMBERSHIP_ALREADY_ACTIVE") await onSuccess?.({ alreadyActive: true }); else setError(financialErrorMessage(requestError, __msg("financial.topUpOrSubscriptionCouldNotBeCompleted"))); }
+    finally { joining.current = false; setBusy(false); }
   };
 
-  return <div className="premium-confirm-overlay" onMouseDown={onClose} role="presentation"><section aria-label={__msg("system.JoinPremiumModal.0f4f9df90a", { value0: publication.title })} aria-modal="true" className="premium-confirm-sheet" onMouseDown={(event) => event.stopPropagation()} role="dialog">
-    <span className="premium-confirm-handle" /><button aria-label={__msg("activity.close")} className="premium-confirm-close" onClick={onClose} type="button"><FiX /></button>
+  return <div className="premium-confirm-overlay" onMouseDown={() => !joining.current && onClose()} role="presentation"><section aria-busy={busy} aria-label={__msg("system.JoinPremiumModal.0f4f9df90a", { value0: publication.title })} aria-modal="true" className="premium-confirm-sheet" onMouseDown={(event) => event.stopPropagation()} role="dialog">
+    <span className="premium-confirm-handle" /><button aria-label={__msg("activity.close")} className="premium-confirm-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
     <small>{__msg("system.JoinPremiumModal.9a3f6528f2")} {firstName.toUpperCase()}{__msg("system.JoinPremiumModal.6ec321d6e9")}</small><h2>{__msg("system.JoinPremiumModal.9011f129d9")}</h2><p>{__msg("system.JoinPremiumModal.ac8d88aff1")} <b>{publication.title}</b> {__msg("system.JoinPremiumModal.8d0e8c3f37")}</p>
     <div className="premium-confirm-summary"><p><span>{__msg("profile.today")}</span><b>{COIN} {data.charge}</b></p><p><span>{__msg("system.JoinPremiumModal.074a29f683")} {nextDate()}</span><b>{COIN} {data.regular}</b></p><p><span>{__msg("system.JoinPremiumModal.abaec4522b")}</span><b>{__msg("publication.every30Days")}</b></p></div>
     <ul><li><FiCheck /> {__msg("system.JoinPremiumModal.914207af96")}</li><li><FiCheck /> {__msg("system.JoinPremiumModal.bb12385ea4")}</li><li><FiCheck /> {__msg("system.JoinPremiumModal.aae5bc7716")}</li></ul>

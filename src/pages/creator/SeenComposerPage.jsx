@@ -1,3 +1,5 @@
+import UploadProgress from "../../components/publication/UploadProgress";
+import { publicationFeedback } from "../../utils/publicationFeedback";
 import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
@@ -47,6 +49,7 @@ import { resolveMediaUrl } from "../../utils/media";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
 import AiSeenGuide from "../../components/publication/AiSeenGuide";
+import PublishMoment from "../../components/publication/SuccessMoment";
 
 const empty = { allowDownload: false, captionsEnabled: true, ownerWelcomeNote: "", attachedEntities: [], entityRefs: [], experienceLocation: "", kind: "SEEN", pricing: { mode: "FREE", starsAmount: null, presetId: null }, taggedPeople: [], title: "", summary: "", description: "", category: "", series: null, seriesId: null, visibility: "PUBLIC", tags: [], chapters: [] };
 const fallbackCategories = ["Travel", "Fitness", "Lifestyle", "Business", "Tech", "Psychology", "Fashion", "Beauty", "Wellness", "Food"];
@@ -2514,6 +2517,7 @@ export default function SeenComposerPage() {
   const [seriesCreating, setSeriesCreating] = useState(false);
   const [seriesError, setSeriesError] = useState("");
   const [linkOnlyShare, setLinkOnlyShare] = useState(null);
+  const [publishMoment, setPublishMoment] = useState(null);
   const [introOpen, setIntroOpen] = useState(() => !localStorage.getItem("atseen_seen_intro_dismissed"));
   const [status, setStatus] = useState("Saved");
   const [toast, setToast] = useState("");
@@ -2521,6 +2525,7 @@ export default function SeenComposerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [uploading, setUploading] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [starsPerUsd, setStarsPerUsd] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [videoToTrim, setVideoToTrim] = useState(null);
@@ -2884,6 +2889,12 @@ export default function SeenComposerPage() {
     [coverPreview?.url],
   );
 
+  const uploadMediaWithFeedback = async (id, file, fields) => {
+    setUploadProgress(undefined);
+    try { return await api.uploadMedia(id, file, fields, setUploadProgress); }
+    finally { setUploadProgress(null); }
+  };
+
   const uploadCoverFile = async (file, kind = pendingCoverKind.current) => {
     if (!file) return;
     const previewUrl = URL.createObjectURL(file);
@@ -2896,7 +2907,7 @@ export default function SeenComposerPage() {
       if (!publication) return;
       setUploading(kind);
       setStatus(__msg("creator.uploadingMedia"));
-      await api.uploadMedia(publication.id, file, {
+      await uploadMediaWithFeedback(publication.id, file, {
         purpose: "COVER",
         statusVersion: publication.statusVersion,
       });
@@ -2965,7 +2976,7 @@ export default function SeenComposerPage() {
     setError("");
     try {
       const publication = await ensure({ navigateToDraft: false });
-      await api.uploadMedia(publication.id, file, { mediaType: "VOICE", purpose: "INTRO", statusVersion: publication.statusVersion });
+      await uploadMediaWithFeedback(publication.id, file, { mediaType: "VOICE", purpose: "INTRO", statusVersion: publication.statusVersion });
       await refresh(publication.id, { preserveLocalChanges: dirty.current });
       setToast(__msg("system.SeenComposerPage.f99c511ff6"));
       setOwnerVoiceOpen(false);
@@ -3071,7 +3082,7 @@ export default function SeenComposerPage() {
         const chapterId = added.data?.data?.chapter?.stableChapterId;
         publication = await refresh(publication.id);
         const blockId = globalThis.crypto?.randomUUID?.() || `ai-photo-${Date.now()}-${chapterIndex}`;
-        const uploaded = (await api.uploadMedia(publication.id, prepared.file, { chapterId, blockId, mediaType: "IMAGE" })).data?.data;
+        const uploaded = (await uploadMediaWithFeedback(publication.id, prepared.file, { chapterId, blockId, mediaType: "IMAGE" })).data?.data;
         await api.updateChapter(publication.id, chapterId, {
           title: prepared.heading || __msg("profile.chapter_7c635d", { value0: chapterIndex + 1 }),
           blocks: [
@@ -3372,7 +3383,7 @@ export default function SeenComposerPage() {
     setError("");
     try {
       const uploaded = (
-        await api.uploadMedia(p.id, file, {
+        await uploadMediaWithFeedback(p.id, file, {
           purpose: "BLOCK",
           mediaType,
           chapterId: activeChapter.stableChapterId,
@@ -3633,6 +3644,7 @@ export default function SeenComposerPage() {
   };
 
   const submit = async () => {
+    if (submitting || publishMoment) return;
     const publication = await save();
     if (!publication) return;
     const errors = seenCompleteness(publication);
@@ -3644,18 +3656,25 @@ export default function SeenComposerPage() {
     try {
       const response = await api[publication.status === "CHANGES_REQUESTED" ? "resubmitPublication" : "submitPublication"](publication.id, publication.statusVersion);
       const published = response.data?.data?.publication;
+      const feedback = publicationFeedback(publication, response.data?.data);
       sessionStorage.removeItem("atseen_new_seen_draft");
-      if (published?.visibility === "LINK_ONLY" && published.shareUrl) {
-        setP((current) => ({ ...current, ...published, chapters: current.chapters }));
-        dirty.current = false;
-        setLinkOnlyShare({ copied: false, url: published.shareUrl });
-        setStatus(__msg("creator.linkOnlySeenPublished"));
-        return;
-      }
-      nav(returnTo || (fromSeen ? "/seen" : "/profile"), {
-        replace: true,
-        state: returnTo || fromSeen ? undefined : { publishedSeen: { id: published?.id || publication.id, title: published?.title || publication.title } },
-      });
+      const finishPublishing = () => {
+        setPublishMoment(null);
+        if (feedback && published?.visibility === "LINK_ONLY" && published.shareUrl) {
+          setP((current) => ({ ...current, ...published, chapters: current.chapters }));
+          dirty.current = false;
+          setLinkOnlyShare({ copied: false, url: published.shareUrl });
+          setStatus(__msg(feedback.updated ? "celebrations.updated" : "creator.linkOnlySeenPublished"));
+          return;
+        }
+        nav(returnTo || (feedback ? "/profile" : fromSeen ? "/seen" : "/profile"), {
+          replace: true,
+          state: feedback ? { publishedSeen: feedback } : undefined,
+        });
+      };
+      if (feedback && !feedback.updated) {
+        setPublishMoment({ media: published.coverMedia || publication.coverMedia, onComplete: finishPublishing });
+      } else finishPublishing();
     } catch (requestError) {
       if (["SELLER_VERIFICATION_REQUIRED", "SELLER_INFORMATION_REQUIRED"].includes(requestError.response?.data?.code)) {
         nav("/creator/seller-verification", { state: { returnTo: window.location.pathname } });
@@ -3741,6 +3760,7 @@ export default function SeenComposerPage() {
     const description = p.description || p.summary || "";
     return (
       <section className="seen-compose-page seen-about-page">
+        <UploadProgress progress={uploadProgress} />
         {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
         {error || statusText ? (
           <div className="seen-compose-feedback-stack" aria-live="polite">
@@ -3832,6 +3852,7 @@ export default function SeenComposerPage() {
             source={cropTarget.url}
           />
         ) : null}
+        <UploadProgress progress={uploadProgress} />
         <SeenChapterEditor
           key={activeChapter.stableChapterId}
           busy={chapterSaving}
@@ -3871,6 +3892,7 @@ export default function SeenComposerPage() {
   if (paidSeen && chaptersStep) {
     return (
       <section className="seen-compose-page seen-chapters-step">
+        <UploadProgress progress={uploadProgress} />
         {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
         {error || statusText ? <div className="seen-compose-feedback-stack" aria-live="polite">{error ? <p className="seen-compose-feedback is-error" role="alert">{__systemMessage(error)}</p> : null}{statusText ? <p className="seen-compose-feedback is-status" role="status">{statusText}</p> : null}</div> : null}
         <header className="seen-compose-header seen-flow-step-header">
@@ -3893,6 +3915,8 @@ export default function SeenComposerPage() {
 
   return (
     <section className="seen-compose-page">
+      <UploadProgress progress={uploadProgress} />
+      {publishMoment ? <PublishMoment media={publishMoment.media} message={__msg("celebrations.published")} onComplete={publishMoment.onComplete} /> : null}
       {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
       {error || statusText ? (
         <div className="seen-compose-feedback-stack" aria-live="polite">

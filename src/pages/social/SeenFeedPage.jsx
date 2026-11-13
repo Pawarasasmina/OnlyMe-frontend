@@ -595,7 +595,7 @@ function SeenSummary({ item, onOpenChapter, onPurchase }) {
       </button>
     </div>
     {item.pricing?.mode === "ONE_TIME" && item.access === "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock is-owned" onClick={() => onOpenChapter(0)} type="button"><span>{__msg("system.SeenFeedPage.755844bc39")}</span><small>{__msg("system.SeenFeedPage.7243089e5c")}</small><b>{__msg("publication.open")}</b></button> : null}
-    {item.pricing?.mode === "ONE_TIME" && item.access !== "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> ✦ {Number(item.pricing.starsAmount || 0).toLocaleString(__uiLocale())}</span><small>{__msg("system.SeenFeedPage.fc2d3a48d2")} {item.ownerCount.toLocaleString(__uiLocale())} {__msg("profile.ownIt")}</small><b>{item.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("admin.unavailable")}</b></button> : null}
+    {item.pricing?.mode === "ONE_TIME" && item.access !== "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> ✦ {Number(item.pricing.starsAmount || 0).toLocaleString(__uiLocale())}</span>{item.ownerCount > 0 ? <small>{__msg("celebrations.ownerCount", { count: item.ownerCount })}</small> : null}<b>{item.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("admin.unavailable")}</b></button> : null}
     <ChapterPreviewList chapters={item.chapters} maxVisible={5} onOpenChapter={onOpenChapter} />
   </div>;
 }
@@ -645,7 +645,7 @@ function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onJoinWorld,
     <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>{__msg("profile.chapter")} {chapterIndex + 1} {__msg("onboarding.of")} {chapters.length}</span></div>
     <h2>{chapter.title || item.title}</h2><i className="seen-inline-accent" />
     <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
-    <div className="seen-paid-locked-card"><span><FiLock /></span><h2>{__msg("system.SeenFeedPage.7898d6a540")}</h2><p>{__msg("system.SeenFeedPage.1446710a0d")} {item.ownerCount.toLocaleString(__uiLocale())} {__msg("profile.ownIt")}</p><button onClick={onPurchase} type="button">{__msg("system.SeenFeedPage.8c6ae9a2fd")} {Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</button></div>
+    <div className="seen-paid-locked-card"><span><FiLock /></span><h2>{__msg("system.SeenFeedPage.7898d6a540")}</h2>{item.ownerCount > 0 ? <p>{__msg("celebrations.ownerCount", { count: item.ownerCount })}</p> : null}<button onClick={onPurchase} type="button">{__msg("system.SeenFeedPage.8c6ae9a2fd")} {Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</button></div>
     {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>{__msg("onboarding.next")}</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label={__msg("system.SeenFeedPage.2a02ed17e8")} /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>{__msg("comments.done")}</small><strong>{__msg("creator.backToOverview")}</strong><FiChevronRight /></button>}
   </section>;
   return <section className="seen-inline-chapter" aria-live="polite">
@@ -1320,7 +1320,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     />
     <SeenReportSheet done={reportDone} isOpen={reportOpen} onClose={() => { setReportOpen(false); setReportDone(false); }} onReport={(reason) => reportMutation.mutate(reason)} pending={reportMutation.isPending} title={item.title} />
     <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
-    <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => onFeedReplace(item.id, { ...rawItem, access: "ENTITLED_SEEN", paymentAvailable: false, ownerCount: Number(rawItem.ownerCount || 0) + 1, chapters: (rawItem.chapters || []).map((chapter) => ({ ...chapter, locked: false })) })} publication={rawItem} />
+    <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={(result) => onFeedReplace(item.id, { ...rawItem, access: "ENTITLED_SEEN", paymentAvailable: false, ownerCount: Number(rawItem.ownerCount || 0) + (result?.alreadyOwned ? 0 : 1), chapters: (rawItem.chapters || []).map((chapter) => ({ ...chapter, locked: false })) })} publication={rawItem} />
     <SeenInsightsSheet fallbackViews={item.engagement.views} insightsQuery={insightsQuery} isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title={item.title} />
     <SeriesPickerSheet
       isOpen={seriesOpen}
