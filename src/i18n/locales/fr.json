@@ -961,6 +961,7 @@
   "messaging.uploadingVoiceMessage": "L’envoi de messages vocaux...",
   "messaging.preview": "Avis sur le {value0}",
   "messaging.retryUpload": "Retour sur upload",
+  "onboarding.showYourFace":"Montrez votre visage","onboarding.showYourFaceCopy":"Les gens suivent des visages. Une vraie photo et ce que vous faites, c’est tout.","onboarding.addPhoto":"Ajouter une photo","onboarding.addAPhoto":"Ajoutez une photo","onboarding.peopleSeeYouLikeThis":"Voici comment les gens vous verront","onboarding.rightNow":"EN CE MOMENT","onboarding.yourOwn":"Le vôtre…","onboarding.whatAreYouUpTo":"Que faites-vous ?","onboarding.later":"Plus tard","onboarding.couldnTSaveYourProfile":"Impossible d’enregistrer votre profil","onboarding.couldnTSaveYourPhoto":"Impossible d’enregistrer votre photo","onboarding.couldnTSaveYourStatus":"Impossible d’enregistrer votre statut",
   "onboarding.chooseYourMainSignal": "Choisissez votre signal principal",
   "onboarding.freshTrending": "Fresh & tendance",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "De nouvelles voix, des créateurs émergents et ce qui se passe maintenant.",

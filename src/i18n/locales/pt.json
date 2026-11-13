@@ -972,6 +972,7 @@
   "messaging.uploadingVoiceMessage": "Apresentação de mensagens de voz...",
   "messaging.preview": "Previsão · {value0}",
   "messaging.retryUpload": "Retorno upload",
+  "onboarding.showYourFace":"Mostre seu rosto","onboarding.showYourFaceCopy":"As pessoas seguem rostos. Uma foto real e o que você está fazendo — só isso.","onboarding.addPhoto":"Adicionar foto","onboarding.addAPhoto":"Adicione uma foto","onboarding.peopleSeeYouLikeThis":"É assim que as pessoas verão você","onboarding.rightNow":"AGORA","onboarding.yourOwn":"O seu…","onboarding.whatAreYouUpTo":"O que você está fazendo?","onboarding.later":"Mais tarde","onboarding.couldnTSaveYourProfile":"Não foi possível salvar seu perfil","onboarding.couldnTSaveYourPhoto":"Não foi possível salvar sua foto","onboarding.couldnTSaveYourStatus":"Não foi possível salvar seu status",
   "onboarding.chooseYourMainSignal": "Escolha seu sinal principal",
   "onboarding.freshTrending": "Fresco e tendência",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "Novas vozes, criadores emergentes e o que está acontecendo agora.",

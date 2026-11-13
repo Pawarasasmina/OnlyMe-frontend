@@ -51,6 +51,7 @@ export function useOnboarding() {
     saveWelcome: useMutation({ mutationFn: onboardingService.saveWelcomeStep, ...mutationOptions }),
     saveInterests: useMutation({ mutationFn: onboardingService.saveInterests, ...mutationOptions }),
     saveProfileType: useMutation({ mutationFn: onboardingService.saveProfileType, ...mutationOptions }),
+    saveFace: useMutation({ mutationFn: onboardingService.saveFaceStep, ...mutationOptions }),
     saveInstincts: useMutation({ mutationFn: onboardingService.saveInstincts, ...mutationOptions }),
     savePeople: useMutation({ mutationFn: onboardingService.saveSuggestedPeople, ...mutationOptions }),
     acknowledgeTicket: useMutation({ mutationFn: onboardingService.acknowledgeTicket, ...mutationOptions }),

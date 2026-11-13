@@ -124,7 +124,7 @@ export default function StoryGiftPicker({ landing = false, onClose, onSent, prev
       }, remainingAnimationMs);
     } catch (requestError) {
       const timedOut = requestError.code === "ECONNABORTED" || /timeout/i.test(requestError.message || "");
-      setError(requestError.response?.data?.message || (timedOut ? "Gift confirmation took too long. Check your activity before trying again." : "The gift could not be sent. Please try again."));
+      setError(requestError.response?.data?.message || (timedOut ? "Didn’t go through — your coins are back. Please check Activity before trying again." : "Didn’t go through — your coins are back."));
     } finally {
       sendLockRef.current = false;
       setSending("");

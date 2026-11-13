@@ -846,7 +846,9 @@ export default function ActivityPage() {
     return true;
   });
   const filters = allowedFilters;
-  const loading = activityQuery.isLoading || ledgerQuery.isLoading;
+  // Render social activity as soon as its request resolves. Wallet history can
+  // merge in afterward instead of blocking the entire screen.
+  const loading = activityQuery.isLoading;
   const failed = activityQuery.isError && ledgerQuery.isError;
   const hasMore = Boolean(activityQuery.data?.pageInfo?.hasMore || (ledgerQuery.data?.pagination && page < ledgerQuery.data.pagination.pages));
 

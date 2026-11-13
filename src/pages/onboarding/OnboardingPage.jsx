@@ -8,12 +8,14 @@ import OnboardingLayout from "../../layouts/OnboardingLayout";
 import AccountTypePicker from "../../components/onboarding/AccountTypePicker";
 import OnboardingTicket from "../../components/onboarding/OnboardingTicket";
 import PrototypeInterestPicker from "../../components/onboarding/PrototypeInterestPicker";
+import ShowYourFace from "../../components/onboarding/ShowYourFace";
 import { useAuth } from "../../hooks/useAuth";
 import { useOnboarding, useOnboardingSuggestions } from "../../hooks/useOnboarding";
 import { defaultDestinationFor, isOnboardingComplete } from "../../utils/socialAccess";
 import { normalizeApiError } from "../../utils/apiErrors";
+import { profileService } from "../../services/profileService";
 
-const steps = ["welcome", "interests", "account-type", "fill-feed", "ticket"];
+const steps = ["welcome", "interests", "account-type", "show-your-face", "fill-feed", "ticket"];
 const routes = [...steps, "complete"];
 const normalizedStage = (value) => value === "completed" ? "complete" : routes.includes(value) ? value : null;
 const pathFor = (value) => `/onboarding/${value}`;
@@ -83,7 +85,13 @@ export default function OnboardingPage() {
   const togglePerson = (id) => setSelectedPeople((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   const list = suggestions.data || [];
   const saveInterests = () => run(() => onboarding.saveInterests.mutateAsync(interests), "account-type", __msg("onboarding.couldnTSaveYourInterests"));
-  const saveType = (selection = { profileType, category: accountCategory, contactButtons }) => run(() => onboarding.saveProfileType.mutateAsync(selection), "fill-feed", __msg("onboarding.couldnTSaveYourAccountType"));
+  const saveType = async (selection = { profileType, category: accountCategory, contactButtons }) => {
+    setError("");
+    try {
+      const response = await onboarding.saveProfileType.mutateAsync(selection);
+      go(response?.data?.data?.onboarding?.currentStep || "show-your-face");
+    } catch (reason) { fail(reason, __msg("onboarding.couldnTSaveYourAccountType")); }
+  };
   const savePeople = async (people = selectedPeople) => {
     setError("");
     try {
@@ -119,6 +127,25 @@ export default function OnboardingPage() {
     if (accountSetup === "contacts") return shell(<><h1 className="text-[27px] font-black tracking-[-.035em]">{__msg("profile.businessContactTitle")}</h1><p className="mt-2 text-[14px] leading-6 text-white/60">{__msg("profile.businessContactDescription")}</p><div className="mt-5 divide-y divide-white/[.06]">{contactChoices.map(({ id, label, icon: Icon }) => { const enabled = contactButtons.includes(id); return <button className="flex w-full items-center gap-4 py-4 text-left active:scale-[.97]" key={id} onClick={() => setContactButtons((current) => enabled ? current.filter((item) => item !== id) : [...current, id])} type="button"><Icon className="text-lg text-white/60" /><b className="flex-1 text-sm">{label}</b><span className={`relative h-7 w-12 rounded-full ${enabled ? "bg-[#9CCBFF]" : "bg-white/10"}`}><i className={`absolute top-1 h-5 w-5 rounded-full bg-[#0A0C0F] transition ${enabled ? "left-6" : "left-1"}`} /></span></button>; })}</div><button className="mt-6 w-full rounded-[14px] bg-[#9CCBFF] py-[15px] font-black text-[#0A0C0F] active:scale-[.97]" onClick={() => saveType()} type="button">{__msg("profile.continue")}</button><button className="mt-3 w-full py-2 text-[13px] text-white/55" onClick={() => setAccountSetup("category")} type="button">{__msg("discover.back")}</button></>);
     return shell(<><h1 className="text-[27px] font-black leading-[1.08] tracking-[-.035em]">{__msg("system.OnboardingPage.71f5258990")}</h1><p className="mt-2 text-[14px] leading-[1.65] text-white/60">{__msg("system.OnboardingPage.9b742bdb75")}</p><div className="mt-[14px]"><AccountTypePicker onChange={(value) => { setProfileType(value); setAccountCategory(""); }} value={profileType} /></div>{error ? <p className="mt-4 rounded-xl bg-red-400/10 p-3 text-xs text-red-200">{__systemMessage(error)}</p> : null}<button className="mt-4 w-full rounded-[14px] bg-[#9CCBFF] py-[15px] text-[15px] font-black text-[#0A0C0F] active:scale-[.97] disabled:opacity-45" disabled={onboarding.saveProfileType.isPending} onClick={() => profileType === "personal" ? saveType({ profileType: "personal", category: "", contactButtons: [] }) : setAccountSetup("category")} type="button">{onboarding.saveProfileType.isPending ? __msg("admin.saving") : __msg("profile.continue")}</button><button className="mt-3 w-full py-2 text-[13px] text-white/55 active:scale-[.97]" disabled={onboarding.saveProfileType.isPending} onClick={() => saveType({ profileType: "personal", category: "", contactButtons: [] })} type="button">{__msg("system.LoginPage.e457149073")}</button></>);
   }
+
+  if (stage === "show-your-face") return <ShowYourFace
+    avatar={state.user?.avatar || user.avatar}
+    busy={onboarding.saveFace.isPending}
+    error={error}
+    name={state.user?.name || user.name}
+    onContinue={() => run(() => onboarding.saveFace.mutateAsync(), "fill-feed", __msg("onboarding.couldnTSaveYourProfile"))}
+    onSavePhoto={async (file) => {
+      setError("");
+      try { await profileService.uploadAvatar(file); }
+      catch (reason) { fail(reason, __msg("onboarding.couldnTSaveYourPhoto")); throw reason; }
+    }}
+    onSaveStatus={async (status) => {
+      if (!status) return;
+      setError("");
+      try { await profileService.updateStatus({ status }); }
+      catch (reason) { fail(reason, __msg("onboarding.couldnTSaveYourStatus")); throw reason; }
+    }}
+  />;
 
   if (stage === "fill-feed") {
     const followed = selectedPeople.length;

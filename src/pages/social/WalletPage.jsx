@@ -7,7 +7,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { walletService } from "../../services/walletService";
-import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { walletRate, walletPacks, ledgerUsd } from "../../utils/walletPresentation";
 import { resolveMediaUrl } from "../../utils/media";
 import "./WalletPage.css";
@@ -23,15 +22,17 @@ const money = (value) => value == null || !Number.isFinite(Number(value)) ? "\u2
 function activityTitle(item) {
   const person = item.counterparty?.name;
   const publication = item.publication?.title;
+  const debit = Number(item.starsChange) < 0;
   if (["CREDIT_ADMIN", "WALLET_TOPUP_CREDIT"].includes(item.event)) return __msg("social.coinPack");
   if (item.event === "INCOME_CONVERSION_DEBIT") return __msg("social.creatorIncomeConverted");
   if (item.event === "INCOME_CONVERSION_CREDIT") return __msg("social.coinsFromCreatorIncome");
   if (item.event.includes("DA_")) return person ? __msg("social.value0UnlockedYourQuestion", { value0: person }) : __msg("social.directAccessUnlocked");
   if (item.event.includes("CALL_")) return person ? __msg("social.value0BookedACall", { value0: person }) : __msg("social.paidCall");
-  if (item.event.includes("GIFT")) return person ? __msg("social.value0SentAGift", { value0: person }) : __msg("social.giftReceived");
+  if (item.event === "CHAT_GIFT_DEBIT") return person ? `Gift to ${person}` : "Gift sent";
+  if (item.event === "CHAT_GIFT_EARNING") return person ? `${person} sent you a gift` : __msg("social.giftReceived");
   if (item.event.includes("DREAM")) return person ? __msg("social.value0SupportedYourDreamValue1", { value0: person, value1: publication ? ` “${publication}”` : "" }) : publication || __msg("admin.dreamSupport");
-  if (item.event.includes("PREMIUM")) return person ? __msg("social.value0SubscribedToYourWorld", { value0: person }) : publication || __msg("social.worldSubscription");
-  if (item.event.includes("WORLD")) return person ? __msg("social.value0BoughtValue1", { value0: person, value1: publication || "your World" }) : publication || __msg("social.worldUnlock");
+  if (item.event.includes("PREMIUM")) return debit ? `You joined ${person || "the creator"}’s World` : person ? `${person} joined your World` : publication || __msg("social.worldSubscription");
+  if (item.event.includes("WORLD")) return debit ? `You unlocked ${publication || "a Seen"}${person ? ` from ${person}` : ""}` : person ? `${person} unlocked ${publication || "your Seen"}` : publication || __msg("social.worldUnlock");
   return item.event.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -90,20 +91,9 @@ export default function WalletPage() {
   const packs = useMemo(() => walletPacks(wallet), [wallet]);
 
   const topUp = async (pack) => {
-    const bonusCopy = pack.bonus ? __msg("social.includingValue0BonusCoins", { value0: pack.bonus }) : "";
-    if (!window.confirm(__msg("social.addValue0Value1ToYourWalletValue2", { value0: "", value1: pack.total.toLocaleString(__uiLocale()), value2: bonusCopy }))) return;
     setTopUpBusy(pack.usd);
-    setTopUpMessage("");
-    try {
-      const response = await walletService.topUp(pack.usd, createIdempotencyKey("wallet-topup"));
-      const credited = response.data.data?.topUp?.totalStars;
-      await Promise.all([queryClient.invalidateQueries({ queryKey: ["wallet"] }), queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] })]);
-      setTopUpMessage(__msg("social.value0Value1AddedToYourWallet", { value0: "", value1: credited != null ? Number(credited).toLocaleString(__uiLocale()) : pack.total.toLocaleString(__uiLocale()) }));
-    } catch (error) {
-      setTopUpMessage(error.response?.data?.message || __msg("social.couldNotTopUpYourWalletPleaseTry"));
-    } finally {
-      setTopUpBusy(null);
-    }
+    setTopUpMessage("Top-ups open soon");
+    window.setTimeout(() => setTopUpBusy(null), 350);
   };
   const saveLimit = async (value) => {
     setLimitBusy(true);

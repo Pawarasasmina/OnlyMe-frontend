@@ -13,7 +13,7 @@ import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 import { walletService } from "../../services/walletService";
 import { purchaseService } from "../../services/purchaseService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
-import { financialErrorCode, financialErrorMessage } from "../../utils/financialErrorMessages";
+import { financialErrorCode } from "../../utils/financialErrorMessages";
 import "./PurchaseWorldModal.css";
 
 const creatorName = (item) => item?.creator?.displayName || item?.creator?.name || item?.creator?.username || __msg("context.theCreator");
@@ -29,7 +29,7 @@ function PaidSeenPurchaseSheet({ busy, error, onClose, onPurchase, onTopUp, publ
   const price = Number(publication?.pricing?.starsAmount || 0);
   return <div aria-modal="true" className="paid-seen-purchase-layer" role="dialog" aria-label={__msg("social.unlock", { value0: publication?.title || "this Seen" })}>
     <button aria-label={__msg("system.PurchaseWorldModal.e683c030f8")} className="paid-seen-purchase-scrim" disabled={busy} onClick={onClose} type="button" />
-    <section className="paid-seen-purchase-sheet">
+    <section className={`paid-seen-purchase-sheet ${busy ? "animate-pulse" : ""}`}>
       <span className="paid-seen-purchase-handle" /><button aria-label={__msg("activity.close")} className="paid-seen-purchase-close" disabled={busy} onClick={onClose} type="button"><FiX /></button>
       <div className="paid-seen-purchase-hero"><PublicationCoverMedia alt="" media={cover} /><span className="paid-seen-purchase-creator"><FanAvatar name={creatorName(publication)} size="h-7 w-7" src={creator.avatar} /><b>{creatorFirstName(publication)}</b></span><div><small>{publication?.category || __msg("social.seen")} · {chapters.length} {__msg("creator.chapters_84ff9e")}</small><h2>{publication?.title}</h2><p>{publication?.summary || publication?.description}</p></div></div>
       <div className="paid-seen-purchase-owners"><span>●●●</span><b>{Number(publication?.ownerCount || 0).toLocaleString(__uiLocale())} {__msg("system.PurchaseWorldModal.a7577876f6")}</b><small>{__msg("system.PurchaseWorldModal.151423a541")}</small></div>
@@ -106,8 +106,8 @@ export default function PurchaseWorldModal({ open, onClose, publication, onSucce
     if (!paidSeen) { await onSuccess?.(); onClose(); }
   };
   const closeSuccess = () => { onClose(); onSuccess?.(); };
-  const confirmPurchase = async () => { setBusy(true); setError(""); try { await finishPurchase(await purchaseService.purchaseWorld(id, key)); } catch (requestError) { const code = financialErrorCode(requestError); if (["ALREADY_ENTITLED", "SELF_PURCHASE_NOT_REQUIRED"].includes(code)) await finishPurchase(null); else if (code === "INSUFFICIENT_STARS") { const short = Math.max(0, Number(publication.pricing?.starsAmount || 0) - Number(wallet.data?.balance || 0)); setTopUpNeeded(short); setError(__msg("system.PurchaseWorldModal.198907bfa4", { value0: short })); } else setError(financialErrorMessage(requestError)); } finally { setBusy(false); } };
-  const topUpAndResume = async () => { setBusy(true); setError(""); try { await walletService.topUpExact(topUpNeeded, createIdempotencyKey("purchase-exact-topup")); await finishPurchase(await purchaseService.purchaseWorld(id, key)); } catch (requestError) { setError(financialErrorMessage(requestError)); } finally { setBusy(false); } };
+  const confirmPurchase = async () => { setBusy(true); setError(""); try { await finishPurchase(await purchaseService.purchaseWorld(id, key)); } catch (requestError) { const code = financialErrorCode(requestError); if (["ALREADY_ENTITLED", "SELF_PURCHASE_NOT_REQUIRED"].includes(code)) await finishPurchase(null); else if (code === "INSUFFICIENT_STARS") { const short = Math.max(0, Number(publication.pricing?.starsAmount || 0) - Number(wallet.data?.balance || 0)); setTopUpNeeded(short); setError(__msg("system.PurchaseWorldModal.198907bfa4", { value0: short })); } else setError("Didn’t go through — your coins are back."); } finally { setBusy(false); } };
+  const topUpAndResume = async () => { setError("Top-ups open soon"); };
   const remaining = useMemo(() => wallet.data ? wallet.data.balance - Number(publication?.pricing?.starsAmount || 0) : null, [publication?.pricing?.starsAmount, wallet.data]);
   if (!open) return null;
   if (paidSeen && entitlement) return <PaidSeenSuccess entitlement={entitlement} onClose={closeSuccess} publication={publication} />;

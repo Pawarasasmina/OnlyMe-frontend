@@ -71,6 +71,8 @@ const directWindowParticipant = (windowItem, viewerId) => (
 );
 
 const directWindowSnippet = (windowItem, viewerId) => {
+  if (windowItem?.settlementStatus === "REFUNDED") return "Expired · refunded";
+  if (windowItem?.status === "EXPIRED") return "Expired";
   const latest = windowItem?.latestMessage;
   if (latest) {
     const prefix = String(latest.senderId) === String(viewerId) ? "You: " : "";

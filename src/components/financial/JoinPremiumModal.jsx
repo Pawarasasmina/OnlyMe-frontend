@@ -61,10 +61,7 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
   };
   const topUpAndResume = async () => {
     if (!topUpNeeded || busy) return;
-    setBusy(true); setError("");
-    try { await walletService.topUpExact(topUpNeeded, createIdempotencyKey("world-exact-topup")); await finish(await membershipService.joinPremiumWorld(publication.id || publication._id, key)); }
-    catch (requestError) { setError(financialErrorMessage(requestError, __msg("financial.topUpOrSubscriptionCouldNotBeCompleted"))); }
-    finally { setBusy(false); }
+    setError("Top-ups open soon");
   };
 
   return <div className="premium-confirm-overlay" onMouseDown={onClose} role="presentation"><section aria-label={__msg("system.JoinPremiumModal.0f4f9df90a", { value0: publication.title })} aria-modal="true" className="premium-confirm-sheet" onMouseDown={(event) => event.stopPropagation()} role="dialog">

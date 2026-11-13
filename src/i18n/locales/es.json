@@ -955,6 +955,7 @@
   "messaging.uploadingVoiceMessage": "Descargar mensaje de voz...",
   "messaging.preview": "Previsión · {value0}",
   "messaging.retryUpload": "Retiro de upload",
+  "onboarding.showYourFace":"Muestra tu cara","onboarding.showYourFaceCopy":"La gente sigue rostros. Una foto real y qué estás haciendo; eso es todo.","onboarding.addPhoto":"Añadir foto","onboarding.addAPhoto":"Añade una foto","onboarding.peopleSeeYouLikeThis":"Así te verá la gente","onboarding.rightNow":"AHORA MISMO","onboarding.yourOwn":"El tuyo…","onboarding.whatAreYouUpTo":"¿Qué estás haciendo?","onboarding.later":"Más tarde","onboarding.couldnTSaveYourProfile":"No se pudo guardar tu perfil","onboarding.couldnTSaveYourPhoto":"No se pudo guardar tu foto","onboarding.couldnTSaveYourStatus":"No se pudo guardar tu estado",
   "onboarding.chooseYourMainSignal": "Elige tu señal principal",
   "onboarding.freshTrending": "Tendencia y tendencias",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "Nuevas voces, creadores emergentes y lo que está sucediendo ahora.",

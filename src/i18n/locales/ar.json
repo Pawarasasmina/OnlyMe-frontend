@@ -958,6 +958,7 @@
   "messaging.uploadingVoiceMessage": "تحميل الرسالة الصوتية ..",
   "messaging.preview": "المقالة السابقة {value0}",
   "messaging.retryUpload": "ردود الفعل upload",
+  "onboarding.showYourFace":"أظهر وجهك","onboarding.showYourFaceCopy":"يتابع الناس الوجوه. صورة حقيقية وما تفعله الآن — هذا كل شيء.","onboarding.addPhoto":"إضافة صورة","onboarding.addAPhoto":"أضف صورة","onboarding.peopleSeeYouLikeThis":"هكذا سيراك الناس","onboarding.rightNow":"الآن","onboarding.yourOwn":"اكتب حالتك…","onboarding.whatAreYouUpTo":"ماذا تفعل الآن؟","onboarding.later":"لاحقًا","onboarding.couldnTSaveYourProfile":"تعذر حفظ ملفك الشخصي","onboarding.couldnTSaveYourPhoto":"تعذر حفظ صورتك","onboarding.couldnTSaveYourStatus":"تعذر حفظ حالتك",
   "onboarding.chooseYourMainSignal": "اختر إشارةك الرئيسية",
   "onboarding.freshTrending": "التطور & Trend",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "أصوات جديدة، والمبدعين الناشئين وما يحدث الآن.",

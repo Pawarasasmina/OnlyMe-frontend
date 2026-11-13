@@ -7,7 +7,7 @@ function outputFileName(kind) {
   return `${kind || "image"}.jpg`;
 }
 
-export default function ProfileImageCropper({ actionLabel = "", kind, onCancel, onSave, saving, source }) {
+export default function ProfileImageCropper({ actionLabel = "", constrainToCenter = false, kind, onCancel, onSave, saving, source }) {
   __useUiLanguage();
   const isSeenCover = kind === "seen";
   const [zoom, setZoom] = useState(1);
@@ -15,7 +15,7 @@ export default function ProfileImageCropper({ actionLabel = "", kind, onCancel, 
   const [y, setY] = useState(0);
   const gestureRef = useRef({ pointers: new Map() });
   const config = {
-    avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 800, label: __msg("profile.profilePhoto"), width: 800 },
+    avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 400, label: __msg("profile.profilePhoto"), width: 400 },
     cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: __msg("profile.cover"), width: 1500 },
     feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: __msg("profile.feedImage"), width: 1080 },
     message: { aspect: "aspect-square", frame: "w-full max-w-[360px] rounded-2xl", height: 1080, label: __msg("system.ProfileImageCropper.d60861b0bc"), width: 1080 },
@@ -106,7 +106,7 @@ export default function ProfileImageCropper({ actionLabel = "", kind, onCancel, 
   };
 
   return (
-    <div aria-modal="true" className={`profile-image-crop-layer ${isSeenCover ? "is-seen-cover" : ""} ${kind === "message" ? "is-message" : ""}`} role="dialog">
+    <div aria-modal="true" className={`profile-image-crop-layer ${isSeenCover ? "is-seen-cover" : ""} ${kind === "message" ? "is-message" : ""} ${constrainToCenter ? "is-center-column" : ""}`} role="dialog">
       <button aria-label={__msg("profile.closeImageEditor")} className="profile-image-crop-scrim" disabled={saving} onClick={onCancel} type="button" />
       <section className="profile-image-crop-sheet">
         {isSeenCover ? <span aria-hidden="true" className="profile-image-crop-handle" /> : null}

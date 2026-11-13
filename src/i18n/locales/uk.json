@@ -953,6 +953,7 @@
   "messaging.uploadingVoiceMessage": "Завантажити голосові повідомлення...",
   "messaging.preview": "Попередній запис: {value0}",
   "messaging.retryUpload": "Завантажити upload",
+  "onboarding.showYourFace":"Покажіть своє обличчя","onboarding.showYourFaceCopy":"Люди підписуються на обличчя. Справжнє фото й чим ви займаєтесь — ось і все.","onboarding.addPhoto":"Додати фото","onboarding.addAPhoto":"Додайте фото","onboarding.peopleSeeYouLikeThis":"Так вас бачитимуть інші","onboarding.rightNow":"ПРЯМО ЗАРАЗ","onboarding.yourOwn":"Свій варіант…","onboarding.whatAreYouUpTo":"Чим ви займаєтесь?","onboarding.later":"Пізніше","onboarding.couldnTSaveYourProfile":"Не вдалося зберегти профіль","onboarding.couldnTSaveYourPhoto":"Не вдалося зберегти фото","onboarding.couldnTSaveYourStatus":"Не вдалося зберегти статус",
   "onboarding.chooseYourMainSignal": "Виберіть свій головний сигнал",
   "onboarding.freshTrending": "Свіжий і тренд",
   "onboarding.newVoicesEmergingCreatorsAndWhatIsHappeningRight": "Нові голоси, нові творці і те, що відбувається зараз.",
