@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { msg, getLocale, optionLabel } from "../../../i18n/runtime.js";
 import { useLanguage } from "../../../hooks/useLanguage";
@@ -24,11 +24,9 @@ export default function WallMarketplaceTile({ post, hideCategory = false, locati
   const id = post.originalPostId || post.id || post._id;
   const target = { pathname: `/posts/${encodeURIComponent(id)}` };
   const state = { wallReturnTo: location.pathname + location.search };
-  const [expanded, setExpanded] = useState(false);
   const [more, setMore] = useState(false);
   const scrollRef = useRef(null);
   const gestureRef = useRef({ moved: false, x: 0, y: 0 });
-  const captionId = useId();
   const checkScroll = () => {
     const element = scrollRef.current;
     if (element) setMore(element.scrollHeight > element.clientHeight + 2 && element.scrollTop + element.clientHeight < element.scrollHeight - 2);
@@ -56,7 +54,7 @@ export default function WallMarketplaceTile({ post, hideCategory = false, locati
       {price ? <Link className="wall-market-price" to={target} state={state} title={price}>{price}</Link> : null}
     </div>
     {closedLabel || (!hideCategory && !price) ? <Link className="wall-market-category" to={target} state={state}>{closedLabel || optionLabel(post.postType || post.context || "Community")}</Link> : null}
-    {photo && text ? <button aria-controls={captionId} aria-expanded={expanded} aria-label={msg(expanded ? "wallGrid.collapseCaption" : "wallGrid.expandCaption")} className={`wall-market-caption${expanded ? " is-expanded" : ""}`} dir="auto" id={captionId} onClick={() => setExpanded(current => !current)} type="button">{text}</button> : null}
+    {photo && text ? <Link aria-label={msg("wallGrid.openNote")} className="wall-market-caption" dir="auto" state={state} to={target}>{text}</Link> : null}
     <Link className="wall-market-meta" to={target} state={state} title={[name, post.location, relativeTime(post.publishedAt || post.createdAt)].filter(Boolean).join(" · ")}>{name}{post.location ? ` · ${String(post.location).split(",")[0]}` : ""} · {relativeTime(post.publishedAt || post.createdAt)}{post.editedAt ? ` ? ${msg("wallEdit.edited")}` : ""}</Link>
   </article>;
 }

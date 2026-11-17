@@ -483,6 +483,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
     [item.reaction.key]: item.count,
   }), {}), [reactionSummary]);
   const commentCount = Math.max(normalized.commentCount, comments.length);
+  const imageCount = normalized.media.filter((item) => String(item.type || "image").toLowerCase() === "image").length;
   const replyIntent = wallReplyIntent(normalized);
   const visibleReactionSamples = reactionSummary.length
     ? [...reactionSummary].sort((a, b) => Number(b.reaction.key === reaction) - Number(a.reaction.key === reaction) || b.count - a.count).slice(0, 2).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
@@ -1000,7 +1001,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
 
   return (
     <>
-      <article className={`home-feed-post wall-thread-note ${profileNote && !normalized.sharedBy ? "is-profile-note" : ""} ${resolvedAt || isClosed ? "is-solved" : ""}`} ref={articleRef} onClick={event => {
+      <article className={`home-feed-post wall-thread-note ${fullText ? "is-note-detail" : ""} ${profileNote && !normalized.sharedBy ? "is-profile-note" : ""} ${resolvedAt || isClosed ? "is-solved" : ""}`} ref={articleRef} onClick={event => {
         if (fullText || event.target.closest("a,button,input,textarea,video,audio,label,[role='button'],.home-feed-media") || window.getSelection()?.toString()) return;
         navigate(noteTo, { state: noteState });
       }}>
@@ -1026,9 +1027,9 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
             </Link> : null}
             <div className="home-feed-meta wall-note-meta"><WallPostTypeBadge closedLabel={closedLabel} rightNow={normalized.rightNow && !isClosed && !resolvedAt} postType={normalized.postType} context={normalized.context} /><span className="wall-note-age">&middot; {normalized.timestamp}</span>{normalized.editedAt ? <span className="wall-note-edited"> &middot; {__msg("wallEdit.edited")}</span> : null}{normalized.location ? <span className="wall-note-place" title={normalized.location}>&middot; <FiMapPin aria-hidden="true" />{normalized.location.split(",")[0]}</span> : null}</div>
           </div>
-          <span aria-label={__msg("fanWeb.views", { value0: formatCount(viewCount) })} className="home-feed-head-views" title={__msg("fanWeb.views_24be61")}>
+          {!fullText ? <span aria-label={__msg("fanWeb.views", { value0: formatCount(viewCount) })} className="home-feed-head-views" title={__msg("fanWeb.views_24be61")}>
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
-          </span>
+          </span> : null}
           {!fullText ? <button
             aria-label={__msg("fanWeb.moreActionsForSPost", { value0: creator.name })}
             className="rounded-full p-1.5 text-atseen-dim transition hover:bg-atseen-surface-2 hover:text-white"
@@ -1049,9 +1050,9 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
           </p>
         ) : null}
         {normalized.media?.length ? (
-          <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
+          <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout} ${fullText ? "wall-note-detail-media" : ""} ${fullText && imageCount > 1 ? "has-multiple-images" : ""}`}>
             {normalized.media.map((mediaItem) => (
-              !fullText && mediaItem.type === "image" ? <Link className="wall-note-media-link" to={noteTo} state={noteState} key={mediaItem.id || mediaItem.url}><MediaItem item={mediaItem} postId={actionPostId} postText={caption} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} /></Link> : <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} />
+              !fullText && mediaItem.type === "image" ? <Link className="wall-note-media-link" to={noteTo} state={noteState} key={mediaItem.id || mediaItem.url}><MediaItem item={mediaItem} postId={actionPostId} postText={caption} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} /></Link> : fullText ? <div className={`wall-note-detail-media-item is-${String(mediaItem.type || "image").toLowerCase()}`} key={mediaItem.id || mediaItem.url}><MediaItem item={mediaItem} postId={actionPostId} postText={caption} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} /></div> : <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} />
             ))}
           </div>
         ) : null}
@@ -1114,6 +1115,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
         {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={openComments} type="button">{__msg("fanWeb.viewNoteComments", { count: commentCount })}</button> : null}
         {fullText && commentsOpen ? (
           <section aria-label={__msg("fanWeb.wallNoteComments")} className="seen-comments-panel wall-comments-panel">
+            <h2 className="wall-note-replies-heading">{__msg("fanWeb.replies")}<span aria-hidden="true"> &middot; </span>{commentCount}</h2>
             {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">{__msg("fanWeb.viewNoteComments", { count: commentCount })}</button> : null}
             <WallCommentList noteOwner={creator} comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
               onOpenOptions={(comment) => { setCommentReport(comment); setCommentReportStage("options"); }}
@@ -1131,7 +1133,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
             {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>@{replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
             <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAComment")} value={commentText} />
+              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : `Reply to ${commentFirstName(creator, __msg("discover.creator"))}\u2026`} value={commentText} />
               <button aria-label={__msg("fanWeb.recordAVoiceComment")} className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
               <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">{__msg("fanWeb.post")}</button>
             </form>

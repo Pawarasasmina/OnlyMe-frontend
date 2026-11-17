@@ -47,7 +47,7 @@ async function setup(page, server = { account: 0, views: ["feed", "feed"], saves
   return server;
 }
 
-for (const width of [320, 390, 1280]) test(`grid geometry, internal reading, caption expansion and note links at ${width}px`, async ({ page }) => {
+for (const width of [320, 390, 1280]) test(`grid geometry, internal reading and unified note links at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 900 });
   const server = await setup(page);
   const toggle = page.getByRole("group", { name: "Wall view" });
@@ -63,13 +63,11 @@ for (const width of [320, 390, 1280]) test(`grid geometry, internal reading, cap
   await expect(tiles.first().locator(".wall-market-price")).toHaveCSS("backdrop-filter", /blur\(14px\)/);
   await expect(tiles.nth(2).locator(".wall-market-price")).toHaveText("Free");
   const tileCaption = tiles.first().locator(".wall-market-caption");
-  await expect(tileCaption).toHaveAttribute("aria-expanded", "false");
+  await expect(tileCaption).toHaveAttribute("href", `/posts/${posts[0].id}`);
   await tileCaption.click();
-  await expect(tileCaption).toHaveAttribute("aria-expanded", "true");
-  await expect(page).toHaveURL(/\/wall$/);
-  expect(await tileCaption.evaluate(el => el.clientHeight)).toBeGreaterThan(40);
-  await tileCaption.click();
-  await expect(tileCaption).toHaveAttribute("aria-expanded", "false");
+  await expect(page).toHaveURL(new RegExp(`/posts/${posts[0].id}$`));
+  await page.getByRole("link", { name: "Back to Wall" }).click();
+  await expect(tiles).toHaveCount(4);
   const text = tiles.nth(1).locator(".wall-market-text");
   await expect(text).toHaveText(longText);
   await expect(text).toHaveClass(/has-more/);
