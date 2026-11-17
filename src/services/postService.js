@@ -74,7 +74,7 @@ export const postService = {
   flagOutdated: (postId) => axiosInstance.post(`/posts/${encodeURIComponent(postId)}/outdated`),
   updatePost: async (postId, payload) => {
     const response = await axiosInstance.put(`/posts/${postId}`, payload);
-    return normalizePost(response.data?.data?.post);
+    return { ...normalizePost(response.data?.data?.post), editUnchanged: Boolean(response.data?.data?.unchanged) };
   },
   reactToPost: async (postId, reaction) => {
     const response = await axiosInstance.put(`/posts/${postId}/reaction`, { reaction });
