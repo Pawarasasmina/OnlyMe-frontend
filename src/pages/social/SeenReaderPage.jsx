@@ -41,7 +41,7 @@ const reactionEmoji = {
   INSIGHTFUL: "\uD83D\uDD25",
 };
 
-const DEFAULT_ENGAGEMENT = { reactionCount: 0, commentCount: 0, shareCount: 0, viewCount: 0, viewerReaction: null, viewerShared: false, viewerSaved: false, comments: [] };
+const DEFAULT_ENGAGEMENT = { reactionCount: 0, reactorPreviews: [], commentCount: 0, shareCount: 0, viewCount: 0, viewerReaction: null, viewerShared: false, viewerSaved: false, comments: [] };
 
 function withOptimisticCommentReaction(engagement = {}, commentId, reaction) {
   const update = (comment) => {
@@ -124,6 +124,7 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
 
   return <>
   <div className="seen-compact-engagement" aria-label={__msg("social.seenEngagement")}>
+    {engagement.reactorPreviews?.length ? <button aria-label={__msg("social.openReactions")} className="seen-reactor-faces" onClick={() => setReactionsOpen(true)} type="button">{engagement.reactorPreviews.slice(0, 2).map((person) => <FanAvatar key={person.id || person._id} name={person.name} size="h-5 w-5" src={person.avatar || person.avatarUrl} />)}</button> : null}
     <button ref={reactionAnchorRef} aria-expanded={reactionsOpen} aria-label={__msg("social.openReactions")} className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
     <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
     {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat />{Number(engagement.shareCount) > 0 ? <small>{formatCount(engagement.shareCount)}</small> : null}</button> : null}

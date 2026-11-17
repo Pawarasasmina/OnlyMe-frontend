@@ -1031,13 +1031,20 @@ function ContentTabsPanel({ data, isOwner, tab }) {
 
 function ProfileNotes({ isOwner, posts = [] }) {
   __useUiLanguage();
+  const [expanded, setExpanded] = useState(false);
+  const visiblePosts = expanded ? posts : posts.slice(0, 2);
   return (
     <section className="profile-section profile-wall-section">
       <header className="profile-section-head">
-        <h2>{__msg("social.notes")}</h2>
-        <span>{compact(posts.length)} {posts.length === 1 ? __msg("social.note") : __msg("social.notes_3add7b")}</span>
+        <h2>{__msg("fanWeb.wall")}</h2>
       </header>
-      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} profileNote />)}</div> : <ContentEmptyState compact message={isOwner ? __msg("social.writeAWallNoteAndItWillAppearHere") : __msg("social.thisCreatorHasNotPostedAWallNoteYet")} primaryAction={isOwner ? { label: __msg("social.createAPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={isOwner ? __msg("fan.createYourFirstPost") : __msg("social.noPostsYet")} variant="wall" />}
+      {posts.length ? <>
+        <div className="home-feed-list profile-notes-list">{visiblePosts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div>
+        <button aria-expanded={expanded} className="profile-wall-footer" onClick={() => setExpanded((current) => !current)} type="button">
+          <strong>{__msg("fanWeb.wall")}</strong>
+          <span>{compact(posts.length)} {posts.length === 1 ? __msg("social.note") : __msg("social.notes_3add7b")} <b aria-hidden="true">{expanded ? "⌃" : "›"}</b></span>
+        </button>
+      </> : <ContentEmptyState compact message={isOwner ? __msg("social.writeAWallNoteAndItWillAppearHere") : __msg("social.thisCreatorHasNotPostedAWallNoteYet")} primaryAction={isOwner ? { label: __msg("social.createAPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={isOwner ? __msg("fan.createYourFirstPost") : __msg("social.noPostsYet")} variant="wall" />}
     </section>
   );
 }

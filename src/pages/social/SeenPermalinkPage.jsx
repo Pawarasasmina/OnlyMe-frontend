@@ -60,6 +60,7 @@ export default function SeenPermalinkPage() {
         reactionCount: engagement.reactionCount,
         reactionBreakdown: engagement.reactionBreakdown,
         topReactions: engagement.topReactions,
+        reactorPreviews: engagement.reactorPreviews,
         commentCount: engagement.commentCount,
         shareCount: engagement.shareCount,
         saveCount: engagement.saveCount,
