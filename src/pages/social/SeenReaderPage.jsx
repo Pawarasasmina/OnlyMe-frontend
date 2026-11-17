@@ -35,16 +35,22 @@ const reactionEmoji = {
   SAD: "\uD83E\uDD72",
   PHONE: "\uD83D\uDCF1",
   STRONG: "\uD83D\uDCAA",
+  ADMIRE: "\uD83D\uDE0D",
+  WOW: "\uD83D\uDE2E",
   PRAY: "\uD83D\uDE4F",
   INSIGHTFUL: "\uD83D\uDD25",
 };
 
 const DEFAULT_ENGAGEMENT = { reactionCount: 0, commentCount: 0, shareCount: 0, viewCount: 0, viewerReaction: null, viewerShared: false, viewerSaved: false, comments: [] };
 
-function withOptimisticCommentHeart(engagement = {}, commentId, active) {
-  const update = (comment) => String(comment.id) === String(commentId)
-    ? { ...comment, viewerReaction: active ? "LOVE" : null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + (active ? 1 : -1)), reactionBreakdown: { ...(comment.reactionBreakdown || {}), LOVE: Math.max(0, Number(comment.reactionBreakdown?.LOVE || 0) + (active ? 1 : -1)) }, topReactions: active ? ["LOVE"] : comment.topReactions || [] }
-    : { ...comment, replies: (comment.replies || []).map(update) };
+function withOptimisticCommentReaction(engagement = {}, commentId, reaction) {
+  const update = (comment) => {
+    if (String(comment.id) !== String(commentId)) return { ...comment, replies: (comment.replies || []).map(update) };
+    const previous = comment.viewerReaction || "";
+    const next = reaction || "";
+    const delta = previous ? (next ? 0 : -1) : (next ? 1 : 0);
+    return { ...comment, viewerReaction: next || null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + delta), topReactions: next ? [next] : comment.topReactions || [] };
+  };
   return { ...engagement, comments: (engagement.comments || []).map(update) };
 }
 const STAR = "\u2726";
@@ -247,7 +253,7 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
       <div className="seen-comment-copy">
         <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{commentFirstName(item.author, __msg("profile.fan"))}</Link> : <strong>{commentFirstName(item.author, __msg("profile.fan"))}</strong>}<CommentReplyMention author={parentAuthor} replyingAuthor={item.author} />{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label={__msg("comments.voiceComment")} /> : null}
-        <span><button aria-label={reacted ? "Remove reaction" : `React to ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(item.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(item)} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat />{Number(repostCounts[item.id] ?? item.repostCount) > 0 ? <small>{formatCount(repostCounts[item.id] ?? item.repostCount)}</small> : null}</button> : null}</span>
+        <span><button aria-label={reacted ? "Remove reaction" : `React to ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(item.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(item)} type="button">{reacted && reactionEmoji[item.viewerReaction] ? <i aria-hidden="true" className="seen-comment-selected-reaction">{reactionEmoji[item.viewerReaction]}</i> : <FiHeart />}{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat />{Number(repostCounts[item.id] ?? item.repostCount) > 0 ? <small>{formatCount(repostCounts[item.id] ?? item.repostCount)}</small> : null}</button> : null}</span>
         {String(reactionCommentId) === String(item.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={item.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { onReact(item, reaction); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}
       </div>
     </article>;
@@ -1191,7 +1197,7 @@ export default function SeenReaderPage() {
       : publicationService.removeSeenCommentReaction(id, commentId, accessToken)),
     onMutate: ({ commentId, reaction }) => {
       const previous = engagement;
-      syncSeenEngagementCaches(withOptimisticCommentHeart(previous, commentId, Boolean(reaction)));
+      syncSeenEngagementCaches(withOptimisticCommentReaction(previous, commentId, reaction));
       return { previous };
     },
     onError: (_error, _variables, context) => context?.previous && syncSeenEngagementCaches(context.previous),

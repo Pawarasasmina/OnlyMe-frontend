@@ -87,10 +87,14 @@ function formatCount(value = 0) {
   return new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
-function withOptimisticCommentHeart(engagement = {}, commentId, active) {
-  const update = (comment) => String(comment.id) === String(commentId)
-    ? { ...comment, viewerReaction: active ? "LOVE" : null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + (active ? 1 : -1)), reactionBreakdown: { ...(comment.reactionBreakdown || {}), LOVE: Math.max(0, Number(comment.reactionBreakdown?.LOVE || 0) + (active ? 1 : -1)) }, topReactions: active ? ["LOVE"] : comment.topReactions || [] }
-    : { ...comment, replies: (comment.replies || []).map(update) };
+function withOptimisticCommentReaction(engagement = {}, commentId, reaction) {
+  const update = (comment) => {
+    if (String(comment.id) !== String(commentId)) return { ...comment, replies: (comment.replies || []).map(update) };
+    const previous = comment.viewerReaction || "";
+    const next = reaction || "";
+    const delta = previous ? (next ? 0 : -1) : (next ? 1 : 0);
+    return { ...comment, viewerReaction: next || null, reactionCount: Math.max(0, Number(comment.reactionCount || 0) + delta), topReactions: next ? [next] : comment.topReactions || [] };
+  };
   return { ...engagement, comments: (engagement.comments || []).map(update) };
 }
 
@@ -699,7 +703,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onClose, 
       : publicationService.removeSeenCommentReaction(item.id, comment.id)),
     onMutate: ({ comment, reaction }) => {
       const previous = engagementQuery.data;
-      onEngagementChange(withOptimisticCommentHeart(previous, comment.id, Boolean(reaction)));
+      onEngagementChange(withOptimisticCommentReaction(previous, comment.id, reaction));
       return { previous };
     },
     onSuccess: (response) => {
@@ -770,7 +774,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onClose, 
       <div className="seen-comment-copy">
         <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{commentFirstName(comment.author, __msg("profile.fan"))}</Link><MemberCommentBadge author={comment.author} noteOwner={item.creator} /><CommentReplyMention author={parentAuthor} replyingAuthor={comment.author} />{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label={__msg("comments.voiceComment")} /> : null}
-        <span><button aria-label={reacted ? "Remove reaction" : `React to ${comment.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(comment.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(comment)} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">{__msg("fan.reply")}</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
+        <span><button aria-label={reacted ? "Remove reaction" : `React to ${comment.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(comment.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(comment)} type="button">{reacted && reactionLabel[currentSeenReactionKey(comment.viewerReaction)] ? <i aria-hidden="true" className="seen-comment-selected-reaction">{reactionLabel[currentSeenReactionKey(comment.viewerReaction)]}</i> : <FiHeart />}{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">{__msg("fan.reply")}</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
         {String(reactionCommentId) === String(comment.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={comment.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { commentReactionMutation.mutate({ comment, reaction }); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}
       </div>
     </article>;

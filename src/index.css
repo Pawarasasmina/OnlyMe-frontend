@@ -15924,6 +15924,7 @@ video.seen-reader-media {
 .seen-comment-quick-reactions button:hover,
 .seen-comment-quick-reactions button.is-selected { background: rgba(156,203,255,.14); }
 .seen-comment-quick-reactions button:active { transform: scale(.84); }
+.seen-comment-selected-reaction { font-style: normal; font-size: 14px; line-height: 1; }
 @keyframes seen-comment-reactions-in {
   from { opacity: 0; transform: translateY(5px) scale(.94); }
   to { opacity: 1; transform: none; }

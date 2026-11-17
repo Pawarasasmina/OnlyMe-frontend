@@ -3,7 +3,7 @@ const user = { id: "507f1f77bcf86cd799439011", name: "Viewer", username: "viewer
 const id = "507f1f77bcf86cd799439012";
 async function setup(page, own = true) {
   const author = own ? user : { id: "507f1f77bcf86cd799439013", name: "Neighbour", username: "neighbour" };
-  const post = { id, author, text: "The complete content of this community note. ".repeat(30), postType: "Question", publishedAt: new Date().toISOString(), isOwner: own, canResolve: own, media: [], comments: Array.from({ length: 12 }, (_, i) => ({ id: `comment-${i}`, author, text: `Full reply ${i}` })), commentCount: 12 };
+  const post = { id, author, text: "The complete content of this community note. ".repeat(30), postType: "Question", publishedAt: new Date().toISOString(), isOwner: own, canResolve: own, media: [], comments: Array.from({ length: 12 }, (_, i) => ({ id: `comment-${i}`, author, text: `Full reply ${i}`, ...(i === 0 ? { reactionCount: 4, viewerReaction: "fire" } : {}) })), commentCount: 12 };
   await page.addInitScript(value => { localStorage.setItem("onlyme_access_token", "detail-fixture"); localStorage.setItem("onlyme_cached_user", JSON.stringify(value)); }, user);
   await page.route("**/api/**", async route => {
     const url = new URL(route.request().url());
@@ -28,6 +28,17 @@ for (const width of [390, 1280]) test(`full Note page, reply focus and owner men
   await expect(input).toBeFocused();
   await expect(input).toBeInViewport();
   await expect(page.locator(".home-feed-text")).toHaveText(post.text);
+  await expect(page.locator(".wall-note-replies-heading")).toHaveText("Replies · 12");
+  await expect(input).toHaveAttribute("placeholder", "Reply to Viewer\u2026");
+  await expect(page.locator(".is-note-detail .fan-avatar").first()).toHaveCSS("width", "42px");
+  const firstReplyReaction = page.locator('[data-comment-id="comment-0"] .wall-comment-actions button').first();
+  await expect(firstReplyReaction).toContainText("\uD83D\uDD25");
+  await expect(firstReplyReaction).toContainText("4");
+  await firstReplyReaction.dispatchEvent("pointerdown");
+  await page.waitForTimeout(500);
+  await firstReplyReaction.dispatchEvent("pointerup");
+  await expect(page.locator('[data-comment-id="comment-0"] .wall-comment-quick-reactions')).toBeVisible();
+  await expect(page.locator('[data-comment-id="comment-0"] .wall-comment-quick-reactions button')).toHaveCount(8);
   await expect(page.locator('[data-comment-id="comment-11"]')).toBeAttached();
   await expect(page.locator(".wall-comments-panel > form")).toHaveCSS("position", width <= 880 ? "fixed" : "sticky");
   await page.locator(".wall-note-detail-header button").click();
