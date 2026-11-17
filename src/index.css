@@ -41867,7 +41867,7 @@ video.seen-reader-media {
 @media (max-width:480px) { .dream-gift-recent p { white-space:normal;overflow-wrap:anywhere; } }
 
 /* Activity replays a gift in place, as giftFX does in the reference. */
-.activity-gift-preview { position:fixed;top:0;bottom:0;left:0;z-index:230;width:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,rgba(27,40,61,.3),transparent 58%),#07090e;animation:activity-gift-open .3s ease-out both; }
+.activity-gift-preview { position:fixed;top:0;bottom:0;left:0;z-index:230;width:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(27,40,61,.24),rgba(4,6,10,.82) 58%),rgba(3,5,9,.9);box-shadow:0 0 80px rgba(0,0,0,.72);backdrop-filter:blur(18px) saturate(1.05);-webkit-backdrop-filter:blur(18px) saturate(1.05);animation:activity-gift-open .3s ease-out both; }
 .activity-gift-preview-dismiss { display:flex;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:60px 0 100px;cursor:pointer; }
 .activity-gift-preview-dismiss:focus-visible { outline:2px solid #9ccbff;outline-offset:-3px; }
 .activity-gift-preview-art { position:relative;display:flex;width:72%;height:44dvh;max-height:440px;align-items:center;justify-content:center;animation:activity-gift-art-in .6s cubic-bezier(.16,.8,.22,1) both; }
@@ -41937,9 +41937,9 @@ video.seen-reader-media {
 @media (min-width: 1020px) {
   .universal-location-layer.is-center-column .universal-location-sheet {
     right: auto;
-    left: calc((100vw - 1016px) / 2 + 276px);
-    width: 440px;
-    max-width: 440px;
+    left: 0;
+    width: 100%;
+    max-width: none;
   }
 }
 .seen-paid-preview-note{display:flex;align-items:flex-start;gap:8px;margin:-4px 0 10px;color:#75d4a3;font-size:11px;line-height:1.45}.seen-paid-preview-note svg{width:14px;flex:none;margin-top:1px}.seen-paid-earning-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:-6px 0 16px;padding:15px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.025)}.seen-paid-earning-row>span{display:grid;gap:2px}.seen-paid-earning-row>span:last-child{text-align:right}.seen-paid-earning-row small{color:rgba(255,255,255,.42);font-size:10px}.seen-paid-earning-row b{color:#fff;font-size:21px}.seen-paid-earning-row>span:last-child b{color:#bfe3ff;font-size:13px}.seen-paid-earning-row em{color:rgba(255,255,255,.38);font-size:9px;font-style:normal}

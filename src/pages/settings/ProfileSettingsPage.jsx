@@ -190,6 +190,7 @@ function NotificationSheet({ anchorRef, isOpen, onClose }) {
     onSuccess: (response) => {
       const data = response.data.data;
       queryClient.setQueryData(["settings", "notifications"], data);
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
       setPreferences(data.notificationPreferences || {});
       setError("");
     },
@@ -235,13 +236,23 @@ function NotificationSheet({ anchorRef, isOpen, onClose }) {
     <section className="profile-notification-sheet settings-notification-sheet edit-profile-notification-sheet">
       <span aria-hidden="true" className="profile-notification-grab" />
       <h2 id="profile-notifications-title">{__msg("settings.notifications")}</h2>
-      {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : <div className="profile-notification-list">
+      {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : !query.isError ? <div className="profile-notification-list">
         {notificationRows.map(([key, title]) => <button aria-checked={preferences[key] !== false} disabled={mutation.isPending} key={key} onClick={() => toggle(key)} role="switch" type="button"><span><b>{title}</b></span><i aria-hidden="true" className={preferences[key] !== false ? "is-on" : ""}><em /></i></button>)}
-      </div>}
-      {query.isError ? <p className="profile-notification-error">{__msg("settings.unableToLoadNotificationSettings")}</p> : null}
+      </div> : null}
+      {query.isError ? <div className="profile-notification-error"><p>{__msg("settings.unableToLoadNotificationSettings")}</p><button className="mt-3 font-bold text-atseen-blue" onClick={() => query.refetch()} type="button">{__msg("discover.tryAgain")}</button></div> : null}
       {error ? <p className="profile-notification-error">{__systemMessage(error)}</p> : null}
     </section>
   </div>;
+}
+
+function giftCollections(gifts = []) {
+  const groups = new Map();
+  gifts.forEach((gift) => {
+    if (!gift.category?.id) return;
+    if (!groups.has(gift.category.id)) groups.set(gift.category.id, { id: gift.category.id, name: gift.category.name, sortOrder: gift.category.sortOrder ?? 100000, gifts: [] });
+    groups.get(gift.category.id).gifts.push(gift);
+  });
+  return [...groups.values()].sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
 export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
@@ -254,6 +265,7 @@ export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
     mutationFn: (enabledGiftIds) => profileService.updateGiftSettings(enabledGiftIds),
     onSuccess: (response) => {
       queryClient.setQueryData(["settings", "gifts"], response.data.data);
+      queryClient.invalidateQueries({ queryKey: ["settings", "gifts", "fan-preview"] });
       queryClient.invalidateQueries({ queryKey: ["messages", "gifts"] });
       queryClient.invalidateQueries({ queryKey: ["dream"] });
       setError("");
@@ -289,10 +301,10 @@ export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
     const enabled = !group.gifts.every((gift) => gift.enabled);
     const nextGifts = gifts.map((gift) => groupIds.has(gift.id) ? { ...gift, enabled } : gift);
     const enabledGiftIds = nextGifts.filter((gift) => gift.enabled).map((gift) => gift.id);
-    queryClient.setQueryData(["settings", "gifts"], { gifts: nextGifts });
+    queryClient.setQueryData(["settings", "gifts"], (current) => ({ ...current, gifts: nextGifts }));
     mutation.mutate(enabledGiftIds);
   };
-  const toggle = (gift) => toggleGroup({ gifts: [gift] });
+  const collections = giftCollections(query.data?.gifts || []);
 
   return (
     <div aria-labelledby="gift-settings-title" aria-modal="true" className="profile-notification-layer settings-notification-layer" role="dialog" style={anchorBounds ? { "--settings-notification-left": `${anchorBounds.left}px`, "--settings-notification-width": `${anchorBounds.width}px` } : undefined}>
@@ -301,7 +313,8 @@ export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
         <span aria-hidden="true" className="profile-notification-grab" />
         <h2 className="text-[18px] font-black text-white" id="gift-settings-title">{__msg("creator.gifts")}</h2>
         <p className="mt-1 text-[11px] text-white/45">{__msg("settings.whatFansCanSendYouCoinsGoToYour")}</p>
-        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-5 divide-y divide-white/[0.08]">{(query.data?.gifts || []).map((gift) => <button aria-pressed={gift.enabled} className="flex w-full items-center gap-4 py-3.5 text-left disabled:opacity-60" disabled={mutation.isPending} key={gift.id} onClick={() => toggle(gift)} type="button"><span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.04]"><img alt="" className="h-10 w-10 object-contain" src={gift.imageUrl} style={{ transform: `translate(${gift.imagePositionX || 0}%, ${gift.imagePositionY || 0}%) scale(${(gift.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{gift.name}</b><small className="mt-1 block text-xs text-atseen-muted"><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(gift.stars).toLocaleString(__uiLocale())}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${gift.enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${gift.enabled ? "left-6" : "left-1"}`} /></i></button>)}</div>}
+        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-4 divide-y divide-white/[0.08]">{collections.map((collection) => { const preview = collection.gifts[0]; const enabled = collection.gifts.every((gift) => gift.enabled); const prices = collection.gifts.map((gift) => Number(gift.stars || 0)); const minimum = Math.min(...prices); const maximum = Math.max(...prices); return <button aria-pressed={enabled} className="flex w-full items-center gap-3 py-3 text-left disabled:opacity-60" disabled={mutation.isPending} key={collection.id} onClick={() => toggleGroup(collection)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden"><img alt="" className="h-8 w-8 object-contain" src={preview.imageUrl} style={{ transform: `translate(${preview.imagePositionX || 0}%, ${preview.imagePositionY || 0}%) scale(${(preview.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{collection.name}</b><small className="mt-1 block text-xs text-atseen-muted">{collection.gifts.length} · <img alt="coins" className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{minimum.toLocaleString(__uiLocale())}{maximum !== minimum ? `–${maximum.toLocaleString(__uiLocale())}` : ""}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${enabled ? "left-6" : "left-1"}`} /></i></button>; })}</div>}
+        {!query.isLoading && !query.isError && collections.length ? <p className="mt-3 text-center text-[10px] text-white/35">{collections.filter((collection) => collection.gifts.every((gift) => gift.enabled)).length}/{collections.length} collections on · The Vault is where legends live</p> : null}
         {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{__systemMessage(error)}</p> : null}
       </section>
     </div>
@@ -430,11 +443,12 @@ function ProfileSettingsPage() {
   }, [profile.directAccessEnabled, profile.directAccessPriceStars, profile.directCallDurationMinutes, profile.directCallEnabled, profile.directCallPriceStars, role, __uiLanguage]);
 
   const giftSummary = useMemo(() => {
-    const enabled = (giftSettingsQuery.data?.gifts || []).filter((gift) => gift.enabled);
+    const collections = giftCollections(giftSettingsQuery.data?.gifts || []);
+    const enabled = collections.filter((collection) => collection.gifts.every((gift) => gift.enabled));
     if (!giftSettingsQuery.data) return __msg("settings.chooseAcceptedGifts");
     if (!enabled.length) return __msg("settings.allGiftsOff");
-    if (enabled.length === giftSettingsQuery.data.gifts.length) return __msg("settings.allGiftsOn");
-    return enabled.slice(0, 3).map((gift) => gift.name).join(" - ") + (enabled.length > 3 ? ` +${enabled.length - 3}` : "");
+    if (enabled.length === collections.length) return __msg("settings.allGiftsOn");
+    return enabled.slice(0, 3).map((collection) => collection.name).join(" - ") + (enabled.length > 3 ? ` +${enabled.length - 3}` : "");
   }, [giftSettingsQuery.data, __uiLanguage]);
   const notificationSummary = [
     form.notificationPreferences.directAccess ? __msg("fanWeb.support") : "",
