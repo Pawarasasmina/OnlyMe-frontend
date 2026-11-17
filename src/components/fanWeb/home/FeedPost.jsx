@@ -881,7 +881,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
       onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.c1027a54c0b9")),
       onSuccess: () => {
         showToast(__msg("system.FeedPost.cd7e7590cd"));
-        navigate("/wall", { replace: true });
+        navigate(noteState.wallReturnTo, { replace: true });
       },
     });
   };
@@ -970,7 +970,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
           setMoreBusy("");
           setMoreOpen(false);
           showToast(__msg("system.FeedPost.17219f1010"));
-          navigate("/wall", { replace: true });
+          navigate(noteState.wallReturnTo, { replace: true });
         },
       });
     } else if (action === "block") {
@@ -1278,7 +1278,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("admin.edit"), subtitle: __msg("wallEdit.remaining", { minutes: Math.max(1, Math.ceil((new Date(normalized.editUntil || new Date(normalized.publishedAt || normalized.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }), icon: FiEdit2 }] : []),
+              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("admin.edit"), subtitle: __msg("wallEdit.menuRemaining", { minutes: Math.max(1, Math.ceil((new Date(normalized.editUntil || new Date(normalized.publishedAt || normalized.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }), icon: FiEdit2 }] : []),
               ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? __msg("fanWeb.reopen") : closeLabels.action, subtitle: resolvedAt ? __msg("fanWeb.backAmongActivePosts") : __msg("fanWeb.staysVisibleWithItsCommentsAndReplies"), icon: FiCheck }] : []),
               { key: "story", label: __msg("activity.addToYourStory"), subtitle: __msg("system.FeedPost.1acf81ee86"), icon: FiPlusCircle },
               { key: "repost", label: shared ? __msg("fan.removeFromProfile") : __msg("fanWeb.repostToMyProfile"), subtitle: shared ? __msg("fanWeb.takeItOffYourShowcase") : __msg("fanWeb.yourProfileYourListAddAsManyAsYou"), icon: FiRepeat },

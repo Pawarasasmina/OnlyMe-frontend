@@ -20,7 +20,7 @@ export default function WallPostTypeBadge({ postType, topic, context, rightNow, 
   const topicKey = WALL_FILTER_TOPICS.find(item => (item.sourceLabel || item.label).toLowerCase() === String(topicLabel).toLowerCase())?.value;
   const target = (field, value) => {
     const params = new URLSearchParams(location.pathname === "/wall" ? location.search : "");
-    for (const key of ["note", "filter", "type", "topic", "q", "compose", "composeRequest", "question"]) params.delete(key);
+    for (const key of ["note", "filter", "type", "topic", "rightNow", "q", "compose", "composeRequest", "question"]) params.delete(key);
     params.set(field, value);
     return `/wall?${params}`;
   };

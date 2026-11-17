@@ -62,6 +62,23 @@ test("request author can Keep it and later mark Solved from detail", async ({ pa
   await expect(page.locator(".wall-post-type-link")).toHaveText("Solved");
 });
 
+for (const [type, age, title] of [["Need Help", 6.25, "Still need it?"], ["Looking for", 13.25, "Still need it?"], ["Question", 29.25, "Still need it?"], ["Buy & Sell", 14, "Still available?"], ["Offering", 14, "Still available?"], ["Recommendation", 90, "Still true?"]]) {
+  test(`${type} author reminder survives filtered rows and grid`, async ({ page }) => {
+    await setup(page, [note(type, age)]);
+    await page.goto("/wall?topic=meet_people");
+    const reminder = page.locator(".wall-note-availability");
+    await expect(reminder).toContainText(title);
+    if (["Need Help", "Looking for", "Question"].includes(type)) {
+      await expect(reminder).toContainText("Leaves the Wall in 18 h");
+      await expect(reminder.getByRole("button", { name: "Keep it", exact: true })).toBeVisible();
+      await expect(reminder.getByRole("button", { name: "Solved", exact: true })).toBeVisible();
+    }
+    await page.getByRole("group", { name: "Wall view" }).getByRole("button", { name: "Grid", exact: true }).click();
+    await expect(reminder).toContainText(title);
+    await expect(page.locator(".wall-expiry-note")).toHaveCSS("grid-column", "1 / -1");
+  });
+}
+
 test("Right now and Events never show author expiry prompts", async ({ page }) => {
   const posts = [note("Buy & Sell", 0.9, { rightNow: true, canBump: true }), note("Event", 6.5, { id: "507f1f77bcf86cd799439013", canBump: true })];
   await setup(page, posts);
@@ -114,6 +131,7 @@ test("solving from the Wall opens the retained closed note detail", async ({ pag
   await expect.poll(() => server.resolutions).toBe(1);
   await expect(page).toHaveURL(new RegExp(`/posts/${id}$`));
   await expect(page.locator(".wall-post-type-link")).toHaveText("Solved");
+  await expect(page.getByText("Solved ✓ — off the Wall, still on your profile and in search", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Back to Wall" }).click();
   await expect(page.locator(".wall-thread-note")).toHaveCount(0);
 });

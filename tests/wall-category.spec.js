@@ -61,7 +61,7 @@ for (const width of [390, 1280]) {
     await expect(page.locator(".wall-comments-panel")).toBeVisible();
     await page.getByRole("link", { name: "Back to Wall" }).click();
     await page.locator(".wall-thread-note").first().locator(".wall-view-comments").click();
-    await expect(page).toHaveURL(new RegExp(`/posts/${posts[0].id}$`));
+    await expect(page).toHaveURL(new RegExp(`/posts/${posts[0].id}\\?reply=1$`));
     await expect(page.locator(".wall-comments-panel")).toBeVisible();
     await page.goto("/wall?topic=food");
     await expect(rows).toHaveCount(2);

@@ -39,3 +39,12 @@ test("mounted notes derive newly due prompts despite stale API flags", () => {
  assert.equal(prompt.canBump, true);
  assert.equal(wallExpiryPrompt({ postType: "Need Help", publishedAt, bumpCount: 3 }, now).canBump, false);
 });
+
+test("stale prompt flags cannot revive ended, hidden, deleted or draft notes", () => {
+ const now = Date.parse("2026-11-08T00:00:00Z");
+ const post = { postType: "Need Help", publishedAt: "2026-11-01T00:00:00Z", canBump: true, needsExpiryPrompt: true };
+ assert.equal(wallExpiryPrompt(post, now), null);
+ for (const state of [{ resolvedAt: new Date(now) }, { deletedAt: new Date(now) }, { status: "draft" }, { moderationHiddenAt: new Date(now) }, { moderationStatus: "PENDING_REVIEW" }]) {
+  assert.equal(wallExpiryPrompt({ ...post, publishedAt: new Date(now - 6.5 * 86400000), ...state }, now), null);
+ }
+});

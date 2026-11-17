@@ -336,9 +336,9 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
 
     const formData = new FormData();
     formData.append("text", trimmedText);
-    formData.append("context", validContextValue);
+    formData.append("context", editPost ? editPost.context || "" : validContextValue);
     formData.append("postType", selectedType.value);
-    formData.append("topic", effectiveTopic);
+    formData.append("topic", editPost ? topic : effectiveTopic);
     formData.append("rightNow", String(rightNow));
     formData.append("location", location.trim());
     if (countryCode) formData.append("countryCode", countryCode);
@@ -383,7 +383,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
         onSuccess: (post) => {
           publishingRef.current = false;
           attemptRef.current = null;
-          if (editPost) { showToast(__msg("wallEdit.saved")); onEditClose?.(); return; }
+          if (editPost) { showToast(__msg(post.editUnchanged ? "wallEdit.noChanges" : "wallEdit.saved")); onEditClose?.(); return; }
           clearWallDraft();
           showToast(__msg(isWallHeld(post) ? "wallPublishing.reviewSubmitted" : "fanWeb.notePublished"));
           resetComposer();
