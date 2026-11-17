@@ -9321,39 +9321,24 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   width: 100%;
   max-width: 100%;
 }
-
-/* Keep Profile's generic control typography from enlarging Wall feed content. */
-.profile-prototype .profile-wall-section .home-feed-post-head {
-  gap: 7px;
-}
-.profile-prototype .profile-wall-section .home-feed-author {
-  font-size: 11.5px;
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: -.1px;
-}
-.profile-prototype .profile-wall-section .home-feed-meta {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-.profile-prototype .profile-wall-section .home-context-pill {
-  display: inline-flex;
-  min-height: 22px;
-  max-width: 150px;
+.profile-wall-footer {
+  display: flex;
+  width: 100%;
   align-items: center;
-  padding: 3px 9px;
-  font-size: 10px;
-  font-weight: 650;
-  line-height: 1;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,.085);
+  padding: 18px 0 2px;
+  background: transparent;
+  color: #fff;
+  text-align: start;
 }
-.profile-prototype .profile-wall-section .home-feed-text {
-  margin-top: 7px;
-  font-size: 14.5px;
-  font-weight: 450;
-  line-height: 1.5;
-  letter-spacing: -.1px;
-}
+.profile-wall-footer strong { font-size: 14px; font-weight: 800; }
+.profile-wall-footer span { color: rgba(156,203,255,.72); font-size: 11.5px; }
+.profile-wall-footer b { display: inline-block; margin-inline-start: 7px; color: #fff; font-size: 15px; font-weight: 400; }
+.profile-wall-footer:focus-visible { outline: 2px solid #9ccbff; outline-offset: 4px; border-radius: 4px; }
+
 .profile-open-wall {
   margin-top: 12px;
 }
@@ -21371,6 +21356,19 @@ video.seen-reader-media {
   align-items: center;
   gap: 14px;
 }
+.seen-reactor-faces {
+  display: inline-flex !important;
+  flex: none;
+  align-items: center;
+  gap: 0 !important;
+  margin-inline-end: -8px;
+  padding: 0 !important;
+  border: 0;
+  background: transparent !important;
+}
+.seen-reactor-faces .fan-avatar { width: 20px; height: 20px; border: 1.5px solid #0a0c0f; }
+.seen-reactor-faces .fan-avatar + .fan-avatar { margin-inline-start: -6px; }
+.seen-reactor-faces .fan-avatar > span { font-size: 7px; line-height: 1; }
 
 .seen-engagement-bar button,
 .seen-view-count {

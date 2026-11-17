@@ -146,6 +146,7 @@ function nextEngagementFromReaction(item, nextReaction) {
     reactionCount,
     reactionBreakdown,
     topReactions: orderedReactionCounts(reactionBreakdown).slice(0, 3).map((reaction) => reaction.type),
+    reactorPreviews: item.engagement.reactorPreviews || [],
     commentCount: item.engagement.comments,
     shareCount: item.engagement.reposts,
     saveCount: item.engagement.saveCount || 0,
@@ -212,6 +213,7 @@ function normalizeSeen(raw = {}) {
       reactions: Number(raw.engagement?.reactionCount ?? raw.reactionCount) || 0,
       reactionBreakdown: raw.engagement?.reactionBreakdown || raw.reactionBreakdown || {},
       topReactions: raw.engagement?.topReactions || raw.topReactions || [],
+      reactorPreviews: raw.engagement?.reactorPreviews || raw.reactorPreviews || [],
       comments: Number(raw.engagement?.commentCount ?? raw.commentCount) || 0,
       reposts: Number(raw.engagement?.shareCount ?? raw.shareCount) || 0,
       privateShares: Number(raw.engagement?.privateShareCount ?? raw.privateShareCount) || 0,
@@ -933,6 +935,7 @@ function EngagementBar({ item, onCommentToggle, onCopyLink, onReactHold, onReact
   const cancelHold = () => window.clearTimeout(holdTimer.current);
   return <div className="seen-engagement-bar">
     <div className="seen-engagement-left">
+      {item.engagement.reactorPreviews.length ? <button aria-label={__msg("social.openReactions")} className="seen-reactor-faces" onClick={onReactOpen} type="button">{item.engagement.reactorPreviews.slice(0, 2).map((person) => <FanAvatar key={person.id || person._id} name={person.name} size="h-5 w-5" src={person.avatar || person.avatarUrl} />)}</button> : null}
       <button aria-label={selected.reaction ? "Change reaction" : "React to Seen"} className={selected.reaction ? "is-selected seen-reactions" : "seen-reactions"} disabled={pending} onClick={() => { if (!held.current) onReactOpen(); held.current = false; }} onPointerCancel={cancelHold} onPointerDown={() => { held.current = false; holdTimer.current = window.setTimeout(() => { held.current = true; onReactHold(); navigator.vibrate?.(12); }, 420); }} onPointerLeave={cancelHold} onPointerUp={cancelHold} ref={reactionAnchorRef} type="button">
         <span>{reactionCluster(item)}</span><b>{formatCount(item.engagement.reactions)}</b>
       </button>
@@ -1543,6 +1546,7 @@ export default function SeenFeedPage() {
         reactionCount: engagement.reactionCount,
         reactionBreakdown: engagement.reactionBreakdown || entry.engagement?.reactionBreakdown || {},
         topReactions: engagement.topReactions || entry.engagement?.topReactions || [],
+        reactorPreviews: engagement.reactorPreviews || entry.engagement?.reactorPreviews || [],
         commentCount: engagement.commentCount,
         shareCount: engagement.shareCount,
         saveCount: engagement.saveCount,
