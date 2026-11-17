@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { FiFlag, FiHeart, FiImage, FiMoreHorizontal, FiPlay, FiPlus, FiRefreshCw, FiRepeat, FiSend, FiTrash2, FiVideo, FiX } from "react-icons/fi";
+
+const compactRepostCount = (value) => Number(value) >= 1000 ? new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(Number(value)) : String(Number(value) || 0);
 import LoadingSkeleton from "../fanWeb/shared/LoadingSkeleton";
 import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
@@ -296,7 +298,7 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
   const repostMutation = useMutation({
     mutationFn: (item) => repostService.toggle("photo", item.id, "ProfileMedia").then((response) => response.data.data),
     onSuccess: (result, item) => {
-      const patchItem = (entry) => entry.id === item.id ? { ...entry, viewerReposted: result.reposted } : entry;
+      const patchItem = (entry) => entry.id === item.id ? { ...entry, viewerReposted: result.reposted, repostCount: result.repostCount } : entry;
       onPatchActive?.((current) => current?.id === item.id ? patchItem(current) : current);
       queryClient.setQueryData(queryKey, (current) => current?.media ? { ...current, media: current.media.map(patchItem) } : current);
       queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
@@ -379,7 +381,7 @@ function ProfileMediaViewer({ active, isOwner, items, onClose, onPatchActive, on
         disabled={repostMutation.isPending}
         onClick={() => repostMutation.mutate(active)}
         type="button"
-      ><FiRepeat /></button> : null}
+      ><FiRepeat />{Number(active.repostCount) > 0 ? <span>{compactRepostCount(active.repostCount)}</span> : null}</button> : null}
       {optionsOpen ? (
         <div className="profile-media-options">
           <button onClick={share} type="button"><FiSend /> {__msg("admin.share")}</button>

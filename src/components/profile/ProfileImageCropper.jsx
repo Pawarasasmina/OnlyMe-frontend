@@ -13,6 +13,7 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const gestureRef = useRef({ pointers: new Map() });
   const config = {
     avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 400, label: __msg("profile.profilePhoto"), width: 400 },
@@ -30,6 +31,7 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
   const beginGesture = (event) => {
     if (saving) return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    setIsDragging(true);
     const gesture = gestureRef.current;
     gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const points = [...gesture.pointers.values()];
@@ -63,6 +65,7 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
     const gesture = gestureRef.current;
     gesture.pointers.delete(event.pointerId);
     const points = [...gesture.pointers.values()];
+    if (!points.length) setIsDragging(false);
     if (points.length) {
       gesture.startX = x;
       gesture.startY = y;
@@ -117,7 +120,7 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
 
         <div
           aria-label={__msg("profile.cropPreviewDragToRepositionAndPinchWithTwo")}
-          className={`profile-image-crop-preview ${config.aspect} ${config.frame}`}
+          className={`profile-image-crop-preview ${isDragging ? "is-dragging" : ""} ${config.aspect} ${config.frame}`}
           onPointerCancel={endGesture}
           onPointerDown={beginGesture}
           onPointerMove={moveGesture}
@@ -126,6 +129,7 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
           style={{ touchAction: "none" }}
         >
           <img alt={__msg("profile.cropPreview")} className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
+          <span aria-hidden="true" className="profile-image-crop-guides" />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
 

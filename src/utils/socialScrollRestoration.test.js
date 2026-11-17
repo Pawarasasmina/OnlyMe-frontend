@@ -29,3 +29,8 @@ test("restores mobile viewport scroll as well as the desktop centre column", () 
   assert.equal(restoreSocialScroll(content, viewport, { content: 0, window: 1800 }), true);
   assert.equal(viewport.scrollY, 1800);
 });
+
+test("Wall filter toggles retain the current position instead of an older route position", () => {
+  const current = { content: 320, window: 120 };
+  assert.deepEqual(scrollPositionForNavigation({ navigationType: "REPLACE", restoreScroll: current, routePosition: { content: 0, window: 0 } }), current);
+});

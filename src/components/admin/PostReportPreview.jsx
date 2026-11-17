@@ -4,6 +4,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { FiEye, FiHeart, FiMessageCircle, FiMoreHorizontal, FiShare2 } from "react-icons/fi";
 import { resolveMediaUrl } from "../../utils/media";
+import { isAutomatedWallReview } from "../../utils/wallModerationReview.js";
 
 function MediaPreview({ media }) {
   __useUiLanguage();
@@ -50,6 +51,11 @@ export default function PostReportPreview({ report }) {
       {isPublication && <h5 className="mt-3 text-xl font-black tracking-tight">{title}</h5>}
       {body ? <p className="mt-3 whitespace-pre-wrap break-words text-[15px] leading-6 text-slate-800">{body}</p> : <p className="mt-3 text-sm italic text-slate-400">{__msg("admin.noWrittenCaption")}</p>}
       <MediaPreview media={media} />
+      {isAutomatedWallReview(report) && snapshot.evidence?.matchedText ? <section className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+        <h5 className="text-xs font-black text-blue-700">{__msg("admin.wallReview.matchingNote")}</h5>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-700" dir="auto">{snapshot.evidence.matchedText}</p>
+        {Number.isFinite(snapshot.evidence.similarity) ? <p className="mt-2 text-xs text-slate-500">{__msg("admin.wallReview.similarity", { percent: Math.round(snapshot.evidence.similarity * 100) })}</p> : null}
+      </section> : null}
       {isPublication && requestedSafetyActions.length ? <section className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4">
         <p className="text-[11px] font-black uppercase tracking-wider text-red-500">{__msg("admin.reporterSelectedActions")}</p>
         <div className="mt-3 flex flex-wrap gap-2">

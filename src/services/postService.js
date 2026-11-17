@@ -1,7 +1,8 @@
 import axiosInstance from "../api/axiosInstance";
+import { resolveMediaUrl } from "../utils/media";
 
-function normalizePost(raw = {}) {
-  const media = raw.media || raw.images || [];
+export function normalizePost(raw = {}) {
+  const media = Array.isArray(raw.media) && raw.media.length ? raw.media : Array.isArray(raw.images) ? raw.images : [];
   return {
     ...raw,
     id: raw.id || raw._id,
@@ -13,10 +14,12 @@ function normalizePost(raw = {}) {
       author: comment.author || comment.user || null,
     })),
     entityRefs: raw.entityRefs || [],
-    media: media.map((item) => ({
+    media: media.map((rawItem) => {
+      const item = typeof rawItem === "string" ? { url: rawItem } : rawItem || {};
+      return ({
       ...item,
       id: item.id || item._id || item.assetId || item.url,
-      url: item.url || item.secureUrl,
+      url: resolveMediaUrl(item.url || item.secureUrl),
       type: item.type || "image",
       duration: item.duration || null,
       mimeType: item.mimeType || "",
@@ -28,7 +31,7 @@ function normalizePost(raw = {}) {
         text: translation.text,
       })),
       waveform: item.waveform || [],
-    })),
+    }); }),
   };
 }
 
@@ -44,7 +47,7 @@ export const postService = {
   reportComment: (postId, commentId, payload) => axiosInstance.post(`/posts/${postId}/comments/${commentId}/report`, payload),
   deleteComment: async (postId, commentId) => normalizePost((await axiosInstance.delete(`/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`)).data?.data?.post),
   getNeedCounts: async (params = {}) => (await axiosInstance.get("/posts/need-counts", { params })).data.data,
-  getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params })),
+  getFeedPosts: async (params = {}) => normalizeList(await axiosInstance.get("/posts", { params, timeout: 30000 })),
   getPost: async (postId) => normalizePost((await axiosInstance.get(`/posts/${encodeURIComponent(postId)}`)).data?.data?.post),
   getContentLanguage: async (postId, mediaId, signal) => (await axiosInstance.get(`/posts/${encodeURIComponent(postId)}/language`, { params: mediaId ? { mediaId } : {}, signal })).data?.data || {},
   translateContent: async (postId, mediaId) => (await axiosInstance.post(`/posts/${encodeURIComponent(postId)}/translation`, { ...(mediaId ? { mediaId } : {}) })).data?.data || {},
@@ -68,6 +71,7 @@ export const postService = {
   },
   setResolution: async (postId, solved) => normalizePost((await axiosInstance.put(`/posts/${encodeURIComponent(postId)}/resolution`, { solved })).data?.data?.post),
   bumpPost: async (postId) => normalizePost((await axiosInstance.post(`/posts/${encodeURIComponent(postId)}/bump`)).data?.data?.post),
+  flagOutdated: (postId) => axiosInstance.post(`/posts/${encodeURIComponent(postId)}/outdated`),
   updatePost: async (postId, payload) => {
     const response = await axiosInstance.put(`/posts/${postId}`, payload);
     return normalizePost(response.data?.data?.post);

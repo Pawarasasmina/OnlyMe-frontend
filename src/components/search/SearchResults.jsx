@@ -13,6 +13,9 @@ import PublicationCoverMedia from "../publication/PublicationCoverMedia";
 import { analyticsService } from "../../services/analyticsService";
 import { savedService } from "../../services/savedService";
 import { resolveMediaUrl } from "../../utils/media";
+import { wallClosedLabel } from "../../utils/wallResolution";
+import { wallSearchPost } from "../../utils/wallLifecycle";
+import { useWallLifecycleClock } from "../../hooks/useWallLifecycleClock";
 
 const resultIcons = {
   journey: FiCompass,
@@ -101,10 +104,12 @@ function ExperienceResults({ items }) {
 
 function WallResults({ items }) {
   __useUiLanguage();
+  const now = useWallLifecycleClock(items.map(wallSearchPost));
   return <div className="search-wall-list">
     {items.map((item, index) => {
       const author = item.metadata?.author || {};
       const authorName = item.metadata?.isOwn ? __msg("fanWeb.you") : author.name || __msg("admin.user");
+      const closedLabel = wallClosedLabel(wallSearchPost(item), now);
       return <Link className="search-wall-result" key={`${item.type}-${item.id}`} onClick={() => trackResult(item, index + 1, "wall_notes")} to={item.route || "/wall"}>
         <span className="search-wall-result-copy">
           <span className="search-wall-result-text">{item.description || item.title}</span>
@@ -113,7 +118,7 @@ function WallResults({ items }) {
             <strong>{authorName}</strong>
             <time>{item.createdAt ? new Date(item.createdAt).toLocaleDateString(__uiLocale()) : ""}</time>
           </span>
-          <span className="search-wall-result-meta">{item.category ? <em>#{item.category.replace(/^#/u, "")}</em> : null}{item.location?.city ? <small><FiMapPin />{item.location.city}</small> : null}</span>
+          <span className="search-wall-result-meta">{closedLabel ? <strong className="wall-search-closed-status">{closedLabel}</strong> : null}{item.category ? <em>#{item.category.replace(/^#/u, "")}</em> : null}{item.location?.city ? <small><FiMapPin />{item.location.city}</small> : null}</span>
         </span>
         <FiChevronRight data-ui-directional="true" aria-hidden="true" className="search-wall-open" />
       </Link>;

@@ -1,6 +1,6 @@
 import { msg as __msg } from "../i18n/runtime.js";
 export const PUBLICATION_LIMITS={title:120,summary:300,description:2000,category:40,tags:15,tag:40,chapterTitle:120,chapterText:2000};
-export const SEEN_VISIBILITIES=["PUBLIC","FRIENDS","LINK_ONLY"];
+export const SEEN_VISIBILITIES=["PUBLIC","FRIENDS","LINK_ONLY","WORLD_MEMBERS"];
 export const BLOCK_TYPES=["TEXT","IMAGE","VIDEO","AUDIO","VOICE","LINK","KEY_POINT","HIGHLIGHT","LIST","POLL"];
 export const normalizeTags=(v)=>[...new Set((Array.isArray(v)?v:String(v||"").split(",")).map(x=>x.trim().toLowerCase()).filter(Boolean))].slice(0,15);
 export const chapterTextCount=(c)=>(c?.blocks||[]).reduce((n,b)=>n+(["TEXT","KEY_POINT","HIGHLIGHT","LIST"].includes(b.type)?(b.text||"").length:b.type==="LINK"?(b.label||"").length:b.type==="POLL"?(b.metadata?.question||"").length+(b.metadata?.options||[]).join("").length:0),0);

@@ -7,20 +7,26 @@ import { msg as __msg } from "../../../i18n/runtime.js";
 import { wallNoteStoryDraft } from "../../../utils/wallNoteStory";
 import { relativeTime as compactPostAge } from "../../../utils/relativeTime";
 import WallReactionTray from "./WallReactionTray";
-import { wallCloseLabels } from "../../../utils/wallResolution";
+import { wallCloseLabels, wallClosedLabel } from "../../../utils/wallResolution";
+import { wallIsClosed } from "../../../utils/wallLifecycle";
+import { useWallLifecycleClock } from "../../../hooks/useWallLifecycleClock";
+import { wallExpiryPrompt } from "../../../utils/wallLifetimePresentation";
 import ShowMoreEyeIcon from "../../branding/ShowMoreEyeIcon";
 import WallPostTypeBadge from "./WallPostTypeBadge";
 import { wallPostCaption } from "../../../utils/wallVoiceDisplay";
+import { wallPricePresentation } from "../../../utils/wallMarketplace";
 import { WallTextContent, WallVoiceNote } from "./WallPostContent";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { FiArchive, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMapPin, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
-import FeedPostComposer from "../../posts/FeedPostComposer";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FiArchive, FiEdit2, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMapPin, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
+import PostComposer from "./PostComposer";
+import { useWallEditClock, wallCanEdit } from "../../../hooks/useWallEditClock";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
 import ShareSheet from "../../share/ShareSheet";
 import StoryCreator from "../../stories/StoryCreator";
 import VoiceCommentRecorder from "../../comments/VoiceCommentRecorder";
+import { commentFirstName } from "../../comments/commentIdentityUtils";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import { confirmDialog } from "../../shared/AppDialogProvider";
@@ -171,6 +177,7 @@ function formatCount(value = 0) {
 function MediaItem({ item, title, postId, postText }) {
   __useUiLanguage();
   const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [item?.url]);
   if (!item?.url || failed) {
     return <span className="home-feed-media-fallback" role="img" aria-label={__msg("fanWeb.mediaUnavailable")}>{__msg("fanWeb.mediaUnavailable")}</span>;
   }
@@ -272,7 +279,16 @@ function normalizeFeedPost(post = {}) {
     },
     commentCount: Number(post.commentCount ?? post.comments ?? 0),
     resolvedAt: post.resolvedAt || null,
+    bumpedAt: post.bumpedAt || null,
+    bumpCount: post.bumpCount || 0,
+    outdatedConcern: Boolean(post.outdatedConcern),
+    viewerFlaggedOutdated: Boolean(post.viewerFlaggedOutdated),
+    publishedAt: post.publishedAt || post.createdAt,
     canBump: Boolean(post.canBump),
+    needsExpiryPrompt: Boolean(post.needsExpiryPrompt),
+    expiryPromptKind: post.expiryPromptKind || "",
+    expiresAt: post.expiresAt || null,
+    lifecycleStatus: post.lifecycleStatus || "",
     availabilityAge: `${Math.max(0, Math.floor((Date.now() - new Date(post.bumpedAt || post.publishedAt || post.createdAt).getTime()) / 86400000))}d`,
     closedReason: post.closedReason || "",
     isClosed: Boolean(post.isClosed),
@@ -287,6 +303,14 @@ function normalizeFeedPost(post = {}) {
     entityRefs: post.entityRefs || [],
     isOwner: Boolean(post.isOwner),
     location: post.location || "",
+    price: post.price ?? null,
+    editedAt: post.editedAt || null,
+    editUntil: post.editUntil || null,
+    editVersion: post.editVersion || 0,
+    moderationStatus: post.moderationStatus || "CLEAR",
+    moderationHiddenAt: post.moderationHiddenAt || null,
+    countryCode: post.countryCode || "",
+    currency: post.currency || post.cur || "",
     media,
     reactionBreakdown: post.reactionBreakdown || {},
     reactions: post.reactions || [],
@@ -295,6 +319,7 @@ function normalizeFeedPost(post = {}) {
     seededComments: comments,
     supportCount: Number(post.supportCount ?? post.handshakes ?? 0),
     shareCount: Number(post.shareCount ?? 0),
+    privateShareCount: Number(post.privateShareCount ?? 0),
     text: post.text || "",
     timestamp: post.timestamp || compactPostAge(post.bumpedAt || post.publishedAt || post.createdAt),
     topReactions: post.topReactions || [],
@@ -327,14 +352,32 @@ function WallPostViewEye() {
   );
 }
 
-function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
+function FeedPost({ post, profileMenu = false, profileNote = false, fullText = false, focusedCommentId = "", focusReply = false, menuRequest = 0 }) {
   const { language: __uiLanguage } = __useUiLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const normalized = useMemo(() => normalizeFeedPost(post), [post]);
+  const [livePrivateShareCount, setLivePrivateShareCount] = useState(normalized.privateShareCount);
+  useEffect(() => setLivePrivateShareCount(normalized.privateShareCount), [normalized.privateShareCount]);
+  useEffect(() => {
+    const update = (event) => {
+      if (event.detail?.contentType === "feed_post" && String(event.detail.contentId) === String(normalized.id)) {
+        setLivePrivateShareCount(Number(event.detail.privateShareCount) || 0);
+      }
+    };
+    window.addEventListener("atseen:private-share", update);
+    return () => window.removeEventListener("atseen:private-share", update);
+  }, [normalized.id]);
   const [resolvedAt, setResolvedAt] = useState(normalized.resolvedAt);
   useEffect(() => { setResolvedAt(normalized.resolvedAt); }, [normalized.resolvedAt]);
   const caption = wallPostCaption(normalized.text, normalized.media);
+  const listingPrice = wallPricePresentation(normalized, { locale: __uiLocale(), freeLabel: __msg("profile.free") });
+  const lifecycleNow = useWallLifecycleClock([normalized]);
+  const editNow = useWallEditClock(normalized);
+  const isClosed = wallIsClosed({ ...normalized, resolvedAt }, lifecycleNow);
+  const closedLabel = wallClosedLabel({ ...normalized, resolvedAt }, lifecycleNow);
+  const expiryPrompt = wallExpiryPrompt(normalized, lifecycleNow);
   const creator = normalized.author;
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -363,7 +406,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const [reactionBreakdown, setReactionBreakdown] = useState(normalized.reactionBreakdown || {});
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [reactionExpanded, setReactionExpanded] = useState(false);
-  const [allComments, setAllComments] = useState(Boolean(focusedCommentId));
+  const [allComments, setAllComments] = useState(fullText || Boolean(focusedCommentId));
   const openReactionPicker = () => { setReactionExpanded(false); setReactionPickerOpen(true); };
   const [reactionsSheetOpen, setReactionsSheetOpen] = useState(false);
   const [saved, setSaved] = useState(normalized.viewerSaved);
@@ -373,10 +416,11 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   const [replyTarget, setReplyTarget] = useState(null);
   const [reactingCommentId, setReactingCommentId] = useState("");
   const commentInputRef = useRef(null);
+  useEffect(() => { if (fullText && focusReply) commentInputRef.current?.focus({ preventScroll: true }); }, [fullText, focusReply]);
   const [shareCaption, setShareCaption] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(Boolean(focusedCommentId));
+  const [commentsOpen, setCommentsOpen] = useState(fullText || Boolean(focusedCommentId));
   useEffect(() => {
     if (!focusedCommentId) return undefined;
     setAllComments(true); setCommentsOpen(true);
@@ -399,7 +443,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     setRepostingCommentId(comment.id);
     try {
       const response = await repostService.toggle("cm", comment.id, "FeedPost");
-      setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReposted: response.data.data.reposted } : item));
+      setComments((current) => current.map((item) => item.id === comment.id ? { ...item, viewerReposted: response.data.data.reposted, repostCount: response.data.data.repostCount } : item));
       showToast(response.data.data.reposted ? __msg("social.repostedToYourProfile") : __msg("fanWeb.repostRemoved"));
     } catch (error) {
       showToast(error.response?.data?.message || __msg("fanWeb.couldNotUpdateRepost"));
@@ -408,10 +452,13 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     }
   };
   const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => { if (menuRequest) setMoreOpen(true); }, [menuRequest]);
   const wallSheetPosition = useWallSheetPosition(moreOpen || reactionPickerOpen || reactionsSheetOpen || Boolean(commentReport));
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [editingSnapshot, setEditingSnapshot] = useState(null);
+  const closeEditor = useCallback(() => setEditOpen(false), []);
   const [viewCount, setViewCount] = useState(normalized.viewCount);
   const [moreBusy, setMoreBusy] = useState("");
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
@@ -441,6 +488,14 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     ? [...reactionSummary].sort((a, b) => Number(b.reaction.key === reaction) - Number(a.reaction.key === reaction) || b.count - a.count).slice(0, 2).map(({ reaction: summaryReaction }) => summaryReaction.icon).join(" ")
     : "\u2764\uFE0F \uD83D\uDD25";
   const actionPostId = normalized.originalPostId || normalized.id;
+  const noteTo = `/posts/${encodeURIComponent(actionPostId)}`;
+  const noteState = { wallReturnTo: /^\/wall(?:\?|$)/.test(location.pathname + location.search) ? location.pathname + location.search : location.state?.wallReturnTo || "/wall" };
+  const openComments = () => {
+    if (!fullText) { navigate(`${noteTo}?reply=1`, { state: noteState }); return; }
+    setAllComments(true);
+    setCommentsOpen(true);
+    commentInputRef.current?.focus({ preventScroll: true });
+  };
   const postUrl = useMemo(() => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     return `${origin}/posts/${actionPostId}`;
@@ -460,7 +515,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
     canonicalUrl: postUrl,
     contentId: actionPostId,
     contentType: "feed_post",
-    destinationRoute: `/wall?note=${encodeURIComponent(actionPostId)}`,
+    destinationRoute: `/posts/${encodeURIComponent(actionPostId)}`,
     imageUrl: isVoiceOnlyPost ? "" : normalized.media?.[0]?.url || "",
     mediaType: firstMediaType,
     storyDraft: wallNoteStoryDraft({ id: actionPostId, text: normalized.text, location: normalized.location, own: ownsPost, author: creator, ...(isVoiceOnlyPost ? { transcript: voiceTextForStory, translationText: voiceCopyForStory.translationText, translationLabel: voiceCopyForStory.translationLabel } : {}) }),
@@ -740,6 +795,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         onSuccess: () => {
           void analyticsService.trackRecommendationSignal({ creatorId: creator.id, entityId: actionPostId, entityType: "feed_post", eventType: "NOT_INTERESTED", reason: "not_useful", topics: [normalized.context, normalized.location].filter(Boolean) });
           showToast(__msg("fanWeb.thanksWeWillTuneYourFeed"));
+          if (fullText) navigate(noteState.wallReturnTo, { replace: true });
         },
       }
     );
@@ -751,7 +807,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
     blockMutation.mutate(actionPostId, {
       onError: (error) => showToast(error?.response?.data?.message || __msg("system.copy.21a85920d87a")),
-      onSuccess: () => showToast(__msg("fanWeb.isBlockedTheyWillNotKnow", { value0: creator.name.split(" ")[0] })),
+      onSuccess: () => {
+        showToast(__msg("fanWeb.isBlockedTheyWillNotKnow", { value0: creator.name.split(" ")[0] }));
+        if (fullText) navigate(noteState.wallReturnTo, { replace: true });
+      },
     });
   };
 
@@ -827,6 +886,17 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
   };
 
   const moreAction = (action) => {
+    if (action === "outdated") {
+      if (moreBusy || !requireDatabasePost()) return;
+      setMoreBusy("outdated");
+      postService.flagOutdated(actionPostId).then(() => {
+        setMoreOpen(false);
+        showToast(__msg("wallFreshness.feedbackSent"));
+        queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+        queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
+      }).catch(error => showToast(error?.response?.data?.message || __msg("posts.somethingWentWrong"))).finally(() => setMoreBusy(""));
+      return;
+    }
     if (action === "resolution") {
       if (moreBusy || resolutionMutation.isPending || !ownsPost || !normalized.canResolve || !requireDatabasePost()) return;
       setMoreBusy("resolution");
@@ -834,9 +904,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         onSuccess: (savedPost) => {
           setResolvedAt(savedPost.resolvedAt || null);
           setMoreOpen(false);
-          if (savedPost.resolvedAt && (savedPost.postType === "Buy & Sell" || (!savedPost.postType && ["Buy/Sell", "Shopping"].includes(savedPost.context)))) {
-            queryClient.setQueryData(["wall-note", actionPostId], savedPost);
-            navigate(`/wall?note=${encodeURIComponent(actionPostId)}`, { state: { scrollToWallFeed: true } });
+          if (savedPost.resolvedAt && location.pathname === "/wall") {
+            queryClient.setQueryData(["feed-posts", "detail", actionPostId], savedPost);
+            navigate(`/posts/${encodeURIComponent(actionPostId)}`, { state: { wallReturnTo: location.pathname + location.search } });
           }
           showToast(savedPost.resolvedAt ? __msg("fanWeb.value0YourPostAndRepliesStayVisible", { value0: closeLabels.state }) : __msg("system.copy.f299214ce87b"));
         },
@@ -909,7 +979,9 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
       setMoreOpen(false);
       setReportOpen(true);
     } else if (action === "edit") {
+      if (!wallCanEdit(normalized, Date.now())) return;
       setMoreOpen(false);
+      setEditingSnapshot({ ...normalized, id: actionPostId });
       setEditOpen(true);
     } else if (action === "delete") {
       setMoreOpen(false);
@@ -928,7 +1000,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
   return (
     <>
-      <article className={`home-feed-post ${resolvedAt || normalized.isClosed ? "is-solved" : ""}`} ref={articleRef}>
+      <article className={`home-feed-post wall-thread-note ${profileNote && !normalized.sharedBy ? "is-profile-note" : ""} ${resolvedAt || isClosed ? "is-solved" : ""}`} ref={articleRef} onClick={event => {
+        if (fullText || event.target.closest("a,button,input,textarea,video,audio,label,[role='button'],.home-feed-media") || window.getSelection()?.toString()) return;
+        navigate(noteTo, { state: noteState });
+      }}>
         {normalized.sharedBy ? (
           <div className="home-feed-shared-by">
             <FiShare2 className="text-atseen-blue" />
@@ -939,32 +1014,34 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         {normalized.shareCaption ? (
           <p className="mb-3 whitespace-pre-wrap text-sm leading-7 text-white/90">{normalized.shareCaption}</p>
         ) : null}
-        <div className={normalized.sharedBy ? "home-shared-post" : ""}>
+        <div className={`wall-thread-content ${normalized.sharedBy ? "home-shared-post" : ""}`}>
         <div className="home-feed-post-head">
-          <Link className="shrink-0" to={`/profile/${encodeURIComponent(creator.username)}`}>
+          {!(profileNote && !normalized.sharedBy) ? <Link className="shrink-0" to={`/profile/${encodeURIComponent(creator.username)}`}>
             <FanAvatar name={creator.name} size="h-9 w-9" src={creator.avatar} />
-          </Link>
+          </Link> : null}
           <div className="min-w-0 flex-1">
-            <Link className="home-feed-author" to={`/profile/${encodeURIComponent(creator.username)}`}>
+            {!(profileNote && !normalized.sharedBy) ? <Link className="home-feed-author" to={`/profile/${encodeURIComponent(creator.username)}`}>
               {headerName}
               {creator.verified ? <VerifiedBadge /> : null}
-            </Link>
-            <div className="home-feed-meta wall-note-meta"><WallPostTypeBadge closedLabel={resolvedAt ? closeLabels.state : normalized.isClosed ? normalized.closedReason === "ended" ? "Ended" : "Expired" : ""} rightNow={normalized.rightNow && !normalized.isClosed && !resolvedAt} postType={normalized.postType} context={normalized.context} /><span className="wall-note-age">&middot; {normalized.timestamp}</span>{normalized.location ? <span className="wall-note-place" title={normalized.location}>&middot; <FiMapPin aria-hidden="true" />{normalized.location.split(",")[0]}</span> : null}</div>
+            </Link> : null}
+            <div className="home-feed-meta wall-note-meta"><WallPostTypeBadge closedLabel={closedLabel} rightNow={normalized.rightNow && !isClosed && !resolvedAt} postType={normalized.postType} context={normalized.context} /><span className="wall-note-age">&middot; {normalized.timestamp}</span>{normalized.editedAt ? <span className="wall-note-edited"> &middot; {__msg("wallEdit.edited")}</span> : null}{normalized.location ? <span className="wall-note-place" title={normalized.location}>&middot; <FiMapPin aria-hidden="true" />{normalized.location.split(",")[0]}</span> : null}</div>
           </div>
           <span aria-label={__msg("fanWeb.views", { value0: formatCount(viewCount) })} className="home-feed-head-views" title={__msg("fanWeb.views_24be61")}>
             <WallPostViewEye /> <span>{formatCount(viewCount)}</span>
           </span>
-          <button
+          {!fullText ? <button
             aria-label={__msg("fanWeb.moreActionsForSPost", { value0: creator.name })}
             className="rounded-full p-1.5 text-atseen-dim transition hover:bg-atseen-surface-2 hover:text-white"
             onClick={() => setMoreOpen((current) => profileMenu ? !current : true)}
             type="button"
           >
             <FiMoreHorizontal aria-hidden="true" />
-          </button>
+          </button> : null}
         </div>
 
-        <WallTextContent postId={actionPostId} text={caption} />
+        {ownsPost && (normalized.moderationHiddenAt || ["PENDING_REVIEW", "REJECTED"].includes(normalized.moderationStatus)) ? <p className="wall-note-review-status" role="status">{__msg(normalized.moderationStatus === "REJECTED" ? "wallPublishing.notApproved" : "wallPublishing.underReview")}</p> : null}
+        {listingPrice ? <p className="wall-note-price">{listingPrice}</p> : null}
+        <WallTextContent postId={actionPostId} text={caption} fullText={fullText} noteTo={noteTo} noteState={noteState} />
         <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
@@ -974,23 +1051,23 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         {normalized.media?.length ? (
           <div className={`home-feed-media media-count-${Math.min(normalized.media.length, 4)} media-layout-${mediaLayout}`}>
             {normalized.media.map((mediaItem) => (
-              <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} />
+              !fullText && mediaItem.type === "image" ? <Link className="wall-note-media-link" to={noteTo} state={noteState} key={mediaItem.id || mediaItem.url}><MediaItem item={mediaItem} postId={actionPostId} postText={caption} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} /></Link> : <MediaItem item={mediaItem} postId={actionPostId} postText={caption} key={mediaItem.id || mediaItem.url} title={normalized.text.slice(0, 48) || __msg("fanWeb.homePost")} />
             ))}
           </div>
         ) : null}
         </div>
 
-        {ownsPost && normalized.canBump && !normalized.isClosed && !resolvedAt ? <div className="wall-note-availability">
-          <span><strong>{__msg("system.FeedPost.ead062ce71")}</strong><small>{__msg("system.FeedPost.301777fff4")} {normalized.availabilityAge} {__msg("profile.ago")}</small></span>
-          <button className="wall-note-bump" disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => {
+        {ownsPost && expiryPrompt && !isClosed && !resolvedAt ? <div className="wall-note-availability">
+          <span><strong>{__msg(expiryPrompt.title)}</strong><small>{expiryPrompt.hours !== null ? __msg("wallLifetime.leavesInHours", { hours: expiryPrompt.hours }) : <>{__msg("system.FeedPost.301777fff4")} {normalized.availabilityAge} {__msg("profile.ago")}</>}</small></span>
+          {expiryPrompt.canBump ? <button className="wall-note-bump" disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => {
             if (!requireDatabasePost()) return;
             bumpMutation.mutate(actionPostId, {
               onSuccess: () => showToast(__msg("system.FeedPost.67773e32b8")),
               onError: error => showToast(error?.response?.data?.message || __msg("system.copy.5e9038a11032")),
             });
-          }} type="button">{bumpMutation.isPending ? __msg("system.FeedPost.94fdea95ad") : __msg("system.FeedPost.1d22547907")}</button>
-          <button disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button">{__msg("activity.close")}</button>
-        </div> : ownsPost && normalized.canResolve && !normalized.isClosed && !resolvedAt ? <button className="wall-note-solve" disabled={resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button"><FiCheck aria-hidden="true" />{closeLabels.action}</button> : null}
+          }} type="button">{bumpMutation.isPending ? __msg("system.FeedPost.94fdea95ad") : __msg(expiryPrompt.keep)}</button> : null}
+          <button disabled={bumpMutation.isPending || resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button">{__msg(expiryPrompt.close)}</button>
+        </div> : ownsPost && normalized.canResolve && !isClosed && !resolvedAt ? <button className="wall-note-solve" disabled={resolutionMutation.isPending} onClick={() => moreAction("resolution")} type="button"><FiCheck aria-hidden="true" />{closeLabels.action}</button> : null}
         <div className="home-feed-actions">
           {normalized.reactorPreviews.length ? <button className="wall-reactor-faces" aria-label={__msg("system.FeedPost.5833158617")} onClick={() => setReactionsSheetOpen(true)} type="button">{normalized.reactorPreviews.slice(0, 2).map(person => <FanAvatar key={person.id || person._id} name={person.name} size="h-5 w-5" src={person.avatar || person.avatarUrl} />)}</button> : null}
           <div className="relative">
@@ -1013,11 +1090,11 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
 
             </button>
           </div>
-          <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={() => setCommentsOpen((current) => !current)} title={__msg("admin.comment")} type="button">
-            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !normalized.isClosed && !resolvedAt && replyIntent ? <strong className="wall-join-label">{replyIntent}</strong> : null}
+          <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={`home-feed-action-button ${commentsOpen ? "is-selected" : ""}`} onClick={openComments} title={__msg("admin.comment")} type="button">
+            <FiMessageCircle aria-hidden="true" /> <span>{commentCount}</span>{!ownsPost && !isClosed && !resolvedAt && replyIntent ? <strong className="wall-join-label">{replyIntent}</strong> : null}
           </button>
           {!ownsPost ? <button aria-label={shared ? __msg("fanWeb.removeRepost") : __msg("fanWeb.repost")} className={`home-feed-action-button ${shared ? "is-selected" : ""}`} disabled={shareMutation.isPending} onClick={toggleShare} title={__msg("fanWeb.repost")} type="button">
-            <FiRepeat aria-hidden="true" /> <span>{formatCount(normalized.shareCount)}</span>
+            <FiRepeat aria-hidden="true" />{normalized.shareCount > 0 ? <span>{formatCount(normalized.shareCount)}</span> : null}
           </button> : null}
           <button
             aria-label={saved ? __msg("fanWeb.removeSavedPost") : __msg("fanWeb.savePost")}
@@ -1030,14 +1107,14 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
             <FiBookmark aria-hidden="true" fill={saved ? "currentColor" : "none"} />
           </button>
           <button aria-label={__msg("fanWeb.sendPost")} className="home-feed-action-button" onClick={openSendSheet} title={__msg("fanWeb.send")} type="button">
-            <FiSend aria-hidden="true" />
+            <FiSend aria-hidden="true" />{livePrivateShareCount > 0 ? <span className="wall-private-share-count">{formatCount(livePrivateShareCount)}</span> : null}
           </button>
         </div>
 
-        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={() => { setAllComments(true); setCommentsOpen(true); }} type="button">{__msg("fanWeb.viewAll")} {commentCount} {__msg("fanWeb.comments")}</button> : null}
-        {commentsOpen ? (
+        {!commentsOpen && commentCount > 0 ? <button aria-expanded="false" className="wall-view-comments" onClick={openComments} type="button">{__msg("fanWeb.viewNoteComments", { count: commentCount })}</button> : null}
+        {fullText && commentsOpen ? (
           <section aria-label={__msg("fanWeb.wallNoteComments")} className="seen-comments-panel wall-comments-panel">
-            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">{__msg("fanWeb.viewAll")} {commentCount} {__msg("fanWeb.comments")}</button> : null}
+            {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">{__msg("fanWeb.viewNoteComments", { count: commentCount })}</button> : null}
             <WallCommentList noteOwner={creator} comments={comments} allComments={allComments} options={postReactionOptions} userId={user?.id || user?._id} repostingId={repostingCommentId} reactingId={reactingCommentId} onRepost={toggleCommentRepost}
               onOpenOptions={(comment) => { setCommentReport(comment); setCommentReportStage("options"); }}
               onReply={(comment) => { setReplyTarget(comment); commentInputRef.current?.focus(); }}
@@ -1051,10 +1128,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                 catch (error) { setComments(previousComments); showToast(error?.response?.data?.message || __msg("system.copy.1f1cb99a02e2")); }
                 finally { setReactingCommentId(""); }
               }} />
-            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>{replyTarget.author?.name || __msg("discover.creator")}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
+            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>@{replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
             <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: replyTarget.author?.name || __msg("discover.creator") }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: replyTarget.author?.name || __msg("discover.creator") }) : __msg("fanWeb.addAComment")} value={commentText} />
+              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAComment")} value={commentText} />
               <button aria-label={__msg("fanWeb.recordAVoiceComment")} className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
               <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">{__msg("fanWeb.post")}</button>
             </form>
@@ -1199,6 +1276,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         <div className="home-post-more-list">
           {(ownsPost
             ? [
+              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("admin.edit"), subtitle: __msg("wallEdit.remaining", { minutes: Math.max(1, Math.ceil((new Date(normalized.editUntil || new Date(normalized.publishedAt || normalized.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }), icon: FiEdit2 }] : []),
               ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? __msg("fanWeb.reopen") : closeLabels.action, subtitle: resolvedAt ? __msg("fanWeb.backAmongActivePosts") : __msg("fanWeb.staysVisibleWithItsCommentsAndReplies"), icon: FiCheck }] : []),
               { key: "story", label: __msg("activity.addToYourStory"), subtitle: __msg("system.FeedPost.1acf81ee86"), icon: FiPlusCircle },
               { key: "repost", label: shared ? __msg("fan.removeFromProfile") : __msg("fanWeb.repostToMyProfile"), subtitle: shared ? __msg("fanWeb.takeItOffYourShowcase") : __msg("fanWeb.yourProfileYourListAddAsManyAsYou"), icon: FiRepeat },
@@ -1207,6 +1285,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
               { key: "delete", label: __msg("fanWeb.deleteNote"), icon: FiTrash2, danger: true },
             ]
             : [
+              ...(normalized.postType === "Recommendation" && !normalized.rightNow && !isClosed && !normalized.viewerFlaggedOutdated ? [{ key: "outdated", label: __msg("wallFreshness.outdatedQuestion"), icon: FiFlag }] : []),
               { key: "share", label: __msg("admin.share"), icon: FiSend },
               { key: "show-more", label: __msg("fanWeb.showMoreLikeThis"), subtitle: __msg("system.FeedPost.365aacfae4"), icon: ShowMoreEyeIcon },
               { key: "hide", label: __msg("fanWeb.hideThisNote"), icon: FiEyeOff },
@@ -1240,7 +1319,7 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
         }}
       />
 
-      <FeedPostComposer currentUser={creator} initialPost={{ ...normalized, id: actionPostId }} isOpen={editOpen} mode="edit" onClose={() => setEditOpen(false)} />
+      {editOpen ? <PostComposer currentUser={creator} editPost={editingSnapshot} onEditClose={closeEditor} /> : null}
 
       <FanModal isOpen={reportOpen} onClose={() => setReportOpen(false)} title={reportDone ? __msg("fanWeb.reportReceived") : __msg("fanWeb.reportPost")}>
         {reportDone ? (

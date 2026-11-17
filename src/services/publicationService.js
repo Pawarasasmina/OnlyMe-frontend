@@ -58,6 +58,7 @@ export const publicationService = {
   removeSeenFromSeries: (seriesId, seenId) => axiosInstance.delete(`/publications/series/${encodeURIComponent(seriesId)}/seens/${encodeURIComponent(seenId)}`),
   listPublishedSeens: (params) => axiosInstance.get("/publications/seen", { params }),
   getPublicPublication: (id, params) => axiosInstance.get(`/publications/${id}`, { params }),
+  downloadSeenPdf: (id, params) => axiosInstance.get(`/publications/${id}/pdf`, { params, responseType: "blob", timeout: 30000 }),
   markWorldWalked: (id) => axiosInstance.post(`/publications/${id}/walked`),
   listWorldWalkers: (id, params) => axiosInstance.get(`/publications/${id}/walkers`, { params }),
   getPoll: (id, chapterId, blockId, params) => axiosInstance.get(`/publications/${id}/chapters/${chapterId}/polls/${blockId}`, { params }),

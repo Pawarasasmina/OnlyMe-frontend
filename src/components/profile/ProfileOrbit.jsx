@@ -2,8 +2,13 @@ import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
+import { WaysToEarnDetailSheet } from "../../pages/creator/WaysToEarnPage";
+import { authService } from "../../services/authService";
+import { creatorService } from "../../services/creatorService";
 import { resolveMediaUrl } from "../../utils/media";
 import MinimalWorldIcon from "../world/MinimalWorldIcon";
 import "./ProfileWorldCard.css";
@@ -16,12 +21,27 @@ function numberLabel(value, fallback = 0) {
 export default function ProfileOrbit({ capabilities, planets = [], profile, role }) {
   __useUiLanguage();
   const owner = Boolean(capabilities.isOwner);
-  if (profile?.profileAccountType === "personal" && !owner) return null;
+  const [worldPitchOpen, setWorldPitchOpen] = useState(false);
   const premiumPlanets = planets.filter((planet) => planet.kind === "PREMIUM_WORLD");
-  if ((!profile?.isCreator && role !== "creator" && !owner) || (!premiumPlanets.length && !owner)) return null;
-
   const bySlot = Object.fromEntries(premiumPlanets.map((planet) => [planet.planet?.slot, planet]));
   const primaryPlanet = bySlot.PREMIUM || premiumPlanets[0];
+  const monetization = useQuery({
+    queryKey: ["monetization"],
+    queryFn: () => authService.getMonetization().then((response) => response.data.data),
+    enabled: owner && !primaryPlanet,
+    retry: false,
+    staleTime: 30000,
+  });
+  const showWorldPitch = Boolean(owner && !primaryPlanet && !(monetization.data?.verified && monetization.data?.enabled));
+  const earnings = useQuery({
+    queryKey: ["ways-to-earn"],
+    queryFn: () => creatorService.getWaysToEarn().then((response) => response.data.data),
+    enabled: showWorldPitch,
+    retry: false,
+    staleTime: 30000,
+  });
+  if (profile?.profileAccountType === "personal" && !owner) return null;
+  if ((!profile?.isCreator && role !== "creator" && !owner) || (!premiumPlanets.length && !owner)) return null;
   const creatorName = profile?.displayName?.split(" ")[0] || __msg("discover.creator");
   const title = primaryPlanet?.title || __msg("profile.setUpYourWorld");
   const worldTarget = primaryPlanet?.id ? `/world/${primaryPlanet.id}` : profile?.profileAccountType === "personal" ? "/settings/monetization" : "/create/premium-world";
@@ -40,8 +60,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     const incomeLabel = Number.isFinite(income)
       ? new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(income).replace(/\.00$/, "")
       : null;
-    return <section className="profile-owner-world-section">
-      <Link aria-label={primaryPlanet ? __msg("contentEntities.open", { value0: title }) : __msg("profile.openYourWorld")} className={`profile-owner-world-card ${primaryPlanet ? "" : "is-empty"}`} to={worldTarget}>
+    const worldCardContent = <>
         <MinimalWorldIcon />
         <span className="profile-owner-world-copy">
           <strong>{primaryPlanet ? __msg("profile.yourWorld") : __msg("profile.openYourWorld")}</strong>
@@ -53,7 +72,12 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
           </span> : null}
         </span>
         <FiChevronRight data-ui-directional="true" aria-hidden="true" />
-      </Link>
+      </>;
+    return <section className="profile-owner-world-section">
+      {showWorldPitch
+        ? <button aria-label={__msg("profile.openYourWorld")} className="profile-owner-world-card is-empty" onClick={() => setWorldPitchOpen(true)} type="button">{worldCardContent}</button>
+        : <Link aria-label={primaryPlanet ? __msg("contentEntities.open", { value0: title }) : __msg("profile.openYourWorld")} className={`profile-owner-world-card ${primaryPlanet ? "" : "is-empty"}`} to={worldTarget}>{worldCardContent}</Link>}
+      {worldPitchOpen ? <WaysToEarnDetailSheet example={earnings.data?.example || { name: profile.displayName, username: profile.username, avatar: profile.avatar, followers: 0, world: {}, paidSeen: {}, gifts: {} }} onClose={() => setWorldPitchOpen(false)} profile={profile} rate={Number(earnings.data?.dashboard?.exchangeRate?.starsPerUsd) || 10} type="world" /> : null}
     </section>;
   }
 

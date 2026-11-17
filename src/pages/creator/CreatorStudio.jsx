@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { creatorService } from "../../services/creatorService";
+import { shareService } from "../../services/shareService";
 import { useAuth } from "../../hooks/useAuth";
 
 const STAR = "\u2726";
@@ -178,13 +179,14 @@ function CreatorPath({ data = {} }) {
 
 function ReachCard({ metric = {} }) {
   __useUiLanguage();
-  const change = metric.changePercent == null ? 0 : Number(metric.changePercent);
+  const hasBaseline = metric.changePercent != null && Number.isFinite(Number(metric.changePercent));
+  const change = hasBaseline ? Number(metric.changePercent) : null;
   return (
     <Card className="creator-studio-reach">
       <span>{__msg("creator.reachThisMonth")}</span>
       <div>
         <strong>{compact(metric.value)}</strong>
-        <small className={change < 0 ? "is-down" : "is-up"}>{change < 0 ? `▼ ${Math.abs(change)}%` : `▲ ${change}%`}</small>
+        {hasBaseline ? <small className={change < 0 ? "is-down" : change > 0 ? "is-up" : "is-flat"}>{change < 0 ? `▼ ${Math.abs(change)}%` : change > 0 ? `▲ ${change}%` : "0%"}</small> : null}
       </div>
     </Card>
   );
@@ -443,6 +445,12 @@ export default function CreatorStudio() {
     retry: false,
     staleTime: 30000,
   });
+  const weeklySharesQuery = useQuery({
+    queryKey: ["creator-weekly-share-summary"],
+    queryFn: () => shareService.weeklySummary().then((response) => response.data.data.items || []),
+    retry: false,
+    staleTime: 300000,
+  });
 
   /* Obsolete availability overlay removed.
     description="A focused command center for understanding your audience, tracking earnings, and growing everything you create on @seen."
@@ -476,11 +484,13 @@ export default function CreatorStudio() {
   }
 
   const data = dashboardQuery.data || {};
+  const weeklyShares = (weeklySharesQuery.data || []).reduce((total, item) => total + Number(item.shares || 0), 0);
   const previewNew = searchParams.get("preview") === "new";
   return (
     <>
       <main className="creator-studio-prototype">
         <Header onBack={() => navigate(-1)} />
+        {weeklyShares > 0 ? <section className="creator-weekly-share-summary">Your Seens were shared {compact(weeklyShares)} times this week.</section> : null}
         {!previewNew && canGrow ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
         <Tabs active={activeTab} onChange={setActiveTab} />
         {previewNew ? <section className="creator-new-preview"><small>{__msg("creator.previewNewCreator")}</small><h2>{__msg("creator.startCreatingStartEarning")}</h2><p>{__msg("creator.linaBeganWithOneUsefulExperienceWelcomedPeopleInto")}</p><div><Link to="/create/experience">{__msg("creator.createAnExperience")}</Link><Link to="/create/world">{__msg("creator.startYourWorld")}</Link>{canGrow ? <Link to="/grow">{__msg("creator.shareYourGiftLink")}</Link> : null}</div><button onClick={() => navigate("/studio", { replace: true })} type="button">{__msg("creator.exitPreview")}</button></section> : null}

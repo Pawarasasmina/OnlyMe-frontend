@@ -6,7 +6,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiBookmark, FiCheck, FiChevronRight, FiExternalLink, FiEye, FiFlag, FiHeart, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
+import { FiBookmark, FiCheck, FiChevronRight, FiDownload, FiExternalLink, FiEye, FiFlag, FiHeart, FiList, FiLock, FiMapPin, FiMessageCircle, FiMic, FiPlay, FiPlus, FiRepeat, FiSend, FiSlash, FiSquare, FiX } from "react-icons/fi";
 import ChapterVoicePlayer from "../../components/publication/ChapterVoicePlayer";
 import PublicationCoverMedia from "../../components/publication/PublicationCoverMedia";
 import CoinIcon from "../../components/branding/CoinIcon";
@@ -15,6 +15,8 @@ import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
 import ShareSheet from "../../components/share/ShareSheet";
 import VoiceCommentRecorder from "../../components/comments/VoiceCommentRecorder";
+import { CommentReplyMention } from "../../components/comments/CommentIdentity";
+import { commentFirstName } from "../../components/comments/commentIdentityUtils";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import { useAuth } from "../../hooks/useAuth";
 import { analyticsService } from "../../services/analyticsService";
@@ -118,11 +120,11 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
   <div className="seen-compact-engagement" aria-label={__msg("social.seenEngagement")}>
     <button ref={reactionAnchorRef} aria-expanded={reactionsOpen} aria-label={__msg("social.openReactions")} className={`seen-compact-reactions ${engagement.viewerReaction ? "is-active" : ""}`} onClick={() => setReactionsOpen(true)} type="button"><span>{reactionIcons.map((icon, index) => <i key={`${icon}-${index}`}>{icon}</i>)}</span><small>{formatCount(engagement.reactionCount)}</small></button>
     <button aria-expanded={commentsOpen} aria-label={__msg("fanWeb.openComments")} className={commentsOpen ? "is-active" : ""} onClick={onCommentToggle} type="button"><FiMessageCircle /><small>{formatCount(engagement.commentCount)}</small></button>
-    {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat /><small>{formatCount(engagement.shareCount)}</small></button> : null}
+    {!isOwn ? <button aria-label={engagement.viewerShared ? __msg("fanWeb.removeRepost") : __msg("social.repostSeen")} className={engagement.viewerShared ? "is-active" : ""} disabled={mutations.share.isPending} onClick={() => mutations.share.mutate()} type="button"><FiRepeat />{Number(engagement.shareCount) > 0 ? <small>{formatCount(engagement.shareCount)}</small> : null}</button> : null}
     <span aria-label={__msg("fanWeb.views", { value0: formatCount(engagement.viewCount || 0) })}><FiEye /><small>{formatCount(engagement.viewCount || 0)}</small></span>
     <span className="seen-compact-spacer" />
     <button data-first-hint={!saved ? "save" : undefined} aria-label={saved ? __msg("publication.removeSeenFromSaved") : __msg("publication.saveSeen")} className={saved ? "is-active" : ""} disabled={mutations.save.isPending} onClick={() => mutations.save.mutate()} type="button"><FiBookmark fill={saved ? "currentColor" : "none"} /></button>
-    <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend /></button>
+    <button aria-label={__msg("social.shareSeenLink")} onClick={onCopyLink} type="button"><FiSend />{Number(engagement.privateShareCount) > 0 ? <small>{formatCount(engagement.privateShareCount)}</small> : null}</button>
   </div>
   {reactionsOpen ? <div className="seen-reactions-layer">
     <button aria-label={__msg("fanWeb.closeReactions")} className="seen-reactions-scrim" onClick={() => setReactionsOpen(false)} type="button" />
@@ -160,9 +162,18 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   const [sheetPosition, setSheetPosition] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [reposted, setReposted] = useState({});
+  const [repostCounts, setRepostCounts] = useState({});
+  const [reactionCommentId, setReactionCommentId] = useState(null);
+  const reactionPressRef = useRef({ opened: false, timer: null });
+  const listRef = useRef(null);
+  const sheetRef = useRef(null);
+  const dragRef = useRef({ active: false, startY: 0, distance: 0 });
   const repostMutation = useMutation({
     mutationFn: (item) => repostService.toggle("cm", item.id, "SeenEngagement").then((response) => ({ item, ...response.data.data })),
-    onSuccess: ({ item, reposted: value }) => setReposted((current) => ({ ...current, [item.id]: value })),
+    onSuccess: ({ item, reposted: value, repostCount }) => {
+      setReposted((current) => ({ ...current, [item.id]: value }));
+      setRepostCounts((current) => ({ ...current, [item.id]: Number(repostCount) || 0 }));
+    },
   });
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -176,47 +187,91 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
       if (event.key === "Escape") onClose();
     };
     updatePosition();
+    navigator.vibrate?.(10);
+    document.body.classList.add("seen-sheet-lock");
     document.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", updatePosition);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("resize", updatePosition);
+      document.body.classList.remove("seen-sheet-lock");
     };
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen || focusedComment) return;
+    const list = listRef.current;
+    if (list) requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+  }, [engagement.comments?.length, focusedComment, isOpen]);
+
   if (!isOpen) return null;
   const comments = engagement.comments || [];
-  const renderComment = (item, isReply = false) => {
+  const startDrag = (event) => {
+    dragRef.current = { active: true, startY: event.clientY, distance: 0 };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const moveDrag = (event) => {
+    if (!dragRef.current.active) return;
+    const distance = Math.max(0, event.clientY - dragRef.current.startY);
+    dragRef.current.distance = distance;
+    if (sheetRef.current) sheetRef.current.style.transform = `translateY(${distance}px)`;
+  };
+  const endDrag = () => {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    if (dragRef.current.distance > 90) onClose();
+    else if (sheetRef.current) sheetRef.current.style.transform = "";
+  };
+  const insertEmoji = (emoji) => {
+    onChange({ target: { value: `${comment}${emoji}` } });
+    navigator.vibrate?.(8);
+  };
+  const beginReactionPress = (commentId) => {
+    reactionPressRef.current.opened = false;
+    reactionPressRef.current.timer = window.setTimeout(() => {
+      reactionPressRef.current.opened = true;
+      setReactionCommentId(commentId);
+      navigator.vibrate?.(10);
+    }, 420);
+  };
+  const endReactionPress = (item) => {
+    window.clearTimeout(reactionPressRef.current.timer);
+    if (!reactionPressRef.current.opened) onReact(item, item.viewerReaction ? "" : "LOVE");
+    reactionPressRef.current.opened = false;
+  };
+  const renderComment = (item, isReply = false, parentAuthor = null) => {
     const reacted = Boolean(item.viewerReaction);
     const visibleReactionCount = reacted ? Math.max(1, Number(item.reactionCount || 0)) : Number(item.reactionCount || 0);
     return <article className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
       <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
       <div className="seen-comment-copy">
-        <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{item.author?.name || __msg("profile.fan")}</Link> : <strong>{item.author?.name || __msg("profile.fan")}</strong>}{item.text}</p>
+        <p>{item.author?.username ? <Link to={`/profile/${item.author.username}`}>{commentFirstName(item.author, __msg("profile.fan"))}</Link> : <strong>{commentFirstName(item.author, __msg("profile.fan"))}</strong>}<CommentReplyMention author={parentAuthor} replyingAuthor={item.author} />{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label={__msg("comments.voiceComment")} /> : null}
-        <span><button aria-label={reacted ? "Remove heart" : `Heart ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onClick={() => onReact(item, reacted ? "" : "LOVE")} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat /></button> : null}</span>
+        <span><button aria-label={reacted ? "Remove reaction" : `React to ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(item.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(item)} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat />{Number(repostCounts[item.id] ?? item.repostCount) > 0 ? <small>{formatCount(repostCounts[item.id] ?? item.repostCount)}</small> : null}</button> : null}</span>
+        {String(reactionCommentId) === String(item.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={item.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { onReact(item, reaction); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}
       </div>
     </article>;
   };
 
   return <div className="seen-comments-layer">
     <button aria-label={__msg("social.closeComments")} className="seen-comments-scrim" onClick={onClose} type="button" />
-    <section aria-label={__msg("social.commentsOn", { value0: title })} aria-modal="true" className="seen-comments-sheet" role="dialog" style={sheetPosition || undefined}>
-      <span aria-hidden="true" className="seen-comments-handle" />
-      <header>
-        <div><h2>{__msg("admin.comments")}</h2><small>{title}</small></div>
-        <button aria-label={__msg("social.closeComments")} onClick={onClose} type="button"><FiX /></button>
-      </header>
-      <div className="seen-comments-list">
-        {comments.map((item) => <div className="seen-comment-thread" key={item.id}>{renderComment(item)}{(item.replies || []).map((reply) => renderComment(reply, true))}</div>)}
-        {!comments.length ? <p className="seen-comments-empty">{__msg("social.noCommentsYetStartTheConversation")}</p> : null}
+    <section aria-label={__msg("social.commentsOn", { value0: title })} aria-modal="true" className="seen-comments-sheet" ref={sheetRef} role="dialog" style={sheetPosition || undefined}>
+      <div className="seen-comments-drag-zone" onPointerCancel={endDrag} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
+        <span aria-hidden="true" className="seen-comments-handle" />
+        <header><h2>{__msg("admin.comments")}</h2></header>
       </div>
-      {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b>{replyTo.author?.name || __msg("profile.fan")}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+      <div className="seen-comments-list" ref={listRef}>
+        {comments.map((item) => <div className="seen-comment-thread" key={item.id}>{renderComment(item)}{(item.replies || []).map((reply) => renderComment(reply, true, item.author))}</div>)}
+        {!comments.length ? <div className="seen-comments-empty"><strong>No comments yet</strong><span>Start the conversation.</span></div> : null}
+      </div>
+      <footer className="seen-comments-footer">
+      {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b>@{replyTo.author?.username || commentFirstName(replyTo.author, __msg("profile.fan"))}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+      <div className="seen-comments-emoji-row" aria-label="Quick emoji">{["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"].map((emoji) => <button aria-label={`Add ${emoji}`} key={emoji} onClick={() => insertEmoji(emoji)} type="button">{emoji}</button>)}</div>
       <form onSubmit={(event) => { onSubmit(event, replyTo?.id || ""); if (comment.trim()) setReplyTo(null); }}>
         <FanAvatar className="seen-sheet-composer-avatar" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
         <label><input aria-label={__msg("profile.addASeenComment")} autoFocus maxLength={500} onChange={onChange} placeholder={__msg("fanWeb.addAComment")} value={comment} /><button aria-label={__msg("fanWeb.recordAVoiceComment")} disabled={isPending || voicePending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button></label>
         <button disabled={!comment.trim() || isPending} type="submit">{__msg("fanWeb.post")}</button>
-      </form>
+      </form></footer>
       {voiceCommentOpen ? <VoiceCommentRecorder busy={voicePending} onClose={() => setVoiceCommentOpen(false)} onSubmit={(recording) => { onVoiceSubmit(recording, replyTo?.id || ""); setReplyTo(null); setVoiceCommentOpen(false); }} /> : null}
     </section>
   </div>;
@@ -858,6 +913,7 @@ export default function SeenReaderPage() {
   const [chapterListOpen, setChapterListOpen] = useState(false);
   const [chapterSheetPosition, setChapterSheetPosition] = useState(null);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const originRef = useRef(location.state?.seenOrigin || null);
 
   useEffect(() => {
@@ -941,6 +997,33 @@ export default function SeenReaderPage() {
   const engagement = engagementQuery.data || DEFAULT_ENGAGEMENT;
   const detail = useMemo(() => normalizeSeenDetail(publication, engagement), [publication, engagement]);
   const isOwner = detail.access === "OWNER";
+  const canDownloadPdf = Boolean(currentUser && publication?.allowDownload) && (
+    ["OWNER", "ADMIN"].includes(detail.access)
+    || (publication?.pricing?.mode === "ONE_TIME" ? detail.access === "ENTITLED_SEEN" : detail.access === "PUBLIC_FULL")
+  );
+  const downloadPdf = async () => {
+    if (!canDownloadPdf || pdfDownloading) return;
+    setPdfDownloading(true);
+    try {
+      const response = await publicationService.downloadSeenPdf(id, accessToken ? { access: accessToken } : undefined);
+      const objectUrl = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      const header = response.headers?.["content-disposition"] || "";
+      const filename = header.match(/filename="?([^";]+)"?/iu)?.[1] || `${String(publication.title || "seen").replace(/[^a-z0-9]+/giu, "-")}.pdf`;
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setChapterListOpen(false);
+      setNotice("PDF downloaded");
+    } catch (error) {
+      setNotice(error.response?.status === 403 ? "This PDF is available only to the Seen owner." : "The PDF could not be downloaded. Please try again.");
+    } finally {
+      setPdfDownloading(false);
+    }
+  };
   const ownMediaQuery = useQuery({
     enabled: Boolean(isOwner),
     queryKey: ["profile-media", "me"],
@@ -1419,6 +1502,7 @@ export default function SeenReaderPage() {
           {(chapters.length ? chapters : [{ title: publication.title }]).map((item, index) => <button aria-current={index === safeChapterIndex ? "page" : undefined} className={`${index === safeChapterIndex ? "is-active" : ""} ${item.locked ? "is-locked" : ""}`} key={item.stableChapterId || index} onClick={() => { changeChapter(index); if (!item.locked) setChapterListOpen(false); }} type="button"><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</strong>{item.locked ? <FiLock /> : index === safeChapterIndex ? <small>{__msg("social.reading")}</small> : <FiChevronRight />}</button>)}
         </nav>
         {isOwner && detail.mediaCandidates.length ? <button className="seen-chapter-list-media-action" disabled={addSeenMediaMutation.isPending} onClick={() => { setChapterListOpen(false); openMediaAdd(); }} type="button"><FiPlus /> {__msg("social.addSeenMediaToProfile")}</button> : null}
+        {canDownloadPdf ? <button className="seen-chapter-list-media-action seen-chapter-list-download-action" disabled={pdfDownloading} onClick={downloadPdf} type="button"><FiDownload /> {pdfDownloading ? "Preparing PDF…" : "Download PDF"}</button> : null}
       </section>
     </div> : null}
     <SeenToMediaPicker

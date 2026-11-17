@@ -166,7 +166,7 @@ export default function NotificationSettingsSheet({ anchorRef, isOpen, onClose }
           </div>
         ) : null}
         {error ? <p className="profile-notification-error" role="alert">{__systemMessage(error)}</p> : null}
-        <p className="profile-notification-note">{__msg("settings.viewsAreAlwaysSilentNeverANotification")}</p>
+        <p className="profile-notification-note">Views and shares are always silent — never a notification.</p>
         <button className="notification-week-entry" onClick={() => setFirstWeekOpen(true)} type="button"><span><b>{__msg("settings.yourFirstWeek")}</b><small>{__msg("settings.firstWeekWhatWeSend")}</small></span><FiChevronRight data-ui-directional="true" /></button>
         </>}
       </section>

@@ -1,5 +1,6 @@
 export function scrollPositionForNavigation({ navigationType, restoreScroll, entryPosition, routePosition }) {
   if (navigationType === "POP" && entryPosition) return entryPosition;
+  if (restoreScroll && typeof restoreScroll === "object" && Number.isFinite(restoreScroll.content) && Number.isFinite(restoreScroll.window)) return restoreScroll;
   if (restoreScroll && routePosition) return routePosition;
   return { content: 0, window: 0 };
 }

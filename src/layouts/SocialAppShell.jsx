@@ -52,7 +52,7 @@ class SocialContentErrorBoundary extends Component {
   }
 }
 
-function SocialAppShell({ children = null }) {
+function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
   __useUiLanguage();
   const { user } = useAuth();
   const onboarding = useOnboarding();
@@ -164,7 +164,7 @@ function SocialAppShell({ children = null }) {
         <div className="social-app-frame mx-auto flex min-h-screen w-full max-w-[1240px] min-[881px]:h-screen min-[881px]:min-h-0">
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadActivityCount={unreadActivityCount} unreadMessageCount={unreadMessageCount} />
           <div className="social-center-scroll relative min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
-            {ticketVisible ? <OnboardingTicket busy={onboarding.acknowledgeTicket.isPending || onboarding.complete.isPending} city={onboarding.data?.profile?.city || ""} joinedAt={onboarding.data?.user?.createdAt || user?.createdAt} memberNumber={onboarding.data?.user?.memberNumber || user?.memberNumber} name={user?.name} onContinue={closeOnboardingTicket} overlay /> : null}
+            {ticketVisible && !suppressOnboardingTicket ? <OnboardingTicket busy={onboarding.acknowledgeTicket.isPending || onboarding.complete.isPending} city={onboarding.data?.profile?.city || ""} joinedAt={onboarding.data?.user?.createdAt || user?.createdAt} memberNumber={onboarding.data?.user?.memberNumber || user?.memberNumber} name={user?.name} onContinue={closeOnboardingTicket} overlay /> : null}
             <main className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isWorldReaderPage

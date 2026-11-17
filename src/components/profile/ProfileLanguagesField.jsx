@@ -12,8 +12,8 @@ export default function ProfileLanguagesField({ preferredLanguage, onChange }) {
   const [text, setText] = useState(selected?.name || preferredLanguage || "English");
   useEffect(() => { setText(selected?.name || preferredLanguage || __msg("profile.english")); }, [selected?.name, preferredLanguage]);
   return <label className="edit-profile-field">
-    <span>{__msg("discover.languages")}</span>
-    <input aria-label={__msg("discover.languages")} autoComplete="off" name="preferredLanguage" placeholder={__msg("profile.english")} required value={text} onChange={(event) => {
+    <span>{__msg("Spoken language")}</span>
+    <input aria-label={__msg("Spoken language")} autoComplete="off" name="preferredLanguage" placeholder={__msg("profile.english")} required value={text} onChange={(event) => {
       const value = event.target.value;
       setText(value);
       const match = options.find((option) => option.name.toLowerCase() === value.trim().toLowerCase() || option.code.toLowerCase() === value.trim().toLowerCase());

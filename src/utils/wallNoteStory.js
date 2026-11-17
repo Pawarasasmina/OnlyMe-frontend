@@ -3,7 +3,7 @@ import { msg as __msg } from "../i18n/runtime.js";
 export function wallNoteStoryDraft({ id, text = "", location = "", own = false, author = {}, transcript = "", translationText = "", translationLabel = "" }) {
   return { sharedCard: {
     kind: "note", displayMode: "text_only", imageUrl: "",
-    destinationRoute: `/wall?note=${encodeURIComponent(id)}`,
+    destinationRoute: `/posts/${encodeURIComponent(id)}`,
     authorName: author.name || author.displayName || author.username || "",
     authorAvatar: author.avatar || author.avatarUrl || "",
     variant: "compact",
