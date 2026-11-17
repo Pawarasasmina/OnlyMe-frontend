@@ -38,7 +38,7 @@ function MapPreview({ place }) {
   </div>;
 }
 
-export default function UniversalLocationPicker({ allowCustom = true, allowWorldwide = false, anchorRef, centerColumn = false, onClose, onSelect, title = __msg("fanWeb.location"), value = "" }) {
+export default function UniversalLocationPicker({ allowCustom = true, allowWorldwide = false, anchorRef, centerColumn = true, onClose, onSelect, title = __msg("fanWeb.location"), value = "" }) {
   __useUiLanguage();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(value ? { name: value.split(",")[0], label: value } : allowWorldwide ? { name: "Worldwide", label: "", kind: "world", latitude: 25, longitude: 20 } : null);
@@ -63,7 +63,8 @@ export default function UniversalLocationPicker({ allowCustom = true, allowWorld
   const exact = shown.some((item) => item.name.toLowerCase() === query.trim().toLowerCase());
   const custom = allowCustom && query.trim().length >= 2 && !exact ? { id: "custom", name: query.trim(), label: query.trim(), subtitle: __msg("system.UniversalLocationPicker.7669011536"), latitude: selected?.latitude, longitude: selected?.longitude, kind: "custom" } : null;
   const row = (item, icon) => <button aria-pressed={selected?.label === item.label} className="universal-location-row" key={item.id || item.label} onClick={() => setSelected(item)} type="button"><span>{icon || <FiMapPin />}</span><i><strong>{item.name}</strong><small>{item.subtitle}</small></i>{selected?.label === item.label ? <FiCheck className="universal-location-check" /> : null}</button>;
-  const host = anchorRef?.current?.closest(".social-center-scroll"); const bounds = host?.getBoundingClientRect();
+  const host = anchorRef?.current?.closest(".social-center-scroll") || document.querySelector(".social-center-scroll");
+  const bounds = host?.getBoundingClientRect();
   return createPortal(<div className={`universal-location-layer ${centerColumn ? "is-center-column" : ""}`.trim()} style={bounds ? { left: bounds.left, width: bounds.width, top: Math.max(0, bounds.top), bottom: Math.max(0, innerHeight - bounds.bottom) } : undefined}>
     <button aria-label={__msg("fanWeb.closeLocationPicker")} className="universal-location-scrim" onClick={onClose} type="button" />
     <section aria-modal="true" className="universal-location-sheet" ref={panelRef} role="dialog" tabIndex={-1}><span className="universal-location-handle" /><h2>{title}</h2>

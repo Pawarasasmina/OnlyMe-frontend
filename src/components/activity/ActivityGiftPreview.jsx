@@ -9,7 +9,7 @@ import { resolveMediaUrl } from "../../utils/media";
 import { FiGift } from "react-icons/fi";
 import GiftArt from "../gifts/GiftArt";
 
-export default function ActivityGiftPreview({ activity, onClose }) {
+export default function ActivityGiftPreview({ activity, onClose, showClose = true, skipCatalog = false }) {
   __useUiLanguage();
   const closeButton = useRef(null);
   const [position, setPosition] = useState({});
@@ -22,7 +22,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
   const catalog = useQuery({
     queryKey: ["messages", "gifts", activity.relatedCreator?.id],
     queryFn: () => messageService.getGifts(activity.relatedCreator?.id).then((response) => response.data.data.gifts),
-    enabled: Boolean(giftId),
+    enabled: Boolean(giftId) && !skipCatalog,
     retry: false,
     staleTime: 60000,
   });
@@ -36,7 +36,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
 
   useEffect(() => {
     const previousFocus = document.activeElement;
-    closeButton.current?.focus();
+    if (showClose) closeButton.current?.focus();
     const column = document.querySelector(".social-center-scroll");
     const update = () => {
       if (!column) return;
@@ -49,7 +49,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
     window.addEventListener("resize", update);
     const keydown = (event) => {
       if (event.key === "Escape") { event.preventDefault(); onClose(); }
-      if (event.key === "Tab") { event.preventDefault(); closeButton.current?.focus(); }
+      if (event.key === "Tab" && showClose) { event.preventDefault(); closeButton.current?.focus(); }
     };
     window.addEventListener("keydown", keydown);
     const timer = window.setTimeout(() => setMomentReady(true), 1800);
@@ -60,7 +60,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
       window.removeEventListener("keydown", keydown);
       if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [onClose]);
+  }, [onClose, showClose]);
 
   const sayThanks = async (event) => {
     event.stopPropagation();
@@ -76,7 +76,7 @@ export default function ActivityGiftPreview({ activity, onClose }) {
   };
 
   return <div aria-label={__msg("activity.giftPreview", { value0: name })} aria-modal="true" className="activity-gift-preview" role="dialog" style={position}>
-    <button aria-label={__msg("activity.closeGiftPreview")} className="absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/45 text-xl text-white" onClick={onClose} ref={closeButton} type="button">×</button>
+    {showClose ? <button aria-label={__msg("activity.closeGiftPreview")} className="absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/45 text-xl text-white" onClick={onClose} ref={closeButton} type="button">×</button> : null}
     <div className="activity-gift-preview-dismiss" onClick={onClose} role="presentation">
       <span className="activity-gift-preview-art">
         <i aria-hidden="true" />

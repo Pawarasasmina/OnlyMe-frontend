@@ -48,7 +48,8 @@ import "../../styles/profileCategory.css";
 import "../../styles/publicProfile.css";
 import "../../styles/businessContactActions.css";
 import ProfileContentGrid from "../../components/profile/ProfileContentGrid";
-import ProfileDream, { GiftCelebration } from "../../components/profile/ProfileDream";
+import ProfileDream from "../../components/profile/ProfileDream";
+import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
 import GiftArt from "../../components/gifts/GiftArt";
 import ProfileMediaSection from "../../components/profile/ProfilePhotosSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
@@ -796,10 +797,10 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
   }, [isOpen]);
   useEffect(() => {
     if (!isOpen) return undefined;
-    const close = (event) => event.key === "Escape" && (detailGift ? setDetailGift(null) : onClose());
+    const close = (event) => event.key === "Escape" && !previewGift && (detailGift ? setDetailGift(null) : onClose());
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [detailGift, isOpen, onClose]);
+  }, [detailGift, isOpen, onClose, previewGift]);
   useEffect(() => {
     if (!isOpen) return undefined;
     const centerColumn = backdropRef.current?.closest(".social-center-scroll");
@@ -895,6 +896,19 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
     if (gift.hiddenFromProfile) parts.push("hidden");
     return parts.join(" · ");
   };
+  const previewCopy = previewGift ? profileGiftCopy(previewGift, { isOwner, viewerId }) : null;
+  const focusedPreview = previewGift ? {
+    id: previewGift.celebrationId || previewGift.id,
+    direction: "preview",
+    gift: previewGift,
+    metadata: {
+      giftImageUrl: previewGift.imageUrl,
+      giftMeaning: previewCopy.caption,
+      giftName: previewGift.name,
+      giftNote: previewCopy.note,
+    },
+    relatedCreator: { displayName: previewCopy.senderName },
+  } : null;
   const reportSheet = reportOpen && detailGift ? (
     <section aria-label={__msg("social.reportGift")} className={reportDone ? "profile-gift-report-sheet is-done" : "profile-gift-report-sheet"}>
       <button aria-label={__msg("social.backToGiftDetails")} className="profile-gift-detail-handle" onClick={() => { setReportOpen(false); setReportDone(false); }} type="button" />
@@ -925,7 +939,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
   if (!isOpen) return null;
   return <div aria-labelledby="received-gifts-title" aria-modal="true" className="profile-received-gifts-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()} ref={backdropRef} role="dialog" style={sheetPosition}>
     {thankNotice ? <div aria-live="polite" className="profile-gift-thank-toast">{thankNotice}</div> : null}
-    {previewGift ? <GiftCelebration {...profileGiftCopy(previewGift, { isOwner, viewerId })} detail={previewGift.detail} gift={previewGift} key={previewGift.celebrationId} message={__msg("social.giftReceived")} variant="is-profile-gift" /> : null}
+    {focusedPreview ? <ActivityGiftPreview activity={focusedPreview} key={focusedPreview.id} onClose={() => { setDetailGift(previewGift); setPreviewGift(null); }} showClose={false} skipCatalog /> : null}
     {reportSheet || (detailGift ? <section aria-label={__msg("social.giftDetails", { value0: detailGift.name })} className="profile-gift-detail-sheet">
       <button aria-label={__msg("social.backToReceivedGifts")} className="profile-gift-detail-handle" onClick={() => setDetailGift(null)} type="button" />
       <button aria-label={__msg("social.replayGiftAnimation")} className="profile-gift-detail-art" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button"><span aria-hidden="true" /><GiftArt gift={detailGift} /></button>

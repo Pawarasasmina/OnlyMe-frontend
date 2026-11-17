@@ -40,7 +40,8 @@ function toSheetPreferences(apiPreferences = {}) {
 }
 
 function toApiPreferences(sheetPreferences = {}, currentApiPreferences = {}, role = "fan") {
-  const inApp = activityKeys.some((key) => sheetPreferences[key] !== false);
+  const inAppKeys = [...activityKeys, "messages", "directAccess"];
+  const inApp = inAppKeys.some((key) => sheetPreferences[key] !== false);
   if (role === "admin") {
     return {
       email: sheetPreferences.email ?? currentApiPreferences.email ?? true,
@@ -52,6 +53,7 @@ function toApiPreferences(sheetPreferences = {}, currentApiPreferences = {}, rol
   return {
     email: sheetPreferences.email ?? currentApiPreferences.email ?? true,
     inApp,
+    ...Object.fromEntries(activityKeys.map((key) => [key, sheetPreferences[key] !== false])),
     messages: sheetPreferences.messages !== false,
     directAccess: sheetPreferences.directAccess !== false,
     marketing: currentApiPreferences.marketing ?? sheetPreferences.marketing ?? false,
@@ -103,6 +105,7 @@ export default function NotificationSettingsSheet({ anchorRef, isOpen, onClose }
     onSuccess: (response) => {
       queryClient.setQueryData(["settings", "notifications"], response.data.data);
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["fan", "activity"] });
       setError("");
     },
     onError: (requestError, _payload, context) => {
