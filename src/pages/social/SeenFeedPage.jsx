@@ -5,13 +5,15 @@ import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
+import { CommentReplyMention } from "../../components/comments/CommentIdentity";
+import { commentFirstName } from "../../components/comments/commentIdentityUtils";
 import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { nextSeenFeedPage, updateSeenFeedPages } from "../../utils/seenFeedPagination";
-import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiHeart, FiImage, FiLock, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiZap } from "react-icons/fi";
+import { FiArchive, FiBarChart2, FiBookmark, FiChevronLeft, FiChevronRight, FiEdit3, FiEyeOff, FiFlag, FiGrid, FiHeart, FiImage, FiLock, FiMessageCircle, FiMic, FiMoreHorizontal, FiPlay, FiPlus, FiPlusCircle, FiRefreshCw, FiRepeat, FiSearch, FiSend, FiSlash, FiTrash2, FiUploadCloud, FiVolume2, FiVolumeX, FiX, FiZap } from "react-icons/fi";
 import FanCreateSheet from "../../components/fanWeb/FanCreateSheet";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import ContentEntityList from "../../components/contentEntities/ContentEntityList";
@@ -668,13 +670,18 @@ function PreviewComment({ comment, noteOwner }) {
   </div>;
 }
 
-function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagementChange, value, onChange, onSubmit }) {
+function CommentsPanel({ currentUser, engagementQuery, item, mutation, onClose, onEngagementChange, value, onChange, onSubmit }) {
   __useUiLanguage();
+  const sheetPosition = useSeenSheetPosition(true);
   const comments = engagementQuery.data?.comments || [];
-  const [allComments, setAllComments] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [voiceCommentOpen, setVoiceCommentOpen] = useState(false);
   const [reposted, setReposted] = useState({});
+  const [reactionCommentId, setReactionCommentId] = useState(null);
+  const reactionPressRef = useRef({ opened: false, timer: null });
+  const listRef = useRef(null);
+  const sheetRef = useRef(null);
+  const dragRef = useRef({ active: false, startY: 0, distance: 0 });
   const repostCommentMutation = useMutation({
     mutationFn: (comment) => repostService.toggle("cm", comment.id, "SeenEngagement").then((response) => ({ comment, ...response.data.data })),
     onSuccess: ({ comment, reposted: value }) => setReposted((current) => ({ ...current, [comment.id]: value })),
@@ -704,38 +711,93 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
     if (!mutation.isSuccess) return;
     setReplyTo(null);
   }, [mutation.isSuccess]);
+  useEffect(() => {
+    const list = listRef.current;
+    if (list) requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+  }, [comments.length]);
+  useEffect(() => {
+    const onKeyDown = (event) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKeyDown);
+    document.body.classList.add("seen-sheet-lock");
+    navigator.vibrate?.(10);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.classList.remove("seen-sheet-lock");
+    };
+  }, [onClose]);
+  const startDrag = (event) => {
+    dragRef.current = { active: true, startY: event.clientY, distance: 0 };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const moveDrag = (event) => {
+    if (!dragRef.current.active) return;
+    const distance = Math.max(0, event.clientY - dragRef.current.startY);
+    dragRef.current.distance = distance;
+    if (sheetRef.current) sheetRef.current.style.transform = `translateY(${distance}px)`;
+  };
+  const endDrag = () => {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    if (dragRef.current.distance > 90) onClose();
+    else if (sheetRef.current) sheetRef.current.style.transform = "";
+  };
+  const insertEmoji = (emoji) => {
+    onChange(`${value}${emoji}`);
+    navigator.vibrate?.(8);
+  };
+  const beginReactionPress = (commentId) => {
+    reactionPressRef.current.opened = false;
+    reactionPressRef.current.timer = window.setTimeout(() => {
+      reactionPressRef.current.opened = true;
+      setReactionCommentId(commentId);
+      navigator.vibrate?.(10);
+    }, 420);
+  };
+  const endReactionPress = (comment) => {
+    window.clearTimeout(reactionPressRef.current.timer);
+    if (!reactionPressRef.current.opened) commentReactionMutation.mutate({ comment, reaction: comment.viewerReaction ? "" : "LOVE" });
+    reactionPressRef.current.opened = false;
+  };
   const beginReply = (comment) => {
     setReplyTo(comment);
     onChange("");
   };
-  const renderComment = (comment, nested = false) => {
+  const renderComment = (comment, nested = false, parentAuthor = null) => {
     const reacted = Boolean(comment.viewerReaction);
     const visibleReactionCount = reacted ? Math.max(1, Number(comment.reactionCount || 0)) : Number(comment.reactionCount || 0);
     return <article className={nested ? "is-reply" : ""} key={comment.id}>
       <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
       <div className="seen-comment-copy">
-        <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{comment.author?.name || __msg("profile.fan")}</Link><MemberCommentBadge author={comment.author} noteOwner={item.creator} />{comment.text}</p>
+        <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{commentFirstName(comment.author, __msg("profile.fan"))}</Link><MemberCommentBadge author={comment.author} noteOwner={item.creator} /><CommentReplyMention author={parentAuthor} replyingAuthor={comment.author} />{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label={__msg("comments.voiceComment")} /> : null}
-        <span><button aria-label={reacted ? "Remove heart" : `Heart ${comment.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onClick={() => commentReactionMutation.mutate({ comment, reaction: reacted ? "" : "LOVE" })} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">{__msg("fan.reply")}</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
+        <span><button aria-label={reacted ? "Remove reaction" : `React to ${comment.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(comment.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(comment)} type="button"><FiHeart fill={reacted ? "currentColor" : "none"} />{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">{__msg("fan.reply")}</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
+        {String(reactionCommentId) === String(comment.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={comment.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { commentReactionMutation.mutate({ comment, reaction }); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}
       </div>
     </article>;
   };
-  const renderThread = (comment, ancestors = new Set(), nested = false) => {
+  const renderThread = (comment, ancestors = new Set(), nested = false, parentAuthor = null) => {
     const id = String(comment.id);
     if (ancestors.has(id)) return null;
     const next = new Set([...ancestors, id]);
     return <div className="seen-comment-thread" key={id}>
-      {renderComment(comment, nested)}
-      {(comment.replies || []).map(reply => renderThread(reply, next, true))}
+      {renderComment(comment, nested, parentAuthor)}
+      {(comment.replies || []).map(reply => renderThread(reply, next, true, comment.author))}
     </div>;
   };
-  return <section className="seen-comments-panel">
-    {!allComments && comments.length > 2 ? <button className="wall-view-comments" onClick={() => setAllComments(true)} type="button">View all {engagementQuery.data?.commentCount || item.engagement.comments} comments</button> : null}
-    <div className="seen-comments-list">
-      {(allComments ? comments : comments.slice(0, 2)).map(comment => renderThread(comment))}
-      {!comments.length && !engagementQuery.isLoading ? <p className="seen-comments-empty">{__msg("fanWeb.beTheFirstToComment")}</p> : null}
+  return <div className="seen-comments-layer" style={sheetPosition}>
+    <button aria-label={__msg("social.closeComments")} className="seen-comments-scrim" onClick={onClose} type="button" />
+    <section aria-label={__msg("social.commentsOn", { value0: item.title })} aria-modal="true" className="seen-comments-sheet" ref={sheetRef} role="dialog">
+    <div className="seen-comments-drag-zone" onPointerCancel={endDrag} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
+      <span aria-hidden="true" className="seen-comments-handle" />
+      <header><h2>{__msg("admin.comments")}</h2></header>
     </div>
-    {replyTo ? <div className="seen-replying-to"><span>{__msg("creator.replyingTo")} <b>{replyTo.author?.name || __msg("profile.fan")}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button">×</button></div> : null}
+    <div className="seen-comments-list" ref={listRef}>
+      {comments.map(comment => renderThread(comment))}
+      {!comments.length && !engagementQuery.isLoading ? <div className="seen-comments-empty"><strong>No comments yet</strong><span>Start the conversation.</span></div> : null}
+    </div>
+    <footer className="seen-comments-footer">
+    {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b>@{replyTo.author?.username || replyTo.author?.name || __msg("profile.fan")}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+    <div className="seen-comments-emoji-row" aria-label="Quick emoji">{["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"].map((emoji) => <button aria-label={`Add ${emoji}`} key={emoji} onClick={() => insertEmoji(emoji)} type="button">{emoji}</button>)}</div>
     <form onSubmit={(event) => onSubmit(event, replyTo?.id)}>
       <FanAvatar alt="" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
       <label>
@@ -743,9 +805,9 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onEngagem
         <button aria-label={__msg("fanWeb.recordAVoiceComment")} className="seen-comment-mic" disabled={mutation.isPending || voiceCommentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
       </label>
       <button className="seen-comment-post" disabled={!value.trim() || mutation.isPending} type="submit">{__msg("fanWeb.post")}</button>
-    </form>
+    </form></footer>
     {voiceCommentOpen ? <VoiceCommentRecorder busy={voiceCommentMutation.isPending} onClose={() => setVoiceCommentOpen(false)} onSubmit={(recording) => voiceCommentMutation.mutate(recording)} /> : null}
-  </section>;
+  </section></div>;
 }
 
 function reactionCluster(item) {
@@ -1366,7 +1428,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
       {reactionPickerOpen && !reactionExpanded ? <WallReactionTray anchorRef={reactionAnchorRef} busy={reactionMutation.isPending} onClose={() => setReactionPickerOpen(false)} onMore={() => setReactionExpanded(true)} onSelect={(reaction) => selectReaction(reaction)} options={seenReactionOptions} quickKeys={["SEE_YOU", "LOVE", "FIRE", "TEARY", "LAUGH", "LIKE"]} selected={currentSeenReactionKey(item.viewerState.reaction)} useEyeIcon={false} /> : null}
       {reactionPickerOpen && reactionExpanded ? <ReactionPicker item={item} onClose={() => { setReactionPickerOpen(false); setReactionExpanded(false); }} onSelect={selectReaction} pending={reactionMutation.isPending} /> : null}
       {notice ? <p className="seen-item-notice" role="status">{__systemMessage(notice)}{noticeLink ? <Link to={noticeLink}>{__msg("social.viewReposts")}</Link> : null}</p> : null}
-      {commentsOpen ? <CommentsPanel currentUser={currentUser} engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onEngagementChange={mergeEngagement} onSubmit={submitComment} value={comment} /> : null}
+      {commentsOpen ? <CommentsPanel currentUser={currentUser} engagementQuery={engagementQuery} item={item} mutation={commentMutation} onChange={setComment} onClose={() => setCommentsOpen(false)} onEngagementChange={mergeEngagement} onSubmit={submitComment} value={comment} /> : null}
     </div>
   </motion.article>;
 }

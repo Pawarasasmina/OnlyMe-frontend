@@ -58,6 +58,7 @@ const audienceOptions = [
   { icon: FiGlobe, get label() { return __msg("onboarding.everyone"); }, value: "PUBLIC" },
   { get description() { return __msg("creator.onlyMutualFriends"); }, icon: FiUsers, get label() { return __msg("stories.friends_c11d5e"); }, value: "FRIENDS" },
   { get description() { return __msg("creator.hiddenFromYourProfileAndSeen"); }, icon: FiLink, get label() { return __msg("creator.anyoneWithTheLink"); }, value: "LINK_ONLY" },
+  { get description() { return __msg("creator.insideYourWorld"); }, icon: FiEye, get label() { return __msg("discover.worldMembers"); }, value: "WORLD_MEMBERS" },
 ];
 const VIDEO_RECORDER_TYPES = [
   "video/webm;codecs=vp9,opus",
@@ -751,7 +752,7 @@ async function copyText(value) {
   return copied;
 }
 
-function SelectionSheet({ children, onClose, subtitle, title }) {
+function SelectionSheet({ children, onClose, sheetClassName = "", subtitle, title }) {
   __useUiLanguage();
   const panelRef = useRef(null);
   useEffect(() => {
@@ -782,7 +783,7 @@ function SelectionSheet({ children, onClose, subtitle, title }) {
   return (
     <div aria-modal="true" className="seen-settings-sheet-layer" role="dialog">
       <button aria-label={__msg("creator.close", { value0: title })} className="seen-settings-sheet-dim" onClick={onClose} type="button" />
-      <section className="seen-settings-sheet" ref={panelRef}>
+      <section className={`seen-settings-sheet ${sheetClassName}`.trim()} ref={panelRef}>
         <span className="seen-settings-sheet-handle" aria-hidden="true" />
         <header>
           <h2>{title}</h2>
@@ -811,11 +812,10 @@ function SheetRow({ description = "", Icon, label, onClick, selected }) {
 function CategorySheet({ categories: categoryOptions, onClose, onSelect, value }) {
   __useUiLanguage();
   return (
-    <SelectionSheet onClose={onClose} title={__msg("content.category")}>
-      <div className="seen-settings-options">
+    <SelectionSheet onClose={onClose} sheetClassName="is-category" title={__msg("content.category")}>
+      <div className="seen-settings-options seen-category-options">
         {categoryOptions.map((category) => (
           <SheetRow
-            Icon={FiTag}
             key={category.id || category.name || category}
             label={category.name || category}
             onClick={() => onSelect(category.name || category)}
@@ -950,7 +950,7 @@ function PeopleSheet({ onChange, onClose, selectedIds, selectedPeople }) {
 
 function LocationSheet({ onClose, onSelect, value }) {
   __useUiLanguage();
-  return <UniversalLocationPicker onClose={onClose} onSelect={onSelect} value={value} />;
+  return <UniversalLocationPicker centerColumn onClose={onClose} onSelect={onSelect} value={value} />;
 }
 
 function SeriesSheet({ creating, error, items, loading, newSeries, onClose, onCreate, onInput, onRemove, onSelect, selectedId }) {
@@ -2099,7 +2099,7 @@ export function SeenChapterEditor({ busy, chapter, error, flow = null, onAddBloc
           </div>
         </section>
       ) : null}
-      {placeOpen ? <UniversalLocationPicker onClose={() => setPlaceOpen(false)} onSelect={(location) => onAddPlace(location)} title={__msg("contentEntities.place")} /> : null}
+      {placeOpen ? <UniversalLocationPicker centerColumn onClose={() => setPlaceOpen(false)} onSelect={(location) => onAddPlace(location)} title={__msg("contentEntities.place")} /> : null}
       {structuredEditor ? (
         <section
           className={`seen-chapter-structured-editor is-${structuredEditor.type.toLowerCase()}-editor`}
@@ -2531,6 +2531,14 @@ export default function SeenComposerPage() {
   const [videoToTrim, setVideoToTrim] = useState(null);
   const [buyerViewOpen, setBuyerViewOpen] = useState(false);
   const [ownerVoiceOpen, setOwnerVoiceOpen] = useState(false);
+  const pendingChapterTarget = (() => {
+    try {
+      const value = JSON.parse(sessionStorage.getItem("atseen_seen_open_chapter") || "null");
+      return String(value?.publicationId || "") === String(id || "") ? value.chapterId || "" : "";
+    } catch {
+      return "";
+    }
+  })();
 
   useEffect(() => {
     let active = true;
@@ -2544,11 +2552,11 @@ export default function SeenComposerPage() {
       });
     return () => { active = false; };
   }, []);
-  const [activeChapterId, setActiveChapterId] = useState(() => pageWasReloaded.current ? "" : location.state?.openChapterId || "");
+  const [activeChapterId, setActiveChapterId] = useState(() => location.state?.openChapterId || pendingChapterTarget || "");
   const [chapterStory, setChapterStory] = useState("");
   const [chapterSaving, setChapterSaving] = useState(false);
   const [chapterAdding, setChapterAdding] = useState(false);
-  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => pageWasReloaded.current ? "" : location.state?.focusChapterId || "");
+  const [chapterTitleFocusId, setChapterTitleFocusId] = useState(() => location.state?.focusChapterId || "");
   const [chapterStatus, setChapterStatus] = useState("");
   const [cropTarget, setCropTarget] = useState(null);
   const [loadingPublication, setLoadingPublication] = useState(Boolean(id));
@@ -2561,6 +2569,16 @@ export default function SeenComposerPage() {
     if (!location.state?.openChapterId && !location.state?.focusChapterId && !location.state?.composerStep) return;
     nav(`${location.pathname}${location.search}`, { replace: true, state: null });
   }, []);
+
+  useEffect(() => {
+    if (!activeChapterId || !p.chapters.some((chapter) => chapter.stableChapterId === activeChapterId)) return;
+    try {
+      const value = JSON.parse(sessionStorage.getItem("atseen_seen_open_chapter") || "null");
+      if (String(value?.publicationId || "") === String(p.id || id || "")) sessionStorage.removeItem("atseen_seen_open_chapter");
+    } catch {
+      sessionStorage.removeItem("atseen_seen_open_chapter");
+    }
+  }, [activeChapterId, id, p.chapters, p.id]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -2968,6 +2986,47 @@ export default function SeenComposerPage() {
     setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
   };
 
+  const generatePaidSignatureCover = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1280;
+    canvas.height = 800;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#172b43");
+    gradient.addColorStop(.55, "#0d1928");
+    gradient.addColorStop(1, "#080c12");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = "rgba(156,203,255,.08)";
+    context.lineWidth = 2;
+    for (let radius = 90; radius <= 420; radius += 82) {
+      context.beginPath();
+      context.arc(1030, 180, radius, 0, Math.PI * 2);
+      context.stroke();
+    }
+    context.fillStyle = "#9CCBFF";
+    context.font = "700 27px sans-serif";
+    context.fillText("PAID SEEN", 72, 92);
+    context.fillStyle = "#FFFFFF";
+    context.font = "800 70px sans-serif";
+    const coverTitle = (p.title.trim() || __msg("profile.untitledSeen")).slice(0, 42);
+    const lines = [];
+    let line = "";
+    coverTitle.split(/\s+/u).forEach((word) => {
+      const next = line ? `${line} ${word}` : word;
+      if (context.measureText(next).width > 1080 && line) {
+        lines.push(line);
+        line = word;
+      } else line = next;
+    });
+    if (line) lines.push(line);
+    lines.slice(0, 3).forEach((value, index) => context.fillText(value, 72, 610 + index * 78));
+    canvas.toBlob((blob) => {
+      if (blob) uploadCoverFile(new File([blob], "paid-seen-signature-cover.jpg", { type: "image/jpeg" }), "IMAGE");
+    }, "image/jpeg", .88);
+  };
+
   const uploadOwnerVoice = async (source) => {
     const file = source?.target?.files?.[0] || source;
     if (source?.target) source.target.value = "";
@@ -3152,8 +3211,8 @@ export default function SeenComposerPage() {
       const firstChapter = latest.chapters.find((chapter) => chapter.stableChapterId === chapterId) || latest.chapters[0];
       initialChapterStarted.current = true;
       setAboutStep(false);
-      setChaptersStep(p.pricing?.mode === "ONE_TIME");
-      if (p.pricing?.mode !== "ONE_TIME" && firstChapter?.stableChapterId) {
+      setChaptersStep(false);
+      if (firstChapter?.stableChapterId) {
         setActiveChapterId(firstChapter.stableChapterId);
         setChapterStory(chapterStoryText(firstChapter));
       } else {
@@ -3163,11 +3222,13 @@ export default function SeenComposerPage() {
       dirty.current = false;
       setStatus(__msg("contentEntities.saved"));
       if (String(id || "") !== String(publication.id)) {
+        sessionStorage.setItem("atseen_seen_open_chapter", JSON.stringify({
+          chapterId: firstChapter?.stableChapterId || chapterId,
+          publicationId: publication.id,
+        }));
         nav(`/studio/seens/${publication.id}/edit${draftSuffix}`, {
           replace: true,
-          state: p.pricing?.mode === "ONE_TIME"
-            ? { composerStep: "chapters" }
-            : { openChapterId: firstChapter?.stableChapterId || chapterId },
+          state: { openChapterId: firstChapter?.stableChapterId || chapterId },
         });
       }
     } catch (requestError) {
@@ -3367,7 +3428,8 @@ export default function SeenComposerPage() {
   const previousSeenChapter = async () => {
     const currentIndex = p.chapters.findIndex((chapter) => chapter.stableChapterId === activeChapterId);
     if (currentIndex <= 0) {
-      await saveChapterStory();
+      const publication = await saveChapterStory({ close: false });
+      if (publication) nav(backTarget);
       return;
     }
     await selectSeenChapter(currentIndex - 1);
@@ -3784,7 +3846,7 @@ export default function SeenComposerPage() {
         ) : null}
 
         <header className="seen-about-header">
-          <button aria-label={__msg("discover.back")} className="seen-compose-back" onClick={() => p.id ? setAboutStep(false) : nav(backTarget)} type="button"><FiChevronLeft /></button>
+          <button aria-label={__msg("discover.back")} className="seen-compose-back" onClick={() => nav(backTarget, { replace: true })} type="button"><FiChevronLeft /></button>
           <div>
             <h1>{paidSeen ? __msg("system.SeenComposerPage.1ff0be91c9") : __msg("publication.newSeen")}</h1>
             <p>{paidSeen ? __msg("system.SeenComposerPage.5e7f4ea3ba") : __msg("creator.aShortStoryToldInUpTo5Chapters")}</p>
@@ -3812,13 +3874,11 @@ export default function SeenComposerPage() {
                 {description ? <p>{description}</p> : null}
               </div>
             </div>
-          </section> : <section className="seen-paid-prototype-preview" aria-label={__msg("system.SeenComposerPage.7c0fa96c70")}>
-            <button className={`seen-paid-prototype-cover ${mediaPreview ? "has-media" : ""}`} disabled={Boolean(uploading)} onClick={() => mediaPreview ? setSettingsSheet("cover") : chooseMedia("AUTO", 15)} type="button">
-              {mediaPreview ? mediaKind === "VIDEO" ? <video autoPlay loop muted playsInline preload="metadata" src={mediaPreview} /> : <img alt={__msg("system.SeenComposerPage.f639ed6d98")} src={mediaPreview} /> : <span><FiPlus /><b>{__msg("creator.addCover")}</b><small>{__msg("creator.photoOrVideoOptional")}</small></span>}
+          </section> : <section className="seen-paid-about-cover" aria-label={__msg("system.SeenComposerPage.7c0fa96c70")}>
+            <button className={mediaPreview ? "has-media" : ""} disabled={Boolean(uploading)} onClick={() => mediaPreview ? setSettingsSheet("cover") : chooseMedia("AUTO", 15)} type="button">
+              {mediaPreview ? mediaKind === "VIDEO" ? <video autoPlay loop muted playsInline preload="metadata" src={mediaPreview} /> : <img alt={__msg("system.SeenComposerPage.f639ed6d98")} src={mediaPreview} /> : <span><FiImage /><b>{__msg("creator.addCover")}</b><small>{__msg("creator.photoOrVideoOptional")}</small></span>}
             </button>
-            <button className="seen-paid-prototype-edit" onClick={() => mediaPreview ? setSettingsSheet("cover") : chooseMedia("AUTO", 15)} type="button">{__msg("profile.edit")}</button>
-            <button className="seen-paid-prototype-video" onClick={() => chooseMedia("VIDEO", 15)} type="button"><FiPlay /><b>{__msg("creator.addAVideoCover")}</b><span>{__msg("creator.515SecItPlaysInTheFeed")}</span></button>
-            <div className="seen-paid-prototype-title"><small>{__msg("creator.giveItATitle")}</small><strong>{p.title.trim() || __msg("creator.yourTitle")}</strong></div>
+            <button className="seen-signature-cover-action" disabled={Boolean(uploading)} onClick={generatePaidSignatureCover} type="button">{__msg("creator.generateFromTitle")}</button>
           </section>}
 
           {!paidSeen ? mediaPreview && mediaKind === "VIDEO" ? <div className="seen-about-video-nudge is-confirmed"><FiCheck /><span>{__msg("creator.videoCoverPlaysInTheFeed")}</span></div> : <button className="seen-about-video-nudge" onClick={() => chooseMedia("VIDEO", 15)} type="button"><FiPlay /><span><b>{__msg("creator.addAVideoCover")}</b> {__msg("creator.515SecItPlaysInTheFeed")}</span></button> : null}
@@ -3896,7 +3956,7 @@ export default function SeenComposerPage() {
         {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}
         {error || statusText ? <div className="seen-compose-feedback-stack" aria-live="polite">{error ? <p className="seen-compose-feedback is-error" role="alert">{__systemMessage(error)}</p> : null}{statusText ? <p className="seen-compose-feedback is-status" role="status">{statusText}</p> : null}</div> : null}
         <header className="seen-compose-header seen-flow-step-header">
-          <button aria-label={__msg("discover.back")} className="seen-compose-back" onClick={() => setAboutStep(true)} type="button"><FiChevronLeft /></button>
+          <button aria-label={__msg("discover.back")} className="seen-compose-back" onClick={() => { setChaptersStep(false); setAboutStep(true); }} type="button"><FiChevronLeft /></button>
           <div className="seen-compose-heading"><h1>{t("Chapters")}</h1><p>{p.title || __msg("system.SeenComposerPage.f21287443b")}</p></div>
         </header>
         <div className="seen-paid-create-progress is-step-two" aria-label={__msg("system.SeenComposerPage.d80610afb5")}><i /><i /><i /></div>
@@ -3914,7 +3974,7 @@ export default function SeenComposerPage() {
   }
 
   return (
-    <section className="seen-compose-page">
+    <section className={`seen-compose-page ${paidSeen ? "is-paid-review" : ""}`}>
       <UploadProgress progress={uploadProgress} />
       {publishMoment ? <PublishMoment media={publishMoment.media} message={__msg("celebrations.published")} onComplete={publishMoment.onComplete} /> : null}
       {toast ? <p className="seen-compose-toast" role="status">{toast}</p> : null}

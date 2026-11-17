@@ -21,6 +21,7 @@ import ContentEntityList from "../../contentEntities/ContentEntityList";
 import ShareSheet from "../../share/ShareSheet";
 import StoryCreator from "../../stories/StoryCreator";
 import VoiceCommentRecorder from "../../comments/VoiceCommentRecorder";
+import { commentFirstName } from "../../comments/commentIdentityUtils";
 import FanAvatar from "../shared/FanAvatar";
 import FanModal from "../shared/FanModal";
 import { confirmDialog } from "../../shared/AppDialogProvider";
@@ -1063,10 +1064,10 @@ function FeedPost({ post, profileMenu = false, focusedCommentId = "" }) {
                 catch (error) { setComments(previousComments); showToast(error?.response?.data?.message || __msg("system.copy.1f1cb99a02e2")); }
                 finally { setReactingCommentId(""); }
               }} />
-            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>{replyTarget.author?.name || __msg("discover.creator")}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
+            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>@{replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
             <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
-              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: replyTarget.author?.name || __msg("discover.creator") }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: replyTarget.author?.name || __msg("discover.creator") }) : __msg("fanWeb.addAComment")} value={commentText} />
+              <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAComment")} value={commentText} />
               <button aria-label={__msg("fanWeb.recordAVoiceComment")} className="seen-comment-mic" disabled={commentMutation.isPending} onClick={() => setVoiceCommentOpen(true)} type="button"><FiMic /></button>
               <button className="seen-comment-post" disabled={!commentText.trim() || commentMutation.isPending} type="submit">{__msg("fanWeb.post")}</button>
             </form>

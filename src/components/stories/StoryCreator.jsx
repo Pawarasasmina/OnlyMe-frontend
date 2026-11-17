@@ -5,6 +5,7 @@ import "./TicketStory.css";
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FiCamera, FiEdit3, FiEye, FiHelpCircle, FiImage, FiRefreshCw, FiRepeat, FiTrash2, FiType, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { useCreateStory } from "../../hooks/useStories";
@@ -407,7 +408,8 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
   const [textDragging, setTextDragging] = useState(false);
   const [deleteArmed, setDeleteArmed] = useState(false);
   const [photoGuides, setPhotoGuides] = useState({ x: false, y: false });
-  const [composerPosition, setComposerPosition] = useState(undefined);
+  const [composerPortalTarget, setComposerPortalTarget] = useState(null);
+  const [composerViewportStyle, setComposerViewportStyle] = useState(undefined);
   const [editingTextId, setEditingTextId] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(true);
   const [drawingMode, setDrawingMode] = useState(false);
@@ -429,22 +431,22 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    const centerColumn = document.querySelector(".social-center-scroll");
-    if (!centerColumn) return undefined;
-    const updatePosition = () => {
-      const bounds = centerColumn.getBoundingClientRect();
-      setComposerPosition({
-        "--story-composer-center-x": `${bounds.left + bounds.width / 2}px`,
-        "--story-composer-column-width": `${bounds.width}px`,
-      });
-    };
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
-    observer?.observe(centerColumn);
+    const centerColumn = document.querySelector(".social-app-frame > .social-center-scroll");
+    const desktop = window.matchMedia("(min-width: 881px)").matches && centerColumn;
+    const target = desktop ? centerColumn : document.body;
+    const previousOverflow = target.style.overflowY;
+    const updateViewport = () => setComposerViewportStyle(desktop
+      ? { height: `${centerColumn.clientHeight}px`, top: `${centerColumn.scrollTop}px` }
+      : undefined);
+    setComposerPortalTarget(target);
+    updateViewport();
+    target.style.overflowY = "hidden";
+    window.addEventListener("resize", updateViewport);
     return () => {
-      window.removeEventListener("resize", updatePosition);
-      observer?.disconnect();
+      window.removeEventListener("resize", updateViewport);
+      target.style.overflowY = previousOverflow;
+      setComposerPortalTarget(null);
+      setComposerViewportStyle(undefined);
     };
   }, [isOpen]);
 
@@ -1049,10 +1051,10 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
     }
   };
 
-  if (!isOpen || !canCreate) return null;
+  if (!isOpen || !canCreate || !composerPortalTarget) return null;
 
-  return (
-    <div aria-label={__msg("stories.createStory")} aria-modal="true" className="story-composer-overlay" role="dialog" style={composerPosition} onKeyDown={(event) => {
+  return createPortal((
+    <div aria-label={__msg("stories.createStory")} aria-modal="true" className="story-composer-overlay" role="dialog" style={composerViewportStyle} onKeyDown={(event) => {
       if (event.key === "Escape") { event.preventDefault(); if (editingTextId) setEditingTextId(""); else close(); }
       if (event.key !== "Tab") return;
       const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled), input:not([type="file"]), textarea, a[href]')].filter((element) => element.getClientRects().length);
@@ -1347,7 +1349,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
 
       </section>
     </div>
-  );
+  ), composerPortalTarget);
 }
 
 export default StoryCreator;
