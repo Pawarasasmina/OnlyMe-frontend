@@ -6,6 +6,8 @@ export const adminService = {
   createStaff: (payload) => axiosInstance.post("/admin/staff", payload),
   updateStaff: (id, payload) => axiosInstance.patch(`/admin/staff/${id}`, payload),
   resetStaffPassword: (id, payload) => axiosInstance.post(`/admin/staff/${id}/reset-password`, payload),
+  updateStaffTwoFactor: (id, payload) => axiosInstance.post(`/admin/staff/${id}/2fa`, payload),
+  updateRoleTwoFactor: (payload) => axiosInstance.post("/admin/staff/2fa-policy", payload),
   getUsers: (params = {}) => axiosInstance.get("/admin/users", { params }),
   updateUserStatus: (userId, status) => axiosInstance.patch(`/admin/users/${userId}/status`, { status }),
   bulkUpdateUsers: (payload) => axiosInstance.patch("/admin/users/bulk", payload),

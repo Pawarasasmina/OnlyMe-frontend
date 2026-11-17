@@ -50,7 +50,7 @@ export default function AdminSecuritySetupPage() {
     </section>
     {showDisable ? <form className="rounded-3xl border border-red-200 bg-white p-6 shadow-sm sm:p-8" onSubmit={disable}>
       <h2 className="text-xl font-black text-slate-950">Turn off two-factor authentication?</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">Confirm your password and current authenticator code. All active sessions will be revoked, and the admin console will remain locked until you enable 2FA again.</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">Confirm your password and current authenticator code. The saved authenticator will be removed and all active sessions will be revoked. You can enroll a new authenticator here later.</p>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-bold text-slate-700">{__msg("admin.currentPassword")}<input autoComplete="current-password" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-orange-500" onChange={(event) => setDisableForm((value) => ({ ...value, currentPassword: event.target.value }))} required type="password" value={disableForm.currentPassword} /></label>
         <label className="text-sm font-bold text-slate-700">{__msg("system.AccountTwoFactorCard.52e07d3b35")}<input autoComplete="one-time-code" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-center font-black tracking-[.25em] text-slate-950 outline-none focus:border-orange-500" inputMode="numeric" maxLength="6" onChange={(event) => setDisableForm((value) => ({ ...value, code: event.target.value.replace(/\D/g, "") }))} required value={disableForm.code} /></label>

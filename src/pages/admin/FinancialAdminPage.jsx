@@ -1,53 +1,75 @@
-import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
-import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
-import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FiCheckCircle, FiCreditCard, FiDollarSign, FiSearch, FiShield, FiTrendingUp, FiUser } from "react-icons/fi";
-import FinancialConfirmDialog from "../../components/financial/FinancialConfirmDialog";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { FiCheckCircle, FiDollarSign, FiPercent } from "react-icons/fi";
 import { adminFinancialService } from "../../services/adminFinancialService";
-import { createIdempotencyKey } from "../../utils/idempotencyKey";
-import AdminMonetizationPolicy from "../../components/financial/AdminMonetizationPolicy";
-import { financialErrorMessage } from "../../utils/financialErrorMessages";
 
-const inputClass = "mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100";
-const stars = (value) => `✦${Number(value || 0).toLocaleString(__uiLocale())}`;
-const typeStyle = { REAL: "bg-blue-100 text-blue-700", SEED: "bg-amber-100 text-amber-700", TEST: "bg-violet-100 text-violet-700" };
-function Metric({ icon: Icon, label, value, detail, className = "" }) {
-  __useUiLanguage(); return <article className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}><div className="flex justify-between"><div><p className="text-xs font-black uppercase tracking-[.14em] text-slate-400">{label}</p><p className="mt-2 text-2xl font-black">{value}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></div><span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100"><Icon /></span></div></article>; }
+const inputClass = "mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-lg font-black outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100";
 
 export default function FinancialAdminPage() {
   __useUiLanguage();
-  const queryClient = useQueryClient();
-  const [search, setSearch] = useState(""); const [type, setType] = useState("ALL"); const [selectedId, setSelectedId] = useState("");
-  const [amount, setAmount] = useState(""); const [reason, setReason] = useState(""); const [draft, setDraft] = useState(null);
-  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [result, setResult] = useState("");
-  const [starsPerUsd, setStarsPerUsd] = useState(""); const [rateBusy, setRateBusy] = useState(false);
-  const [taxPercent, setTaxPercent] = useState(""); const [taxBusy, setTaxBusy] = useState(false);
-  const walletsQuery = useQuery({ queryKey: ["admin", "user-wallets"], queryFn: () => adminFinancialService.listUserWallets().then((response) => response.data.data.items) });
-  const revenueQuery = useQuery({ queryKey: ["admin", "platform-revenue"], queryFn: () => adminFinancialService.getPlatformRevenue().then((response) => response.data.data) });
+  const [starsPerUsd, setStarsPerUsd] = useState("");
+  const [taxPercent, setTaxPercent] = useState("");
+  const [rateBusy, setRateBusy] = useState(false);
+  const [taxBusy, setTaxBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState("");
   const rateQuery = useQuery({ queryKey: ["admin", "star-exchange-rate"], queryFn: () => adminFinancialService.getExchangeRate().then((response) => response.data.data) });
   const taxQuery = useQuery({ queryKey: ["admin", "coin-tax-rate"], queryFn: () => adminFinancialService.getCoinTaxRate().then((response) => response.data.data) });
+
   useEffect(() => { if (rateQuery.data?.starsPerUsd != null) setStarsPerUsd(String(rateQuery.data.starsPerUsd)); }, [rateQuery.data?.starsPerUsd]);
   useEffect(() => { if (taxQuery.data?.percent != null) setTaxPercent(String(taxQuery.data.percent)); }, [taxQuery.data?.percent]);
-  const users = useMemo(() => (walletsQuery.data || []).filter((user) => { const term = search.trim().toLowerCase(); return (type === "ALL" || user.accountType === type) && (!term || [user.name, user.username, user.email, user.role, user.accountType].join(" ").toLowerCase().includes(term)); }), [search, type, walletsQuery.data]);
-  const selected = (walletsQuery.data || []).find((user) => user.id === selectedId);
-  const realRevenue = revenueQuery.data?.breakdown?.realSeed || revenueQuery.data?.summary || {}; const testRevenue = revenueQuery.data?.breakdown?.test || {};
-  const review = (event) => { event.preventDefault(); const test = selected.accountType === "TEST"; const previousBalance = test ? selected.wallet.testBalance : selected.wallet.realSeedBalance; setDraft({ userId: selected.id, accountType: selected.accountType, target: `${selected.name} (@${selected.username})`, amount: Number(amount), reason: reason.trim(), resetLegacyWallet: !test && selected.wallet.exists && selected.wallet.reconciliationStatus !== "MATCHED", previousBalance, previousCurrency: selected.wallet.currency, key: createIdempotencyKey("admin-credit") }); };
-  const confirm = async () => { setBusy(true); setError(""); try { await adminFinancialService.creditStars(draft.userId, { starsAmount: draft.amount, reason: draft.reason, resetLegacyWallet: draft.resetLegacyWallet, idempotencyKey: draft.key }); setResult(__msg("admin.addedValue0ToValue1SValue2Wallet", { value0: stars(draft.amount), value1: draft.target, value2: draft.accountType === "TEST" ? "TEST" : "REAL + SEED" })); setAmount(""); setReason(""); setDraft(null); await queryClient.invalidateQueries({ queryKey: ["admin", "user-wallets"] }); } catch (requestError) { setError(financialErrorMessage(requestError)); } finally { setBusy(false); } };
-  const saveRate = async (event) => { event.preventDefault(); setRateBusy(true); setError(""); try { const response = await adminFinancialService.updateExchangeRate({ starsPerUsd: Number(starsPerUsd) }); setStarsPerUsd(String(response.data.data.starsPerUsd)); setResult(__msg("admin.exchangeRateUpdatedValue01", { value0: stars(response.data.data.starsPerUsd) })); } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.unableToUpdateExchangeRate")); } finally { setRateBusy(false); } };
-  const saveTax = async (event) => { event.preventDefault(); setTaxBusy(true); setError(""); try { const response = await adminFinancialService.updateCoinTaxRate({ percent: Number(taxPercent) }); setTaxPercent(String(response.data.data.percent)); setResult(__msg("admin.webCoinTaxUpdatedToValue0", { value0: response.data.data.percent })); } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.unableToUpdateWebCoinTax")); } finally { setTaxBusy(false); } };
 
-  return <div className="mx-auto max-w-[1500px]"><header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-orange-500">{__msg("admin.commerceControlCenter")}</p><h1 className="mt-1 text-3xl font-black">{__msg("layouts.financialOperations")}</h1><p className="mt-2 text-sm text-slate-500">{__msg("admin.realPlatformValueAndQaValueRemainClearlyIsolated")}</p></div><form className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm" onSubmit={saveRate}><label className="text-xs font-bold uppercase text-slate-500">{__msg("admin.starsPer1")}<input className="mt-1 block w-32 rounded-xl border border-slate-200 px-3 py-2 text-base font-black" min="0.01" onChange={(event) => setStarsPerUsd(event.target.value)} required step="0.01" type="number" value={starsPerUsd} /></label><button className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40" disabled={rateBusy} type="submit">{rateBusy ? __msg("financial.saving") : __msg("admin.updateRate")}</button></form></header>
-    <form className="mt-4 flex max-w-md items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" onSubmit={saveTax}><label className="flex-1 text-xs font-bold uppercase text-slate-500">{__msg("system.FinancialAdminPage.3cd190362c")}<input className={inputClass} min="0" max="100" onChange={(event) => setTaxPercent(event.target.value)} required step="0.001" type="number" value={taxPercent} /></label><button className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40" disabled={taxBusy} type="submit">{taxBusy ? __msg("financial.saving") : __msg("system.FinancialAdminPage.3d49b0256c")}</button></form>
-    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={FiDollarSign} label={__msg("admin.realSeedGross")} value={stars(realRevenue.grossStars)} detail={__msg("admin.transactions_622f4d", { value0: Number(realRevenue.transactions || 0).toLocaleString(__uiLocale()) })} /><Metric icon={FiTrendingUp} label={__msg("admin.creatorEarnings")} value={stars(realRevenue.creatorStars)} detail={__msg("admin.withdrawableValue")} className="border-emerald-200 bg-emerald-50" /><Metric icon={FiCreditCard} label={__msg("admin.platformRevenue")} value={stars(realRevenue.platformStars)} detail={__msg("admin.realSeedOnly")} className="border-orange-200 bg-orange-50" /><Metric icon={FiShield} label={__msg("admin.testActivity")} value={stars(testRevenue.grossStars)} detail={__msg("admin.isolatedTransactions", { value0: Number(testRevenue.transactions || 0).toLocaleString(__uiLocale()) })} className="border-violet-200 bg-violet-50" /></div>
-    {result ? <p className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700"><FiCheckCircle />{result}</p> : null}{error && !draft ? <p className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{__systemMessage(error)}</p> : null}
-    <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(430px,1fr)_minmax(460px,1fr)]"><section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 p-5"><div className="flex items-center justify-between"><div><h2 className="font-black">{__msg("admin.accountWallets")}</h2><p className="text-xs text-slate-500">{__msg("admin.selectAnAccountToInspectOrCredit")}</p></div><strong className="text-xs text-slate-400">{users.length} {__msg("admin.shown")}</strong></div><div className="relative mt-4"><FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input className="w-full rounded-xl border border-slate-200 py-2.5 ps-10 pe-3 text-sm" onChange={(event) => setSearch(event.target.value)} placeholder={__msg("admin.searchAccounts")} value={search} /></div><div className="mt-3 flex gap-2">{["ALL", "REAL", "SEED", "TEST"].map((item) => <button className={`rounded-lg px-3 py-1.5 text-xs font-black ${type === item ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600"}`} key={item} onClick={() => setType(item)} type="button">{item}</button>)}</div></div><div className="max-h-[600px] overflow-y-auto">{walletsQuery.isLoading ? <p className="p-6 text-sm text-slate-500">{__msg("admin.loadingAccounts")}</p> : users.map((user) => <button className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-100 p-4 text-start ${selectedId === user.id ? "bg-orange-50" : "hover:bg-slate-50"}`} key={user.id} onClick={() => setSelectedId(user.id)} type="button"><span className="grid h-10 w-10 place-items-center rounded-full bg-slate-100"><FiUser /></span><span className="min-w-0"><strong dir="auto" className="block truncate text-sm">{user.name}</strong><small dir="auto" className="block truncate text-slate-500">@{user.username} · {__enumLabel(user.role)}</small><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black ${typeStyle[user.accountType]}`}>{__enumLabel(user.accountType)}</span></span><span className="text-end text-xs font-bold"><span className="block">{__msg("admin.rS")} {stars(user.wallet.realSeedBalance)}</span><span className="block text-violet-700">{__msg("admin.test_984816")} {stars(user.wallet.testBalance)}</span></span></button>)}</div></section>
-      <section>{selected ? <form className="sticky top-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" onSubmit={review}><div className="flex justify-between"><div><p className="text-xs font-black uppercase text-orange-500">{__msg("admin.selectedAccount")}</p><h2 dir="auto" className="mt-1 text-xl font-black">{selected.name}</h2><p dir="auto" className="text-sm text-slate-500">@{selected.username}</p></div><span className={`h-fit rounded-full px-3 py-1.5 text-xs font-black ${typeStyle[selected.accountType]}`}>{__enumLabel(selected.accountType)}</span></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-slate-950 p-4 text-white"><p className="text-xs uppercase text-slate-400">{__msg("admin.realSeed")}</p><p className="mt-2 text-2xl font-black">{stars(selected.wallet.realSeedBalance)}</p><p className="mt-2 text-xs text-slate-400">{__msg("layouts.earnings")} {stars(selected.wallet.realSeedEarnings)}</p></div><div className="rounded-2xl bg-violet-50 p-4 text-violet-950"><p className="text-xs uppercase text-violet-500">{__msg("admin.testOnly")}</p><p className="mt-2 text-2xl font-black">{stars(selected.wallet.testBalance)}</p><p className="mt-2 text-xs text-violet-600">{__msg("layouts.earnings")} {stars(selected.wallet.testEarnings)}</p></div></div><p className={`mt-4 rounded-xl p-3 text-xs ${selected.accountType === "TEST" ? "bg-violet-50 text-violet-700" : "bg-emerald-50 text-emerald-700"}`}>{__msg("admin.creditsEnterThe")} <strong>{selected.accountType === "TEST" ? __msg("admin.isolatedTestWallet") : __msg("admin.realSeedWallet")}</strong>.</p><label className="mt-5 block text-sm font-semibold">{__msg("admin.starsToAdd")}<input className={inputClass} min="1" onChange={(event) => setAmount(event.target.value)} required type="number" value={amount} /></label><label className="mt-4 block text-sm font-semibold">{__msg("admin.administrativeReason")}<textarea className={`${inputClass} min-h-24`} maxLength="500" minLength="3" onChange={(event) => setReason(event.target.value)} required value={reason} /></label><button className="mt-5 w-full rounded-xl bg-slate-950 py-3 text-sm font-black text-white disabled:opacity-40" disabled={selected.status !== "active"} type="submit">{__msg("admin.reviewWalletCredit")}</button></form> : <div className="grid min-h-[430px] place-items-center rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center"><div><FiCreditCard className="mx-auto text-4xl text-slate-300" /><h2 className="mt-3 font-black">{__msg("admin.chooseAnAccount")}</h2><p className="mt-1 text-sm text-slate-500">{__msg("admin.separatedBalancesAndControlsWillAppearHere")}</p></div></div>}</section></div>
-    <AdminMonetizationPolicy />
-    <FinancialConfirmDialog open={Boolean(draft)} onClose={() => !busy && setDraft(null)} title={__msg("admin.confirmWalletCredit")} actions={<><button className="rounded-full border border-atseen-line px-5 py-2" disabled={busy} onClick={() => setDraft(null)} type="button">{__msg("admin.cancel")}</button><button className="rounded-full bg-red-600 px-5 py-2 font-bold text-white" disabled={busy} onClick={confirm} type="button">{busy ? __msg("financial.processing") : __msg("admin.addStars")}</button></>}><p><strong>{__msg("admin.account_ac06ef")}</strong> {draft?.target}</p><p className="mt-2"><strong>{__msg("admin.environment")}</strong> {draft?.accountType === "TEST" ? __msg("admin.testIsolated") : __msg("admin.realSeed_b5a14c")}</p><p className="mt-2"><strong>{__msg("admin.credit")}</strong> {stars(draft?.amount)}</p><p className="mt-2"><strong>{__msg("admin.newBalance")}</strong> {stars((draft?.previousBalance || 0) + (draft?.amount || 0))}</p><p className="mt-2"><strong>{__msg("admin.reason")}</strong> {draft?.reason}</p>{error ? <p className="mt-4 rounded-xl bg-red-400/10 p-3 text-red-200">{__systemMessage(error)}</p> : null}</FinancialConfirmDialog>
+  const saveRate = async (event) => {
+    event.preventDefault(); setRateBusy(true); setError(""); setResult("");
+    try {
+      const response = await adminFinancialService.updateExchangeRate({ starsPerUsd: Number(starsPerUsd) });
+      setStarsPerUsd(String(response.data.data.starsPerUsd));
+      setResult(__msg("admin.exchangeRateUpdatedValue01", { value0: response.data.data.starsPerUsd }));
+    } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.unableToUpdateExchangeRate")); }
+    finally { setRateBusy(false); }
+  };
+  const saveTax = async (event) => {
+    event.preventDefault(); setTaxBusy(true); setError(""); setResult("");
+    try {
+      const response = await adminFinancialService.updateCoinTaxRate({ percent: Number(taxPercent) });
+      setTaxPercent(String(response.data.data.percent));
+      setResult(__msg("admin.webCoinTaxUpdatedToValue0", { value0: response.data.data.percent }));
+    } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.unableToUpdateWebCoinTax")); }
+    finally { setTaxBusy(false); }
+  };
+
+  const loading = rateQuery.isLoading || taxQuery.isLoading;
+  const loadError = rateQuery.isError || taxQuery.isError;
+  return <div className="mx-auto max-w-4xl">
+    <header>
+      <p className="text-xs font-black uppercase tracking-[.18em] text-orange-500">{__msg("admin.commerceControlCenter")}</p>
+      <h1 className="mt-1 text-3xl font-black">{__msg("layouts.financialOperations")}</h1>
+      <p className="mt-2 text-sm text-slate-500">Set the Stars exchange value and web purchase tax. Users manage their own top-ups from their Wallet.</p>
+    </header>
+
+    {loadError ? <p className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Unable to load financial settings. <button className="font-bold underline" onClick={() => { rateQuery.refetch(); taxQuery.refetch(); }} type="button">{__msg("activity.retry")}</button></p> : null}
+    {result ? <p className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700"><FiCheckCircle />{result}</p> : null}
+    {error ? <p className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
+
+    <div className="mt-6 grid gap-5 md:grid-cols-2">
+      <form className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" onSubmit={saveRate}>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-blue-600"><FiDollarSign /></span>
+        <h2 className="mt-4 text-lg font-black">Stars value</h2>
+        <p className="mt-1 text-sm text-slate-500">Number of Stars users receive for each US dollar.</p>
+        <label className="mt-5 block text-xs font-bold uppercase text-slate-500">{__msg("admin.starsPer1")}<input className={inputClass} disabled={loading || rateBusy} min="0.01" onChange={(event) => setStarsPerUsd(event.target.value)} required step="0.01" type="number" value={starsPerUsd} /></label>
+        <button className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-40" disabled={loading || rateBusy} type="submit">{rateBusy ? __msg("financial.saving") : __msg("admin.updateRate")}</button>
+      </form>
+
+      <form className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" onSubmit={saveTax}>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-orange-50 text-orange-600"><FiPercent /></span>
+        <h2 className="mt-4 text-lg font-black">Web purchase tax</h2>
+        <p className="mt-1 text-sm text-slate-500">Tax percentage applied when users purchase Stars on the web.</p>
+        <label className="mt-5 block text-xs font-bold uppercase text-slate-500">{__msg("system.FinancialAdminPage.3cd190362c")}<input className={inputClass} disabled={loading || taxBusy} min="0" max="100" onChange={(event) => setTaxPercent(event.target.value)} required step="0.001" type="number" value={taxPercent} /></label>
+        <button className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-40" disabled={loading || taxBusy} type="submit">{taxBusy ? __msg("financial.saving") : __msg("system.FinancialAdminPage.3d49b0256c")}</button>
+      </form>
+    </div>
   </div>;
 }
