@@ -1023,7 +1023,7 @@ function ProfileNotes({ isOwner, posts = [] }) {
         <h2>{__msg("social.notes")}</h2>
         <span>{compact(posts.length)} {posts.length === 1 ? __msg("social.note") : __msg("social.notes_3add7b")}</span>
       </header>
-      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} />)}</div> : <ContentEmptyState compact message={isOwner ? __msg("social.writeAWallNoteAndItWillAppearHere") : __msg("social.thisCreatorHasNotPostedAWallNoteYet")} primaryAction={isOwner ? { label: __msg("social.createAPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={isOwner ? __msg("fan.createYourFirstPost") : __msg("social.noPostsYet")} variant="wall" />}
+      {posts.length ? <div className="home-feed-list profile-notes-list">{posts.map((post) => <FeedPost key={post.feedId || post.id} post={post} profileMenu={isOwner} profileNote />)}</div> : <ContentEmptyState compact message={isOwner ? __msg("social.writeAWallNoteAndItWillAppearHere") : __msg("social.thisCreatorHasNotPostedAWallNoteYet")} primaryAction={isOwner ? { label: __msg("social.createAPost"), to: `/wall?compose=note&composeRequest=${Date.now()}` } : { label: __msg("profile.discoverPeople"), to: "/discover" }} title={isOwner ? __msg("fan.createYourFirstPost") : __msg("social.noPostsYet")} variant="wall" />}
     </section>
   );
 }

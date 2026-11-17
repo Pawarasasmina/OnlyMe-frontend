@@ -3,6 +3,7 @@ import { prependCreatedWallPosts } from "../utils/wallCreatedPosts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { patchWallResolution } from "../utils/wallResolution";
 import { postService } from "../services/postService";
+import { isWallHeld } from "../utils/wallModerationPresentation";
 
 export const postKeys = {
   all: ["feed-posts"],
@@ -11,9 +12,15 @@ export const postKeys = {
   drafts: ["feed-posts", "drafts"],
 };
 
+function invalidateWallStatusSurfaces(queryClient) {
+  for (const queryKey of [["search"], ["wall-search"], ["unified-profile"], ["feed-posts", "need-counts"], ["saved"], ["saved-content"]]) {
+    queryClient.invalidateQueries({ queryKey });
+  }
+}
+
 function replacePostInCaches(queryClient, post) {
   queryClient.setQueriesData({ queryKey: ["feed-posts"] }, (current) => {
-    if (!current?.items) return current;
+    if (!current?.items) return current?.id === post.id ? { ...current, ...post } : current;
     return {
       ...current,
       items: current.items.map((item) => (
@@ -40,7 +47,8 @@ export function useFeedPosts(params = {}, options = {}) {
     refetchOnMount: false,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: (failureCount, error) => failureCount < 1 && (['ECONNABORTED', 'ETIMEDOUT', 'ERR_NETWORK'].includes(error?.code) || Number(error?.response?.status) >= 500),
+    retryDelay: 1000,
     // Wall pages are accumulated locally while scrolling. Keep each cached
     // page stable until an explicit Wall action or refresh invalidates it.
     staleTime: Infinity,
@@ -74,7 +82,7 @@ export function useCreateFeedPost() {
     mutationFn: ({ formData, onUploadProgress, signal, idempotencyKey }) => postService.createPost(formData, { onUploadProgress, signal, idempotencyKey }),
     retry: false,
     onSuccess: (post) => {
-      queryClient.setQueryData(["feed-posts", "created", viewerId], (current) => ({ items: prependCreatedWallPosts(current?.items || [], [post]) }));
+      if (!isWallHeld(post)) queryClient.setQueryData(["feed-posts", "created", viewerId], (current) => ({ items: prependCreatedWallPosts(current?.items || [], [post]) }));
       queryClient.invalidateQueries({ queryKey: postKeys.all });
     },
   });
@@ -97,15 +105,12 @@ export function useSetPostResolution() {
     onSuccess: (post) => {
       queryClient.setQueriesData({ queryKey: postKeys.all }, (current) => patchWallResolution(current, post));
       queryClient.setQueryData(["wall-note", String(post.originalPostId || post.id)], post);
+      invalidateWallStatusSurfaces(queryClient);
       // Let the confirmation render before restarting pagination and moving the post.
       if (typeof window !== "undefined") window.setTimeout(() => {
         window.dispatchEvent(new Event("wall-resolution-changed"));
         queryClient.resetQueries({ queryKey: ["feed-posts", "feed"] });
       }, 0);
-      queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["saved"] });
-      queryClient.invalidateQueries({ queryKey: ["saved-content"] });
     },
   });
 }
@@ -117,6 +122,8 @@ export function useUpdateFeedPost() {
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
+      queryClient.setQueryData(["wall-note", String(post.originalPostId || post.id)], post);
+      invalidateWallStatusSurfaces(queryClient);
       queryClient.invalidateQueries({ queryKey: postKeys.all });
     },
   });
@@ -129,9 +136,8 @@ export function useBumpFeedPost() {
     retry: false,
     onSuccess: (post) => {
       replacePostInCaches(queryClient, post);
-      queryClient.invalidateQueries({ queryKey: ["unified-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["saved"] });
-      queryClient.invalidateQueries({ queryKey: ["feed-posts", "need-counts"] });
+      queryClient.setQueryData(["wall-note", String(post.originalPostId || post.id)], post);
+      invalidateWallStatusSurfaces(queryClient);
       if (typeof window !== "undefined") window.setTimeout(() => {
         window.dispatchEvent(new Event("wall-resolution-changed"));
         queryClient.resetQueries({ queryKey: ["feed-posts", "feed"] });

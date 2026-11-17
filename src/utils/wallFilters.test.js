@@ -33,9 +33,21 @@ test("Right now, post type and topic toggle independently with legacy URL suppor
   filters = toggleWallFilter(filters, "meet_people", "topic");
   assert.deepEqual([filters.rightNow, filters.type, filters.topic], [true, "need_help", "meet_people"]);
   filters = toggleWallFilter(filters, "question", "type");
-  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [true, "question", "meet_people"]);
+  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [true, "need_help,question", "meet_people"]);
   filters = toggleWallFilter(filters, "right_now", "type");
-  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [false, "question", "meet_people"]);
+  assert.deepEqual([filters.rightNow, filters.type, filters.topic], [false, "need_help,question", "meet_people"]);
   assert.equal(readWallFilters(new URLSearchParams("type=right_now")).rightNow, true);
   assert.equal(readWallFilters(new URLSearchParams("type=right_now")).type, "all");
+});
+
+test("multi selections roundtrip and deselect without changing other switches", () => {
+  let filters = readWallFilters(new URLSearchParams("type=need_help,question&topic=meet_people,food&rightNow=true"));
+  filters = toggleWallFilter(filters, "need_help", "type");
+  assert.equal(filters.type, "question");
+  assert.equal(filters.topic, "meet_people,food");
+  assert.equal(filters.rightNow, true);
+  filters = toggleWallFilter(filters, "meet_people", "topic");
+  assert.equal(filters.topic, "food");
+  assert.deepEqual(readWallFilters(writeWallFilters(new URLSearchParams(), filters)), filters);
+  assert.equal(readWallFilters(new URLSearchParams("type=bad,question,question&topic=bad,food")).type, "question");
 });

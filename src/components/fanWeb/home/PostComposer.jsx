@@ -1,3 +1,4 @@
+import { useWallEditClock, wallCanEdit } from "../../../hooks/useWallEditClock";
 import { systemMessage as __systemMessage } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { msg as __msg } from "../../../i18n/runtime.js";
@@ -6,12 +7,13 @@ import { inferWallTopic as autoTopic } from "../../../utils/wallTopic";
 import { readWallDraft, saveWallDraft, clearWallDraft } from "../../../services/wallDraftStore";
 import WallTopicSheet from "./WallTopicSheet";
 import WallNeedPicker from "./WallNeedPicker";
+import { wallLifetimeMessage } from "../../../utils/wallLifetimePresentation";
 import { useEffect, useRef, useState } from "react";
-import { FiMic, FiImage, FiMoreHorizontal, FiX, FiChevronLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
+import { FiMic, FiImage, FiMoreHorizontal, FiX, FiChevronLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiClock, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
 import { useAuth } from "../../../hooks/useAuth";
-import { useCreateFeedPost } from "../../../hooks/useFeedPosts";
+import { useCreateFeedPost, useUpdateFeedPost } from "../../../hooks/useFeedPosts";
 import { canCreateFeedPost } from "../../../utils/postPermissions";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import WallVoiceRecorder from "../../voice/WallVoiceRecorder";
@@ -22,6 +24,8 @@ import {
 } from "../../../data/postOptions";
 import ProfileImageCropper from "../../profile/ProfileImageCropper";
 import UniversalLocationPicker from "../../location/UniversalLocationPicker";
+import { formatWallPriceInput, normalizeWallPriceInput, wallCurrencyLabel, wallCurrencyOfLocation } from "../../../utils/wallMarketplace";
+import { isWallHeld } from "../../../utils/wallModerationPresentation";
 
 const POST_TYPES = [
   { value: "Buy & Sell", context: "Buy/Sell", icon: FiShoppingBag, color: "blue", get description() { return __msg("fanWeb.sellOrFindSomethingSecondHand"); } },
@@ -61,12 +65,12 @@ function previewFile(file) {
   };
 }
 
-function PostComposer({ initialQuestion = null, initialType = null, initialTopic = null, initialRightNow = false, currentUser, onComposeOpened, openSignal = "", defaultLocation = "", onPublished }) {
+function PostComposer({ editPost = null, onEditClose, initialQuestion = null, initialType = null, initialTopic = null, initialRightNow = false, currentUser, onComposeOpened, openSignal = "", defaultLocation = "", onPublished }) {
   __useUiLanguage();
   const { user } = useAuth();
   const { showToast } = useFanToast();
   const owner = String(user?.id || user?._id || "");
-  const initialDraft = useRef(readWallDraft(owner)).current;
+  const initialDraft = useRef(editPost ? { ...editPost, needLabel: editPost.postType, selectedType: POST_TYPES.find(item => item.value === editPost.postType) || POST_TYPES[1], files: [] } : readWallDraft(owner)).current;
   const publishingRef = useRef(false);
   const attemptRef = useRef(initialDraft?.attempt || null);
   const textRef = useRef(null);
@@ -75,37 +79,60 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
   const fileInputRef = useRef(null);
   const filesRef = useRef([]);
   const voiceAttachmentRef = useRef(null);
-  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(Boolean(editPost));
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
   const [voiceReview, setVoiceReview] = useState(false);
   const voiceTranscriptRequestRef = useRef(null);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [topicPickerOpen, setTopicPickerOpen] = useState(false);
   const [text, setText] = useState(initialDraft?.text || initialQuestion || "");
+  const [price, setPrice] = useState(initialDraft?.price ?? "");
+  const changePrice = (event) => {
+    const input = event.target;
+    const offset = input.value.slice(0, input.selectionStart ?? input.value.length).replace(/[^0-9]/g, "").length;
+    const raw = normalizeWallPriceInput(input.value);
+    const formatted = formatWallPriceInput(raw);
+    setPrice(raw);
+    input.value = formatted;
+    let caret = 0;
+    let characters = 0;
+    while (caret < formatted.length && characters < offset) {
+      if (formatted[caret] !== ",") characters += 1;
+      caret += 1;
+    }
+    input.setSelectionRange(caret, caret);
+  };
   const [selectedType, setSelectedType] = useState(initialDraft?.selectedType || (initialQuestion !== null ? POST_TYPES.find((item) => item.value === "Question") : POST_TYPES[1]));
   const [topic, setTopic] = useState(initialDraft?.topic || "");
   const [rightNow, setRightNow] = useState(initialDraft?.rightNow || false);
   const [needLabel, setNeedLabel] = useState(initialDraft?.needLabel || (initialQuestion !== null ? "Question" : ""));
-  const [screen, setScreen] = useState("needs");
+  const [screen, setScreen] = useState(editPost ? "compose" : "needs");
+  const [retainedPhotos, setRetainedPhotos] = useState(() => (editPost?.media || []).filter(item => item.type === "image"));
   const [location, setLocation] = useState(initialDraft?.location ?? defaultLocation);
+  const [countryCode, setCountryCode] = useState(initialDraft?.countryCode || "");
   const [files, setFiles] = useState(() => (initialDraft?.files || []).map(previewFile));
-  const [voiceAttachment, setVoiceAttachment] = useState(() => initialDraft?.voice?.file ? { ...initialDraft.voice, url: URL.createObjectURL(initialDraft.voice.file) } : null);
+  const [voiceAttachment, setVoiceAttachment] = useState(() => initialDraft?.voice?.file ? { ...initialDraft.voice, url: URL.createObjectURL(initialDraft.voice.file) } : (editPost?.media || []).find(item => item.type === "audio") || null);
   const [error, setError] = useState("");
   const [uploadLabel, setUploadLabel] = useState("");
   const [cropQueue, setCropQueue] = useState([]);
   const cropQueueRef = useRef([]);
   const canPostToHome = canCreateFeedPost(user);
-  const createMutation = useCreateFeedPost();
+  const newMutation = useCreateFeedPost();
+  const editMutation = useUpdateFeedPost();
+  const createMutation = editPost ? editMutation : newMutation;
+  const editNow = useWallEditClock(editPost);
   const trimmedText = text.trim();
   const validContextValue = selectedType.context;
   const categoryLabel = needLabel || selectedType.value;
+  const lifetimeMessage = wallLifetimeMessage(selectedType.value, rightNow);
   const effectiveTopic = topic || autoTopic(text);
-  const canPublish = canPostToHome && !cropQueue.length && !voiceRecorderOpen && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
+  const canPublish = (!editPost || wallCanEdit(editPost, editNow)) && canPostToHome && !cropQueue.length && !voiceRecorderOpen && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
   const hasDraft = Boolean(trimmedText || files.length || voiceAttachment);
 
   useEffect(() => {
-    saveWallDraft(owner, { text, selectedType, topic, rightNow, needLabel, location, files: files.map((item) => item.file), voice: voiceAttachment, attempt: attemptRef.current });
-  }, [owner, text, selectedType, topic, rightNow, needLabel, location, files, voiceAttachment, uploadLabel]);
+    if (editPost) return;
+    saveWallDraft(owner, { text, price, selectedType, topic, rightNow, needLabel, location, countryCode, files: files.map((item) => item.file), voice: voiceAttachment, attempt: attemptRef.current });
+  }, [editPost, owner, text, price, selectedType, topic, rightNow, needLabel, location, countryCode, files, voiceAttachment, uploadLabel]);
 
   useEffect(() => {
     filesRef.current = files;
@@ -150,12 +177,14 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
     files.forEach((item) => URL.revokeObjectURL(item.url));
     if (voiceAttachment?.url) URL.revokeObjectURL(voiceAttachment.url);
     setText("");
+    setPrice("");
     setSelectedType(POST_TYPES[0]);
     setTopic("");
     setRightNow(false);
     setNeedLabel("");
     setScreen("needs");
     setLocation(defaultLocation);
+    setCountryCode("");
     cropQueueRef.current.forEach((item) => URL.revokeObjectURL(item.url));
     cropQueueRef.current = [];
     setCropQueue([]);
@@ -187,11 +216,12 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
     const onKeyDown = (event) => {
       if (event.key === "Escape" && !topicPickerOpen && !locationPickerOpen && !voiceRecorderOpen && !createMutation.isPending) {
         setComposerOpen(false);
+        if (editPost) onEditClose?.();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [composerOpen, screen, topicPickerOpen, locationPickerOpen, voiceRecorderOpen, createMutation.isPending, cropQueue.length]);
+  }, [composerOpen, screen, topicPickerOpen, locationPickerOpen, voiceRecorderOpen, createMutation.isPending, cropQueue.length, editPost, onEditClose]);
 
   useEffect(() => {
     if (!voiceRecorderOpen) return undefined;
@@ -221,7 +251,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
 
   const addFiles = (incoming) => {
     const next = [...incoming];
-    const remaining = 3 - filesRef.current.length - cropQueueRef.current.length;
+    const remaining = 3 - retainedPhotos.length - filesRef.current.length - cropQueueRef.current.length;
     const accepted = [];
     let nextError = "";
 
@@ -291,6 +321,14 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
 
   const publish = () => {
     if (publishingRef.current) return;
+    if (selectedType.value === "Buy & Sell" && String(price).trim() && (!/^\d+$/.test(String(price)) || !Number.isFinite(Number(price)) || Number(price) > 999999999)) {
+      setError(__msg("wallGrid.invalidPrice"));
+      return;
+    }
+    if (selectedType.value === "Buy & Sell" && String(price).trim() && !wallCurrencyOfLocation(countryCode || location)) {
+      setError(__msg("wallGrid.priceCountryRequired"));
+      return;
+    }
     if (!canPublish) {
       setError(trimmedText ? __msg("fanWeb.thisNoteIsTooLong") : __msg("fanWeb.writeSomethingOrAttachAVoiceNoteBefore"));
       return;
@@ -303,7 +341,14 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
     formData.append("topic", effectiveTopic);
     formData.append("rightNow", String(rightNow));
     formData.append("location", location.trim());
-    formData.append("entityRefs", "[]");
+    if (countryCode) formData.append("countryCode", countryCode);
+    if (selectedType.value === "Buy & Sell" && price !== "") formData.append("price", price);
+    formData.append("entityRefs", JSON.stringify(editPost?.entityRefs || []));
+    if (editPost) {
+      formData.append("retainedMedia", JSON.stringify([...retainedPhotos, ...(voiceAttachment && !voiceAttachment.file ? [voiceAttachment] : [])].map(item => String(item.id || item._id || item.assetId))));
+      formData.append("editVersion", String(editPost.editVersion || 0));
+      if (selectedType.value === "Buy & Sell" && price === "") formData.append("price", "");
+    }
     files.forEach((item) => formData.append("media", item.file));
     if (voiceAttachment?.file) {
       formData.append("voice", voiceAttachment.file);
@@ -321,7 +366,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
 
     createMutation.mutate(
       {
-        formData,
+        ...(editPost ? { payload: formData, postId: editPost.originalPostId || editPost.id } : { formData }),
         idempotencyKey: attemptRef.current.key,
         onUploadProgress: (event) => {
           if (!event.total) return;
@@ -335,11 +380,12 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
           setUploadLabel("");
           setError(mutationError?.response?.data?.message || __msg("system.copy.e60428494fda"));
         },
-        onSuccess: () => {
+        onSuccess: (post) => {
           publishingRef.current = false;
           attemptRef.current = null;
+          if (editPost) { showToast(__msg("wallEdit.saved")); onEditClose?.(); return; }
           clearWallDraft();
-          showToast(__msg("fanWeb.notePublished"));
+          showToast(__msg(isWallHeld(post) ? "wallPublishing.reviewSubmitted" : "fanWeb.notePublished"));
           resetComposer();
           setComposerOpen(false);
           onPublished?.();
@@ -372,9 +418,9 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
           }}
         >
           <header className="wall-create-header">
-            <button aria-label={__msg("fanWeb.backToNeeds")} disabled={createMutation.isPending} onClick={() => setScreen("needs")} type="button"><FiChevronLeft data-ui-directional="true" /></button>
+            <button aria-label={__msg(editPost ? "admin.cancel" : "fanWeb.backToNeeds")} disabled={createMutation.isPending} onClick={() => editPost ? onEditClose?.() : setScreen("needs")} type="button"><FiChevronLeft data-ui-directional="true" /></button>
             <h1>{categoryLabel}</h1>
-            <button className="wall-prototype-post" disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? __msg("comments.posting") : __msg("fanWeb.post")}</button>
+            <button className="wall-prototype-post" disabled={!canPublish} onClick={publish} type="button">{createMutation.isPending ? __msg("comments.posting") : __msg(editPost ? "contentEntities.save_efc007" : "fanWeb.post")}</button>
           </header>
           <fieldset disabled={createMutation.isPending} className="wall-create-body">
           <div className="wall-compose-author"><FanAvatar name={currentUser.name} src={currentUser.avatar} size="h-[38px] w-[38px]" /><div><strong>{currentUser.name}</strong><small><b>{categoryLabel}</b> · {location || __msg("fanWeb.worldwide")}</small></div></div>
@@ -390,6 +436,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
             ref={textRef}
             value={text}
           />
+          {selectedType.value === "Buy & Sell" ? <div className="wall-compose-price"><label><span>{wallCurrencyLabel(wallCurrencyOfLocation(countryCode || location))}</span><input aria-label={__msg("wallGrid.optionalPrice")} inputMode="numeric" maxLength={11} onChange={changePrice} placeholder={__msg("wallGrid.optionalPrice")} value={formatWallPriceInput(price)} /></label><small>{__msg("wallGrid.priceHint")}</small></div> : null}
           {voiceAttachment ? <div className="wall-composer-voice-chip">
             <VoiceMessageBubble compact variant="chip" audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label={__msg("fanWeb.voiceNote")} />
             <button aria-label={__msg("fanWeb.reviewVoiceTextAndTranslations")} onClick={() => { setVoiceReview(true); setVoiceRecorderOpen(true); }} type="button"><FiMoreHorizontal /></button>
@@ -403,6 +450,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
             <input accept={POST_IMAGE_TYPES.join(",")} className="sr-only" multiple onChange={(event) => { addFiles(event.target.files || []); event.target.value = ""; }} ref={fileInputRef} type="file" />
           </div>
 
+          {retainedPhotos.length ? <div className="home-note-preview-grid">{retainedPhotos.map(item => <span key={item.id || item._id || item.url}><img alt="" src={item.url} /><button aria-label={__msg("fanWeb.removeImage")} onClick={() => setRetainedPhotos(items => items.filter(photo => photo !== item))} type="button"><FiX /></button></span>)}</div> : null}
           {files.length ? (
             <div className="home-note-preview-grid">
               {files.map((item) => (
@@ -419,6 +467,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
             <button onClick={() => setLocationPickerOpen(true)} type="button"><span>{__msg("fanWeb.place")}</span><strong>{location || __msg("fanWeb.worldwide")}</strong></button>
             <button aria-pressed={rightNow} onClick={() => setRightNow((value) => !value)} type="button"><span>{__msg("fanWeb.rightNow")}</span><strong className={rightNow ? "is-on" : "is-off"}><i aria-hidden="true" />{rightNow ? __msg("fanWeb.on") : __msg("fanWeb.off")}</strong></button>
           </div>
+          {editPost ? <p className="wall-edit-time" role="status">{wallCanEdit(editPost, editNow) ? __msg("wallEdit.remaining", { minutes: Math.max(1, Math.ceil((new Date(editPost.editUntil || new Date(editPost.publishedAt || editPost.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }) : __msg("wallEdit.expired")}</p> : lifetimeMessage ? <p className="wall-compose-lifetime"><FiClock aria-hidden="true" /><span>{__msg(lifetimeMessage.key, lifetimeMessage.values)}</span></p> : null}
           <div className="wall-create-submit">
             {error ? <p role="alert">{__systemMessage(error)}</p> : uploadLabel ? <p role="status">{uploadLabel}</p> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
 
@@ -438,7 +487,7 @@ function PostComposer({ initialQuestion = null, initialType = null, initialTopic
         </div>
       )}
       {topicPickerOpen ? <WallTopicSheet selected={topic} inferred={autoTopic(text)} location={location || defaultLocation} viewerId={user?.id || user?._id} anchorRef={hostRef} onClose={() => setTopicPickerOpen(false)} onSelect={(value) => { setTopic(value); setTopicPickerOpen(false); }} /> : null}
-      {locationPickerOpen ? <LocationPicker anchorRef={hostRef} suggestions={[defaultLocation, currentUser.location]} onClose={() => setLocationPickerOpen(false)} onSelect={setLocation} selected={location} /> : null}
+      {locationPickerOpen ? <LocationPicker anchorRef={hostRef} suggestions={[defaultLocation, currentUser.location]} onClose={() => setLocationPickerOpen(false)} onSelect={(label, code, place) => { setLocation(label); setCountryCode(place?.countryCode || place?.country_code || code || ""); }} selected={location} /> : null}
       <WallVoiceRecorder onDelete={removeVoiceNote} quick={!voiceReview} initialRecording={voiceReview ? voiceAttachment : null} isOpen={voiceRecorderOpen} onClose={() => setVoiceRecorderOpen(false)} onUse={attachVoiceNote} />
     </div>
   );

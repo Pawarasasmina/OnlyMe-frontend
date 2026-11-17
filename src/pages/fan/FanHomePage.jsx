@@ -4,11 +4,15 @@ import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import WallExploreNeeds from "../../components/fanWeb/home/WallExploreNeeds";
 import { prependCreatedWallPosts } from "../../utils/wallCreatedPosts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useOutletContext, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import { DEFAULT_WALL_FILTERS, WALL_FILTER_TYPES, WALL_FILTER_TOPICS } from "../../data/wallFilters";
-import { mergeWallPages, readWallFilters, writeWallFilters } from "../../utils/wallFilters";
+import { mergeWallPages, readWallFilters, writeWallFilters, wallFilterValues } from "../../utils/wallFilters";
 import { useQuery } from "@tanstack/react-query";
 import FeedPost from "../../components/fanWeb/home/FeedPost";
+import WallCategoryRow from "../../components/fanWeb/home/WallCategoryRow";
+import WallMarketplaceTile from "../../components/fanWeb/home/WallMarketplaceTile";
+import WallViewSwitch from "../../components/fanWeb/home/WallViewSwitch";
+import { useWallViewPreference } from "../../hooks/useWallViewPreference";
 import HomeHeader from "../../components/fanWeb/home/HomeHeader";
 import PostComposer from "../../components/fanWeb/home/PostComposer";
 import StoriesRow from "../../components/fanWeb/home/StoriesRow";
@@ -24,6 +28,9 @@ import { postService } from "../../services/postService";
 import { profileService } from "../../services/profileService";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import WallEmptyState from "../../components/fanWeb/home/WallEmptyState";
+import { wallHaptic } from "../../utils/wallHaptics";
+import { activeWallPosts } from "../../utils/wallLifecycle";
+import { useWallLifecycleClock } from "../../hooks/useWallLifecycleClock";
 
 const HOME_FILTERS = [
   { key: "all", get label() { return __msg("fanWeb.all"); } },
@@ -53,7 +60,9 @@ function FanHomePage() {
   __useUiLanguage();
   const { status, setStatus } = useOutletContext();
   const navigation = useLocation();
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { view, setView } = useWallViewPreference();
   const unreadActivityCount = useUnreadActivityCount(Boolean(user));
   const [searchParams, setSearchParams] = useSearchParams();
   const display = getUserDisplay(user, status);
@@ -83,22 +92,30 @@ function FanHomePage() {
     initialData: { items: [] },
   });
   const noteId = searchParams.get("note") || "";
+  useEffect(() => {
+    if (!/^[a-f0-9]{24}$/i.test(noteId)) return;
+    const returnParams = new URLSearchParams(searchParams); returnParams.delete("note");
+    navigate(`/posts/${noteId}`, { replace: true, state: { wallReturnTo: `/wall${returnParams.size ? `?${returnParams}` : ""}` } });
+  }, [noteId, navigate, searchParams]);
   const focusedNote = useQuery({
     queryKey: ["wall-note", noteId],
     queryFn: () => postService.getPost(noteId),
-    enabled: Boolean(user) && /^[a-f0-9]{24}$/i.test(noteId),
+    enabled: false,
     retry: false,
   });
+  const lifecycleNow = useWallLifecycleClock([...feedState.items, ...(createdQuery.data?.items || []), ...(focusedNote.data ? [focusedNote.data] : [])]);
   const feedPosts = useMemo(() => {
     const items = feedState.scope === queryScope ? feedState.items : [];
     const selection = JSON.parse(queryScope);
     const unfiltered = selection.filter === "all" && Object.entries(DEFAULT_WALL_FILTERS).every(([key, value]) => selection[key] === value);
     const list = unfiltered ? prependCreatedWallPosts(items, createdQuery.data?.items || []) : items;
     const selected = focusedNote.data;
-    if (!selected?.id) return list;
-    return [selected, ...list.filter(item => String(item.originalPostId || item.id) !== String(selected.id))];
-  }, [feedState, queryScope, createdQuery.data, focusedNote.data]);
+    if (!selected?.id) return activeWallPosts(list, lifecycleNow);
+    return activeWallPosts([selected, ...list.filter(item => String(item.originalPostId || item.id) !== String(selected.id))], lifecycleNow);
+  }, [feedState, queryScope, createdQuery.data, focusedNote.data, lifecycleNow]);
   const sentinelRef = useRef(null);
+  const mainRef = useRef(null);
+  const heldHeight = useRef(0);
 
   const profileQuery = useQuery({
     queryKey: ["profile", "me", "social-home"],
@@ -112,6 +129,7 @@ function FanHomePage() {
   const selectedCountryCode = searchParams.get("country") || "";
   const feedParams = useMemo(() => ({
     ...JSON.parse(queryScope),
+    matchMode: "any",
     limit: 20,
     page,
     _viewerId: user?.id || user?._id || "",
@@ -171,19 +189,35 @@ function FanHomePage() {
   }, [loading, navigation.key, navigation.state]);
 
   const applyFilters = useCallback((nextFilters) => {
+    const restoreScroll = { content: document.querySelector(".social-center-scroll")?.scrollTop || 0, window: window.scrollY };
+    // Preserve the tapped icon's position even when the filtered list is shorter.
+    if (mainRef.current) {
+      heldHeight.current = Math.max(heldHeight.current, mainRef.current.offsetHeight);
+      mainRef.current.style.minHeight = `${heldHeight.current}px`;
+    }
     setSearchParams((current) => {
       const next = writeWallFilters(current, nextFilters);
       if (current.has("country")) next.set("country", current.get("country"));
       return next;
-    }, { replace: true });
+    }, { replace: true, state: { restoreScroll } });
   }, [setSearchParams]);
 
   const resetFilters = () => {
+    wallHaptic();
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       for (const key of ["note", "type", "topic", "rightNow", "filter", "q"]) next.delete(key);
       return next;
     }, { replace: true });
+  };
+  const changeView = next => {
+    if (view === next) return;
+    wallHaptic();
+    if (mainRef.current) {
+      heldHeight.current = Math.max(heldHeight.current, mainRef.current.offsetHeight);
+      mainRef.current.style.minHeight = `${heldHeight.current}px`;
+    }
+    setView(next);
   };
   const changeLocation = useCallback((location, countryCode = "") => {
     setSearchParams((current) => {
@@ -193,17 +227,20 @@ function FanHomePage() {
       return next;
     }, { replace: true });
   }, [setSearchParams]);
-  const activeCount = Number(filters.rightNow) + Number(filters.type !== "all") + Number(filters.topic !== "all") + Number(activeFilter !== "all") + Number(Boolean(searchParams.get("q")));
+  const selectedTypes = wallFilterValues(filters, "type");
+  const selectedTopics = wallFilterValues(filters, "topic");
+  const activeCount = Number(filters.rightNow) + selectedTypes.length + selectedTopics.length + Number(activeFilter !== "all") + Number(Boolean(searchParams.get("q")));
+  const compactNotes = filters.type !== "all" || filters.topic !== "all" || filters.rightNow || activeFilter !== "all";
   const selectedLabels = [
     filters.rightNow ? __msg("constants.rightNow") : "",
-    filters.type !== "all" ? ({ need_help: __msg("fanWeb.needHelp"), right_now: __msg("constants.rightNow"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[filters.type] || WALL_FILTER_TYPES.find((item) => item.value === filters.type)?.label) : "",
-    filters.topic !== "all" ? WALL_FILTER_TOPICS.find((item) => item.value === filters.topic)?.label : "",
+    ...selectedTopics.map(key => key === "meet_people" ? __msg("wallNeeds.company") : WALL_FILTER_TOPICS.find(item => item.value === key)?.label),
+    ...selectedTypes.map(key => ({ need_help: __msg("fanWeb.needHelp"), recommendation: __msg("wallNeeds.tips"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[key] || WALL_FILTER_TYPES.find(item => item.value === key)?.label)),
   ].filter(Boolean);
   const feedTitle = selectedLabels.join(" \u00b7 ") || (activeFilter !== "all" ? HOME_FILTERS.find((item) => item.key === activeFilter)?.label : __msg("fan.forYou"));
 
   return (
     <div className="home-prototype-page">
-      <section className="home-prototype-main" aria-label={__msg("fan.homeFeed")}>
+      <section className="home-prototype-main" ref={mainRef} aria-label={__msg("fan.homeFeed")}>
         <HomeHeader
           activityCount={unreadActivityCount}
           countryCode={selectedCountryCode}
@@ -223,10 +260,10 @@ function FanHomePage() {
 
 
         <WallExploreNeeds location={feedLocation} viewerId={String(user?.id || user?._id || "")} filters={filters} onSelect={applyFilters} />
-        <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || __msg("fanWeb.worldwide")}</span>{activeCount ? <button onClick={resetFilters} type="button">{__msg("fan.clear")}</button> : null}</div>
+        <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || __msg("fanWeb.worldwide")}</span>{activeCount ? <button onClick={resetFilters} type="button">{__msg("fan.clear")}</button> : null}<WallViewSwitch view={view} onChange={changeView} /></div>
 
         {loading ? <WallFeedSkeleton /> : null}
-        {feedQuery.isError ? (
+        {feedQuery.isError && page === 1 ? (
           <section className="home-feed-error" role="alert">
             <p>{__msg("fan.unableToLoadPostsFromTheDatabase")}</p>
             <button onClick={() => feedQuery.refetch()} type="button">{__msg("activity.retry")}</button>
@@ -252,11 +289,17 @@ function FanHomePage() {
             return next;
           }, { replace: true })}
         /> : null}
-        <div aria-busy={loading ? "true" : "false"} className="home-feed-list">
-          {feedPosts.map((post) => <FeedPost key={post.id} post={post} />)}
+        <div aria-busy={loading ? "true" : "false"} className={`home-feed-list${view === "grid" ? " wall-market-grid" : ""}`}>
+          {feedPosts.map((post) => view === "grid"
+            ? <WallMarketplaceTile key={post.id} post={post} location={feedLocation} hideCategory={selectedTypes.length === 1 && !selectedTopics.length && !filters.rightNow} />
+            : compactNotes
+            ? <WallCategoryRow key={post.id} post={post} hideCategory={selectedTypes.length === 1 && !selectedTopics.length && !filters.rightNow} />
+            : <FeedPost key={post.id} post={post} />)}
         </div>
         <div className="home-feed-sentinel" ref={sentinelRef}>
+          {feedQuery.isError && page > 1 ? <section className="home-feed-error" role="alert"><p>{__msg("wallFeed.moreError")}</p><button onClick={() => feedQuery.refetch()} type="button">{__msg("activity.retry")}</button></section> : null}
           {feedQuery.isFetching && page > 1 ? <LoadingSkeleton className="h-16" count={1} /> : null}
+          {!feedQuery.isFetching && !feedQuery.isError && feedQuery.data?.pagination?.pages > page ? <button className="wall-load-more" onClick={() => setCursor({ scope: queryScope, page: page + 1 })} type="button">{__msg("wallFeed.loadMore")}</button> : null}
         </div>
       </section>
 
