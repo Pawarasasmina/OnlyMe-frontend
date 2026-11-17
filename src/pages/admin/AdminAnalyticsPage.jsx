@@ -199,7 +199,7 @@ export default function AdminAnalyticsPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `onlyme-analytics-report.${format}`;
+    anchor.download = `atseen-analytics-report.${format}`;
     anchor.click();
     URL.revokeObjectURL(url);
   };

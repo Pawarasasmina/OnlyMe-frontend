@@ -221,13 +221,13 @@ function PostMessagePreview({ mine, postId, sharedUrl }) {
   if (postQuery.isLoading) return <div className={`w-[min(14rem,68vw)] max-w-full animate-pulse overflow-hidden rounded-xl border ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`}><div className="h-28 bg-white/10" /><div className="space-y-2 p-3"><div className="h-3 w-28 max-w-full rounded bg-white/10" /><div className="h-3 w-44 max-w-full rounded bg-white/10" /></div></div>;
   if (!post) return <a className={`block w-[min(13rem,68vw)] max-w-full overflow-hidden rounded-xl border text-left ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank"><span className="block px-3 py-3"><span className={`block text-[10px] font-black uppercase tracking-wider ${mine ? "text-atseen-bg/60" : "text-atseen-blue"}`}>Shared post</span><span className="mt-1 block text-sm font-bold">Open this post</span><span className={`mt-1 block truncate text-[10px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{sharedUrl}</span></span></a>;
   const previewMedia = post.media?.find((item) => item.type === "image") || post.media?.[0];
-  const authorName = post.author?.name || post.author?.displayName || "OnlyMe creator";
+  const authorName = post.author?.name || post.author?.displayName || __msg("fan.onlymeCreator");
   const authorAvatar = post.author?.avatar || post.author?.avatarUrl || "";
   return <a className={`block w-[min(18rem,72vw)] overflow-hidden rounded-xl border text-left transition hover:brightness-110 ${mine ? "border-atseen-bg/20 bg-atseen-bg/10" : "border-atseen-line bg-black/20"}`} href={sharedUrl} rel="noreferrer" target="_blank">
     {previewMedia?.url ? previewMedia.type === "video" ? <div className="grid h-32 place-items-center bg-black/40 text-xs font-bold">Video post</div> : <img alt="Shared post preview" className="h-32 w-full object-cover" loading="lazy" src={resolveMediaUrl(previewMedia.url)} /> : null}
     <span className="block p-3">
       <span className="flex items-center gap-2"><FanAvatar name={authorName} size="h-7 w-7" src={authorAvatar} /><span className="min-w-0"><span className="block truncate text-xs font-black">{authorName}</span>{post.author?.username ? <span className={`block truncate text-[9px] ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>@{post.author.username}</span> : null}</span></span>
-      {post.text ? <span className="mt-2 block line-clamp-3 whitespace-pre-wrap text-xs leading-5">{post.text}</span> : <span className={`mt-2 block text-xs ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>Shared an OnlyMe post</span>}
+      {post.text ? <span className="mt-2 block line-clamp-3 whitespace-pre-wrap text-xs leading-5">{post.text}</span> : <span className={`mt-2 block text-xs ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>{__msg("fan.sharedAnOnlymePost")}</span>}
       <span className={`mt-2 block text-[10px] font-bold ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>Open post</span>
     </span>
   </a>;
