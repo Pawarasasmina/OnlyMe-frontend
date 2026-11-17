@@ -30,14 +30,14 @@ export default function WallExplorePage() {
   const selectedParams = writeWallFilters(params, filters);
   if (params.has("country")) selectedParams.set("country", params.get("country"));
   const backTo = `/wall${selectedParams.size ? `?${selectedParams}` : ""}`;
-  const done = () => { wallHaptic(); navigate(backTo, { replace: true }); };
+  const done = () => { wallHaptic(); navigate(backTo, { replace: true, state: { scrollToWallFeed: true } }); };
   useEffect(() => {
     if (location.state?.wallMoreHint && !moreShown.current && moreAnchor.current) {
       moreShown.current = true;
       void showHint("more", moreAnchor.current);
     }
   }, [location.state, showHint]);
-  useEffect(() => { const key = event => { if(event.key === "Escape") navigate(backTo); }; window.addEventListener("keydown",key); return () => window.removeEventListener("keydown",key); }, [navigate,backTo]);
+  useEffect(() => { const key = event => { if(event.key === "Escape") navigate(backTo, { replace: true, state: { scrollToWallFeed: true } }); }; window.addEventListener("keydown",key); return () => window.removeEventListener("keydown",key); }, [navigate,backTo]);
   const choose = ([key,,,field]) => {
     wallHaptic();
     setFilters(current => toggleWallFilter(current, key, field));
@@ -47,7 +47,7 @@ export default function WallExplorePage() {
   const selected = filters.rightNow || filters.type !== "all" || filters.topic !== "all";
   const grid = (items, compact = false) => <div className={`wall-explore-page-grid ${compact ? "is-topics" : ""}`}>{items.map(item => <WallNeedCard compact={compact} data={query.data} item={item} key={item[0]} onSelect={() => choose(item)} pending={query.isPending} selected={wallFilterSelected(filters, item[0], item[3])} />)}</div>;
   return <section className="wall-explore-page" aria-labelledby="wall-explore-title" data-hints-blocked={hintVisible ? "true" : undefined}>
-    <header><button aria-label={__msg("social.backToWall")} onClick={done} type="button"><FiChevronLeft data-ui-directional="true" aria-hidden="true" /></button><h1 id="wall-explore-title" ref={moreAnchor}>{__msg("fanWeb.exploreNeeds")}</h1>{selected ? <button className="wall-explore-clear" onClick={() => { wallHaptic(); setFilters(current => ({ ...current, type: DEFAULT_WALL_FILTERS.type, topic: DEFAULT_WALL_FILTERS.topic, rightNow: false })); }} type="button">{__msg("fan.clear")}</button> : null}</header>
+    <header><button aria-label={__msg("social.backToWall")} onClick={done} type="button"><FiChevronLeft data-ui-directional="true" aria-hidden="true" /></button><h1 id="wall-explore-title" ref={moreAnchor}>{__msg("fanWeb.exploreNeeds")}</h1><button className="wall-explore-clear" disabled={!selected} aria-hidden={!selected} onClick={() => { wallHaptic(); setFilters(current => ({ ...current, type: DEFAULT_WALL_FILTERS.type, topic: DEFAULT_WALL_FILTERS.topic, rightNow: false })); }} type="button">{__msg("fan.clear")}</button></header>
     <p className="wall-explore-subtitle">{__msg("wallNeeds.pick")}</p>
     {query.isError ? <div className="wall-explore-page-error" role="alert"><p>{__msg("social.couldNotLoadNeeds")}</p><button onClick={() => query.refetch()} type="button">{__msg("activity.retry")}</button></div> : null}
     <div className="wall-explore-page-content"><h2>{__msg("social.whatPeoplePost")}</h2>{grid(purposes)}<h2>{__msg("settings.topics")}</h2>{grid(topics,true)}</div>

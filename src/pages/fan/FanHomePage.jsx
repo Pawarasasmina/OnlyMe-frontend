@@ -31,6 +31,7 @@ import WallEmptyState from "../../components/fanWeb/home/WallEmptyState";
 import { wallHaptic } from "../../utils/wallHaptics";
 import { activeWallPosts } from "../../utils/wallLifecycle";
 import { useWallLifecycleClock } from "../../hooks/useWallLifecycleClock";
+import { wallExpiryPrompt } from "../../utils/wallLifetimePresentation";
 
 const HOME_FILTERS = [
   { key: "all", get label() { return __msg("fanWeb.all"); } },
@@ -199,16 +200,21 @@ function FanHomePage() {
       const next = writeWallFilters(current, nextFilters);
       if (current.has("country")) next.set("country", current.get("country"));
       return next;
-    }, { replace: true, state: { restoreScroll } });
+    }, { replace: true, state: { restoreScroll, scrollToWallFeed: nextFilters.rightNow || nextFilters.type !== "all" || nextFilters.topic !== "all" } });
   }, [setSearchParams]);
 
   const resetFilters = () => {
     wallHaptic();
+    const restoreScroll = { content: document.querySelector(".social-center-scroll")?.scrollTop || 0, window: window.scrollY };
+    if (mainRef.current) {
+      heldHeight.current = Math.max(heldHeight.current, mainRef.current.offsetHeight);
+      mainRef.current.style.minHeight = `${heldHeight.current}px`;
+    }
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       for (const key of ["note", "type", "topic", "rightNow", "filter", "q"]) next.delete(key);
       return next;
-    }, { replace: true });
+    }, { replace: true, state: { restoreScroll } });
   };
   const changeView = next => {
     if (view === next) return;
@@ -233,8 +239,9 @@ function FanHomePage() {
   const compactNotes = filters.type !== "all" || filters.topic !== "all" || filters.rightNow || activeFilter !== "all";
   const selectedLabels = [
     filters.rightNow ? __msg("constants.rightNow") : "",
-    ...selectedTopics.map(key => key === "meet_people" ? __msg("wallNeeds.company") : WALL_FILTER_TOPICS.find(item => item.value === key)?.label),
-    ...selectedTypes.map(key => ({ need_help: __msg("fanWeb.needHelp"), recommendation: __msg("wallNeeds.tips"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[key] || WALL_FILTER_TYPES.find(item => item.value === key)?.label)),
+    selectedTopics.includes("meet_people") ? __msg("wallNeeds.company") : "",
+    ...["need_help", "looking_for", "buy_sell", "recommendation", "offering", "question", "event"].filter(key => selectedTypes.includes(key)).map(key => ({ need_help: __msg("fanWeb.needHelp"), recommendation: __msg("wallNeeds.tips"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[key] || WALL_FILTER_TYPES.find(item => item.value === key)?.label)),
+    ...WALL_FILTER_TOPICS.filter(item => item.value !== "meet_people" && selectedTopics.includes(item.value)).map(item => item.label),
   ].filter(Boolean);
   const feedTitle = selectedLabels.join(" \u00b7 ") || (activeFilter !== "all" ? HOME_FILTERS.find((item) => item.key === activeFilter)?.label : __msg("fan.forYou"));
 
@@ -260,7 +267,7 @@ function FanHomePage() {
 
 
         <WallExploreNeeds location={feedLocation} viewerId={String(user?.id || user?._id || "")} filters={filters} onSelect={applyFilters} />
-        <div className="wall-feed-heading"><h2>{feedTitle}</h2><span>· {feedLocation || __msg("fanWeb.worldwide")}</span>{activeCount ? <button onClick={resetFilters} type="button">{__msg("fan.clear")}</button> : null}<WallViewSwitch view={view} onChange={changeView} /></div>
+        <div className="wall-feed-heading"><h2 title={feedTitle}>{feedTitle}</h2>{!selectedLabels.length ? <span>· {feedLocation || __msg("fanWeb.worldwide")}</span> : null}{activeCount ? <button onClick={resetFilters} type="button">{__msg("fan.clear")}</button> : null}<WallViewSwitch view={view} onChange={changeView} /></div>
 
         {loading ? <WallFeedSkeleton /> : null}
         {feedQuery.isError && page === 1 ? (
@@ -290,7 +297,9 @@ function FanHomePage() {
           }, { replace: true })}
         /> : null}
         <div aria-busy={loading ? "true" : "false"} className={`home-feed-list${view === "grid" ? " wall-market-grid" : ""}`}>
-          {feedPosts.map((post) => view === "grid"
+          {feedPosts.map((post) => (post.isOwner || String(post.author?.id || post.author?._id || post.author) === String(user?.id || user?._id)) && wallExpiryPrompt(post, lifecycleNow)
+            ? <div className="wall-expiry-note" key={post.id}><FeedPost post={post} /></div>
+            : view === "grid"
             ? <WallMarketplaceTile key={post.id} post={post} location={feedLocation} hideCategory={selectedTypes.length === 1 && !selectedTopics.length && !filters.rightNow} />
             : compactNotes
             ? <WallCategoryRow key={post.id} post={post} hideCategory={selectedTypes.length === 1 && !selectedTopics.length && !filters.rightNow} />

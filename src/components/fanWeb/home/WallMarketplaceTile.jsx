@@ -55,6 +55,6 @@ export default function WallMarketplaceTile({ post, hideCategory = false, locati
     </div>
     {closedLabel || (!hideCategory && !price) ? <Link className="wall-market-category" to={target} state={state}>{closedLabel || optionLabel(post.postType || post.context || "Community")}</Link> : null}
     {photo && text ? <Link aria-label={msg("wallGrid.openNote")} className="wall-market-caption" dir="auto" state={state} to={target}>{text}</Link> : null}
-    <Link className="wall-market-meta" to={target} state={state} title={[name, post.location, relativeTime(post.publishedAt || post.createdAt)].filter(Boolean).join(" · ")}>{name}{post.location ? ` · ${String(post.location).split(",")[0]}` : ""} · {relativeTime(post.publishedAt || post.createdAt)}{post.editedAt ? ` ? ${msg("wallEdit.edited")}` : ""}</Link>
+    <Link className="wall-market-meta" to={target} state={state} title={[name, post.location, relativeTime(post.publishedAt || post.createdAt)].filter(Boolean).join(" · ")}>{name}{post.location ? ` · ${String(post.location).split(",")[0]}` : ""} · {relativeTime(post.publishedAt || post.createdAt)}{post.editedAt ? ` \u00b7 ${msg("wallEdit.edited")}` : ""}</Link>
   </article>;
 }

@@ -12,7 +12,15 @@ async function setup(page, own = true) {
     if (url.pathname.endsWith("/auth/me")) data = { user };
     if (url.pathname.endsWith("/profiles/me")) data = { user, profile: { city: "Dubai" } };
     if (url.pathname === "/api/posts") data = { items: [post], pagination: { page: 1, pages: 1, total: 1 } };
-    if (url.pathname.endsWith(`/posts/${id}`)) data = { post };
+    if (url.pathname.endsWith(`/posts/${id}/resolution`)) {
+      const solved = route.request().postDataJSON().solved;
+      Object.assign(post, { resolvedAt: solved ? new Date().toISOString() : null, isClosed: solved, closedReason: solved ? "resolved" : "" });
+      data = { post };
+    }
+    if (url.pathname.endsWith(`/posts/${id}`)) {
+      if (route.request().method() === "PUT") Object.assign(post, { text: "Updated from the note page", editedAt: new Date().toISOString(), editVersion: 1 });
+      data = { post };
+    }
     await route.fulfill({ json: { success: true, data } });
   });
   return post;
@@ -42,6 +50,8 @@ for (const width of [390, 1280]) test(`full Note page, reply focus and owner men
   await expect(page.locator('[data-comment-id="comment-11"]')).toBeAttached();
   await expect(page.locator(".wall-comments-panel > form")).toHaveCSS("position", width <= 880 ? "fixed" : "sticky");
   await page.locator(".wall-note-detail-header button").click();
+  await expect(page.locator(".wall-note-detail-header button")).toHaveCSS("width", "36px");
+  await expect(page.locator(".wall-note-detail-header button")).toHaveCSS("background-color", "rgba(255, 255, 255, 0.07)");
   const menu = page.locator(".home-post-more-list");
   for (const action of ["edit", "resolution", "story", "repost", "share", "archive", "delete"]) await expect(menu.locator(`[data-action="${action}"]`)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
@@ -49,13 +59,41 @@ for (const width of [390, 1280]) test(`full Note page, reply focus and owner men
 test("visitor Note menu uses normal user actions", async ({ page }) => {
   await setup(page, false); await page.goto(`/posts/${id}`);
   await page.locator(".wall-note-detail-header button").click();
-  for (const action of ["share", "hide", "report", "block"]) await expect(page.locator(`.home-post-more-list [data-action="${action}"]`)).toBeVisible();
+  for (const action of ["share", "show-more", "hide", "unfollow", "report-spam", "report", "block"]) await expect(page.locator(`.home-post-more-list [data-action="${action}"]`)).toBeVisible();
   await expect(page.locator('[data-action="edit"]')).toHaveCount(0);
 });
 test("old Wall links open the unified Note page", async ({ page }) => {
   await setup(page); await page.goto(`/wall?note=${id}`);
   await expect(page).toHaveURL(new RegExp(`/posts/${id}$`));
   await expect(page.locator(".wall-note-detail-header")).toBeVisible();
+});
+
+for (const entry of ["grid", "list"]) for (const action of ["archive", "delete"]) test(`${entry} opens editable note; solve/reopen and ${action} stay in sync`, async ({ page }) => {
+  await setup(page);
+  await page.goto("/wall?type=question");
+  if (entry === "grid") {
+    await page.getByRole("group", { name: "Wall view" }).getByRole("button", { name: "Grid", exact: true }).click();
+    await page.locator(".wall-market-text").first().click();
+  } else await page.locator(".wall-category-row").first().click();
+  await expect(page).toHaveURL(new RegExp(`/posts/${id}$`));
+  const more = page.locator(".wall-note-detail-header button");
+  await more.click();
+  await page.locator('.home-post-more-list [data-action="edit"]').click();
+  await page.getByRole("textbox", { name: "Note text", exact: true }).fill("Updated from the note page");
+  await page.locator(".wall-create-screen").getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".home-feed-text")).toHaveText("Updated from the note page");
+  await expect(page).toHaveURL(new RegExp(`/posts/${id}$`));
+  await more.click();
+  await page.locator('.home-post-more-list [data-action="resolution"]').click();
+  await expect(page.locator(".wall-post-type-link")).toHaveText("Solved");
+  await more.click();
+  await expect(page.locator('.home-post-more-list [data-action="edit"]')).toHaveCount(0);
+  await page.locator('.home-post-more-list [data-action="resolution"]').click();
+  await expect(page.locator(".wall-post-type-link")).toHaveText("Question");
+  await more.click();
+  await page.locator(`.home-post-more-list [data-action="${action}"]`).click();
+  if (action === "delete") await page.locator(".app-dialog-layer").getByRole("button", { name: "Delete note", exact: true }).click();
+  await expect(page).toHaveURL(/\/wall\?type=question$/);
 });
 test("comment notification links reveal the targeted reply", async ({ page }) => {
   await setup(page); await page.goto(`/posts/${id}?comment=comment-11`);

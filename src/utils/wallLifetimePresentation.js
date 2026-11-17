@@ -1,4 +1,4 @@
-import { wallCanBump, wallExpiresAt, wallNeedsExpiryPrompt, wallPromptKind } from "../../shared/wallLifecycle.js";
+import { wallCanBump, wallClosedReason, wallExpiresAt, wallNeedsExpiryPrompt, wallPromptKind } from "../../shared/wallLifecycle.js";
 
 export function wallLifetimeMessage(postType, rightNow = false) {
   if (rightNow || postType === "Right Now") return { key: "wallLifetime.rightNow" };
@@ -9,6 +9,7 @@ export function wallLifetimeMessage(postType, rightNow = false) {
 }
 
 export function wallExpiryPrompt(post, now = Date.now()) {
+  if (wallClosedReason(post, now) || post.deletedAt || (post.status && post.status !== "published") || post.moderationHiddenAt || ["PENDING_REVIEW", "REJECTED"].includes(post.moderationStatus)) return null;
   if (post.rightNow || post.postType === "Right Now" || post.context === "Right now" || post.postType === "Event" || (!post.postType && post.context === "Events")) return null;
   if (!post.needsExpiryPrompt && !post.canBump && !wallNeedsExpiryPrompt(post, now)) return null;
   const kind = post.expiryPromptKind || wallPromptKind(post) || "availability";
