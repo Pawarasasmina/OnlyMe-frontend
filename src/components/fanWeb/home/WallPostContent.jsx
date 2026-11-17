@@ -2,6 +2,7 @@
 import { msg as __msg } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useId, useState } from "react";
+import { Link } from "react-router-dom";
 import { FiChevronDown, FiChevronUp, FiGlobe } from "react-icons/fi";
 import VoiceMessageBubble from "../../messaging/VoiceMessageBubble";
 import { useWallTranslation } from "../../../hooks/useWallTranslation";
@@ -20,16 +21,15 @@ export function TranslationLink({ translation, onClick, alwaysVisible = false })
   </div>;
 }
 
-export function WallTextContent({ postId, text }) {
+export function WallTextContent({ postId, text, fullText = false, noteTo, noteState }) {
   __useUiLanguage();
   const translation = useWallTranslation({ postId, text });
-  const [expanded, setExpanded] = useState(false);
   if (!text?.trim()) return null;
   const display = translation.text || text;
-  const long = display.length > 260;
+  const long = !fullText && Boolean(noteTo) && display.length > 260;
+  const content = <p className="home-feed-text" dir="auto">{long ? `${display.slice(0, 260).trim()}...` : display}</p>;
   return <div className="wall-post-text-content" ref={translation.ref}>
-    <p className="home-feed-text" dir="auto">{long && !expanded ? `${display.slice(0, 260).trim()}...` : display}</p>
-    {long ? <button className="home-feed-show-more" onClick={() => setExpanded(!expanded)} type="button">{expanded ? __msg("fanWeb.showLess") : __msg("fanWeb.showMore")}</button> : null}
+    {noteTo && !fullText ? <Link className="wall-note-text-link" to={noteTo} state={noteState}>{content}</Link> : content}
     <TranslationLink translation={translation} />
   </div>;
 }
