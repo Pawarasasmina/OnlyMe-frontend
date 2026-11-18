@@ -29,6 +29,7 @@ import { walletService } from "../../services/walletService";
 import { getMessageSocket } from "../../services/messageSocket";
 import ActivityAcknowledgement from "../../components/activity/ActivityAcknowledgement";
 import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
+import GiftArt from "../../components/gifts/GiftArt";
 import { isGiftActivity, mergeActivitySources } from "../../utils/activitySources";
 import { relativeTime } from "../../utils/relativeTime";
 import { GIFT_THANKS_OPEN_EVENT } from "../../components/fanWeb/shared/giftThanksEvent";
@@ -648,6 +649,13 @@ function ActivityItem({ item, onOpen, starsPerUsd, acknowledged, onAcknowledge }
   const interactive = isGiftActivity(item) || Boolean(route);
   const tone = toneFor(item);
   const giftImageUrl = item.metadata?.giftImageUrl || item.giftImageUrl || "";
+  const activityGift = giftImageUrl ? {
+    ...(item.gift || {}),
+    ...(item.metadata || {}),
+    id: item.gift?.id || item.metadata?.giftId || item.reference?.id,
+    name: item.metadata?.giftName || item.gift?.name || __msg("fan.gift"),
+    imageUrl: giftImageUrl,
+  } : null;
 
   const openItem = () => {
     if (!interactive) return;
@@ -685,7 +693,7 @@ function ActivityItem({ item, onOpen, starsPerUsd, acknowledged, onAcknowledge }
         {/^premium_renewal_(low_balance|failed)$/.test(item.type || "") ? <button className="activity-follow-action" onClick={event => { event.stopPropagation(); navigate("/wallet"); }} onKeyDown={event => event.stopPropagation()} type="button">{__msg("activity.topUp")}</button> : null}
         {item.type === "follow" && item.direction === "received" && item.relatedCreator?.username ? <ActivityFollowAction username={item.relatedCreator.username} /> : null}
         <ActivityContentPreview item={item} />
-        {giftImageUrl && !isGiftThanksActivity(item) ? <img alt={item.metadata?.giftName || __msg("fan.gift")} className="activity-prototype-gift" src={giftImageUrl} /> : null}
+        {activityGift && !isGiftThanksActivity(item) ? <GiftArt decorative gift={activityGift} imageUrl={giftImageUrl} className="activity-prototype-gift" /> : null}
         {amount ? <strong className={amount.className}>{amount.label}</strong> : null}
 
       </div>
