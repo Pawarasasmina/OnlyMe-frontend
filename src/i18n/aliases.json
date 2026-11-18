@@ -2918,6 +2918,7 @@
   "Add cover": "creator.addCover",
   "photo or video · optional": "creator.photoOrVideoOptional",
   "Adjust": "creator.adjust",
+  "Adjust crop": "creator.adjustCrop",
   "Your title": "creator.yourTitle",
   "up to 5 chapters": "creator.upTo5Chapters",
   "Video cover · plays in the feed": "creator.videoCoverPlaysInTheFeed",

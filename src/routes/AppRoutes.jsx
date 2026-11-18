@@ -115,7 +115,7 @@ function RootRedirect() {
   __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user?.role === ROLES.ADMIN) return <Navigate replace to={!user.adminTwoFactorEnabled ? "/admin/security" : user.adminRole === "FINANCE" ? "/admin/financial" : "/admin/dashboard"} />;
+  if (user?.role === ROLES.ADMIN) return <Navigate replace to={user.adminTwoFactorRequired !== false && !user.adminTwoFactorEnabled ? "/admin/security" : user.adminRole === "FINANCE" ? "/admin/financial" : "/admin/dashboard"} />;
   return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
