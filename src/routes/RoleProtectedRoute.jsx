@@ -23,7 +23,7 @@ function RoleProtectedRoute({ allowedRoles = [], allowedAdminRoles = null, requi
 
   // The security enrollment route must remain reachable, but every other
   // administrator screen depends on the backend's mandatory 2FA gate.
-  if (user.role === "admin" && !user.adminTwoFactorEnabled && location.pathname !== "/admin/security") {
+  if (user.role === "admin" && user.adminTwoFactorRequired !== false && !user.adminTwoFactorEnabled && location.pathname !== "/admin/security") {
     return <Navigate replace to="/admin/security" />;
   }
 

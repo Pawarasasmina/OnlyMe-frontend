@@ -847,8 +847,17 @@ function AudienceSheet({ onClose, onSelect, value }) {
   );
 }
 
-function CoverSheet({ hasCover, onClose, onUpload }) {
+function CoverSheet({ busy = false, hasCover, onAdjust, onClose, onRemove, onUpload }) {
   __useUiLanguage();
+  if (hasCover) return (
+    <SelectionSheet onClose={onClose} sheetClassName="is-cover-actions" title="">
+      <div className="seen-cover-actions">
+        <button disabled={busy} onClick={onAdjust} type="button"><FiScissors aria-hidden="true" /><b>{__msg("creator.adjustCrop")}</b></button>
+        <button disabled={busy} onClick={() => onUpload("AUTO")} type="button"><FiImage aria-hidden="true" /><b>{__msg("profile.replace")}</b></button>
+        <button className="is-danger" disabled={busy} onClick={onRemove} type="button"><FiX aria-hidden="true" /><b>{__msg("profile.remove")}</b></button>
+      </div>
+    </SelectionSheet>
+  );
   return (
     <SelectionSheet onClose={onClose} subtitle={__msg("creator.45ShownInTheFeedAndOnThe")} title={__msg("creator.cover")}>
       <div className="seen-cover-sheet-body">
@@ -2986,6 +2995,51 @@ export default function SeenComposerPage() {
     setCropTarget({ kind: "cover", url: URL.createObjectURL(file) });
   };
 
+  const adjustExistingCover = async () => {
+    setSettingsSheet("");
+    if (!mediaPreview || uploading) return;
+    setUploading("COVER_EDIT");
+    setError("");
+    try {
+      const response = await fetch(mediaPreview);
+      if (!response.ok) throw new Error(__msg("creator.uploadFailed"));
+      const blob = await response.blob();
+      const isVideo = mediaKind === "VIDEO";
+      const extension = isVideo ? (blob.type.includes("webm") ? "webm" : "mp4") : (blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg");
+      const file = new File([blob], `seen-cover.${extension}`, { type: blob.type || (isVideo ? "video/mp4" : "image/jpeg") });
+      const url = URL.createObjectURL(file);
+      if (isVideo) setVideoToTrim({ file, limitSeconds: paidSeen ? 30 : 15, target: "cover", url });
+      else setCropTarget({ kind: "cover", url });
+    } catch (requestError) {
+      setError(requestError.message || __msg("creator.uploadFailed"));
+    } finally {
+      setUploading("");
+    }
+  };
+
+  const removeCover = async () => {
+    setSettingsSheet("");
+    if (uploading) return;
+    if (coverPreview?.url) {
+      setCoverPreview((current) => {
+        if (current?.url) URL.revokeObjectURL(current.url);
+        return null;
+      });
+    }
+    if (!p.id || !p.coverMedia) return;
+    setUploading("COVER_REMOVE");
+    setError("");
+    try {
+      await api.deleteMedia(p.id, "COVER", p.statusVersion);
+      await refresh(p.id, { preserveLocalChanges: dirty.current });
+      setToast(__msg("social.coverRemoved", { value0: "Seen" }));
+    } catch (requestError) {
+      setError(publicationError(requestError, __msg("creator.uploadFailed")));
+    } finally {
+      setUploading("");
+    }
+  };
+
   const generatePaidSignatureCover = () => {
     const canvas = document.createElement("canvas");
     canvas.width = 1280;
@@ -3895,7 +3949,7 @@ export default function SeenComposerPage() {
           <button className="seen-about-continue" disabled={!p.title.trim() || Boolean(uploading || continuingToChapter)} onClick={continueToFirstChapter} type="button">{continuingToChapter ? __msg("creator.openingChapter") : t("Continue")}</button>
         </div>
         <input accept={`${IMAGE_ACCEPT},${VIDEO_ACCEPT}`} className="sr-only" onChange={uploadCover} ref={coverInput} type="file" />
-        {settingsSheet === "cover" ? <CoverSheet hasCover={Boolean(p.coverMedia || coverPreview)} onClose={() => setSettingsSheet("")} onUpload={(kind) => chooseMedia(kind, 15)} /> : null}
+        {settingsSheet === "cover" ? <CoverSheet busy={Boolean(uploading)} hasCover={Boolean(p.coverMedia || coverPreview)} onAdjust={adjustExistingCover} onClose={() => setSettingsSheet("")} onRemove={removeCover} onUpload={(kind) => { setSettingsSheet(""); chooseMedia(kind, 15); }} /> : null}
       </section>
     );
   }
@@ -4168,7 +4222,7 @@ export default function SeenComposerPage() {
         />
       ) : null}
       {settingsSheet === "cover" ? (
-        <CoverSheet hasCover={Boolean(p.coverMedia)} onClose={() => setSettingsSheet("")} onUpload={(kind) => chooseMedia(kind, 30)} />
+        <CoverSheet busy={Boolean(uploading)} hasCover={Boolean(p.coverMedia || coverPreview)} onAdjust={adjustExistingCover} onClose={() => setSettingsSheet("")} onRemove={removeCover} onUpload={(kind) => { setSettingsSheet(""); chooseMedia(kind, 30); }} />
       ) : null}
       {settingsSheet === "series" ? (
         <SeriesSheet

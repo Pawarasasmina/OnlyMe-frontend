@@ -17899,6 +17899,32 @@ video.seen-reader-media {
 .seen-cover-upload + .seen-cover-upload { margin-left: 8px; }
 .seen-cover-sheet-body small { display: block; margin-top: 8px; color: rgba(255,255,255,.42); font-size: 10px; }
 
+.seen-settings-sheet.is-cover-actions {
+  padding-top: 8px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+.seen-settings-sheet.is-cover-actions > header { display: none; }
+.seen-settings-sheet.is-cover-actions .seen-settings-sheet-handle { margin-bottom: 13px; }
+.seen-cover-actions { display: grid; }
+.seen-cover-actions button {
+  display: grid;
+  min-height: 57px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  padding: 0 8px;
+  color: rgba(255,255,255,.92);
+  text-align: left;
+}
+.seen-cover-actions button svg { width: 17px; height: 17px; color: rgba(255,255,255,.72); }
+.seen-cover-actions button b { font-size: 14px; font-weight: 700; }
+.seen-cover-actions button.is-danger,
+.seen-cover-actions button.is-danger svg { color: #ff4f6d; }
+.seen-cover-actions button:disabled { opacity: .45; }
+.seen-cover-actions button:not(:disabled):hover { background: rgba(255,255,255,.04); }
+
 .seen-series-create {
   display: grid;
   grid-template-columns: minmax(0,1fr) 42px;

@@ -1,6 +1,6 @@
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 
 function outputFileName(kind) {
@@ -15,6 +15,9 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
   const [y, setY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const gestureRef = useRef({ pointers: new Map() });
+  const previewRef = useRef(null);
+  const [imageSize, setImageSize] = useState({ height: 0, width: 0 });
+  const [previewSize, setPreviewSize] = useState({ height: 0, width: 0 });
   const config = {
     avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 400, label: __msg("profile.profilePhoto"), width: 400 },
     cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: __msg("profile.cover"), width: 1500 },
@@ -23,9 +26,25 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
     seen: { aspect: "aspect-[4/5]", frame: "w-full rounded-2xl", height: 1350, label: __msg("profile.seenCover"), width: 1080 },
     story: { aspect: "aspect-[9/16]", frame: "h-[min(56vh,520px)] rounded-2xl", height: 1920, label: __msg("profile.storyImage"), width: 1080 },
   }[kind] || { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: __msg("profile.image"), width: 1080 };
-  const translateLimit = ((zoom - 1) / (2 * zoom)) * 100;
-  const translateX = -(x / 100) * translateLimit;
-  const translateY = -(y / 100) * translateLimit;
+  useEffect(() => {
+    const preview = previewRef.current;
+    if (!preview) return undefined;
+    const measure = () => setPreviewSize({ height: preview.clientHeight, width: preview.clientWidth });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(preview);
+    return () => observer.disconnect();
+  }, [kind]);
+
+  const baseScale = imageSize.width && imageSize.height && previewSize.width && previewSize.height
+    ? Math.max(previewSize.width / imageSize.width, previewSize.height / imageSize.height)
+    : 1;
+  const previewImageWidth = imageSize.width * baseScale * zoom;
+  const previewImageHeight = imageSize.height * baseScale * zoom;
+  const previewFreeX = Math.max(0, previewImageWidth - previewSize.width);
+  const previewFreeY = Math.max(0, previewImageHeight - previewSize.height);
+  const previewLeft = (previewSize.width - previewImageWidth) / 2 - (x / 100) * previewFreeX / 2;
+  const previewTop = (previewSize.height - previewImageHeight) / 2 - (y / 100) * previewFreeY / 2;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const beginGesture = (event) => {
@@ -126,9 +145,17 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
           onPointerMove={moveGesture}
           onPointerUp={endGesture}
           onWheel={zoomWithWheel}
+          ref={previewRef}
           style={{ touchAction: "none" }}
         >
-          <img alt={__msg("profile.cropPreview")} className="h-full w-full select-none object-cover" draggable="false" src={source} style={{ objectPosition: `${50 + x / 2}% ${50 + y / 2}%`, transform: `translate(${translateX}%, ${translateY}%) scale(${zoom})` }} />
+          <img
+            alt={__msg("profile.cropPreview")}
+            className="absolute max-w-none select-none"
+            draggable="false"
+            onLoad={(event) => setImageSize({ height: event.currentTarget.naturalHeight, width: event.currentTarget.naturalWidth })}
+            src={source}
+            style={{ height: previewImageHeight || "100%", left: previewLeft || 0, top: previewTop || 0, width: previewImageWidth || "100%" }}
+          />
           <span aria-hidden="true" className="profile-image-crop-guides" />
           <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/30" />
         </div>
