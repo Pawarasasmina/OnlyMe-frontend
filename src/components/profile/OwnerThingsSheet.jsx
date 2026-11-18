@@ -15,6 +15,8 @@ import { publicationService } from "../../services/publicationService";
 import { postService } from "../../services/postService";
 import { GIFT_THANKS_OPEN_EVENT } from "../fanWeb/shared/giftThanksEvent";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
+import GiftArt from "../gifts/GiftArt";
+import { resolveMediaUrl } from "../../utils/media";
 import "./OwnerThingsSheet.css";
 import OwnerLibrary from "./OwnerLibrary";
 
@@ -113,7 +115,9 @@ export default function OwnerThingsSheet({ isOpen, onClose, initialView = "menu"
       {["library", "subscriptions"].includes(view) ? <OwnerLibrary subscriptionsOnly={view === "subscriptions"} onClose={onClose} onFullScreen={setLibraryFull} userId={user?.id} wallet={wallet.data} /> : null}
       {view === "thanks" ? <QueryState empty="When a creator thanks you for a gift, it stays here." query={thanks}>{thanks.data?.length ? thanks.data.map(item => {
         const actor = item.relatedCreator || item.actor || {};
-        return <button className="owner-things-row" key={item.id || item._id} onClick={() => { onClose(); window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, { detail: item })); }} type="button"><FanAvatar name={actor.name || actor.displayName || "Creator"} size="h-10 w-10" src={actor.avatarUrl || actor.avatar} /><span className="owner-things-copy"><b>{actor.name || actor.displayName || __msg("discover.creator")}</b><small>{item.preview || item.message || item.title || __msg("profile.thankYouForYourGift")}</small></span><FiChevronRight data-ui-directional="true" /></button>;
+        const giftImage = resolveMediaUrl(item.metadata?.giftImageUrl || item.giftImageUrl || item.gift?.imageUrl);
+        const gift = { ...(item.gift || {}), ...(item.metadata || {}), name: item.metadata?.giftName || item.gift?.name || __msg("fan.gift") };
+        return <button className="owner-things-row owner-things-thanks-row" key={item.id || item._id} onClick={() => { onClose(); window.dispatchEvent(new CustomEvent(GIFT_THANKS_OPEN_EVENT, { detail: item })); }} type="button"><FanAvatar name={actor.name || actor.displayName || "Creator"} size="h-10 w-10" src={actor.avatarUrl || actor.avatar} /><span className="owner-things-copy"><b>{actor.name || actor.displayName || __msg("discover.creator")}</b><small>{item.preview || item.message || item.title || __msg("profile.thankYouForYourGift")}</small></span>{giftImage ? <GiftArt decorative gift={gift} imageUrl={giftImage} className="owner-things-thanks-gift" /> : <span aria-hidden="true" className="owner-things-thanks-gift is-fallback"><FiGift /></span>}<FiChevronRight data-ui-directional="true" /></button>;
       }) : null}</QueryState> : null}
       {view === "friends" ? <BringFriendsFlow user={user} onClose={onClose} onFullScreen={setLibraryFull} /> : null}
     </section>

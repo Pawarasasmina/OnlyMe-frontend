@@ -87,11 +87,14 @@ function DiscoverPage() {
   const storyTriggerRef = useRef(null);
   const [storyViewer, setStoryViewer] = useState({ personId: null, index: 0 });
   const [activeRecommendationStory, setActiveRecommendationStory] = useState(null);
+  const [localStoryGroupIndex, setLocalStoryGroupIndex] = useState(null);
 
   const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
   const firstPage = pages[0] || {};
   const topicChips = firstPage.topicChips || [];
   const localTonight = firstPage.localTonight || null;
+  const localStoryGroups = localTonight?.storyGroups || [];
+  const activeLocalStoryGroup = localStoryGroupIndex == null ? null : localStoryGroups[localStoryGroupIndex];
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])).sort((left, right) => Number(String(right.creator?.status || right.status || "").toLowerCase() === "at seen") - Number(String(left.creator?.status || left.status || "").toLowerCase() === "at seen")), [pages]);
   const followingPeople = useMemo(
     () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))),
@@ -190,6 +193,13 @@ function DiscoverPage() {
     setActiveRecommendationStory(recommendations[index] || null);
   }, [recommendations]);
 
+  const openLocalStories = useCallback(() => {
+    if (!localStoryGroups.length) return;
+    setStoryViewer({ personId: null, index: 0 });
+    setActiveRecommendationStory(null);
+    setLocalStoryGroupIndex(0);
+  }, [localStoryGroups.length]);
+
   useEffect(() => {
     if (!activeRecommendationStory) return;
     const stillExists = recommendations.find((card) => (card.id || card.username) === (activeRecommendationStory.id || activeRecommendationStory.username));
@@ -265,7 +275,15 @@ function DiscoverPage() {
     <div className="discover-orb-page" onTouchCancel={endPull} onTouchEnd={endPull} onTouchMove={movePull} onTouchStart={startPull}>
       {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? __msg("social.releaseForFreshRecommendations") : __msg("social.pullForFreshRecommendations")}</div> : null}
       <section className="discover-orb-main" aria-label={__msg("discover.discover")}>
-        {activeStoryPerson ? (
+        {activeLocalStoryGroup ? (
+          <DiscoverRecommendationStory
+            card={activeLocalStoryGroup}
+            initialIndex={firstUnseenStoryIndex(activeLocalStoryGroup)}
+            onClose={() => setLocalStoryGroupIndex(null)}
+            onNext={() => setLocalStoryGroupIndex((current) => current + 1 < localStoryGroups.length ? current + 1 : null)}
+            onPrevious={() => setLocalStoryGroupIndex((current) => current > 0 ? current - 1 : current)}
+          />
+        ) : activeStoryPerson ? (
           <DiscoverRecommendationStory
             card={activeStoryPerson}
             initialIndex={storyViewer.index}
@@ -314,13 +332,13 @@ function DiscoverPage() {
             />
 
             {localTonight ? (
-              <Link className="discover-dubai-today" to={localTonight.route || `/search?location=${encodeURIComponent(localTonight.city || "")}`}>
+              <button aria-label={`Watch ${localTonight.title} stories`} className="discover-dubai-today" onClick={openLocalStories} type="button">
                 <span className="discover-dubai-avatars" aria-hidden="true">
                   {(localTonight.avatars || []).map((person) => <FanAvatar key={person.id} name={person.name} size="h-10 w-10" src={person.avatar} />)}
                 </span>
                 <span className="discover-dubai-copy"><strong><i />{localTonight.title}</strong><small>{localTonight.subtitle}</small></span>
                 <FiChevronRight aria-hidden="true" />
-              </Link>
+              </button>
             ) : null}
 
             <div className="discover-recommendation-heading">

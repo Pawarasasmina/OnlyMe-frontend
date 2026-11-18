@@ -26,8 +26,15 @@ export default function ActivityGiftPreview({ activity, onClose, showClose = tru
     retry: false,
     staleTime: 60000,
   });
-  const gift = { ...(catalog.data?.find((item) => String(item.id) === String(giftId)) || {}), ...snapshot };
-  const name = metadata.giftName || gift.name || __msg("fan.gift");
+  const catalogGift = catalog.data?.find((item) => String(item.id) === String(giftId)) || {};
+  const name = metadata.giftName || snapshot.name || catalogGift.name || __msg("fan.gift");
+  const gift = {
+    ...catalogGift,
+    ...snapshot,
+    ...metadata,
+    id: snapshot.id || snapshot.giftId || giftId || catalogGift.id,
+    name,
+  };
   const imageUrl = resolveMediaUrl(metadata.giftImageUrl || gift.imageUrl || activity.giftImageUrl);
   const meaning = metadata.giftMeaning || metadata.giftDescription || gift.meaning || gift.description;
   const note = metadata.giftNote || metadata.giftMessage || gift.note;
@@ -80,7 +87,7 @@ export default function ActivityGiftPreview({ activity, onClose, showClose = tru
     <div className="activity-gift-preview-dismiss" onClick={onClose} role="presentation">
       <span className="activity-gift-preview-art">
         <i aria-hidden="true" />
-        {imageUrl ? <GiftArt gift={gift} imageUrl={imageUrl} /> : <FiGift aria-label={name} />}
+        {imageUrl ? <GiftArt allowShine gift={gift} imageUrl={imageUrl} /> : <FiGift aria-label={name} />}
       </span>
       <span className="activity-gift-preview-info">
         <strong>{name}</strong>

@@ -11,6 +11,7 @@ import { resolveMediaUrl } from "../../../utils/media";
 import { useFanToast } from "./FanToastContext";
 import FanAvatar from "./FanAvatar";
 import { GIFT_THANKS_OPEN_EVENT } from "./giftThanksEvent";
+import "./GiftThanksNotice.css";
 
 // The prototype's timed reply is a demo. Announce real creator activity only.
 export default function GiftThanksNotice() {
