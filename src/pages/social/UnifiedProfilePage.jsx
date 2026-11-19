@@ -491,10 +491,11 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
         </div>
         <div className="profile-copy">
           <h1 dir="auto">
-            {profile.displayName}
+            <button className="profile-handle-copy" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/profile/${profile.username}`)} title={__msg("admin.copyLink")} type="button"><span className="identity-at">@</span>{profile.username}</button>
             {isOwner ? <MemberTicket profile={profile} /> : null}
             {profile.verified ? <ProfileVerifiedSeal isOwner={isOwner} name={profile.displayName} /> : null}
           </h1>
+          {profile.displayName ? <p className="profile-real-name" dir="auto">{profile.displayName}</p> : null}
           <div className="profile-identity-metrics" aria-label={__msg("social.profileMetrics")}>
             {identityMetrics.map(([key, label, value, onClick]) => (
               <button aria-label={label} key={key} onClick={onClick} type="button">

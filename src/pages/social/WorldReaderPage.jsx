@@ -3,6 +3,7 @@ import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
+import { CommentAuthorIdentity } from "../../components/comments/CommentIdentity";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1442,7 +1443,7 @@ function WorldInsideComments({ noteOwner, engagement, mutationBusy, onCommentRea
     return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${canManage ? "can-moderate" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
       <div className="world-inside-detail__comment-body">
-        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || __msg("admin.user")}</Link><MemberCommentBadge author={item.author} noteOwner={noteOwner} /> {showText ? item.text : null}</p>
+        <p><CommentAuthorIdentity author={item.author} fallback={__msg("admin.user")} /><MemberCommentBadge author={item.author} noteOwner={noteOwner} /> {showText ? item.text : null}</p>
         {item.audio ? (
           <div className="voice-comment-bubble-row">
             <VoiceMessageBubble audio={item.audio} className="world-voice-comment-player" compact label={__msg("comments.voiceComment")} variant="chip" />

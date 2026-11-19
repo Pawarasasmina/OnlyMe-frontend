@@ -174,7 +174,12 @@ function isGiftThanksActivity(item) {
 }
 
 function creatorName(creator, fallback = __msg("fan.someone")) {
-  return creator?.displayName || creator?.name || creator?.username || fallback;
+  return creator?.username ? `@${creator.username}` : creator?.displayName || creator?.name || fallback;
+}
+
+function ActivityHandle({ person, fallback = "" }) {
+  if (person?.username) return <b><i className="identity-at">@</i>{person.username}</b>;
+  return <b>{person?.displayName || person?.name || fallback}</b>;
 }
 
 function creatorForCounterparty(counterparty) {
@@ -308,7 +313,7 @@ function normalizeLegacyActivity(item) {
   const warning = item.type === "moderation_warning";
   const actor = item.relatedCreator || item.actor || null;
   const originalDescription = warning ? (item.title || __msg("layouts.accountWarning")) : cleanText(item.title || item.description || item.type || __msg("social.activity"));
-  const actorName = actor?.displayName || actor?.name || actor?.username || originalDescription.match(/^(.+?) thanked you/i)?.[1] || __msg("fan.someone");
+  const actorName = creatorName(actor, originalDescription.match(/^(.+?) thanked you/i)?.[1] || __msg("fan.someone"));
   const description = isGiftThanksActivity(item) ? __msg("fan.value0ThankedYouForYourGift", { value0: actorName }) : originalDescription;
   const preview = cleanText(item.preview || item.relatedContent?.title || item.target?.preview || item.message || (item.type === "story_mention" && direction === "received" ? __msg("fan.tapToAddItToYourStory") : ""));
 
@@ -394,7 +399,7 @@ function aggregateReceivedActivity(items) {
     if (group.length < 2) return;
     const latest = [...group].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
     const people = group.map((item) => item.relatedCreator).filter(Boolean);
-    const names = people.map((person) => person.displayName || person.name || person.username || __msg("fan.someone"));
+    const names = people.map((person) => creatorName(person));
     const leadNames = names.slice(0, 2).join(", ");
     const more = Math.max(0, group.length - 2);
     passthrough.push({
@@ -442,7 +447,7 @@ function aggregateReceivedActivity(items) {
     const action = aggregateAction(latest);
     const targetLabel = aggregateTargetLabel(latest);
     const people = group.map((item) => item.relatedCreator).filter(Boolean);
-    const names = people.slice(0, 2).map((person) => person.displayName || person.name || person.username).filter(Boolean);
+    const names = people.slice(0, 2).map((person) => creatorName(person, "")).filter(Boolean);
     const lead = names.length ? `${names.join(", ")}${group.length > 2 ? __msg("fan.andValue0Others", { value0: group.length - 2 }) : ""}` : __msg("fan.people", { value0: group.length });
     const verbs = {
       save: __msg("fan.savedYourValue0", { value0: targetLabel }),
@@ -599,7 +604,10 @@ function ActivityAvatar({ item }) {
 function ActivityTitle({ item }) {
   __useUiLanguage();
   const title = __systemMessage(item.title) || __msg("social.activity");
-  const actorName = item.relatedCreator?.displayName || item.relatedCreator?.name || item.relatedCreator?.username || "";
+  const actor = item.relatedCreator;
+  const actorName = creatorName(actor, "");
+  const actorAliases = [actor?.displayName, actor?.name, actor?.username, actor?.username ? `@${actor.username}` : ""].filter(Boolean);
+  const titleActorPrefix = actorAliases.find((name) => title.startsWith(name));
   const titleMark = titleMarkFor(item);
   const actionIcon = titleMark && !title.includes(titleMark) ? <span aria-hidden="true" className="activity-title-event-icon is-reaction">{titleMark}</span> : null;
 
@@ -610,17 +618,16 @@ function ActivityTitle({ item }) {
   }
 
   if (item.type === "profile_seen_group" && item.relatedCreators?.length) {
-    const names = item.relatedCreators.map((person) => person.displayName || person.name || person.username || __msg("fan.someone"));
-    const leadNames = names.slice(0, 2).join(", ");
-    const more = Math.max(0, Number(item.aggregate?.count || names.length) - 2);
-    return <p><b>{leadNames}</b>{more ? <> {__msg("fan.and")} <b>{more} {__msg("fan.more")}</b></> : null} {__msg("profile.saidISeeYou")}</p>;
+    const people = item.relatedCreators.slice(0, 2);
+    const more = Math.max(0, Number(item.aggregate?.count || item.relatedCreators.length) - 2);
+    return <p>{people.map((person, index) => <span key={person.id || person.username || index}>{index ? ", " : ""}<ActivityHandle person={person} fallback={__msg("fan.someone")} /></span>)}{more ? <> {__msg("fan.and")} <b>{more} {__msg("fan.more")}</b></> : null} {__msg("profile.saidISeeYou")}</p>;
   }
 
-  if (actorName && title.startsWith(actorName)) {
+  if (actorName && titleActorPrefix) {
     return (
       <p>
-        <b>{actorName}</b>
-        {title.slice(actorName.length)}
+        <ActivityHandle person={actor} fallback={actorName} />
+        {title.slice(titleActorPrefix.length)}
         {actionIcon}
       </p>
     );

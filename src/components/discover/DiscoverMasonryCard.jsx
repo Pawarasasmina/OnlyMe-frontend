@@ -36,7 +36,7 @@ function DiscoverMasonryCard({ card, index = 0, onOpen }) {
   const fallbackImage = resolveMediaUrl(card.media?.type === "video" ? card.media.poster || card.creator?.cover : card.coverImage || card.media?.url || card.creator?.cover);
   const imageUrl = [...new Set([portrait, fallbackImage].filter(Boolean))][failed];
   const name = card.displayName || card.creator?.name || card.username || __msg("discover.creator");
-  const firstName = name.trim().split(/\s+/)[0];
+  const username = card.username || card.creator?.username || "";
   const category = card.category || card.creator?.category || "";
   const place = card.city || card.creator?.location?.city || String(card.location || "").split(",")[0];
   const creatorId = card.userId || card.creator?.id || card.creatorId || card.id || "";
@@ -53,7 +53,7 @@ function DiscoverMasonryCard({ card, index = 0, onOpen }) {
       <span className="discover-orb-card-shade" aria-hidden="true" />
       {live ? <span className="discover-orb-live-dot" aria-label={__msg("discover.atSeenRightNow")} /> : null}
       <span className="discover-orb-card-copy">
-        <strong><span>{firstName}</span>{world ? <WorldMark /> : null}</strong>
+        <strong><span>{username ? <><i className="identity-at">@</i>{username}</> : name}</span>{world ? <WorldMark /> : null}</strong>
         <small>{[category ? __systemMessage(category) : "", place].filter(Boolean).join(" · ")}</small>
         <em>{recommendationReason(card)}</em>
         {seen?.title ? <span className="discover-orb-doing"><SeenNavIcon aria-hidden="true" /><span dir="auto">{seen.title}</span></span> : world ? <span className="discover-orb-doing">{__msg("admin.world")}{members != null ? __msg("discover.members_079fce", { value0: Number(members).toLocaleString(__uiLocale()) }) : ""}</span> : null}

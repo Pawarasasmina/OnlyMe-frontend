@@ -464,7 +464,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
-  const headerName = ownsPost ? __msg("fanWeb.you") : creator.name;
+  const headerName = creator.username ? <b className="home-feed-username"><span className="identity-at">@</span>{creator.username}</b> : creator.name;
   const closeLabels = wallCloseLabels(normalized.postType, normalized.context);
   const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (Object.keys(reactionBreakdown).length

@@ -5,7 +5,7 @@ import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
-import { CommentReplyMention } from "../../components/comments/CommentIdentity";
+import { CommentAuthorIdentity, CommentReplyMention } from "../../components/comments/CommentIdentity";
 import { commentFirstName } from "../../components/comments/commentIdentityUtils";
 import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -286,8 +286,8 @@ function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, onViewsClick, 
       <FanAvatar alt="" name={creator.displayName} size="h-[31px] w-[31px]" src={creator.avatarUrl} />
     </Link>
     <Link className="seen-creator-copy" to={profileTo}>
-      <strong>{creator.displayName}{isOwn ? <em> {__msg("social.you")}</em> : null}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
-      <span>{meta}</span>
+      <strong>{creator.username ? <b className="seen-username"><i className="identity-at">@</i>{creator.username}</b> : creator.displayName}{isOwn ? <em> {__msg("social.you")}</em> : null}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
+      <span>{[creator.location || creator.status, relativeTime(createdAt, "")].filter(Boolean).join(" - ")}</span>
     </Link>
     {isOwn ? (
       <button aria-label={__msg("social.openSeenInsights")} className="seen-creator-views is-clickable" onClick={onViewsClick} type="button">
@@ -774,7 +774,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onClose, 
     return <article className={nested ? "is-reply" : ""} key={comment.id}>
       <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
       <div className="seen-comment-copy">
-        <p><Link to={comment.author?.username ? `/profile/${comment.author.username}` : `/seen/${item.id}`}>{commentFirstName(comment.author, __msg("profile.fan"))}</Link><MemberCommentBadge author={comment.author} noteOwner={item.creator} /><CommentReplyMention author={parentAuthor} replyingAuthor={comment.author} />{comment.text}</p>
+        <p><CommentAuthorIdentity author={comment.author} fallback={commentFirstName(comment.author, __msg("profile.fan"))} /><MemberCommentBadge author={comment.author} noteOwner={item.creator} /><CommentReplyMention author={parentAuthor} replyingAuthor={comment.author} />{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label={__msg("comments.voiceComment")} /> : null}
         <span><button aria-label={reacted ? "Remove reaction" : `React to ${comment.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(comment.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(comment)} type="button">{reacted && reactionLabel[currentSeenReactionKey(comment.viewerReaction)] ? <i aria-hidden="true" className="seen-comment-selected-reaction">{reactionLabel[currentSeenReactionKey(comment.viewerReaction)]}</i> : <FiHeart />}{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">{__msg("fan.reply")}</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
         {String(reactionCommentId) === String(comment.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={comment.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { commentReactionMutation.mutate({ comment, reaction }); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}

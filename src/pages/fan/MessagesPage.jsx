@@ -206,7 +206,7 @@ function Identity({ person, presence, compact = false, subtitle = "" }) {
       <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 ${online ? "bg-atseen-success" : "bg-atseen-dim"}`} />
     </span>
     <span className="min-w-0 flex-1">
-      <span className="message-identity-name flex items-center gap-1 truncate text-sm font-bold">{person.displayName}{person.isVerified ? <VerifiedBadge /> : null}</span>
+      <span className="message-identity-name flex items-center gap-1 truncate text-sm font-bold">{person.username ? <b className="message-username"><i className="identity-at">@</i>{person.username}</b> : person.displayName}{person.isVerified ? <VerifiedBadge /> : null}</span>
       {atSeenSubtitle ? <span className="mt-0.5 flex min-w-0 items-center gap-1.5"><span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-atseen-blue/25 bg-atseen-blue/[0.07] px-2 py-0.5 text-[9px] font-bold text-atseen-blue"><span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" />{__msg("constants.atSeen")}</span>{replyLabel ? <span className="message-identity-preview truncate text-[10px] text-atseen-muted">{replyLabel}</span> : null}</span> : <span className={`message-identity-preview block truncate text-[11px] ${online && !subtitle ? "text-atseen-success" : "text-atseen-muted"}`}>{subtitle || (online ? "Online" : relative(resolvedPresence?.lastSeenAt || person.lastSeenAt))}</span>}
     </span>
   </>;

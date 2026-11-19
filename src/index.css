@@ -2054,6 +2054,7 @@ body::-webkit-scrollbar-thumb {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.share-recipient-name .identity-at { margin: 0; }
 
 .share-recipient-item.is-selected .share-recipient-name {
   color: #FFFFFF;
@@ -4059,6 +4060,14 @@ div.absolute.inset-0.flex.items-end[class*="bg-black"] > :is(div, section, form)
 .home-feed-post-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .home-feed-author { display: flex; align-items: center; gap: 4px; overflow: hidden; color: #fff; font-size: 13px; font-weight: 950; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .home-feed-author:hover { color: #fff; }
+.home-feed-author .home-feed-username {
+  display: inline-flex;
+  min-width: 0;
+  gap: 0;
+  overflow: hidden;
+  font: inherit;
+  text-overflow: ellipsis;
+}
 .home-feed-meta { overflow: hidden; color: rgba(255,255,255,.47); font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .home-context-pill { max-width: 182px; overflow: hidden; border: 1px solid rgba(255,255,255,.11); border-radius: 999px; background: rgba(255,255,255,.055); color: rgba(255,255,255,.68); padding: 6px 11px; font-size: 10px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; transition: background .18s ease,color .18s ease,border-color .18s ease; }
 .home-context-pill:hover { border-color: rgba(138,184,255,.35); background: rgba(138,184,255,.11); color: #b9d7ff; }
@@ -13567,6 +13576,14 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-weight: 600;
   line-height: 1.15;
 }
+.messages-page .message-identity-name .message-username {
+  display: inline-flex;
+  min-width: 0;
+  gap: 0;
+  overflow: hidden;
+  font: inherit;
+  text-overflow: ellipsis;
+}
 
 .messages-page .message-identity-preview {
   color: rgba(255,255,255,.4);
@@ -21012,6 +21029,15 @@ video.seen-reader-media {
   white-space: nowrap;
 }
 
+.seen-creator-copy .seen-username {
+  display: inline-flex;
+  min-width: 0;
+  gap: 0;
+  overflow: hidden;
+  font: inherit;
+  text-overflow: ellipsis;
+}
+
 .seen-verified {
   width: 16px;
   height: 16px;
@@ -25481,6 +25507,73 @@ video.seen-reader-media {
   overflow: visible;
   margin: 0;
   padding: 0 2px 12px;
+}
+
+/* The modal is inside the Seen shell too, but unlike the inline comments
+   panel it must own its scrolling area so long threads cannot cover the
+   pinned emoji/composer footer. */
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-list {
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 16px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 16px 18px 24px !important;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comment-thread {
+  gap: 16px;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-list article {
+  gap: 10px;
+  min-height: 40px;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-list article.is-reply {
+  margin-top: 2px;
+  margin-left: 34px;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-list p {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.42;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comment-copy > span {
+  margin-top: 5px;
+  font-size: 9.5px;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .comment-author-identity {
+  font-size: 12px;
+  font-weight: 750;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-drag-zone {
+  position: relative;
+  height: 54px;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-drag-zone > .seen-comments-handle {
+  position: absolute;
+  top: 9px;
+  right: 0;
+  left: 0;
+  margin: 0 auto;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-drag-zone > header {
+  box-sizing: border-box;
+  height: 54px;
+  padding: 19px 18px 0;
+}
+.social-app-shell:has(.seen-shell-main) .seen-comments-sheet .seen-comments-drag-zone > header h2 {
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 20px;
 }
 
 .social-app-shell:has(.seen-shell-main) .seen-comment-thread {
@@ -40842,7 +40935,7 @@ video.seen-reader-media {
 .share-sheet-overlay .share-recipient-grid,.share-sheet-overlay.is-seen-share .share-recipient-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px 8px; margin-top: 13px; }
 .share-sheet-overlay .share-recipient-ring,.share-sheet-overlay.is-seen-share .share-recipient-ring { width: 55px; height: 55px; }
 .share-sheet-overlay .share-recipient-ring > span:first-child,.share-sheet-overlay.is-seen-share .share-recipient-ring > span:first-child { width: 51px !important; height: 51px !important; }
-.share-sheet-overlay .share-external-row,.share-sheet-overlay.is-seen-share .share-external-row { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 5px; margin-top: 16px; padding-top: 14px; }
+.share-sheet-overlay .share-external-row,.share-sheet-overlay.is-seen-share .share-external-row { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; margin-top: 16px; padding-top: 14px; }
 .share-sheet-overlay .share-external-action,.share-sheet-overlay.is-seen-share .share-external-action { width: auto; min-width: 0; }
 .share-sheet-overlay .share-external-action > span,.share-sheet-overlay.is-seen-share .share-external-action > span { width: 44px; height: 44px; margin-inline: auto; font-size: 18px; }
 .share-sheet-overlay .share-external-action small,.share-sheet-overlay.is-seen-share .share-external-action small { overflow: hidden; width: 100%; font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
@@ -40852,7 +40945,9 @@ video.seen-reader-media {
   .share-chat-media { height: clamp(142px,39vw,175px); }
 }
 @media (max-width: 340px) {
-  .share-sheet-overlay .share-external-row,.share-sheet-overlay.is-seen-share .share-external-row { grid-template-columns: repeat(3,1fr); row-gap: 12px; }
+  .share-sheet-overlay .share-external-row,.share-sheet-overlay.is-seen-share .share-external-row { grid-template-columns: repeat(7,minmax(0,1fr)); gap: 2px; }
+  .share-sheet-overlay .share-external-action > span,.share-sheet-overlay.is-seen-share .share-external-action > span { width: 36px; height: 36px; font-size: 16px; }
+  .share-sheet-overlay .share-external-action small,.share-sheet-overlay.is-seen-share .share-external-action small { font-size: 7.5px; }
   .share-chat-card { width: 100%; }
 }
 
@@ -42450,6 +42545,10 @@ html[dir="rtl"] textarea {
     transform: none !important;
   }
 }
+.identity-at { color: #9ccbff; font-style: normal; }
+.profile-handle-copy { color: inherit; font: inherit; font-weight: inherit; letter-spacing: inherit; }
+.profile-real-name { margin-top: 2px; color: rgba(255,255,255,.48); font-size: 13px; font-weight: 500; }
+
 /* Shared confirmation and text-request sheet. Replaces native browser dialogs. */
 .app-dialog-layer { position: fixed; inset: 0; z-index: 1000; }
 .app-dialog-scrim { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(7px); }
@@ -42543,6 +42642,13 @@ html[dir="rtl"] textarea {
   line-height: 1;
   vertical-align: middle;
 }
+.comment-author-identity {
+  margin-right: 4px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+.comment-author-identity:hover { text-decoration: underline; }
 .comment-reply-mention {
   margin-right: 4px !important;
   color: #9CCBFF !important;
