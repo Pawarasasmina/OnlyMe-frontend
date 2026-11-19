@@ -2,7 +2,8 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiHeart, FiImage, FiInbox, FiLink, FiLock, FiLogOut, FiMessageCircle, FiMoreHorizontal, FiPaperclip, FiPhone, FiPlay, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiX, FiZap } from "react-icons/fi";
+import { FiArchive, FiArrowLeft, FiBell, FiCamera, FiCheck, FiCheckCircle, FiCircle, FiClock, FiCopy, FiCornerUpLeft, FiEye, FiFilter, FiFlag, FiGift, FiHeart, FiImage, FiInbox, FiLink, FiLock, FiLogOut, FiMessageCircle, FiMoreHorizontal, FiPaperclip, FiPhone, FiPlay, FiPlus, FiRefreshCw, FiSearch, FiSend, FiSettings, FiShare2, FiShield, FiStar, FiTrash2, FiUnlock, FiUserPlus, FiUsers, FiVideo, FiVolumeX, FiX, FiZap } from "react-icons/fi";
+import { PiPushPinSimple } from "react-icons/pi";
 import { FiExternalLink } from "react-icons/fi";
 import { getLocale as __uiLocale, msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
@@ -11,12 +12,14 @@ import ProfileImageCropper from "../../components/profile/ProfileImageCropper";
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import VoiceRecorder from "../../components/messaging/VoiceRecorder";
 import VideoNoteBubble from "../../components/messaging/VideoNoteBubble";
+import VideoNoteRecorder from "../../components/messaging/VideoNoteRecorder";
 import DirectAccessSettingsSheet from "../../components/messages/DirectAccessSettingsSheet";
 import StoryGiftPicker from "../../components/stories/StoryGiftPicker";
 import StoryCreator from "../../components/stories/StoryCreator";
 import StoryViewer from "../../components/stories/StoryViewer";
 import ActivitySparkMark from "../../components/activity/ActivitySparkMark";
 import GiftArt from "../../components/gifts/GiftArt";
+import { GiftCelebration } from "../../components/profile/ProfileDream";
 import CoinAmount from "../../components/financial/CoinAmount";
 import { useAuth } from "../../hooks/useAuth";
 import { useUnreadActivityCount } from "../../hooks/useUnreadActivityCount";
@@ -88,6 +91,14 @@ const directWindowSnippet = (windowItem, viewerId) => {
     return `${prefix}${body.length > 54 ? `${body.slice(0, 51)}…` : body}`;
   }
   return windowItem?.questionQuote ? `“${windowItem.questionQuote}”` : `${windowItem?.messagesRemaining ?? 0} messages left`;
+};
+
+const directAccessDisplayStatus = (windowItem, { includePending = false } = {}) => {
+  if (!windowItem) return null;
+  if (windowItem.settlementStatus === "REFUNDED" || windowItem.refundedAt) return "Refunded";
+  if (windowItem.status === "ANSWERED" || windowItem.firstCreatorReplyAt || ["CAPTURED", "INCLUDED"].includes(windowItem.settlementStatus)) return "Answered";
+  if (!includePending) return null;
+  return new Date(windowItem.expiresAt).getTime() > Date.now() ? "Pending" : "Expired";
 };
 
 const chatDateKey = (value) => {
@@ -195,15 +206,15 @@ function useMessageSheetPosition(isOpen) {
 const newClientMessageId = () => globalThis.crypto?.randomUUID?.()
   || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 
-function Identity({ person, presence, compact = false, subtitle = "" }) {
+function Identity({ person, presence, compact = false, showPresence = true, subtitle = "" }) {
   const resolvedPresence = presence || person.presence;
   const online = resolvedPresence?.online;
   const atSeenSubtitle = subtitle.startsWith("● At seen");
   const replyLabel = atSeenSubtitle ? subtitle.replace("● At seen", "").replace(/^\s*·\s*/, "") : "";
   return <>
-    <span className="relative shrink-0">
+    <span className="message-identity-avatar relative shrink-0">
       <FanAvatar name={person.displayName} size={compact ? "h-10 w-10" : "h-12 w-12"} src={person.avatarUrl} />
-      <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 ${online ? "bg-atseen-success" : "bg-atseen-dim"}`} />
+      {showPresence ? <span className={`message-identity-presence absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 ${online ? "bg-atseen-success" : "bg-atseen-dim"}`} /> : null}
     </span>
     <span className="min-w-0 flex-1">
       <span className="message-identity-name flex items-center gap-1 truncate text-sm font-bold">{person.username ? <b className="message-username"><i className="identity-at">@</i>{person.username}</b> : person.displayName}{person.isVerified ? <VerifiedBadge /> : null}</span>
@@ -412,6 +423,7 @@ export default function MessagesPage() {
   const [newGroup, setNewGroup] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [inboxRowMenu, setInboxRowMenu] = useState(null);
+  const [inboxDeleteConfirm, setInboxDeleteConfirm] = useState(null);
   const [groupName, setGroupName] = useState("");
   const [groupMembers, setGroupMembers] = useState([]);
   const [newGroupAvatar, setNewGroupAvatar] = useState(null);
@@ -436,10 +448,19 @@ export default function MessagesPage() {
   const [storyShareContent, setStoryShareContent] = useState(null);
   const [expiredStoryIds, setExpiredStoryIds] = useState(() => new Set());
   const [search, setSearch] = useState("");
+  const [inboxSearch, setInboxSearch] = useState("");
+  const [inboxScrolled, setInboxScrolled] = useState(true);
+  const inboxScrollInteractionRef = useRef(false);
+  const inboxLastScrollTopRef = useRef(0);
+  const inboxScrollLockUntilRef = useRef(0);
+  const inboxPointerYRef = useRef(null);
   const [presence, setPresence] = useState({});
   const [socketConnected, setSocketConnected] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
+  const [attachmentSheetOpen, setAttachmentSheetOpen] = useState(false);
+  const [replayGift, setReplayGift] = useState(null);
+  const replayGiftPosition = useMessageSheetPosition(Boolean(replayGift));
   const [chatInfoOpen, setChatInfoOpen] = useState(false);
   const [chatInfoTab, setChatInfoTab] = useState("media");
   const [chatInfoMenuOpen, setChatInfoMenuOpen] = useState(false);
@@ -448,7 +469,18 @@ export default function MessagesPage() {
   const [, setMessageMenuPosition] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState(null);
   const [bulkDeleteDialog, setBulkDeleteDialog] = useState(null);
-  const [reportTarget, setReportTarget] = useState(null);
+  const [reportTarget, setRawReportTarget] = useState(null);
+  const [conversationReportOpen, setConversationReportOpen] = useState(false);
+  const setReportTarget = (target) => {
+    if (target?.type === "conversation") {
+      setRawReportTarget(null);
+      setConversationReportOpen(true);
+      return;
+    }
+    setRawReportTarget(target);
+  };
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [chatConfirm, setChatConfirm] = useState(null);
   const [reportReason, setReportReason] = useState("SPAM");
   const [reportDetails, setReportDetails] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
@@ -485,6 +517,12 @@ export default function MessagesPage() {
   const suppressInboxOpenRef = useRef(false);
 
   useEffect(() => {
+    if (!replayGift) return undefined;
+    const timer = window.setTimeout(() => setReplayGift(null), 4200);
+    return () => window.clearTimeout(timer);
+  }, [replayGift]);
+
+  useEffect(() => {
     if (searchParams.get("gift") !== "1" || !selected?.id || selected.type === "group") return;
     setGiftOpen(true);
     setSearchParams((current) => {
@@ -495,6 +533,7 @@ export default function MessagesPage() {
   }, [searchParams, selected?.id, selected?.type, setSearchParams]);
   useEffect(() => {
     initialScrollRef.current = true;
+    setAttachmentSheetOpen(false);
     setChatInfoOpen(false);
     setChatInfoMenuOpen(false);
     setChatInfoPreview(null);
@@ -512,14 +551,26 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!inboxRowMenu && !chatMenuOpen && !messageMenu && !reactionFor) return undefined;
     const dismissPopovers = (event) => {
-      if (event.target.closest?.("[data-chat-popover]")) return;
+      if (event.target.closest?.("[data-chat-popover], .message-context-stack")) return;
       setInboxRowMenu(null);
       setChatMenuOpen(false);
       setMessageMenu(null);
       setReactionFor(null);
     };
-    document.addEventListener("pointerdown", dismissPopovers);
-    return () => document.removeEventListener("pointerdown", dismissPopovers);
+    const dismissOnEscape = (event) => {
+      if (event.key !== "Escape") return;
+      setInboxRowMenu(null);
+      setChatMenuOpen(false);
+      setMessageMenu(null);
+      setReactionFor(null);
+    };
+    // Capture phase also sees taps handled or stopped by the surrounding app shell.
+    document.addEventListener("pointerdown", dismissPopovers, true);
+    document.addEventListener("keydown", dismissOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissPopovers, true);
+      document.removeEventListener("keydown", dismissOnEscape);
+    };
   }, [chatMenuOpen, inboxRowMenu, messageMenu, reactionFor]);
   useEffect(() => {
     if (!filterSheetOpen) return undefined;
@@ -585,8 +636,8 @@ export default function MessagesPage() {
   const directWindowsQuery = useQuery({
     queryKey: ["messages", "direct-access"],
     queryFn: () => messageService.getDirectAccessWindows().then((response) => response.data.data.windows),
-    enabled: inboxTab === "direct" || creatorMode,
-    refetchInterval: inboxTab === "direct" ? 10000 : false,
+    enabled: ["all", "direct"].includes(inboxTab) || creatorMode,
+    refetchInterval: ["all", "direct"].includes(inboxTab) ? 10000 : false,
   });
   const creatorDirectAccessQuery = useQuery({
     queryKey: ["messages", "direct-access-settings"],
@@ -641,12 +692,87 @@ export default function MessagesPage() {
   ), [directWindowsQuery.data]);
   const archiveInboxRow = async (conversation) => {
     setInboxRowMenu(null);
-    if (conversation.type === "group") await messageService.archiveGroup(conversation.id, !conversation.archived);
-    else await messageService.archiveConversation(conversation.id, !conversation.archived);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] }),
-      queryClient.invalidateQueries({ queryKey: ["messages", "groups"] }),
-    ]);
+    setRequestBusy(true);
+    setError("");
+    const snapshot = patchInboxCache(conversation, { archived: !conversation.archived });
+    try {
+      if (conversation.type === "group") await messageService.archiveGroup(conversation.id, !conversation.archived);
+      else await messageService.archiveConversation(conversation.id, !conversation.archived);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] }),
+        queryClient.invalidateQueries({ queryKey: ["messages", "groups"] }),
+      ]);
+    } catch (requestError) {
+      restoreInboxCache(snapshot);
+      setError(requestError.response?.data?.message || "Could not archive this chat.");
+    } finally { setRequestBusy(false); }
+  };
+  const refreshInbox = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["messages", "conversations"] }),
+    queryClient.invalidateQueries({ queryKey: ["messages", "groups"] }),
+  ]);
+  const patchInboxCache = (conversation, patch, remove = false) => {
+    const key = conversation.type === "group" ? ["messages", "groups"] : ["messages", "conversations"];
+    const previous = queryClient.getQueryData(key);
+    queryClient.setQueryData(key, (current = []) => remove
+      ? current.filter((item) => item.id !== conversation.id)
+      : current.map((item) => item.id === conversation.id ? { ...item, ...patch } : item));
+    return { key, previous };
+  };
+  const restoreInboxCache = ({ key, previous }) => queryClient.setQueryData(key, previous);
+  const updateInboxRowState = async (conversation, state) => {
+    setInboxRowMenu(null);
+    setRequestBusy(true);
+    setError("");
+    const patch = {};
+    if (typeof state.pinned === "boolean") patch.pinned = state.pinned;
+    if (typeof state.manualUnread === "boolean") {
+      patch.manualUnread = state.manualUnread;
+      patch.unreadCount = state.manualUnread ? Math.max(1, Number(conversation.unreadCount) || 0) : 0;
+    }
+    const snapshot = patchInboxCache(conversation, patch);
+    try {
+      if (conversation.type === "group") await messageService.updateGroupState(conversation.id, state);
+      else await messageService.updateConversationState(conversation.id, state);
+      await refreshInbox();
+    } catch (requestError) {
+      restoreInboxCache(snapshot);
+      setError(requestError.response?.data?.message || "Could not update this chat.");
+    } finally { setRequestBusy(false); }
+  };
+  const muteInboxRow = async (conversation) => {
+    setInboxRowMenu(null);
+    setRequestBusy(true);
+    setError("");
+    const snapshot = patchInboxCache(conversation, { muted: !conversation.muted });
+    try {
+      if (conversation.type === "group") await messageService.muteGroup(conversation.id, !conversation.muted);
+      else await messageService.muteConversation(conversation.id, !conversation.muted);
+      await refreshInbox();
+    } catch (requestError) {
+      restoreInboxCache(snapshot);
+      setError(requestError.response?.data?.message || "Could not update notification settings.");
+    } finally { setRequestBusy(false); }
+  };
+  const removeInboxRow = async (conversation, confirmed = false) => {
+    if (!confirmed) {
+      setInboxRowMenu(null);
+      setInboxDeleteConfirm(conversation);
+      return;
+    }
+    setInboxDeleteConfirm(null);
+    setInboxRowMenu(null);
+    setRequestBusy(true);
+    setError("");
+    const snapshot = patchInboxCache(conversation, {}, true);
+    try {
+      if (conversation.type === "group") await messageService.leaveGroup(conversation.id);
+      else await messageService.deleteConversation(conversation.id);
+      await refreshInbox();
+    } catch (requestError) {
+      restoreInboxCache(snapshot);
+      setError(requestError.response?.data?.message || "Could not remove this chat.");
+    } finally { setRequestBusy(false); }
   };
   const directWindowSections = useMemo(() => {
     const windows = directConversations;
@@ -1152,22 +1278,66 @@ export default function MessagesPage() {
   }, [giftOpen, giftTipVisible]);
 
   const orderedPeople = useMemo(() => peopleQuery.data || [], [peopleQuery.data]);
+  const inboxStoryPeople = useMemo(() => {
+    const unique = new Map();
+    conversations.forEach((conversation) => {
+      const person = conversation.participant;
+      const id = String(person?.id || conversation.id || "");
+      if (id && id !== myId && person) unique.set(id, { ...person, id });
+    });
+    orderedPeople.forEach((person) => {
+      const id = String(person?.id || "");
+      if (id && id !== myId && !unique.has(id)) unique.set(id, person);
+    });
+    return [...unique.values()].slice(0, 12);
+  }, [conversations, myId, orderedPeople]);
   const shownConversations = useMemo(() => {
     if (inboxTab === "direct") return [];
+    const standardConversationByPerson = new Map(conversations.map((item) => [String(item.id), item]));
+    const myDirectAccessRows = inboxTab === "all" ? directConversations
+      .filter((windowItem) => String(windowItem.fanId) === myId)
+      .map((windowItem) => {
+        const other = directWindowParticipant(windowItem, myId);
+        const directAccessStatus = directAccessDisplayStatus(windowItem);
+        const standardConversation = other?.id ? standardConversationByPerson.get(String(other.id)) : null;
+        const latestMessage = windowItem.latestMessage || standardConversation?.lastMessage || null;
+        return other ? {
+          id: other.id,
+          type: "direct",
+          participant: other,
+          directAccessWindowId: windowItem.id,
+          directAccessStatus,
+          isDirectAccess: true,
+          lastMessage: latestMessage || { body: windowItem.questionQuote || "Direct Access", createdAt: windowItem.updatedAt || windowItem.createdAt, senderId: "" },
+          unreadCount: standardConversation?.unreadCount || 0,
+          manualUnread: standardConversation?.manualUnread || false,
+          muted: standardConversation?.muted || false,
+          pinned: standardConversation?.pinned || false,
+        } : null;
+      }).filter(Boolean) : [];
+    const myDirectAccessIds = new Set(myDirectAccessRows.map((item) => String(item.id)));
     const items = [
-      ...(inboxTab === "all" ? (groupsQuery.data || []).filter((item) => !item.archived) : []),
+      ...(["all", "groups"].includes(inboxTab) ? (groupsQuery.data || []).filter((item) => !item.archived) : []),
       ...conversations.filter((item) => {
+        if (inboxTab === "groups") return false;
         if (inboxTab === "requests") return item.status === "REQUEST" && item.requestReceived;
+        if (inboxTab === "all" && myDirectAccessIds.has(String(item.id))) return false;
         return !item.archived && item.status !== "DECLINED" && (item.status !== "REQUEST" || !item.requestReceived);
       }),
+      ...myDirectAccessRows,
     ].sort((left, right) => {
+      if (Boolean(left.pinned) !== Boolean(right.pinned)) return left.pinned ? -1 : 1;
       if (Boolean(left.hasPriorityCall) !== Boolean(right.hasPriorityCall)) return left.hasPriorityCall ? -1 : 1;
       const leftTime = new Date(left.hasPriorityCall ? left.priorityCallRequestedAt : left.lastMessage?.createdAt || left.updatedAt || left.createdAt || 0).getTime();
       const rightTime = new Date(right.hasPriorityCall ? right.priorityCallRequestedAt : right.lastMessage?.createdAt || right.updatedAt || right.createdAt || 0).getTime();
       return rightTime - leftTime;
     });
-    if (inboxTab !== "all" || inboxFilter === "all") return items;
-    return items.filter((item) => {
+    const searched = inboxSearch.trim().toLowerCase() ? items.filter((item) => {
+      const identity = item.type === "group" ? item.name : `@${item.participant?.username || ""} ${item.participant?.displayName || ""}`;
+      return `${identity} ${item.lastMessage?.body || ""}`.toLowerCase().includes(inboxSearch.trim().toLowerCase());
+    }) : items;
+    if (inboxTab !== "all" || inboxFilter === "all") return searched;
+    return searched.filter((item) => {
       if (inboxFilter === "unread") return Number(item.unreadCount) > 0;
       if (inboxFilter === "unanswered") return item.isUnanswered ?? (item.lastMessage?.senderId !== myId);
       if (inboxFilter === "verified") return item.type !== "group" && Boolean(item.participant?.isVerified);
@@ -1177,7 +1347,7 @@ export default function MessagesPage() {
       if (inboxFilter === "dream") return Boolean(item.isDreamKeeper);
       return true;
     });
-  }, [conversations, groupsQuery.data, inboxFilter, inboxTab, myId]);
+  }, [conversations, directConversations, groupsQuery.data, inboxFilter, inboxSearch, inboxTab, myId]);
   const archivedConversations = useMemo(() => [
     ...(groupsQuery.data || []).filter((item) => item.archived),
     ...conversations.filter((item) => item.archived),
@@ -1842,9 +2012,13 @@ export default function MessagesPage() {
       setActionBusy(false);
     }
   };
-  const toggleBlock = async () => {
+  const toggleBlock = async (confirmed = false) => {
     const blocked = Boolean(messagesQuery.data?.blockStatus?.blockedByMe);
-    if (!blocked && !window.confirm(`Block ${participant?.displayName || "this account"}? They will not be able to message you.`)) return;
+    if (!blocked && !confirmed) {
+      setChatMenuOpen(false);
+      setChatConfirm({ type: "block" });
+      return;
+    }
     setActionBusy(true);
     setChatMenuOpen(false);
     setError("");
@@ -1855,14 +2029,20 @@ export default function MessagesPage() {
         ...current,
         blockStatus: { ...(current.blockStatus || {}), blockedByMe: !blocked },
       } : current);
+      setChatConfirm(null);
     } catch (requestError) {
       setError(requestError.response?.data?.message || `Could not ${blocked ? "unblock" : "block"} this account.`);
     } finally {
       setActionBusy(false);
     }
   };
-  const deleteSelectedConversation = async () => {
-    if (!selected?.id || !window.confirm("Delete this chat? It will disappear only for you. New messages can start the chat again.")) return;
+  const deleteSelectedConversation = async (confirmed = false) => {
+    if (!selected?.id) return;
+    if (!confirmed) {
+      setChatMenuOpen(false);
+      setChatConfirm({ type: "delete" });
+      return;
+    }
     const otherUserId = selected.id;
     setActionBusy(true);
     setChatMenuOpen(false);
@@ -1873,6 +2053,7 @@ export default function MessagesPage() {
         current.filter((item) => item.id !== otherUserId)
       ));
       queryClient.removeQueries({ queryKey: ["messages", otherUserId], exact: true });
+      setChatConfirm(null);
       closeConversation();
       window.dispatchEvent(new Event(UNREAD_MESSAGE_COUNT_EVENT));
     } catch (requestError) {
@@ -1998,8 +2179,25 @@ export default function MessagesPage() {
       } else if (reportTarget.type === "direct-access") await messageService.disputeDirectAccess(directAccessWindow.id, payload);
       else await messageService.reportConversation(selected.id, payload);
       setReportTarget(null);
+      setReportSubmitted(true);
       setReportReason("SPAM");
       setReportDetails("");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Could not submit this report.");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+  const submitConversationReport = async (reason) => {
+    if (!selected?.id || actionBusy) return;
+    setActionBusy(true);
+    setError("");
+    try {
+      await messageService.reportConversation(selected.id, { reason, details: "" });
+      setReportTarget(null);
+      setConversationReportOpen(false);
+      setReportReason("SPAM");
+      setReportSubmitted(true);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Could not submit this report.");
     } finally {
@@ -2014,6 +2212,8 @@ export default function MessagesPage() {
   };
 
   return <div className="messages-page relative h-full min-h-0 min-w-0 overflow-hidden bg-atseen-bg-2" data-chat-open={selected ? "true" : "false"}>
+    {error && !selected ? <button className="absolute left-1/2 top-3 z-[120] max-w-[90%] -translate-x-1/2 rounded-full border border-red-400/25 bg-[#2a1115]/95 px-4 py-2 text-xs text-red-200 shadow-xl backdrop-blur" onClick={() => setError("")} role="alert" type="button">{error}</button> : null}
+    {inboxDeleteConfirm ? <div className="message-delete-confirm-overlay absolute inset-0 z-[110] flex items-end bg-black/75" onMouseDown={(event) => { if (event.target === event.currentTarget && !requestBusy) setInboxDeleteConfirm(null); }} role="presentation"><section aria-labelledby="message-delete-confirm-title" aria-modal="true" className="message-delete-confirm-sheet" role="dialog"><div className="message-delete-confirm-grab" /><h2 id="message-delete-confirm-title">{inboxDeleteConfirm.type === "group" ? "Leave group?" : "Delete chat?"}</h2><p>{inboxDeleteConfirm.type === "group" ? `You will leave ${inboxDeleteConfirm.name || "this group"} and it will disappear from your inbox.` : `The conversation disappears from your inbox. ${inboxDeleteConfirm.participant?.displayName?.split(" ")[0] || "The other person"} keeps their copy.`}</p><button className="message-delete-confirm-action" disabled={requestBusy} onClick={() => removeInboxRow(inboxDeleteConfirm, true)} type="button">{requestBusy ? "Please wait…" : inboxDeleteConfirm.type === "group" ? "Leave Group" : "Delete"}</button><button className="message-delete-confirm-cancel" disabled={requestBusy} onClick={() => setInboxDeleteConfirm(null)} type="button">Cancel</button></section></div> : null}
     <div className="flex h-full min-h-0">
       {disappearingViewer ? <div aria-label={__msg("fan.disappearingMessageViewer")} aria-modal="true" className="absolute inset-0 z-[210] flex flex-col bg-black" role="dialog"><div className="absolute left-0 right-0 top-0 z-10 p-3"><div className="h-1 overflow-hidden rounded-full bg-white/25"><div className="h-full rounded-full bg-white" style={{ animation: disappearingViewer.disappearAfterSeconds === 0 ? "none" : `disappearing-progress ${disappearingViewer.disappearAfterSeconds}s linear forwards`, width: disappearingViewer.disappearAfterSeconds === 0 ? "100%" : undefined }} /></div><div className="mt-3 flex items-center gap-3"><FanAvatar name={participant?.displayName} size="h-9 w-9" src={participant?.avatarUrl} /><div className="min-w-0 flex-1"><b className="block truncate text-sm">{participant?.displayName}</b><span className="text-[10px] text-white/60">{disappearingViewer.disappearAfterSeconds === 0 ? "View once" : `${disappearingViewer.disappearAfterSeconds} seconds`}</span></div><button aria-label={__msg("fan.closeDisappearingMessage")} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl" onClick={closeDisappearingViewer} type="button"><FiX /></button></div></div><div className="flex min-h-0 flex-1 items-center justify-center px-5 pb-16 pt-24">{disappearingViewer.mediaType === "image" && disappearingViewer.image ? <img alt={__msg("fan.disappearing")} className="max-h-full max-w-full rounded-xl object-contain" src={disappearingViewer.image.url} /> : disappearingViewer.mediaType === "video" && disappearingViewer.video ? <video autoPlay className="max-h-full max-w-full rounded-xl" controls playsInline src={disappearingViewer.video.url} /> : disappearingViewer.mediaType === "audio" && disappearingViewer.audio ? <div className="w-full max-w-md rounded-3xl bg-white/10 p-6"><p className="mb-4 text-center text-sm font-bold">{__msg("fan.voiceMessage")}</p><audio autoPlay className="w-full" controls src={disappearingViewer.audio.url} /></div> : disappearingViewer.mediaType === "gift" && disappearingViewer.gift ? <div className="text-center"><img alt={disappearingViewer.gift.name} className="mx-auto h-52 w-52 object-contain" src={disappearingViewer.gift.imageUrl} /><h2 className="mt-4 text-2xl font-black">{disappearingViewer.gift.name}</h2><p className="mt-2 font-bold text-atseen-warning"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(disappearingViewer.gift.stars).toLocaleString()}</p></div> : <p className="max-w-xl whitespace-pre-wrap break-words text-center text-2xl font-semibold leading-relaxed">{disappearingViewer.body}</p>}</div>{disappearingViewer.mediaType !== "text" && disappearingViewer.body && !["Image", "Voice message", "Video note"].includes(disappearingViewer.body) ? <p className="absolute bottom-8 left-5 right-5 text-center text-sm">{disappearingViewer.body}</p> : null}</div> : null}
       {sharePickerOpen ? <div className="absolute inset-0 z-[80] flex items-end bg-black/75" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSharePicker(); }}><section aria-modal="true" className="flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5 shadow-2xl" role="dialog">
@@ -2028,20 +2228,26 @@ export default function MessagesPage() {
         </div>
       </section></div> : null}
       <aside className={`${selected ? "hidden" : "flex"} h-full min-h-0 w-full flex-col`}>
-        <header className="flex items-center gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
-          <p className="message-inbox-handle mr-auto min-w-0 flex-1 truncate text-left text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
+        <header className="message-inbox-header flex items-center gap-2 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-5">
+          <p className="message-inbox-handle min-w-0 flex-1 truncate text-center text-sm font-black text-atseen-blue">@{user?.username || user?.name || "you"}</p>
           <button aria-label={__msg("fan.newMessage")} className="grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-lg text-atseen-muted transition hover:border-atseen-blue/50 hover:text-white" onClick={() => setNewChat(true)}><FiPlus /></button>
           <button aria-label={__msg("Open activity")} className="relative grid h-11 w-11 place-items-center rounded-full border border-atseen-line bg-atseen-surface text-atseen-blue" onClick={() => navigate("/activity")} type="button"><ActivitySparkMark className="h-6 w-6" />{unreadActivityCount > 0 ? <span className="activity-count-badge">{unreadActivityCount > 99 ? "99+" : unreadActivityCount}</span> : null}</button>
         </header>
+        <div aria-hidden={inboxScrolled} className={`message-story-strip atseen-hide-scrollbar ${inboxScrolled ? "is-collapsed" : ""}`}>
+          <button className="message-story-person" onClick={() => navigate(`/profile/${encodeURIComponent(user?.username || "")}`)} type="button"><span className="message-story-ring"><FanAvatar name={user?.name || user?.username} size="h-[54px] w-[54px]" src={user?.avatar || user?.avatarUrl} /></span><small>{__msg("You")}</small></button>
+          {inboxStoryPeople.map((person) => <button className="message-story-person" key={person.id} onClick={() => chooseConversation({ id: person.id, participant: person, type: "direct" })} type="button"><span className="message-story-ring"><FanAvatar name={person.displayName || person.username} size="h-[54px] w-[54px]" src={person.avatarUrl} /></span><small>{person.username || person.displayName}</small></button>)}
+        </div>
+        <label className="message-inbox-search"><FiSearch /><input aria-label={__msg("Search")} onChange={(event) => setInboxSearch(event.target.value)} placeholder={__msg("Search")} type="search" value={inboxSearch} /></label>
         <div className="mx-3 flex items-center gap-3 sm:mx-5">
-          <nav aria-label={__msg("Message inbox tabs")} className="grid min-w-0 flex-1 grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1">
-            {([{ id: "all", label: __msg("All") }, { id: "requests", label: __msg("Requests") }, { id: "direct", label: __msg("language.directAccess") }]).map((tab) => {
+          <nav aria-label={__msg("Message inbox tabs")} className="message-folder-tabs grid min-w-0 flex-1 grid-cols-4 rounded-xl border border-atseen-line bg-atseen-surface p-1">
+            {([{ id: "all", label: __msg("All") }, { id: "groups", label: __msg("Groups") }, { id: "requests", label: __msg("Requests") }, { id: "direct", label: __msg("language.directAccess") }]).map((tab) => {
               const count = tab.id === "requests"
                 ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
+                : tab.id === "groups" ? (groupsQuery.data || []).filter((item) => !item.archived && Number(item.unreadCount) > 0).length
                 : tab.id === "direct"
                   ? creatorMode ? directConversations.filter((item) => String(item.creatorId) === myId && ["HELD", "INCLUDED"].includes(item.settlementStatus) && !item.firstCreatorReplyAt).length : directConversations.length
                   : 0;
-              return <button className={`message-inbox-tab min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.055] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => { setInboxTab(tab.id); if (tab.id !== "all") setInboxFilter("all"); }} type="button"><span className="break-words">{tab.label}</span>{count ? <span className={`ml-1 ${tab.id === "direct" ? "text-atseen-warning" : "text-atseen-blue"}`}>{count}</span> : null}</button>;
+              return <button className={`message-inbox-tab min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.09] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => { setInboxTab(tab.id); if (tab.id !== "all") setInboxFilter("all"); }} type="button"><span className="break-words">{tab.label}</span>{count ? <span className="message-folder-count">{count}</span> : null}</button>;
             })}
           </nav>
           <button aria-label={__msg("Filter conversations")} className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border transition ${inboxFilter !== "all" ? "border-atseen-blue/40 bg-atseen-blue/10 text-atseen-blue" : "border-atseen-line bg-atseen-surface text-atseen-muted hover:text-white"}`} onClick={() => setFilterSheetOpen(true)} type="button"><FiFilter /></button>
@@ -2063,7 +2269,7 @@ export default function MessagesPage() {
             </div>
           </section>
         </div> : null}
-        <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain" onPointerDown={(event) => { inboxScrollInteractionRef.current = true; inboxPointerYRef.current = event.clientY; }} onPointerMove={(event) => { if (inboxPointerYRef.current === null) return; const delta = event.clientY - inboxPointerYRef.current; const now = Date.now(); if (now < inboxScrollLockUntilRef.current || Math.abs(delta) < 10) return; if (delta > 0 && inboxScrolled) { inboxScrollLockUntilRef.current = now + 320; setInboxScrolled(false); } else if (delta < 0 && !inboxScrolled) { inboxScrollLockUntilRef.current = now + 320; setInboxScrolled(true); } inboxPointerYRef.current = event.clientY; }} onPointerUp={() => { inboxPointerYRef.current = null; }} onPointerCancel={() => { inboxPointerYRef.current = null; }} onScroll={(event) => { const top = event.currentTarget.scrollTop; const previous = inboxLastScrollTopRef.current; const now = Date.now(); if (inboxScrollInteractionRef.current && now >= inboxScrollLockUntilRef.current) { if (top > previous + 5 && !inboxScrolled) { inboxScrollLockUntilRef.current = now + 280; setInboxScrolled(true); } else if ((top < previous - 5 || top <= 2) && inboxScrolled) { inboxScrollLockUntilRef.current = now + 280; setInboxScrolled(false); } } inboxLastScrollTopRef.current = top; }} onWheel={(event) => { inboxScrollInteractionRef.current = true; const now = Date.now(); if (now < inboxScrollLockUntilRef.current || Math.abs(event.deltaY) < 4) return; if (event.deltaY < 0 && inboxScrolled) { inboxScrollLockUntilRef.current = now + 320; setInboxScrolled(false); } else if (event.deltaY > 0 && !inboxScrolled) { inboxScrollLockUntilRef.current = now + 320; setInboxScrolled(true); } }}>
           {inboxTab === "direct" && creatorMode ? <button className="mx-5 mb-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-xl border border-atseen-blue/25 bg-atseen-blue/[0.035] px-3 py-2.5 text-left transition hover:bg-atseen-blue/[0.07]" onClick={() => { setError(""); setDirectAccessSettings({ enabled: Boolean(creatorDirectAccessQuery.data?.enabled), priceStars: Number(creatorDirectAccessQuery.data?.priceStars || 100), callEnabled: Boolean(creatorDirectAccessQuery.data?.callEnabled), callPriceStars: Number(creatorDirectAccessQuery.data?.callPriceStars || 500), callDurationMinutes: Number(creatorDirectAccessQuery.data?.callDurationMinutes || 5), callAutoDeclineAway: Boolean(creatorDirectAccessQuery.data?.callAutoDeclineAway) }); setDirectAccessSetupOpen(true); }} type="button"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-atseen-blue/10 text-xs text-atseen-blue"><FiSettings /></span><span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-atseen-blue">{__msg("fan.setUpDirectAccess")}</span><span className="mt-0.5 block text-[9px] text-atseen-muted">{__msg("fan.yourPricesForMessagesAndCalls")}</span></span></button> : null}
           {inboxTab === "direct" && directWindowsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">{__msg("fan.loadingDirectAccess")}</p> : null}
           {inboxTab !== "direct" && conversationsQuery.isLoading ? <p className="p-6 text-sm text-atseen-muted">{__msg("fan.loadingConversations")}</p> : null}
@@ -2074,8 +2280,8 @@ export default function MessagesPage() {
             const hoursLeft = Math.max(0, Math.ceil((new Date(windowItem.expiresAt).getTime() - Date.now()) / 3600000));
             const viewerIsCreator = String(windowItem.creatorId) === myId;
             const incoming = viewerIsCreator && ["HELD", "INCLUDED"].includes(windowItem.settlementStatus) && !windowItem.firstCreatorReplyAt;
-            const answered = Boolean(windowItem.firstCreatorReplyAt) && ["CAPTURED", "INCLUDED"].includes(windowItem.settlementStatus);
-            const myStatus = windowItem.settlementStatus === "REFUNDED" ? "Refunded" : answered ? "Answered" : hoursLeft > 0 ? "Pending" : "Expired";
+            const answered = directAccessDisplayStatus(windowItem) === "Answered";
+            const myStatus = directAccessDisplayStatus(windowItem, { includePending: true });
             return <button className="group flex w-full items-start gap-3 px-5 py-3 text-left transition hover:bg-white/[0.03]" key={windowItem.id} onClick={() => chooseConversation({ id: other.id, participant: other, directAccessWindowId: windowItem.id })} type="button">
               <FanAvatar className="mt-0.5 h-11 w-11 shrink-0" name={other.displayName || other.username} src={other.avatarUrl} />
               <span className="min-w-0 flex-1">
@@ -2107,10 +2313,20 @@ export default function MessagesPage() {
             const isGroup = conversation.type === "group";
             const rowPerson = isGroup ? { displayName: conversation.name, avatarUrl: conversation.avatarUrl } : conversation.participant;
             const last = conversation.lastMessage;
-            const subtitle = !last ? __msg("No messages yet") : last.deletedAt ? last.senderId === myId ? __msg("You deleted this message") : __msg("This message was deleted") : `${last.senderId === myId ? `${__msg("You")}: ` : isGroup && last.sender?.displayName ? `${last.sender.displayName.split(" ")[0]}: ` : ""}${localizedInboxBody(last.body)}`;
+            const subtitle = !last ? __msg("No messages yet") : last.deletedAt ? last.senderId === myId ? __msg("You deleted this message") : __msg("This message was deleted") : `${isGroup && last.sender?.displayName ? `${last.senderId === myId ? __msg("You") : last.sender.displayName.split(" ")[0]}: ` : ""}${localizedInboxBody(last.body)}`;
             const requestPending = conversation.status === "REQUEST";
-            return <div className={`relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
-              <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-3.5 pl-2 pr-3 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button"><Identity compact person={rowPerson} presence={isGroup ? null : presence[conversation.id]} subtitle={subtitle} /><span className="ml-auto flex max-w-[95px] flex-col items-end gap-1"><span className="message-inbox-time text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>{requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">{__msg("fan.pending")}</span> : conversation.unreadCount ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-atseen-blue px-1 text-[10px] font-black text-atseen-bg">{conversation.unreadCount}</span> : null}</span></button>
+            return <div className={`message-inbox-row relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
+              <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-2 pl-1 pr-2 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button">
+                <Identity compact person={rowPerson} presence={null} showPresence={false} subtitle={subtitle} />
+                <span className="ml-auto flex max-w-[95px] flex-col items-end gap-1">
+                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className={last.readAt ? "message-read-ticks is-read" : "message-read-ticks"}>{last.readAt ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
+                  <span className="message-row-state-icons">
+                    {conversation.directAccessStatus ? <span className={`message-direct-access-state is-${conversation.directAccessStatus.toLowerCase()}`}>{__msg(conversation.directAccessStatus)}</span> : requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">{__msg("fan.pending")}</span> : conversation.manualUnread ? <span aria-label="Marked as unread" className={`message-unread-count is-manual ${conversation.muted ? "is-muted" : ""}`} /> : conversation.unreadCount ? <span className={`message-unread-count ${conversation.muted ? "is-muted" : ""}`}>{conversation.unreadCount}</span> : null}
+                    {conversation.muted ? <FiVolumeX aria-label="Muted" /> : null}
+                    {conversation.pinned ? <PiPushPinSimple aria-label="Pinned" className="message-pinned-icon" /> : null}
+                  </span>
+                </span>
+              </button>
             </div>;
           })}
         </div>
@@ -2151,25 +2367,16 @@ export default function MessagesPage() {
         {selected ? <>
           <header className="relative z-50 flex shrink-0 items-center gap-1.5 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-2 py-2.5 backdrop-blur sm:gap-3 sm:px-4 sm:py-3">
             <button aria-label={__msg("fan.backToConversations")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
-            {participant ? <button className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else { setChatInfoTab("media"); setChatInfoOpen(true); } }} type="button"><Identity person={participant} presence={selected.type === "group" ? null : presence[selected.id]} subtitle={selected.type === "group" ? `${participant.members?.length || 0} members${participant.admins?.includes(myId) ? " · you're admin" : ""}` : `${presence[selected.id]?.online ? "● At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)} · ${liveReplyLabel}`} /></button> : null}
+            {participant ? <button className="message-chat-header-identity flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else { setChatInfoTab("media"); setChatInfoOpen(true); } }} type="button"><FanAvatar name={participant.displayName} size="h-10 w-10" src={participant.avatarUrl} /><span className="min-w-0"><span className="flex min-w-0 items-center gap-1 text-[15px] font-bold leading-5 text-white">{selected.type === "group" ? <span className="truncate">{participant.displayName}</span> : <span className="message-username truncate"><i className="identity-at">@</i>{participant.username || participant.displayName}</span>}{participant.isVerified ? <VerifiedBadge /> : null}</span><span className="mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold text-atseen-muted"><FiEye className="text-[10px]" />{selected.type === "group" ? `${participant.members?.length || 0} members` : presence[selected.id]?.online ? "At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)}</span></span></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">{__msg("fan.reconnecting")}</span> : null}
             {canCallParticipant ? <div className="flex shrink-0 items-center gap-1">
               <button aria-label={`Audio call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button>
             </div> : null}
             <div className="relative">
               <button aria-expanded={chatMenuOpen} aria-label={__msg("fan.chatOptions")} className="grid h-9 w-9 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" data-chat-popover onClick={() => { setInboxRowMenu(null); setMessageMenu(null); setReactionFor(null); setChatMenuOpen((current) => !current); }} type="button"><FiMoreHorizontal /></button>
-              {chatMenuOpen ? <div className="absolute right-0 top-11 z-[70] w-52 overflow-hidden rounded-2xl border border-atseen-line bg-atseen-bg-2 p-1.5 shadow-2xl" data-chat-popover>
-                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={muteSelectedConversation} type="button"><FiBell /> {selectedConversationMuted ? "Unmute notifications" : "Mute notifications"}</button>
-                {selected.type === "group" ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); pinSelectedGroup(); }} type="button"><FiZap /> {participant?.pinnedToProfile ? "Remove from profile" : "Add group to profile"}</button> : null}
-                {selected.type === "group" && participant?.admins?.includes(myId) ? <><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={changeSelectedGroupAvatar} ref={groupAvatarInputRef} type="file" /><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => groupAvatarInputRef.current?.click()} type="button"><FiImage /> {__msg("fan.changeGroupPhoto")}</button></> : null}
-                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={archiveSelectedConversation} type="button"><FiArchive /> {selected.archived ? "Unarchive chat" : "Archive chat"}</button>
-                {selected.type !== "group" ? <><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setReportTarget({ type: "conversation" }); }} type="button"><FiFlag className="text-atseen-warning" /> {__msg("fan.reportConversation")}</button>
-                {directAccessWindow ? <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setReportTarget({ type: "direct-access" }); }} type="button"><FiShield className="text-atseen-warning" /> {__msg("system.MessagesPage.27c671a16d")}</button> : null}
-                <button className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/5 ${messagesQuery.data?.blockStatus?.blockedByMe ? "text-atseen-blue" : "text-atseen-danger"}`} disabled={actionBusy} onClick={toggleBlock} type="button"><FiShield /> {messagesQuery.data?.blockStatus?.blockedByMe ? "Unblock account" : "Block account"}</button>
-                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-atseen-danger hover:bg-atseen-danger/5" disabled={actionBusy} onClick={deleteSelectedConversation} type="button"><FiTrash2 /> {__msg("fan.deleteChat")}</button></> : null}
-              </div> : null}
             </div>
           </header>
+          {chatMenuOpen ? <div className="message-chat-sheet-overlay" onMouseDown={(event) => event.target === event.currentTarget && setChatMenuOpen(false)} role="presentation"><section aria-label="Chat options" aria-modal="true" className="message-chat-actions-sheet" data-chat-popover role="dialog"><div className="message-chat-sheet-grab" /><h2>{selected.type === "group" ? participant?.displayName : participant?.username || participant?.displayName}</h2>{selected.type !== "group" ? <button disabled={actionBusy} onClick={() => { setChatMenuOpen(false); shareChatProfile(); }} type="button"><FiShare2 /><span>Share profile</span></button> : null}<button disabled={actionBusy} onClick={muteSelectedConversation} type="button"><FiVolumeX /><span>{selectedConversationMuted ? "Unmute notifications" : "Mute notifications"}</span></button>{selected.type === "group" ? <button disabled={actionBusy} onClick={() => { setChatMenuOpen(false); pinSelectedGroup(); }} type="button"><FiZap /><span>{participant?.pinnedToProfile ? "Remove from profile" : "Add group to profile"}</span></button> : null}<button disabled={actionBusy} onClick={archiveSelectedConversation} type="button"><FiArchive /><span>{selected.archived ? "Unarchive chat" : "Archive chat"}</span></button>{selected.type !== "group" ? <><button disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setReportTarget({ type: "conversation" }); }} type="button"><FiFlag /><span>Report</span></button><button disabled={actionBusy} onClick={() => { setChatMenuOpen(false); setChatConfirm({ type: "delete" }); }} type="button"><FiTrash2 /><span>Delete chat</span></button><button className="is-danger" disabled={actionBusy} onClick={() => { setChatMenuOpen(false); messagesQuery.data?.blockStatus?.blockedByMe ? toggleBlock(true) : setChatConfirm({ type: "block" }); }} type="button"><FiCircle /><span>{messagesQuery.data?.blockStatus?.blockedByMe ? "Unblock" : `Block ${participant?.displayName?.split(" ")[0] || participant?.username || "account"}`}</span></button></> : null}</section></div> : null}
           {awaitingFollowupCreatorReply ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{directAccessWindow.priceStars} {__msg("fan.held")}</b> {__msg("fan.awaitingCreatorReply")} {directAccessTimeLabel} {__msg("fan.03Used")}</div> : fanAwaitingFreeAskReply || creatorCanReplyToFreeFanAsk ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>{__msg("fan.freeFollowUpPending")}</b> {__msg("fan.noStarsChargedYet")}</div> : creatorCanAnswerClosedPaidWindow ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.055] px-4 py-2 text-center text-[10px] text-atseen-warning"><b>{__msg("fan.33FanMessagesUsed")}</b> {__msg("fan.youCanStillAnswer")} {directAccessTimeLabel}</div> : directAccessEffectivelyClosed && !viewerIsDirectAccessFan ? <div className="shrink-0 border-b border-atseen-line/70 px-4 py-2 text-center text-[10px] text-atseen-muted"><b>Direct Access ended</b> {__msg("fan.historyRemainsReadable")}</div> : null}
           {selected.type !== "group" && messagesQuery.data?.requestReceived ? <div className="shrink-0 border-b border-atseen-warning/20 bg-atseen-warning/[0.06] px-4 py-2 text-center text-[11px] font-semibold text-atseen-warning">{__msg("fan.theyWonTKnowYouVeSeenItUntil")}</div> : null}
           {hasActiveDirectAccessWindow ? <div className="shrink-0 border-b border-atseen-line/70 bg-atseen-bg-2 px-3 py-2 text-center">
@@ -2199,16 +2406,16 @@ export default function MessagesPage() {
               const storyUnavailable = Boolean(message.storyReply && (expiredStoryIds.has(message.storyReply.storyId) || (message.storyReply.expiresAt && new Date(message.storyReply.expiresAt).getTime() <= clock)));
               return <Fragment key={message.id}>
                 {startsDay ? <div className="sticky top-2 z-20 my-5 flex items-center justify-center"><span className="rounded-full border border-atseen-line bg-atseen-bg-2/95 px-3 py-1.5 text-[10px] font-bold text-atseen-muted shadow-sm backdrop-blur">{dateLabel}</span></div> : null}
-                <div className={`group flex rounded-2xl transition ${groupedWithNext ? "mb-0.5" : "mb-2"} ${mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
-                <div className={`relative flex max-w-[76%] flex-col ${storyReaction ? "w-[160px] max-w-[48%]" : ""} ${mine ? "items-end" : "items-start"}`}>
-                  <div className={`${storyReaction ? "min-w-0 overflow-visible bg-transparent p-0 shadow-none" : `min-w-[112px] rounded-[19px] px-4 py-2.5 text-sm leading-5 shadow-sm sm:min-w-[128px] ${mine ? `${groupedWithPrevious ? "rounded-tr-md" : ""} ${groupedWithNext ? "rounded-br-md" : "rounded-br-[19px]"} bg-atseen-blue font-medium text-atseen-bg shadow-atseen-blue/10` : `${groupedWithPrevious ? "rounded-tl-md" : ""} ${groupedWithNext ? "rounded-bl-md" : "rounded-bl-[19px]"} border border-white/10 bg-atseen-surface-2 text-atseen-text shadow-black/20`}`} touch-manipulation select-none`} data-message-id={message.id} onDoubleClick={() => reactToMessage(message, "❤️")} onPointerCancel={cancelReactionHold} onPointerDown={(event) => beginReactionHold(event, message)} onPointerMove={moveReactionHold} onPointerUp={(event) => endReactionHold(event, message)} title={__msg("system.MessagesPage.d9b87303fe")}>
+                <div className={`group flex rounded-2xl transition ${groupedWithNext ? "mb-0.5" : "mb-2"} ${message.mediaType === "gift" ? "justify-center" : mine ? "justify-end" : "justify-start"} ${forwardSelection.has(message.id) ? "bg-atseen-blue/10 ring-1 ring-inset ring-atseen-blue/30" : ""}`} data-chat-date-label={dateLabel} onClick={message.mediaType === "gift" && message.gift ? () => setReplayGift({ gift: message.gift, mine, note: message.body && message.body !== message.gift.name ? message.body : "" }) : forwardSelection.size && !message.id.startsWith("pending:") ? () => setForwardSelection((current) => { const next = new Set(current); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; }) : undefined}>
+                <div className={`relative flex max-w-[76%] flex-col ${storyReaction ? "w-[160px] max-w-[48%]" : ""} ${message.mediaType === "gift" ? "items-center" : mine ? "items-end" : "items-start"}`}>
+                  <div className={`${message.mediaType === "gift" ? "message-gift-bubble" : message.mediaType === "audio" ? "message-voice-bubble !border-0 !p-0 !shadow-none" : message.mediaType === "video" ? "message-video-bubble !overflow-visible !border-0 !bg-transparent !p-0 !shadow-none" : storyReaction ? "min-w-0 overflow-visible bg-transparent p-0 shadow-none" : `min-w-[112px] rounded-[19px] px-4 py-2.5 text-sm leading-5 shadow-sm sm:min-w-[128px] ${mine ? `${groupedWithPrevious ? "rounded-tr-md" : ""} ${groupedWithNext ? "rounded-br-md" : "rounded-br-[19px]"} bg-atseen-blue font-medium text-atseen-bg shadow-atseen-blue/10` : `${groupedWithPrevious ? "rounded-tl-md" : ""} ${groupedWithNext ? "rounded-bl-md" : "rounded-bl-[19px]"} border border-white/10 bg-atseen-surface-2 text-atseen-text shadow-black/20`}`} touch-manipulation select-none`} data-message-id={message.id} style={message.mediaType === "video" ? { background: "transparent", border: 0, boxShadow: "none", padding: 0, overflow: "visible" } : undefined} onDoubleClick={() => reactToMessage(message, "❤️")} onPointerCancel={cancelReactionHold} onPointerDown={(event) => beginReactionHold(event, message)} onPointerMove={moveReactionHold} onPointerUp={(event) => endReactionHold(event, message)} title={__msg("system.MessagesPage.d9b87303fe")}>
                     {selected.type === "group" && !mine && !groupedWithPrevious && message.sender?.displayName ? <p className="mb-0.5 text-[10px] font-bold text-atseen-blue">{message.sender.displayName}</p> : null}
                     {message.replyTo ? <button className={`mb-2 block w-full rounded-xl border-l-2 px-3 py-1.5 text-left ${mine ? "border-atseen-bg/40 bg-atseen-bg/10 text-atseen-bg/70" : "border-atseen-blue bg-black/20 text-atseen-muted"}`} onClick={() => document.querySelector(`[data-message-id="${message.replyTo.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })} type="button"><span className="block text-[10px] font-bold">{message.replyTo.senderId === myId ? "You" : participant?.displayName}</span><span className="block max-w-[230px] truncate text-xs">{message.replyTo.body}</span></button> : null}
                     {message.storyReply && !storyReaction ? <StoryReplyPreview forceExpired={expiredStoryIds.has(message.storyReply.storyId)} mine={mine} onOpen={openStoryReply} reply={message.storyReply} /> : null}
                     {message.forwarded ? <p className={`mb-1 text-[9px] italic ${mine ? "text-atseen-bg/55" : "text-atseen-muted"}`}>{__msg("fan.forwarded_aa6f80")}</p> : null}
                     {message.messageKind === "CREATOR_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-blue"}`}>{__msg("fan.asksYou")}</p> : null}
                     {message.messageKind === "FAN_FREE_ASK" ? <p className={`mb-1 text-[9px] font-black uppercase tracking-[0.16em] ${mine ? "text-atseen-bg/65" : "text-atseen-warning"}`}>{__msg("fan.freeFollowUp")}</p> : null}
-                    {storyReaction ? <div className={mine ? "text-right" : "text-left"}><p className="mb-1 whitespace-nowrap text-[10px] text-atseen-muted">{mine ? "You reacted to their story" : "Reacted to your story"}</p><button className={`relative inline-block h-44 w-28 overflow-hidden rounded-[14px] border border-white/10 bg-atseen-surface-2 shadow-lg ${storyUnavailable ? "cursor-default" : ""}`} disabled={storyUnavailable} onClick={() => openStoryReply(message.storyReply, storyUnavailable)} type="button">{storyUnavailable ? <span className="flex h-full w-full flex-col items-center justify-center bg-[#171b21] px-3 text-center"><span className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-atseen-muted">⌛</span><b className="mt-3 text-[11px] text-atseen-text">{__msg("fan.storyUnavailable")}</b><span className="mt-1 text-[9px] leading-3 text-atseen-muted">This story expired or was removed</span></span> : <img alt="Story reacted to" className="h-full w-full object-cover" onError={() => setExpiredStoryIds((current) => new Set(current).add(message.storyReply.storyId))} src={resolveMediaUrl(message.storyReply.imageUrl)} />}<span className="absolute bottom-1.5 right-2 text-[9px] font-bold text-white drop-shadow-md">{chatTimeLabel(message.createdAt, chatLanguage)}{mine ? " ✓✓" : ""}</span></button><span className={`-mt-3 block text-[28px] leading-none drop-shadow-lg ${mine ? "-mr-1 text-right" : "-ml-1 text-left"}`}>{storyReaction[1]}</span></div> : message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><GiftArt className="mx-auto h-24 w-24" gift={message.gift} imageClassName="h-full w-full object-contain" /><p className="mt-1 font-black">{mine ? "You sent" : "You received"} {message.gift.name}</p><p className={`text-xs font-black ${mine ? "text-atseen-bg/75" : "text-atseen-warning"}`}><img alt={__msg("profile.coins")} className="mr-1 inline-block h-3.5 w-3.5 object-contain align-[-2px]" src="/brand/goldcoin.png" />{Number(message.gift.stars).toLocaleString()}</p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt={__msg("fan.sharedInChat")} className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
+                    {storyReaction ? <div className={mine ? "text-right" : "text-left"}><p className="mb-1 whitespace-nowrap text-[10px] text-atseen-muted">{mine ? "You reacted to their story" : "Reacted to your story"}</p><button className={`relative inline-block h-44 w-28 overflow-hidden rounded-[14px] border border-white/10 bg-atseen-surface-2 shadow-lg ${storyUnavailable ? "cursor-default" : ""}`} disabled={storyUnavailable} onClick={() => openStoryReply(message.storyReply, storyUnavailable)} type="button">{storyUnavailable ? <span className="flex h-full w-full flex-col items-center justify-center bg-[#171b21] px-3 text-center"><span className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-atseen-muted">⌛</span><b className="mt-3 text-[11px] text-atseen-text">{__msg("fan.storyUnavailable")}</b><span className="mt-1 text-[9px] leading-3 text-atseen-muted">This story expired or was removed</span></span> : <img alt="Story reacted to" className="h-full w-full object-cover" onError={() => setExpiredStoryIds((current) => new Set(current).add(message.storyReply.storyId))} src={resolveMediaUrl(message.storyReply.imageUrl)} />}<span className="absolute bottom-1.5 right-2 text-[9px] font-bold text-white drop-shadow-md">{chatTimeLabel(message.createdAt, chatLanguage)}{mine ? " ✓✓" : ""}</span></button><span className={`-mt-3 block text-[28px] leading-none drop-shadow-lg ${mine ? "-mr-1 text-right" : "-ml-1 text-left"}`}>{storyReaction[1]}</span></div> : message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><GiftArt className="mx-auto h-24 w-24" gift={message.gift} imageClassName="h-full w-full object-contain" /><p className="mt-1 font-black" dir="auto">{message.gift.name}</p><p className="message-gift-from"><span>{mine ? "Gift from you" : `Gift from @${participant?.username || "user"}`}</span><span aria-hidden="true"> · </span><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><span>{Number(message.gift.stars).toLocaleString()}</span></p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt={__msg("fan.sharedInChat")} className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     {!storyReaction ? <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{chatTimeLabel(message.createdAt, chatLanguage)}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : ""}</span>
                       {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some((receipt) => receipt.userId !== myId) ? "Read" : "Sent" : message.readAt ? "Read" : "Sent"} className="font-black">{selected.type === "group" ? (message.readBy || []).some((receipt) => receipt.userId !== myId) ? "✓✓" : "✓" : message.readAt ? "✓✓" : "✓"}</span> : null}
@@ -2290,16 +2497,20 @@ export default function MessagesPage() {
             {viewerIsDirectAccessCreator && directAccessWindow?.settlementStatus === "HELD" ? <p className="mb-2 text-center text-[11px] text-atseen-dim">{__msg("fan.answerTheActualQuestionSpecificAndRealYourReply")}</p> : null}
             {directAccessFanLocked && !fanCanOpenNewWindow && !awaitingFollowupCreatorReply ? <p className="mb-2 text-center text-xs font-bold text-atseen-warning">{__msg("fan.thisDirectAccessWindowIsClosedItsMessageHistory")}</p> : null}
             {giftTipVisible && selected.type !== "group" ? <div className="relative mb-2 ml-24 flex max-w-xs items-start gap-3 rounded-2xl border border-atseen-warning/30 bg-[#211f1a] px-4 py-3 text-xs shadow-xl"><FiGift className="mt-0.5 shrink-0 text-atseen-warning" /><p className="min-w-0 flex-1 leading-5"><b className="block text-atseen-warning">{__msg("system.MessagesPage.134b685c51")}</b><span className="text-atseen-muted">{__msg("system.MessagesPage.5be241fc3c")}</span></p><button aria-label={__msg("system.MessagesPage.cc7890d068")} className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-atseen-muted hover:bg-white/5 hover:text-white" onClick={dismissGiftTip} type="button"><FiX /></button><span className="absolute -bottom-1.5 left-7 h-3 w-3 rotate-45 border-b border-r border-atseen-warning/30 bg-[#211f1a]" /></div> : null}
-            <div className="flex items-center gap-2">
-              <div className="flex min-w-0 flex-1 items-center rounded-full border border-atseen-line bg-atseen-surface-2 px-2 transition focus-within:border-atseen-blue/50">
-                <textarea aria-label={__msg("discover.message")} className="max-h-28 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm leading-5 outline-none placeholder:text-atseen-dim disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(event); } }} placeholder={__msg("fan.message")} rows={1} value={draft} />
-                <input accept="image/jpeg,image/png,image/webp" aria-label={__msg("system.MessagesPage.7f23b28cb9")} className="hidden" onChange={chooseAttachment} ref={attachmentInputRef} type="file" />
-                <button aria-label={__msg("system.MessagesPage.ae85e4ee1e")} className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-white disabled:opacity-40" disabled={sending || directAccessFanLocked} onClick={() => attachmentInputRef.current?.click()} title={__msg("system.MessagesPage.43b7d31d66")} type="button"><FiPaperclip />{attachmentProgress > 0 ? <span className="absolute -right-1 -top-1 rounded-full bg-atseen-blue px-1 text-[7px] font-black text-atseen-bg">{attachmentProgress}%</span> : null}</button>
-                {selected.type !== "group" ? <button aria-expanded={disappearingOpen} aria-label={__msg("fan.disappearingMessageTimer")} className={`relative grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs transition ${disappearAfterSeconds !== null ? "bg-atseen-blue/15 text-atseen-blue" : "text-atseen-muted hover:bg-white/5 hover:text-white"}`} disabled={directAccessFanLocked} onClick={() => { setGiftOpen(false); setDisappearingOpen((current) => !current); }} title={__msg("fan.disappearingMessage")} type="button"><FiClock />{disappearAfterSeconds !== null ? <span className="absolute -right-0.5 -top-0.5 grid h-3 min-w-3 place-items-center rounded-full bg-atseen-blue px-0.5 text-[7px] font-black leading-none text-atseen-bg">{disappearAfterSeconds === 0 ? "1" : disappearAfterSeconds}</span> : null}</button> : null}
-                {selected.type !== "group" ? <button aria-label={__msg("profile.sendAGift")} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition ${giftOpen ? "bg-atseen-warning/10 text-atseen-warning" : "text-atseen-warning hover:bg-atseen-warning/10"}`} disabled={giftBusy || directAccessFanLocked} onClick={() => setGiftOpen((current) => !current)} title={__msg("profile.sendAGift")} type="button"><FiGift /></button> : null}
-                <VoiceRecorder compact disabled={sending || directAccessFanLocked} onSend={sendVoice} />
+            {attachmentSheetOpen ? <div aria-hidden="true" className="message-attachment-dim" onClick={() => setAttachmentSheetOpen(false)} /> : null}
+            {attachmentSheetOpen ? <section aria-label="Message attachments" aria-modal="true" className="message-attachment-sheet" role="dialog"><div className="message-attachment-grab" />
+              {selected.type !== "group" ? <button className="message-attachment-row" onClick={() => { setAttachmentSheetOpen(false); setGiftOpen(false); setDisappearingOpen(true); }} type="button"><span className="message-attachment-icon"><FiClock /></span><span><b>Disappearing photo or message</b><small>Opens once, then it’s gone</small></span></button> : null}
+              {selected.type !== "group" ? <button className="message-attachment-row" disabled={giftBusy || directAccessFanLocked} onClick={() => { setAttachmentSheetOpen(false); setGiftOpen(true); }} type="button"><span className="message-attachment-icon"><FiGift /></span><span><b>Gift</b><small>Something that lands</small></span></button> : null}
+              <VideoNoteRecorder compact disabled={sending || directAccessFanLocked} onSend={async (blob, onProgress) => { await sendVideoNote(blob, onProgress); setAttachmentSheetOpen(false); }} triggerClassName="message-attachment-row w-full" triggerContent={<><span className="message-attachment-icon"><FiVideo /></span><span><b>Video circle</b><small>Up to 60 seconds</small></span></>} wrapperClassName="w-full" />
+              {selected.type !== "group" ? <button className="message-attachment-row" disabled={directAccessBusy || directAccessFanLocked} onClick={() => { setAttachmentSheetOpen(false); openDirectAccess(); }} type="button"><span className="message-attachment-icon"><FiZap /></span><span><b>Priority message</b><small>Direct Access — guaranteed answer</small></span></button> : null}
+            </section> : null}
+            <div className="message-prototype-composer flex items-center gap-2">
+              <input accept="image/jpeg,image/png,image/webp" aria-label={__msg("system.MessagesPage.7f23b28cb9")} className="hidden" onChange={chooseAttachment} ref={attachmentInputRef} type="file" />
+              <button aria-expanded={attachmentSheetOpen} aria-label="Open attachment options" className="message-composer-plain-action" disabled={sending || directAccessFanLocked} onClick={() => { setGiftOpen(false); setDisappearingOpen(false); setAttachmentSheetOpen((current) => !current); }} type="button"><FiPaperclip />{attachmentProgress > 0 ? <span className="message-upload-progress">{attachmentProgress}%</span> : null}</button>
+              <div className="flex min-w-0 flex-1 items-center rounded-full border border-atseen-line bg-[#171a1f] px-3">
+                <textarea aria-label={__msg("discover.message")} className="max-h-28 min-h-10 min-w-0 flex-1 resize-none bg-transparent py-2.5 text-[16px] leading-5 outline-none placeholder:text-atseen-dim disabled:opacity-50" disabled={directAccessFanLocked} maxLength={2000} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(event); } }} placeholder={__msg("fan.message")} rows={1} value={draft} />
               </div>
-              <button aria-label={__msg("stories.sendMessage")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-atseen-blue text-atseen-bg transition hover:brightness-110 disabled:opacity-40" disabled={!draft.trim() || sending || directAccessFanLocked}><FiSend /></button>
+              {draft.trim() ? <button aria-label={__msg("stories.sendMessage")} className="message-composer-send" disabled={sending || directAccessFanLocked}><FiSend /></button> : <VoiceRecorder compact disabled={sending || directAccessFanLocked} onSend={sendVoice} showVideo={false} />}
             </div>
             {selected?.type !== "group" && !directAccessWindow && selectedDirectAccessOfferQuery.data?.enabled ? <button className="mx-auto mt-2 block text-[10px] text-atseen-muted transition hover:text-atseen-blue" disabled={directAccessBusy} onClick={openDirectAccess} type="button"><b className="text-atseen-blue">Priority message</b> · Direct Access — guaranteed answer ›</button> : null}
           </form>)}
@@ -2391,7 +2602,7 @@ export default function MessagesPage() {
       </section>
     </div> : null}
     {reactionPickerFor ? <div className="absolute inset-0 z-[250] flex items-end bg-black/55 backdrop-blur-[2px]" onMouseDown={(event) => event.target === event.currentTarget && setReactionPickerFor(null)} role="presentation"><section aria-label="All reactions" aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#0e1218] px-8 pb-[max(28px,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-24px_70px_rgba(0,0,0,.62)]" role="dialog"><div className="mx-auto h-1 w-8 rounded-full bg-white/35" /><div className="mt-5 grid grid-cols-5 gap-x-5 gap-y-3">{ALL_MESSAGE_REACTIONS.map((emoji) => { const selectedReaction = (reactionPickerFor.reactions || []).some((reaction) => reaction.userId === myId && reaction.emoji === emoji); return <button aria-label={`React with ${emoji}`} className={`grid aspect-square min-h-11 place-items-center rounded-xl text-[28px] transition hover:scale-110 hover:bg-white/[0.07] ${selectedReaction ? "bg-[#242d3a] ring-1 ring-white/5" : ""}`} key={emoji} onClick={() => reactToMessage(reactionPickerFor, emoji)} type="button">{emoji}</button>; })}</div><p className="mt-4 text-center text-[10px] text-atseen-muted">{__msg("fanWeb.oneReactionMakeItYours")}</p></section></div> : null}
-    {inboxRowMenu ? <div className="absolute inset-0 z-[90] flex items-end bg-black/65" onMouseDown={(event) => event.target === event.currentTarget && setInboxRowMenu(null)} role="presentation"><section aria-label="Conversation actions" aria-modal="true" className="w-full rounded-t-[24px] border border-b-0 border-atseen-line bg-[#11151c] px-5 pb-8 pt-2 shadow-[0_-24px_70px_rgba(0,0,0,.55)]" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/30" /><h2 className="truncate text-base font-black">{inboxRowMenu.type === "group" ? inboxRowMenu.name : inboxRowMenu.participant?.displayName}</h2><p className="mt-1 text-[11px] text-atseen-muted">{__msg("states.conversation")}</p><button className="mt-4 flex w-full items-center gap-4 border-b border-white/[0.07] py-4 text-left text-sm font-bold" onClick={() => { const row = inboxRowMenu; setInboxRowMenu(null); chooseConversation(row); }} type="button"><FiMessageCircle className="text-atseen-blue" />{__msg("fan.openChat")}</button><button className="flex w-full items-center gap-4 py-4 text-left text-sm font-bold" onClick={() => archiveInboxRow(inboxRowMenu)} type="button"><FiArchive className="text-atseen-muted" />{inboxRowMenu.archived ? "Unarchive" : "Archive"}</button></section></div> : null}
+    {inboxRowMenu ? <div className="message-context-overlay absolute inset-0 z-[90] bg-black/60 backdrop-blur-xl" onMouseDown={(event) => event.target === event.currentTarget && setInboxRowMenu(null)} role="presentation"><div className="message-context-stack"><section className="message-context-card"><FanAvatar name={inboxRowMenu.type === "group" ? inboxRowMenu.name : inboxRowMenu.participant?.displayName} size="h-[52px] w-[52px]" src={inboxRowMenu.type === "group" ? inboxRowMenu.avatarUrl : inboxRowMenu.participant?.avatarUrl} /><span><b>{inboxRowMenu.type === "group" ? inboxRowMenu.name : `@${inboxRowMenu.participant?.username || ""}`}</b><small>{inboxRowMenu.lastMessage?.body ? localizedInboxBody(inboxRowMenu.lastMessage.body) : __msg("No messages yet")}</small></span></section><section aria-label="Conversation actions" aria-modal="true" className="message-context-menu" role="dialog"><button onClick={() => updateInboxRowState(inboxRowMenu, { manualUnread: !inboxRowMenu.unreadCount })} type="button"><span>{inboxRowMenu.unreadCount ? "Mark as Read" : "Mark as Unread"}</span><FiCheckCircle /></button><button onClick={() => updateInboxRowState(inboxRowMenu, { pinned: !inboxRowMenu.pinned })} type="button"><span>{inboxRowMenu.pinned ? "Unpin" : "Pin"}</span><PiPushPinSimple /></button><button onClick={() => muteInboxRow(inboxRowMenu)} type="button"><span>{inboxRowMenu.muted ? "Unmute" : "Mute"}</span><FiVolumeX /></button>{inboxRowMenu.type !== "group" ? <button onClick={() => archiveInboxRow(inboxRowMenu)} type="button"><span>{inboxRowMenu.archived ? "Unarchive" : "Archive"}</span><FiArchive /></button> : null}<button className="is-danger" onClick={() => removeInboxRow(inboxRowMenu)} type="button"><span>{inboxRowMenu.type === "group" ? "Leave Group" : "Delete"}</span><FiTrash2 /></button></section></div></div> : null}
     {groupPhotoMenuOpen && selected?.type === "group" ? <div className="absolute inset-0 z-[70] flex items-end bg-black/65" onMouseDown={(event) => { if (event.target === event.currentTarget) setGroupPhotoMenuOpen(false); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-7 pt-2.5" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><h2 className="mb-2 text-base font-black">{__msg("fan.groupPhoto")}</h2>{participant.avatarUrl ? <button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left text-sm font-bold" onClick={() => { setGroupPhotoMenuOpen(false); setGroupImageViewerOpen(true); }} type="button"><FiEye className="text-atseen-muted" /> {__msg("fan.viewPhoto")}</button> : null}{participant.admins?.includes(myId) || participant.permissions?.editGroupInfo === "ALL_MEMBERS" ? <><button className="flex w-full items-center gap-4 border-b border-white/[0.07] py-3.5 text-left text-sm font-bold" onClick={() => groupAvatarInputRef.current?.click()} type="button"><FiCamera className="text-atseen-blue" /> {participant.avatarUrl ? "Change photo" : "Add photo"}</button>{participant.avatarUrl ? <button className="flex w-full items-center gap-4 py-3.5 text-left text-sm font-bold text-atseen-danger" disabled={actionBusy} onClick={removeSelectedGroupAvatar} type="button"><FiTrash2 /> {__msg("fan.removePhoto")}</button> : null}</> : <p className="py-3 text-xs text-atseen-muted">{__msg("fan.onlyPermittedGroupMembersCanChangeThisPhoto")}</p>}</section></div> : null}
     {groupImageViewerOpen && participant?.avatarUrl ? <div className="absolute inset-0 z-[75] flex items-center justify-center bg-black/95 p-5"><button aria-label={__msg("fan.closePhoto")} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10" onClick={() => setGroupImageViewerOpen(false)} type="button"><FiX /></button><img alt={`${participant.displayName} group`} className="aspect-square w-full max-w-md rounded-full object-cover shadow-2xl" src={participant.avatarUrl} /></div> : null}
     {groupCropSource ? <GroupImageCropper onCancel={() => { URL.revokeObjectURL(groupCropSource.url); setGroupCropSource(null); }} onSave={groupCropSource.target === "NEW_GROUP" ? storeCroppedNewGroupAvatar : uploadCroppedGroupAvatar} saving={groupCropSource.target === "NEW_GROUP" ? false : actionBusy} source={groupCropSource} /> : null}
@@ -2403,6 +2614,10 @@ export default function MessagesPage() {
     {deleteDialog ? <div className="absolute inset-0 z-[75] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div aria-labelledby="delete-message-title" aria-modal="true" className="w-full max-w-[300px] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-4 shadow-2xl" role="dialog"><div className="flex items-center justify-between"><h2 className="text-base font-bold" id="delete-message-title">{deleteDialog.scope ? "Confirm deletion" : "Delete message"}</h2><button aria-label={__msg("fan.closeDeleteMessage")} className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => setDeleteDialog(null)} type="button"><FiX /></button></div>{deleteDialog.scope ? <><p className="mt-2 text-xs leading-5 text-atseen-muted">{__msg("fan.thisDisappearsOnlyFromYourChat")}</p><div className="mt-4 flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-2 text-xs font-bold" disabled={actionBusy} onClick={() => setDeleteDialog((current) => ({ ...current, scope: null }))} type="button">{__msg("discover.back")}</button><button className="flex-[1.3] rounded-full bg-atseen-danger px-3 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={actionBusy} onClick={deleteSelectedMessage} type="button">{actionBusy ? "Deleting…" : "Delete"}</button></div></> : <><p className="mt-1 text-xs text-atseen-muted">{__msg("fan.chooseAnOption")}</p><div className="mt-3 grid gap-1"><button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/5" onClick={() => setDeleteDialog((current) => ({ ...current, scope: "me" }))} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs">{__msg("fan.deleteForMe")}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{__msg("fan.onlyRemovesItFromYourChat")}</span></span></button>{deleteDialog.message.senderId === myId ? <button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-atseen-danger/5 disabled:opacity-50" disabled={actionBusy} onClick={() => deleteSelectedMessage({ message: deleteDialog.message, scope: "everyone" })} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs text-atseen-danger">{actionBusy ? "Unsending…" : "Unsend for everyone"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{__msg("fan.replacesItForBothPeople")}</span></span></button> : null}</div></>}</div></div> : null}
     {bulkDeleteDialog ? <div className="absolute inset-0 z-[76] flex items-end bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget && !actionBusy) setBulkDeleteDialog(null); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-8 pt-2.5 shadow-2xl" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-center justify-between"><div><h2 className="text-base font-black">{__msg("posts.delete")} {bulkDeleteDialog.messages.length} {__msg("fan.messages")}</h2><p className="mt-1 text-[11px] text-atseen-muted">{__msg("fan.chooseWhereTheSelectedMessagesShouldDisappear")}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setBulkDeleteDialog(null)} type="button"><FiX /></button></div><button className="mt-4 flex w-full items-center gap-4 border-b border-white/[0.07] py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("me")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm">{__msg("fan.deleteForMe")}</b><span className="mt-1 block text-[10px] text-atseen-muted">{__msg("fan.onlyRemovesTheSelectedMessagesFromYourChat")}</span></span></button>{bulkDeleteDialog.messages.every((message) => message.senderId === myId && !message.deletedAt) ? <button className="flex w-full items-center gap-4 py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("everyone")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm text-atseen-danger">{__msg("fan.deleteForEveryone")}</b><span className="mt-1 block text-[10px] text-atseen-muted">{__msg("fan.allSelectedMessagesWereSentByYou")}</span></span></button> : null}{actionBusy ? <p className="pt-3 text-center text-xs font-bold text-atseen-muted">{__msg("fan.deletingMessages")}</p> : null}</section></div> : null}
     {reportTarget ? <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/75 p-3 sm:items-center"><form className="w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-bg-2 p-5 shadow-2xl" onSubmit={submitReport}><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">{__msg("discover.report")} {reportTarget.type === "message" ? "message" : "conversation"}</h2><p className="mt-1 text-xs text-atseen-muted">{__msg("fan.yourReportIsPrivateAndWillBeReviewed")}</p></div><button aria-label={__msg("fan.closeReport")} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setReportTarget(null)} type="button"><FiX /></button></div><label className="mt-5 block text-xs font-bold text-atseen-muted">{__msg("discover.reason")}<select className="mt-2 w-full rounded-xl border border-atseen-line bg-atseen-surface-2 px-3 py-3 text-sm text-white [color-scheme:dark] outline-none" onChange={(event) => setReportReason(event.target.value)} value={reportReason}>{REPORT_REASONS.map(([value, label]) => <option className="bg-atseen-bg-2 text-white" key={value} value={value}>{label}</option>)}</select></label><label className="mt-4 block text-xs font-bold text-atseen-muted">{__msg("discover.additionalDetails")} <span className="font-normal">{__msg("admin.optional")}</span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface-2 p-3 text-sm text-white outline-none" maxLength={1000} onChange={(event) => setReportDetails(event.target.value)} value={reportDetails} /></label><button className="mt-5 w-full rounded-full bg-atseen-danger py-3 text-sm font-bold text-white disabled:opacity-50" disabled={actionBusy} type="submit">{actionBusy ? "Submitting…" : "Submit report"}</button></form></div> : null}
+    {replayGift ? <div className="message-gift-replay-host" style={{ "--profile-gifts-center-x": replayGiftPosition?.["--message-sheet-center-x"] || "50%", "--profile-gifts-column-width": replayGiftPosition?.["--message-sheet-column-width"] || "440px" }}><GiftCelebration caption={replayGift.gift.caption || replayGift.gift.tagline || replayGift.gift.description || ""} gift={{ ...replayGift.gift, celebrationId: `${replayGift.gift.id || "gift"}-${Date.now()}` }} onDismiss={() => setReplayGift(null)} senderName={replayGift.mine ? "you" : participant?.username ? `@${participant.username}` : participant?.displayName || ""} showSuccessToast={false} variant="is-profile-gift" /></div> : null}
+    {conversationReportOpen ? <div className="message-chat-sheet-overlay" onMouseDown={(event) => event.target === event.currentTarget && !actionBusy && setConversationReportOpen(false)} role="presentation"><section aria-labelledby="report-conversation-title" aria-modal="true" className="message-report-sheet" role="dialog"><div className="message-chat-sheet-grab" /><h2 id="report-conversation-title">Report conversation</h2><p>Why are you reporting this?</p>{[["SPAM", "Spam"], ["DEFAMATION", "False information"], ["HARASSMENT", "Harassment"], ["HATE", "Hate"], ["SEXUAL_CONTENT", "Nudity"], ["SCAM", "Illegal content"], ["COPYRIGHT", "Copyright"], ["OTHER", "Other"]].map(([value, label]) => <button disabled={actionBusy} key={value} onClick={() => submitConversationReport(value)} type="button"><span>{label}</span><span aria-hidden="true">›</span></button>)}</section></div> : null}
+    {reportSubmitted ? <div className="message-chat-sheet-overlay" role="presentation"><section aria-labelledby="report-thanks-title" aria-modal="true" className="message-result-sheet" role="dialog"><div className="message-chat-sheet-grab" /><FiEye /><h2 id="report-thanks-title">Thank you</h2><p>Our team will review this shortly.</p><button onClick={() => setReportSubmitted(false)} type="button">Done</button></section></div> : null}
+    {chatConfirm ? <div className="message-chat-sheet-overlay" onMouseDown={(event) => event.target === event.currentTarget && !actionBusy && setChatConfirm(null)} role="presentation"><section aria-labelledby="chat-confirm-title" aria-modal="true" className="message-confirm-sheet" role="dialog"><div className="message-chat-sheet-grab" /><h2 id="chat-confirm-title">{chatConfirm.type === "delete" ? "Delete chat?" : `Block ${participant?.displayName?.split(" ")[0] || participant?.username || "account"}?`}</h2><p>{chatConfirm.type === "delete" ? `The conversation disappears from your inbox. ${participant?.displayName?.split(" ")[0] || "The other person"} keeps their copy.` : "They won’t be able to message you, see your profile, or interact with your content."}</p><button className="is-danger" disabled={actionBusy} onClick={() => chatConfirm.type === "delete" ? deleteSelectedConversation(true) : toggleBlock(true)} type="button">{actionBusy ? "Please wait…" : chatConfirm.type === "delete" ? "Delete" : "Block"}</button><button disabled={actionBusy} onClick={() => setChatConfirm(null)} type="button">Cancel</button></section></div> : null}
     {storyViewer?.story ? (
       <StoryViewer
         isOpen

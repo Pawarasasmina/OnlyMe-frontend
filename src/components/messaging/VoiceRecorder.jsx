@@ -19,7 +19,7 @@ const supportedMime = () => [
   "audio/webm",
 ].find((type) => window.MediaRecorder?.isTypeSupported(type)) || "";
 
-export default function VoiceRecorder({ compact = false, disabled = false, onSend }) {
+export default function VoiceRecorder({ compact = false, disabled = false, onSend, showVideo = true }) {
   __useUiLanguage();
   const [mode, setMode] = useState("idle");
   const [elapsed, setElapsed] = useState(0);
@@ -152,7 +152,7 @@ export default function VoiceRecorder({ compact = false, disabled = false, onSen
     }
   };
 
-  if (mode === "idle") return <><div className="shrink-0"><button aria-label={__msg("messaging.recordVoiceMessage")} className={compact ? "grid h-8 w-8 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-atseen-blue disabled:opacity-40" : "grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:text-atseen-blue disabled:opacity-40"} disabled={disabled} onClick={begin} title={__msg("messaging.recordVoiceMessage")} type="button"><FiMic /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs text-atseen-danger shadow-xl">{__systemMessage(error)}<button aria-label={__msg("messaging.dismissMicrophoneError")} className="float-right" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div><VideoNoteRecorder compact={compact} disabled={disabled} onSend={(blob, onProgress) => onSend(blob, onProgress, "video")} /></>;
+  if (mode === "idle") return <><div className="shrink-0"><button aria-label={__msg("messaging.recordVoiceMessage")} className={compact ? "grid h-8 w-8 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-atseen-blue disabled:opacity-40" : "grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:text-atseen-blue disabled:opacity-40"} disabled={disabled} onClick={begin} title={__msg("messaging.recordVoiceMessage")} type="button"><FiMic /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs text-atseen-danger shadow-xl">{__systemMessage(error)}<button aria-label={__msg("messaging.dismissMicrophoneError")} className="float-right" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div>{showVideo ? <VideoNoteRecorder compact={compact} disabled={disabled} onSend={(blob, onProgress) => onSend(blob, onProgress, "video")} /> : null}</>;
 
   if (["recording", "paused"].includes(mode)) return createPortal(<div className="fixed inset-0 z-[500] flex justify-center bg-black/80 backdrop-blur-[2px]" role="presentation">
     <section aria-label={__msg("messaging.recordVoiceMessage")} aria-modal="true" className="relative flex h-[100dvh] w-full max-w-[440px] flex-col overflow-hidden border-x border-white/10 bg-[#080b0f]/95 text-white shadow-[0_0_70px_rgba(0,0,0,.7)] max-[480px]:border-x-0" role="dialog">

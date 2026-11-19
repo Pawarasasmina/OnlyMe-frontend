@@ -3307,6 +3307,7 @@
   "New message": "fan.newMessage",
   "Open activity": "fan.openActivity",
   "Message inbox tabs": "fan.messageInboxTabs",
+  "Groups": "fan.groups",
   "Requests": "fan.requests",
   "Filter conversations": "fan.filterConversations",
   "People you don’t follow yet. They won’t know you’ve seen it until you accept.": "fan.peopleYouDonTFollowYetTheyWonT",
