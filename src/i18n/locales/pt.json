@@ -5534,6 +5534,8 @@
   "profile.upTo3MessagesFromYouAReal": "Até 3 mensagens de você – um verdadeiro back-and-forth, não um bilhete.",
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "Sua mensagem aparece acima das conversas padrão, de modo que não pode ser perdida.",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "Uma resposta pessoal, geralmente muito mais rápida - dentro da garantia.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Faça-me uma pergunta privada. Resposta prioritária garantida.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Faça-me uma pergunta privada. Resposta prioritária garantida.",
   "profile.passwordSecurity": "Password & Segurança",
   "profile.viewPublicProfile": "Ver perfil público",
   "verification.creditedInstantly": "Crédito instantâneo",
@@ -7282,4 +7284,6 @@
   "creator.draftRemainsPrivateUntilSellerReady": "O seu rascunho fica visível Só para você até poder vender",
   "creator.setUp": "Configurar",
   "discover.inviteDescription": "O Discover cresce com pessoas reais que conheces"
+  ,"profile.everythingCreatorSharesMonthly": "Tudo o que {value0} compartilha, mensalmente",
+  "profile.now": "agora"
 }

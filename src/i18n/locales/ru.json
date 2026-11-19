@@ -5565,6 +5565,8 @@
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "Ваше сообщение появляется выше стандартных разговоров, поэтому его нельзя потерять.",
   "profile.firstReplyWithin48Hours": "Первый ответ в течение 48 часов",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "Личный ответ, как правило, намного быстрее — в рамках гарантии.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Задайте мне личный вопрос. Приоритетный ответ гарантирован.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Задайте мне личный вопрос. Приоритетный ответ гарантирован.",
   "profile.refundedIfUnanswered": "Возврат, если не отвечен",
   "profile.noReplyIn48HoursYourCoinsCome": "Не отвечают за 48 часов? ваши монеты возвращаются автоматически.",
   "profile.passwordSecurity": "Пароль и безопасность",
@@ -7282,4 +7284,6 @@
   "creator.draftRemainsPrivateUntilSellerReady": "Ваш черновик виден только вам, пока вы не сможете продавать",
   "creator.setUp": "Настроить",
   "discover.inviteDescription": "Discover растёт с реальными людьми, которых ты знаешь"
+  ,"profile.everythingCreatorSharesMonthly": "Всё, чем делится {value0}, ежемесячно",
+  "profile.now": "сейчас"
 }

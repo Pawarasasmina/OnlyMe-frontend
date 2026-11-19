@@ -5534,6 +5534,8 @@
   "profile.upTo3MessagesFromYouAReal": "ما يصل إلى 3 رسائل منك - حقيقي الخلف والخلف ، وليس تذكرة.",
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "يظهر رسالتك فوق المحادثات القياسية بحيث لا يمكن أن تضيع.",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "رد شخصي، عادة أسرع بكثير – ضمن الضمان.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "اسألني سؤالاً خاصاً. رد ذو أولوية مضمون.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "اسألني سؤالاً خاصاً. رد ذو أولوية مضمون.",
   "profile.passwordSecurity": "كلمة المرور والأمن",
   "profile.viewPublicProfile": "عرض الملف الشخصي العام",
   "verification.creditedInstantly": "اعتمدت على الفور",
@@ -7282,4 +7284,6 @@
   "creator.draftRemainsPrivateUntilSellerReady": "تبقى مسودتك لك وحدك حتى تتمكن من البيع",
   "creator.setUp": "الإعداد",
   "discover.inviteDescription": "ينمو Discover مع الأشخاص الحقيقيين الذين تعرفهم"
+  ,"profile.everythingCreatorSharesMonthly": "كل ما يشاركه {value0}، شهريًا",
+  "profile.now": "الآن"
 }
