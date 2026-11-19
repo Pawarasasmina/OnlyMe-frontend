@@ -1,4 +1,5 @@
 import PublishBanner from "../../components/publication/PublishBanner";
+import { syncDiscoverFollowState } from "../../hooks/useDiscoverQuery";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
@@ -536,7 +537,10 @@ function VisitorFollowButton({ profile, relationship = {} }) {
   const client = useQueryClient();
   const follow = useMutation({
     mutationFn: () => profileService.toggleFollow(profile.username),
-    onSuccess: () => invalidateFollowSurfaces(client),
+    onSuccess: (response) => {
+      syncDiscoverFollowState(client, profile.username, Boolean(response.data?.data?.relationship?.active ?? !relationship.following));
+      return invalidateFollowSurfaces(client);
+    },
   });
   const following = Boolean(relationship.following);
   return <button className={`profile-action-chip profile-follow-action ${following ? "is-following" : ""}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? __msg("activity.following") : __msg("discover.follow")}</button>;
