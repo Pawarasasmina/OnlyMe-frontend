@@ -7282,5 +7282,8 @@
   "creator.paidItemsStayPrivate": "Os itens pagos ficam visíveis Só para você até à verificação",
   "creator.sellerInfoTakesAMinute": "Adicione os dados do vendedor uma vez — demora um minuto",
   "creator.draftRemainsPrivateUntilSellerReady": "O seu rascunho fica visível Só para você até poder vender",
-  "creator.setUp": "Configurar"
+  "creator.setUp": "Configurar",
+  "discover.inviteDescription": "O Discover cresce com pessoas reais que conheces"
+  ,"profile.everythingCreatorSharesMonthly": "Tudo o que {value0} compartilha, mensalmente",
+  "profile.now": "agora"
 }
