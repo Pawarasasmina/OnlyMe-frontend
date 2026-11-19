@@ -43,7 +43,17 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && hasAccessToken && !request?._retried && !isPublicAuthRequest) {
       request._retried = true;
       try {
-        refreshPromise ||= axiosInstance.post("/auth/refresh").finally(() => { refreshPromise = null; });
+        refreshPromise ||= axiosInstance.post("/auth/refresh")
+          .catch(async (refreshError) => {
+            // Mobile browsers can briefly omit a cross-site cookie while
+            // resuming, rotating the screen, or changing network. A single
+            // 401/403 must not immediately destroy an otherwise valid UI
+            // session; confirm it once before clearing local auth state.
+            if (![401, 403].includes(refreshError.response?.status)) throw refreshError;
+            await new Promise(resolve => window.setTimeout(resolve, 750));
+            return axiosInstance.post("/auth/refresh", null, { _sessionRecovery: true });
+          })
+          .finally(() => { refreshPromise = null; });
         const response = await refreshPromise;
         const accessToken = response.data.data.accessToken;
         localStorage.setItem("onlyme_access_token", accessToken);
@@ -56,8 +66,6 @@ axiosInstance.interceptors.response.use(
           clearExpiredSessionAndRedirect();
         }
       }
-    } else if (error.response?.status === 401 && isRefreshRequest) {
-      clearExpiredSessionAndRedirect();
     }
 
     return Promise.reject(error);

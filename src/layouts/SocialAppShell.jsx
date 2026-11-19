@@ -181,7 +181,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
               <CenterRefreshOverlay />
               <Suspense fallback={<CenterRouteLoading />}>
                 <SocialContentErrorBoundary key={location.pathname === "/wall" ? "/wall" : `${location.pathname}${location.search}`}>
-                  <Fragment key={location.pathname === "/wall" ? "/wall" : location.key}>{children || <Outlet context={outletContext} />}</Fragment>
+                  <Fragment key={["/seen", "/wall"].includes(location.pathname) ? location.pathname : location.key}>{children || <Outlet context={outletContext} />}</Fragment>
                 </SocialContentErrorBoundary>
               </Suspense>
             </main>

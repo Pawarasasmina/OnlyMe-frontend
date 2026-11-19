@@ -42655,3 +42655,4 @@ html[dir="rtl"] textarea {
 .wall-need-ring { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
 @keyframes wallNeedRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .wall-need-icon { animation: none; } }
+
