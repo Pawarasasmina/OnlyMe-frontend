@@ -14,18 +14,16 @@ function FanMobileNav({ unreadMessageCount = 0 }) {
   return (
     <nav
       aria-label={__msg("fanWeb.mobileFanNavigation")}
-      className="fan-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.05] bg-[#090c0f]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur min-[881px]:hidden"
+      className="fan-mobile-nav fixed z-40 min-[881px]:hidden"
     >
-      <div className="mx-auto grid h-[54px] max-w-md grid-cols-5 items-center gap-1">
+      <div className="fan-mobile-nav-cells">
         {socialMobileNavItems.map((item) => {
           const Icon = item.icon;
 
           return (
             <NavLink
               className={({ isActive }) =>
-                `flex h-[54px] items-center justify-center text-[10px] font-semibold transition ${
-                  isActive ? "text-atseen-blue" : "text-white/35 hover:text-white/70"
-                }`
+                `fan-mobile-nav-cell${isActive ? " is-active" : ""}`
               }
               key={item.to}
               to={item.to}
@@ -38,11 +36,11 @@ function FanMobileNav({ unreadMessageCount = 0 }) {
                         alt={__msg("fanWeb.yourProfile")}
                         className={`border ${isActive ? "border-atseen-blue" : "border-white/35"}`}
                         name={display.name}
-                        size="h-5 w-5"
+                        size="h-7 w-7"
                         src={display.avatar}
                       />
                     ) : (
-                      <Icon aria-hidden="true" className="h-5 w-5" />
+                      <Icon aria-hidden="true" className="h-[26px] w-[26px]" />
                     )}
                     {item.to === "/messages" && unreadMessageCount > 0 ? <span aria-label={__msg("fanWeb.unreadChats", { value0: unreadMessageCount })} className="absolute -right-3 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-atseen-blue px-1 text-[9px] font-black leading-none text-atseen-bg">{unreadMessageCount > 99 ? "99+" : unreadMessageCount}</span> : null}
                   </span>

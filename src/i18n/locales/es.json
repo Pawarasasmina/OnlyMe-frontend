@@ -7280,5 +7280,6 @@
   "creator.paidItemsStayPrivate": "Los artículos de pago serán Solo tú hasta la verificación",
   "creator.sellerInfoTakesAMinute": "Añade una vez los datos del vendedor; solo tardarás un minuto",
   "creator.draftRemainsPrivateUntilSellerReady": "Tu borrador seguirá siendo Solo tú hasta que puedas vender",
-  "creator.setUp": "Configurar"
+  "creator.setUp": "Configurar",
+  "discover.inviteDescription": "Discover crece con personas reales que conoces"
 }

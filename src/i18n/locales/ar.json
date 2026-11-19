@@ -7280,5 +7280,6 @@
   "creator.paidItemsStayPrivate": "تبقى العناصر المدفوعة لك وحدك حتى التحقق",
   "creator.sellerInfoTakesAMinute": "معلومات البائع مرة واحدة — تستغرق دقيقة",
   "creator.draftRemainsPrivateUntilSellerReady": "تبقى مسودتك لك وحدك حتى تتمكن من البيع",
-  "creator.setUp": "الإعداد"
+  "creator.setUp": "الإعداد",
+  "discover.inviteDescription": "ينمو Discover مع الأشخاص الحقيقيين الذين تعرفهم"
 }

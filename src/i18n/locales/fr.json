@@ -7280,5 +7280,6 @@
   "creator.paidItemsStayPrivate": "Les contenus payants restent visibles par vous uniquement jusqu’à la vérification",
   "creator.sellerInfoTakesAMinute": "Ajoutez les informations du vendeur une seule fois — cela prend une minute",
   "creator.draftRemainsPrivateUntilSellerReady": "Votre brouillon reste visible par vous uniquement jusqu’à ce que vous puissiez vendre",
-  "creator.setUp": "Configurer"
+  "creator.setUp": "Configurer",
+  "discover.inviteDescription": "Discover grandit avec les personnes que vous connaissez"
 }

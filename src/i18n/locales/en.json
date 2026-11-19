@@ -7280,5 +7280,6 @@
   "creator.paidItemsStayPrivate": "Paid items stay Only you until Verification",
   "creator.sellerInfoTakesAMinute": "Seller info once — takes a minute",
   "creator.draftRemainsPrivateUntilSellerReady": "Your draft remains Only you until you can sell",
-  "creator.setUp": "Set up"
+  "creator.setUp": "Set up",
+  "discover.inviteDescription": "Discover grows with real people you know"
 }

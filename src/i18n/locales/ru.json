@@ -7280,5 +7280,6 @@
   "creator.paidItemsStayPrivate": "Платные материалы видны только вам до прохождения проверки",
   "creator.sellerInfoTakesAMinute": "Укажите данные продавца один раз — это займёт минуту",
   "creator.draftRemainsPrivateUntilSellerReady": "Ваш черновик виден только вам, пока вы не сможете продавать",
-  "creator.setUp": "Настроить"
+  "creator.setUp": "Настроить",
+  "discover.inviteDescription": "Discover растёт с реальными людьми, которых ты знаешь"
 }

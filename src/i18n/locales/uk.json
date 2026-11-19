@@ -7280,5 +7280,6 @@
   "creator.paidItemsStayPrivate": "Платні матеріали бачите лише ви до проходження перевірки",
   "creator.sellerInfoTakesAMinute": "Укажіть дані продавця один раз — це займе хвилину",
   "creator.draftRemainsPrivateUntilSellerReady": "Вашу чернетку бачите лише ви, доки не зможете продавати",
-  "creator.setUp": "Налаштувати"
+  "creator.setUp": "Налаштувати",
+  "discover.inviteDescription": "Discover зростає зі справжніми людьми, яких ти знаєш"
 }
