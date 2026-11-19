@@ -41723,6 +41723,98 @@ video.seen-reader-media {
   text-overflow: ellipsis;
 }
 
+/* Discover mobile containment: only the story/filter rails may scroll sideways. */
+@media (max-width: 880px) {
+  html,
+  body,
+  #root,
+  .social-app-shell,
+  .social-app-shell .social-app-frame,
+  .social-app-shell .social-center-scroll,
+  .social-app-shell .social-center-scroll > main,
+  .social-app-shell .discover-orb-page,
+  .social-app-shell .discover-orb-main {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  html,
+  body,
+  #root,
+  .social-app-shell,
+  .social-app-shell .social-app-frame,
+  .social-app-shell .social-center-scroll,
+  .social-app-shell .social-center-scroll > main,
+  .social-app-shell .discover-orb-page,
+  .social-app-shell .discover-orb-main {
+    overflow-x: clip;
+  }
+
+  .social-app-shell .discover-friends-strip,
+  .social-app-shell .discover-following-strip,
+  .social-app-shell .discover-orb-filters {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .social-app-shell .discover-orb-grid {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-count: initial;
+    column-gap: 12px;
+    row-gap: 14px;
+  }
+
+  .social-app-shell .discover-orb-card {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+}
+
+/* The center column is a vertical scroller only. Discover owns its horizontal
+   rails; allowing the shell itself to scroll sideways can leave the route
+   restored at a non-zero scrollLeft and clip headings such as Discover. */
+.social-app-shell .social-center-scroll {
+  overflow-x: clip !important;
+}
+
+.social-app-shell .social-center-scroll > main,
+.social-app-shell .discover-orb-page,
+.social-app-shell .discover-orb-main,
+.social-app-shell .discover-recommendation-heading {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.social-app-shell .discover-recommendation-heading {
+  overflow: hidden;
+}
+
+.social-app-shell .discover-recommendation-heading .discover-orb-filters {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.social-app-shell .discover-friends-strip::-webkit-scrollbar,
+.social-app-shell .discover-following-strip::-webkit-scrollbar,
+.social-app-shell .discover-orb-filters::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Discover playback: compact header and Reply / heart / Send. */
 .discover-story-viewer .story-progress-bars { top: 54px; }
 .discover-story-viewer .story-viewer-header { top: 68px; gap: 8px; }
