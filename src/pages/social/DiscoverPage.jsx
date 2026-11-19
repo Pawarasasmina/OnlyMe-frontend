@@ -98,7 +98,9 @@ function DiscoverPage() {
   const activeLocalStoryGroup = localStoryGroupIndex == null ? null : localStoryGroups[localStoryGroupIndex];
   const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])).sort((left, right) => Number(String(right.creator?.status || right.status || "").toLowerCase() === "at seen") - Number(String(left.creator?.status || left.status || "").toLowerCase() === "at seen")), [pages]);
   const followingPeople = useMemo(
-    () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))),
+    () => dedupeByProfile((firstPage.following || []).filter((person) =>
+      String(person?.id || person?._id || "") !== String(viewerId || "") &&
+      person.following !== false && person.isFollowing !== false)),
     [firstPage.following, viewerId],
   );
   const followingStoryPeople = useMemo(
@@ -107,15 +109,16 @@ function DiscoverPage() {
   );
   const suggestedPeople = useMemo(() => {
     const followed = new Set(followingPeople.flatMap(person => [String(person.id || person._id || ""), person.username].filter(Boolean)));
-    return recommendations.map(card => ({
+    const unfollowedPeople = (firstPage.following || []).filter(person => person.following === false || person.isFollowing === false);
+    return dedupeByProfile([...unfollowedPeople, ...recommendations.map(card => ({
       ...card,
       ...card.creator,
       id: card.userId || card.creator?.id || card.creatorId || card.id,
       isFollowing: Boolean(card.actions?.following || card.isFollowing || card.following || card.creator?.following || card.creator?.isFollowing),
-    }))
+    }))])
       .filter(person => String(person.id) !== String(viewerId) && !followed.has(String(person.id)) && !followed.has(person.username) && !person.isFollowing && !person.following && !person.isBlocked && !person.isMuted)
       .slice(0, 10);
-  }, [recommendations, followingPeople, viewerId]);
+  }, [recommendations, followingPeople, firstPage.following, viewerId]);
   const inviteFriend = async () => {
     const url = canonicalShareUrl({ route: user?.username ? `/profile/${encodeURIComponent(user.username)}` : "/welcome" });
     try {

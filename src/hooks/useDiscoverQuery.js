@@ -27,7 +27,7 @@ function updateDiscoverCreator(current, username, updater) {
     return {
       ...slide,
       ...next,
-      creator: slide.creator ? { ...slide.creator, following } : slide.creator,
+      creator: slide.creator ? { ...slide.creator, following, isFollowing: following } : slide.creator,
       actions: slide.actions ? { ...slide.actions, following } : slide.actions,
     };
   };
