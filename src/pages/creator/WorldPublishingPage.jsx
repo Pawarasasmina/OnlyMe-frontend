@@ -1621,7 +1621,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
         <p className="experience-field-label">{__msg("creator.premiumPrice")}</p>
         <div className="experience-premium-price">
-          <div className="experience-premium-price-entry"><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><input aria-label={__msg("creator.oneTimeExperiencePrice")} min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /><small>{__msg("creator.oneTimeUnlockAllChaptersIncludedAfterPurchase")}</small></div>
+          <div className="experience-premium-price-entry"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><input aria-label={__msg("creator.oneTimeExperiencePrice")} min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /><small>{__msg("creator.oneTimeUnlockAllChaptersIncludedAfterPurchase")}</small></div>
           <div className="experience-premium-presets">{[150, 300, 500, 900].map((amount) => <button className={Number(world.pricing?.starsAmount) === amount ? "is-selected" : ""} key={amount} onClick={() => updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } })} type="button">🪙{amount}</button>)}</div>
           <p>≈ ${(Number(world.pricing?.starsAmount || 190) * .068).toFixed(2)} {__msg("messages.toYou")}</p>
         </div>
@@ -1792,8 +1792,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <p className="experience-preview-note">{__msg("creator.everyChapterUnlocksAfterTheOneTimePurchase")}</p>
 
         <p className="experience-field-label">{__msg("creator.price")}</p>
-        <div className="experience-price-input"><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><input min="10" onChange={(event) => { const price = Math.max(10, Number(event.target.value) || 10); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${price}`, starsAmount: price } }); }} placeholder={__msg("creator.priceInCoins")} type="number" value={world.pricing?.starsAmount || 190} /></div>
-        <p className="experience-price-hint">{__msg("creator.suggested")} <strong><img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />190–500</strong> {__msg("creator.basedOnSimilarExperiences")}</p>
+        <div className="experience-price-input"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><input min="10" onChange={(event) => { const price = Math.max(10, Number(event.target.value) || 10); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${price}`, starsAmount: price } }); }} placeholder={__msg("creator.priceInCoins")} type="number" value={world.pricing?.starsAmount || 190} /></div>
+        <p className="experience-price-hint">{__msg("creator.suggested")} <strong><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />190–500</strong> {__msg("creator.basedOnSimilarExperiences")}</p>
         <label className="experience-world-toggle"><span><strong>{__msg("creator.includeInMyWorld")}</strong><small>{__msg("creator.optionalAccessForActiveWorldMembersThisExperienceRemains")}</small></span><input checked={Boolean(world.includedInWorld)} onChange={(event) => updateWorld({ includedInWorld: event.target.checked })} type="checkbox" /></label>
         {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
         <div className="experience-create-actions"><button disabled={saving} onClick={saveDraft} type="button">{saving ? __msg("financial.saving") : __msg("publication.saveDraft")}</button><button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button">{submitting ? __msg("creator.publishing_74f811") : __msg("posts.publish")}</button></div>
@@ -1837,8 +1837,8 @@ export default function WorldPublishingPage({ experience = false, publicationId 
 
       {paidWorldRestricted ? <aside className="world-seller-readiness" role="note">
         <FiLock aria-hidden="true" />
-        <span><b>{monetization.sellerReady ? __msg("social.verification") : __msg("system.SellerVerificationPage.f730c577bc")}</b><small>{monetization.sellerReady ? __msg("Paid items stay Only you until Verification") : __msg("Seller info once — takes a minute")}</small><em>{__msg("Your draft remains Only you until you can sell")}</em></span>
-        <button onClick={() => nav("/settings/monetization", { state: { returnTo: window.location.pathname } })} type="button">{__msg("Set up")}</button>
+        <span><b>{monetization.sellerReady ? __msg("social.verification") : __msg("system.SellerVerificationPage.f730c577bc")}</b><small>{monetization.sellerReady ? __msg("creator.paidItemsStayPrivate") : __msg("creator.sellerInfoTakesAMinute")}</small><em>{__msg("creator.draftRemainsPrivateUntilSellerReady")}</em></span>
+        <button onClick={() => nav("/settings/monetization", { state: { returnTo: window.location.pathname } })} type="button">{__msg("creator.setUp")}</button>
       </aside> : null}
 
       {!experience ? (

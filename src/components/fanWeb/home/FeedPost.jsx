@@ -1278,7 +1278,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("admin.edit"), subtitle: __msg("wallEdit.menuRemaining", { minutes: Math.max(1, Math.ceil((new Date(normalized.editUntil || new Date(normalized.publishedAt || normalized.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }), icon: FiEdit2 }] : []),
+              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("profile.edit"), subtitle: __msg("wallEdit.menuRemaining", { minutes: Math.max(1, Math.ceil((new Date(normalized.editUntil || new Date(normalized.publishedAt || normalized.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }), icon: FiEdit2 }] : []),
               ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? __msg("fanWeb.reopen") : closeLabels.action, subtitle: resolvedAt ? __msg("fanWeb.backAmongActivePosts") : __msg("fanWeb.staysVisibleWithItsCommentsAndReplies"), icon: FiCheck }] : []),
               { key: "story", label: __msg("activity.addToYourStory"), subtitle: __msg("system.FeedPost.1acf81ee86"), icon: FiPlusCircle },
               { key: "repost", label: shared ? __msg("fan.removeFromProfile") : __msg("fanWeb.repostToMyProfile"), subtitle: shared ? __msg("fanWeb.takeItOffYourShowcase") : __msg("fanWeb.yourProfileYourListAddAsManyAsYou"), icon: FiRepeat },

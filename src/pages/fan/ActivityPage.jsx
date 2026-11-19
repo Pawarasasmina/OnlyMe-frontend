@@ -755,7 +755,7 @@ function FirstWeekNudge({ nudge, onOpen }) {
   __useUiLanguage();
   return <article className="activity-first-week-card">
     <span className="activity-first-week-mark"><ActivityEyeMark /></span>
-    <div><small>{__msg("Your first week")} · {__msg("Day")} {nudge.day}</small><b>{__msg(nudge.title)}</b><p>{__msg(nudge.copy)}</p></div>
+    <div><small>{__msg("settings.yourFirstWeek")} · {__msg("activity.day")} {nudge.day}</small><b>{__msg(nudge.title)}</b><p>{__msg(nudge.copy)}</p></div>
     <button onClick={() => onOpen(nudge.to)} type="button">{__msg(nudge.action)} <FiChevronRight /></button>
   </article>;
 }

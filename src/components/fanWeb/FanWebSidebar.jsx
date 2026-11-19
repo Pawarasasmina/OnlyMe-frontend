@@ -7,17 +7,15 @@ import FanAvatar from "./shared/FanAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { getUserDisplay } from "./shared/userDisplay";
 import { socialPrimaryNavItems } from "../social/socialNavItems";
-import { useLanguage } from "../../hooks/useLanguage";
 import { FiPlus } from "react-icons/fi";
 
 function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0, unreadMessageCount = 0 }) {
   __useUiLanguage();
   const { user } = useAuth();
-  const { t } = useLanguage();
   const location = useLocation();
   const display = getUserDisplay(user, status);
   const createAction = capabilities.canCreate ? { label: __msg("fanWeb.create_66eee2"), onClick: onCreate } : null;
-  const createLabel = createAction ? t(createAction.label).replace(/\s*[✦↓]\s*$/u, "") : "";
+  const createLabel = createAction ? createAction.label.replace(/\s*[✦↓]\s*$/u, "") : "";
 
   return (
     <aside className="social-fixed-rail social-left-rail fan-web-sidebar sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/[0.05] px-[18px] pb-[22px] pt-[30px] min-[881px]:flex">
@@ -57,7 +55,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
             </span>
 
             <span className="flex min-w-0 items-center gap-2">
-              <span className="truncate">{t(item.label)}</span>
+              <span className="truncate">{item.label}</span>
               {item.to === "/messages" && unreadMessageCount > 0 ? (
                 <span aria-label={__msg("fanWeb.unreadChats", { value0: unreadMessageCount })} className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-atseen-blue px-1.5 text-[10px] font-black text-atseen-bg">
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
@@ -88,7 +86,7 @@ function FanWebSidebar({ capabilities, onCreate, status, unreadActivityCount = 0
           <FanAvatar name={display.name} size="h-10 w-10" src={display.avatar} />
           <span className="fan-sidebar-user-copy min-w-0">
             <strong dir="auto" className="block truncate">{display.name}</strong>
-            <small className="mt-0.5 block truncate">{t("Your space")}</small>
+            <small className="mt-0.5 block truncate">{__msg("Your space")}</small>
           </span>
         </NavLink>
       </div>

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { activateLanguage, catalogs, formatCurrency, formatDate, formatNumber, formatRelative, getLanguage, loadLanguage, msg, systemMessage } from "./runtime.js";
 import { localizedValidationErrors } from "./errors.js";
+import { socialMobileNavItems } from "../components/social/socialNavItems.js";
 
 test("all eight locale chunks contain every registered English key", async () => {
   await Promise.all(["ar", "ru", "uk", "es", "pt", "fr", "de"].map(loadLanguage));
@@ -9,6 +10,18 @@ test("all eight locale chunks contain every registered English key", async () =>
   for (const [locale, messages] of Object.entries(catalogs)) {
     assert.deepEqual(Object.keys(messages).sort(), registered, locale);
   }
+});
+
+test("mobile navigation keeps all five routes in every language", async () => {
+  const expected = ["/seen", "/discover", "/wall", "/messages", "/profile"];
+  for (const locale of ["en", "ar", "ru", "uk", "es", "pt", "fr", "de"]) {
+    await loadLanguage(locale);
+    activateLanguage(locale);
+    assert.deepEqual(socialMobileNavItems.map(item => item.to), expected, locale);
+    assert.equal(socialMobileNavItems.length, 5, locale);
+    assert.ok(socialMobileNavItems.every(item => item.label && item.label !== "Text unavailable"), locale);
+  }
+  activateLanguage("en");
 });
 
 test("ICU interpolation, gender, Arabic and Slavic plurals preserve names", () => {

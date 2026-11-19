@@ -3,3 +3,7 @@ html[lang=ar]{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Ari
 [dir=auto],bdi{unicode-bidi:isolate}
 input[type=email],input[type=url],input[type=tel],code,pre{direction:ltr;unicode-bidi:isolate}
 .language-sheet,.settings-index-row-copy,.social-center-scroll{overflow-wrap:anywhere}
+
+/* Language changes must not resize, mirror, or offset the fixed mobile bar. */
+.fan-mobile-nav{box-sizing:border-box;width:100%;max-width:100vw;direction:ltr;overflow:hidden}
+.fan-mobile-nav>div,.fan-mobile-nav a{min-width:0}

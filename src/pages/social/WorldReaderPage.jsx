@@ -1218,7 +1218,7 @@ function LegacyWorldShareSheet({ onClose, publication, viewerId }) {
           <div className="world-share-actions">
             <WorldShareAction label={__msg("activity.story")} onClick={shareToStory}><FiPlusCircle /></WorldShareAction>
             <WorldShareAction label={copied ? __msg("creator.copied") : __msg("profile.copyLink")} onClick={copy}>{copied ? <FiCheck /> : <FiCopy />}</WorldShareAction>
-            <WorldShareAction label="WhatsApp" onClick={shareWhatsApp}><FaWhatsapp /></WorldShareAction>
+            <WorldShareAction label={__msg("share.whatsapp")} onClick={shareWhatsApp}><FaWhatsapp /></WorldShareAction>
             <WorldShareAction label={__msg("social.snapchat")} onClick={shareSnapchat}><FaSnapchatGhost /></WorldShareAction>
             <WorldShareAction label={__msg("discover.more")} onClick={more}><FiMoreHorizontal /></WorldShareAction>
           </div>
@@ -1462,11 +1462,11 @@ function WorldInsideComments({ noteOwner, engagement, mutationBusy, onCommentRea
     <div className="world-inside-detail__comment-list">{comments.map((item) => renderComment(item))}</div>
     {menuTarget ? <BottomSheet labelledBy="world-comment-options-title" onClose={() => setMenuTarget(null)} sheetClassName="world-comment-options-sheet">
       <header className="world-comment-options-head">
-        <div><h2 id="world-comment-options-title">Comment options</h2><p>{menuTarget.author?.name || menuTarget.author?.username || "Comment"}</p></div>
-        <button aria-label="Close comment options" onClick={() => setMenuTarget(null)} type="button"><FiX /></button>
+        <div><h2 id="world-comment-options-title">{__msg("system.FeedPost.dc57782ca4")}</h2><p>{menuTarget.author?.name || menuTarget.author?.username || "Comment"}</p></div>
+        <button aria-label={__msg("system.FeedPost.f5508161f2")} onClick={() => setMenuTarget(null)} type="button"><FiX /></button>
       </header>
       <button className="world-comment-delete-option" disabled={mutationBusy === menuTarget.id} onClick={() => { const target = menuTarget; setMenuTarget(null); onRemove(target); }} type="button">
-        <FiTrash2 /><span><b>Delete comment</b><small>This removes the comment and its replies.</small></span>
+        <FiTrash2 /><span><b>{__msg("social.deleteComment")}</b><small>This removes the comment and its replies.</small></span>
       </button>
     </BottomSheet> : null}
   </>;

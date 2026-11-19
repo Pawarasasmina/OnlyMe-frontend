@@ -1,16 +1,16 @@
 {
   "locales": {
     "en": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [],
       "unexpectedEnglish": []
     },
     "ar": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -39,12 +39,20 @@
           "source": "Ethan Brooks"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "admin.ctr",
           "source": "CTR"
         },
         {
           "key": "admin.text",
           "source": "'{{firstName}}'"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
         },
         {
           "key": "fan.directAccess",
@@ -79,6 +87,10 @@
           "source": "Max"
         },
         {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
           "key": "settings.espaOl",
           "source": "Español"
         },
@@ -145,13 +157,82 @@
         {
           "key": "verification.value0Kb",
           "source": "{value0} KB"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     },
     "ru": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -176,8 +257,16 @@
           "source": "Ethan Brooks"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "admin.text",
           "source": "'{{firstName}}'"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
         },
         {
           "key": "social.snapchat",
@@ -204,6 +293,10 @@
           "source": "Max"
         },
         {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
           "key": "settings.espaOl",
           "source": "Español"
         },
@@ -270,13 +363,82 @@
         {
           "key": "verification.value0Kb",
           "source": "{value0} KB"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     },
     "uk": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -305,8 +467,16 @@
           "source": "Ethan Brooks"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "admin.text",
           "source": "'{{firstName}}'"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
         },
         {
           "key": "fan.directAccess",
@@ -341,6 +511,10 @@
           "source": "Max"
         },
         {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
           "key": "settings.espaOl",
           "source": "Español"
         },
@@ -407,16 +581,89 @@
         {
           "key": "verification.value0Kb",
           "source": "{value0} KB"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     },
     "es": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
+        {
+          "key": "wallGrid.feed",
+          "source": "Feed"
+        },
         {
           "key": "admin.mb",
           "source": " · {value0} MB"
@@ -458,6 +705,10 @@
           "source": "Popular"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "admin.total",
           "source": "Total"
         },
@@ -488,6 +739,10 @@
         {
           "key": "fan.fitness",
           "source": "Fitness"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
         },
         {
           "key": "fan.directAccess",
@@ -532,6 +787,10 @@
         {
           "key": "creator.max",
           "source": "Max"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
         },
         {
           "key": "settings.espaOl",
@@ -636,16 +895,93 @@
         {
           "key": "system.label.idea",
           "source": "Idea"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "wallGrid.feed",
+          "source": "Feed"
+        },
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     },
     "pt": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
+        {
+          "key": "wallGrid.feed",
+          "source": "Feed"
+        },
         {
           "key": "discover.online",
           "source": "Online"
@@ -691,6 +1027,10 @@
           "source": "Popular"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "admin.total",
           "source": "Total"
         },
@@ -717,6 +1057,10 @@
         {
           "key": "fan.fitness",
           "source": "Fitness"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
         },
         {
           "key": "fan.directAccess",
@@ -753,6 +1097,10 @@
         {
           "key": "fan.offline",
           "source": "Offline"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
         },
         {
           "key": "settings.espaOl",
@@ -845,13 +1193,86 @@
         {
           "key": "verification.value0Kb",
           "source": "{value0} KB"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "wallGrid.feed",
+          "source": "Feed"
+        },
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     },
     "fr": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -972,6 +1393,10 @@
           "source": "Communication"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "layouts.studio",
           "source": "Studio"
         },
@@ -1052,6 +1477,10 @@
           "source": "Shopping"
         },
         {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
           "key": "fan.directAccess",
           "source": "✦ Direct Access"
         },
@@ -1130,6 +1559,10 @@
         {
           "key": "creator.max",
           "source": "Max"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
         },
         {
           "key": "settings.espaOl",
@@ -1314,16 +1747,89 @@
         {
           "key": "system.label.bug",
           "source": "Bug"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     },
     "de": {
-      "keys": 7178,
-      "required": 7178,
+      "keys": 7282,
+      "required": 7282,
       "missing": [],
       "invalid": [],
       "identical": [
+        {
+          "key": "wallGrid.feed",
+          "source": "Feed"
+        },
         {
           "key": "admin.optional",
           "source": "(optional)"
@@ -1429,6 +1935,10 @@
           "source": "Wellness"
         },
         {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
           "key": "layouts.administrator",
           "source": "Administrator"
         },
@@ -1483,6 +1993,10 @@
         {
           "key": "fan.fitness",
           "source": "Fitness"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
         },
         {
           "key": "fan.directAccess",
@@ -1543,6 +2057,10 @@
         {
           "key": "fan.offline",
           "source": "Offline"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
         },
         {
           "key": "settings.espaOl",
@@ -1723,13 +2241,86 @@
         {
           "key": "statusPresets.value0Tennis",
           "source": "{value0} Tennis?"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
         }
       ],
-      "unexpectedEnglish": []
+      "unexpectedEnglish": [
+        {
+          "key": "wallGrid.feed",
+          "source": "Feed"
+        },
+        {
+          "key": "layouts.onlymeAdminConsole",
+          "source": "ATSEEN admin console"
+        },
+        {
+          "key": "fan.sharedAnOnlymePost",
+          "source": "Shared an @seen post"
+        },
+        {
+          "key": "fan.onlymeCreator",
+          "source": "@seen creator"
+        },
+        {
+          "key": "wallPublishing.reviewSubmitted",
+          "source": "Note submitted for review. You can check its status on your profile."
+        },
+        {
+          "key": "wallPublishing.underReview",
+          "source": "Under review ? only you can see this note."
+        },
+        {
+          "key": "wallPublishing.notApproved",
+          "source": "Not approved ? this note is not visible to others."
+        },
+        {
+          "key": "wallEdit.expired",
+          "source": "The 15-minute edit window has ended."
+        },
+        {
+          "key": "wallEdit.edited",
+          "source": "edited"
+        },
+        {
+          "key": "wallFreshness.outdatedQuestion",
+          "source": "Outdated?"
+        },
+        {
+          "key": "wallFreshness.feedbackSent",
+          "source": "Thanks. We'll ask the author to check this recommendation."
+        }
+      ]
     }
   },
   "source": {
-    "modules": 489,
+    "modules": 525,
     "routeDeclarations": 136,
     "routes": [
       "/explore",
@@ -1870,11 +2461,487 @@
       "*"
     ],
     "unregistered": [],
-    "rawJsx": []
+    "rawJsx": [
+      {
+        "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
+        "line": 1155,
+        "text": "This removes the comment and its replies."
+      },
+      {
+        "file": "src\\components\\messaging\\VoiceRecorder.jsx",
+        "line": 162,
+        "text": "Tap to record · up to 60s"
+      },
+      {
+        "file": "src\\components\\messaging\\VoiceRecorder.jsx",
+        "line": 169,
+        "text": "Voice keeps it human — fans hear you."
+      },
+      {
+        "file": "src\\components\\profile\\ProfileDream.jsx",
+        "line": 418,
+        "text": "Not enough coins for this gift."
+      },
+      {
+        "file": "src\\components\\share\\TicketChatCard.jsx",
+        "line": 22,
+        "text": "atseen.com"
+      },
+      {
+        "file": "src\\layouts\\AdminLayout.jsx",
+        "line": 45,
+        "text": "Security & 2FA"
+      },
+      {
+        "file": "src\\layouts\\AdminLayout.jsx",
+        "line": 53,
+        "text": "READ-ONLY TEST"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
+        "line": 231,
+        "text": "Platform intelligence"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
+        "line": 231,
+        "text": "Aggregate platform trends and performance. Individual moderation complaints are managed under Trust & Safety reports."
+      },
+      {
+        "file": "src\\pages\\admin\\AdminDashboard.jsx",
+        "line": 33,
+        "text": "Current operational totals, safety queues, account environments, and priority actions."
+      },
+      {
+        "file": "src\\pages\\admin\\AdminDashboard.jsx",
+        "line": 33,
+        "text": "Live database · all current accounts"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminDashboard.jsx",
+        "line": 36,
+        "text": "Account environment"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminDashboard.jsx",
+        "line": 36,
+        "text": "Headline totals include every current database account. This split shows exactly how much comes from production, controlled seed data, and QA automation."
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 47,
+        "text": "Two-factor authentication is enabled"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 47,
+        "text": "Your password and a current authenticator code protect this admin account when you sign in."
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 49,
+        "text": "Turn off 2FA"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 52,
+        "text": "Turn off two-factor authentication?"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 53,
+        "text": "The saved authenticator will be removed and all active sessions will be revoked. You can enroll a new authenticator later."
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 54,
+        "text": "Authenticator code"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 62,
+        "text": "Admin security"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "text": "Scan this QR code"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "text": "Enter key manually"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 99,
+        "text": "Read-only test"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 100,
+        "text": "Remove / turn off 2FA"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 100,
+        "text": "Add new 2FA"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 100,
+        "text": "Delete test account"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 104,
+        "text": "Role-wide 2FA control"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 104,
+        "text": "Apply a security reset to every account in a role. Existing authenticator secrets are permanently removed and sessions are revoked."
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 104,
+        "text": "Turn off all"
+      },
+      {
+        "file": "src\\pages\\admin\\AdminStaffPage.jsx",
+        "line": 104,
+        "text": "Require new setup"
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 30,
+        "text": "Review queue"
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 30,
+        "text": "applications in this view"
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 31,
+        "text": "Applications could not be loaded."
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 31,
+        "text": "Queue is clear"
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 36,
+        "text": "Back to queue"
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 36,
+        "text": "Review sensitive payout information carefully before deciding."
+      },
+      {
+        "file": "src\\pages\\admin\\BankReviewPage.jsx",
+        "line": 36,
+        "text": "This application has already been reviewed."
+      },
+      {
+        "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+        "line": 50,
+        "text": "Set the Stars exchange value and web purchase tax. Users manage their own top-ups from their Wallet."
+      },
+      {
+        "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+        "line": 53,
+        "text": "Unable to load financial settings."
+      },
+      {
+        "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+        "line": 60,
+        "text": "Stars value"
+      },
+      {
+        "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+        "line": 61,
+        "text": "Number of Stars users receive for each US dollar."
+      },
+      {
+        "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+        "line": 68,
+        "text": "Web purchase tax"
+      },
+      {
+        "file": "src\\pages\\admin\\FinancialAdminPage.jsx",
+        "line": 69,
+        "text": "Tax percentage applied when users purchase Stars on the web."
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 37,
+        "text": "Send animation preview"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 87,
+        "text": "Gift animation"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 87,
+        "text": "Choose its idle motion and the scene fans see when it is sent."
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 89,
+        "text": "Idle motion"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 90,
+        "text": "Send scene"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 91,
+        "text": "Cinematic style"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 92,
+        "text": "Object movement"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 94,
+        "text": "Light sweep"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 94,
+        "text": "Halo"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 100,
+        "text": "How these controls work"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 100,
+        "text": "Idle motion, light sweep and halo affect the gift wherever it is displayed. Send scene, cinematic style and object movement affect the full-screen moment after sending or replaying the gift."
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 117,
+        "text": "Drag categories into the order fans should see in the gift picker."
+      },
+      {
+        "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+        "line": 68,
+        "text": "Tune what people see, how behavior affects ranking, and how varied each delivery batch feels. Changes stay in draft until activated."
+      },
+      {
+        "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+        "line": 68,
+        "text": "Unsaved changes"
+      },
+      {
+        "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+        "line": 70,
+        "text": "Set the balance of personalized, related, and discovery content. Every surface must total 100%."
+      },
+      {
+        "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+        "line": 70,
+        "text": "Feed composition"
+      },
+      {
+        "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+        "line": 71,
+        "text": "Positive signals promote similar content; negative signals reduce it."
+      },
+      {
+        "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
+        "line": 71,
+        "text": "Control batch size, variety, repetition, and freshness."
+      },
+      {
+        "file": "src\\pages\\creator\\CreatorStudio.jsx",
+        "line": 493,
+        "text": "Your Seens were shared"
+      },
+      {
+        "file": "src\\pages\\creator\\CreatorStudio.jsx",
+        "line": 493,
+        "text": "times this week."
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 733,
+        "text": "captured ·"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2078,
+        "text": "Message ·"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2166,
+        "text": "Direct Access ended"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2170,
+        "text": "Direct Access ·"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2204,
+        "text": "This story expired or was removed"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2266,
+        "text": "Window ended · ask"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2266,
+        "text": "a question — they see it free, replying opens a new window"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2274,
+        "text": "asked you a question"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2274,
+        "text": "Your window with"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2274,
+        "text": "has ended"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2274,
+        "text": "New window ·"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2274,
+        "text": "Reading the thread is always free"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2297,
+        "text": "Priority message"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2297,
+        "text": "· Direct Access — guaranteed answer ›"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2319,
+        "text": "World members get priority replies"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2321,
+        "text": "RECENT PRIVATE REPLIES"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2323,
+        "text": "How did you start when you had…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2323,
+        "text": "Honestly? The first month I was terrified, but…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2324,
+        "text": "What would you tell someone who…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2324,
+        "text": "Stop waiting for the perfect moment and…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2327,
+        "text": "replies within"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2327,
+        "text": "98% warm calls"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2327,
+        "text": "48h or refund"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2334,
+        "text": "Answer · New window"
+      },
+      {
+        "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
+        "line": 172,
+        "text": "Views and shares are always silent — never a notification."
+      },
+      {
+        "file": "src\\pages\\settings\\ProfileSettingsPage.jsx",
+        "line": 317,
+        "text": "collections on · The Vault is where legends live"
+      },
+      {
+        "file": "src\\pages\\social\\SeenFeedPage.jsx",
+        "line": 802,
+        "text": "No comments yet"
+      },
+      {
+        "file": "src\\pages\\social\\SeenFeedPage.jsx",
+        "line": 802,
+        "text": "Start the conversation."
+      },
+      {
+        "file": "src\\pages\\social\\SeenReaderPage.jsx",
+        "line": 272,
+        "text": "No comments yet"
+      },
+      {
+        "file": "src\\pages\\social\\SeenReaderPage.jsx",
+        "line": 272,
+        "text": "Start the conversation."
+      },
+      {
+        "file": "src\\pages\\social\\WorldReaderPage.jsx",
+        "line": 358,
+        "text": "Memberships aren’t available yet"
+      },
+      {
+        "file": "src\\pages\\social\\WorldReaderPage.jsx",
+        "line": 1469,
+        "text": "This removes the comment and its replies."
+      }
+    ]
   },
   "references": {
-    "html": true,
-    "oct17": true,
-    "oct20": true
+    "html": false,
+    "oct17": false,
+    "oct20": false
   }
 }

@@ -7270,7 +7270,15 @@
   "wallEdit.noChanges": "No changes",
   "wallEdit.expired": "The 15-minute edit window has ended.",
   "wallEdit.saved": "Saved ✓",
+  "settings.payoutsReady": "payouts ready",
+  "settings.setUpPayouts": "set up payouts",
   "wallEdit.edited": "edited",
   "wallFreshness.outdatedQuestion": "Outdated?",
-  "wallFreshness.feedbackSent": "Thanks. We'll ask the author to check this recommendation."
+  "wallFreshness.feedbackSent": "Thanks. We'll ask the author to check this recommendation.",
+  "profile.spokenLanguage": "Spoken language",
+  "activity.day": "Day",
+  "creator.paidItemsStayPrivate": "Paid items stay Only you until Verification",
+  "creator.sellerInfoTakesAMinute": "Seller info once — takes a minute",
+  "creator.draftRemainsPrivateUntilSellerReady": "Your draft remains Only you until you can sell",
+  "creator.setUp": "Set up"
 }
