@@ -1,6 +1,6 @@
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
-import { msg as __msg } from "../../i18n/runtime.js";
+import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useMemo, useState } from "react";
 import { SeenNavIcon } from "../social/socialNavItems";
@@ -54,7 +54,7 @@ function DiscoverMasonryCard({ card, index = 0, onOpen }) {
       {live ? <span className="discover-orb-live-dot" aria-label={__msg("discover.atSeenRightNow")} /> : null}
       <span className="discover-orb-card-copy">
         <strong><span>{firstName}</span>{world ? <WorldMark /> : null}</strong>
-        <small>{[category, place].filter(Boolean).join(" · ")}</small>
+        <small>{[category ? __systemMessage(category) : "", place].filter(Boolean).join(" · ")}</small>
         <em>{recommendationReason(card)}</em>
         {seen?.title ? <span className="discover-orb-doing"><SeenNavIcon aria-hidden="true" /><span dir="auto">{seen.title}</span></span> : world ? <span className="discover-orb-doing">{__msg("admin.world")}{members != null ? __msg("discover.members_079fce", { value0: Number(members).toLocaleString(__uiLocale()) }) : ""}</span> : null}
       </span>

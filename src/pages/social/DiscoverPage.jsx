@@ -1,5 +1,5 @@
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
-import { msg as __msg } from "../../i18n/runtime.js";
+import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FiChevronRight, FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
@@ -325,18 +325,21 @@ function DiscoverPage() {
 
             <DiscoverPeopleSections
               friends={followingPeople}
-              friendSectionTitle="Following"
+              friendSectionTitle={__msg("activity.following")}
               following={[]}
               onOpenFollowingStories={openPersonStories}
               onOpenFriendStories={openPersonStories}
             />
 
             {localTonight ? (
-              <button aria-label={`Watch ${localTonight.title} stories`} className="discover-dubai-today" onClick={openLocalStories} type="button">
+              <button aria-label={__msg("discover.viewSStory", { value0: localTonight.city })} className="discover-dubai-today" onClick={openLocalStories} type="button">
                 <span className="discover-dubai-avatars" aria-hidden="true">
                   {(localTonight.avatars || []).map((person) => <FanAvatar key={person.id} name={person.name} size="h-10 w-10" src={person.avatar} />)}
                 </span>
-                <span className="discover-dubai-copy"><strong><i />{localTonight.title}</strong><small>{localTonight.subtitle}</small></span>
+                <span className="discover-dubai-copy">
+                  <strong><i />{localTonight.city} {__msg("orbit.today")}</strong>
+                  <small>{localTonight.storyGroups?.reduce((count, group) => count + (group.stories?.length || 0), 0) || 0} {__msg("profile.stories")} · {__msg("orbit.today")}</small>
+                </span>
                 <FiChevronRight aria-hidden="true" />
               </button>
             ) : null}
@@ -355,7 +358,7 @@ function DiscoverPage() {
                     {filter.label}
                   </button>
                 ))}
-                {topicChips.map((topic) => <button aria-pressed={activeTopic === topic.id} className={`discover-orb-chip ${activeTopic === topic.id ? "is-selected" : ""}`} key={topic.id} onClick={() => changeTopic(topic.id)} type="button">{topic.label}</button>)}
+                {topicChips.map((topic) => <button aria-pressed={activeTopic === topic.id} className={`discover-orb-chip ${activeTopic === topic.id ? "is-selected" : ""}`} key={topic.id} onClick={() => changeTopic(topic.id)} type="button">{__systemMessage(topic.label)}</button>)}
               </div>
             </div>
 

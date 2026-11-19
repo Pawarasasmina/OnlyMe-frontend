@@ -1,6 +1,6 @@
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
-import { msg as __msg } from "../../i18n/runtime.js";
+import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
@@ -69,7 +69,7 @@ function SuggestedForYou({ disabled, onFollowToggle, people = [] }) {
                 {person.displayName || person.name || person.username}
                 {person.isVerified ? <VerifiedBadge /> : null}
               </strong>
-              <small>{person.recommendationReason || [person.category, person.city || person.country].filter(Boolean).join(" \u00b7 ") || `@${person.username}`}</small>
+              <small>{person.recommendationReason ? __systemMessage(person.recommendationReason) : [person.category ? __systemMessage(person.category) : "", person.city || person.country].filter(Boolean).join(" \u00b7 ") || `@${person.username}`}</small>
             </span>
             <DiscoverFollowButton disabled={disabled} onToggle={onFollowToggle} person={person} />
           </Link>
@@ -127,7 +127,13 @@ function DiscoverRailFooter() {
   return (
     <footer className="discover-rail-footer" aria-label={__msg("discover.discoverLinks")}>
       <nav aria-label={__msg("discover.aboutSeen")}>
-        {["About", "Creators", "Terms", "Privacy", "Help"].map((item) => <span key={item}>{item}</span>)}
+        {[
+          ["about", __msg("settings.about")],
+          ["creators", __msg("admin.creators")],
+          ["terms", __msg("system.LoginPage.a55a275aa6")],
+          ["privacy", __msg("settings.privacy")],
+          ["help", __msg("profile.help")],
+        ].map(([key, label]) => <span key={key}>{label}</span>)}
       </nav>
       <p>{__msg("discover.seenWeSeeYouEveryDay")}</p>
     </footer>

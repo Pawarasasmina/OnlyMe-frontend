@@ -61,7 +61,14 @@ const inboxTime = (value) => {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  return date.toLocaleDateString(__uiLocale(), { month: "short", day: "numeric" });
+};
+
+const localizedInboxBody = (body) => {
+  const value = String(body || "");
+  const storyReaction = value.match(/^Reacted\s+(.+?)\s+to your story$/i);
+  if (storyReaction) return `${storyReaction[1]} ${__msg("fan.reactedToYourValue0", { value0: __msg("activity.story") })}`;
+  return __systemMessage(value);
 };
 
 const directWindowParticipant = (windowItem, viewerId) => (
@@ -2028,7 +2035,7 @@ export default function MessagesPage() {
         </header>
         <div className="mx-3 flex items-center gap-3 sm:mx-5">
           <nav aria-label={__msg("Message inbox tabs")} className="grid min-w-0 flex-1 grid-cols-3 rounded-xl border border-atseen-line bg-atseen-surface p-1">
-            {([{ id: "all", label: __msg("All") }, { id: "requests", label: __msg("Requests") }, { id: "direct", label: __msg("Direct Access") }]).map((tab) => {
+            {([{ id: "all", label: __msg("All") }, { id: "requests", label: __msg("Requests") }, { id: "direct", label: __msg("language.directAccess") }]).map((tab) => {
               const count = tab.id === "requests"
                 ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
                 : tab.id === "direct"
@@ -2100,7 +2107,7 @@ export default function MessagesPage() {
             const isGroup = conversation.type === "group";
             const rowPerson = isGroup ? { displayName: conversation.name, avatarUrl: conversation.avatarUrl } : conversation.participant;
             const last = conversation.lastMessage;
-            const subtitle = !last ? __msg("No messages yet") : last.deletedAt ? last.senderId === myId ? __msg("You deleted this message") : __msg("This message was deleted") : `${last.senderId === myId ? `${__msg("You")}: ` : isGroup && last.sender?.displayName ? `${last.sender.displayName.split(" ")[0]}: ` : ""}${__systemMessage(last.body)}`;
+            const subtitle = !last ? __msg("No messages yet") : last.deletedAt ? last.senderId === myId ? __msg("You deleted this message") : __msg("This message was deleted") : `${last.senderId === myId ? `${__msg("You")}: ` : isGroup && last.sender?.displayName ? `${last.sender.displayName.split(" ")[0]}: ` : ""}${localizedInboxBody(last.body)}`;
             const requestPending = conversation.status === "REQUEST";
             return <div className={`relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-3.5 pl-2 pr-3 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button"><Identity compact person={rowPerson} presence={isGroup ? null : presence[conversation.id]} subtitle={subtitle} /><span className="ml-auto flex max-w-[95px] flex-col items-end gap-1"><span className="message-inbox-time text-[10px] text-atseen-muted">{inboxTime(last?.createdAt)}</span>{requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">{__msg("fan.pending")}</span> : conversation.unreadCount ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-atseen-blue px-1 text-[10px] font-black text-atseen-bg">{conversation.unreadCount}</span> : null}</span></button>
