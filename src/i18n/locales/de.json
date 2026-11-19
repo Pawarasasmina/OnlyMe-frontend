@@ -7285,5 +7285,10 @@
   "creator.setUp": "Einrichten",
   "discover.inviteDescription": "Discover wächst mit echten Menschen, die du kennst"
   ,"profile.everythingCreatorSharesMonthly": "Alles, was {value0} teilt, monatlich",
-  "profile.now": "jetzt"
+  "profile.now": "jetzt",
+  "discover.seenSavedCount": "Seen {count}-mal gespeichert",
+  "discover.followedByName": "Gefolgt von {name}",
+  "discover.signalSeen": "Gesehen",
+  "discover.onlyPersonSees": "nur {name} sieht das",
+  "discover.bothWalked": "Ihr habt beide „{title}“ durchlaufen"
 }

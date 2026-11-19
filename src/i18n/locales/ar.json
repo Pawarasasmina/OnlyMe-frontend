@@ -7285,5 +7285,10 @@
   "creator.setUp": "الإعداد",
   "discover.inviteDescription": "ينمو Discover مع الأشخاص الحقيقيين الذين تعرفهم"
   ,"profile.everythingCreatorSharesMonthly": "كل ما يشاركه {value0}، شهريًا",
-  "profile.now": "الآن"
+  "profile.now": "الآن",
+  "discover.seenSavedCount": "تم حفظ Seen ‏{count} مرة",
+  "discover.followedByName": "يتابعه {name}",
+  "discover.signalSeen": "تمت رؤيته",
+  "discover.onlyPersonSees": "لا يرى هذا سوى {name}",
+  "discover.bothWalked": "أكملتما معًا «{title}»"
 }
