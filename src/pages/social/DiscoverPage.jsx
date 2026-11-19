@@ -107,7 +107,12 @@ function DiscoverPage() {
   );
   const suggestedPeople = useMemo(() => {
     const followed = new Set(followingPeople.flatMap(person => [String(person.id || person._id || ""), person.username].filter(Boolean)));
-    return recommendations.map(card => ({ ...card, ...card.creator, id: card.userId || card.creator?.id || card.creatorId || card.id }))
+    return recommendations.map(card => ({
+      ...card,
+      ...card.creator,
+      id: card.userId || card.creator?.id || card.creatorId || card.id,
+      isFollowing: Boolean(card.actions?.following || card.isFollowing || card.following || card.creator?.following || card.creator?.isFollowing),
+    }))
       .filter(person => String(person.id) !== String(viewerId) && !followed.has(String(person.id)) && !followed.has(person.username) && !person.isFollowing && !person.following && !person.isBlocked && !person.isMuted)
       .slice(0, 10);
   }, [recommendations, followingPeople, viewerId]);

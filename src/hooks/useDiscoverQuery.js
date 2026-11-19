@@ -63,6 +63,15 @@ function updateAllDiscoverQueries(queryClient, username, updater) {
   });
 }
 
+// Profile follow actions must update inactive Discover caches before returning.
+export function syncDiscoverFollowState(queryClient, username, following) {
+  updateAllDiscoverQueries(queryClient, username, item => ({
+    ...item,
+    following,
+    isFollowing: following,
+  }));
+}
+
 function updateSlidePages(queryClient, updater) {
   queryClient.getQueriesData({ queryKey: discoverKeys.all }).forEach(([queryKey, data]) => {
     if (!data?.pages) return;
