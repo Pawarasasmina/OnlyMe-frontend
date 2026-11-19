@@ -46,12 +46,13 @@ function FriendAvatarContent({ friend }) {
 
 function DiscoverFriendsSection({
   friends = [],
+  suggestions = [],
   onOpenFriendStories,
   title = __msg("stories.friends_c11d5e"),
   subtitle,
 }) {
   __useUiLanguage();
-  if (!friends.length) return null;
+  if (!friends.length && !suggestions.length) return null;
 
   return (
     <section className="discover-orb-section" aria-labelledby="discover-friends-title">
@@ -84,6 +85,17 @@ function DiscoverFriendsSection({
             </div>
           );
         })}
+        {suggestions.map((person) => (
+          <div className="discover-friend-item discover-suggestion-item" key={`suggested-${person.id || person.username}`} role="listitem">
+            <Link className="discover-friend-link" to={profileRoute(person)}>
+              <span className="discover-friend-avatar discover-suggestion-avatar">
+                <FanAvatar name={friendDisplayName(person)} size="h-[52px] w-[52px]" src={person.avatar} />
+              </span>
+              <small><PersonName person={person} /></small>
+              <span className="discover-suggestion-follow">{__msg("discover.follow")}</span>
+            </Link>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -199,6 +211,7 @@ function DiscoverFollowingSection({ following = [], onOpenFollowingStories }) {
 
 function DiscoverPeopleSections({
   friends,
+  suggestions,
   friendSectionTitle,
   friendSectionSubtitle,
   following,
@@ -210,6 +223,7 @@ function DiscoverPeopleSections({
     <>
       <DiscoverFriendsSection
         friends={friends}
+        suggestions={suggestions}
         onOpenFriendStories={onOpenFriendStories}
         subtitle={friendSectionSubtitle}
         title={friendSectionTitle}

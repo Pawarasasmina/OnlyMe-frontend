@@ -16,6 +16,7 @@ import {
 import { firstUnseenStoryIndex } from "../../utils/discoverFriends";
 import { resolveMediaUrl } from "../../utils/media";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
+import { canonicalShareUrl } from "../../services/shareService";
 
 const DEFAULT_FILTER = "for_you";
 const SUPPORTED_FILTERS = new Set(["for_you", "nearby", "rising", "new", "creators"]);
@@ -104,6 +105,24 @@ function DiscoverPage() {
     () => followingPeople.filter((person) => Array.isArray(person.stories) && person.stories.length > 0),
     [followingPeople],
   );
+  const suggestedPeople = useMemo(() => {
+    const followed = new Set(followingPeople.flatMap(person => [String(person.id || person._id || ""), person.username].filter(Boolean)));
+    return recommendations.map(card => ({ ...card, ...card.creator, id: card.userId || card.creator?.id || card.creatorId || card.id }))
+      .filter(person => String(person.id) !== String(viewerId) && !followed.has(String(person.id)) && !followed.has(person.username) && !person.isFollowing && !person.following && !person.isBlocked && !person.isMuted)
+      .slice(0, 10);
+  }, [recommendations, followingPeople, viewerId]);
+  const inviteFriend = async () => {
+    const url = canonicalShareUrl({ route: user?.username ? `/profile/${encodeURIComponent(user.username)}` : "/welcome" });
+    try {
+      if (navigator.share) await navigator.share({ title: "@seen", url });
+      else {
+        await navigator.clipboard.writeText(url);
+        showToast(__msg("profile.shareLinkCopied"));
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") showToast(__msg("social.accessLinkCouldNotBeCopied"));
+    }
+  };
   const activeStoryPerson = useMemo(
     () => followingStoryPeople.find((person) => person.id === storyViewer.personId),
     [followingStoryPeople, storyViewer.personId],
@@ -325,6 +344,7 @@ function DiscoverPage() {
 
             <DiscoverPeopleSections
               friends={followingPeople}
+              suggestions={suggestedPeople}
               friendSectionTitle={__msg("activity.following")}
               following={[]}
               onOpenFollowingStories={openPersonStories}
@@ -368,6 +388,13 @@ function DiscoverPage() {
                   {recommendations.map((card, index) => (
                     <DiscoverMasonryCard card={card} index={index} key={card.id || card.username} onOpen={openRecommendationStory} />
                   ))}
+                  {recommendations.length % 2 === 1 ? (
+                    <button className="discover-invite-tile" onClick={inviteFriend} type="button">
+                      <i aria-hidden="true">+</i>
+                      <strong>{__msg("profile.inviteAFriend")}</strong>
+                      <span>{__msg("discover.inviteDescription")}</span>
+                    </button>
+                  ) : null}
                 </div>
                 <div className="discover-next-sentinel" ref={sentinelRef}>
                   {discoverQuery.isFetchingNextPage ? <FiRefreshCw aria-hidden="true" className="animate-spin" /> : null}
