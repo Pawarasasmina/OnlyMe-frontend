@@ -1,9 +1,11 @@
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import useDiscoverFilters from "../../hooks/useDiscoverFilters";
 import { FiChevronRight, FiRefreshCw, FiSearch, FiUserPlus } from "react-icons/fi";
 import DiscoverMasonryCard from "../../components/discover/DiscoverMasonryCard";
+import DiscoverQuickActions from "../../components/discover/DiscoverQuickActions";
 import DiscoverPeopleSections from "../../components/discover/DiscoverPeopleSections";
 import DiscoverRecommendationStory from "../../components/discover/DiscoverRecommendationStory";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
@@ -18,8 +20,6 @@ import { resolveMediaUrl } from "../../utils/media";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import { canonicalShareUrl } from "../../services/shareService";
 
-const DEFAULT_FILTER = "for_you";
-const SUPPORTED_FILTERS = new Set(["for_you", "nearby", "rising", "new", "creators"]);
 function dedupeByProfile(items = []) {
   const seen = new Set();
   return items.filter((item) => {
@@ -69,12 +69,9 @@ function DiscoverError({ error, onRetry }) {
 function DiscoverPage() {
   __useUiLanguage();
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useFanToast();
-  const requestedFilter = searchParams.get("filter") || DEFAULT_FILTER;
-  const activeFilter = SUPPORTED_FILTERS.has(requestedFilter) ? requestedFilter : DEFAULT_FILTER;
-  const activeTopic = searchParams.get("topic") || "";
   const viewerId = user?.id || user?._id || "";
+  const { activeFilter, activeTopic, changeFilter, changeTopic } = useDiscoverFilters(viewerId);
   // Keep the initial query key stable so returning to Discover can reuse React
   // Query's warm cache. A token is still generated for an explicit refresh.
   const [refreshToken, setRefreshToken] = useState("");
@@ -88,6 +85,12 @@ function DiscoverPage() {
   const storyTriggerRef = useRef(null);
   const [storyViewer, setStoryViewer] = useState({ personId: null, index: 0 });
   const [activeRecommendationStory, setActiveRecommendationStory] = useState(null);
+  const [quickActionCard, setQuickActionCard] = useState(null);
+  const quickActionAnchor = useRef(null);
+  const openQuickActions = useCallback((card, target) => {
+    quickActionAnchor.current = target;
+    setQuickActionCard(card);
+  }, []);
   const [localStoryGroupIndex, setLocalStoryGroupIndex] = useState(null);
 
   const pages = useMemo(() => discoverQuery.data?.pages || [], [discoverQuery.data?.pages]);
@@ -96,9 +99,13 @@ function DiscoverPage() {
   const localTonight = firstPage.localTonight || null;
   const localStoryGroups = localTonight?.storyGroups || [];
   const activeLocalStoryGroup = localStoryGroupIndex == null ? null : localStoryGroups[localStoryGroupIndex];
-  const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || [])).sort((left, right) => Number(String(right.creator?.status || right.status || "").toLowerCase() === "at seen") - Number(String(left.creator?.status || left.status || "").toLowerCase() === "at seen")), [pages]);
+  const recommendations = useMemo(() => dedupeByProfile(pages.flatMap((page) => page.recommendations || []))
+    .filter(card => !card.isFollowing && !card.following && !card.actions?.following && !card.creator?.following && !card.creator?.isFollowing)
+    .sort((left, right) => Number(String(right.creator?.status || right.status || "").toLowerCase() === "at seen") - Number(String(left.creator?.status || left.status || "").toLowerCase() === "at seen")), [pages]);
   const followingPeople = useMemo(
-    () => dedupeByProfile((firstPage.following || []).filter((person) => String(person?.id || person?._id || "") !== String(viewerId || ""))),
+    () => dedupeByProfile((firstPage.following || []).filter((person) =>
+      String(person?.id || person?._id || "") !== String(viewerId || "") &&
+      person.following !== false && person.isFollowing !== false)),
     [firstPage.following, viewerId],
   );
   const followingStoryPeople = useMemo(
@@ -107,15 +114,16 @@ function DiscoverPage() {
   );
   const suggestedPeople = useMemo(() => {
     const followed = new Set(followingPeople.flatMap(person => [String(person.id || person._id || ""), person.username].filter(Boolean)));
-    return recommendations.map(card => ({
+    const unfollowedPeople = (firstPage.following || []).filter(person => person.following === false || person.isFollowing === false);
+    return dedupeByProfile([...unfollowedPeople, ...recommendations.map(card => ({
       ...card,
       ...card.creator,
       id: card.userId || card.creator?.id || card.creatorId || card.id,
       isFollowing: Boolean(card.actions?.following || card.isFollowing || card.following || card.creator?.following || card.creator?.isFollowing),
-    }))
+    }))])
       .filter(person => String(person.id) !== String(viewerId) && !followed.has(String(person.id)) && !followed.has(person.username) && !person.isFollowing && !person.following && !person.isBlocked && !person.isMuted)
       .slice(0, 10);
-  }, [recommendations, followingPeople, viewerId]);
+  }, [recommendations, followingPeople, firstPage.following, viewerId]);
   const inviteFriend = async () => {
     const url = canonicalShareUrl({ route: user?.username ? `/profile/${encodeURIComponent(user.username)}` : "/welcome" });
     try {
@@ -133,26 +141,6 @@ function DiscoverPage() {
     [followingStoryPeople, storyViewer.personId],
   );
 
-  const changeFilter = useCallback((filterId) => {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (filterId === DEFAULT_FILTER) next.delete("filter");
-      else next.set("filter", filterId);
-      next.delete("topic");
-      return next;
-    }, { replace: true });
-  }, [setSearchParams]);
-
-  const changeTopic = useCallback((topicId) => {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      next.delete("filter");
-      if (topicId && topicId !== activeTopic) next.set("topic", topicId);
-      else next.delete("topic");
-      return next;
-    }, { replace: true });
-  }, [activeTopic, setSearchParams]);
-
   const refresh = useCallback(() => {
     setRefreshToken(`${Date.now()}-${Math.random()}`);
   }, []);
@@ -161,7 +149,11 @@ function DiscoverPage() {
     const onNavigationClick = (event) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const link = event.target.closest?.("a");
-      if (!link || new URL(link.href, window.location.origin).pathname !== "/discover") return;
+      if (!link) return;
+      const target = new URL(link.href, window.location.origin);
+      if (target.pathname !== "/discover") return;
+      // A link to another selection is navigation, not an active-tab refresh.
+      if (target.search && ((target.searchParams.get("filter") || "for_you") !== activeFilter || (target.searchParams.get("topic") || "") !== activeTopic)) return;
       event.preventDefault();
       refresh();
       sentinelRef.current?.closest(".social-center-scroll")?.scrollTo({ top: 0, behavior: "auto" });
@@ -169,7 +161,7 @@ function DiscoverPage() {
     };
     document.addEventListener("click", onNavigationClick, true);
     return () => document.removeEventListener("click", onNavigationClick, true);
-  }, [refresh, showToast]);
+  }, [refresh, showToast, activeFilter, activeTopic]);
 
   const startPull = (event) => {
     const scrollRoot = event.currentTarget.closest(".social-center-scroll");
@@ -297,6 +289,7 @@ function DiscoverPage() {
 
   return (
     <div className="discover-orb-page" onTouchCancel={endPull} onTouchEnd={endPull} onTouchMove={movePull} onTouchStart={startPull}>
+      {quickActionCard ? <DiscoverQuickActions card={quickActionCard} anchorRef={quickActionAnchor} queryParams={queryParams} onClose={() => setQuickActionCard(null)} /> : null}
       {pullDistance > 0 ? <div aria-live="polite" className="flex items-center justify-center py-2 text-xs font-bold text-atseen-muted" style={{ height: pullDistance / 2 }}>{pullDistance >= 72 ? __msg("social.releaseForFreshRecommendations") : __msg("social.pullForFreshRecommendations")}</div> : null}
       <section className="discover-orb-main" aria-label={__msg("discover.discover")}>
         {activeLocalStoryGroup ? (
@@ -391,7 +384,7 @@ function DiscoverPage() {
               <>
                 <div className="discover-orb-grid">
                   {recommendations.map((card, index) => (
-                    <DiscoverMasonryCard card={card} index={index} key={card.id || card.username} onOpen={openRecommendationStory} />
+                    <DiscoverMasonryCard card={card} index={index} key={card.id || card.username} onOpen={openRecommendationStory} onQuickActions={openQuickActions} />
                   ))}
                   {recommendations.length % 2 === 1 ? (
                     <button className="discover-invite-tile" onClick={inviteFriend} type="button">

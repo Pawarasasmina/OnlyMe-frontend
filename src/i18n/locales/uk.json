@@ -7285,5 +7285,10 @@
   "creator.draftRemainsPrivateUntilSellerReady": "Вашу чернетку бачите лише ви, доки не зможете продавати",
   "creator.setUp": "Налаштувати"
   ,"profile.everythingCreatorSharesMonthly": "Усе, чим ділиться {value0}, щомісяця",
-  "profile.now": "зараз"
+  "profile.now": "зараз",
+  "discover.seenSavedCount": "Seen зберегли {count}",
+  "discover.followedByName": "Стежить {name}",
+  "discover.signalSeen": "Побачено",
+  "discover.onlyPersonSees": "це бачить лише {name}",
+  "discover.bothWalked": "Ви обоє пройшли «{title}»"
 }

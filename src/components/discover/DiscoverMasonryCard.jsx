@@ -2,11 +2,13 @@ import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
+import { createLongPressGesture } from "../../utils/longPressGesture";
 import { SeenNavIcon } from "../social/socialNavItems";
 import { resolveMediaUrl } from "../../utils/media";
 import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
 import { analyticsService } from "../../services/analyticsService";
+import { selectDiscoverReason } from "../../utils/discoverReason";
 
 function WorldMark() {
   __useUiLanguage();
@@ -14,24 +16,22 @@ function WorldMark() {
 }
 
 function recommendationReason(card) {
-  // Only describe facts present in the response. Legacy rotation-based reasons
-  // (nearby/follow graph/rising) are not evidence for those claims.
-  if (card.dream?.title && card.dream.status !== "completed") return __msg("discover.dreamsOfValue0", { value0: card.dream.title });
-  if (card.reason?.code === "SAME_CITY" && card.city) return __msg("discover.alsoInValue0", { value0: card.city });
-  if (card.reason?.code === "SHARED_INTERESTS") return card.reason.detail;
-  const status = String(card.creator?.status || card.status || "").toLowerCase();
-  if (status === "at seen") return __msg("discover.onSeenRightNow");
-  const legacyReasons = new Set(["POPULAR_NEARBY", "FOLLOW_GRAPH", "RISING_CREATOR", "RECENT_ACTIVITY", "WORLD_MATCH"]);
-  if (!legacyReasons.has(card.reason?.code) && card.recommendationReason) return card.recommendationReason;
-  const seen = card.featuredSeen || card.latestSeen;
-  if (seen?.title) return __msg("discover.sharesValue0", { value0: seen.category || __msg("profile.seens") });
-  if (card.featuredOffer?.title) return __msg("discover.sharesValue0", { value0: card.featuredOffer.title });
-  return card.category ? __msg("discover.exploreValue0", { value0: card.category }) : __msg("discover.discoverTheirProfile");
+  const reason = selectDiscoverReason(card);
+  switch (reason.code) {
+    case "DREAM": return __msg("discover.dreamsOfValue0", { value0: reason.title });
+    case "SAME_CITY": return __msg("discover.alsoInValue0", { value0: reason.city });
+    case "ACTIVE_NOW": return __msg("discover.onSeenRightNow");
+    case "SEEN_SAVED": return __msg("discover.seenSavedCount", { count: new Intl.NumberFormat(__uiLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(reason.count) });
+    case "FOLLOWED_BY": return __msg("discover.followedByName", { name: reason.name });
+    case "SHARES": return __msg("discover.sharesValue0", { value0: reason.category || __msg("profile.seens") });
+    default: return __msg("discover.discoverTheirProfile");
+  }
 }
 
-function DiscoverMasonryCard({ card, index = 0, onOpen }) {
+function DiscoverMasonryCard({ card, index = 0, onOpen, onQuickActions }) {
   __useUiLanguage();
   const [failed, setFailed] = useState(0);
+  const [pressed, setPressed] = useState(false);
   const portrait = resolveMediaUrl(card.avatar || card.creator?.avatar);
   const fallbackImage = resolveMediaUrl(card.media?.type === "video" ? card.media.poster || card.creator?.cover : card.coverImage || card.media?.url || card.creator?.cover);
   const imageUrl = [...new Set([portrait, fallbackImage].filter(Boolean))][failed];
@@ -46,10 +46,15 @@ function DiscoverMasonryCard({ card, index = 0, onOpen }) {
   const world = card.world || card.featuredOffer;
   const live = String(card.creator?.status || card.status || "").toLowerCase() === "at seen";
   const members = world?.peopleCount ?? world?.memberCount ?? card.worldMembers ?? card.rankSignals?.worldMembers;
+  const gesture = useMemo(() => createLongPressGesture({ onLongPress: target => onQuickActions?.(card, target), onPressChange: setPressed }), [card, onQuickActions]);
+  useEffect(() => () => gesture.dispose(), [gesture]);
 
   return (
-    <button aria-label={__msg("discover.openSDiscoverStory", { value0: name })} className="discover-orb-card" onClick={() => { void analyticsService.trackProfileView({ profileUserId: creatorId, source: "discover" }); onOpen?.(index); }} ref={trackingRef} type="button">
-      {imageUrl ? <img alt={__msg("discover.portrait", { value0: name })} loading="lazy" onError={() => setFailed((count) => count + 1)} src={imageUrl} /> : <span className="discover-orb-card-fallback" aria-hidden="true">{name.trim().slice(0, 1).toUpperCase() || "@"}</span>}
+    <button aria-label={__msg("discover.openSDiscoverStory", { value0: name })} aria-haspopup="dialog" className={`discover-orb-card${pressed ? " is-pressed" : ""}`} onPointerDown={gesture.start} onPointerMove={gesture.move} onPointerUp={gesture.end} onPointerCancel={gesture.cancel} onPointerLeave={gesture.cancel}
+      onContextMenu={event => { event.preventDefault(); gesture.cancel(); onQuickActions?.(card, event.currentTarget); }}
+      onKeyDown={event => { if (event.key === "ContextMenu" || event.shiftKey && event.key === "F10") { event.preventDefault(); onQuickActions?.(card, event.currentTarget); } }}
+      onClick={() => { if (gesture.consumeClick()) return; void analyticsService.trackProfileView({ profileUserId: creatorId, source: "discover" }); onOpen?.(index); }} ref={trackingRef} type="button">
+      {imageUrl ? <img alt={__msg("discover.portrait", { value0: name })} draggable={false} loading="lazy" onError={() => setFailed((count) => count + 1)} src={imageUrl} /> : <span className="discover-orb-card-fallback" aria-hidden="true">{name.trim().slice(0, 1).toUpperCase() || "@"}</span>}
       <span className="discover-orb-card-shade" aria-hidden="true" />
       {live ? <span className="discover-orb-live-dot" aria-label={__msg("discover.atSeenRightNow")} /> : null}
       <span className="discover-orb-card-copy">

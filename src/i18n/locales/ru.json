@@ -7286,5 +7286,10 @@
   "creator.setUp": "Настроить",
   "discover.inviteDescription": "Discover растёт с реальными людьми, которых ты знаешь"
   ,"profile.everythingCreatorSharesMonthly": "Всё, чем делится {value0}, ежемесячно",
-  "profile.now": "сейчас"
+  "profile.now": "сейчас",
+  "discover.seenSavedCount": "Seen сохранили {count}",
+  "discover.followedByName": "Подписан(а) {name}",
+  "discover.signalSeen": "Увидел(а)",
+  "discover.onlyPersonSees": "это видит только {name}",
+  "discover.bothWalked": "Вы оба прошли «{title}»"
 }

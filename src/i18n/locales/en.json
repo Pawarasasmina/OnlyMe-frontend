@@ -301,7 +301,7 @@
   "discover.submitting": "Submitting",
   "discover.submit": "Submit",
   "discover.copyLink": "Copy Link",
-  "discover.notInterested": "Not Interested",
+  "discover.notInterested": "Not interested",
   "discover.report": "Report",
   "discover.blockAccount": "Block Account",
   "discover.premiumAccessAvailable": "Premium access available",
@@ -7286,5 +7286,10 @@
   "creator.setUp": "Set up",
   "discover.inviteDescription": "Discover grows with real people you know",
   "profile.everythingCreatorSharesMonthly": "Everything {value0} shares, monthly",
-  "profile.now": "now"
+  "profile.now": "now",
+  "discover.seenSavedCount": "Seen saved {count}",
+  "discover.followedByName": "Followed by {name}",
+  "discover.signalSeen": "Seen",
+  "discover.onlyPersonSees": "only {name} sees this",
+  "discover.bothWalked": "You both walked “{title}”"
 }
