@@ -556,7 +556,7 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
   if (!viewerCapabilities.isOwner && !viewerCapabilities.canMessage) return null;
   if (!viewerCapabilities.isOwner && !profile.directAccess?.enabled && !profile.directAccess?.callEnabled) return null;
   const waiting = (windows.data || []).filter((item) => item.settlementStatus === "HELD").length;
-  const meta = [
+  const ownerMeta = [
     profile.directAccess?.enabled ? __msg("social.messagesValue0Value1", { value0: String.fromCharCode(10022), value1: profile.directAccess.priceStars }) : "",
     profile.directAccess?.callEnabled ? __msg("social.callsValue0Value1Value2Min", { value0: String.fromCharCode(10022), value1: profile.directAccess.callPriceStars, value2: profile.directAccess.callDurationMinutes }) : "",
     "chats & requests",
@@ -569,8 +569,8 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
       <button className="profile-row profile-direct-row" onClick={open} type="button">
         <span className="profile-row-orb"><FiMessageCircle /></span>
         <span className="min-w-0 flex-1">
-          <b>{__msg("Direct Access")} {waiting ? <i> - {waiting} {__msg("profile.waiting")}</i> : null}</b>
-          <small>{meta}</small>
+          <b>{__msg("Direct Access")} {viewerCapabilities.isOwner ? waiting ? <i> - {waiting} {__msg("profile.waiting")}</i> : null : profile.directAccess?.typicalReplyHours ? <i className="profile-direct-response">{__msg("fan.repliesWithinValue0H", { value0: profile.directAccess.typicalReplyHours }).replace(/^\s*[·•]\s*/, "")}</i> : null}</b>
+          <small>{viewerCapabilities.isOwner ? ownerMeta : __msg("profile.askMeAPrivateQuestionGuaranteedPriorityReply")}</small>
         </span>
         {viewerCapabilities.isOwner ? <Link aria-label={__msg("settings.directAccessSettings")} onClick={(event) => event.stopPropagation()} state={{ returnTo: "/profile" }} to="/settings/direct-access"><FiSettings /></Link> : null}
         <FiChevronRight data-ui-directional="true" />

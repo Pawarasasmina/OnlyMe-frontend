@@ -5534,6 +5534,8 @@
   "profile.upTo3MessagesFromYouAReal": "Jusqu'à 3 messages de vous - un véritable arrière-en-dessus, pas un billet.",
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "Votre message apparaît au-dessus des conversations standard, de sorte qu’il ne peut pas être perdu.",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "Une réponse personnelle, généralement beaucoup plus rapide - dans la garantie.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Posez-moi une question privée. Réponse prioritaire garantie.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Posez-moi une question privée. Réponse prioritaire garantie.",
   "profile.passwordSecurity": "Password & Sécurité",
   "profile.viewPublicProfile": "Voir le profil public",
   "verification.creditedInstantly": "Crédit immédiatement",
@@ -7281,4 +7283,6 @@
   "creator.sellerInfoTakesAMinute": "Ajoutez les informations du vendeur une seule fois — cela prend une minute",
   "creator.draftRemainsPrivateUntilSellerReady": "Votre brouillon reste visible par vous uniquement jusqu’à ce que vous puissiez vendre",
   "creator.setUp": "Configurer"
+  ,"profile.everythingCreatorSharesMonthly": "Tout ce que {value0} partage, chaque mois",
+  "profile.now": "maintenant"
 }

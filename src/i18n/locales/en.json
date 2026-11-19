@@ -5564,6 +5564,8 @@
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "Your message appears above standard conversations so it cannot get lost.",
   "profile.firstReplyWithin48Hours": "First reply within 48 hours",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "A personal reply, usually much faster — within the guarantee.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Ask me a private question. Guaranteed priority reply.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Ask me a private question. Guaranteed priority reply.",
   "profile.refundedIfUnanswered": "Refunded if unanswered",
   "profile.noReplyIn48HoursYourCoinsCome": "No reply in 48 hours? Your coins come back automatically. Every time.",
   "profile.passwordSecurity": "Password & security",
@@ -7280,5 +7282,7 @@
   "creator.paidItemsStayPrivate": "Paid items stay Only you until Verification",
   "creator.sellerInfoTakesAMinute": "Seller info once — takes a minute",
   "creator.draftRemainsPrivateUntilSellerReady": "Your draft remains Only you until you can sell",
-  "creator.setUp": "Set up"
+  "creator.setUp": "Set up",
+  "profile.everythingCreatorSharesMonthly": "Everything {value0} shares, monthly",
+  "profile.now": "now"
 }

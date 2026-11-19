@@ -5534,6 +5534,8 @@
   "profile.upTo3MessagesFromYouAReal": "Bis zu 3 Nachrichten von Ihnen - ein echtes Back-and-Forth, nicht ein Ticket.",
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "Ihre Nachricht erscheint über Standardkonversationen, so dass sie nicht verloren gehen kann.",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "Eine persönliche Antwort, meist viel schneller – innerhalb der Garantie.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Stell mir eine private Frage. Priorisierte Antwort garantiert.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Stell mir eine private Frage. Priorisierte Antwort garantiert.",
   "profile.passwordSecurity": "Passwort & Sicherheit",
   "profile.viewPublicProfile": "öffentliches Profil ansehen",
   "verification.creditedInstantly": "Anschließend Kredit",
@@ -7281,4 +7283,6 @@
   "creator.sellerInfoTakesAMinute": "Verkäuferinformationen einmalig angeben — dauert nur eine Minute",
   "creator.draftRemainsPrivateUntilSellerReady": "Dein Entwurf bleibt nur für dich sichtbar, bis du verkaufen kannst",
   "creator.setUp": "Einrichten"
+  ,"profile.everythingCreatorSharesMonthly": "Alles, was {value0} teilt, monatlich",
+  "profile.now": "jetzt"
 }

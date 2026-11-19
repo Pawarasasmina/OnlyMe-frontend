@@ -5534,6 +5534,8 @@
   "profile.upTo3MessagesFromYouAReal": "До 3 повідомлень від вас — реальний назад і вперед, а не квиток.",
   "profile.yourMessageAppearsAboveStandardConversationsSoIt": "Ваша повідомлення з'являється вище стандартних розмов, так що вона не може бути втрачена.",
   "profile.aPersonalReplyUsuallyMuchFasterWithinThe": "Особиста відповідь, зазвичай набагато швидше — в межах гарантії.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Поставте мені приватне запитання. Пріоритетна відповідь гарантована.",
+  "profile.askMeAPrivateQuestionGuaranteedPriorityReply": "Поставте мені приватне запитання. Пріоритетна відповідь гарантована.",
   "profile.passwordSecurity": "Пароль та безпека",
   "profile.viewPublicProfile": "Переглянути публічний профіль",
   "verification.creditedInstantly": "Кредити відразу",
@@ -7281,4 +7283,6 @@
   "creator.sellerInfoTakesAMinute": "Укажіть дані продавця один раз — це займе хвилину",
   "creator.draftRemainsPrivateUntilSellerReady": "Вашу чернетку бачите лише ви, доки не зможете продавати",
   "creator.setUp": "Налаштувати"
+  ,"profile.everythingCreatorSharesMonthly": "Усе, чим ділиться {value0}, щомісяця",
+  "profile.now": "зараз"
 }

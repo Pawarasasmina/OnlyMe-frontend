@@ -7073,6 +7073,12 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   font-style: normal;
   font-size: 11px;
 }
+.profile-direct-row b .profile-direct-response {
+  margin-left: 4px;
+  color: rgba(255,255,255,.5);
+  font-size: 9px;
+  font-weight: 500;
+}
 .profile-direct-row small {
   display: block;
   overflow: hidden;
@@ -29595,10 +29601,15 @@ video.seen-reader-media {
 .profile-prototype.is-public-profile .profile-visitor-gifts { width:24px;height:26px;font-size:13px; }
 .profile-prototype.is-public-profile .profile-follow-action { border-color:#78b5fb;background:#78b5fb;color:#07101a; }
 .profile-prototype.is-public-profile .profile-follow-action.is-following { border-color:var(--profile-line);background:rgba(255,255,255,.055);color:#fff; }
-.profile-prototype.is-public-profile .profile-access-group { margin-top:13px; }
-.profile-prototype.is-public-profile .profile-access-group .profile-direct-row { min-height:47px;border-color:rgba(126,190,255,.42);background:rgba(15,22,30,.35); }
-.profile-prototype.is-public-profile .profile-direct-row b { font-size:12px; }
-.profile-prototype.is-public-profile .profile-direct-row small { color:rgba(255,255,255,.72);font-size:9px; }
+.profile-prototype.is-public-profile .profile-access-group { width:calc(100% - 32px);margin:13px 16px 0; }
+.profile-prototype.is-public-profile .profile-access-group .profile-direct-row { min-height:45px;border-color:#30475b;border-radius:14px;background:radial-gradient(ellipse 58px 42px at 0 50%,rgba(55,118,169,.22) 0%,rgba(31,73,108,.13) 45%,rgba(13,20,27,0) 100%),#0d141b;padding:7px 10px;gap:8px; }
+.profile-prototype.is-public-profile .profile-row-orb { width:20px;height:20px;flex-basis:20px;border-color:#426783;background:#112438;color:#9ccbff;box-shadow:none; }
+.profile-prototype.is-public-profile .profile-row-orb svg { width:11px;height:11px; }
+.profile-prototype.is-public-profile .profile-direct-row b { font-size:11px;font-weight:750;line-height:13px; }
+.profile-prototype.is-public-profile .profile-direct-row b .profile-direct-response { margin-left:5px;color:#929aa5;font-size:9px;font-weight:500; }
+.profile-prototype.is-public-profile .profile-direct-row small { margin-top:1px;color:#c2c8cf;font-size:9px;font-weight:400;line-height:12px; }
+.profile-prototype.is-public-profile .profile-direct-row > svg:last-child { width:10px;height:10px;color:#9ccbff; }
+.profile-prototype.is-public-profile .profile-world-compact-section { width:calc(100% - 32px);margin-right:16px;margin-left:16px; }
 .profile-prototype.is-public-profile .profile-gift-strip { min-height:48px;margin-top:8px; }
 .profile-prototype.is-public-profile .profile-gift-art { min-width:91px; }
 .profile-prototype.is-public-profile .profile-gift-art img,
