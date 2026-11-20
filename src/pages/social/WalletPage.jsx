@@ -17,7 +17,7 @@ function Coin({ value }) {
   __useUiLanguage();
   return <span className="wallet-coin"><img alt="" src="/brand/goldcoin.png" />{Number(value).toLocaleString(__uiLocale())}</span>;
 }
-const creatorEvents = new Set(["WORLD_CREATOR_EARNING", "PREMIUM_CREATOR_EARNING", "DREAM_CREATOR_EARNING", "CHAT_GIFT_EARNING", "DA_CREATOR_EARNING", "CALL_CREATOR_EARNING"]);
+const creatorEvents = new Set(["WORLD_CREATOR_EARNING", "PREMIUM_CREATOR_EARNING", "DREAM_CREATOR_EARNING", "CHAT_GIFT_EARNING", "DA_CREATOR_EARNING", "CALL_CREATOR_EARNING", "REFERRAL_CREATOR_EARNING"]);
 const money = (value) => value == null || !Number.isFinite(Number(value)) ? "\u2014" : new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(Number(value));
 
 function activityTitle(item) {
@@ -31,6 +31,7 @@ function activityTitle(item) {
   if (item.event.includes("CALL_")) return person ? __msg("social.value0BookedACall", { value0: person }) : __msg("social.paidCall");
   if (item.event === "CHAT_GIFT_DEBIT") return person ? `Gift to ${person}` : "Gift sent";
   if (item.event === "CHAT_GIFT_EARNING") return person ? `${person} sent you a gift` : __msg("social.giftReceived");
+  if (item.event === "REFERRAL_CREATOR_EARNING") return person ? `${person} joined through your link` : "Referral earning";
   if (item.event.includes("DREAM")) return person ? __msg("social.value0SupportedYourDreamValue1", { value0: person, value1: publication ? ` “${publication}”` : "" }) : publication || __msg("admin.dreamSupport");
   if (item.event.includes("PREMIUM")) return debit ? `You joined ${person || "the creator"}’s World` : person ? `${person} joined your World` : publication || __msg("social.worldSubscription");
   if (item.event.includes("WORLD")) return debit ? `You unlocked ${publication || "a Seen"}${person ? ` from ${person}` : ""}` : person ? `${person} unlocked ${publication || "your Seen"}` : publication || __msg("social.worldUnlock");
