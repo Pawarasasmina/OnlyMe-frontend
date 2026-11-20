@@ -20,6 +20,8 @@ function clearExpiredSessionAndRedirect() {
   localStorage.removeItem("onlyme_access_token");
   window.dispatchEvent(new Event("onlyme-auth-cleared"));
   if (sessionRedirectStarted || window.location.pathname === "/login") return;
+  const authRequired = new CustomEvent("onlyme-auth-required", { cancelable: true, detail: { returnTo: `${window.location.pathname}${window.location.search}${window.location.hash}` } });
+  if (!window.dispatchEvent(authRequired)) return;
   sessionRedirectStarted = true;
   rememberSessionReturnTo();
   window.location.replace("/login");
@@ -57,7 +59,12 @@ axiosInstance.interceptors.response.use(
         // A network error or backend 5xx does not prove that the session is
         // invalid. Preserve it so a cold start/outage cannot log the user out.
         if ([401, 403].includes(refreshError.response?.status)) {
-          clearExpiredSessionAndRedirect();
+          if (request?._sessionProbe) {
+            localStorage.removeItem("onlyme_access_token");
+            window.dispatchEvent(new Event("onlyme-auth-cleared"));
+          } else {
+            clearExpiredSessionAndRedirect();
+          }
         }
       }
     }

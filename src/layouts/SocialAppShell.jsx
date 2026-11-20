@@ -90,6 +90,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const [verificationOpen, setVerificationOpen] = useState(false);
+  const [guestLoginOpen, setGuestLoginOpen] = useState(false);
   const ticketVisible = user?.onboarding?.status === "in_progress" && user?.onboarding?.currentStep === "ticket";
 
   const closeOnboardingTicket = async () => {
@@ -105,6 +106,16 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
     if (status) localStorage.setItem(STATUS_KEY, status);
     else localStorage.removeItem(STATUS_KEY);
   }, [status]);
+
+  useEffect(() => {
+    if (user) return undefined;
+    const requireLogin = (event) => {
+      event.preventDefault?.();
+      setGuestLoginOpen(true);
+    };
+    window.addEventListener("onlyme-auth-required", requireLogin);
+    return () => window.removeEventListener("onlyme-auth-required", requireLogin);
+  }, [user]);
 
   const outletContext = useMemo(() => ({ status, setStatus }), [status]);
   const canCreateStoryNow = capabilities.canCreate && canCreateStory(user);
@@ -127,6 +138,13 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
 
   const handleShellNavigation = (event) => {
     if (event.defaultPrevented || (event.button != null && event.button !== 0) || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const guestRailAction = !user && event.target.closest?.(".fan-web-sidebar, .fan-mobile-nav, .social-shared-right-rail");
+    if (guestRailAction) {
+      event.preventDefault();
+      event.stopPropagation();
+      setGuestLoginOpen(true);
+      return;
+    }
     const anchor = event.target.closest?.("a[href]");
     if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
     const target = new URL(anchor.href, window.location.href);
@@ -185,6 +203,15 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
                 </SocialContentErrorBoundary>
               </Suspense>
             </main>
+            <FanModal
+              isOpen={guestLoginOpen}
+              onClose={() => setGuestLoginOpen(false)}
+              overlayClassName="!absolute"
+              title="Join Atseen to continue"
+            >
+              <p className="text-center text-sm leading-6 text-atseen-muted">Sign in or create an account to follow people, react, comment, purchase paid content, or open the rest of Atseen.</p>
+              <div className="mt-5 grid gap-2 sm:grid-cols-2"><button className="rounded-full border border-white/15 px-4 py-3 text-sm font-bold" onClick={() => setGuestLoginOpen(false)} type="button">Keep viewing</button><button className="rounded-full bg-atseen-blue px-4 py-3 text-sm font-black text-atseen-bg" onClick={() => navigate("/login", { state: { from: location } })} type="button">Log in</button></div>
+            </FanModal>
           </div>
           <FanWebRightRail capabilities={capabilities} status={status} user={user} />
         </div>

@@ -100,7 +100,7 @@ function updateSlide(current, targetUserId, updater) {
   return current;
 }
 
-export function useDiscoverQuery(params = {}) {
+export function useDiscoverQuery(params = {}, options = {}) {
   return useQuery({
     queryKey: discoverKeys.home(params),
     queryFn: ({ signal }) => discoverService.getDiscover(requestParams(params), signal),
@@ -108,6 +108,7 @@ export function useDiscoverQuery(params = {}) {
     gcTime: 1000 * 60 * 20,
     cacheTime: 1000 * 60 * 20,
     retry: 1,
+    enabled: options.enabled !== false,
   });
 }
 
