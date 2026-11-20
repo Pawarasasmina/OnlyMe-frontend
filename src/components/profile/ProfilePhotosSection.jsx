@@ -37,7 +37,7 @@ export default function ProfilePhotosSection({ initialMedia = [], isOwner, usern
   if (!isOwner && !items.length && !query.isError) return null;
   return <section className="profile-photos-prototype">
     <h2>{__msg("profile.photos")}</h2>
-    <input accept="image/jpeg,image/png,image/webp" aria-label={__msg("profile.uploadProfilePhoto")} className="sr-only" onChange={event => { const next = event.target.files?.[0]; event.target.value = ""; if (!next) return; if (!["image/jpeg", "image/png", "image/webp"].includes(next.type)) { setError(__msg("profile.chooseAJpegPngOrWebpPhoto")); return; } setError(""); setFile(next); }} ref={input} type="file" />
+    {isOwner ? <input accept="image/jpeg,image/png,image/webp" aria-label={__msg("profile.uploadProfilePhoto")} className="sr-only" onChange={event => { const next = event.target.files?.[0]; event.target.value = ""; if (!next) return; if (!["image/jpeg", "image/png", "image/webp"].includes(next.type)) { setError(__msg("profile.chooseAJpegPngOrWebpPhoto")); return; } setError(""); setFile(next); }} ref={input} type="file" /> : null}
     <div className="profile-photos-strip">
       {isOwner ? <button aria-label={__msg("profile.addPhoto")} className="profile-photos-add" onClick={() => input.current?.click()} type="button"><FiPlus /></button> : null}
       {items.map((item, index) => <button aria-label={__msg("profile.openPhoto", { value0: index + 1 })} className="profile-photos-tile" key={item.id} onClick={() => setActiveId(item.id)} type="button"><img alt={item.caption || __msg("profile.profilePhoto_33f385")} loading="lazy" src={resolveMediaUrl(item.thumbnailUrl || item.url || item.mediaUrl)} /></button>)}

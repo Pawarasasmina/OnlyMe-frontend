@@ -3,12 +3,11 @@ import axiosInstance from "../api/axiosInstance";
 async function uploadVerificationDocument(documentType, file) {
   const formData = new FormData();
   formData.append("document", file, file.name);
-  const token = localStorage.getItem("onlyme_access_token");
   const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api";
   const response = await fetch(`${baseUrl}/creator/verification/upload/${encodeURIComponent(documentType)}`, {
     method: "POST",
     credentials: "include",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    headers: { "X-Requested-With": "XMLHttpRequest" },
     body: formData,
   });
   const data = await response.json().catch(() => ({}));

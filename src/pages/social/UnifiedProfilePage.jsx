@@ -980,12 +980,12 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
   </div>;
 }
 
-function ProfileTabs({ tab, setTab }) {
+function ProfileTabs({ isOwner, tab, setTab }) {
   __useUiLanguage();
   const tabs = [
     ["seens", __msg("profile.seens"), FiGrid],
     ["reposts", __msg("settings.reposts"), FiRepeat],
-    ["saved", __msg("contentEntities.saved"), FiBookmark],
+    ...(isOwner ? [["saved", __msg("contentEntities.saved"), FiBookmark]] : []),
   ];
   return (
     <nav className="profile-icon-tabs" aria-label={__msg("social.profileContent")}>
@@ -1063,7 +1063,8 @@ function ProfileBody({ data, setConnectionsType }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const [tab, setTabState] = useState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
+  const requestedTabs = data.viewerCapabilities.isOwner ? ["seens", "reposts", "saved"] : ["seens", "reposts"];
+  const [tab, setTabState] = useState(requestedTabs.includes(requestedTab) ? requestedTab : "seens");
   const [activeSeriesId, setActiveSeriesId] = useState("");
   const [activeSeenListId, setActiveSeenListId] = useState("");
   const [experienceCreateOpen, setExperienceCreateOpen] = useState(false);
@@ -1097,8 +1098,16 @@ function ProfileBody({ data, setConnectionsType }) {
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);
   const canPostNote = canCreateFeedPost(user);
   useEffect(() => {
-    setTabState(["seens", "reposts", "saved"].includes(requestedTab) ? requestedTab : "seens");
-  }, [requestedTab]);
+    const allowedTabs = isOwner ? ["seens", "reposts", "saved"] : ["seens", "reposts"];
+    setTabState(allowedTabs.includes(requestedTab) ? requestedTab : "seens");
+    if (!isOwner && requestedTab === "saved") {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.delete("tab");
+        return next;
+      }, { replace: true });
+    }
+  }, [isOwner, requestedTab, setSearchParams]);
   useEffect(() => {
     if (!draftSavedCount) return undefined;
     setSearchParams((current) => {
@@ -1184,7 +1193,7 @@ function ProfileBody({ data, setConnectionsType }) {
       <ProfileAccessGroup profile={profile} viewerCapabilities={viewerCapabilities} />
       <ProfileGiftStrip profile={profile} viewerCapabilities={viewerCapabilities} viewerId={user?.id || user?._id} />
       <ProfileMediaSection initialMedia={data.media || []} isOwner={isOwner} profile={profile} username={profile.username} />
-      <ProfileTabs setTab={setTab} tab={tab} />
+      <ProfileTabs isOwner={isOwner} setTab={setTab} tab={tab} />
       <section className="profile-grid-panel">
         {tab === "seens" ? (
           <ProfileContentGrid

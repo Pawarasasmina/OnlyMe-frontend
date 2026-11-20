@@ -342,36 +342,27 @@ function ProfileSettingsPage() {
   const [giftSettingsOpen, setGiftSettingsOpen] = useState(false);
   const [cropImage, setCropImage] = useState(null);
   const [usernameStatus, setUsernameStatus] = useState({ message: "", state: "" });
-  const accessToken = localStorage.getItem("onlyme_access_token");
   const backTarget = new URLSearchParams(location.search).get("from") === "settings" ? "/settings" : "/profile";
 
   const profileQuery = useQuery({
     queryKey: ["profile", "me"],
     queryFn: () => profileService.getMe().then((response) => response.data.data),
-    enabled: Boolean(user && accessToken),
+    enabled: Boolean(user),
     retry: false,
   });
 
   const privacyQuery = useQuery({
     queryKey: ["settings", "privacy"],
     queryFn: () => profileService.getPrivacySettings().then((response) => response.data.data),
-    enabled: Boolean(user && accessToken),
+    enabled: Boolean(user),
     retry: false,
   });
   const giftSettingsQuery = useQuery({
     queryKey: ["settings", "gifts"],
     queryFn: () => profileService.getGiftSettings().then((response) => response.data.data),
-    enabled: Boolean(user && accessToken),
+    enabled: Boolean(user),
     retry: false,
   });
-
-  useEffect(() => {
-    if (user && !accessToken) {
-      setUser(null);
-      queryClient.removeQueries({ queryKey: ["profile", "me"] });
-      navigate("/login", { replace: true, state: { from: location } });
-    }
-  }, [accessToken, location, navigate, queryClient, setUser, user]);
 
   useEffect(() => {
     if ((profileQuery.error || privacyQuery.error)?.response?.status === 401) {
