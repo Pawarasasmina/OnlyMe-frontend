@@ -2,7 +2,7 @@
 import { msg as __msg } from "../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import CreatorAppShell from "../layouts/CreatorAppShell";
@@ -13,7 +13,7 @@ import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
 import { ROLES } from "../utils/constants";
 import { useAuth } from "../hooks/useAuth";
-import { defaultDestinationFor, hasCreatorAccess } from "../utils/socialAccess";
+import { defaultDestinationFor, destinationForUser, hasCreatorAccess } from "../utils/socialAccess";
 import Loader from "../components/common/Loader";
 
 const pageModules = import.meta.glob("../pages/**/*.jsx");
@@ -119,6 +119,14 @@ function RootRedirect() {
   return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
+function GuestOnlyRoute() {
+  __useUiLanguage();
+  const { loading, user } = useAuth();
+  if (loading) return <div className="grid min-h-[100dvh] place-items-center"><Loader label={__msg("onboarding.checkingSession")} /></div>;
+  if (user) return <Navigate replace to={destinationForUser(user)} />;
+  return <Outlet />;
+}
+
 function LegacyCreatorProfileRedirect() {
   __useUiLanguage();
   const { username } = useParams();
@@ -169,15 +177,16 @@ function AppRoutes() {
       <Route path="/invite/:code" element={<ReferralLandingPage />} />
     </Route>
 
-    <Route element={<AuthLayout />}>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+    <Route element={<GuestOnlyRoute />}>
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      </Route>
+      <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/start/interests" element={<PublicStoryInterestsPage />} />
     </Route>
-
-    <Route path="/welcome" element={<WelcomePage />} />
-    <Route path="/start/interests" element={<PublicStoryInterestsPage />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />

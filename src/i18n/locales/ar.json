@@ -2740,6 +2740,7 @@
   "auth.usernameMustBe30CharactersOrLess": "يجب أن يكون اسم المستخدم 30 حرفًا أو أقل.",
   "auth.useLowercaseLettersNumbersUnderscoresOrPeriods": "استخدم الحروف أو الأرقام أو الأرقام أو الفترات",
   "auth.checkingAvailability": "التحقق من توافر...",
+  "auth.emailOrPhone": "البريد الإلكتروني أو الهاتف",
   "auth.usernameSuggestions": "أفكار متاحة لاسم المستخدم",
   "auth.pleaseChooseAnAvailableUsernameBeforeCreatingYourAccount": "يرجى اختيار اسم مستخدم متاح قبل إنشاء حسابك.",
   "auth.backToCreators_447886": "← العودة إلى المبدعين",

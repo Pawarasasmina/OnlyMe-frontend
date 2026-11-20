@@ -9475,19 +9475,19 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 }
 .profile-status-avatar-ring {
   display: grid;
-  width: 102px;
-  height: 102px;
+  width: 92px;
+  height: 92px;
   place-items: center;
-  border: 2px solid rgba(156,203,255,.92);
+  border: 2px solid rgba(255,255,255,.08);
   border-radius: 50%;
-  box-shadow: 0 0 26px rgba(156,203,255,.34);
+  box-shadow: none;
 }
 .profile-status-avatar-ring > span {
-  border: 2px solid #0A0C0F;
+  border: 0;
 }
 .profile-status-input {
   width: min(100%, 230px);
-  margin-top: 22px;
+  margin-top: 28px;
   border: 0;
   background: transparent;
   color: rgba(255,255,255,.9);
@@ -9533,7 +9533,7 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  width: min(100%, 300px);
+  width: min(100%, 282px);
   margin-top: 30px;
 }
 .profile-status-chip {
@@ -9718,15 +9718,15 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
     padding-top: 42px;
   }
   .profile-status-avatar-ring {
-    width: 120px;
-    height: 120px;
+    width: 92px;
+    height: 92px;
   }
   .profile-status-input {
     max-width: 100%;
-    font-size: 20px;
+    font-size: 18px;
   }
   .profile-status-suggestions {
-    width: 100%;
+    width: min(100%, 282px);
   }
 }
 .profile-viewers-backdrop {

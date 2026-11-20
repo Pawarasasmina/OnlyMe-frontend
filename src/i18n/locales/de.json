@@ -2746,6 +2746,7 @@
   "auth.usernameMustBe30CharactersOrLess": "Benutzername muss 30 Zeichen oder weniger sein",
   "auth.useLowercaseLettersNumbersUnderscoresOrPeriods": "Verwenden Sie unterschriftliche Buchstaben, Zahlen, Unterschriften oder Perioden",
   "auth.checkingAvailability": "Überprüfen der Verfügbarkeit...",
+  "auth.emailOrPhone": "E-Mail oder Telefon",
   "auth.usernameSuggestions": "Verfügbare Benutzernamen",
   "auth.pleaseChooseAnAvailableUsernameBeforeCreatingYourAccount": "Bitte wählen Sie ein verfügbare Benutzername vor der Erstellung Ihres Kontos aus.",
   "auth.backToCreators_447886": "← Zurück zu den Schöpfern",

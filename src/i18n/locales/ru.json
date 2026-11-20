@@ -2976,6 +2976,7 @@
   "auth.usernameMustBe30CharactersOrLess": "Имя пользователя должно быть 30 символов или меньше.",
   "auth.useLowercaseLettersNumbersUnderscoresOrPeriods": "Используйте нижние буквы, цифры, подсчеты или периоды",
   "auth.checkingAvailability": "Проверка доступности...",
+  "auth.emailOrPhone": "Электронная почта или телефон",
   "auth.usernameSuggestions": "Доступные варианты имени",
   "auth.pleaseChooseAnAvailableUsernameBeforeCreatingYourAccount": "Выберите именем пользователя, который доступен перед созданием учетной записи.",
   "auth.backToCreators_447886": "← Возвращение к создателям",

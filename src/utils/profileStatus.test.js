@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PROFILE_STATUS_SUGGESTIONS, STATUS_LABEL_MAX_LENGTH } from "../constants/statusPresets.js";
+import { PROFILE_STATUS_SUGGESTIONS, profileStatusSuggestions, STATUS_LABEL_MAX_LENGTH } from "../constants/statusPresets.js";
 
 test("profile status suggestions match the v113 status screen list", () => {
   assert.equal(STATUS_LABEL_MAX_LENGTH, 120);
@@ -20,4 +20,11 @@ test("profile status suggestions match the v113 status screen list", () => {
     "\uD83C\uDF0D My World is open",
   ]);
   assert.equal(new Set(PROFILE_STATUS_SUGGESTIONS).size, PROFILE_STATUS_SUGGESTIONS.length);
+});
+
+test("fan statuses exclude professional call and World availability", () => {
+  const fanSuggestions = profileStatusSuggestions(false);
+  assert.equal(fanSuggestions.includes("\uD83D\uDCDE Open for calls"), false);
+  assert.equal(fanSuggestions.includes("\uD83C\uDF0D My World is open"), false);
+  assert.deepEqual(profileStatusSuggestions(true), PROFILE_STATUS_SUGGESTIONS);
 });

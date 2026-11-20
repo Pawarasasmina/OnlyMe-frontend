@@ -2714,6 +2714,7 @@
   "auth.usernameMustBe30CharactersOrLess": "Користувальна назва повинна бути 30 символів або менше.",
   "auth.useLowercaseLettersNumbersUnderscoresOrPeriods": "Використовуйте нижчі букви, числа, підрахунки або періоди",
   "auth.checkingAvailability": "Перевірка наявності...",
+  "auth.emailOrPhone": "Email або телефон",
   "auth.usernameSuggestions": "Доступні варіанти імені",
   "auth.pleaseChooseAnAvailableUsernameBeforeCreatingYourAccount": "Будь ласка, виберіть доступне ім'я користувача перед створенням облікового запису.",
   "auth.backToCreators_447886": "← Повернення до творців",

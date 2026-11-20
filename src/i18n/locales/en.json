@@ -2709,6 +2709,7 @@
   "auth.usernameMustBe30CharactersOrLess": "Username must be 30 characters or less",
   "auth.useLowercaseLettersNumbersUnderscoresOrPeriods": "Use lowercase letters, numbers, underscores, or periods",
   "auth.checkingAvailability": "Checking availability...",
+  "auth.emailOrPhone": "Email or phone",
   "auth.usernameSuggestions": "Available username ideas",
   "auth.pleaseChooseAnAvailableUsernameBeforeCreatingYourAccount": "Please choose an available username before creating your account.",
   "auth.backToCreators_447886": "← Back to creators",

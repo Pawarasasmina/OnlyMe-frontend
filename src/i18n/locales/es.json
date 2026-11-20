@@ -2738,6 +2738,7 @@
   "auth.usernameMustBe30CharactersOrLess": "El nombre de usuario debe ser de 30 caracteres o menos.",
   "auth.useLowercaseLettersNumbersUnderscoresOrPeriods": "Utilice letras, números, subescores o períodos de la caja inferior",
   "auth.checkingAvailability": "Verificar la disponibilidad...",
+  "auth.emailOrPhone": "Correo o teléfono",
   "auth.usernameSuggestions": "Ideas de usuario disponibles",
   "auth.pleaseChooseAnAvailableUsernameBeforeCreatingYourAccount": "Por favor, seleccione un nombre de usuario disponible antes de crear su cuenta.",
   "auth.backToCreators_447886": "← Volver a los creadores",

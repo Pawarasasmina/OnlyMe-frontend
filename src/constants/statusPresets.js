@@ -38,3 +38,7 @@ export const PROFILE_STATUS_SUGGESTIONS = Object.freeze(__uiTuple(__uiTuple([
   { __uiMessage: "statusPresets.value0OpenForCalls", values: { value0: cp(0x1F4DE) } },
   { __uiMessage: "statusPresets.value0MyWorldIsOpen", values: { value0: cp(0x1F30D) } },
 ])));
+
+export function profileStatusSuggestions(professional = false) {
+  return professional ? PROFILE_STATUS_SUGGESTIONS : PROFILE_STATUS_SUGGESTIONS.slice(0, -2);
+}
