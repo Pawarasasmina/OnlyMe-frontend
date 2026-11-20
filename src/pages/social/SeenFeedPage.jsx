@@ -264,7 +264,7 @@ function SeenHeader({ activeTab, activityCount = 0, onTabChange, onActivity, onC
   return <header className="seen-proto-header">
     <nav aria-label={__msg("social.seenFeedTabs")} className="seen-proto-tabs">
       <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><SeenEyeMark className="seen-tab-eye-mark" />Seen</button>
-      <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">{__msg("stories.friends_c11d5e")}</button>
+      <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">{__msg("activity.following")}</button>
     </nav>
     <div className="seen-proto-header-actions">
       <button aria-label={__msg("fanWeb.create")} onClick={onCreate} type="button"><FiPlus /></button>
@@ -1443,7 +1443,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
 function EmptyState({ canCreate, onCreate, tab }) {
   __useUiLanguage();
   const friends = tab === "friends";
-  return <ContentEmptyState message={friends ? __msg("social.followPeopleToFillThisSpaceWithTheStories") : __msg("social.publishedSeensWillAppearHereYouCanExplorePeople")} primaryAction={friends ? { label: __msg("profile.discoverPeople"), to: "/discover" } : canCreate ? { label: __msg("profile.createASeen"), onClick: onCreate } : { label: __msg("profile.discoverPeople"), to: "/discover" }} secondaryAction={friends ? { label: __msg("profile.exploreSeens"), to: "/seen?tab=explore" } : null} title={friends ? __msg("social.yourFriendsSeensLiveHere") : __msg("profile.noSeensYet_1d5d33")} variant="seen" />;
+  return <ContentEmptyState message={friends ? __msg("social.followPeopleToFillThisSpaceWithTheStories") : __msg("social.publishedSeensWillAppearHereYouCanExplorePeople")} primaryAction={friends ? { label: __msg("profile.discoverPeople"), to: "/discover" } : canCreate ? { label: __msg("profile.createASeen"), onClick: onCreate } : { label: __msg("profile.discoverPeople"), to: "/discover" }} secondaryAction={friends ? { label: __msg("profile.exploreSeens"), to: "/seen?tab=explore" } : null} title={friends ? __msg("activity.following") : __msg("profile.noSeensYet_1d5d33")} variant="seen" />;
 }
 
 function EndState({ onCreate }) {
