@@ -42,7 +42,7 @@ async function setup(page, isolateHints = false) {
   return server;
 }
 
-for (const width of [390, 1280]) test(`seven glass icons select one kind and scroll to its list at ${width}px`, async ({ page }) => {
+for (const width of [390, 1280]) test(`seven glass icons independently toggle combined needs without jumping at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 900 });
   const server = await setup(page);
   const row = page.locator(".wall-need-icons");
@@ -58,12 +58,25 @@ for (const width of [390, 1280]) test(`seven glass icons select one kind and scr
   await help.click();
   await expect(help).toHaveAttribute("aria-pressed", "true");
   await expect(help.locator(".wall-need-glass")).toHaveCSS("color", "rgb(10, 12, 15)");
-  await expect(page.locator(".wall-feed-heading")).toBeInViewport();
+  await expect(help).toBeInViewport();
   await expect.poll(() => server.requests.at(-1)?.type).toBe("need_help");
   await row.getByRole("button", { name: "Company", exact: true }).click();
-  await expect(help).toHaveAttribute("aria-pressed", "false");
-  await expect(row.locator('[aria-pressed="true"]')).toHaveCount(1);
+  await expect(help).toHaveAttribute("aria-pressed", "true");
+  await expect(row.locator('[aria-pressed="true"]')).toHaveCount(2);
+  await expect.poll(() => server.requests.at(-1)?.type).toBe("need_help");
+  await expect.poll(() => server.requests.at(-1)?.topic).toBe("meet_people");
+  await row.getByRole("button", { name: "Right now", exact: true }).click();
+  await row.getByRole("button", { name: "Buy & Sell", exact: true }).click();
+  await expect(row.locator('[aria-pressed="true"]')).toHaveCount(4);
+  await expect.poll(() => server.requests.at(-1)?.type).toBe("need_help,buy_sell");
+  await expect.poll(() => server.requests.at(-1)?.matchMode).toBe("any");
+  await page.reload();
+  await expect(row.locator('[aria-pressed="true"]')).toHaveCount(4);
+  await row.getByRole("button", { name: "Right now", exact: true }).click();
+  await row.getByRole("button", { name: "Buy & Sell", exact: true }).click();
   await row.getByRole("button", { name: "Company", exact: true }).click();
+  await expect(help).toHaveAttribute("aria-pressed", "true");
+  await help.click();
   await expect(row.locator('[aria-pressed="true"]')).toHaveCount(0);
   await expect(page.locator(".wall-feed-heading h2")).toHaveText("For you");
   await row.getByRole("button", { name: "More", exact: true }).click();

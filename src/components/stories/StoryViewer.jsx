@@ -1,3 +1,4 @@
+import { newestStoriesFirst } from "../../utils/storyOrder";
 import "../reactions/ReactionMotion.css";
 import { useStoryPersonTransition } from "../../hooks/useStoryPersonTransition";
 import "./WallNoteStory.css";
@@ -143,7 +144,7 @@ function StoryOverlays({ canOpenQuestionAnswers = false, canReply = false, onQue
           </span>
         );
       })}
-{(metadata.mentions || []).map((mention) => <a aria-label={__msg("stories.view", { value0: mention.username })} className={`story-composer-mention ${mention.st === 1 ? "is-solid" : ""}`} href={`/profile/${encodeURIComponent(mention.username || "")}`} key={mention.userId} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} style={{ left: `${mention.x ?? 50}%`, top: `${mention.y ?? 50}%`, transform: `translate(-50%,-50%) scale(${mention.scale || 1}) rotate(${mention.rotation || 0}deg)` }}><span>@</span>{mention.username}</a>)}
+{(metadata.mentions || []).map((mention) => <a aria-label={__msg("stories.view", { value0: mention.username })} className={`story-composer-mention ${mention.st === 1 ? "is-solid" : ""}`} href={`/profile/${encodeURIComponent(mention.username || "")}`} key={mention.userId} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} style={{ left: `${mention.x ?? 50}%`, top: `${mention.y ?? 50}%`, transform: `translate(-50%,-50%) scale(${mention.scale || 1}) rotate(${mention.rotation || 0}deg)` }}><bdi dir="ltr"><span>@</span>{mention.username}</bdi></a>)}
       {(metadata.stickers || []).map((sticker) => (
         <span
           className="absolute rounded-2xl bg-black/25 px-3 py-1.5 text-2xl backdrop-blur"
@@ -688,8 +689,9 @@ function StoryViewerActionsSheet({ layerStyle, onBlock, onClose, onHide, onMessa
   ), document.body);
 }
 
-function StoryViewer({ highlightTitle, showHighlightViews = false, externalPaused = false, discover = false, initialIndex = 0, isOpen, onClose, onComplete, onMore, onNextCreator, onPreviousComplete, onPreviousCreator, presentation = "modal", previewOnly = false, stories = [] }) {
+function StoryViewer({ highlightTitle, showHighlightViews = false, externalPaused = false, discover = false, initialIndex = 0, isOpen, onClose, onComplete, onMore, onNextCreator, onPreviousComplete, onPreviousCreator, presentation = "modal", previewOnly = false, stories: sourceStories = [] }) {
   __useUiLanguage();
+  const stories = useMemo(() => newestStoriesFirst(sourceStories), [sourceStories]);
   const viewerPosition = useStoryViewerPosition(isOpen);
   const { user } = useAuth();
   const { showToast } = useFanToast();
@@ -706,7 +708,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
   const suppressReactionClick = useRef(false);
   const videoRef = useRef(null);
   const viewedRef = useRef(new Set());
-  const [index, setIndex] = useState(initialIndex);
+  const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(IMAGE_DURATION_MS);
   const [manualPaused, setManualPaused] = useState(false);
@@ -768,7 +770,7 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
 
   const activeStory = stories[index] || null;
   const transitionOwner = activeStory?.owner?.id || activeStory?.ownerId || activeStory?.creatorId;
-  const { surfaceRef: personSurfaceRef, directionRef: personDirectionRef } = useStoryPersonTransition(isOpen, transitionOwner ? String(transitionOwner) : null);
+  const { surfaceRef: personSurfaceRef, directionRef: personDirectionRef } = useStoryPersonTransition(isOpen, transitionOwner ? String(transitionOwner) : null, activeStory?.id);
   const storyTopics = useMemo(() => [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title].filter(Boolean), [activeStory?.sourceSeen?.category, activeStory?.sourceSeen?.title]);
   const storyTrackingRef = useRecommendationTracking({ creatorId: activeStory?.owner?.id || activeStory?.creatorId || "", enabled: isOpen && !previewOnly, entityId: activeStory?.id || "", entityType: "story", position: index, topics: storyTopics });
   const attachStorySurface = useCallback(element => { storyTrackingRef.current = element; personSurfaceRef.current = element; }, [storyTrackingRef, personSurfaceRef]);
@@ -798,7 +800,13 @@ function StoryViewer({ highlightTitle, showHighlightViews = false, externalPause
     },
     onError: (error) => showToast(error?.response?.data?.message || __msg("stories.storyReplyCouldNotBeSent")),
   });
-  const boundedIndex = useMemo(() => Math.max(0, Math.min(stories.length - 1, initialIndex)), [initialIndex, stories.length]);
+  // Normal story entry points always open the latest, including already-viewed stories.
+  // Preserve explicit highlight slide links by identity when their source order differs.
+  const boundedIndex = useMemo(() => {
+    if (!previewOnly || !initialIndex) return 0;
+    const requested = sourceStories[initialIndex];
+    return Math.max(0, stories.indexOf(requested));
+  }, [initialIndex, previewOnly, sourceStories, stories]);
   const storyGroupOwner = stories[0]?.owner?.id || stories[0]?.ownerId || stories[0]?.creatorId || null;
 
   useEffect(() => {

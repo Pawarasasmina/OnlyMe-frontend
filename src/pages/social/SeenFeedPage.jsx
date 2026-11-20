@@ -1,3 +1,4 @@
+import SeenCommentActions from "../../components/comments/SeenCommentActions";
 import { useReactionSelection } from "../../hooks/useReactionSelection";
 import { popReactionCapsule } from "../../utils/reactionMotion";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
@@ -286,7 +287,7 @@ function CreatorHeader({ creator, createdAt, isOwn, onMenuToggle, onViewsClick, 
       <FanAvatar alt="" name={creator.displayName} size="h-[31px] w-[31px]" src={creator.avatarUrl} />
     </Link>
     <Link className="seen-creator-copy" to={profileTo}>
-      <strong>{creator.username ? <b className="seen-username"><i className="identity-at">@</i>{creator.username}</b> : creator.displayName}{isOwn ? <em> {__msg("social.you")}</em> : null}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
+      <strong>{creator.username ? <b className="seen-username"><bdi dir="ltr"><i className="identity-at">@</i>{creator.username}</bdi></b> : creator.displayName}{isOwn ? <em> {__msg("social.you")}</em> : null}{creator.verified ? <VerifiedBadge className="seen-verified" /> : null}</strong>
       <span>{[creator.location || creator.status, relativeTime(createdAt, "")].filter(Boolean).join(" - ")}</span>
     </Link>
     {isOwn ? (
@@ -774,15 +775,15 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onClose, 
   const renderComment = (comment, nested = false, parentAuthor = null) => {
     const reacted = Boolean(comment.viewerReaction);
     const visibleReactionCount = reacted ? Math.max(1, Number(comment.reactionCount || 0)) : Number(comment.reactionCount || 0);
-    return <article className={nested ? "is-reply" : ""} key={comment.id}>
+    return <SeenCommentActions className={nested ? "is-reply" : ""} key={comment.id} comment={comment} currentUser={currentUser} publicationId={item.id} canModerate={engagementQuery.data?.viewerCanModerate} onEngagementChange={(next) => { setReplyTo(null); onEngagementChange(next); }}>
       <FanAvatar alt="" name={comment.author?.name || "Fan"} size="h-6 w-6" src={comment.author?.avatar} />
       <div className="seen-comment-copy">
-        <p><CommentAuthorIdentity author={comment.author} fallback={commentFirstName(comment.author, __msg("profile.fan"))} /><MemberCommentBadge author={comment.author} noteOwner={item.creator} /><CommentReplyMention author={parentAuthor} replyingAuthor={comment.author} />{comment.text}</p>
+        <p>{String(comment.author?.id || "") === String(currentUser?.id || currentUser?._id || "") ? <b>{__msg("fanWeb.you")}</b> : <CommentAuthorIdentity author={comment.author} fallback={commentFirstName(comment.author, __msg("profile.fan"))} />}<MemberCommentBadge author={comment.author} noteOwner={item.creator} /><CommentReplyMention author={parentAuthor} replyingAuthor={comment.author} />{" "}{comment.text}</p>
         {comment.audio ? <VoiceMessageBubble audio={comment.audio} label={__msg("comments.voiceComment")} /> : null}
         <span><button aria-label={reacted ? "Remove reaction" : `React to ${comment.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={commentReactionMutation.isPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(comment.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(comment)} type="button">{reacted && reactionLabel[currentSeenReactionKey(comment.viewerReaction)] ? <i aria-hidden="true" className="seen-comment-selected-reaction">{reactionLabel[currentSeenReactionKey(comment.viewerReaction)]}</i> : <FiHeart />}{formatCount(visibleReactionCount)}</button>{nested ? null : <button onClick={() => beginReply(comment)} type="button">{__msg("fan.reply")}</button>}{String(comment.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[comment.id] ?? comment.viewerReposted) ? "is-selected" : ""} disabled={repostCommentMutation.isPending} onClick={() => repostCommentMutation.mutate(comment)} type="button"><FiRepeat /></button> : null}</span>
         {String(reactionCommentId) === String(comment.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={comment.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { commentReactionMutation.mutate({ comment, reaction }); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}
       </div>
-    </article>;
+    </SeenCommentActions>;
   };
   const renderThread = (comment, ancestors = new Set(), nested = false, parentAuthor = null) => {
     const id = String(comment.id);
@@ -805,7 +806,7 @@ function CommentsPanel({ currentUser, engagementQuery, item, mutation, onClose, 
       {!comments.length && !engagementQuery.isLoading ? <div className="seen-comments-empty"><strong>No comments yet</strong><span>Start the conversation.</span></div> : null}
     </div>
     <footer className="seen-comments-footer">
-    {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b>@{replyTo.author?.username || replyTo.author?.name || __msg("profile.fan")}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+    {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b><bdi dir="ltr">@{replyTo.author?.username || replyTo.author?.name || __msg("profile.fan")}</bdi></b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
     <div className="seen-comments-emoji-row" aria-label="Quick emoji">{["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"].map((emoji) => <button aria-label={`Add ${emoji}`} key={emoji} onClick={() => insertEmoji(emoji)} type="button">{emoji}</button>)}</div>
     <form onSubmit={(event) => onSubmit(event, replyTo?.id)}>
       <FanAvatar alt="" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
@@ -878,7 +879,7 @@ function SeenReactionsSheet({ currentUserId, item, onAddYours, onClose }) {
             <FanAvatar alt={__msg("fan.avatar", { value0: name })} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatarUrl} />
             <span className="seen-reactor-copy">
               <strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>
-              {reactor.user?.username ? <small>@{reactor.user.username}</small> : null}
+              {reactor.user?.username ? <small><bdi dir="ltr">@{reactor.user.username}</bdi></small> : null}
             </span>
             <span aria-label={reactionMeta[reactor.reaction]?.label || __msg("fanWeb.reaction")} className="seen-reactor-emoji"><SeenReactionIcon reaction={reactor.reaction} /></span>
           </button>;
@@ -1419,7 +1420,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
     <div className={`seen-feed-copy ${activeChapter >= 0 ? "is-reading" : "is-overview"}`}>
       <div className="seen-inline-stage" onDoubleClick={addHeartFromDoubleTap} onPointerUp={detectTouchDoubleTap}>
         <button aria-label={activeChapter <= 0 ? __msg("social.backToSeenOverview") : __msg("creator.previousChapter")} className="seen-inline-arrow is-previous" disabled={activeChapter < 0} onClick={previousPanel} type="button"><FiChevronLeft /></button>
-        <motion.div animate={{ opacity: 1, x: 0 }} className="seen-inline-track" drag={mobileSwipe ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragDirectionLock dragElastic={mobileSwipe ? .82 : 0} dragMomentum={false} initial={reduceMotion ? false : { opacity: .45, x: swipeDirection * 54 }} key={activeChapter} onDragEnd={finishSwipe} transition={reduceMotion ? { duration: 0 } : { duration: .26, ease: [0.22,1,0.36,1] }}>
+        <motion.div animate={{ opacity: 1, x: 0, rotateY: 0, filter: "brightness(1)" }} style={{ transformPerspective: 1000, transformOrigin: swipeDirection > 0 ? "left center" : "right center" }} className="seen-inline-track" drag={mobileSwipe ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragDirectionLock dragElastic={mobileSwipe ? .82 : 0} dragMomentum={false} initial={reduceMotion ? false : { opacity: .65, x: swipeDirection * 90, rotateY: swipeDirection * 42, filter: "brightness(.7)" }} key={activeChapter} onDragEnd={finishSwipe} transition={reduceMotion ? { duration: 0 } : { duration: .42, ease: [0.22,1,0.36,1] }}>
           <div aria-hidden="true" className="seen-inline-panel is-neighbor">{renderInlinePanel(previousChapterPanel)}</div>
           <div className="seen-inline-panel is-current">{renderInlinePanel(activeChapter)}</div>
           <div aria-hidden="true" className="seen-inline-panel is-neighbor">{renderInlinePanel(nextChapterPanel)}</div>
@@ -1558,7 +1559,7 @@ export default function SeenFeedPage() {
         viewerShared: engagement.viewerShared,
         viewerSaved: engagement.viewerSaved,
       },
-      previewComment: engagement.comments?.at(-1) || entry.previewComment || null,
+      previewComment: engagement.comments ? engagement.comments.at(-1) || null : entry.previewComment || null,
     } : entry)));
   };
   const replaceFeedItem = (id, nextItem) => {

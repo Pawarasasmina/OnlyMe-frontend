@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+import { wallEditMinutesRemaining } from "../../../utils/wallEditTime";
 import { useWallEditClock, wallCanEdit } from "../../../hooks/useWallEditClock";
 import { systemMessage as __systemMessage } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
@@ -8,7 +10,7 @@ import { readWallDraft, saveWallDraft, clearWallDraft } from "../../../services/
 import WallTopicSheet from "./WallTopicSheet";
 import WallNeedPicker from "./WallNeedPicker";
 import { wallLifetimeMessage } from "../../../utils/wallLifetimePresentation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FiMic, FiImage, FiMoreHorizontal, FiX, FiChevronLeft, FiLink, FiBriefcase, FiHelpCircle, FiCalendar, FiClock, FiHeart, FiShoppingBag, FiStar, FiZap } from "react-icons/fi";
 import FanAvatar from "../shared/FanAvatar";
 import { useFanToast } from "../shared/FanToastContext";
@@ -75,6 +77,13 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
   const attemptRef = useRef(initialDraft?.attempt || null);
   const textRef = useRef(null);
   const hostRef = useRef(null);
+  const [editHost, setEditHost] = useState(null);
+  useLayoutEffect(() => {
+    if (!editPost) return;
+    // Keep the editor outside the feed wrapper hidden by the open-composer CSS.
+    const main = hostRef.current?.closest(".home-prototype-main");
+    if (main) setEditHost(main);
+  }, [editPost]);
   const returnFocusRef = useRef(null);
   const fileInputRef = useRef(null);
   const filesRef = useRef([]);
@@ -395,7 +404,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
   };
 
 
-  return (
+  const composer = (
     <div className={`wall-composer-host ${composerOpen ? "is-open" : ""}`} ref={hostRef}>
       {cropQueue[0] ? <ProfileImageCropper kind="feed" onCancel={skipCrop} onSave={finishCrop} source={cropQueue[0].url} /> : null}
       {composerOpen && screen === "needs" ? (
@@ -467,7 +476,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
             <button onClick={() => setLocationPickerOpen(true)} type="button"><span>{__msg("fanWeb.place")}</span><strong>{location || __msg("fanWeb.worldwide")}</strong></button>
             <button aria-pressed={rightNow} onClick={() => setRightNow((value) => !value)} type="button"><span>{__msg("fanWeb.rightNow")}</span><strong className={rightNow ? "is-on" : "is-off"}><i aria-hidden="true" />{rightNow ? __msg("fanWeb.on") : __msg("fanWeb.off")}</strong></button>
           </div>
-          {editPost ? <p className="wall-edit-time" role="status">{wallCanEdit(editPost, editNow) ? __msg("wallEdit.remaining", { minutes: Math.max(1, Math.ceil((new Date(editPost.editUntil || new Date(editPost.publishedAt || editPost.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }) : __msg("wallEdit.expired")}</p> : lifetimeMessage ? <p className="wall-compose-lifetime"><FiClock aria-hidden="true" /><span>{__msg(lifetimeMessage.key, lifetimeMessage.values)}</span></p> : null}
+          {editPost ? <p className="wall-edit-time" role="status">{wallCanEdit(editPost, editNow) ? __msg("wallEdit.remaining", { minutes: wallEditMinutesRemaining(editPost, editNow) }) : __msg("wallEdit.expired")}</p> : lifetimeMessage ? <p className="wall-compose-lifetime"><FiClock aria-hidden="true" /><span>{__msg(lifetimeMessage.key, lifetimeMessage.values)}</span></p> : null}
           <div className="wall-create-submit">
             {error ? <p role="alert">{__systemMessage(error)}</p> : uploadLabel ? <p role="status">{uploadLabel}</p> : hasDraft ? <small>{text.length}/{POST_TEXT_MAX_LENGTH}</small> : null}
 
@@ -491,6 +500,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
       <WallVoiceRecorder onDelete={removeVoiceNote} quick={!voiceReview} initialRecording={voiceReview ? voiceAttachment : null} isOpen={voiceRecorderOpen} onClose={() => setVoiceRecorderOpen(false)} onUse={attachVoiceNote} />
     </div>
   );
+  return editPost && editHost ? createPortal(composer, editHost) : composer;
 }
 
 export default PostComposer;

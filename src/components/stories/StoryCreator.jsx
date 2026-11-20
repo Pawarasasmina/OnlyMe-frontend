@@ -1215,7 +1215,7 @@ function StoryCreator({ initialContent = null, isOpen, mode = "publish", onClose
             if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); updateStory({ mentions: story.mentions.filter((item) => item.userId !== mention.userId) }); }
             if (event.key.startsWith("Arrow")) { event.preventDefault(); updateStory({ mentions: story.mentions.map((item) => item.userId === mention.userId ? { ...item, x: Math.max(-5, Math.min(105, item.x + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0))), y: Math.max(-2, Math.min(102, item.y + (event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0))) } : item) }); }
           }}
-          style={{ left: `${mention.x}%`, top: `${mention.y}%`, transform: `translate(-50%,-50%) scale(${mention.scale || 1}) rotate(${mention.rotation || 0}deg)` }} type="button"><span>@</span>{mention.username}</button>)}
+          style={{ left: `${mention.x}%`, top: `${mention.y}%`, transform: `translate(-50%,-50%) scale(${mention.scale || 1}) rotate(${mention.rotation || 0}deg)` }} type="button"><bdi dir="ltr"><span>@</span>{mention.username}</bdi></button>)}
 
         {story.texts.filter((item) => item.text || editingTextId === item.id).map((item) => {
           const isEditing = editingTextId === item.id;

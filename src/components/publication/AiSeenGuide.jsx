@@ -1,3 +1,4 @@
+import AiThinking from "./AiThinking";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
@@ -110,8 +111,9 @@ export default function AiSeenGuide({ onClose, onComplete, open }) {
 
   if (status && status.remaining === 0 && !sessionId) return <section aria-labelledby="ai-seen-limit-title" aria-modal="true" className="ai-seen-guide is-limit" role="dialog"><header><button aria-label={__msg("discover.back")} onClick={onClose} type="button"><FiArrowLeft /></button></header><main><span className="ai-seen-guide-icon"><FiImage /></span><h1 id="ai-seen-limit-title">{__msg("system.AiSeenGuide.dda1824763")}</h1><p>{__msg("system.AiSeenGuide.8d9e0d0d01")} <b>{countdown(status.resetAt)}</b>.</p><button className="ai-seen-primary" onClick={onClose} type="button">{__msg("system.AiSeenGuide.294202730d")}</button><button className="ai-seen-secondary" onClick={onClose} type="button">{__msg("system.AiSeenGuide.ab328b0135")}</button></main></section>;
 
-  return <section aria-labelledby="ai-seen-title" aria-modal="true" className="ai-seen-guide" role="dialog">
+  return <section aria-labelledby="ai-seen-title" aria-modal="true" className="ai-seen-guide" aria-busy={busy} role="dialog">
     <header><button aria-label={__msg("discover.back")} onClick={close} type="button"><FiArrowLeft /></button><strong id="ai-seen-title">{__msg("system.AiSeenGuide.6569a7cef0")}</strong><button aria-label={__msg("activity.close")} onClick={close} type="button"><FiX /></button></header>
+    {busy ? <AiThinking label={__msg("system.AiSeenGuide.c5a97c73eb")} /> : null}
     {!sessionId ? <main className="ai-seen-photo-start"><h1>{__msg("system.AiSeenGuide.2725d5fa98")}</h1><p>{__msg("system.AiSeenGuide.6913ffc700")}</p><input accept="image/*" hidden multiple onChange={chooseFiles} ref={inputRef} type="file" />
       <button className="ai-seen-photo-picker" onClick={() => inputRef.current?.click()} type="button">{files.length ? <span className="ai-seen-photo-grid">{urls.map((url) => <img alt={__msg("system.AiSeenGuide.0c3b38dfca")} key={url} src={url} />)}</span> : <><FiPlus /><b>{__msg("system.AiSeenGuide.a59893579b")}</b></>}</button>
       {error ? <p className="ai-seen-error" role="alert">{__systemMessage(error)}</p> : null}<button className="ai-seen-primary" disabled={busy || !files.length} onClick={begin} type="button">{busy ? __msg("social.opening") : __msg("system.AiSeenGuide.1cf214c3a8")}</button></main>

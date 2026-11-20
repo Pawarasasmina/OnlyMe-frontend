@@ -31,7 +31,7 @@ export default function DiscoverEncounterPreview({ card, queryParams, go, onHide
       <span className="discover-encounter-banner"><DiscoverPreviewMedia sources={[cover, card.avatar, card.creator?.avatar]}/><span/></span>
       <span className="discover-encounter-identity">
         <FanAvatar name={name} src={card.avatar || card.creator?.avatar} size="h-[62px] w-[62px]"/>
-        <span className="discover-encounter-name"><strong dir="auto"><span><i>@</i>{username || name}</span>{card.isVerified || card.creator?.verified ? <VerifiedBadge variant="profile"/> : null}</strong>{statusLine ? <small dir="auto">{statusLine}</small> : null}</span>
+        <span className="discover-encounter-name"><strong dir="auto"><span><bdi dir="ltr"><i>@</i>{username || name}</bdi></span>{card.isVerified || card.creator?.verified ? <VerifiedBadge variant="profile"/> : null}</strong>{statusLine ? <small dir="auto">{statusLine}</small> : null}</span>
       </span>
     </button>
     {happening ? <div className="discover-encounter-now"><span>{msg("orbit.happeningNow")}</span><p dir="auto">“{happening}”</p></div> : null}

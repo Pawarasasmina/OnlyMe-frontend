@@ -189,7 +189,7 @@ function FanHomePage() {
     return () => window.cancelAnimationFrame(frame);
   }, [loading, navigation.key, navigation.state]);
 
-  const applyFilters = useCallback((nextFilters) => {
+  const applyFilters = useCallback((nextFilters, { scrollToFeed = true } = {}) => {
     const restoreScroll = { content: document.querySelector(".social-center-scroll")?.scrollTop || 0, window: window.scrollY };
     // Preserve the tapped icon's position even when the filtered list is shorter.
     if (mainRef.current) {
@@ -200,7 +200,7 @@ function FanHomePage() {
       const next = writeWallFilters(current, nextFilters);
       if (current.has("country")) next.set("country", current.get("country"));
       return next;
-    }, { replace: true, state: { restoreScroll, scrollToWallFeed: nextFilters.rightNow || nextFilters.type !== "all" || nextFilters.topic !== "all" } });
+    }, { replace: true, state: { restoreScroll, scrollToWallFeed: scrollToFeed && (nextFilters.rightNow || nextFilters.type !== "all" || nextFilters.topic !== "all") } });
   }, [setSearchParams]);
 
   const resetFilters = () => {

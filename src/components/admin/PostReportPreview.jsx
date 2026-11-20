@@ -43,7 +43,7 @@ export default function PostReportPreview({ report }) {
       <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-900 font-black text-white">
         {owner.avatar ? <img alt="" className="h-full w-full object-cover" src={resolveMediaUrl(owner.avatar)} /> : owner.name?.slice(0, 1) || __msg("admin.u")}
       </span>
-      <div className="min-w-0 flex-1"><p className="truncate font-black">{owner.name || __msg("admin.reportedUser")}</p><p className="truncate text-xs text-slate-500">@{owner.username || __msg("admin.unknown")}{publishedAt ? ` · ${new Date(publishedAt).toLocaleString(__uiLocale())}` : ""}</p></div>
+      <div className="min-w-0 flex-1"><p className="truncate font-black">{owner.name || __msg("admin.reportedUser")}</p><p className="truncate text-xs text-slate-500"><bdi dir="ltr">@{owner.username || __msg("admin.unknown")}</bdi>{publishedAt ? ` · ${new Date(publishedAt).toLocaleString(__uiLocale())}` : ""}</p></div>
       <FiMoreHorizontal className="text-xl text-slate-400" />
     </header>
     <div className="px-4 pb-4">

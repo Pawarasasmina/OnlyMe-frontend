@@ -34,7 +34,7 @@ function SuggestedPeopleGrid({ max = 10, onToggle, people = [], selected = [] })
                   {person.name}
                   {person.verified ? <VerifiedBadge /> : null}
                 </span>
-                <span dir="auto" className="mt-1 block truncate text-xs text-white/45">@{person.username}</span>
+                <span dir="auto" className="mt-1 block truncate text-xs text-white/45"><bdi dir="ltr">@{person.username}</bdi></span>
                 {location ? (
                   <span className="mt-2 flex items-center gap-1 truncate text-[11px] text-white/45">
                     <FiMapPin className="shrink-0 text-[#9CCBFF]" aria-hidden="true" />

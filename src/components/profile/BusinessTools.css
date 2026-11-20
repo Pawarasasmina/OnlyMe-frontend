@@ -1,0 +1,6 @@
+.business-dashboard-tools { margin: 20px 0; padding: 16px; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; background: rgba(255,255,255,.025); }
+.business-dashboard-tools h2 { margin: 0; font-size: 16px; font-weight: 700; color: #f4f5f7; }
+.business-dashboard-tools p { margin: 6px 0 12px; font-size: 12px; color: #929dab; }
+.business-dashboard-tools a { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: #c6defa; font-size: 14px; }
+.business-dashboard-tools a span { flex: 1; }
+.business-dashboard-tools a + a { border-top: 1px solid rgba(255,255,255,.07); }

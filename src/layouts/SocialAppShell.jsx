@@ -1,3 +1,5 @@
+import "../styles/tabletLayout.css";
+import { useRouteMotion } from "../hooks/useRouteMotion";
 import FirstTimeHints from "../components/common/FirstTimeHints";
 /* i18n-source-migrated */
 import { msg as __msg } from "../i18n/runtime.js";
@@ -58,6 +60,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
   const onboarding = useOnboarding();
   const capabilities = useSocialCapabilities();
   const location = useLocation();
+  const routeSurfaceRef = useRouteMotion(location.pathname);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const warningQuery = useQuery({ queryKey: ["moderation-warnings", user?.id], queryFn: () => moderationWarningService.listPending().then((response) => response.data.data.warnings || []), enabled: Boolean(user), retry: false });
@@ -183,7 +186,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
           <FanWebSidebar capabilities={capabilities} onCreate={() => setCreateOpen(true)} onGetApp={() => setAppModalOpen(true)} onVerify={() => setVerificationOpen(true)} status={status} unreadActivityCount={unreadActivityCount} unreadMessageCount={unreadMessageCount} />
           <div className="social-center-scroll relative min-w-0 flex-1 min-[881px]:h-screen min-[881px]:overflow-y-auto min-[881px]:overscroll-contain" ref={contentScrollRef}>
             {ticketVisible && !suppressOnboardingTicket ? <OnboardingTicket busy={onboarding.acknowledgeTicket.isPending || onboarding.complete.isPending} city={onboarding.data?.profile?.city || ""} joinedAt={onboarding.data?.user?.createdAt || user?.createdAt} memberNumber={onboarding.data?.user?.memberNumber || user?.memberNumber} name={user?.name} onContinue={closeOnboardingTicket} overlay /> : null}
-            <main className={isWorldComposePage
+            <main ref={routeSurfaceRef} className={isWorldComposePage
               ? "seen-shell-main mx-auto min-h-screen w-full min-w-0 px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:h-screen min-[881px]:pb-0"
               : isWorldReaderPage
               ? "world-reader-shell-main mx-auto min-h-screen w-full min-w-0 max-w-none px-0 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-0 min-[881px]:pb-20"

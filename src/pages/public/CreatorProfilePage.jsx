@@ -72,7 +72,7 @@ function CreatorProfilePage() {
               <h1 dir="auto" className="text-4xl font-black">{creator.displayName}</h1>
               {creator.isVerified ? <FiCheckCircle className="text-brand-secondary" title={__msg("public.verifiedCreator")} /> : null}
             </div>
-            <p dir="auto" className="mt-1 text-brand-mist/55">@{creator.username}</p>
+            <p dir="auto" className="mt-1 text-brand-mist/55"><bdi dir="ltr">@{creator.username}</bdi></p>
             {creator.categories?.length ? (
               <div className="mt-5 flex flex-wrap gap-2">
                 {creator.categories.map((category) => (

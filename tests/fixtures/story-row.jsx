@@ -11,5 +11,5 @@ const items = ["Lina", "Mia", "Zoe"].map((name, i) => {
   return { id: owner.id, user: owner, hasUnseenStories: true, stories: [{ id: `507f1f77bcf86cd79943903${i}`, owner, ownerId: owner.id, caption: `${name} story`, mediaUrl: "/illustrations/empty-feed.svg", image: "/illustrations/empty-feed.svg", mediaType: "image", viewed: false, createdAt: new Date().toISOString() }] };
 });
 const client = new QueryClient({ defaultOptions: { queries: { enabled: false, retry: false } } });
-client.setQueryData(["wall-stories", user.id, ""], { viewer: { ...user, stories: [] }, items });
+client.setQueryData(["wall-stories", user.id, ""], { viewer: { ...user, stories: window.__OWN_STORIES__ || [] }, items: window.__STORY_GROUPS__ || items });
 createRoot(document.getElementById("root")).render(<AuthContext.Provider value={{ user }}><QueryClientProvider client={client}><BrowserRouter><main className="social-center-scroll" style={{ width: "min(100%,550px)", height: "100dvh", margin: "auto" }}><StoriesRow currentUser={user} /></main></BrowserRouter></QueryClientProvider></AuthContext.Provider>);

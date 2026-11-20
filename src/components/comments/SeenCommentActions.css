@@ -1,0 +1,21 @@
+.seen-comments-sheet .seen-comments-list article.seen-comment-has-actions { position: relative; }
+.seen-comment-actions-layer { position: fixed; inset: 0; z-index: 300; display: flex; align-items: flex-end; justify-content: center; }
+.seen-comment-actions-scrim { position: absolute; inset: 0; border: 0; background: #0009; }
+.seen-comment-actions-layer .seen-comment-actions-sheet { position: relative; left: auto; right: auto; bottom: auto; width: min(440px, 100%); max-height: 80dvh; overflow-y: auto; transform: none; animation: none; }
+.seen-comments-sheet .seen-comments-list article.seen-comment-has-actions { padding-right: 28px; }
+.seen-comment-more { position: absolute; top: 4px; right: 0; display: grid; place-items: center; width: 28px; height: 28px; border: 0; background: transparent; color: rgba(255,255,255,.4); cursor: pointer; }
+
+.seen-comments-sheet .seen-comments-list article.is-comment-actions-open {
+  margin-right: -8px;
+  margin-left: -8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255, 107, 129, .06);
+}
+.seen-comments-sheet .is-comment-actions-open .seen-comment-copy > span,
+.seen-comments-sheet .is-comment-actions-open .seen-comment-quick-reactions { display: none; }
+.seen-comments-sheet .seen-comment-inline-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 3px; }
+.seen-comments-sheet .seen-comment-inline-actions > button { padding: 0; border: 0; background: transparent; color: rgba(255,255,255,.4); font-size: 11px; line-height: 1.5; font-weight: 700; cursor: pointer; }
+.seen-comments-sheet .seen-comment-inline-actions > button.is-danger { color: #ff6b81; }
+.seen-comments-sheet .seen-comment-inline-actions > button:disabled { opacity: .5; cursor: wait; }
+.seen-comments-sheet .seen-comment-inline-actions > p { flex-basis: 100%; }
