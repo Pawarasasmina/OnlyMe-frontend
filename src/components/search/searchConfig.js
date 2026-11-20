@@ -4,7 +4,6 @@ export const SEARCH_TYPES = [
   { id: "all", get label() { return __msg("search.top"); } },
   { id: "people", get label() { return __msg("search.people"); } },
   { id: "seens", label: "Seen" },
-  { id: "experiences", get label() { return __msg("profile.experiences"); } },
   { id: "worlds", get label() { return __msg("orbit.worlds"); } },
   { id: "wall_notes", get label() { return __msg("fanWeb.wall"); } },
 ];

@@ -82,7 +82,6 @@ const WalletPage = lazyPage("../pages/social/WalletPage");
 const WalletLedgerPage = lazyPage("../pages/social/WalletLedgerPage");
 const WithdrawPage = lazyPage("../pages/social/WithdrawPage");
 const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
-const MyExperiencesPage = lazyPage("../pages/social/MyExperiencesPage");
 const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
 const MembershipCancellationPage = lazyPage("../pages/social/MembershipCancellationPage");
@@ -238,8 +237,8 @@ function AppRoutes() {
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
           <Route path="/memberships/:id/cancel" element={<MembershipCancellationPage />} />
-          <Route path="/experiences" element={<MyExperiencesPage />} />
-          <Route path="/profile/:username/experiences" element={<MyExperiencesPage />} />
+          <Route path="/experiences" element={<Navigate replace to="/profile" />} />
+          <Route path="/profile/:username/experiences" element={<LegacyCreatorProfileRedirect />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
             <Route path="/creator/seller-verification" element={<SellerVerificationPage />} />
@@ -256,8 +255,8 @@ function AppRoutes() {
             <Route path="/grow/fan-preview" element={<GrowFanPreviewPage />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
-            <Route path="/create/experience" element={<WorldComposerPage experience />} />
-            <Route path="/studio/experiences/:id/edit" element={<WorldComposerPage experience />} />
+            <Route path="/create/experience" element={<Navigate replace to="/create/seen?type=paid" />} />
+            <Route path="/studio/experiences/:id/edit" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
@@ -341,7 +340,7 @@ function AppRoutes() {
     <Route path="/profile/:username" element={<ProfileRoute />} />
     <Route path="/world/:id/inside" element={<WorldRoute />} />
     <Route path="/world/:id" element={<WorldRoute />} />
-    <Route path="/experience/:id" element={<WorldRoute />} />
+    <Route path="/experience/:id" element={<Navigate replace to="/seen" />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />

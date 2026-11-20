@@ -30,7 +30,6 @@ export const profileService = {
   toggleProfileMediaLike: (username, mediaId) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/like`),
   reportProfileMedia: (username, mediaId, payload) => axiosInstance.post(`/profiles/${encodeURIComponent(username)}/media/${encodeURIComponent(mediaId)}/report`, payload),
   getUnifiedProfile: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}`, { timeout: 45000 }),
-  getExperiences: (username) => axiosInstance.get(`/profiles/${encodeURIComponent(username)}/experiences`),
   getOrbitCreators: () => axiosInstance.get("/profiles/orbit"),
   toggleFollow: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/follow`),
   toggleSeeSignal: (username) => axiosInstance.put(`/profiles/${encodeURIComponent(username)}/see-signal`),

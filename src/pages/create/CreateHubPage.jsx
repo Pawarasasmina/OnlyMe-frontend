@@ -36,7 +36,6 @@ function CreateHubPage() {
   const cards = [
     { title: t("Free Seen"), text: __msg("create.upTo5ChaptersEveryChapterIsOpen"), to: "/create/seen?type=free" },
     { title: t("Paid Seen"), text: __msg("create.upTo5ChaptersChapter1IsFree"), to: "/create/seen?type=paid" },
-    ...(capabilities.isApprovedCreator ? [{ title: __msg("create.premiumExperience"), text: __msg("create.multiChapterJourneyFirstChapterFreeOneTime"), to: "/create/experience" }] : []),
     ...(capabilities.isApprovedCreator ? [{ title: __msg("admin.world"), text: __msg("create.monthlySubscriptionPrivateEcosystemProfileOnlyValue0", { value0: premium ? __msg("create.alreadyCreated") : __msg("social.available") }), to: "/create/premium-world", disabled: premium >= 1 }] : []),
   ];
 

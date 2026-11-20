@@ -4,7 +4,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { FiCheck, FiStar, FiVolumeX, FiX } from "react-icons/fi";
+import { FiCheck, FiStar, FiX } from "react-icons/fi";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import { creatorService } from "../../services/creatorService";
 import { profileService } from "../../services/profileService";
@@ -47,7 +47,6 @@ export default function GrowFanPreviewPage() {
   const grow = growQuery.data || {};
   const profile = data.profile || {};
   const creatorName = firstName(profile.displayName);
-  const experiences = (data.experiences || []).slice(0, 2);
   const recent = grow.recent || [];
   const joinedCount = Number(grow.counts?.total || 0);
   const invitationPath = `/invite/${encodeURIComponent(grow.codes?.creator || "")}`;
@@ -62,15 +61,6 @@ export default function GrowFanPreviewPage() {
         <span>{recent.slice(0, 4).map((row) => <i key={row.id}><Avatar avatar={row.person?.avatar} name={row.person?.name} /></i>)}</span>
         <small>{joinedCount.toLocaleString(__uiLocale())} {__msg("creator.joinedThrough")} {creatorName}</small>
       </div>
-    </section>
-
-    <section className={`grow-fan-preview-experiences ${experiences.length === 1 ? "has-one" : ""}`}>
-      {experiences.map((experience) => <Link key={experience.id} to={`/experience/${experience.id}`}>
-        {experience.coverMedia?.secureUrl ? <img alt="" src={resolveMediaUrl(experience.coverMedia.secureUrl)} /> : <span className="grow-fan-preview-cover-fallback"><FiStar /></span>}
-        <span className="grow-fan-preview-card-shade" />
-        <span className="grow-fan-preview-card-title"><i><FiVolumeX /></i><b>{experience.title || __msg("profile.untitledExperience")}</b></span>
-      </Link>)}
-      {!experiences.length ? <div className="grow-fan-preview-empty"><FiStar /><b>{__msg("creator.yourExperiencesWillAppearHere")}</b><small>{__msg("creator.publishAnExperienceToCompleteTheInvitationPreview")}</small></div> : null}
     </section>
 
     <section className="grow-fan-preview-benefits">

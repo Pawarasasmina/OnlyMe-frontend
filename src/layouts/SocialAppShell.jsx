@@ -78,7 +78,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
     || location.pathname.startsWith("/seen/");
   const isSettingsPage = location.pathname === "/settings" || location.pathname.startsWith("/settings/");
   const isWorldReaderPage = location.pathname.startsWith("/world/");
-  const isWorldComposePage = location.pathname === "/create/premium-world" || location.pathname === "/create/experience" || location.pathname.startsWith("/studio/experiences/");
+  const isWorldComposePage = location.pathname === "/create/premium-world";
   const isFullWidthUtilityPage = location.pathname.startsWith("/create/")
     || location.pathname.startsWith("/settings")
     || location.pathname.startsWith("/studio/seens/");
