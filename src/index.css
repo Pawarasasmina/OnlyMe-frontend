@@ -17738,6 +17738,7 @@ video.seen-reader-media {
   grid-column: 1 / -1;
   margin: 0 !important;
   color: #fff !important;
+  padding-bottom: 31px;
   text-align: left;
 }
 .seen-compose-chapter-page-copy strong,
@@ -17906,11 +17907,15 @@ video.seen-reader-media {
 
 /* Compact, text-only Category sheet used by the Seen composer prototype. */
 .seen-settings-sheet.is-category {
+  z-index: 1;
+  isolation: isolate;
   height: min(58.5dvh, 540px);
   max-height: min(58.5dvh, 540px);
   overflow: hidden;
   border-radius: 18px 18px 0 0;
+  background: #0c0f14;
   padding: 10px 20px 0;
+  box-shadow: 0 -24px 76px rgba(0,0,0,.78);
 }
 
 .seen-settings-sheet.is-category .seen-settings-sheet-handle {
@@ -17946,6 +17951,32 @@ video.seen-reader-media {
   line-height: 1.25;
   font-weight: 600;
 }
+
+.world-changes-requested {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 14px 20px 18px;
+  border: 1px solid rgba(251,146,60,.3);
+  border-radius: 16px;
+  background: rgba(249,115,22,.1);
+  color: #fed7aa;
+  padding: 14px;
+}
+.world-changes-requested > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+}
+.world-changes-requested > span {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+.world-changes-requested b { color: #fff; font-size: 13px; font-weight: 850; }
+.world-changes-requested p { margin: 0; color: #fed7aa; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.world-changes-requested small { color: rgba(254,215,170,.68); font-size: 10px; font-weight: 700; }
 
 .seen-settings-option > svg:first-child {
   width: 17px;
@@ -40265,7 +40296,7 @@ video.seen-reader-media {
 .seen-chapter-flow-footer > span { overflow: hidden; color: rgba(255,255,255,.38); font-size: 9.5px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .is-flow-editor .seen-chapter-editor-add { bottom: 86px; }
 .is-flow-editor .seen-chapter-add-menu { bottom: 76px; }
-.is-flow-editor .seen-chapter-editor-status{top:58px;bottom:auto;width:auto;max-width:calc(100vw - 72px);border-color:rgba(255,255,255,.08);border-radius:999px;background:rgba(27,31,38,.96);padding:9px 16px;color:#fff;box-shadow:0 7px 24px rgba(0,0,0,.3)}
+.is-flow-editor .seen-chapter-editor-status{top:96px;bottom:auto;width:auto;max-width:calc(100vw - 72px);border-color:rgba(255,255,255,.08);border-radius:999px;background:rgba(27,31,38,.96);padding:9px 16px;color:#fff;box-shadow:0 7px 24px rgba(0,0,0,.3)}
 .experience-final-settings { display: grid; gap: 12px; margin-top: 16px; border: 1px solid #252e38; border-radius: 18px; background: #10151b; padding: 16px; }
 .experience-final-settings > header { display: flex; align-items: center; justify-content: space-between; }
 .experience-final-settings > header span { color: #91c7ff; font-size: 9px; font-weight: 900; letter-spacing: .13em; }
@@ -40704,6 +40735,21 @@ video.seen-reader-media {
   .is-flow-editor .seen-chapter-editor-add { left: 20px; bottom: calc(72px + env(safe-area-inset-bottom)); }
   .seen-chapter-nav-actions { right: 20px; bottom: calc(72px + env(safe-area-inset-bottom)); }
   .is-flow-editor .seen-chapter-add-menu { bottom: calc(58px + env(safe-area-inset-bottom)); }
+  .seen-compose-body {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+  .seen-chapters-step-body {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+  .seen-chapter-editor-page.is-flow-editor {
+    padding-bottom: calc(156px + env(safe-area-inset-bottom));
+  }
+  .seen-chapter-writing-surface,
+  .seen-chapter-block-strip,
+  .seen-chapter-structured-list,
+  .seen-chapter-location-chips {
+    scroll-margin-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
 }
 
 .search-world-list { display: grid; gap: 8px; }

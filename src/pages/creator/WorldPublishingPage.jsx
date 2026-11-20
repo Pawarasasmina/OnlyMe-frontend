@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
   FiArrowUpRight,
+  FiAlertCircle,
   FiCheck,
   FiEdit3,
   FiEye,
@@ -1828,6 +1829,17 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         </div>
       </header>
 
+      {world.status === "CHANGES_REQUESTED" ? (
+        <aside className="world-changes-requested" role="status">
+          <FiAlertCircle aria-hidden="true" />
+          <span>
+            <b>{__msg("content.changesRequested")}</b>
+            {world.creatorVisibleFeedback ? <p dir="auto">{world.creatorVisibleFeedback}</p> : null}
+            <small>{__msg("verification.updateAndResubmit")}</small>
+          </span>
+        </aside>
+      ) : null}
+
       {!experience ? (
         <section className="world-prototype-planet world-publish-planet world-create-brand">
           <MinimalWorldIcon size={72} />
@@ -2001,7 +2013,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
         <button disabled={saving || submitting} onClick={leaveComposer} type="button">{__msg("admin.cancel")}</button>
         <button disabled={saving || uploading || submitting} onClick={() => saveDraft()} type="button">{saving ? __msg("financial.saving") : __msg("publication.saveDraft")}</button>
-        <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? __msg("creator.publishing_74f811") : __msg("creator.publishWorld")}</button>
+        <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? __msg("creator.publishing_74f811") : world.status === "CHANGES_REQUESTED" ? __msg("publication.resubmit") : __msg("creator.publishWorld")}</button>
       </div>
     </article>
     </>
