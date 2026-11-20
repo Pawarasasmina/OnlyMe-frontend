@@ -864,19 +864,6 @@ export default function MessagesPage() {
     setPendingShare("");
     setSearchParams((current) => { const next = new URLSearchParams(current); next.delete("share"); return next; }, { replace: true });
   }, [pendingShare, selected?.id, setSearchParams]);
-  const latestGroupSeenMessageByUser = useMemo(() => {
-    const latestMessageByUser = new Map();
-    if (selected?.type !== "group") return latestMessageByUser;
-
-    messages.forEach((message) => {
-      if (message.senderId !== myId) return;
-      (message.readBy || []).forEach((receipt) => {
-        if (receipt.userId !== myId) latestMessageByUser.set(receipt.userId, message.id);
-      });
-    });
-
-    return latestMessageByUser;
-  }, [messages, myId, selected?.type]);
   const directAccessWindow = selected?.type === "group" ? null : messagesQuery.data?.directAccessWindow || null;
   const viewerIsDirectAccessFan = Boolean(directAccessWindow && String(directAccessWindow.fanId) === myId);
   const viewerIsDirectAccessCreator = Boolean(directAccessWindow && String(directAccessWindow.creatorId) === myId);
@@ -982,14 +969,6 @@ export default function MessagesPage() {
         setDirectAccessBusy(false);
       });
   }, [hasActiveDirectAccessWindow, location.state, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
-  const lastReadOutgoingMessageId = useMemo(() => {
-    for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index];
-      if (message.senderId === myId && message.readAt) return message.id;
-    }
-    return null;
-  }, [messages, myId]);
-
   useEffect(() => {
     const unreadChats = conversations.filter(
       (conversation) => !conversation.muted && (Number(conversation.unreadCount) || 0) > 0,
@@ -2371,7 +2350,7 @@ export default function MessagesPage() {
               <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-2 pl-1 pr-2 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button">
                 <Identity compact person={rowPerson} presence={isGroup ? null : presence[rowPerson?.id]} showPresence={!isGroup} subtitle={subtitle} />
                 <span className="ml-auto flex max-w-[95px] flex-col items-end gap-1">
-                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className={last.readAt && user?.read_receipts !== false ? "message-read-ticks is-read" : "message-read-ticks"}>{last.readAt && user?.read_receipts !== false || last.delivered ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
+                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className="message-read-ticks">{last.readAt && user?.read_receipts !== false ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
                   <span className="message-row-state-icons">
                     {conversation.directAccessStatus ? <span className={`message-direct-access-state is-${conversation.directAccessStatus.toLowerCase()}`}>{__msg(conversation.directAccessStatus)}</span> : requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">{__msg("fan.pending")}</span> : conversation.manualUnread ? <span aria-label="Marked as unread" className={`message-unread-count is-manual ${conversation.muted ? "is-muted" : ""}`} /> : conversation.unreadCount ? <span className={`message-unread-count ${conversation.muted ? "is-muted" : ""}`}>{conversation.unreadCount}</span> : null}
                     {conversation.muted ? <FiVolumeX aria-label="Muted" /> : null}
@@ -2450,7 +2429,6 @@ export default function MessagesPage() {
               const startsDay = index === 0 || chatDateKey(messages[index - 1].createdAt) !== chatDateKey(message.createdAt);
               const groupedWithPrevious = !startsDay && messagesAreGrouped(messages[index - 1], message);
               const groupedWithNext = messagesAreGrouped(message, messages[index + 1]);
-              const showReadAvatar = mine && message.id === lastReadOutgoingMessageId;
               const reactions = message.reactions || [];
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
               const canShareQuestionReply = Boolean(!mine && message.storyReply?.questionPrompt && message.body && !message.id.startsWith("pending:"));
@@ -2470,7 +2448,7 @@ export default function MessagesPage() {
                     {storyReaction ? <div className={mine ? "text-right" : "text-left"}><p className="mb-1 whitespace-nowrap text-[10px] text-atseen-muted">{mine ? "You reacted to their story" : "Reacted to your story"}</p><button className={`relative inline-block h-44 w-28 overflow-hidden rounded-[14px] border border-white/10 bg-atseen-surface-2 shadow-lg ${storyUnavailable ? "cursor-default" : ""}`} disabled={storyUnavailable} onClick={() => openStoryReply(message.storyReply, storyUnavailable)} type="button">{storyUnavailable ? <span className="flex h-full w-full flex-col items-center justify-center bg-[#171b21] px-3 text-center"><span className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-atseen-muted">⌛</span><b className="mt-3 text-[11px] text-atseen-text">{__msg("fan.storyUnavailable")}</b><span className="mt-1 text-[9px] leading-3 text-atseen-muted">This story expired or was removed</span></span> : <img alt="Story reacted to" className="h-full w-full object-cover" onError={() => setExpiredStoryIds((current) => new Set(current).add(message.storyReply.storyId))} src={resolveMediaUrl(message.storyReply.imageUrl)} />}<span className="absolute bottom-1.5 right-2 text-[9px] font-bold text-white drop-shadow-md">{chatTimeLabel(message.createdAt, chatLanguage)}{mine ? " ✓✓" : ""}</span></button><span className={`-mt-3 block text-[28px] leading-none drop-shadow-lg ${mine ? "-mr-1 text-right" : "-ml-1 text-left"}`}>{storyReaction[1]}</span></div> : message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><GiftArt className="mx-auto h-24 w-24" gift={message.gift} imageClassName="h-full w-full object-contain" /><p className="mt-1 font-black" dir="auto">{message.gift.name}</p><p className="message-gift-from"><span>{mine ? "Gift from you" : `Gift from @${participant?.username || "user"}`}</span><span aria-hidden="true"> · </span><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><span>{Number(message.gift.stars).toLocaleString()}</span></p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt={__msg("fan.sharedInChat")} className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     {!storyReaction ? <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{chatTimeLabel(message.createdAt, chatLanguage)}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : ""}</span>
-                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) ? "Read" : (message.deliveredBy || []).some(receipt => receipt.userId !== myId) ? "Delivered" : "Sent" : message.readAt ? "Read" : message.delivered ? "Delivered" : "Sent"} className={`message-delivery-ticks font-black${(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) : message.readAt) ? " is-read" : ""}`}>{(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) || (message.deliveredBy || []).some(receipt => receipt.userId !== myId) : message.readAt || message.delivered) ? "\u2713\u2713" : "\u2713"}</span> : null}
+                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) ? "Read" : (message.deliveredBy || []).some(receipt => receipt.userId !== myId) ? "Delivered" : "Sent" : message.readAt ? "Read" : message.delivered ? "Delivered" : "Sent"} className="message-delivery-ticks font-black">{(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) : message.readAt) ? "\u2713\u2713" : "\u2713"}</span> : null}
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button> : null}
                     </p> : null}
                   </div>
@@ -2502,14 +2480,6 @@ export default function MessagesPage() {
                       {!mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-atseen-warning hover:bg-white/5" onClick={() => { setMessageMenu(null); setReportTarget({ type: "message", message }); }} type="button"><FiFlag /> {__msg("discover.report")}</button> : null}
                     </div></div></div>, document.querySelector(".messages-page") || document.body) : null}
                   </div> : null}
-                  {selected.type !== "group" && showReadAvatar && participant ? <span aria-label={`Seen by ${participant.displayName}`} className="mt-1 block" title={`Seen by ${participant.displayName}`}><FanAvatar name={participant.displayName} size="h-4 w-4" src={participant.avatarUrl} /></span> : null}
-                  {selected.type === "group" && mine ? (() => {
-                    const seenMembers = (message.readBy || []).filter((receipt) => receipt.userId !== myId && latestGroupSeenMessageByUser.get(receipt.userId) === message.id).map((receipt) => participant?.members?.find((member) => member.id === receipt.userId)).filter(Boolean);
-                    if (!seenMembers.length) return null;
-                    const visibleMembers = seenMembers.slice(0, 3);
-                    const extraCount = Math.max(0, seenMembers.length - visibleMembers.length);
-                    return <button aria-label={`Seen by ${seenMembers.length} group members. Open message info.`} className="mt-1 flex items-center justify-end -space-x-1.5" onClick={() => setGroupMessageInfo(message)} title={__msg("fan.openMessageInfo")} type="button">{visibleMembers.map((member) => <span className="rounded-full ring-2 ring-atseen-bg-2" key={member.id}><FanAvatar name={member.displayName} size="h-4 w-4" src={member.avatarUrl} /></span>)}{extraCount ? <span className="relative grid h-4 min-w-4 place-items-center rounded-full bg-atseen-surface-2 px-1 text-[8px] font-black text-atseen-blue ring-2 ring-atseen-bg-2">+{extraCount}</span> : null}</button>;
-                  })() : null}
                 </div>
               </div>
               </Fragment>;
