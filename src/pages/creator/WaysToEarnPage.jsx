@@ -3,7 +3,7 @@ import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FiArrowLeft, FiChevronRight, FiCreditCard, FiEye, FiGift, FiTrendingUp, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiChevronRight, FiCreditCard, FiEye, FiGift, FiTrendingUp, FiUsers, FiX } from "react-icons/fi";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
@@ -78,6 +78,7 @@ export default function WaysToEarnPage() {
   const [price, setPrice] = useState(490);
   const [people, setPeople] = useState(25);
   const [detail, setDetail] = useState("");
+  useEffect(() => { if (detail === "referral") navigate("/grow"); }, [detail, navigate]);
   const earnQuery = useQuery({ queryKey: ["ways-to-earn"], queryFn: () => creatorService.getWaysToEarn().then(response => response.data.data) });
   const profileQuery = useQuery({ queryKey: ["unified-profile", "me"], queryFn: () => profileService.getUnifiedMe().then(response => response.data.data) });
   const monetizationQuery = useQuery({ queryKey: ["monetization"], queryFn: () => authService.getMonetization().then(response => response.data.data), retry: false, staleTime: 30000 });
@@ -89,6 +90,7 @@ export default function WaysToEarnPage() {
     { type: "world", Icon: FiEye, title: __msg("profile.openYourWorld"), note: __msg("creator.aMonthlyIncomeFromYourClosestFans") },
     { type: "seen", Icon: FiTrendingUp, title: __msg("system.WaysToEarnPage.f6485c28ac"), note: __msg("creator.whatYouKnowPackedIntoChapters") },
     { type: "gift", Icon: FiGift, title: __msg("system.WaysToEarnPage.bdd98cf2cd"), note: __msg("creator.oneLinkInYourBioFansGiftIn") },
+    { type: "referral", Icon: FiUsers, title: "Bring a creator", note: "$1 for every $10 they earn, for their first year" },
   ], [__uiLanguage]);
   if (earnQuery.isLoading || profileQuery.isLoading || monetizationQuery.isLoading) return <main className="ways-to-earn-page"><LoadingSkeleton className="h-20" count={1}/><LoadingSkeleton className="mt-5 h-72" count={2}/></main>;
   if (earnQuery.isError || profileQuery.isError) return <main className="ways-to-earn-page"><h1>{__msg("creator.waysToEarn")}</h1><p>{__msg("system.WaysToEarnPage.7f232b41bd")}</p></main>;
