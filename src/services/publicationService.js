@@ -77,6 +77,7 @@ export const publicationService = {
     if (waveform?.length) body.append("waveform", JSON.stringify(waveform));
     return axiosInstance.post(`/publications/${id}/comments`, body);
   },
+  reportSeenComment: (id, commentId, payload) => axiosInstance.post(`/publications/${id}/comments/${encodeURIComponent(commentId)}/report`, payload),
   removeSeenComment: (id, commentId) => axiosInstance.delete(`/publications/${id}/comments/${encodeURIComponent(commentId)}`),
   reactToSeenComment: (id, commentId, reaction, accessToken = "") => axiosInstance.put(`/publications/${id}/comments/${commentId}/reaction`, { reaction, accessToken }),
   removeSeenCommentReaction: (id, commentId, accessToken = "") => axiosInstance.delete(`/publications/${id}/comments/${commentId}/reaction`, { data: { accessToken } }),

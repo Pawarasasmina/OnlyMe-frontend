@@ -61,7 +61,7 @@ function StoryInsightsModal({ isOpen, onClose, story }) {
                 {insights.viewers.map((viewer) => (
                   <Link className="flex items-center gap-3 p-3 transition hover:bg-white/[0.04]" key={viewer.id} onClick={onClose} to={`/profile/${viewer.username}`}>
                     <div className="relative"><FanAvatar name={viewer.name || viewer.username} size="h-10 w-10" src={viewer.avatar} />{viewer.reaction ? <span className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full border-2 border-atseen-surface bg-atseen-bg text-sm">{viewer.reaction}</span> : null}</div>
-                    <div className="min-w-0 flex-1"><p className="flex items-center gap-1 truncate text-sm font-bold text-atseen-text">{viewer.name || viewer.username}{viewer.verified ? <VerifiedBadge /> : null}</p><p dir="auto" className="truncate text-[11px] text-atseen-muted">@{viewer.username} · {viewedTime(viewer.viewedAt)}</p></div>
+                    <div className="min-w-0 flex-1"><p className="flex items-center gap-1 truncate text-sm font-bold text-atseen-text">{viewer.name || viewer.username}{viewer.verified ? <VerifiedBadge /> : null}</p><p dir="auto" className="truncate text-[11px] text-atseen-muted"><bdi dir="ltr">@{viewer.username}</bdi> · {viewedTime(viewer.viewedAt)}</p></div>
                     <span className={`shrink-0 text-xs font-bold ${viewer.reaction ? "text-atseen-blue" : "text-atseen-muted"}`}>{viewer.reaction || __msg("stories.viewed")}</span>
                   </Link>
                 ))}

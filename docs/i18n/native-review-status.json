@@ -1,0 +1,74 @@
+{
+  "status": "Native-speaker review pending in all seven languages. Automated checks and implementation corrections are not linguistic approval.",
+  "scope": "Catalog completeness, broken replacement characters, and long English strings left unchanged. These checks cannot detect every mistranslation.",
+  "locales": {
+    "ar": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": []
+    },
+    "ru": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": []
+    },
+    "uk": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": [
+        {
+          "key": "fan.directAccess_419dbf",
+          "source": "Direct Access · ✦{value0}"
+        }
+      ]
+    },
+    "es": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": [
+        {
+          "key": "fan.directAccess_419dbf",
+          "source": "Direct Access · ✦{value0}"
+        }
+      ]
+    },
+    "pt": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": []
+    },
+    "fr": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": [
+        {
+          "key": "fan.directAccess_419dbf",
+          "source": "Direct Access · ✦{value0}"
+        },
+        {
+          "key": "common.messagesCount",
+          "source": "{count, plural, one {# message} other {# messages}}"
+        }
+      ]
+    },
+    "de": {
+      "nativeReview": "pending",
+      "keys": 7292,
+      "missingKeys": [],
+      "brokenCharacterEntries": [],
+      "potentialUntranslatedText": []
+    }
+  }
+}

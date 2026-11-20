@@ -178,7 +178,7 @@ function creatorName(creator, fallback = __msg("fan.someone")) {
 }
 
 function ActivityHandle({ person, fallback = "" }) {
-  if (person?.username) return <b><i className="identity-at">@</i>{person.username}</b>;
+  if (person?.username) return <b><bdi dir="ltr"><i className="identity-at">@</i>{person.username}</bdi></b>;
   return <b>{person?.displayName || person?.name || fallback}</b>;
 }
 

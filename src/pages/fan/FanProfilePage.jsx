@@ -41,7 +41,7 @@ function FanProfilePage() {
       <div className="rounded-[22px] border border-atseen-line bg-[radial-gradient(80%_90%_at_50%_45%,#0d1420,#06080B_75%)] px-5 py-10 text-center">
         <FanAvatar className="mx-auto border-2 border-atseen-blue shadow-glow" name={display.name} size="h-[84px] w-[84px]" src={display.avatar} />
         <p dir="auto" className="mt-3 flex items-center justify-center gap-2 text-lg font-extrabold">{display.name}{account?.isVerified ? <FiCheckCircle className="text-atseen-blue" /> : null}</p>
-        <p dir="auto" className="mt-1 text-sm text-atseen-muted">@{display.username}</p>
+        <p dir="auto" className="mt-1 text-sm text-atseen-muted"><bdi dir="ltr">@{display.username}</bdi></p>
         {profile.bio ? <p dir="auto" className="mx-auto mt-4 max-w-md text-sm leading-6 text-white/80">{profile.bio}</p> : null}
         {status ? <span className="mt-4 inline-flex rounded-full border border-atseen-blue/25 bg-atseen-blue/10 px-3 py-1.5 text-xs font-bold text-atseen-blue">{__enumLabel(status)}</span> : null}
       </div>

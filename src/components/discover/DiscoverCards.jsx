@@ -118,7 +118,7 @@ export const FeaturedCreatorCard = memo(function FeaturedCreatorCard({ creator, 
                 <span dir="auto" className="truncate">{creator.name}</span>
                 {creator.verified ? <VerifiedBadge className="h-5 w-5 text-xs" /> : null}
               </h2>
-              <p dir="auto" className="mt-1 text-sm font-bold text-white/58">@{creator.username}</p>
+              <p dir="auto" className="mt-1 text-sm font-bold text-white/58"><bdi dir="ltr">@{creator.username}</bdi></p>
             </div>
           </div>
           <p dir="auto" className="mt-4 line-clamp-3 text-sm leading-6 text-white/72">{creator.bio}</p>
@@ -172,7 +172,7 @@ export const DiscoverCreatorCard = memo(function DiscoverCreatorCard({ creator, 
             <span dir="auto" className="truncate">{creator.name}</span>
             {creator.verified ? <VerifiedBadge /> : null}
           </h3>
-          <p dir="auto" className="mt-0.5 truncate text-xs font-bold text-atseen-muted">@{creator.username}</p>
+          <p dir="auto" className="mt-0.5 truncate text-xs font-bold text-atseen-muted"><bdi dir="ltr">@{creator.username}</bdi></p>
           <div className="mt-3 flex items-center justify-between gap-2">
             <span className="truncate rounded-full bg-atseen-blue/10 px-2.5 py-1 text-[10px] font-extrabold text-atseen-blue">{creator.category}</span>
             <span className="truncate text-[10px] font-bold text-white/40">{creator.location || __msg("discover.global")}</span>
@@ -253,7 +253,7 @@ export const WorldCard = memo(function WorldCard({ world }) {
             <FanAvatar name={world.owner?.name} size="h-8 w-8" src={world.owner?.avatar} />
             <div className="min-w-0">
               <p className="flex items-center gap-1 truncate text-xs font-bold text-white">{world.owner?.name || __msg("discover.creator")}{world.owner?.verified ? <VerifiedBadge /> : null}</p>
-              <p dir="auto" className="truncate text-[10px] text-white/42">@{world.owner?.username}</p>
+              <p dir="auto" className="truncate text-[10px] text-white/42"><bdi dir="ltr">@{world.owner?.username}</bdi></p>
             </div>
           </div>
           <h3 dir="auto" className="mt-3 truncate text-lg font-black text-white">{world.title}</h3>

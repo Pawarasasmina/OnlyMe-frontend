@@ -1,3 +1,5 @@
+import { businessContactHrefs } from "../../utils/businessContacts";
+import { storyStartIndex } from "../../utils/storyStartIndex";
 import PublishBanner from "../../components/publication/PublishBanner";
 import { syncDiscoverFollowState } from "../../hooks/useDiscoverQuery";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
@@ -296,7 +298,7 @@ function TopProfileBar({ planets = [], profile, viewerCapabilities = {} }) {
   return (
     <>
       <header className="profile-prototype-topbar">
-        <span dir="auto"><b>@</b>{profile.username}</span>
+        <span dir="auto"><bdi dir="ltr"><b>@</b>{profile.username}</bdi></span>
         <div>
           <button aria-expanded={createOpen} aria-label={__msg("fanWeb.create")} className="profile-top-icon" onClick={openCreate} type="button"><FiPlus /></button>
           <Link aria-label={__msg("social.activity")} className="is-activity" to="/activity">
@@ -425,7 +427,7 @@ function VisitorProfileBar({ profile, relationship, viewerCapabilities }) {
   return (
     <header className="profile-prototype-topbar profile-visitor-topbar">
       <button aria-label={__msg("profile.goBack")} className="profile-visitor-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
-      <div><span dir="auto" className="profile-visitor-username"><b>@</b>{profile.username}</span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
+      <div><span dir="auto" className="profile-visitor-username"><bdi dir="ltr"><b>@</b>{profile.username}</bdi></span><MoreMenu isOwner={false} profile={profile} relationship={relationship} viewerCapabilities={viewerCapabilities} /></div>
     </header>
   );
 }
@@ -492,7 +494,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
         </div>
         <div className="profile-copy">
           <h1 dir="auto">
-            <button className="profile-handle-copy" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/profile/${profile.username}`)} title={__msg("admin.copyLink")} type="button"><span className="identity-at">@</span>{profile.username}</button>
+            <button className="profile-handle-copy" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/profile/${profile.username}`)} title={__msg("admin.copyLink")} type="button"><bdi dir="ltr"><span className="identity-at">@</span>{profile.username}</bdi></button>
             {isOwner ? <MemberTicket profile={profile} /> : null}
             {profile.verified ? <ProfileVerifiedSeal isOwner={isOwner} name={profile.displayName} /> : null}
           </h1>
@@ -609,20 +611,18 @@ function ProfileAccessGroup({ profile, viewerCapabilities }) {
   );
 }
 
-function BusinessContactActions({ profile, isOwner }) {
+function BusinessContactActions({ profile }) {
   __useUiLanguage();
-  const navigate = useNavigate();
   if ((profile.profileAccountType || profile.profileType) !== "business") return null;
   const contact = profile.businessContact || {};
-  const enabled = new Set(contact.enabled || []);
+  const hrefs = businessContactHrefs(contact);
   const actions = [
-    { id: "call", label: __msg("context.call"), Icon: FiPhone, value: contact.call, href: contact.call ? `tel:${String(contact.call).replace(/[^+\d]/g, "")}` : "" },
-    { id: "directions", label: __msg("profile.businessDirections"), Icon: FiMapPin, value: contact.directions, href: contact.directions ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.directions)}` : "" },
-    { id: "website", label: __msg("settings.website"), Icon: FiLink, value: contact.website, href: contact.website || "" },
-  ].filter((item) => enabled.has(item.id) && (isOwner || item.value));
+    { id: "call", label: __msg("context.call"), Icon: FiPhone },
+    { id: "directions", label: __msg("profile.businessDirections"), Icon: FiMapPin },
+    { id: "website", label: __msg("settings.website"), Icon: FiLink },
+  ].filter(item => hrefs[item.id]).map(item => ({ ...item, href: hrefs[item.id] }));
   if (!actions.length) return null;
   const open = (item) => {
-    if (!item.href) return navigate("/settings/profile?from=profile");
     if (item.id === "call") window.location.href = item.href;
     else window.open(item.href, "_blank", "noopener,noreferrer");
   };
@@ -1082,17 +1082,16 @@ function ProfileBody({ data, setConnectionsType }) {
   const storiesQuery = useCreatorStories(profile.ownerUserId, { staleTime: 30000 });
   const profileStories = storiesQuery.data?.length ? storiesQuery.data : data.profileStories || [];
   const hasProfileStories = profile.hasActiveStories || profileStories.length > 0;
-  const firstUnseenStoryIndex = Math.max(0, profileStories.findIndex((story) => !story.viewed));
+  const openingStoryIndex = storyStartIndex(profileStories, isOwner);
   const openProfileStories = () => {
     if (profileStories.length) {
-      setProfileStoryViewer({ index: firstUnseenStoryIndex, stories: profileStories });
+      setProfileStoryViewer({ index: openingStoryIndex, stories: profileStories });
       return;
     }
     void storiesQuery.refetch().then((result) => {
       const stories = result.data || [];
       if (!stories.length) return;
-      const unseenIndex = stories.findIndex((story) => !story.viewed);
-      setProfileStoryViewer({ index: unseenIndex >= 0 ? unseenIndex : 0, stories });
+      setProfileStoryViewer({ index: storyStartIndex(stories, isOwner), stories });
     });
   };
   const canCreateStoryNow = viewerCapabilities.canCreate && canCreateStory(user);

@@ -84,7 +84,7 @@ function OrbitProfilePreview({ node, onClose }) {
                     <span>{statusLine}</span>
                   </p>
                 ) : (
-                  <p dir="auto" className="mt-1 truncate text-xs text-atseen-muted">@{node.username}</p>
+                  <p dir="auto" className="mt-1 truncate text-xs text-atseen-muted"><bdi dir="ltr">@{node.username}</bdi></p>
                 )}
                 <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-atseen-blue opacity-0 transition group-hover:opacity-100">
                   <FiUser aria-hidden="true" />{__msg("onboarding.viewProfile")}</p>

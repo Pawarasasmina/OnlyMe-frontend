@@ -1,0 +1,48 @@
+/* Prototype hides side rails and fills the viewport through 880px. */
+@media (min-width: 768px) and (max-width: 880px) {
+  :root {
+    --seen-sheet-column-width: 100vw;
+    --seen-sheet-center-x: 50vw;
+    --profile-gifts-column-width: 100vw;
+    --profile-gifts-center-x: 50vw;
+    --message-sheet-column-width: 100vw;
+    --message-sheet-center-x: 50vw;
+  }
+  html:root body .user-app-shell.social-app-shell { background: var(--feed-outer-bg, #050608); }
+  html:root body .user-app-shell.social-app-shell .social-app-frame {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-inline: auto !important;
+  }
+  html:root body .user-app-shell.social-app-shell .social-center-scroll {
+    width: 100vw !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    flex: 1 1 auto !important;
+    margin: 0 !important;
+    border-inline: 0;
+  }
+  html:root body .user-app-shell.social-app-shell .social-center-scroll > main {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  html:root body .user-app-shell.social-app-shell .social-center-scroll > main > :not(.center-refresh-overlay):not([role="dialog"]) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  html:root body .user-app-shell.social-app-shell .fan-mobile-nav {
+    left: 50% !important;
+    right: auto !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    transform: translateX(-50%) !important;
+  }
+  .ai-seen-guide { left: 0; right: auto; width: 100vw; }
+  html:root body .seen-create-sheet {
+    left: var(--create-menu-left, 0px) !important;
+    width: var(--create-menu-width, 100vw) !important;
+    max-width: 100vw !important;
+  }
+}

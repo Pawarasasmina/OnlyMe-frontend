@@ -19,7 +19,7 @@ function ProfileHeader({ metrics = {}, onConnectionsOpen, profile, showConnectio
       <div className="px-5 pb-6 sm:px-7">
         <FanAvatar className="-mt-11 border-4 border-atseen-bg shadow-glow" name={profile.displayName} size="h-[88px] w-[88px]" src={avatar} />
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <h1 dir="auto" className="text-2xl font-extrabold tracking-tight text-atseen-text"><i className="identity-at">@</i>{profile.username}</h1>
+          <h1 dir="auto" className="text-2xl font-extrabold tracking-tight text-atseen-text"><bdi dir="ltr"><i className="identity-at">@</i>{profile.username}</bdi></h1>
           {profile.verified ? <FiCheckCircle aria-label={__msg("fanWeb.verified")} className="text-atseen-blue" /> : null}
           <span className="rounded-full border border-atseen-line px-2.5 py-1 text-[10px] font-bold uppercase text-atseen-muted">{__enumLabel(profile.role)}</span>
         </div>
