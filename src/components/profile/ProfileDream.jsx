@@ -203,7 +203,7 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
               role="radio"
               type="button"
             >
-              {fullPage ? "🪙" : STAR}{goal.toLocaleString(__uiLocale())}
+              <CoinIcon />{goal.toLocaleString(__uiLocale())}
             </button>
           ))}
         </div>

@@ -409,7 +409,6 @@ function PayoutsSheet({ onClose }) {
         <h2>{__msg("creator.howPayoutsWork")}</h2>
         <p>{__msg("creator.simpleAndTheSameForEveryone")}</p>
         <div className="creator-payouts-list">
-          <article><span>80%</span><div><b>{__msg("creator.youKeep80AfterAppStoreFees")}</b><small>{__msg("creator.worldsDirectAccessGiftsAndSupportUseTheStored")}</small></div></article>
           <article><span><FiDollarSign /></span><div><b>{__msg("creator.payoutsIn35BusinessDays")}</b><small>{__msg("creator.toYourBankFrom50TransferFeesOnUs")}</small></div></article>
           <article><span><FiZap /></span><div><b>{__msg("creator.noSubscriptionNoListingFees")}</b><small>{__msg("creator.creatingAndPublishingOnSeenIsFreeForever")}</small></div></article>
         </div>

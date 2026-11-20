@@ -726,7 +726,7 @@ function PriceSheet({ busy, currentPriceFallback, error, loading, onClose, onSav
                 title={locked ? tier.reason : undefined}
                 type="button"
               >
-                {locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString(__uiLocale())}
+                {locked ? <FiLock aria-hidden="true" /> : null}<img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" /> {tierPrice.toLocaleString(__uiLocale())}
               </button>
             );
           })}

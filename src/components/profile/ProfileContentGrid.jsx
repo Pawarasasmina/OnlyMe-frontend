@@ -630,12 +630,12 @@ function ProfileContentGrid({
           })}
           {featuredSeens.map((item) => {
             const chapters = item.chapters?.length || 0;
-            const paid = item.pricing?.mode === "ONE_TIME";
+            const paid = item.pricing?.mode === "ONE_TIME" && Number(item.pricing?.starsAmount) > 0;
             const tile = (
               <>
                 {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: item.title })} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
-                <span className="profile-seen-badge">{paid ? <>{__msg("system.ProfileContentGrid.645017bd05")}{Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</> : reposted ? <><FiRepeat /> {__msg("profile.repost_ed0fe2")}</> : __msg("profile.pinned")}</span>
+                <span className="profile-seen-badge">{paid ? <>{__msg("system.ProfileContentGrid.645017bd05")}<img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" />{Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</> : reposted ? <><FiRepeat /> {__msg("profile.repost_ed0fe2")}</> : __msg("profile.pinned")}</span>
                 <span className="profile-seen-copy">
                   <strong>{item.title}</strong>
                   <small>{chapters} {chapters === 1 ? __msg("profile.chapter_09d4c7") : __msg("discover.chapters")}</small>

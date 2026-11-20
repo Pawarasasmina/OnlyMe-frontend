@@ -22,7 +22,7 @@ function Calculator({ price, setPrice, people, setPeople, prices = WORLD_PRICES,
   const result = price * people / rate;
   return <section className="earn-turn-card">
     <small>{__msg("system.WaysToEarnPage.09ea0a9efb")}</small><p>{recurring ? __msg("system.WaysToEarnPage.605c9a5920") : __msg("system.WaysToEarnPage.16a067af17")}</p>
-    <div className="earn-price-grid">{prices.map(item => <button className={item === price ? "is-active" : ""} key={item} onClick={() => setPrice(item)} type="button">🪙 {item}</button>)}</div>
+    <div className="earn-price-grid">{prices.map(item => <button className={item === price ? "is-active" : ""} key={item} onClick={() => setPrice(item)} type="button"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" /> {item}</button>)}</div>
     <label><span>{recurring ? __msg("system.WaysToEarnPage.20ec0e09ef") : __msg("system.WaysToEarnPage.121343beb3")}</span><b>{people}</b><input min="1" max="500" type="range" value={people} onChange={event => setPeople(Number(event.target.value))} /></label>
     <strong>{money(result)} <em>{recurring ? __msg("system.WaysToEarnPage.7336ae13a2") : __msg("system.WaysToEarnPage.af0953c6a6")}</em></strong>
     <p className="earn-calc-note">{__msg("system.WaysToEarnPage.27e90dfa57")} {price} {__msg("profile.coins")} {recurring ? __msg("system.WaysToEarnPage.dd39f6be64", { value0: money(result * 12) }) : __msg("system.WaysToEarnPage.aed6647c7b", { value0: money(price / rate) })}</p>

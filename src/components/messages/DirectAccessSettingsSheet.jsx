@@ -45,6 +45,7 @@ export default function DirectAccessSettingsSheet({ busy, eligibility, saveDisab
   const messageEarningUsd = messagePrice / rate;
   const callEarningUsd = callPrice / rate;
   const activationBlocked = eligibility?.allowed === false;
+  const callsAvailable = settings.callsAvailable !== false;
   const estimatedUsd = (settings.enabled && !activationBlocked ? messageEarningUsd * 12 : 0)
     + (settings.callEnabled && !activationBlocked ? callEarningUsd * 4 : 0);
   const update = (values) => setSettings((current) => ({ ...current, ...values }));
@@ -67,18 +68,18 @@ export default function DirectAccessSettingsSheet({ busy, eligibility, saveDisab
         <small>{money(messageEarningUsd)} {__msg("messages.toYouInstantly")}{!settings.enabled || activationBlocked ? " · choose your price before going live" : ""}</small>
       </section>
 
-      <section className="direct-settings-option">
+      {callsAvailable ? <section className="direct-settings-option">
         <div className="direct-settings-option-head"><FiPhone /><h3>{__msg("messages.calls")}</h3><Toggle checked={Boolean(settings.callEnabled) && !activationBlocked} disabled={busy || activationBlocked} label={__msg("messages.enableCalls")} onChange={(callEnabled) => update({ callEnabled })} /></div>
         <div className="direct-settings-choices">{[...new Set([...CALL_PRICES, callPrice])].sort((a, b) => a - b).map((price) => <Choice active={callPrice === price} disabled={busy} key={price} onClick={() => update({ callPriceStars: price })}><CoinAmount value={price} /></Choice>)}</div>
         <div className="direct-settings-choices is-duration">{[...new Set([...CALL_LENGTHS, Number(settings.callDurationMinutes)])].filter((value) => value > 0).sort((a, b) => a - b).map((minutes) => <Choice active={Number(settings.callDurationMinutes) === minutes} disabled={busy} key={minutes} onClick={() => update({ callDurationMinutes: minutes })}>{minutes} {__msg("messages.min")}</Choice>)}</div>
         <small>{money(callEarningUsd)} {__msg("messages.toYouFor")} {settings.callDurationMinutes || 5} {__msg("messages.minYouConfirmTheSlot")}{!settings.callEnabled || activationBlocked ? " · choose before going live" : ""}</small>
-      </section>
+      </section> : <section className="direct-settings-eligibility" role="status"><div><strong>{__msg("messages.calls")}</strong><p>{settings.callsUnavailableReason || "Calls are unavailable in your country."}</p></div></section>}
 
       {!activationBlocked && (settings.enabled || settings.callEnabled) && <section className="direct-settings-estimate"><small>{__msg("messages.aCalmMonthLikeThis")}</small><strong><span>≈</span> {money(estimatedUsd)} <em>{__msg("messages.toYou")}</em></strong><p>{__msg("messages.directAccessMonthlyExample", { answers: settings.enabled ? 12 : 0, calls: settings.callEnabled ? 4 : 0 })}</p></section>}
       <div className="direct-settings-refund"><span>{__msg("messages.noReplyIn48hCoinsGoBackToThe")}</span></div>
       {!hasRate && <p className="direct-settings-rate-status" role="status">{walletQuery.isError || (!walletQuery.isPending && !hasRate) ? <>{__msg("settings.balanceUnavailable")} <button onClick={() => walletQuery.refetch()} type="button">{__msg("discover.tryAgain")}</button></> : __msg("settings.loadingBalance")}</p>}
       {error ? <p className="direct-settings-error" role="alert">{__systemMessage(error)}</p> : null}
-      <button className="direct-settings-save" disabled={busy || saveDisabled} onClick={() => onSave(activationBlocked ? { ...settings, enabled: false, callEnabled: false } : settings)} type="button">{busy ? __msg("financial.saving") : __msg("contentEntities.save_efc007")}</button>
+      <button className="direct-settings-save" disabled={busy || saveDisabled} onClick={() => onSave((activationBlocked || !callsAvailable) ? { ...settings, enabled: activationBlocked ? false : settings.enabled, callEnabled: false } : settings)} type="button">{busy ? __msg("financial.saving") : __msg("contentEntities.save_efc007")}</button>
     </section>
   </div>;
 }

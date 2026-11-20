@@ -139,7 +139,7 @@ export default function SettingsPage() {
     setError("");
     try {
       if (ownershipStep === "deactivate") await authService.deactivateAccount();
-      else await authService.deleteAccount({ acknowledgeEarningsLoss: earnings > 0 });
+      else await authService.deleteAccount({});
       try { await logout(); } catch { /* Local auth is cleared by logout even when the request fails. */ }
       queryClient.clear();
       navigate("/login", { replace: true, state: { message: ownershipStep === "deactivate" ? __msg("settings.accountDeactivatedLogBackInAnytimeToBring") : __msg("settings.deletionRequested30DaysToChangeYourMind") } });

@@ -12,7 +12,8 @@ import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { financialErrorCode, financialErrorMessage } from "../../utils/financialErrorMessages";
 import "./worldSubscription.css";
 
-const COIN = "🪙";
+const COIN = <img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" />;
+const COIN_WORD = "coins";
 const firstNameOf = (creator) => (creator?.name || creator?.displayName || creator?.username || __msg("discover.creator")).trim().split(/\s+/)[0];
 const nextDate = () => new Date(Date.now() + 30 * 86400000).toLocaleDateString(__uiLocale(), { month: "short", day: "numeric" });
 
@@ -75,7 +76,7 @@ export default function JoinPremiumModal({ authenticated = true, onClose, onRequ
     <ul><li><FiCheck /> {__msg("system.JoinPremiumModal.914207af96")}</li><li><FiCheck /> {__msg("system.JoinPremiumModal.bb12385ea4")}</li><li><FiCheck /> {__msg("system.JoinPremiumModal.aae5bc7716")}</li></ul>
     {authenticated ? <div className="premium-confirm-balance"><span>{__msg("fan.walletBalance")}</span><b>{COIN} {wallet.data?.balance ?? "—"}</b></div> : null}
     {limitExceeded ? <p className="premium-join-error">{__msg("system.JoinPremiumModal.5015bbda18")} <Link to="/wallet">{__msg("system.JoinPremiumModal.d1aa984bcc")}</Link></p> : null}{error ? <p aria-live="assertive" className="premium-join-error">{__systemMessage(error)}</p> : null}
-    {topUpNeeded ? <button className="premium-confirm-primary" disabled={busy} onClick={topUpAndResume} type="button">{busy ? __msg("system.JoinPremiumModal.f4a74a9448") : __msg("system.JoinPremiumModal.0d37aa474c", { value0: COIN, value1: topUpNeeded })}</button> : <button className="premium-confirm-primary" disabled={busy || limitExceeded || (authenticated && (wallet.isError || wallet.isLoading))} onClick={confirm} type="button">{!authenticated ? __msg("system.JoinPremiumModal.6b6b38fab4") : busy ? __msg("system.JoinPremiumModal.f44c1e4259") : __msg("system.JoinPremiumModal.2a87192b60", { value0: COIN, value1: data.charge })}</button>}
+    {topUpNeeded ? <button className="premium-confirm-primary" disabled={busy} onClick={topUpAndResume} type="button">{busy ? __msg("system.JoinPremiumModal.f4a74a9448") : __msg("system.JoinPremiumModal.0d37aa474c", { value0: COIN_WORD, value1: topUpNeeded })}</button> : <button className="premium-confirm-primary" disabled={busy || limitExceeded || (authenticated && (wallet.isError || wallet.isLoading))} onClick={confirm} type="button">{!authenticated ? __msg("system.JoinPremiumModal.6b6b38fab4") : busy ? __msg("system.JoinPremiumModal.f44c1e4259") : __msg("system.JoinPremiumModal.2a87192b60", { value0: COIN_WORD, value1: data.charge })}</button>}
     <p className="premium-confirm-terms">{__msg("system.JoinPremiumModal.8908e1d740")} {COIN}{data.regular} {__msg("system.JoinPremiumModal.5192e0ac96")}</p>
   </section></div>;
 }

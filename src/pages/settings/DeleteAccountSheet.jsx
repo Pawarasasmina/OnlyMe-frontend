@@ -88,7 +88,7 @@ export default function DeleteAccountSheet({ anchorRef, busy, error, onClose, on
             {!loading && <button className="settings-delete-confirm" onClick={onRetry} type="button">{__msg("discover.tryAgain")}</button>}
           </> : step === "earnings" ? <>
             <h2 id="settings-delete-title">{__msg("profile.youHave")} {new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD" }).format(earnings)} {__msg("settings.notWithdrawn")}</h2>
-            <p id="settings-delete-description">{__msg("settings.earningsCanTBePaidOutAfterTheAccount")}</p>
+            <p id="settings-delete-description">{__msg("settings.finishPayoutsBeforeDeleting")}</p>
           </> : <>
             <svg aria-hidden="true" className="settings-delete-icon" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" /></svg>
             <h2 id="settings-delete-title">{__msg("settings.deleteAccount_f58423")}</h2>
@@ -96,7 +96,7 @@ export default function DeleteAccountSheet({ anchorRef, busy, error, onClose, on
           </>}
           {error ? <p className="settings-delete-error" role="alert">{__systemMessage(error)}</p> : null}
           {step === "deactivate" || step === "delete" ? <button className="settings-delete-confirm" disabled={busy} onClick={onConfirm} type="button">{busy ? (step === "deactivate" ? __msg("settings.deactivating") : __msg("settings.requestingDeletion")) : step === "deactivate" ? __msg("settings.deactivate") : __msg("settings.deleteMyAccount")}</button> : null}
-          {step === "earnings" ? <><button className="settings-delete-confirm ownership-payouts" onClick={onPayouts} type="button">{__msg("settings.goToPayouts")}</button><button className="settings-delete-cancel ownership-danger" onClick={() => onStep("delete")} type="button">{__msg("settings.deleteAnyway")}</button></> : null}
+          {step === "earnings" ? <button className="settings-delete-confirm ownership-payouts" onClick={onPayouts} type="button">{__msg("settings.goToPayouts")}</button> : null}
           {step !== "earnings" && <button aria-label={step === "ownership" ? __msg("settings.closeAccountOwnershipAndControl") : undefined} className={`settings-delete-cancel ${step === "ownership" ? "ownership-close" : ""}`} disabled={busy} onClick={step === "deactivate" ? () => onStep("ownership") : onClose} ref={cancelRef} type="button">{step === "delete" ? __msg("settings.keepIt") : __msg("admin.cancel")}</button>}
 
         </div>
