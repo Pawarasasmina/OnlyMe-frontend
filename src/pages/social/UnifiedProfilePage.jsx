@@ -57,6 +57,7 @@ import ActivityGiftPreview from "../../components/activity/ActivityGiftPreview";
 import GiftArt from "../../components/gifts/GiftArt";
 import ProfileMediaSection from "../../components/profile/ProfilePhotosSection";
 import ProfileOrbit from "../../components/profile/ProfileOrbit";
+import MinimalWorldIcon from "../../components/world/MinimalWorldIcon";
 import ShowMoreEyeIcon from "../../components/branding/ShowMoreEyeIcon";
 import StoryHighlights from "../../components/profile/StoryHighlights";
 import StoryCreator from "../../components/stories/StoryCreator";
@@ -436,7 +437,7 @@ function metricValue(metrics = {}, key, fallback = 0) {
   return metrics[key] ?? metrics[`${key}Count`] ?? fallback;
 }
 
-function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, onStoriesCreate, onStoriesOpen, profile, relationship = {}, viewerCapabilities }) {
+function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, onStoriesCreate, onStoriesOpen, planets = [], profile, relationship = {}, viewerCapabilities }) {
   __useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -447,6 +448,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
   const isOwner = viewerCapabilities.isOwner;
   const avatar = resolveMediaUrl(profile.avatar);
   const activeStatus = profile.activeStatus || null;
+  const orbitWorld = planets.find((planet) => planet?.id && PUBLIC_WORLD_STATUSES.has(planet.status));
   const statusColor = activeStatus?.color || "#9CCBFF";
   const shareUrl = `${window.location.origin}/profile/${profile.username}`;
   const editStatus = () => isOwner && navigate("/profile/status");
@@ -483,12 +485,12 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
     <section className="profile-identity is-owner">
       {!isOwner && seenConfirmation ? <div className="profile-seen-confirmation" role="status"><FiEye /> {__msg("social.only")} {profile.displayName?.split(" ")[0] || __msg("stories.they_f1fdd4")} {__msg("social.seesThis")}</div> : null}
       <div className="profile-identity-row">
-        <div className={`profile-avatar-orbit-shell ${profile.friendInviteRingEarned ? "has-invite-gold-ring" : ""} ${activeStatus?.emoji ? "has-status" : ""}`}>
-          {activeStatus?.emoji ? <span aria-hidden="true" className="profile-avatar-world-orbit-ring" /> : null}
+        <div className={`profile-avatar-orbit-shell ${profile.friendInviteRingEarned ? "has-invite-gold-ring" : ""} ${orbitWorld ? "has-world" : ""}`}>
+          {orbitWorld ? <span aria-hidden="true" className="profile-avatar-world-orbit-ring" /> : null}
           <button data-first-hint={!isOwner && hasStories ? "photo" : undefined} aria-label={hasStories ? __msg("social.viewSStories", { value0: profile.displayName }) : __msg("social.checkSStories", { value0: profile.displayName })} className={`profile-avatar-ring ${hasStories ? "has-stories" : "no-stories"}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesOpen?.(); }} style={{ "--profile-status-color": statusColor }} type="button">
             <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
           </button>
-          {activeStatus?.emoji ? <span className="profile-avatar-world-rotor"><span aria-label={activeStatus.label || __msg("financial.status")} className="profile-avatar-world-planet" role="img" title={activeStatus.label || __msg("financial.status")}>{activeStatus.emoji}</span></span> : null}
+          {orbitWorld ? <span className="profile-avatar-world-rotor"><Link aria-label={`Open ${orbitWorld.title || "World"}`} className="profile-avatar-world-planet" onClick={(event) => event.stopPropagation()} title={orbitWorld.title || "World"} to={`/world/${orbitWorld.id}`}><MinimalWorldIcon size={22} /></Link></span> : null}
           {activeStatus ? <span aria-label={__msg("social.onlineNow")} className="profile-avatar-now-dot" role="img" /> : null}
           {isOwner ? <button aria-label={__msg("social.createAStory")} className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
         </div>
