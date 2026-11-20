@@ -13626,7 +13626,8 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
 .message-unread-count.is-muted { background:#606975;color:#eef1f4; }
 .message-inbox-row { min-height:74px;border-bottom:1px solid rgba(255,255,255,.065); }
 .message-inbox-row button > span:first-of-type:not(.ml-auto) { min-width:0; }
-.message-inbox-row .message-identity-avatar,.message-inbox-row .message-identity-avatar > span,.message-inbox-row .message-identity-avatar img { width:58px!important;height:58px!important; }
+.message-inbox-row .message-identity-avatar,.message-inbox-row .message-identity-avatar > span:not(.message-identity-presence),.message-inbox-row .message-identity-avatar img { width:58px!important;height:58px!important; }
+.message-inbox-row .message-identity-presence { width:12px!important;height:12px!important; }
 .message-inbox-row .message-identity-name { font-size:16px;font-weight:700;line-height:20px; }
 .message-inbox-row .message-identity-preview { display:-webkit-box;overflow:hidden;color:rgba(255,255,255,.72);font-size:14px;line-height:18px;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal; }
 .message-read-ticks { margin-right:4px;color:#8290a1;font-weight:800;letter-spacing:-3px; }

@@ -644,7 +644,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (selected?.id) messagesQuery.refetch();
   }, [selected?.directAccessWindowId]);
-  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || sharePickerOpen || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
+  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || newDirectChat || sharePickerOpen || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
   const groupsQuery = useQuery({
     queryKey: ["messages", "groups"],
     queryFn: () => messageService.getGroups().then((response) => response.data.data.groups),
@@ -1346,38 +1346,32 @@ export default function MessagesPage() {
   }, [conversations, myId, orderedPeople]);
   const shownConversations = useMemo(() => {
     if (inboxTab === "direct") return [];
-    const standardConversationByPerson = new Map(conversations.map((item) => [String(item.id), item]));
-    const myDirectAccessRows = inboxTab === "all" ? directConversations
-      .filter((windowItem) => String(windowItem.fanId) === myId)
-      .map((windowItem) => {
-        const other = directWindowParticipant(windowItem, myId);
-        const directAccessStatus = directAccessDisplayStatus(windowItem);
-        const standardConversation = other?.id ? standardConversationByPerson.get(String(other.id)) : null;
-        const latestMessage = windowItem.latestMessage || standardConversation?.lastMessage || null;
-        return other ? {
-          id: other.id,
-          type: "direct",
-          participant: other,
-          directAccessWindowId: windowItem.id,
-          directAccessStatus,
-          isDirectAccess: true,
-          lastMessage: latestMessage || { body: windowItem.questionQuote || "Direct Access", createdAt: windowItem.updatedAt || windowItem.createdAt, senderId: "" },
-          unreadCount: standardConversation?.unreadCount || 0,
-          manualUnread: standardConversation?.manualUnread || false,
-          muted: standardConversation?.muted || false,
-          pinned: standardConversation?.pinned || false,
-        } : null;
-      }).filter(Boolean) : [];
-    const myDirectAccessIds = new Set(myDirectAccessRows.map((item) => String(item.id)));
+    const directAccessRowsByPerson = new Map();
+    if (inboxTab === "all") directConversations.forEach((windowItem) => {
+      const other = directWindowParticipant(windowItem, myId);
+      if (!other?.id || directAccessRowsByPerson.has(String(other.id))) return;
+      directAccessRowsByPerson.set(String(other.id), {
+        id: other.id,
+        type: "direct",
+        participant: other,
+        directAccessWindowId: windowItem.id,
+        directAccessStatus: directAccessDisplayStatus(windowItem),
+        isDirectAccess: true,
+        lastMessage: windowItem.latestMessage || { body: windowItem.questionQuote || "Direct Access", createdAt: windowItem.updatedAt || windowItem.createdAt, senderId: "" },
+        unreadCount: 0,
+        manualUnread: false,
+        muted: false,
+        pinned: false,
+      });
+    });
     const items = [
       ...(["all", "groups"].includes(inboxTab) ? (groupsQuery.data || []).filter((item) => !item.archived) : []),
       ...conversations.filter((item) => {
         if (inboxTab === "groups") return false;
         if (inboxTab === "requests") return item.status === "REQUEST" && item.requestReceived;
-        if (inboxTab === "all" && myDirectAccessIds.has(String(item.id))) return false;
         return !item.archived && item.status !== "DECLINED" && (item.status !== "REQUEST" || !item.requestReceived);
       }),
-      ...myDirectAccessRows,
+      ...directAccessRowsByPerson.values(),
     ].sort((left, right) => {
       if (Boolean(left.pinned) !== Boolean(right.pinned)) return left.pinned ? -1 : 1;
       if (Boolean(left.hasPriorityCall) !== Boolean(right.hasPriorityCall)) return left.hasPriorityCall ? -1 : 1;
@@ -2342,7 +2336,7 @@ export default function MessagesPage() {
             return <button className="group flex w-full items-start gap-3 px-5 py-3 text-left transition hover:bg-white/[0.03]" key={windowItem.id} onClick={() => chooseConversation({ id: other.id, participant: other, directAccessWindowId: windowItem.id })} type="button">
               <FanAvatar className="mt-0.5 h-11 w-11 shrink-0" name={other.displayName || other.username} src={other.avatarUrl} />
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5"><strong className="truncate text-[13px] leading-5 text-white">{other.displayName || other.username || "Member"}</strong>{presence[other.id]?.active_now ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
+                <span className="flex items-center gap-1.5"><strong className="message-username truncate text-[13px] leading-5 text-white">{other.username ? <bdi dir="ltr"><i className="identity-at">@</i>{other.username}</bdi> : other.displayName || "Member"}</strong>{presence[other.id]?.active_now ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
                 <span className="block truncate text-[11px] leading-5 text-atseen-muted">{incoming && windowItem.questionQuote ? `“${windowItem.questionQuote}”` : directWindowSnippet(windowItem, myId)}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[9px]">
                   {incoming ? <><span className="rounded-full bg-[#202734] px-2 py-1 font-bold text-atseen-muted">Message · {windowItem.settlementStatus === "INCLUDED" ? __msg("profile.included") : <><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{windowItem.priceStars}</>}</span>{windowItem.settlementStatus !== "INCLUDED" ? <span className="font-bold text-atseen-success">≈ ${Number(windowItem.creatorNetUsd || 0).toFixed(2)} {__msg("messages.toYou")}</span> : null}<span className="text-atseen-muted">◷ {hoursLeft}{__msg("fan.hLeft")}</span></> : null}
@@ -2373,7 +2367,8 @@ export default function MessagesPage() {
             const last = conversation.lastMessage;
             const subtitle = !last ? __msg("No messages yet") : last.deletedAt ? last.senderId === myId ? __msg("You deleted this message") : __msg("This message was deleted") : `${isGroup && last.sender?.displayName ? `${last.senderId === myId ? __msg("You") : last.sender.displayName.split(" ")[0]}: ` : ""}${localizedInboxBody(last.body)}`;
             const requestPending = conversation.status === "REQUEST";
-            return <div className={`message-inbox-row relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
+            const selectedRow = selected?.id === conversation.id && (selected?.directAccessWindowId || null) === (conversation.directAccessWindowId || null);
+            return <div className={`message-inbox-row relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selectedRow ? "bg-atseen-blue/10" : ""}`} key={isGroup ? `group:${conversation.id}` : conversation.directAccessWindowId ? `direct-access:${conversation.directAccessWindowId}` : `direct:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-2 pl-1 pr-2 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button">
                 <Identity compact person={rowPerson} presence={isGroup ? null : presence[rowPerson?.id]} showPresence={!isGroup} subtitle={subtitle} />
                 <span className="ml-auto flex max-w-[95px] flex-col items-end gap-1">
