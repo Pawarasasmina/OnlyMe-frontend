@@ -3,7 +3,7 @@ import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FiCheck, FiPause, FiPlay, FiRotateCcw, FiSend, FiSquare, FiVideo, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { FiCheck, FiPause, FiPlay, FiRepeat, FiRotateCcw, FiSend, FiSquare, FiVideo, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 
 const MAX_DURATION_MS = 60000;
 const clock = (milliseconds = 0) => {
@@ -23,6 +23,8 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const [previewCurrent, setPreviewCurrent] = useState(0);
   const [previewDuration, setPreviewDuration] = useState(0);
+  const [facingMode, setFacingMode] = useState("user");
+  const [canSwitchCamera, setCanSwitchCamera] = useState(false);
   const liveVideoRef = useRef(null);
   const previewVideoRef = useRef(null);
   const recorderRef = useRef(null);
@@ -49,6 +51,8 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
     setPreviewPlaying(false);
     setPreviewCurrent(0);
     setPreviewDuration(0);
+    setFacingMode("user");
+    setCanSwitchCamera(false);
     setError("");
     setMode("idle");
   };
@@ -59,23 +63,27 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
     if (previewRef.current?.url) URL.revokeObjectURL(previewRef.current.url);
   }, []);
 
-  const openCamera = async () => {
+  const openCamera = async (nextFacingMode = facingMode) => {
     setError("");
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       setError(__msg("messaging.videoNotesAreNotSupportedInThisBrowser"));
       return;
     }
+    stopStream();
     setMode("opening");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 }, aspectRatio: { ideal: 1 } },
+        video: { facingMode: { ideal: nextFacingMode }, width: { ideal: 720 }, height: { ideal: 720 }, aspectRatio: { ideal: 1 } },
       });
       if (!stream.getAudioTracks().length) {
         stream.getTracks().forEach((track) => track.stop());
         throw new DOMException(__msg("messaging.noMicrophoneTrackWasProvided"), __msg("messaging.notfounderror"));
       }
       streamRef.current = stream;
+      setFacingMode(nextFacingMode);
+      const devices = await navigator.mediaDevices.enumerateDevices?.() || [];
+      setCanSwitchCamera(devices.filter((device) => device.kind === "videoinput").length > 1);
       setMode("ready");
       window.setTimeout(() => {
         if (liveVideoRef.current) {
@@ -89,6 +97,10 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
       else if (permissionError.name === "NotFoundError") setError(__msg("messaging.aFrontCameraAndMicrophoneAreRequiredToRecord"));
       else setError(__msg("messaging.theCameraCouldNotBeStartedCloseOtherCamera"));
     }
+  };
+  const switchCamera = () => {
+    if (mode !== "ready" || !canSwitchCamera) return;
+    openCamera(facingMode === "user" ? "environment" : "user");
   };
   const record = () => {
     const stream = streamRef.current;
@@ -176,15 +188,16 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
   const displayedLimit = reviewing && previewDuration > 0 ? clock(previewDuration * 1000) : "1:00";
   return createPortal(<div className="video-circle-recorder-overlay">
     <div className="video-circle-recorder-panel">
-    <div className="video-circle-recorder-heading"><div><p>{__msg("messaging.videoNote")}</p><small>{mode === "recording" ? __msg("messaging.recordingWithFrontCamera") : mode === "uploading" ? __msg("messaging.sendingSecurely") : mode === "failed" ? __msg("messaging.uploadPaused") : showingCamera ? "Tap to record · up to 60s" : __msg("messaging.reviewBeforeSending")}</small></div><button aria-label={__msg("messaging.cancelVideoNote")} disabled={mode === "uploading"} onClick={cancel} type="button">{__msg("admin.cancel")}</button></div>
+    <div className="video-circle-recorder-heading"><div><p>{__msg("messaging.videoNote")}</p><small>{mode === "recording" ? `Recording with ${facingMode === "user" ? "front" : "rear"} camera` : mode === "uploading" ? __msg("messaging.sendingSecurely") : mode === "failed" ? __msg("messaging.uploadPaused") : showingCamera ? "Tap to record · up to 60s" : __msg("messaging.reviewBeforeSending")}</small></div><button aria-label={__msg("messaging.cancelVideoNote")} disabled={mode === "uploading"} onClick={cancel} type="button">{__msg("admin.cancel")}</button></div>
     <div className="relative mx-auto h-52 w-52">
       <div className={`absolute inset-0 rounded-full bg-atseen-blue/20 blur-2xl ${mode === "recording" ? "animate-pulse" : ""}`} />
       <div className={`relative h-full w-full overflow-hidden rounded-full border-[3px] bg-black shadow-2xl ${mode === "recording" ? "border-atseen-danger" : "border-atseen-blue/70"}`}>
-        {showingCamera ? <video autoPlay className="h-full w-full scale-x-[-1] object-cover" muted playsInline ref={liveVideoRef} /> : <video className="h-full w-full object-cover" controls={false} key={preview?.url} loop muted={previewMuted} onDurationChange={(event) => setPreviewDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : elapsed / 1000)} onEnded={() => setPreviewPlaying(false)} onLoadedData={(event) => { event.currentTarget.currentTime = 0.001; }} onPause={() => setPreviewPlaying(false)} onPlay={() => setPreviewPlaying(true)} onTimeUpdate={(event) => setPreviewCurrent(event.currentTarget.currentTime)} playsInline preload="auto" ref={previewVideoRef} src={preview?.url} />}
+        {showingCamera ? <video autoPlay className={`h-full w-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`} muted playsInline ref={liveVideoRef} /> : <video className="h-full w-full object-cover" controls={false} key={preview?.url} loop muted={previewMuted} onDurationChange={(event) => setPreviewDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : elapsed / 1000)} onEnded={() => setPreviewPlaying(false)} onLoadedData={(event) => { event.currentTarget.currentTime = 0.001; }} onPause={() => setPreviewPlaying(false)} onPlay={() => setPreviewPlaying(true)} onTimeUpdate={(event) => setPreviewCurrent(event.currentTarget.currentTime)} playsInline preload="auto" ref={previewVideoRef} src={preview?.url} />}
         {mode === "opening" ? <div className="absolute inset-0 grid place-items-center bg-black/75"><span className="h-7 w-7 animate-spin rounded-full border-2 border-white/20 border-t-atseen-blue" /></div> : null}
         {mode === "uploading" ? <div className="absolute inset-0 grid place-items-center bg-black/60 backdrop-blur-[2px]"><div className="text-center"><p className="text-2xl font-black">{uploadProgress}%</p><p className="mt-1 text-[10px] text-white/70">{__msg("messaging.uploading")}</p></div></div> : null}
         {!showingCamera && mode !== "uploading" ? <button aria-label={previewPlaying ? __msg("messaging.pausePreview") : __msg("messaging.playPreview")} className="absolute inset-0 grid place-items-center bg-black/10 transition hover:bg-black/20" onClick={togglePreviewPlayback} type="button"><span className="grid h-12 w-12 place-items-center rounded-full bg-black/55 text-lg text-white shadow-xl backdrop-blur-sm">{previewPlaying ? <FiPause /> : <FiPlay className="ml-1" />}</span></button> : null}
       </div>
+      {mode === "ready" && canSwitchCamera ? <button aria-label={__msg("stories.switchCamera")} className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/65 text-white shadow-lg backdrop-blur-sm" onClick={switchCamera} title={__msg("stories.switchCamera")} type="button"><FiRepeat /></button> : null}
       {!showingCamera && mode !== "uploading" ? <button aria-label={previewMuted ? __msg("messaging.unmutePreview") : __msg("messaging.mutePreview")} className="video-circle-sound-button" onClick={togglePreviewSound} title={previewMuted ? __msg("messaging.unmutePreview") : __msg("messaging.mutePreview")} type="button">{previewMuted ? <FiVolumeX /> : <FiVolume2 />}</button> : null}
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 -rotate-90" viewBox="0 0 208 208"><circle cx="104" cy="104" fill="none" r="101" stroke="#9CCBFF" strokeDasharray={2 * Math.PI * 101} strokeDashoffset={(2 * Math.PI * 101) * (1 - ringProgress)} strokeLinecap="round" strokeWidth="4" /></svg>
       <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-3 py-1 font-mono text-xs font-bold tabular-nums text-white backdrop-blur-sm">{clock(displayedTime)} / {displayedLimit}</span>
