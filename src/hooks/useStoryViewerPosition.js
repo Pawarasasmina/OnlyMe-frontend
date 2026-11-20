@@ -4,7 +4,7 @@ export function useStoryViewerPosition(isOpen) {
   const [position, setPosition] = useState(undefined);
 
   useEffect(() => {
-    if (!isOpen || window.innerWidth < 881) { setPosition(undefined); return undefined; }
+    if (!isOpen) { setPosition(undefined); return undefined; }
     const centerColumn = document.querySelector(".social-center-scroll");
     if (!centerColumn) return undefined;
     const updatePosition = () => {

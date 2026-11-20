@@ -6,7 +6,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { postService } from "../../../services/postService";
 import FanAvatar from "../shared/FanAvatar";
-import { wallFilterSelected, wallFilterValues } from "../../../utils/wallFilters";
+import { wallFilterSelected, wallFilterValues, toggleWallFilter } from "../../../utils/wallFilters";
 import { FiMoreHorizontal } from "react-icons/fi";
 import { useWallNeedHints } from "../../../hooks/useWallNeedHints";
 import { wallHaptic } from "../../../utils/wallHaptics";
@@ -50,12 +50,7 @@ export default function WallExploreNeeds({ location, viewerId, filters, onSelect
       const selected = wallFilterSelected(filters, key, field);
       return <button aria-pressed={selected} style={{ animationDelay: `${index * 45}ms` }} className={`wall-need-icon${selected ? " is-active" : ""}`} key={key} type="button" onClick={event => {
         pressNeed(event.currentTarget);
-        const next = { ...filters, type: "all", topic: "all", rightNow: false };
-        if (!selected) {
-          if (key === "right_now") next.rightNow = true;
-          else next[field] = key;
-        }
-        onSelect(next);
+        onSelect(toggleWallFilter(filters, key, field), { scrollToFeed: false });
         if (!selected && !["offering", "question", "event"].includes(key)) void showHint(key, event.currentTarget);
       }}><span className="wall-need-glass"><span className="wall-need-ring" aria-hidden="true" />{key === "right_now" ? <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" /></svg> : <Icon aria-hidden="true" />}{key === "right_now" && query.data?.counts?.right_now > 0 ? <i className="wall-need-live" aria-hidden="true" /> : null}</span><b>{key === "meet_people" ? __msg("wallNeeds.company") : key === "recommendation" ? __msg("wallNeeds.tips") : label}</b></button>;
     })}<button className={`wall-need-icon${moreSelected ? " is-active" : ""}`} aria-label={__msg("wallNeeds.more")} style={{ animationDelay: "270ms" }} type="button" onClick={event => { pressNeed(event.currentTarget); window.setTimeout(() => navigate(`/wall/explore${page.search}`), window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 140); }}><span className="wall-need-glass"><span className="wall-need-ring" aria-hidden="true" /><FiMoreHorizontal aria-hidden="true" /></span><b>{__msg("wallNeeds.more")}</b></button></div>

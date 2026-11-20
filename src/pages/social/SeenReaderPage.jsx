@@ -1,3 +1,5 @@
+import { useSurfaceTurn } from "../../hooks/useSurfaceTurn";
+import SeenCommentActions from "../../components/comments/SeenCommentActions";
 import { popReactionCapsule } from "../../utils/reactionMotion";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
@@ -143,7 +145,7 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
         {filterKeys.map((key) => <button className={reactionFilter === key ? "is-active" : ""} key={key} onClick={() => setReactionFilter(key)} type="button">{reactionEmoji[key] || reactionEmoji.LIKE} <small>{formatCount(engagement.reactionBreakdown[key])}</small></button>)}
       </nav>
       <div className="seen-reactions-list">
-        {visibleReactors.map((item) => <article key={item.id}><FanAvatar className="seen-reaction-avatar" name={item.user?.name} size="h-[34px] w-[34px]" src={item.user?.avatar} /><span className="seen-reaction-person-copy"><strong>{item.user?.name || __msg("admin.user")}</strong>{item.user?.username ? <small>@{item.user.username}</small> : null}</span><i>{reactionEmoji[item.reaction] || reactionEmoji.LIKE}</i></article>)}
+        {visibleReactors.map((item) => <article key={item.id}><FanAvatar className="seen-reaction-avatar" name={item.user?.name} size="h-[34px] w-[34px]" src={item.user?.avatar} /><span className="seen-reaction-person-copy"><strong>{item.user?.name || __msg("admin.user")}</strong>{item.user?.username ? <small><bdi dir="ltr">@{item.user.username}</bdi></small> : null}</span><i>{reactionEmoji[item.reaction] || reactionEmoji.LIKE}</i></article>)}
         {!visibleReactors.length ? <p>{__msg("social.noReactionsInThisGroupYet")}</p> : null}
       </div>
       <footer aria-label={__msg("social.chooseYourReaction")}>
@@ -154,7 +156,7 @@ function SeenEngagementBar({ engagement, isOwn = false, mutations, onCommentTogg
   </>;
 }
 
-function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending, onChange, onClose, onReact, onSubmit, onVoiceSubmit, reactionPending, title, voicePending }) {
+function SeenCommentsSheet({ publicationId, onEngagementChange, comment, currentUser, engagement, isOpen, isPending, onChange, onClose, onReact, onSubmit, onVoiceSubmit, reactionPending, title, voicePending }) {
   __useUiLanguage();
   const [activityParams] = useSearchParams();
   const focusedComment = activityParams.get("comment");
@@ -249,15 +251,15 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
   const renderComment = (item, isReply = false, parentAuthor = null) => {
     const reacted = Boolean(item.viewerReaction);
     const visibleReactionCount = reacted ? Math.max(1, Number(item.reactionCount || 0)) : Number(item.reactionCount || 0);
-    return <article className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
+    return <SeenCommentActions comment={item} currentUser={currentUser} publicationId={publicationId} canModerate={engagement.viewerCanModerate} onEngagementChange={(next) => { setReplyTo(null); onEngagementChange?.(next); }} className={`${isReply ? "is-reply" : ""} ${String(item.id) === focusedComment ? "is-activity-focus" : ""}`} data-seen-comment-id={item.id} key={item.id}>
       <FanAvatar className="seen-comment-avatar" name={item.author?.name || "Fan"} size="h-6 w-6" src={item.author?.avatar} />
       <div className="seen-comment-copy">
-        <p><CommentAuthorIdentity author={item.author} fallback={commentFirstName(item.author, __msg("profile.fan"))} /><CommentReplyMention author={parentAuthor} replyingAuthor={item.author} />{item.text}</p>
+        <p>{String(item.author?.id || "") === String(currentUser?.id || currentUser?._id || "") ? <b>{__msg("fanWeb.you")}</b> : <CommentAuthorIdentity author={item.author} fallback={commentFirstName(item.author, __msg("profile.fan"))} />}<CommentReplyMention author={parentAuthor} replyingAuthor={item.author} />{" "}{item.text}</p>
         {item.audio ? <VoiceMessageBubble audio={item.audio} label={__msg("comments.voiceComment")} /> : null}
         <span><button aria-label={reacted ? "Remove reaction" : `React to ${item.author?.name || __msg("social.comment")}`} aria-pressed={reacted} className={reacted ? "is-selected seen-comment-reaction" : "seen-comment-reaction"} disabled={reactionPending} onContextMenu={(event) => event.preventDefault()} onPointerCancel={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerDown={() => beginReactionPress(item.id)} onPointerLeave={() => window.clearTimeout(reactionPressRef.current.timer)} onPointerUp={() => endReactionPress(item)} type="button">{reacted && reactionEmoji[item.viewerReaction] ? <i aria-hidden="true" className="seen-comment-selected-reaction">{reactionEmoji[item.viewerReaction]}</i> : <FiHeart />}{formatCount(visibleReactionCount)}</button>{isReply ? null : <button onClick={() => setReplyTo(item)} type="button">{__msg("fan.reply")}</button>}{String(item.author?.id || "") !== String(currentUser?.id || currentUser?._id || "") ? <button aria-label={__msg("system.WallCommentList.eab1801d81")} className={(reposted[item.id] ?? item.viewerReposted) ? "is-selected" : ""} disabled={repostMutation.isPending} onClick={() => repostMutation.mutate(item)} type="button"><FiRepeat />{Number(repostCounts[item.id] ?? item.repostCount) > 0 ? <small>{formatCount(repostCounts[item.id] ?? item.repostCount)}</small> : null}</button> : null}</span>
         {String(reactionCommentId) === String(item.id) ? <div className="seen-comment-quick-reactions">{[["LOVE","❤️"],["STRONG","🙌"],["FIRE","🔥"],["CLAP","👏"],["SAD","😢"],["ADMIRE","😍"],["WOW","😮"],["LAUGH","😂"]].map(([reaction, emoji]) => <button aria-label={`React ${emoji}`} className={item.viewerReaction === reaction ? "is-selected" : ""} key={reaction} onClick={() => { onReact(item, reaction); setReactionCommentId(null); }} type="button">{emoji}</button>)}</div> : null}
       </div>
-    </article>;
+    </SeenCommentActions>;
   };
 
   return <div className="seen-comments-layer">
@@ -272,7 +274,7 @@ function SeenCommentsSheet({ comment, currentUser, engagement, isOpen, isPending
         {!comments.length ? <div className="seen-comments-empty"><strong>No comments yet</strong><span>Start the conversation.</span></div> : null}
       </div>
       <footer className="seen-comments-footer">
-      {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b>@{replyTo.author?.username || commentFirstName(replyTo.author, __msg("profile.fan"))}</b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
+      {replyTo ? <div className="seen-sheet-replying"><span>{__msg("creator.replyingTo")} <b><bdi dir="ltr">@{replyTo.author?.username || commentFirstName(replyTo.author, __msg("profile.fan"))}</bdi></b></span><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTo(null)} type="button"><FiX /></button></div> : null}
       <div className="seen-comments-emoji-row" aria-label="Quick emoji">{["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"].map((emoji) => <button aria-label={`Add ${emoji}`} key={emoji} onClick={() => insertEmoji(emoji)} type="button">{emoji}</button>)}</div>
       <form onSubmit={(event) => { onSubmit(event, replyTo?.id || ""); if (comment.trim()) setReplyTo(null); }}>
         <FanAvatar className="seen-sheet-composer-avatar" name={currentUser?.displayName || currentUser?.name || currentUser?.username || "You"} size="h-6 w-6" src={currentUser?.avatarUrl || currentUser?.avatar} />
@@ -891,7 +893,7 @@ function SeenOverview({
     onDone={closeReport}
     onSelectReason={submitReport}
   />
-  <SeenCommentsSheet comment={comment} currentUser={mutations.currentUser} engagement={engagement} isOpen={commentsOpen} isPending={mutations.comment.isPending} onChange={onCommentChange} onClose={onCommentToggle} onReact={mutations.commentReaction} onSubmit={onCommentSubmit} onVoiceSubmit={mutations.voiceComment} reactionPending={mutations.commentReactionPending} title={detail.title} voicePending={mutations.voiceCommentPending} />
+  <SeenCommentsSheet publicationId={detail.id} onEngagementChange={mutations.onEngagementChange} comment={comment} currentUser={mutations.currentUser} engagement={engagement} isOpen={commentsOpen} isPending={mutations.comment.isPending} onChange={onCommentChange} onClose={onCommentToggle} onReact={mutations.commentReaction} onSubmit={onCommentSubmit} onVoiceSubmit={mutations.voiceComment} reactionPending={mutations.commentReactionPending} title={detail.title} voicePending={mutations.voiceCommentPending} />
   <ShareSheet isOpen={shareSheetOpen} onClose={onShareClose} payload={sharePayload} variant="seen" />
   </>;
 }
@@ -1043,6 +1045,9 @@ export default function SeenReaderPage() {
     .filter(Boolean)), [id, ownMediaQuery.data]);
   const chapters = detail.chapters;
   const safeChapterIndex = Math.min(Math.max(chapterIndex, 0), Math.max(chapters.length - 1, 0));
+  const chapterTurn = useSurfaceTurn(true, `${id}:${safeChapterIndex}`, safeChapterIndex, "page");
+  const chapterSwipe = useRef(null);
+  const suppressChapterClick = useRef(false);
   const chapter = chapters[safeChapterIndex] || null;
   const visibleBlocks = chapter?.blocks || [];
   const pointBlocks = visibleBlocks.filter((block) => ["KEY_POINT", "HIGHLIGHT"].includes(block.type) && block.text?.trim());
@@ -1108,7 +1113,7 @@ export default function SeenReaderPage() {
           viewerShared: next.viewerShared,
           viewerSaved: next.viewerSaved,
         },
-        previewComment: next.comments?.at(-1) || entry.previewComment || null,
+        previewComment: next.comments ? next.comments.at(-1) || null : entry.previewComment || null,
       } : entry)
       : current);
   };
@@ -1252,6 +1257,7 @@ export default function SeenReaderPage() {
     setMediaPickerOpen(true);
   };
   const changeChapter = (nextIndex) => {
+    chapterTurn.directionRef.current = nextIndex < safeChapterIndex ? -1 : 1;
     const next = Math.min(Math.max(nextIndex, 0), Math.max(chapters.length - 1, 0));
     setChapterIndex(next);
     const nextParams = new URLSearchParams(searchParams);
@@ -1416,7 +1422,7 @@ export default function SeenReaderPage() {
         {chapters.map((item, index) => <button className={item.locked ? "is-locked" : ""} key={item.stableChapterId || index} onClick={() => openOverviewChapter(index)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><i>{item.locked ? <FiLock /> : null}</i><b>{item.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b><FiChevronRight /></button>)}
       </nav>
       <footer className="seen-paid-overview-engagement"><SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={isOwner} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen(true)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} /></footer>
-      <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
+      <SeenCommentsSheet publicationId={id} onEngagementChange={syncSeenEngagementCaches} comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
       <ShareSheet isOpen={shareSheetOpen} onClose={() => setShareSheetOpen(false)} payload={sharePayload} variant="seen" />
       <PurchaseWorldModal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSuccess={() => publicationQuery.refetch()} publication={publication} />
     </section>;
@@ -1448,7 +1454,11 @@ export default function SeenReaderPage() {
       {!isOwner && chapter?.stableChapterId ? <button aria-label={__msg("system.SeenReaderPage.9713f9218c")} className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" onClick={async () => { const reason = window.prompt("Report category: SPAM, HARASSMENT, HATE, DEFAMATION, NUDITY, VIOLENCE, SELF_HARM, SCAM, COPYRIGHT, IMPERSONATION, CHILD_SAFETY, or OTHER", "OTHER"); if (!reason) return; const details = window.prompt("Add a private note for the moderation team (optional):", "") || ""; try { await publicationService.reportChapter(id, chapter.stableChapterId, { reason: reason.trim().toUpperCase(), details }); setNotice(__msg("system.SeenReaderPage.cd83da62bc")); } catch (requestError) { setNotice(requestError.response?.data?.message || __msg("system.copy.c1ab3e66c148")); } }} type="button"><FiFlag /></button> : <i aria-hidden="true" />}
     </div>
 
-    <article className={`seen-reader-content ${chapter?.locked ? "is-paid-locked" : ""}`} onClick={handleReaderClick}>
+    <article ref={chapterTurn.surfaceRef} style={{touchAction:"pan-y pinch-zoom"}} className={`seen-reader-content ${chapter?.locked ? "is-paid-locked" : ""}`} onClick={handleReaderClick}
+      onClickCapture={event => { if (suppressChapterClick.current) { suppressChapterClick.current = false; event.preventDefault(); event.stopPropagation(); } }}
+      onPointerDown={event => { suppressChapterClick.current = false; if (!event.target.closest("button,a,input,textarea,audio,video")) chapterSwipe.current = { x: event.clientX, y: event.clientY }; }}
+      onPointerCancel={() => { chapterSwipe.current = null; }}
+      onPointerUp={event => { const start = chapterSwipe.current; chapterSwipe.current = null; if (!start) return; const dx = event.clientX - start.x, dy = event.clientY - start.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4) { event.preventDefault(); suppressChapterClick.current = true; changeChapter(safeChapterIndex + (dx < 0 ? 1 : -1)); } }}>
       {chapter?.locked && chapter?.worldBonus && publication.bonusWorld ? <section className="seen-paid-locked-chapter is-world-bonus">
         <div className="seen-paid-locked-blur" aria-hidden="true"><i /><i /><i /></div>
         <div className="seen-world-bonus-card">
@@ -1495,7 +1505,7 @@ export default function SeenReaderPage() {
       <SeenEngagementBar commentsOpen={commentsOpen} engagement={engagement} isOwn={isOwner} mutations={{ reaction: reactionMutation, save: saveMutation, share: shareMutation }} onCommentToggle={() => setCommentsOpen((value) => !value)} onCopyLink={() => setShareSheetOpen(true)} saved={Boolean(engagement.viewerSaved)} />
       {notice ? <p className="seen-reader-notice" role="status">{__systemMessage(notice)}{noticeLink ? <Link to={noticeLink}>{__msg("social.viewReposts")}</Link> : null}</p> : null}
     </footer>
-    <SeenCommentsSheet comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
+    <SeenCommentsSheet publicationId={id} onEngagementChange={syncSeenEngagementCaches} comment={comment} currentUser={currentUser} engagement={engagement} isOpen={commentsOpen} isPending={commentMutation.isPending} onChange={(event) => setComment(event.target.value)} onClose={() => setCommentsOpen(false)} onReact={reactToComment} onSubmit={submitComment} onVoiceSubmit={submitVoiceComment} reactionPending={commentReactionMutation.isPending} title={publication.title} voicePending={voiceCommentMutation.isPending} />
     {chapterListOpen ? <div className="seen-chapter-list-layer">
       <button aria-label={__msg("social.closeChapterList")} className="seen-chapter-list-scrim" onClick={() => setChapterListOpen(false)} type="button" />
       <section aria-label={__msg("social.chaptersIn", { value0: publication.title })} aria-modal="true" className="seen-chapter-list-sheet" role="dialog" style={chapterSheetPosition || undefined}>

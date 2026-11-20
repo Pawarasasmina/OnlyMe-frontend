@@ -1,3 +1,4 @@
+import { storyStartIndex } from "../../utils/storyStartIndex";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -77,15 +78,13 @@ function StoriesRow({ currentUser }) {
       openCreator();
       return;
     }
-    const index = ownStories.findIndex((story) => !story.viewed);
-    openViewer({ groupId: "own", index: index >= 0 ? index : 0 });
+    openViewer({ groupId: "own", index: storyStartIndex(ownStories, true) });
   };
 
   const openStoryAfterSeen = () => {
     setSeenStoryOpen(false);
     if (ownStories.length) {
-      const ownIndex = ownStories.findIndex((story) => !story.viewed);
-      openViewer({ groupId: "own", index: ownIndex >= 0 ? ownIndex : 0 });
+      openViewer({ groupId: "own", index: storyStartIndex(ownStories, true) });
       return;
     }
     const firstGroup = peopleGroups[0];

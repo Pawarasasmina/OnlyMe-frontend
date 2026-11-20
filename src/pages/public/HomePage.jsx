@@ -54,7 +54,7 @@ function HomePage() {
               {creator.avatar ? <img alt={creator.name} className="h-full w-full object-cover" src={creator.avatar} /> : <span className="text-6xl font-black text-white/90 drop-shadow-lg">{initials(creator.name)}</span>}
             </div>
             <div className="p-6">
-              <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">{creator.category}</p><h2 dir="auto" className="mt-2 text-2xl font-bold">{creator.name}</h2><p dir="auto" className="mt-1 text-sm text-brand-mist/55">@{creator.username}</p></div><FiLock className="mt-1 text-brand-mist/40" /></div>
+              <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">{creator.category}</p><h2 dir="auto" className="mt-2 text-2xl font-bold">{creator.name}</h2><p dir="auto" className="mt-1 text-sm text-brand-mist/55"><bdi dir="ltr">@{creator.username}</bdi></p></div><FiLock className="mt-1 text-brand-mist/40" /></div>
               <p className="mt-4 line-clamp-2 min-h-12 text-sm leading-6 text-brand-mist/70">{creator.bio || __msg("public.thisCreatorIsGettingTheirProfileReady")}</p>
               <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-5"><span className="inline-flex items-center gap-2 text-sm text-brand-mist/60"><FiUsers /> {creator.members} {__msg("public.fans")}</span><Link className="font-semibold text-brand-primary" to={`/creators/${creator.username}`}>{__msg("public.viewCreator")}</Link></div>
             </div>

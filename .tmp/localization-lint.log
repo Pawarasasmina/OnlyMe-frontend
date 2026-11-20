@@ -1,0 +1,33 @@
+
+D:\Downloads\OnlyMe-frontend\src\components\fanWeb\home\FeedPost.jsx
+  528:7  warning  React Hook useMemo has an unnecessary dependency: '__uiLanguage'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Downloads\OnlyMe-frontend\src\components\stories\StoryViewer.jsx
+  886:6  warning  React Hook useEffect has a missing dependency: 'activeStory'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Downloads\OnlyMe-frontend\src\pages\admin\AdminUserDetailPage.jsx
+  13:37  warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Downloads\OnlyMe-frontend\src\pages\admin\SafetyCenterPage.jsx
+   6:86  warning  'FiUser' is defined but never used                                                                       no-unused-vars
+   9:7   warning  'categories' is assigned a value but never used                                                          no-unused-vars
+  22:37  warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Downloads\OnlyMe-frontend\src\pages\fan\ActivityPage.jsx
+  871:6  warning  React Hook useMemo has an unnecessary dependency: '__uiLanguage'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Downloads\OnlyMe-frontend\src\pages\fan\MessagesPage.jsx
+    5:161  warning  'FiImage' is defined but never used                                                                                                    no-unused-vars
+  631:6    warning  React Hook useEffect has missing dependencies: 'messagesQuery' and 'selected?.id'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Downloads\OnlyMe-frontend\src\pages\social\SeenFeedPage.jsx
+  284:9  warning  'meta' is assigned a value but never used  no-unused-vars
+
+D:\Downloads\OnlyMe-frontend\src\pages\social\WorldReaderPage.jsx
+  1122:7    warning  React Hook useMemo has an unnecessary dependency: '__uiLanguage'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  1254:6    warning  React Hook useMemo has an unnecessary dependency: '__uiLanguage'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  1476:126  warning  'onOpenChapter' is defined but never used. Allowed unused args must match /^_/u                                     no-unused-vars
+
+✖ 13 problems (0 errors, 13 warnings)
+
+Warning: React version not specified in eslint-plugin-react settings. See https://github.com/jsx-eslint/eslint-plugin-react#configuration .

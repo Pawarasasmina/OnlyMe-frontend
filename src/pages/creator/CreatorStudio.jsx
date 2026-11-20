@@ -1,3 +1,4 @@
+import BusinessTools from "../../components/profile/BusinessTools";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
@@ -93,13 +94,13 @@ function medianLabel(minutes) {
   return __msg("creator.value0HMedian", { value0: Math.round(minutes / 60) });
 }
 
-function Header({ onBack }) {
+function Header({ onBack, business }) {
   __useUiLanguage();
   return (
     <header className="creator-studio-header">
       <button aria-label={__msg("discover.back")} className="creator-studio-back" onClick={onBack} type="button"><FiArrowLeft data-ui-directional="true" /></button>
       <div>
-        <h1>{__msg("creator.creatorDashboard")}</h1>
+        <h1>{__msg(business ? "social.businessDashboard" : "creator.creatorDashboard")}</h1>
         <p>{__msg("admin.thisMonth")} {DOT} {__msg("creator.freeForever")} {STAR}</p>
       </div>
       <Link aria-label={__msg("profile.wallet")} className="creator-studio-wallet" to="/wallet"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 7V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-1" /><path d="M21 9h-6a2 2 0 000 6h6a1 1 0 001-1v-4a1 1 0 00-1-1z" /></svg></Link>
@@ -475,7 +476,7 @@ export default function CreatorStudio() {
       <main className="creator-studio-prototype">
         <button aria-label={__msg("discover.back")} className="creator-studio-back" onClick={() => navigate(-1)} type="button"><FiArrowLeft data-ui-directional="true" /></button>
         <section className="creator-studio-error">
-          <h1>{__msg("creator.creatorDashboard")}</h1>
+          <h1>{__msg(accountType === "business" ? "social.businessDashboard" : "creator.creatorDashboard")}</h1>
           <p>{__msg("creator.unableToLoadCreatorStudio")}</p>
           <button onClick={() => dashboardQuery.refetch()} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button>
         </section>
@@ -489,7 +490,8 @@ export default function CreatorStudio() {
   return (
     <>
       <main className="creator-studio-prototype">
-        <Header onBack={() => navigate(-1)} />
+        <Header business={accountType === "business"} onBack={() => navigate(-1)} />
+        {accountType === "business" ? <BusinessTools /> : null}
         {weeklyShares > 0 ? <section className="creator-weekly-share-summary">Your Seens were shared {compact(weeklyShares)} times this week.</section> : null}
         {!previewNew && canGrow ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
         <Tabs active={activeTab} onChange={setActiveTab} />

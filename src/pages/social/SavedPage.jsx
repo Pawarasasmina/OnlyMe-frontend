@@ -305,7 +305,7 @@ function SavedCreatorCard({ creator }) {
             <span>{creator.displayName || creator.name || creator.username || __msg("discover.creator")}</span>
             {creator.isVerified || creator.verified ? <VerifiedBadge /> : null}
           </strong>
-          {creator.username ? <small dir="auto">@{creator.username}</small> : null}
+          {creator.username ? <small dir="auto"><bdi dir="ltr">@{creator.username}</bdi></small> : null}
           {meta ? <em>{meta}</em> : null}
           {creator.bio ? <span dir="auto">{creator.bio}</span> : null}
         </span>

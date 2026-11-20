@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 const user = { id: "507f1f77bcf86cd799439011", name: "Editor", username: "editor", role: "fan", onboarding: { status: "completed" } };
 const id = "507f1f77bcf86cd799439012";
-async function setup(page, age = 60000) {
+async function setup(page, age = 60000, wall = false) {
   const now = await page.evaluate(() => Date.now());
   const post = { id, author: user, isOwner: true, postType: "Buy & Sell", text: "Original desk", price: 123444, currency: "AED", location: "Dubai, UAE", rightNow: true, publishedAt: new Date(now - age).toISOString(), editVersion: 0, canResolve: true, comments: [], media: [{ id: "photo", type: "image", url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="blue"/></svg>' }, { id: "voice", type: "audio", url: "https://example.test/voice.webm", duration: 3, transcript: "The original voice" }] };
   const server = { saves: [], post };
@@ -10,6 +10,7 @@ async function setup(page, age = 60000) {
     const url = new URL(route.request().url());
     if (!url.pathname.startsWith("/api/")) return route.continue();
     let data = { items: [], pagination: { page: 1, pages: 1, total: 0 }, unreadCount: 0 };
+    if (url.pathname === "/api/posts") data = { items: [post], posts: [post], pagination: { page: 1, pages: 1, total: 1 } };
     if (url.pathname.endsWith("/auth/me")) data = { user };
     if (url.pathname.endsWith("/profiles/me")) data = { user, profile: { city: "Dubai" } };
     if (url.pathname.endsWith(`/posts/${id}`)) {
@@ -23,7 +24,7 @@ async function setup(page, age = 60000) {
     }
     await route.fulfill({ json: { success: true, data } });
   });
-  await page.goto(`/posts/${id}`);
+  await page.goto(wall ? "/wall" : `/posts/${id}`);
   return server;
 }
 async function openEdit(page) {
@@ -85,4 +86,15 @@ test("unchanged Save reports No changes without adding the edited mark", async (
   await page.locator(".wall-create-screen").getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("No changes", { exact: true })).toBeVisible();
   await expect(page.locator(".wall-note-edited")).toHaveCount(0);
+});
+
+test("Wall feed Edit is visible outside the hidden feed wrapper and countdown never exceeds fifteen", async ({ page }) => {
+  await setup(page, -30000, true);
+  await openEdit(page);
+  const editor = page.locator(".home-prototype-main > .wall-composer-host.is-open");
+  await expect(editor).toBeVisible();
+  await expect(editor.getByRole("textbox", { name: "Note text", exact: true })).toHaveValue("Original desk");
+  await expect(editor.locator(".wall-edit-time")).toContainText("15 more min");
+  await editor.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(page.locator(".home-feed-text")).toHaveText("Original desk");
 });

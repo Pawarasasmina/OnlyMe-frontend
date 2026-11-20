@@ -1,3 +1,4 @@
+import { wallEditMinutesRemaining } from "../../../utils/wallEditTime";
 import { useReactionSelection } from "../../../hooks/useReactionSelection";
 import { popReactionCapsule } from "../../../utils/reactionMotion";
 import { localizedTuple as __uiTuple } from "../../../i18n/runtime.js";
@@ -234,7 +235,7 @@ function WallReactionsSheet({ currentUserId, onAddYours, onClose, postId, style 
             const meta = reactionDisplayFor(reactor.reaction);
             return <Link className="seen-reactor-row" key={reactor.id} onClick={onClose} to={reactor.user?.username ? `/profile/${encodeURIComponent(reactor.user.username)}` : "/profile"}>
               <FanAvatar alt={__msg("fan.avatar", { value0: name })} name={name} size="h-[38px] w-[38px]" src={reactor.user?.avatar} />
-              <span className="seen-reactor-copy"><strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>{reactor.user?.username ? <small>@{reactor.user.username}</small> : null}</span>
+              <span className="seen-reactor-copy"><strong>{name}{reactor.user?.verified ? <VerifiedBadge className="seen-reactor-verified" /> : null}</strong>{reactor.user?.username ? <small><bdi dir="ltr">@{reactor.user.username}</bdi></small> : null}</span>
               <span aria-label={meta?.label || __msg("fanWeb.reaction")} className="seen-reactor-emoji">{meta?.icon || "🤝"}</span>
             </Link>;
           }) : null}
@@ -464,7 +465,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
 
   const ownsPost = normalized.isOwner || canManageFeedPost(user, normalized);
-  const headerName = creator.username ? <b className="home-feed-username"><span className="identity-at">@</span>{creator.username}</b> : creator.name;
+  const headerName = creator.username ? <b className="home-feed-username"><bdi dir="ltr"><span className="identity-at">@</span>{creator.username}</bdi></b> : creator.name;
   const closeLabels = wallCloseLabels(normalized.postType, normalized.context);
   const selectedReaction = reactionDisplayFor(reaction);
   const reactionSummary = (Object.keys(reactionBreakdown).length
@@ -1130,7 +1131,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
                 catch (error) { setComments(previousComments); showToast(error?.response?.data?.message || __msg("system.copy.1f1cb99a02e2")); }
                 finally { setReactingCommentId(""); }
               }} />
-            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong>@{replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}</strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
+            {replyTarget ? <div className="wall-reply-target" role="status">{__msg("creator.replyingTo")} <strong><bdi dir="ltr">@{replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}</bdi></strong><button aria-label={__msg("fan.cancelReply")} onClick={() => setReplyTarget(null)} type="button">&times;</button></div> : null}
             <form onSubmit={(event) => { event.preventDefault(); submitComment(); }}>
               <FanAvatar alt="" name={user?.displayName || user?.name || user?.username || "You"} size="h-6 w-6" src={user?.avatarUrl || user?.avatar} />
               <input ref={commentInputRef} aria-label={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : __msg("fanWeb.addAWallNoteComment")} maxLength={500} onChange={(event) => setCommentText(event.target.value)} placeholder={replyTarget ? __msg("system.FeedPost.ff43b5c585", { value0: `@${replyTarget.author?.username || commentFirstName(replyTarget.author, __msg("discover.creator"))}` }) : `Reply to ${commentFirstName(creator, __msg("discover.creator"))}\u2026`} value={commentText} />
@@ -1238,7 +1239,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
             <FanAvatar name={creator.name} size="h-9 w-9" src={creator.avatar} />
             <div className="min-w-0">
               <p className="flex items-center gap-1 truncate text-xs font-bold">{creator.name}{creator.verified ? <VerifiedBadge /> : null}</p>
-              <p className="text-[10px] text-atseen-muted">@{creator.username} {__msg("fanWeb.originalPost")}</p>
+              <p className="text-[10px] text-atseen-muted"><bdi dir="ltr">@{creator.username}</bdi> {__msg("fanWeb.originalPost")}</p>
             </div>
           </div>
           <div className="border-t border-atseen-line p-3">
@@ -1278,7 +1279,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
         <div className="home-post-more-list">
           {(ownsPost
             ? [
-              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("profile.edit"), subtitle: __msg("wallEdit.menuRemaining", { minutes: Math.max(1, Math.ceil((new Date(normalized.editUntil || new Date(normalized.publishedAt || normalized.createdAt).getTime() + 900000).getTime() - editNow) / 60000)) }), icon: FiEdit2 }] : []),
+              ...(wallCanEdit(normalized, editNow) ? [{ key: "edit", label: __msg("profile.edit"), subtitle: __msg("wallEdit.menuRemaining", { minutes: wallEditMinutesRemaining(normalized, editNow) }), icon: FiEdit2 }] : []),
               ...(normalized.canResolve ? [{ key: "resolution", label: resolvedAt ? __msg("fanWeb.reopen") : closeLabels.action, subtitle: resolvedAt ? __msg("fanWeb.backAmongActivePosts") : __msg("fanWeb.staysVisibleWithItsCommentsAndReplies"), icon: FiCheck }] : []),
               { key: "story", label: __msg("activity.addToYourStory"), subtitle: __msg("system.FeedPost.1acf81ee86"), icon: FiPlusCircle },
               { key: "repost", label: shared ? __msg("fan.removeFromProfile") : __msg("fanWeb.repostToMyProfile"), subtitle: shared ? __msg("fanWeb.takeItOffYourShowcase") : __msg("fanWeb.yourProfileYourListAddAsManyAsYou"), icon: FiRepeat },

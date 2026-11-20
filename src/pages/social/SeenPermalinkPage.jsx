@@ -69,7 +69,7 @@ export default function SeenPermalinkPage() {
         viewerShared: engagement.viewerShared,
         viewerSaved: engagement.viewerSaved,
       },
-      previewComment: engagement.comments?.at(-1) || (current || publication).previewComment,
+      previewComment: engagement.comments ? engagement.comments.at(-1) || null : (current || publication).previewComment,
     }));
   };
   const leaveRemovedSeen = () => navigate("/seen", { replace: true });

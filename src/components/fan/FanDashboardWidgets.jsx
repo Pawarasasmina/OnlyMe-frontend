@@ -187,7 +187,7 @@ export function ProfileSummaryCard({ profile, loading, error, onRetry }) {
           <Avatar name={profile.displayName || profile.username} src={profile.avatarUrl} size="h-14 w-14" />
           <div className="min-w-0">
             <h3 className="truncate text-lg font-bold text-white">{profile.displayName || profile.username || __msg("fan.atseenFan")}</h3>
-            {profile.username ? <p dir="auto" className="truncate text-sm text-brand-mist/60">@{profile.username}</p> : null}
+            {profile.username ? <p dir="auto" className="truncate text-sm text-brand-mist/60"><bdi dir="ltr">@{profile.username}</bdi></p> : null}
             {profile.email ? (
               <p dir="auto" className="mt-1 truncate text-sm text-brand-mist/55" title={profile.email}>
                 {profile.email}
@@ -261,7 +261,7 @@ export function SubscriptionCard({ subscription, showManage = true }) {
           <Avatar name={subscription.creator?.displayName} src={subscription.creator?.avatarUrl} />
           <div className="min-w-0">
             <h4 className="truncate font-bold text-white">{subscription.creator?.displayName || __msg("fan.creatorUnavailable")}</h4>
-            <p className="truncate text-sm text-brand-mist/55">@{subscription.creator?.username || __msg("admin.unknown")}</p>
+            <p className="truncate text-sm text-brand-mist/55"><bdi dir="ltr">@{subscription.creator?.username || __msg("admin.unknown")}</bdi></p>
           </div>
         </div>
         <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClass}`}>{__enumLabel(subscription.status)}</span>
@@ -349,7 +349,7 @@ export function PurchasedContentCard({ item }) {
         )}
       </div>
       <h4 className="mt-4 line-clamp-2 font-bold text-white">{item.title || __msg("fan.thisContentIsNoLongerAvailable")}</h4>
-      <p className="mt-1 text-sm text-brand-mist/55">@{item.creator?.username || __msg("admin.unknown")}</p>
+      <p className="mt-1 text-sm text-brand-mist/55"><bdi dir="ltr">@{item.creator?.username || __msg("admin.unknown")}</bdi></p>
       <div className="mt-3 grid gap-2 text-sm text-brand-mist/60">
         <span>{item.contentType || __msg("fan.content")} - {formatDate(item.unlockedAt)}</span>
         <span>{formatCoins(item.coinAmount || 0)} - {item.accessStatus || __msg("admin.unavailable")}</span>
@@ -399,7 +399,7 @@ export function ActivityRow({ activity }) {
         </span>
         <div className="min-w-0">
           <p className="font-semibold text-white">{activity.description}</p>
-          {activity.relatedCreator ? <p dir="auto" className="mt-1 text-sm text-brand-mist/55">@{activity.relatedCreator.username}</p> : null}
+          {activity.relatedCreator ? <p dir="auto" className="mt-1 text-sm text-brand-mist/55"><bdi dir="ltr">@{activity.relatedCreator.username}</bdi></p> : null}
           <p className="mt-1 text-xs text-brand-mist/45">{formatDateTime(activity.createdAt)}</p>
         </div>
       </div>

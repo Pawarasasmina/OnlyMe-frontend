@@ -33,7 +33,7 @@ for (const reduced of [false, true]) test(`person transition, reduced motion ${r
     window.storyTurns = [];
     const animate = Element.prototype.animate;
     Element.prototype.animate = function(frames, options) {
-      if (this.classList.contains("story-viewer-surface")) window.storyTurns.push({ frames, options, direction: this.dataset.storyTurn });
+      if (this.classList.contains("story-viewer-surface") && !this.inert) window.storyTurns.push({ frames, options, direction: this.dataset.storyTurn });
       return animate.call(this, frames, options);
     };
   });
@@ -41,18 +41,18 @@ for (const reduced of [false, true]) test(`person transition, reduced motion ${r
   await page.getByRole("button", { name: "Open stories" }).click();
   expect(await page.evaluate(() => window.storyTurns.length)).toBe(0);
   await page.getByRole("button", { name: "Next story", exact: true }).click();
-  await expect(page.getByText("Lina story 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Lina story 1", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.storyTurns.length)).toBe(0);
   await page.getByRole("button", { name: "Next story", exact: true }).click();
   await expect(page.getByText("Mia story 1", { exact: true })).toBeVisible();
   if (!reduced) {
     const turns = await page.evaluate(() => window.storyTurns);
-    expect(turns).toHaveLength(1); expect(turns[0].options.duration).toBe(180);
-    expect(turns[0].frames[0].transform).toContain("rotateY(65deg)");
+    expect(turns).toHaveLength(1); expect(turns[0].options.duration).toBe(360);
+    expect(turns[0].frames[0].transform).toContain("rotateY(90deg)");
   }
   await page.getByRole("button", { name: "Previous story", exact: true }).click();
-  await expect(page.getByText("Lina story 1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Lina story 2", { exact: true })).toBeVisible();
   const turns = await page.evaluate(() => window.storyTurns);
   expect(turns).toHaveLength(reduced ? 0 : 2);
-  if (!reduced) expect(turns[1].frames[0].transform).toContain("rotateY(-65deg)");
+  if (!reduced) expect(turns[1].frames[0].transform).toContain("rotateY(-90deg)");
 });

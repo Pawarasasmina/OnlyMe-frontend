@@ -59,7 +59,7 @@ export default function MembershipCancellationPage() {
     <header><button aria-label={__msg("profile.goBack")} onClick={() => navigate(-1)} type="button"><FiArrowLeft /></button><span>{__msg("system.MembershipCancellationPage.907d3b8c0f")}</span></header>
     <section className="membership-cancel-wall" aria-label={__msg("system.MembershipCancellationPage.841dc4ae1f", { value0: world?.title || __msg("admin.world") })}>
       {cover ? isVideo ? <video autoPlay loop muted playsInline src={cover} /> : <img alt="" src={cover} /> : <div className="membership-cancel-orb" aria-hidden="true" />}
-      <div><small>{__msg("system.MembershipCancellationPage.1a5db92679")}</small><h2>{world?.title || __msg("profile.yourWorld")}</h2><p>@{membership.creator?.username || __msg("financial.creator")} {__msg("system.MembershipCancellationPage.27226b4dd0")}{membership.memberNumber || "—"}</p></div>
+      <div><small>{__msg("system.MembershipCancellationPage.1a5db92679")}</small><h2>{world?.title || __msg("profile.yourWorld")}</h2><p><bdi dir="ltr">@{membership.creator?.username || __msg("financial.creator")}</bdi> {__msg("system.MembershipCancellationPage.27226b4dd0")}{membership.memberNumber || "—"}</p></div>
     </section>
     {!complete ? <section className="membership-cancel-card">
       <p className="membership-cancel-kicker">{__msg("system.MembershipCancellationPage.f4f10ead25")}</p><h1>{__msg("profile.cancelYourMembership")}</h1><p>{__msg("system.MembershipCancellationPage.50cc83d7a1")} {endLabel}{__msg("system.MembershipCancellationPage.f672b61e5f")}</p>

@@ -42,7 +42,7 @@ export default function CreatorAppShell() {
       <div className="flex items-center justify-between"><NavLink className="creator-logo" to="/creator/studio">{__msg("layouts.onlyme")}</NavLink><button className="lg:hidden" aria-label={__msg("layouts.closeNavigation")} onClick={() => setOpen(false)}><FiX /></button></div>
       <div className="creator-account-card">
         <div className="creator-avatar">{avatar ? <img alt="" src={avatar} /> : (user?.name?.[0] || "C").toUpperCase()}</div>
-        <div className="min-w-0"><p className="truncate font-semibold">{user?.name || __msg("discover.creator")}</p><p className="truncate text-xs text-slate-400">@{user?.username || __msg("financial.creator")}</p></div>
+        <div className="min-w-0"><p className="truncate font-semibold">{user?.name || __msg("discover.creator")}</p><p className="truncate text-xs text-slate-400"><bdi dir="ltr">@{user?.username || __msg("financial.creator")}</bdi></p></div>
       </div>
       <nav className="creator-nav">{links}</nav>
       <button className="creator-signout" onClick={signOut} type="button"><FiLogOut /> {__msg("layouts.signOut")}</button>

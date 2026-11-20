@@ -23,7 +23,7 @@ export default function StoryMentionPicker({ onClose, onSelect, selectedIds }) {
         {!people.isPending && !people.isError && !people.data?.length ? <p>{__msg("stories.noPeopleFound")}</p> : null}
         {search === query ? people.data?.map((person) => <button className="story-mention-person" disabled={selectedIds.includes(person.id)} key={person.id} onClick={() => onSelect(person)} type="button">
           <FanAvatar className="story-mention-avatar" name={person.name} size="h-10 w-10" src={person.avatarUrl || person.avatar} />
-          <span className="story-mention-identity"><b dir="auto"><i className="identity-at">@</i>{person.username}</b>{person.name ? <small dir="auto">{person.name}</small> : null}</span>{selectedIds.includes(person.id) ? <small className="story-mention-added">{__msg("stories.added")}</small> : null}
+          <span className="story-mention-identity"><b dir="auto"><bdi dir="ltr"><i className="identity-at">@</i>{person.username}</bdi></b>{person.name ? <small dir="auto">{person.name}</small> : null}</span>{selectedIds.includes(person.id) ? <small className="story-mention-added">{__msg("stories.added")}</small> : null}
         </button>) : null}
       </div>
     </section>

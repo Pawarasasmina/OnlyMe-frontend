@@ -232,7 +232,7 @@ function PrivacySettingsPage() {
                   <FanAvatar name={account.displayName || account.username} src={account.profilePhoto} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">{account.displayName || `@${account.username}`}</p>
-                    <p dir="auto" className="truncate text-xs text-brand-mist/50">@{account.username} · {__enumLabel(account.role)}</p>
+                    <p dir="auto" className="truncate text-xs text-brand-mist/50"><bdi dir="ltr">@{account.username}</bdi> · {__enumLabel(account.role)}</p>
                   </div>
                   <Button
                     className="px-4 py-2"
@@ -268,7 +268,7 @@ function PrivacySettingsPage() {
                   <FanAvatar name={account.displayName || account.username} src={account.profilePhoto} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">{account.displayName || `@${account.username}`}</p>
-                    <p dir="auto" className="truncate text-xs text-brand-mist/50">@{account.username} · {__enumLabel(account.role)}</p>
+                    <p dir="auto" className="truncate text-xs text-brand-mist/50"><bdi dir="ltr">@{account.username}</bdi> · {__enumLabel(account.role)}</p>
                   </div>
                   <Button
                     className="px-4 py-2"
