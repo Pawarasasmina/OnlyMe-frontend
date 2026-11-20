@@ -4,6 +4,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { FiCheck, FiClock, FiShield } from "react-icons/fi";
 import { verificationService } from "../../services/verificationService";
 import { useAuth } from "../../hooks/useAuth";
@@ -12,13 +13,15 @@ import VerifiedBadge from "../fanWeb/shared/VerifiedBadge";
 export default function ManualIdentityApplication({ onClose, onAddBank, bankReady = false, bankLoading = false }) {
   __useUiLanguage();
   const { user, setUser } = useAuth();
+  const navigate = useNavigate();
   const client = useQueryClient();
   const [editing, setEditing] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [files, setFiles] = useState({});
   const [uploading, setUploading] = useState({});
   const [form, setForm] = useState({ legalFullName: "", dateOfBirth: "", country: "", issuingCountry: "", documentType: "passport", expiryDate: "", ageConfirmed: false, informationConfirmed: false, policyAccepted: false, policyVersion: "identity-manual-v1" });
-  const query = useQuery({ queryKey: ["manual-identity", user?.id || user?._id], queryFn: () => verificationService.getMine().then(r => r.data.data.verification), refetchInterval: q => q.state.data?.status === "PENDING_REVIEW" ? 15000 : false });
+  const query = useQuery({ queryKey: ["manual-identity", user?.id || user?._id], queryFn: () => verificationService.getMine().then(r => r.data.data.verification), refetchInterval: q => q.state.data?.status === "PENDING_REVIEW" ? 15000 : false, retry: false });
   const verification = query.data, status = verification?.status, approved = verification?.purpose === "IDENTITY" && status === "APPROVED";
+  const noApplication = query.isError && ([403, 404].includes(query.error?.response?.status) || ["PROFESSIONAL_PROFILE_REQUIRED", "VERIFICATION_NOT_FOUND"].includes(query.error?.response?.data?.code));
   useEffect(() => {
     if (!verification) return;
     setForm(current => ({ ...current, ...Object.fromEntries(Object.keys(current).map(key => [key, key === "dateOfBirth" || key === "expiryDate" ? verification[key]?.slice(0, 10) || "" : verification[key] ?? current[key]])) }));
@@ -30,6 +33,7 @@ export default function ManualIdentityApplication({ onClose, onAddBank, bankRead
     client.invalidateQueries({ queryKey: ["identity"] });
   }, [approved, client, setUser]);
   if (query.isPending) return <p role="status">{__msg("verification.loadingVerification")}</p>;
+  if (noApplication) return <><img className="identity-scene" src="/illustrations/verification-start.svg" alt="" /><h2 className="identity-center">{__msg("verification.noApplicationYet")}</h2><p className="identity-center">{__msg("verification.chooseProfessionalProfileBeforeVerification")}</p><button className="identity-primary" onClick={() => navigate("/settings/monetization")}>{__msg("settings.completeEligibility")}</button><button className="identity-later" onClick={onClose}>{__msg("verification.later")}</button></>;
   if (query.isError) return <><p role="alert">{__msg("verification.unableToLoadYourApplication")}</p><button className="identity-primary" onClick={() => query.refetch()}>{__msg("discover.tryAgain")}</button></>;
   if (approved) return <><img className="identity-scene" src="/illustrations/verified-confirmation.svg" alt="" /><h2 className="identity-center identity-verified-title">{__msg("profile.youReVerified")}</h2><div className="identity-name"><b>{user?.name || verification.legalFullName || user?.username}</b><VerifiedBadge variant="profile" /></div><p className="identity-center identity-verified-copy">{bankReady ? __msg("verification.yourBadgeIsOnYourBankIsReadyFor") : __msg("profile.yourBadgeIsOnAddABankToWithdraw")}</p>{bankReady ? <button className="identity-primary" onClick={onClose}>{__msg("comments.done")}</button> : <><button className="identity-primary" disabled={bankLoading} onClick={onAddBank}>{bankLoading ? __msg("verification.checkingPayoutSetup") : __msg("verification.addABankForPayouts")}</button><button className="identity-later" onClick={onClose}>{__msg("verification.later")}</button></>}</>;
   if (status === "PENDING_REVIEW") return <div className="manual-identity-status"><FiClock /><h2>{__msg("verification.underReview")}</h2><p>{__msg("verification.theSeenTeamIsReviewingYourIdentityDocumentAnd")}</p><p>{__msg("verification.youCanCloseThisPageAndCheckYourStatus")}</p><button className="identity-primary" onClick={onClose}>{__msg("comments.done")}</button></div>;

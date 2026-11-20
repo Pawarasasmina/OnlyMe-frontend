@@ -8,6 +8,11 @@
 .direct-settings-explainer { display:grid;border:1px solid;border-radius:14px; }
 .direct-settings-explainer p { display:grid;align-items:center;color:rgba(255,255,255,.69); }
 .direct-settings-note,.direct-settings-option > small { color:rgba(255,255,255,.4); }
+.direct-settings-eligibility { display:flex;align-items:center;gap:12px;margin:12px 0 8px;padding:13px 14px;border:1px solid rgba(156,203,255,.22);border-radius:16px;background:rgba(156,203,255,.06); }
+.direct-settings-eligibility div { flex:1;min-width:0; }
+.direct-settings-eligibility strong { display:block;font-size:13px; }
+.direct-settings-eligibility p { margin-top:3px;color:rgba(255,255,255,.58);font-size:11px;line-height:1.45; }
+.direct-settings-eligibility button { flex:none;padding:8px 11px;border-radius:999px;background:#9ccbff;color:#07111b;font-size:11px;font-weight:750; }
 .direct-settings-option-head { display:grid;align-items:center; }
 .direct-settings-option-head > svg { width:15px;height:15px; }
 .direct-settings-option-head h3 { font-weight:700; }
