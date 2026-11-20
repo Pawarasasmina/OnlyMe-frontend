@@ -220,13 +220,12 @@ function Identity({ person, presence, compact = false, showPresence = true, subt
   const resolvedPresence = presence || person.presence;
   const { user } = useAuth();
   const online = user?.activity_status !== false && resolvedPresence?.active_now;
-  const chosenOnline = Boolean(person.atSeenActive || person.activeStatus?.presetKey === "at_seen" || person.activeStatus?.label === "At seen");
   const atSeenSubtitle = subtitle.startsWith("● At seen");
   const replyLabel = atSeenSubtitle ? subtitle.replace("● At seen", "").replace(/^\s*·\s*/, "") : "";
   return <>
     <span className="message-identity-avatar relative shrink-0">
       <FanAvatar name={person.displayName} size={compact ? "h-10 w-10" : "h-12 w-12"} src={person.avatarUrl} />
-      {showPresence && (online || chosenOnline) ? <span className={`message-identity-presence absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 ${online || chosenOnline ? "bg-atseen-success" : "bg-atseen-dim"}`} /> : null}
+      {showPresence && online ? <span aria-label={__msg("presence.activeNow")} className="message-identity-presence absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 bg-atseen-success" /> : null}
     </span>
     <span className="min-w-0 flex-1">
       <span className="message-identity-name flex items-center gap-1 truncate text-sm font-bold">{person.username ? <b className="message-username"><bdi dir="ltr"><i className="identity-at">@</i>{person.username}</bdi></b> : person.displayName}{person.isVerified ? <VerifiedBadge /> : null}</span>
@@ -644,7 +643,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (selected?.id) messagesQuery.refetch();
   }, [selected?.directAccessWindowId]);
-  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || sharePickerOpen || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
+  const peopleQuery = useQuery({ queryKey: ["messages", "people", search], queryFn: () => messageService.searchPeople(search).then((r) => r.data.data.people), enabled: newChat || newDirectChat || sharePickerOpen || newGroup || groupInfoOpen || Boolean(forwardingMessage) });
   const groupsQuery = useQuery({
     queryKey: ["messages", "groups"],
     queryFn: () => messageService.getGroups().then((response) => response.data.data.groups),
@@ -841,7 +840,6 @@ export default function MessagesPage() {
   }, [messages, myId, participant?.typicalReplyHours, selected?.id]);
   const liveReplyLabel = replyEstimateLabel(liveReplyMinutes);
   const selectedActiveNow = user?.activity_status !== false && presence[selected?.id]?.active_now;
-  const selectedCreator = participant?.role === "creator" || participant?.isCreator;
   const chatInfoMedia = useMemo(() => messages.flatMap((message) => {
     if (message.deletedAt) return [];
     if (message.image?.url) return [{ id: message.id, type: "image", url: message.image.url }];
@@ -866,19 +864,6 @@ export default function MessagesPage() {
     setPendingShare("");
     setSearchParams((current) => { const next = new URLSearchParams(current); next.delete("share"); return next; }, { replace: true });
   }, [pendingShare, selected?.id, setSearchParams]);
-  const latestGroupSeenMessageByUser = useMemo(() => {
-    const latestMessageByUser = new Map();
-    if (selected?.type !== "group") return latestMessageByUser;
-
-    messages.forEach((message) => {
-      if (message.senderId !== myId) return;
-      (message.readBy || []).forEach((receipt) => {
-        if (receipt.userId !== myId) latestMessageByUser.set(receipt.userId, message.id);
-      });
-    });
-
-    return latestMessageByUser;
-  }, [messages, myId, selected?.type]);
   const directAccessWindow = selected?.type === "group" ? null : messagesQuery.data?.directAccessWindow || null;
   const viewerIsDirectAccessFan = Boolean(directAccessWindow && String(directAccessWindow.fanId) === myId);
   const viewerIsDirectAccessCreator = Boolean(directAccessWindow && String(directAccessWindow.creatorId) === myId);
@@ -984,14 +969,6 @@ export default function MessagesPage() {
         setDirectAccessBusy(false);
       });
   }, [hasActiveDirectAccessWindow, location.state, messagesQuery.isLoading, searchParams, selected?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
-  const lastReadOutgoingMessageId = useMemo(() => {
-    for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index];
-      if (message.senderId === myId && message.readAt) return message.id;
-    }
-    return null;
-  }, [messages, myId]);
-
   useEffect(() => {
     const unreadChats = conversations.filter(
       (conversation) => !conversation.muted && (Number(conversation.unreadCount) || 0) > 0,
@@ -1207,7 +1184,7 @@ export default function MessagesPage() {
       setPresence({}); setGroupMessageInfo(null);
       queryClient.setQueriesData({ queryKey: ["messages"] }, clearReadReceipts);
       queryClient.invalidateQueries({ queryKey: ["messages"] });
-      const ids = [...new Set([...conversations.map(row => row.id), ...groupPresenceIds, selected?.type !== "group" ? selected?.id : null].filter(Boolean))];
+      const ids = [...new Set([...conversations.map(row => row.participant?.id), ...groupPresenceIds, selected?.type !== "group" ? selected?.id : null].filter(Boolean))];
       getMessageSocket().emit("presence:query", ids, rows => setPresence(Object.fromEntries(rows.map(row => [row.userId, row]))));
     };
     window.addEventListener("onlyme-privacy-updated", refreshPrivacy);
@@ -1347,38 +1324,32 @@ export default function MessagesPage() {
   }, [conversations, myId, orderedPeople]);
   const shownConversations = useMemo(() => {
     if (inboxTab === "direct") return [];
-    const standardConversationByPerson = new Map(conversations.map((item) => [String(item.id), item]));
-    const myDirectAccessRows = inboxTab === "all" ? directConversations
-      .filter((windowItem) => String(windowItem.fanId) === myId)
-      .map((windowItem) => {
-        const other = directWindowParticipant(windowItem, myId);
-        const directAccessStatus = directAccessDisplayStatus(windowItem);
-        const standardConversation = other?.id ? standardConversationByPerson.get(String(other.id)) : null;
-        const latestMessage = windowItem.latestMessage || standardConversation?.lastMessage || null;
-        return other ? {
-          id: other.id,
-          type: "direct",
-          participant: other,
-          directAccessWindowId: windowItem.id,
-          directAccessStatus,
-          isDirectAccess: true,
-          lastMessage: latestMessage || { body: windowItem.questionQuote || "Direct Access", createdAt: windowItem.updatedAt || windowItem.createdAt, senderId: "" },
-          unreadCount: standardConversation?.unreadCount || 0,
-          manualUnread: standardConversation?.manualUnread || false,
-          muted: standardConversation?.muted || false,
-          pinned: standardConversation?.pinned || false,
-        } : null;
-      }).filter(Boolean) : [];
-    const myDirectAccessIds = new Set(myDirectAccessRows.map((item) => String(item.id)));
+    const directAccessRowsByPerson = new Map();
+    if (inboxTab === "all") directConversations.forEach((windowItem) => {
+      const other = directWindowParticipant(windowItem, myId);
+      if (!other?.id || directAccessRowsByPerson.has(String(other.id))) return;
+      directAccessRowsByPerson.set(String(other.id), {
+        id: other.id,
+        type: "direct",
+        participant: other,
+        directAccessWindowId: windowItem.id,
+        directAccessStatus: directAccessDisplayStatus(windowItem),
+        isDirectAccess: true,
+        lastMessage: windowItem.latestMessage || { body: windowItem.questionQuote || "Direct Access", createdAt: windowItem.updatedAt || windowItem.createdAt, senderId: "" },
+        unreadCount: 0,
+        manualUnread: false,
+        muted: false,
+        pinned: false,
+      });
+    });
     const items = [
       ...(["all", "groups"].includes(inboxTab) ? (groupsQuery.data || []).filter((item) => !item.archived) : []),
       ...conversations.filter((item) => {
         if (inboxTab === "groups") return false;
         if (inboxTab === "requests") return item.status === "REQUEST" && item.requestReceived;
-        if (inboxTab === "all" && myDirectAccessIds.has(String(item.id))) return false;
         return !item.archived && item.status !== "DECLINED" && (item.status !== "REQUEST" || !item.requestReceived);
       }),
-      ...myDirectAccessRows,
+      ...directAccessRowsByPerson.values(),
     ].sort((left, right) => {
       if (Boolean(left.pinned) !== Boolean(right.pinned)) return left.pinned ? -1 : 1;
       if (Boolean(left.hasPriorityCall) !== Boolean(right.hasPriorityCall)) return left.hasPriorityCall ? -1 : 1;
@@ -2343,7 +2314,7 @@ export default function MessagesPage() {
             return <button className="group flex w-full items-start gap-3 px-5 py-3 text-left transition hover:bg-white/[0.03]" key={windowItem.id} onClick={() => chooseConversation({ id: other.id, participant: other, directAccessWindowId: windowItem.id })} type="button">
               <FanAvatar className="mt-0.5 h-11 w-11 shrink-0" name={other.displayName || other.username} src={other.avatarUrl} />
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5"><strong className="truncate text-[13px] leading-5 text-white">{other.displayName || other.username || "Member"}</strong>{presence[other.id]?.active_now ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
+                <span className="flex items-center gap-1.5"><strong className="message-username truncate text-[13px] leading-5 text-white">{other.username ? <bdi dir="ltr"><i className="identity-at">@</i>{other.username}</bdi> : other.displayName || "Member"}</strong>{presence[other.id]?.active_now ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
                 <span className="block truncate text-[11px] leading-5 text-atseen-muted">{incoming && windowItem.questionQuote ? `“${windowItem.questionQuote}”` : directWindowSnippet(windowItem, myId)}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[9px]">
                   {incoming ? <><span className="rounded-full bg-[#202734] px-2 py-1 font-bold text-atseen-muted">Message · {windowItem.settlementStatus === "INCLUDED" ? __msg("profile.included") : <><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{windowItem.priceStars}</>}</span>{windowItem.settlementStatus !== "INCLUDED" ? <span className="font-bold text-atseen-success">≈ ${Number(windowItem.creatorNetUsd || 0).toFixed(2)} {__msg("messages.toYou")}</span> : null}<span className="text-atseen-muted">◷ {hoursLeft}{__msg("fan.hLeft")}</span></> : null}
@@ -2361,7 +2332,7 @@ export default function MessagesPage() {
             const person = conversation.participant;
             const last = conversation.lastMessage;
             return <article className="flex flex-col items-stretch gap-3 px-3 py-4 min-[480px]:flex-row min-[480px]:items-center sm:px-5" key={`request:${conversation.id}`}>
-              <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={person} presence={presence[conversation.id]} subtitle={last?.body ? __systemMessage(last.body) : __msg("Message request")} /></button>
+              <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => chooseConversation(conversation)} type="button"><Identity compact person={person} presence={presence[person.id]} subtitle={last?.body ? __systemMessage(last.body) : __msg("Message request")} /></button>
               <div className="flex shrink-0 items-center gap-2 max-[479px]:pl-12">
                 <span className="mr-auto text-[10px] text-atseen-muted min-[480px]:mr-1">{inboxTime(last?.createdAt)}</span>
                 <button className="min-h-10 rounded-full bg-atseen-blue px-4 py-2 text-xs font-black text-atseen-bg shadow-[0_7px_18px_rgba(112,169,255,0.25)] disabled:opacity-50" disabled={requestBusy} onClick={() => handleInboxRequest(conversation, true)} type="button">{__msg("fan.accept")}</button>
@@ -2374,11 +2345,12 @@ export default function MessagesPage() {
             const last = conversation.lastMessage;
             const subtitle = !last ? __msg("No messages yet") : last.deletedAt ? last.senderId === myId ? __msg("You deleted this message") : __msg("This message was deleted") : `${isGroup && last.sender?.displayName ? `${last.senderId === myId ? __msg("You") : last.sender.displayName.split(" ")[0]}: ` : ""}${localizedInboxBody(last.body)}`;
             const requestPending = conversation.status === "REQUEST";
-            return <div className={`message-inbox-row relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selected?.id === conversation.id ? "bg-atseen-blue/10" : ""}`} key={`${isGroup ? "group" : "direct"}:${conversation.id}`}>
+            const selectedRow = selected?.id === conversation.id && (selected?.directAccessWindowId || null) === (conversation.directAccessWindowId || null);
+            return <div className={`message-inbox-row relative flex w-full items-center px-3 transition hover:bg-white/[0.03] ${selectedRow ? "bg-atseen-blue/10" : ""}`} key={isGroup ? `group:${conversation.id}` : conversation.directAccessWindowId ? `direct-access:${conversation.directAccessWindowId}` : `direct:${conversation.id}`}>
               <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-2 pl-1 pr-2 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button">
-                <Identity compact person={rowPerson} presence={null} showPresence={false} subtitle={subtitle} />
+                <Identity compact person={rowPerson} presence={isGroup ? null : presence[rowPerson?.id]} showPresence={!isGroup} subtitle={subtitle} />
                 <span className="ml-auto flex max-w-[95px] flex-col items-end gap-1">
-                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className={last.readAt && user?.read_receipts !== false ? "message-read-ticks is-read" : "message-read-ticks"}>{last.readAt && user?.read_receipts !== false || last.delivered ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
+                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className="message-read-ticks">{last.readAt && user?.read_receipts !== false ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
                   <span className="message-row-state-icons">
                     {conversation.directAccessStatus ? <span className={`message-direct-access-state is-${conversation.directAccessStatus.toLowerCase()}`}>{__msg(conversation.directAccessStatus)}</span> : requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">{__msg("fan.pending")}</span> : conversation.manualUnread ? <span aria-label="Marked as unread" className={`message-unread-count is-manual ${conversation.muted ? "is-muted" : ""}`} /> : conversation.unreadCount ? <span className={`message-unread-count ${conversation.muted ? "is-muted" : ""}`}>{conversation.unreadCount}</span> : null}
                     {conversation.muted ? <FiVolumeX aria-label="Muted" /> : null}
@@ -2426,7 +2398,7 @@ export default function MessagesPage() {
         {selected ? <>
           <header className="relative z-50 flex shrink-0 items-center gap-1.5 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-2 py-2.5 backdrop-blur sm:gap-3 sm:px-4 sm:py-3">
             <button aria-label={__msg("fan.backToConversations")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
-            {participant ? <button className="message-chat-header-identity flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else { setChatInfoTab("media"); setChatInfoOpen(true); } }} type="button"><span className="relative shrink-0"><FanAvatar name={participant.displayName} size="h-10 w-10" src={participant.avatarUrl} />{selected.type !== "group" && (selectedActiveNow || participant.atSeenActive) ? <i className="message-presence-dot" aria-label={participant.atSeenActive ? __msg("constants.atSeen") : __msg("presence.activeNow")} /> : null}</span><span className="min-w-0"><span className="flex min-w-0 items-center gap-1 text-[15px] font-bold leading-5 text-white">{selected.type === "group" ? <span className="truncate">{participant.displayName}</span> : <span className="message-username truncate"><bdi dir="ltr"><i className="identity-at">@</i>{participant.username || participant.displayName}</bdi></span>}{participant.isVerified ? <VerifiedBadge /> : null}</span><span className="message-presence-line">{selected.type === "group" ? `${participant.members?.length || 0} members` : <>{selectedCreator ? <span className="message-reply-estimate">{liveReplyLabel}</span> : selectedActiveNow ? <span className="message-active-now"><i />{__msg("presence.activeNow")}</span> : null}{participant.atSeenActive ? <span className="message-at-seen-pill"><FiEye />{__msg("constants.atSeen")}</span> : null}</>}</span></span></button> : null}
+            {participant ? <button className="message-chat-header-identity flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else { setChatInfoTab("media"); setChatInfoOpen(true); } }} type="button"><span className="relative shrink-0"><FanAvatar name={participant.displayName} size="h-10 w-10" src={participant.avatarUrl} />{selected.type !== "group" && selectedActiveNow ? <i className="message-presence-dot" aria-label={__msg("presence.activeNow")} /> : null}</span><span className="min-w-0"><span className="flex min-w-0 items-center gap-1 text-[15px] font-bold leading-5 text-white">{selected.type === "group" ? <span className="truncate">{participant.displayName}</span> : <span className="message-username truncate"><bdi dir="ltr"><i className="identity-at">@</i>{participant.username || participant.displayName}</bdi></span>}{participant.isVerified ? <VerifiedBadge /> : null}</span><span className="message-presence-line">{selected.type === "group" ? `${participant.members?.length || 0} members` : <>{selectedActiveNow ? <span className="message-active-now"><i />{__msg("presence.activeNow")}</span> : null}{participant.atSeenActive ? <span className="message-at-seen-pill"><FiEye />{__msg("constants.atSeen")}</span> : null}</>}</span></span></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">{__msg("fan.reconnecting")}</span> : null}
             {canCallParticipant ? <div className="flex shrink-0 items-center gap-1">
               <button aria-label={`Audio call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button>
@@ -2457,7 +2429,6 @@ export default function MessagesPage() {
               const startsDay = index === 0 || chatDateKey(messages[index - 1].createdAt) !== chatDateKey(message.createdAt);
               const groupedWithPrevious = !startsDay && messagesAreGrouped(messages[index - 1], message);
               const groupedWithNext = messagesAreGrouped(message, messages[index + 1]);
-              const showReadAvatar = mine && message.id === lastReadOutgoingMessageId;
               const reactions = message.reactions || [];
               const groupedReactions = Object.entries(reactions.reduce((groups, reaction) => ({ ...groups, [reaction.emoji]: (groups[reaction.emoji] || 0) + 1 }), {}));
               const canShareQuestionReply = Boolean(!mine && message.storyReply?.questionPrompt && message.body && !message.id.startsWith("pending:"));
@@ -2477,7 +2448,7 @@ export default function MessagesPage() {
                     {storyReaction ? <div className={mine ? "text-right" : "text-left"}><p className="mb-1 whitespace-nowrap text-[10px] text-atseen-muted">{mine ? "You reacted to their story" : "Reacted to your story"}</p><button className={`relative inline-block h-44 w-28 overflow-hidden rounded-[14px] border border-white/10 bg-atseen-surface-2 shadow-lg ${storyUnavailable ? "cursor-default" : ""}`} disabled={storyUnavailable} onClick={() => openStoryReply(message.storyReply, storyUnavailable)} type="button">{storyUnavailable ? <span className="flex h-full w-full flex-col items-center justify-center bg-[#171b21] px-3 text-center"><span className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-atseen-muted">⌛</span><b className="mt-3 text-[11px] text-atseen-text">{__msg("fan.storyUnavailable")}</b><span className="mt-1 text-[9px] leading-3 text-atseen-muted">This story expired or was removed</span></span> : <img alt="Story reacted to" className="h-full w-full object-cover" onError={() => setExpiredStoryIds((current) => new Set(current).add(message.storyReply.storyId))} src={resolveMediaUrl(message.storyReply.imageUrl)} />}<span className="absolute bottom-1.5 right-2 text-[9px] font-bold text-white drop-shadow-md">{chatTimeLabel(message.createdAt, chatLanguage)}{mine ? " ✓✓" : ""}</span></button><span className={`-mt-3 block text-[28px] leading-none drop-shadow-lg ${mine ? "-mr-1 text-right" : "-ml-1 text-left"}`}>{storyReaction[1]}</span></div> : message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><GiftArt className="mx-auto h-24 w-24" gift={message.gift} imageClassName="h-full w-full object-contain" /><p className="mt-1 font-black" dir="auto">{message.gift.name}</p><p className="message-gift-from"><span>{mine ? "Gift from you" : `Gift from @${participant?.username || "user"}`}</span><span aria-hidden="true"> · </span><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><span>{Number(message.gift.stars).toLocaleString()}</span></p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt={__msg("fan.sharedInChat")} className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     {!storyReaction ? <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{chatTimeLabel(message.createdAt, chatLanguage)}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : ""}</span>
-                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) ? "Read" : (message.deliveredBy || []).some(receipt => receipt.userId !== myId) ? "Delivered" : "Sent" : message.readAt ? "Read" : message.delivered ? "Delivered" : "Sent"} className={`message-delivery-ticks font-black${(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) : message.readAt) ? " is-read" : ""}`}>{(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) || (message.deliveredBy || []).some(receipt => receipt.userId !== myId) : message.readAt || message.delivered) ? "\u2713\u2713" : "\u2713"}</span> : null}
+                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) ? "Read" : (message.deliveredBy || []).some(receipt => receipt.userId !== myId) ? "Delivered" : "Sent" : message.readAt ? "Read" : message.delivered ? "Delivered" : "Sent"} className="message-delivery-ticks font-black">{(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) : message.readAt) ? "\u2713\u2713" : "\u2713"}</span> : null}
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button> : null}
                     </p> : null}
                   </div>
@@ -2509,14 +2480,6 @@ export default function MessagesPage() {
                       {!mine ? <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-atseen-warning hover:bg-white/5" onClick={() => { setMessageMenu(null); setReportTarget({ type: "message", message }); }} type="button"><FiFlag /> {__msg("discover.report")}</button> : null}
                     </div></div></div>, document.querySelector(".messages-page") || document.body) : null}
                   </div> : null}
-                  {selected.type !== "group" && showReadAvatar && participant ? <span aria-label={`Seen by ${participant.displayName}`} className="mt-1 block" title={`Seen by ${participant.displayName}`}><FanAvatar name={participant.displayName} size="h-4 w-4" src={participant.avatarUrl} /></span> : null}
-                  {selected.type === "group" && mine ? (() => {
-                    const seenMembers = (message.readBy || []).filter((receipt) => receipt.userId !== myId && latestGroupSeenMessageByUser.get(receipt.userId) === message.id).map((receipt) => participant?.members?.find((member) => member.id === receipt.userId)).filter(Boolean);
-                    if (!seenMembers.length) return null;
-                    const visibleMembers = seenMembers.slice(0, 3);
-                    const extraCount = Math.max(0, seenMembers.length - visibleMembers.length);
-                    return <button aria-label={`Seen by ${seenMembers.length} group members. Open message info.`} className="mt-1 flex items-center justify-end -space-x-1.5" onClick={() => setGroupMessageInfo(message)} title={__msg("fan.openMessageInfo")} type="button">{visibleMembers.map((member) => <span className="rounded-full ring-2 ring-atseen-bg-2" key={member.id}><FanAvatar name={member.displayName} size="h-4 w-4" src={member.avatarUrl} /></span>)}{extraCount ? <span className="relative grid h-4 min-w-4 place-items-center rounded-full bg-atseen-surface-2 px-1 text-[8px] font-black text-atseen-blue ring-2 ring-atseen-bg-2">+{extraCount}</span> : null}</button>;
-                  })() : null}
                 </div>
               </div>
               </Fragment>;
