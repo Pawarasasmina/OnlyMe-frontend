@@ -20,6 +20,30 @@ export const usernameFromName = (...parts) => parts.join(" ")
   .replace(/\.{2,}/g, ".")
   .slice(0, 30);
 
+const fitUsername = (value) => value
+  .replace(/^\.+|\.+$/g, "")
+  .replace(/\.{2,}/g, ".")
+  .slice(0, 30)
+  .replace(/[._]+$/g, "");
+
+export function usernameSuggestions(firstName, lastName) {
+  const first = usernameFromName(firstName).replaceAll(".", "");
+  const last = usernameFromName(lastName).replaceAll(".", "");
+  if (!first) return [];
+  const seed = [...`${first}${last}`].reduce((total, character) => total + character.charCodeAt(0), 0);
+  const number = 10 + (seed % 90);
+  const candidates = last ? [
+    `${first}.${last}`,
+    `${first}${last}`,
+    `${first}_${last}`,
+    `${first}.${last[0]}`,
+    `${first[0]}.${last}`,
+    `${first}${last}${number}`,
+    `the.${first}${last}`,
+  ] : [first, `${first}.${number}`, `the.${first}`, `${first}_${number}`];
+  return [...new Set(candidates.map(fitUsername))].filter(value => !usernameValidationError(value));
+}
+
 export function usernameValidationError(value) {
   if (value.length < 3) return "Username must be at least 3 characters";
   if (value.length > 30) return "Username must be 30 characters or less";

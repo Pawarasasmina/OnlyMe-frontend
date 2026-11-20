@@ -264,7 +264,7 @@ function SeenHeader({ activeTab, activityCount = 0, onTabChange, onActivity, onC
   return <header className="seen-proto-header">
     <nav aria-label={__msg("social.seenFeedTabs")} className="seen-proto-tabs">
       <button className={activeTab === "seen" ? "is-active" : ""} onClick={() => onTabChange("seen")} type="button"><SeenEyeMark className="seen-tab-eye-mark" />Seen</button>
-      <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">{__msg("stories.friends_c11d5e")}</button>
+      <button className={activeTab === "friends" ? "is-active" : ""} onClick={() => onTabChange("friends")} type="button">{__msg("activity.following")}</button>
     </nav>
     <div className="seen-proto-header-actions">
       <button aria-label={__msg("fanWeb.create")} onClick={onCreate} type="button"><FiPlus /></button>
@@ -590,6 +590,9 @@ function CompactSeenMedia({ item, onOpen }) {
 
 function SeenSummary({ item, onOpenChapter, onPurchase }) {
   __useUiLanguage();
+  const paid = item.pricing?.mode === "ONE_TIME" && Number(item.pricing?.starsAmount) > 0;
+  const included = item.access === "ACTIVE_PREMIUM_MEMBER";
+  const openAccess = included || item.access === "ENTITLED_SEEN";
   const chapterCount = item.chapters.length;
   const chapterWord = chapterCount === 1 ? "chapter" : "chapters";
   const meta = [`${chapterCount} ${chapterWord}`, __msg("profile.value0Min", { value0: item.readMinutes })].join(" Â· ");
@@ -603,8 +606,8 @@ function SeenSummary({ item, onOpenChapter, onPurchase }) {
         {item.description ? <p>{item.description}</p> : null}
       </button>
     </div>
-    {item.pricing?.mode === "ONE_TIME" && item.access === "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock is-owned" onClick={() => onOpenChapter(0)} type="button"><span>{__msg("system.SeenFeedPage.755844bc39")}</span><small>{__msg("system.SeenFeedPage.7243089e5c")}</small><b>{__msg("publication.open")}</b></button> : null}
-    {item.pricing?.mode === "ONE_TIME" && item.access !== "ENTITLED_SEEN" ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> <img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(item.pricing.starsAmount || 0).toLocaleString(__uiLocale())}</span>{item.ownerCount > 0 ? <small>{__msg("celebrations.ownerCount", { count: item.ownerCount })}</small> : null}<b>{item.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("admin.unavailable")}</b></button> : null}
+    {paid && openAccess ? <button className="seen-paid-overview-unlock is-owned" onClick={() => onOpenChapter(0)} type="button"><span>{included ? __msg("financial.includedInYourWorld") : __msg("system.SeenFeedPage.755844bc39")}</span><small>{included ? __msg("financial.includedWithActiveWorldMembership") : __msg("system.SeenFeedPage.7243089e5c")}</small><b>{__msg("publication.open")}</b></button> : null}
+    {paid && !openAccess ? <button className="seen-paid-overview-unlock" disabled={!item.paymentAvailable} onClick={onPurchase} type="button"><span><FiLock /> <img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(item.pricing.starsAmount).toLocaleString(__uiLocale())}</span>{item.ownerCount > 0 ? <small>{__msg("celebrations.ownerCount", { count: item.ownerCount })}</small> : null}<b>{item.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("admin.unavailable")}</b></button> : null}
     <ChapterPreviewList chapters={item.chapters} maxVisible={5} onOpenChapter={onOpenChapter} />
   </div>;
 }
@@ -1443,7 +1446,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
 function EmptyState({ canCreate, onCreate, tab }) {
   __useUiLanguage();
   const friends = tab === "friends";
-  return <ContentEmptyState message={friends ? __msg("social.followPeopleToFillThisSpaceWithTheStories") : __msg("social.publishedSeensWillAppearHereYouCanExplorePeople")} primaryAction={friends ? { label: __msg("profile.discoverPeople"), to: "/discover" } : canCreate ? { label: __msg("profile.createASeen"), onClick: onCreate } : { label: __msg("profile.discoverPeople"), to: "/discover" }} secondaryAction={friends ? { label: __msg("profile.exploreSeens"), to: "/seen?tab=explore" } : null} title={friends ? __msg("social.yourFriendsSeensLiveHere") : __msg("profile.noSeensYet_1d5d33")} variant="seen" />;
+  return <ContentEmptyState message={friends ? __msg("social.followPeopleToFillThisSpaceWithTheStories") : __msg("social.publishedSeensWillAppearHereYouCanExplorePeople")} primaryAction={friends ? { label: __msg("profile.discoverPeople"), to: "/discover" } : canCreate ? { label: __msg("profile.createASeen"), onClick: onCreate } : { label: __msg("profile.discoverPeople"), to: "/discover" }} secondaryAction={friends ? { label: __msg("profile.exploreSeens"), to: "/seen?tab=explore" } : null} title={friends ? __msg("activity.following") : __msg("profile.noSeensYet_1d5d33")} variant="seen" />;
 }
 
 function EndState({ onCreate }) {

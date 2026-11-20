@@ -3761,6 +3761,11 @@ export default function SeenComposerPage() {
 
   const submit = async () => {
     if (submitting || publishMoment) return;
+    if (!p.category?.trim()) {
+      setError(__msg("publicationValidation.categoryIsRequired"));
+      setSettingsSheet("category");
+      return;
+    }
     const publication = await save();
     if (!publication) return;
     const errors = seenCompleteness(publication);
@@ -4187,7 +4192,7 @@ export default function SeenComposerPage() {
         </> : null}
         <div className={`seen-compose-settings ${paidSeen ? "is-paid-publish" : ""}`} aria-label={__msg("creator.seenSettings")}>
           {paidSeen ? <label className="seen-review-paid-price"><span><FiLock /><b>{__msg("system.SeenComposerPage.15ef26f902")}</b><small>{__msg("system.SeenComposerPage.8f2aa9764d")}</small></span><span><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /> <input aria-label={__msg("system.SeenComposerPage.ea521c947c")} min="10" onChange={(event) => change({ pricing: { mode: "ONE_TIME", starsAmount: Math.max(10, Math.round(Number(event.target.value) || 10)), presetId: "paid-seen" } })} type="number" value={Number(p.pricing?.starsAmount) || 190} /></span></label> : null}
-          <SettingsRow Icon={FiTag} label={__msg("content.category")} onClick={() => setSettingsSheet("category")} value={p.category || (paidSeen ? "Choose" : "-")} />
+          <SettingsRow Icon={FiTag} label={__msg("content.category")} onClick={() => setSettingsSheet("category")} value={p.category || __msg("publicationValidation.categoryIsRequired")} />
           {!paidSeen ? <SettingsRow Icon={FiGrid} label={__msg("publication.series")} onClick={() => { setSeriesError(""); setSettingsSheet("series"); }} value={selectedSeriesLabel} /> : null}
           {!paidSeen ? <SettingsRow Icon={FiUsers} label={__msg("creator.tagPeople")} onClick={() => setSettingsSheet("people")} value={p.taggedPeople?.length ? `${p.taggedPeople.length} tagged` : "None"} /> : null}
           <SettingsRow Icon={FiMapPin} label={__msg("fanWeb.location")} onClick={() => setSettingsSheet("location")} value={p.experienceLocation || "Add"} />
@@ -4215,6 +4220,7 @@ export default function SeenComposerPage() {
           categories={categoryOptions}
           onClose={() => setSettingsSheet("")}
           onSelect={(category) => {
+            setError("");
             change({ category });
             setSettingsSheet("");
           }}

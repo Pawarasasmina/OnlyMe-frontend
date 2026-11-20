@@ -32,9 +32,9 @@ export default function OnboardingTicket({ city = "", memberNumber, joinedAt, na
   };
 
   return <>
-    <main className={`onboarding-ticket-screen ${overlay ? "is-overlay absolute inset-0 z-[150] min-h-full bg-[#06101b]/95 backdrop-blur-[5px]" : "relative h-[100dvh] w-full bg-[#05070a]"} overflow-y-auto overflow-x-hidden text-white`} role={overlay ? "dialog" : undefined} aria-modal={overlay ? "true" : undefined} aria-label={overlay ? __msg("system.OnboardingTicket.4b9a49b725") : undefined}>
+    <main className={`onboarding-ticket-screen ${overlay ? "is-overlay fixed inset-0 z-[150] h-[100dvh] min-h-[100dvh] w-full bg-[#06101b]/95 backdrop-blur-[5px] min-[881px]:absolute" : "relative h-[100dvh] w-full bg-[#05070a]"} overflow-y-auto overflow-x-hidden overscroll-contain text-white`} role={overlay ? "dialog" : undefined} aria-modal={overlay ? "true" : undefined} aria-label={overlay ? __msg("system.OnboardingTicket.4b9a49b725") : undefined}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[78%] bg-[radial-gradient(ellipse_at_50%_31%,rgba(45,79,124,.34),transparent_58%)]" />
-      <section className={`onboarding-ticket-content relative mx-auto flex ${overlay ? "min-h-full" : "min-h-[100dvh]"} w-full max-w-[458px] flex-col items-center justify-center px-6 py-[max(24px,env(safe-area-inset-top))]`}>
+      <section className="onboarding-ticket-content relative mx-auto flex min-h-[100dvh] w-full max-w-[458px] flex-col items-center justify-center px-6 py-[max(24px,env(safe-area-inset-top))]">
         <p className="member-ticket-heading">{__msg("profile.yourTicket")}</p>
 
         <article className="member-ticket-card onboarding-member-ticket ticket-motion-card">

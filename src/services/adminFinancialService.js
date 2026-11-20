@@ -9,6 +9,8 @@ export const adminFinancialService = {
   updateExchangeRate: (payload) => api.put("/admin/exchange-rate", payload),
   getCoinTaxRate: () => api.get("/admin/coin-tax-rate"),
   updateCoinTaxRate: (payload) => api.put("/admin/coin-tax-rate", payload),
+  getCreatorReferralSettings: () => api.get("/admin/creator-referral-settings"),
+  updateCreatorReferralSettings: (payload) => api.put("/admin/creator-referral-settings", payload),
   activateWallet: (userId, payload) => api.post(`/admin/wallets/${userId}/activate-ledger`, payload),
   creditStars: (userId, payload) => api.post(`/admin/wallets/${userId}/credit-stars`, payload),
 };

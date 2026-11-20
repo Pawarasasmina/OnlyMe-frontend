@@ -8,8 +8,9 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { walletService } from "../../services/walletService";
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
+import CoinIcon from "../../components/branding/CoinIcon";
 
-const STAR = "✦";
+const COIN_WORD = "coins";
 const money = (value) => new Intl.NumberFormat(__uiLocale(), { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(Number(value || 0));
 
 export default function IncomeToCoinsPage() {
@@ -26,13 +27,13 @@ export default function IncomeToCoinsPage() {
 
   const convert = async (stars, label) => {
     if (!Number.isSafeInteger(stars) || stars < 1) return;
-    if (!window.confirm(__msg("social.convertValue0OfCreatorIncomeIntoValue1Value2", { value0: label, value1: STAR, value2: stars.toLocaleString(__uiLocale()) }))) return;
+    if (!window.confirm(__msg("social.convertValue0OfCreatorIncomeIntoValue1Value2", { value0: label, value1: COIN_WORD, value2: stars.toLocaleString(__uiLocale()) }))) return;
     setBusy(true);
     setMessage("");
     try {
       await walletService.convertIncome(stars, createIdempotencyKey("income-to-coins"));
       await Promise.all([queryClient.invalidateQueries({ queryKey: ["wallet"] }), queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] })]);
-      setMessage(__msg("social.convertedSuccessfullyTheseCoinsNowBehaveLikeTopUp", { value0: STAR, value1: stars.toLocaleString(__uiLocale()) }));
+      setMessage(__msg("social.convertedSuccessfullyTheseCoinsNowBehaveLikeTopUp", { value0: COIN_WORD, value1: stars.toLocaleString(__uiLocale()) }));
     } catch (error) {
       setMessage(error.response?.data?.message || __msg("social.couldNotConvertCreatorIncomePleaseTryAgain"));
     } finally {
@@ -50,11 +51,11 @@ export default function IncomeToCoinsPage() {
       <p className="mx-auto mt-5 max-w-xs text-sm font-semibold leading-6 text-white/60">{__msg("social.oneWayOnlyCoinsNeverTurnBackIntoMoney")}</p>
       {Number(wallet.pendingIncomeUsd || 0) > 0 ? <p className="mx-auto mt-3 max-w-xs text-xs leading-5 text-amber-100/70">{money(wallet.pendingIncomeUsd)} {__msg("social.receivedDuringTheLast24HoursIsStillPending")}</p> : null}
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        {[5, 10, 25].map((usd) => { const stars = Math.round(usd * rate); const enabled = stars <= earnedStars; return <button className="rounded-full border border-white/10 bg-[#171b23] px-5 py-3 text-sm font-black disabled:opacity-30" disabled={busy || !enabled} key={usd} onClick={() => convert(stars, money(usd))} type="button">${usd} → <span className="text-[#8fc3ff]">{STAR}</span> {stars.toLocaleString(__uiLocale())}</button>; })}
+        {[5, 10, 25].map((usd) => { const stars = Math.round(usd * rate); const enabled = stars <= earnedStars; return <button className="rounded-full border border-white/10 bg-[#171b23] px-5 py-3 text-sm font-black disabled:opacity-30" disabled={busy || !enabled} key={usd} onClick={() => convert(stars, money(usd))} type="button">${usd} → <CoinIcon size={14} /> {stars.toLocaleString(__uiLocale())}</button>; })}
       </div>
-      {earnedStars > 0 ? <button className="mt-3 rounded-full border border-[#8fc3ff]/45 bg-[#17202a] px-5 py-3 text-sm font-black text-[#9bcaff] disabled:opacity-40" disabled={busy} onClick={() => convert(earnedStars, money(wallet.availableIncomeUsd))} type="button">{__msg("social.all")} {money(wallet.availableIncomeUsd)} → {STAR} {earnedStars.toLocaleString(__uiLocale())}</button> : null}
+      {earnedStars > 0 ? <button className="mt-3 rounded-full border border-[#8fc3ff]/45 bg-[#17202a] px-5 py-3 text-sm font-black text-[#9bcaff] disabled:opacity-40" disabled={busy} onClick={() => convert(earnedStars, money(wallet.availableIncomeUsd))} type="button">{__msg("social.all")} {money(wallet.availableIncomeUsd)} → <CoinIcon size={14} /> {earnedStars.toLocaleString(__uiLocale())}</button> : null}
       {!options.length && earnedStars > 0 ? <p className="mt-4 text-xs text-white/40">{__msg("social.useAllToConvertABalanceBelow")} {money(5)}.</p> : null}
-      <p className="mt-4 text-xs text-white/35">{STAR}{rate.toLocaleString(__uiLocale())} = $1</p>
+      <p className="mt-4 text-xs text-white/35"><CoinIcon size={12} />{rate.toLocaleString(__uiLocale())} = $1</p>
       {message ? <p className="mx-auto mt-5 max-w-sm rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-xs leading-5 text-white/60" role="status">{message}</p> : null}
     </section> : null}
   </main>;

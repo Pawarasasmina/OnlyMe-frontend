@@ -21,6 +21,7 @@ export default function ProfileImageCropper({ actionLabel = "", constrainToCente
   const config = {
     avatar: { aspect: "aspect-square", frame: "w-[min(72vw,320px)] rounded-full", height: 400, label: __msg("profile.profilePhoto"), width: 400 },
     cover: { aspect: "aspect-[3/1]", frame: "w-full rounded-2xl", height: 500, label: __msg("profile.cover"), width: 1500 },
+    dream: { aspect: "aspect-[5/3]", frame: "w-full max-w-[560px] rounded-2xl", height: 720, label: __msg("profile.dreamPhoto"), width: 1200 },
     feed: { aspect: "aspect-square", frame: "w-[min(72vw,360px)] rounded-2xl", height: 1080, label: __msg("profile.feedImage"), width: 1080 },
     message: { aspect: "aspect-square", frame: "w-full max-w-[360px] rounded-2xl", height: 1080, label: __msg("system.ProfileImageCropper.d60861b0bc"), width: 1080 },
     seen: { aspect: "aspect-[4/5]", frame: "w-full rounded-2xl", height: 1350, label: __msg("profile.seenCover"), width: 1080 },

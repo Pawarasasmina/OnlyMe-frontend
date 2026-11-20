@@ -2,7 +2,7 @@
 import { msg as __msg } from "../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import CreatorAppShell from "../layouts/CreatorAppShell";
@@ -13,7 +13,7 @@ import RoleProtectedRoute from "./RoleProtectedRoute";
 import ApprovedCreatorRoute from "./ApprovedCreatorRoute";
 import { ROLES } from "../utils/constants";
 import { useAuth } from "../hooks/useAuth";
-import { defaultDestinationFor, hasCreatorAccess } from "../utils/socialAccess";
+import { defaultDestinationFor, destinationForUser, hasCreatorAccess } from "../utils/socialAccess";
 import Loader from "../components/common/Loader";
 
 const pageModules = import.meta.glob("../pages/**/*.jsx");
@@ -82,7 +82,6 @@ const WalletPage = lazyPage("../pages/social/WalletPage");
 const WalletLedgerPage = lazyPage("../pages/social/WalletLedgerPage");
 const WithdrawPage = lazyPage("../pages/social/WithdrawPage");
 const IncomeToCoinsPage = lazyPage("../pages/social/IncomeToCoinsPage");
-const MyExperiencesPage = lazyPage("../pages/social/MyExperiencesPage");
 const PurchasesPage = lazyPage("../pages/social/PurchasesPage");
 const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
 const MembershipCancellationPage = lazyPage("../pages/social/MembershipCancellationPage");
@@ -119,18 +118,32 @@ function RootRedirect() {
   return <Navigate replace to={user ? defaultDestinationFor(user.role) : "/welcome"} />;
 }
 
+function GuestOnlyRoute() {
+  __useUiLanguage();
+  const { loading, user } = useAuth();
+  if (loading) return <div className="grid min-h-[100dvh] place-items-center"><Loader label={__msg("onboarding.checkingSession")} /></div>;
+  if (user) return <Navigate replace to={destinationForUser(user)} />;
+  return <Outlet />;
+}
+
 function LegacyCreatorProfileRedirect() {
   __useUiLanguage();
   const { username } = useParams();
   return <Navigate replace to={`/profile/${encodeURIComponent(username)}`} />;
 }
 
+function ExperienceRedirect() {
+  __useUiLanguage();
+  const { id } = useParams();
+  return <Navigate replace to={`/seen/${encodeURIComponent(id)}?overview=1`} />;
+}
+
 function ProfileRoute() {
   __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user && user.role !== ROLES.ADMIN) return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
-  return <UnifiedProfilePage />;
+  if (user?.role === ROLES.ADMIN) return <UnifiedProfilePage />;
+  return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
 }
 
 function WorldRoute() {
@@ -138,8 +151,16 @@ function WorldRoute() {
   const { id } = useParams();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user && user.role !== ROLES.ADMIN) return <SocialAppShell><WorldReaderPage key={id} /></SocialAppShell>;
-  return <WorldReaderPage key={id} />;
+  if (user?.role === ROLES.ADMIN) return <WorldReaderPage key={id} />;
+  return <SocialAppShell><WorldReaderPage key={id} /></SocialAppShell>;
+}
+
+function SharedSocialRoute({ children }) {
+  __useUiLanguage();
+  const { loading, user } = useAuth();
+  if (loading) return null;
+  if (user?.role === ROLES.ADMIN) return children;
+  return <SocialAppShell>{children}</SocialAppShell>;
 }
 
 function WallRoute() {
@@ -169,15 +190,16 @@ function AppRoutes() {
       <Route path="/invite/:code" element={<ReferralLandingPage />} />
     </Route>
 
-    <Route element={<AuthLayout />}>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+    <Route element={<GuestOnlyRoute />}>
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      </Route>
+      <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/start/interests" element={<PublicStoryInterestsPage />} />
     </Route>
-
-    <Route path="/welcome" element={<WelcomePage />} />
-    <Route path="/start/interests" element={<PublicStoryInterestsPage />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />
@@ -185,9 +207,7 @@ function AppRoutes() {
       <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
         <Route element={<SocialAppShell />}>
           <Route path="/wall" element={<WallRoute />} />
-          <Route path="/wall/notes/:id" element={<PostDetailPage legacy />} />
           <Route path="/home" element={<Navigate replace to="/wall" />} />
-          <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/profile/seen" element={<OfficialSeenPage />} />
@@ -195,7 +215,6 @@ function AppRoutes() {
           <Route path="/wall/explore" element={<WallExplorePage />} />
           <Route path="/seen" element={<SeenFeedPage />} />
           <Route path="/seen/:id/share/story" element={<ShareSeenAsStoryPage />} />
-          <Route path="/seen/:id" element={<SeenPermalinkPage />} />
           <Route path="/orbit" element={<OrbitPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/activity" element={<ActivityPage />} />
@@ -229,8 +248,8 @@ function AppRoutes() {
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/memberships" element={<MembershipsPage />} />
           <Route path="/memberships/:id/cancel" element={<MembershipCancellationPage />} />
-          <Route path="/experiences" element={<MyExperiencesPage />} />
-          <Route path="/profile/:username/experiences" element={<MyExperiencesPage />} />
+          <Route path="/experiences" element={<Navigate replace to="/profile" />} />
+          <Route path="/profile/:username/experiences" element={<LegacyCreatorProfileRedirect />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.FAN, ROLES.CREATOR]} requireCreatorApproval={false} />}>
             <Route path="/creator/verification" element={<CreatorVerificationPage />} />
             <Route path="/creator/seller-verification" element={<SellerVerificationPage />} />
@@ -247,8 +266,8 @@ function AppRoutes() {
             <Route path="/grow/fan-preview" element={<GrowFanPreviewPage />} />
             <Route path="/create/world" element={<WorldComposerPage premium />} />
             <Route path="/create/premium-world" element={<WorldComposerPage premium />} />
-            <Route path="/create/experience" element={<WorldComposerPage experience />} />
-            <Route path="/studio/experiences/:id/edit" element={<WorldComposerPage experience />} />
+            <Route path="/create/experience" element={<Navigate replace to="/create/seen?type=paid" />} />
+            <Route path="/studio/experiences/:id/edit" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id" element={<Navigate replace to="/profile" />} />
             <Route path="/studio/worlds/:id/edit" element={<WorldComposerPage />} />
@@ -332,7 +351,10 @@ function AppRoutes() {
     <Route path="/profile/:username" element={<ProfileRoute />} />
     <Route path="/world/:id/inside" element={<WorldRoute />} />
     <Route path="/world/:id" element={<WorldRoute />} />
-    <Route path="/experience/:id" element={<WorldRoute />} />
+    <Route path="/seen/:id" element={<SharedSocialRoute><SeenPermalinkPage /></SharedSocialRoute>} />
+    <Route path="/posts/:id" element={<SharedSocialRoute><PostDetailPage /></SharedSocialRoute>} />
+    <Route path="/wall/notes/:id" element={<SharedSocialRoute><PostDetailPage legacy /></SharedSocialRoute>} />
+    <Route path="/experience/:id" element={<ExperienceRedirect />} />
     <Route path="/planet/:id" element={<WorldRoute />} />
 
     <Route path="*" element={<Navigate replace to="/" />} />

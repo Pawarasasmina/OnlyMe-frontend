@@ -502,6 +502,7 @@ export default function OnboardingPage() {
         busy={onboarding.saveFace.isPending}
         error={error}
         name={state.user?.name || user.name}
+        professional={Boolean(state.user?.isCreator || user.isCreator || state.user?.creatorApprovalStatus === "approved" || user.creatorApprovalStatus === "approved" || ["creator", "business"].includes(state.user?.profileAccountType || user.profileAccountType))}
         onContinue={() =>
           run(
             () => onboarding.saveFace.mutateAsync(),

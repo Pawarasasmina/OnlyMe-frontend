@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FiArrowLeft,
   FiArrowUpRight,
+  FiAlertCircle,
   FiCheck,
   FiEdit3,
   FiEye,
@@ -321,7 +322,7 @@ function WorldCreatePriceSheet({ busy, currentPrice, onClose, onSave }) {
           {MONTHLY_PRICES.map((tierPrice) => {
             const locked = tierPrice === 990;
             const selected = price === tierPrice;
-            return <button aria-checked={selected} aria-disabled={locked} className={`${selected ? "is-selected" : ""} ${locked ? "is-locked" : ""}`} disabled={locked || busy} key={tierPrice} onClick={() => setPrice(tierPrice)} role="radio" title={locked ? __msg("creator.requires100ResidentsWithSteadyRenewals") : undefined} type="button">{locked ? <FiLock aria-hidden="true" /> : null}<span>🪙</span> {tierPrice.toLocaleString(__uiLocale())}</button>;
+            return <button aria-checked={selected} aria-disabled={locked} className={`${selected ? "is-selected" : ""} ${locked ? "is-locked" : ""}`} disabled={locked || busy} key={tierPrice} onClick={() => setPrice(tierPrice)} role="radio" title={locked ? __msg("creator.requires100ResidentsWithSteadyRenewals") : undefined} type="button">{locked ? <FiLock aria-hidden="true" /> : null}<img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" /> {tierPrice.toLocaleString(__uiLocale())}</button>;
           })}
         </div>
         <p className="world-price-payout"><b>{payout}</b> <span>{__msg("creator.toYouPerResidentMonthly")}</span></p>
@@ -1622,7 +1623,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         <p className="experience-field-label">{__msg("creator.premiumPrice")}</p>
         <div className="experience-premium-price">
           <div className="experience-premium-price-entry"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><input aria-label={__msg("creator.oneTimeExperiencePrice")} min="10" onChange={(event) => { const amount = Math.max(10, Math.round(Number(event.target.value) || 10)); updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } }); }} type="number" value={world.pricing?.starsAmount || 190} /><small>{__msg("creator.oneTimeUnlockAllChaptersIncludedAfterPurchase")}</small></div>
-          <div className="experience-premium-presets">{[150, 300, 500, 900].map((amount) => <button className={Number(world.pricing?.starsAmount) === amount ? "is-selected" : ""} key={amount} onClick={() => updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } })} type="button">🪙{amount}</button>)}</div>
+          <div className="experience-premium-presets">{[150, 300, 500, 900].map((amount) => <button className={Number(world.pricing?.starsAmount) === amount ? "is-selected" : ""} key={amount} onClick={() => updateWorld({ pricing: { mode: "ONE_TIME", presetId: `ONE_TIME_${amount}`, starsAmount: amount } })} type="button"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" />{amount}</button>)}</div>
           <p>≈ ${(Number(world.pricing?.starsAmount || 190) * .068).toFixed(2)} {__msg("messages.toYou")}</p>
         </div>
         <button className={`experience-download-row ${world.allowDownload ? "is-on" : ""}`} onClick={() => updateWorld({ allowDownload: !world.allowDownload })} type="button"><span>↥</span><span><strong>{__msg("creator.allowDownload")}</strong><small>{__msg("creator.watermarkedPdfTextAndPhotosOnly")}</small></span><em>{world.allowDownload ? __msg("fanWeb.on") : __msg("fanWeb.off")}</em></button>
@@ -1828,6 +1829,17 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         </div>
       </header>
 
+      {world.status === "CHANGES_REQUESTED" ? (
+        <aside className="world-changes-requested" role="status">
+          <FiAlertCircle aria-hidden="true" />
+          <span>
+            <b>{__msg("content.changesRequested")}</b>
+            {world.creatorVisibleFeedback ? <p dir="auto">{world.creatorVisibleFeedback}</p> : null}
+            <small>{__msg("verification.updateAndResubmit")}</small>
+          </span>
+        </aside>
+      ) : null}
+
       {!experience ? (
         <section className="world-prototype-planet world-publish-planet world-create-brand">
           <MinimalWorldIcon size={72} />
@@ -2001,7 +2013,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         {error ? <p aria-live="assertive" className="world-publish-error">{__systemMessage(error)}</p> : null}
         <button disabled={saving || submitting} onClick={leaveComposer} type="button">{__msg("admin.cancel")}</button>
         <button disabled={saving || uploading || submitting} onClick={() => saveDraft()} type="button">{saving ? __msg("financial.saving") : __msg("publication.saveDraft")}</button>
-        <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? __msg("creator.publishing_74f811") : __msg("creator.publishWorld")}</button>
+        <button disabled={!readyToSubmit || submitting} onClick={submitWorld} type="button"><FiCheck /> {submitting ? __msg("creator.publishing_74f811") : world.status === "CHANGES_REQUESTED" ? __msg("publication.resubmit") : __msg("creator.publishWorld")}</button>
       </div>
     </article>
     </>

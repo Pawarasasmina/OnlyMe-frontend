@@ -1,16 +1,16 @@
 {
   "locales": {
     "en": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [],
       "unexpectedEnglish": []
     },
     "ar": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -231,8 +231,8 @@
       ]
     },
     "ru": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -437,9 +437,11 @@
       ]
     },
     "uk": {
-      "keys": 7282,
-      "required": 7282,
-      "missing": [],
+      "keys": 7291,
+      "required": 7292,
+      "missing": [
+        "discover.inviteDescription"
+      ],
       "invalid": [],
       "identical": [
         {
@@ -655,8 +657,8 @@
       ]
     },
     "es": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -973,8 +975,8 @@
       ]
     },
     "pt": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -1271,8 +1273,8 @@
       ]
     },
     "fr": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -1821,8 +1823,8 @@
       ]
     },
     "de": {
-      "keys": 7282,
-      "required": 7282,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [
@@ -2320,7 +2322,7 @@
     }
   },
   "source": {
-    "modules": 525,
+    "modules": 532,
     "routeDeclarations": 136,
     "routes": [
       "/explore",
@@ -2460,7 +2462,13 @@
       "/planet/:id",
       "*"
     ],
-    "unregistered": [],
+    "unregistered": [
+      {
+        "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+        "line": 495,
+        "key": "admin.copyLink"
+      }
+    ],
     "rawJsx": [
       {
         "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
@@ -2679,63 +2687,78 @@
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 37,
+        "line": 38,
         "text": "Send animation preview"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 87,
-        "text": "Gift animation"
+        "line": 81,
+        "text": "Caption"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 87,
-        "text": "Choose its idle motion and the scene fans see when it is sent."
+        "line": 81,
+        "text": "(optional)"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
         "line": 89,
-        "text": "Idle motion"
+        "text": "Gift animation"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 90,
-        "text": "Send scene"
+        "line": 89,
+        "text": "Choose its idle motion and the scene fans see when it is sent."
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
         "line": 91,
-        "text": "Cinematic style"
+        "text": "Idle motion"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
         "line": 92,
+        "text": "Send scene"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 93,
+        "text": "Cinematic style"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 94,
         "text": "Object movement"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 94,
+        "line": 96,
         "text": "Light sweep"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 94,
+        "line": 96,
         "text": "Halo"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 100,
+        "line": 102,
         "text": "How these controls work"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 100,
+        "line": 102,
         "text": "Idle motion, light sweep and halo affect the gift wherever it is displayed. Send scene, cinematic style and object movement affect the full-screen moment after sending or replaying the gift."
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 117,
+        "line": 119,
         "text": "Drag categories into the order fans should see in the gift picker."
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 148,
+        "text": "No caption"
       },
       {
         "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
@@ -2779,123 +2802,213 @@
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 733,
+        "line": 866,
         "text": "captured ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2078,
+        "line": 2216,
+        "text": "Cancel"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2291,
         "text": "Message ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
+        "line": 2379,
+        "text": "Share profile"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2379,
+        "text": "Report"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2379,
+        "text": "Delete chat"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2380,
         "text": "Direct Access ended"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2170,
+        "line": 2384,
         "text": "Direct Access ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2204,
+        "line": 2418,
         "text": "This story expired or was removed"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2266,
+        "line": 2480,
         "text": "Window ended · ask"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2266,
+        "line": 2480,
         "text": "a question — they see it free, replying opens a new window"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
+        "line": 2488,
         "text": "asked you a question"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
+        "line": 2488,
         "text": "Your window with"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
+        "line": 2488,
         "text": "has ended"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
+        "line": 2488,
         "text": "New window ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
+        "line": 2488,
         "text": "Reading the thread is always free"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2297,
+        "line": 2502,
+        "text": "Disappearing photo or message"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2502,
+        "text": "Opens once, then it’s gone"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2503,
+        "text": "Gift"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2503,
+        "text": "Something that lands"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2504,
+        "text": "Video circle"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2504,
+        "text": "Up to 60 seconds"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2505,
         "text": "Priority message"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2297,
+        "line": 2505,
+        "text": "Direct Access — guaranteed answer"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2515,
+        "text": "Priority message"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2515,
         "text": "· Direct Access — guaranteed answer ›"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2319,
+        "line": 2537,
         "text": "World members get priority replies"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2321,
+        "line": 2539,
         "text": "RECENT PRIVATE REPLIES"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2323,
+        "line": 2541,
         "text": "How did you start when you had…"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2323,
+        "line": 2541,
         "text": "Honestly? The first month I was terrified, but…"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2324,
+        "line": 2542,
         "text": "What would you tell someone who…"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2324,
+        "line": 2542,
         "text": "Stop waiting for the perfect moment and…"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2327,
+        "line": 2545,
         "text": "replies within"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2327,
+        "line": 2545,
         "text": "98% warm calls"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2327,
+        "line": 2545,
         "text": "48h or refund"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2334,
+        "line": 2552,
         "text": "Answer · New window"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2618,
+        "text": "Report conversation"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2618,
+        "text": "Why are you reporting this?"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2619,
+        "text": "Thank you"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2619,
+        "text": "Our team will review this shortly."
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2619,
+        "text": "Done"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2620,
+        "text": "Cancel"
       },
       {
         "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
@@ -2904,7 +3017,7 @@
       },
       {
         "file": "src\\pages\\settings\\ProfileSettingsPage.jsx",
-        "line": 317,
+        "line": 318,
         "text": "collections on · The Vault is where legends live"
       },
       {
@@ -2929,12 +3042,12 @@
       },
       {
         "file": "src\\pages\\social\\WorldReaderPage.jsx",
-        "line": 358,
+        "line": 359,
         "text": "Memberships aren’t available yet"
       },
       {
         "file": "src\\pages\\social\\WorldReaderPage.jsx",
-        "line": 1469,
+        "line": 1470,
         "text": "This removes the comment and its replies."
       }
     ]

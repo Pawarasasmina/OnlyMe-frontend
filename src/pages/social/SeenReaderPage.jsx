@@ -1006,7 +1006,7 @@ export default function SeenReaderPage() {
   const isOwner = detail.access === "OWNER";
   const canDownloadPdf = Boolean(currentUser && publication?.allowDownload) && (
     ["OWNER", "ADMIN"].includes(detail.access)
-    || (publication?.pricing?.mode === "ONE_TIME" ? detail.access === "ENTITLED_SEEN" : detail.access === "PUBLIC_FULL")
+    || (publication?.pricing?.mode === "ONE_TIME" ? ["ENTITLED_SEEN", "ACTIVE_PREMIUM_MEMBER"].includes(detail.access) : detail.access === "PUBLIC_FULL")
   );
   const downloadPdf = async () => {
     if (!canDownloadPdf || pdfDownloading) return;
@@ -1393,7 +1393,9 @@ export default function SeenReaderPage() {
   if (publicationQuery.isError || !publication) return <div className="seen-reader-page"><section className="seen-reader-error"><h1>{__msg("social.thisSeenIsNotAvailable")}</h1><Link to="/seen">{__msg("social.backToSeen")}</Link></section></div>;
 
   if (searchParams.get("overview") === "1") {
-    const paid = publication.pricing?.mode === "ONE_TIME";
+    const paid = publication.pricing?.mode === "ONE_TIME" && Number(publication.pricing?.starsAmount) > 0;
+    const includedInWorld = detail.access === "ACTIVE_PREMIUM_MEMBER";
+    const openAccess = includedInWorld || detail.access === "ENTITLED_SEEN";
     const creator = publication.creator || {};
     return <section className="seen-paid-overview-page" ref={readerTopRef}>
       <header className="seen-paid-overview-nav">
@@ -1411,7 +1413,7 @@ export default function SeenReaderPage() {
         </button>
         <div><small>{publication.category || "Seen"}</small><h2>{publication.title}</h2><span>{chapters.length} {__msg("system.SeenReaderPage.4fbee6d40b")}{Math.max(1, chapters.length)} {__msg("messages.min")}</span><p>{publication.description || publication.summary}</p></div>
       </section>
-      {paid ? <button className="seen-paid-overview-unlock" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> {Number(publication.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</span>{Number(publication.ownerCount || 0) > 0 ? <small>{__msg("celebrations.ownerCount", { count: Number(publication.ownerCount || 0) })}</small> : null}<b>{publication.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("system.SeenFeedPage.755844bc39")}</b></button> : null}
+      {paid && openAccess ? <button className="seen-paid-overview-unlock is-owned" onClick={() => openOverviewChapter(0)} type="button"><span>{includedInWorld ? __msg("financial.includedInYourWorld") : __msg("system.SeenFeedPage.755844bc39")}</span><small>{includedInWorld ? __msg("financial.includedWithActiveWorldMembership") : __msg("system.SeenFeedPage.7243089e5c")}</small><b>{__msg("publication.open")}</b></button> : paid ? <button className="seen-paid-overview-unlock" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> {Number(publication.pricing.starsAmount).toLocaleString(__uiLocale())}</span>{Number(publication.ownerCount || 0) > 0 ? <small>{__msg("celebrations.ownerCount", { count: Number(publication.ownerCount || 0) })}</small> : null}<b>{publication.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("admin.unavailable")}</b></button> : null}
       <nav className="seen-paid-overview-chapters" aria-label={__msg("social.seenChapters")}>
         {chapters.map((item, index) => <button className={item.locked ? "is-locked" : ""} key={item.stableChapterId || index} onClick={() => openOverviewChapter(index)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><i>{item.locked ? <FiLock /> : null}</i><b>{item.title || __msg("profile.chapter_7c635d", { value0: index + 1 })}</b><FiChevronRight /></button>)}
       </nav>
@@ -1480,7 +1482,7 @@ export default function SeenReaderPage() {
     <footer className="seen-reader-footer">
       {publication.pricing?.mode === "ONE_TIME" && detail.access === "ENTITLED_SEEN" && (publication.ownerWelcomeNote || publication.introMedia?.secureUrl || publication.introMedia?.url) ? <aside className="seen-owner-welcome"><FanAvatar name={creatorName(publication.creator)} size="h-9 w-9" src={publication.creator?.avatar} /><div><b>{__msg("social.aNoteFrom")} {creatorFirstName(publication.creator)}</b><p>{publication.ownerWelcomeNote}</p>{publication.introMedia?.secureUrl || publication.introMedia?.url ? <audio controls preload="metadata" src={publication.introMedia.secureUrl || publication.introMedia.url} /> : null}</div></aside> : null}
       {publication.pricing?.mode === "ONE_TIME" && detail.access === "ENTITLED_SEEN" && !chapter?.locked && chapters.length > 1 && safeChapterIndex === chapters.length - 1 ? <section className="seen-finished-moment"><span><FiCheck /></span><h2>{__msg("celebrations.finished")}</h2><p>{__msg("celebrations.finishedChapters", { count: chapters.length, title: publication.title })}</p><button onClick={() => setShareSheetOpen(true)} type="button">{__msg("celebrations.shareIt")}</button></section> : null}
-      {publication.pricing?.mode === "ONE_TIME" ? <button className="seen-paid-unlock-row" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> <b><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(publication.pricing?.starsAmount || 0).toLocaleString(__uiLocale())} {__msg("profile.oneTime")}</b></span><small>{Number(publication.ownerCount) > 0 ? __msg("celebrations.ownerCount", { count: Number(publication.ownerCount) }) : null}{publication.paymentAvailable ? __msg("system.SeenReaderPage.425623c6c3") : __msg("system.SeenReaderPage.2a419895f5")}</small><strong>{publication.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("system.SeenFeedPage.755844bc39")}</strong></button> : null}
+      {publication.pricing?.mode === "ONE_TIME" && Number(publication.pricing?.starsAmount) > 0 && detail.access === "PUBLIC_PREVIEW" ? <button className="seen-paid-unlock-row" disabled={!publication.paymentAvailable} onClick={() => publication.paymentAvailable && setPurchaseOpen(true)} type="button"><span><FiLock /> <b><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{Number(publication.pricing.starsAmount).toLocaleString(__uiLocale())} {__msg("profile.oneTime")}</b></span><small>{Number(publication.ownerCount) > 0 ? __msg("celebrations.ownerCount", { count: Number(publication.ownerCount) }) : null}{publication.paymentAvailable ? __msg("system.SeenReaderPage.425623c6c3") : __msg("system.SeenReaderPage.2a419895f5")}</small><strong>{publication.paymentAvailable ? __msg("system.SeenFeedPage.310e3f8652") : __msg("admin.unavailable")}</strong></button> : null}
       {safeChapterIndex === chapters.length - 1 && nextSeen ? <button className="seen-reader-up-next" onClick={openNextSeen} type="button">
         {mediaUrl(nextSeen.coverMedia) ? <PublicationCoverMedia alt="" autoPlay loop media={nextSeen.coverMedia} /> : <span aria-hidden="true"><FiEye /></span>}
         <span><small>{__msg("social.upNextFrom")} {creatorFirstName(publication.creator)}</small><strong>{nextSeen.title || __msg("social.nextSeen")}</strong><em>{nextSeen.chapters?.length || 0} {__msg("discover.chapters")}</em></span>

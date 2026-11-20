@@ -4,9 +4,9 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import ProfileImageCropper from "../profile/ProfileImageCropper";
 import { resolveMediaUrl } from "../../utils/media";
-import { PROFILE_STATUS_SUGGESTIONS } from "../../constants/statusPresets";
+import { profileStatusSuggestions } from "../../constants/statusPresets";
 
-export default function ShowYourFace({ avatar, busy, error, name, onContinue, onSavePhoto, onSaveStatus }) {
+export default function ShowYourFace({ avatar, busy, error, name, onContinue, onSavePhoto, onSaveStatus, professional = false }) {
   __useUiLanguage();
   const inputRef = useRef(null);
   const objectUrlRef = useRef("");
@@ -16,7 +16,7 @@ export default function ShowYourFace({ avatar, busy, error, name, onContinue, on
   const [customOpen, setCustomOpen] = useState(false);
   const [photoSaving, setPhotoSaving] = useState(false);
   const [landed, setLanded] = useState(false);
-  const presets = PROFILE_STATUS_SUGGESTIONS;
+  const presets = profileStatusSuggestions(professional);
 
   useEffect(() => () => { if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current); }, []);
 

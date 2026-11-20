@@ -8,7 +8,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
-import { PROFILE_STATUS_SUGGESTIONS, STATUS_LABEL_MAX_LENGTH } from "../../constants/statusPresets";
+import { profileStatusSuggestions, STATUS_LABEL_MAX_LENGTH } from "../../constants/statusPresets";
 import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
 
@@ -43,13 +43,13 @@ function ProfileStatusPage() {
   });
 
   const profile = profileQuery.data?.profile;
+  const suggestions = useMemo(() => profileStatusSuggestions(Boolean(profile?.isCreator || ["creator", "business"].includes(profile?.profileAccountType))), [profile?.isCreator, profile?.profileAccountType]);
   const savedStatus = profile?.activeStatus?.label || "";
   const selectedSuggestion = useMemo(
-    () => PROFILE_STATUS_SUGGESTIONS.find((suggestion) => suggestion === statusText.trim()) || "",
-    [statusText],
+    () => suggestions.find((suggestion) => suggestion === statusText.trim()) || "",
+    [statusText, suggestions],
   );
   const remaining = STATUS_LABEL_MAX_LENGTH - Array.from(statusText).length;
-  const changed = statusText !== savedStatus;
   const canShow = Boolean(statusText.trim()) && remaining >= 0 && !profileQuery.isLoading;
 
   useEffect(() => {
@@ -85,7 +85,7 @@ function ProfileStatusPage() {
   });
 
   const leave = () => {
-    if (changed && !saveStatus.isPending && !window.confirm(__msg("social.discardYourStatusChanges"))) return;
+    if (saveStatus.isPending) return;
     navigate("/profile");
   };
 
@@ -176,7 +176,7 @@ function ProfileStatusPage() {
         {error ? <p className="profile-status-error" id="profile-status-error">{__systemMessage(error)}</p> : null}
 
         <div aria-label={__msg("social.suggestedStatuses")} className="profile-status-suggestions">
-          {PROFILE_STATUS_SUGGESTIONS.map((suggestion) => {
+          {suggestions.map((suggestion) => {
             const selected = selectedSuggestion === suggestion;
             return (
               <button
@@ -199,6 +199,20 @@ function ProfileStatusPage() {
               </button>
             );
           })}
+          <button
+            aria-pressed={Boolean(statusText.trim() && !selectedSuggestion)}
+            className={`profile-status-chip ${statusText.trim() && !selectedSuggestion ? "is-selected" : ""}`}
+            disabled={saveStatus.isPending}
+            onClick={() => {
+              setTouched(true);
+              setError("");
+              if (selectedSuggestion) setStatusText("");
+              window.setTimeout(() => inputRef.current?.focus(), 0);
+            }}
+            type="button"
+          >
+            {__msg("onboarding.yourOwn")}
+          </button>
         </div>
 
         {savedStatus ? (

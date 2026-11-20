@@ -26,6 +26,6 @@ export const authService = {
   getAccountOwnership: () => axiosInstance.get("/auth/account/ownership"),
   deactivateAccount: () => axiosInstance.post("/auth/account/deactivate"),
   deleteAccount: (payload) => axiosInstance.delete("/auth/account", { data: payload }),
-  getProfile: () => axiosInstance.get("/auth/me"),
+  getProfile: (config = {}) => axiosInstance.get("/auth/me", config),
   updateProfileType: (selection) => axiosInstance.put("/auth/profile-type", { ...(typeof selection === "string" ? { profileType: selection } : selection), confirmed: true }),
 };

@@ -17,6 +17,28 @@ test("onboarding card has the one-second tilted entrance and delayed five-second
   await expect(page.getByText("Continued")).toBeVisible();
 });
 
+test("ticket overlay fills a 375px mobile viewport and keeps Share and Close reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 500 });
+  await page.goto("/tests/fixtures/ticket-welcome.html?overlay=1");
+  const screen = page.locator("main.onboarding-ticket-screen");
+  await expect(screen).toBeVisible();
+  expect(await screen.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(500);
+  const share = page.getByRole("button", { name: "Share", exact: true });
+  const close = page.getByRole("button", { name: "Close", exact: true });
+  await share.scrollIntoViewIfNeeded();
+  await expect(share).toBeVisible();
+  await close.scrollIntoViewIfNeeded();
+  await expect(close).toBeVisible();
+  await close.click();
+  await expect(page.getByText("Continued")).toBeVisible();
+});
+
+test("ticket overlay is center-column scoped on desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 700 });
+  await page.goto("/tests/fixtures/ticket-welcome.html?overlay=1");
+  await expect(page.locator("main.onboarding-ticket-screen")).toHaveCSS("position", "absolute");
+});
+
 test("profile ticket uses the same card animation and can close", async ({ page }) => {
   await page.goto("/tests/fixtures/ticket-welcome.html?mode=profile");
   await page.getByRole("button", { name: /Open your member ticket/ }).click();

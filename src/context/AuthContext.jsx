@@ -7,12 +7,10 @@ import { disconnectMessageSocket, getMessageSocket } from "../services/messageSo
 import { analyticsService } from "../services/analyticsService";
 import { clearAnalyticsSession } from "../services/analyticsSession";
 
-const ACCESS_TOKEN_KEY = "onlyme_access_token";
 const CACHED_USER_KEY = "onlyme_cached_user";
 const LAST_USER_KEY = "onlyme_last_user";
 
 function readCachedUser() {
-  if (!localStorage.getItem(ACCESS_TOKEN_KEY)) return null;
   try {
     return JSON.parse(localStorage.getItem(CACHED_USER_KEY)) || null;
   } catch {
@@ -23,14 +21,14 @@ function readCachedUser() {
 
 function clearStoredAuth() {
   clearWallDraft();
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem("onlyme_access_token");
   localStorage.removeItem(CACHED_USER_KEY);
 }
 
 export function AuthProvider({ children }) {
   __useUiLanguage();
   const [user, setUser] = useState(readCachedUser);
-  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem(ACCESS_TOKEN_KEY)) && !readCachedUser());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
@@ -48,7 +46,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (user && localStorage.getItem(ACCESS_TOKEN_KEY)) {
+    if (user) {
       getMessageSocket();
       return undefined;
     }
@@ -58,7 +56,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const userId = user?.id || user?._id;
-    if (!userId || !localStorage.getItem(ACCESS_TOKEN_KEY)) return undefined;
+    if (!userId) return undefined;
     const socket = getMessageSocket();
     const changed = (event) => {
       if (String(event.userId) !== String(userId) || typeof event.isVerified !== "boolean") return;
@@ -72,14 +70,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    if (!localStorage.getItem(ACCESS_TOKEN_KEY)) {
-      setLoading(false);
-      return () => { mounted = false; };
-    }
-
     // A cached user lets the application render immediately while this request
     // request validates and refreshes the session in the background.
-    authService.getProfile()
+    authService.getProfile({ _sessionProbe: true })
       .then((response) => {
         if (mounted) setUser(response.data?.data?.user ?? null);
       })
@@ -87,7 +80,7 @@ export function AuthProvider({ children }) {
         // The response interceptor removes the token only when the API has
         // confirmed that both access and refresh credentials are invalid.
         // Keep the last session during timeouts, cold starts and temporary 5xxs.
-        if (mounted && !localStorage.getItem(ACCESS_TOKEN_KEY)) setUser(null);
+        if (mounted) setUser(null);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -101,7 +94,6 @@ export function AuthProvider({ children }) {
     loading,
     login: async (credentials) => {
       const response = await authService.login(credentials);
-      localStorage.setItem(ACCESS_TOKEN_KEY, response.data.data.accessToken);
       const nextUser = response.data?.data?.user ?? null;
       if (nextUser) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
       if (nextUser) localStorage.setItem(LAST_USER_KEY, JSON.stringify({ name: nextUser.name, username: nextUser.username, email: nextUser.email, avatar: nextUser.avatar || "" }));
@@ -110,7 +102,6 @@ export function AuthProvider({ children }) {
     },
     register: async (details) => {
       const response = await authService.register(details);
-      localStorage.setItem(ACCESS_TOKEN_KEY, response.data.data.accessToken);
       const nextUser = response.data?.data?.user ?? null;
       if (nextUser) localStorage.setItem(CACHED_USER_KEY, JSON.stringify(nextUser));
       if (nextUser) localStorage.setItem(LAST_USER_KEY, JSON.stringify({ name: nextUser.name, username: nextUser.username, email: nextUser.email, avatar: nextUser.avatar || "" }));
@@ -124,8 +115,7 @@ export function AuthProvider({ children }) {
       return nextUser;
     },
     resumeTrustedSession: async () => {
-      const refreshed = await authService.refreshSession();
-      localStorage.setItem(ACCESS_TOKEN_KEY, refreshed.data.data.accessToken);
+      await authService.refreshSession();
       const response = await authService.getProfile();
       const nextUser = response.data?.data?.user ?? null;
       if (!nextUser) throw new Error("Saved session is unavailable");
@@ -135,6 +125,7 @@ export function AuthProvider({ children }) {
     },
     trustedDeviceLogout: () => {
       void analyticsService.endSession().catch(() => {});
+      void authService.logout().catch(() => {});
       disconnectMessageSocket();
       clearStoredAuth();
       clearAnalyticsSession();

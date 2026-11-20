@@ -18,9 +18,9 @@ const defaultSettings = {
 
 function normalizeSettings(data = {}) {
   return {
-    enabled: Boolean(data.enabled),
+    enabled: Boolean(data.configuredEnabled ?? data.enabled),
     priceStars: Number(data.priceStars || 100),
-    callEnabled: Boolean(data.callEnabled),
+    callEnabled: Boolean(data.configuredCallEnabled ?? data.callEnabled),
     callPriceStars: Number(data.callPriceStars || 500),
     callDurationMinutes: Number(data.callDurationMinutes || 5),
     callAutoDeclineAway: Boolean(data.callAutoDeclineAway),
@@ -73,9 +73,11 @@ export default function DirectAccessSettingsPage() {
     <div className="relative h-screen min-h-screen">
       <DirectAccessSettingsSheet
         busy={busy}
+        eligibility={query.data?.monetizationEligibility}
         saveDisabled={query.isPending || query.isError}
         error={query.isError ? "Could not load Direct Access settings." : error}
         onClose={close}
+        onEligibilityAction={() => navigate("/settings/monetization")}
         onSave={save}
         settings={settings}
         setSettings={setSettings}

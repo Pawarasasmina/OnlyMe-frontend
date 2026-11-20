@@ -9,7 +9,7 @@ import { useLanguage } from "../../hooks/useLanguage";
 import { onboardingService } from "../../services/onboardingService";
 import { clearPreAuthInterests, readPreAuthInterests } from "../../utils/preAuthOnboarding";
 import { profileService } from "../../services/profileService";
-import { normalizeUsernameInput, usernameFromName, usernameValidationError } from "../../utils/username";
+import { normalizeUsernameInput, usernameFromName, usernameSuggestions, usernameValidationError } from "../../utils/username";
 import beachVideo from "../../assets/videos/beach.mp4";
 import cityVideo from "../../assets/videos/city.mp4";
 import coffeeVideo from "../../assets/videos/coffee.mp4";
@@ -23,9 +23,11 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const { language } = useLanguage();
   const [searchParams] = useSearchParams();
-  const [form, setForm] = useState({ firstName: "", lastName: "", username: "", email: "", password: "", dateOfBirth: "" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", username: "", identifier: "", password: "", dateOfBirth: "" });
   const [usernameEdited, setUsernameEdited] = useState(false);
   const [usernameState, setUsernameState] = useState({ status: "idle", message: "" });
+  const [availableSuggestions, setAvailableSuggestions] = useState([]);
+  const [suggestionsBusy, setSuggestionsBusy] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const birthdayPicker = useRef(null);
@@ -38,34 +40,33 @@ export default function RegisterPage() {
   useEffect(() => {
     const username = form.username;
     const validationError = usernameValidationError(username);
-    if (!username) { setUsernameState({ status: "idle", message: "" }); return undefined; }
-    if (validationError) { setUsernameState({ status: "error", message: validationError }); return undefined; }
+    if (!username) { setUsernameState({ status: "idle", message: "" }); setAvailableSuggestions([]); return undefined; }
+    if (validationError) { setUsernameState({ status: "error", message: validationError }); setAvailableSuggestions([]); return undefined; }
     setUsernameState({ status: "checking", message: "" });
+    setAvailableSuggestions([]);
     const timer = window.setTimeout(async () => {
       try {
         const result = await profileService.checkUsername(username);
         if (result.data?.data?.available) {
           setUsernameState({ status: "available", message: `✓ atseen.com/${username}` });
-        } else if (!usernameEdited) {
-          const base = username.slice(0, 28);
-          for (let suffix = 1; suffix <= 20; suffix += 1) {
-            const candidate = `${base.slice(0, 30 - String(suffix).length)}${suffix}`;
-            const candidateResult = await profileService.checkUsername(candidate);
-            if (candidateResult.data?.data?.available) {
-              set("username", candidate);
-              return;
-            }
-          }
-          setUsernameState({ status: "error", message: "Choose a different username" });
         } else {
           setUsernameState({ status: "error", message: "This username is taken" });
+          setSuggestionsBusy(true);
+          const candidates = usernameSuggestions(form.firstName, form.lastName).filter(candidate => candidate !== username);
+          const checks = await Promise.all(candidates.map(async candidate => {
+            try { return (await profileService.checkUsername(candidate)).data?.data?.available ? candidate : null; }
+            catch { return null; }
+          }));
+          setAvailableSuggestions(checks.filter(Boolean).slice(0, 5));
+          setSuggestionsBusy(false);
         }
       } catch (requestError) {
         setUsernameState({ status: "error", message: requestError.response?.data?.message || "Could not check this username" });
+        setSuggestionsBusy(false);
       }
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [form.username, usernameEdited]);
+  }, [form.firstName, form.lastName, form.username]);
   const setBirthday = (value) => {
     const digits = value.replace(/\D/g, "").slice(0, 8);
     const formatted = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join(".");
@@ -94,7 +95,7 @@ export default function RegisterPage() {
     try {
       const usernameError = usernameValidationError(form.username);
       if (usernameError || usernameState.status !== "available") throw new Error(usernameError || "Choose an available username");
-      await register({ firstName: form.firstName.trim(), lastName: form.lastName.trim(), name: `${form.firstName} ${form.lastName}`.trim(), username: form.username, email: form.email, password: form.password, dateOfBirth, preferredLanguage: language, referralCode: searchParams.get("ref") || undefined, referralShareIdentity: searchParams.get("private") !== "1" });
+      await register({ firstName: form.firstName.trim(), lastName: form.lastName.trim(), name: `${form.firstName} ${form.lastName}`.trim(), username: form.username, identifier: form.identifier.trim(), password: form.password, dateOfBirth, preferredLanguage: language, referralCode: searchParams.get("ref") || undefined, referralShareIdentity: searchParams.get("private") !== "1" });
       await onboardingService.saveWelcomeStep();
       const interests = readPreAuthInterests();
       if (interests.length >= 3) {
@@ -122,7 +123,8 @@ export default function RegisterPage() {
       <div className="grid grid-cols-2 gap-3"><input autoComplete="given-name" autoFocus className={field} maxLength={30} onChange={(event) => set("firstName", event.target.value)} placeholder={__msg("settings.firstName")} required value={form.firstName} /><input autoComplete="family-name" className={field} maxLength={30} onChange={(event) => set("lastName", event.target.value)} placeholder={__msg("settings.lastName")} value={form.lastName} /></div>
       <label className="relative mt-3 block"><span className="pointer-events-none absolute left-4 top-[15px] font-black text-[#9CCBFF]">@</span><input aria-describedby="register-username-hint" autoCapitalize="none" autoComplete="username" className={`${field} pl-8`} onChange={(event) => { setUsernameEdited(true); set("username", normalizeUsernameInput(event.target.value)); }} placeholder="username" required spellCheck={false} value={form.username} /></label>
       <p className={`mt-1.5 min-h-4 px-1 text-[11px] ${usernameState.status === "available" ? "text-[#6ECF97]" : usernameState.status === "error" ? "text-red-300" : "text-white/40"}`} id="register-username-hint">{usernameState.status === "checking" ? "Checking…" : usernameState.message}</p>
-      <input autoComplete="email" className={`${field} mt-3`} onChange={(event) => set("email", event.target.value)} placeholder={__msg("system.LoginPage.5a698f5f3b")} required type="email" value={form.email} />
+      {usernameState.status === "error" && (suggestionsBusy || availableSuggestions.length) ? <section className="mt-2 rounded-[14px] border border-white/10 bg-white/[.035] p-3"><p className="text-[11px] font-bold text-white/50">{suggestionsBusy ? __msg("auth.checkingAvailability") : __msg("auth.usernameSuggestions")}</p>{availableSuggestions.length ? <div className="mt-2 flex flex-wrap gap-2">{availableSuggestions.map(suggestion => <button className="rounded-full border border-[#9CCBFF]/25 bg-[#9CCBFF]/10 px-3 py-2 text-[12px] font-bold text-[#9CCBFF] transition hover:border-[#9CCBFF]/55 hover:bg-[#9CCBFF]/15 active:scale-95" key={suggestion} onClick={() => { setUsernameEdited(true); set("username", suggestion); setAvailableSuggestions([]); }} type="button">@{suggestion}</button>)}</div> : null}</section> : null}
+      <input autoCapitalize="none" autoComplete="email" className={`${field} mt-3`} onChange={(event) => set("identifier", event.target.value)} placeholder={__msg("auth.emailOrPhone")} required spellCheck={false} type="text" value={form.identifier} />
       <input autoComplete="new-password" className={`${field} mt-3`} minLength={8} onChange={(event) => set("password", event.target.value)} placeholder={__msg("system.RegisterPage.9a691d13cd")} required type="password" value={form.password} />
       <div className="relative mt-3"><input aria-label={__msg("system.RegisterPage.a6b9d69f57")} autoComplete="bday" className={`${field} pr-12`} inputMode="numeric" maxLength={10} onChange={(event) => setBirthday(event.target.value)} placeholder={__msg("system.RegisterPage.954f4a0fe7")} required value={form.dateOfBirth} /><input aria-hidden="true" className="pointer-events-none absolute h-px w-px opacity-0" max={new Date().toISOString().slice(0, 10)} onChange={(event) => selectBirthday(event.target.value)} ref={birthdayPicker} tabIndex={-1} type="date" /><button aria-label={__msg("system.RegisterPage.560ffcf959")} className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-xl text-lg text-white/45 transition hover:bg-white/[.06] hover:text-[#9CCBFF] active:scale-95" onClick={openBirthdayPicker} type="button"><FiCalendar /></button></div>
       <p className="mt-4 text-[10.5px] leading-[1.6] text-white/45">{__msg("system.RegisterPage.6aed4e7f25")} <span className="text-[#9CCBFF]">{__msg("system.RegisterPage.0c8a9a95e2")}</span> {__msg("fan.and")} <span className="text-[#9CCBFF]">{__msg("system.RegisterPage.9db108ba6b")}</span>{__msg("system.RegisterPage.c058e897f3")}</p>

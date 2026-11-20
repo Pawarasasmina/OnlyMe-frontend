@@ -282,7 +282,7 @@ export function SearchSection({ data, type, preview = false }) {
 
 export function SearchAllResults({ sections = {} }) {
   __useUiLanguage();
-  const sectionOrder = ["people", "experiences", "seens", "wall_notes", "worlds"]
+  const sectionOrder = ["people", "seens", "wall_notes", "worlds"]
     .filter((type, index, items) => items.indexOf(type) === index);
   return (
     <div aria-live="polite">
@@ -295,7 +295,7 @@ export function SearchAllResults({ sections = {} }) {
 
 export function SearchTypedResults({ items = [] }) {
   __useUiLanguage();
-  const type = items[0]?.type === "seen" ? "seens" : items[0]?.type === "experience" ? "experiences" : items[0]?.type === "post" ? "wall_notes" : items[0]?.type === "world" || items[0]?.type === "book" ? "worlds" : "";
+  const type = items[0]?.type === "seen" ? "seens" : items[0]?.type === "post" ? "wall_notes" : items[0]?.type === "world" || items[0]?.type === "book" ? "worlds" : "";
   if (type) return <SearchSection data={{ items }} type={type} />;
   return (
     <div className="mt-4 grid gap-1" aria-live="polite">

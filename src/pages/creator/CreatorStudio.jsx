@@ -371,7 +371,7 @@ function Earnings({ data = {}, onPayouts }) {
         {earnings.recent?.length ? earnings.recent.map((item) => <EarningRow item={item} key={item.id} />) : <p className="creator-studio-empty">{__msg("creator.noEarningsYet")}</p>}
       </section>
       <Link className="creator-studio-wallet-row" to="/wallet"><span>{__msg("creator.walletPayouts")}</span><FiChevronRight data-ui-directional="true" /></Link>
-      <section className="creator-ways-card"><SectionTitle>{__msg("creator.waysToEarn")}</SectionTitle><article><b>{__msg("profile.experiences")}</b><small>{__msg("creator.sellFocusedChaptersPeopleCanKeep")}</small></article><article><b>{__msg("creator.worldSubscriptions")}</b><small>{__msg("creator.buildRecurringValueForYourResidents")}</small></article><article><b>{__msg("creator.gifts")}</b><small>{__msg("creator.letPeopleSupportYourWorkDirectly")}</small></article></section>
+      <section className="creator-ways-card"><SectionTitle>{__msg("creator.waysToEarn")}</SectionTitle><article><b>Paid Seens</b><small>{__msg("creator.sellFocusedChaptersPeopleCanKeep")}</small></article><article><b>{__msg("creator.worldSubscriptions")}</b><small>{__msg("creator.buildRecurringValueForYourResidents")}</small></article><article><b>{__msg("creator.gifts")}</b><small>{__msg("creator.letPeopleSupportYourWorkDirectly")}</small></article></section>
       <section className="creator-calculator-card"><SectionTitle>{__msg("creator.earningsCalculator")}</SectionTitle><p>{__msg("creator.chooseAnExampleExperiencePrice")}</p><div>{[5, 10, 20, 50].map((value) => <button className={price === value ? "is-active" : ""} key={value} onClick={() => setPrice(value)} type="button">${value}</button>)}</div><strong>{__msg("creator.yourEarningsForA")}{price} {__msg("creator.saleAreShownBeforePublishing")}</strong><small>{__msg("creator.thisExampleIsEducationalAndIsNotGuaranteedIncome")}</small></section>
       <p className="creator-studio-note">{__msg("creator.yourNumbersAreYoursNoSubscriptionNoPaywallEver")} {STAR} <button onClick={onPayouts} type="button">{__msg("creator.howPayoutsWork")} <FiChevronRight data-ui-directional="true" /></button></p>
     </div>
@@ -409,7 +409,6 @@ function PayoutsSheet({ onClose }) {
         <h2>{__msg("creator.howPayoutsWork")}</h2>
         <p>{__msg("creator.simpleAndTheSameForEveryone")}</p>
         <div className="creator-payouts-list">
-          <article><span>80%</span><div><b>{__msg("creator.youKeep80AfterAppStoreFees")}</b><small>{__msg("creator.worldsDirectAccessGiftsAndSupportUseTheStored")}</small></div></article>
           <article><span><FiDollarSign /></span><div><b>{__msg("creator.payoutsIn35BusinessDays")}</b><small>{__msg("creator.toYourBankFrom50TransferFeesOnUs")}</small></div></article>
           <article><span><FiZap /></span><div><b>{__msg("creator.noSubscriptionNoListingFees")}</b><small>{__msg("creator.creatingAndPublishingOnSeenIsFreeForever")}</small></div></article>
         </div>
@@ -493,7 +492,7 @@ export default function CreatorStudio() {
         {weeklyShares > 0 ? <section className="creator-weekly-share-summary">Your Seens were shared {compact(weeklyShares)} times this week.</section> : null}
         {!previewNew && canGrow ? <GrowSummaryCard data={growQuery.data} loading={growQuery.isLoading} /> : null}
         <Tabs active={activeTab} onChange={setActiveTab} />
-        {previewNew ? <section className="creator-new-preview"><small>{__msg("creator.previewNewCreator")}</small><h2>{__msg("creator.startCreatingStartEarning")}</h2><p>{__msg("creator.linaBeganWithOneUsefulExperienceWelcomedPeopleInto")}</p><div><Link to="/create/experience">{__msg("creator.createAnExperience")}</Link><Link to="/create/world">{__msg("creator.startYourWorld")}</Link>{canGrow ? <Link to="/grow">{__msg("creator.shareYourGiftLink")}</Link> : null}</div><button onClick={() => navigate("/studio", { replace: true })} type="button">{__msg("creator.exitPreview")}</button></section> : null}
+        {previewNew ? <section className="creator-new-preview"><small>{__msg("creator.previewNewCreator")}</small><h2>{__msg("creator.startCreatingStartEarning")}</h2><p>Create a useful Paid Seen, then welcome people into your World.</p><div><Link to="/create/seen?type=paid">Create a Paid Seen</Link><Link to="/create/world">{__msg("creator.startYourWorld")}</Link>{canGrow ? <Link to="/grow">{__msg("creator.shareYourGiftLink")}</Link> : null}</div><button onClick={() => navigate("/studio", { replace: true })} type="button">{__msg("creator.exitPreview")}</button></section> : null}
         {!previewNew && activeTab === "overview" ? <Overview data={data} onEarnings={() => setActiveTab("earnings")} /> : null}
         {!previewNew && activeTab === "audience" ? <Audience data={data} /> : null}
         {!previewNew && activeTab === "earnings" ? <Earnings data={data} onPayouts={() => setPayoutsOpen(true)} /> : null}
