@@ -80,9 +80,24 @@ const directWindowParticipant = (windowItem, viewerId) => (
     : windowItem?.creator
 );
 
+const directAccessExpiresAt = (windowItem) => new Date(windowItem?.expiresAt).getTime();
+
+const directAccessIsExpired = (windowItem, now = Date.now()) => (
+  ["CLOSED", "EXPIRED"].includes(windowItem?.status)
+  || !Number.isFinite(directAccessExpiresAt(windowItem))
+  || directAccessExpiresAt(windowItem) <= now
+);
+
+const directAccessIsActionable = (windowItem, now = Date.now()) => (
+  Boolean(windowItem)
+  && ["HELD", "INCLUDED"].includes(windowItem.settlementStatus)
+  && !windowItem.firstCreatorReplyAt
+  && !directAccessIsExpired(windowItem, now)
+);
+
 const directWindowSnippet = (windowItem, viewerId) => {
   if (windowItem?.settlementStatus === "REFUNDED") return `${__msg("Expired")} · ${__msg("Refunded")}`;
-  if (windowItem?.status === "EXPIRED") return __msg("Expired");
+  if (directAccessIsExpired(windowItem)) return __msg("Expired");
   const latest = windowItem?.latestMessage;
   if (latest) {
     const prefix = String(latest.senderId) === String(viewerId) ? `${__msg("You")}: ` : "";
@@ -96,9 +111,9 @@ const directWindowSnippet = (windowItem, viewerId) => {
 const directAccessDisplayStatus = (windowItem, { includePending = false } = {}) => {
   if (!windowItem) return null;
   if (windowItem.settlementStatus === "REFUNDED" || windowItem.refundedAt) return "Refunded";
-  if (windowItem.status === "ANSWERED" || windowItem.firstCreatorReplyAt || ["CAPTURED", "INCLUDED"].includes(windowItem.settlementStatus)) return "Answered";
+  if (windowItem.status === "ANSWERED" || windowItem.firstCreatorReplyAt || windowItem.settlementStatus === "CAPTURED") return "Answered";
   if (!includePending) return null;
-  return new Date(windowItem.expiresAt).getTime() > Date.now() ? "Pending" : "Expired";
+  return directAccessIsExpired(windowItem) ? "Expired" : "Pending";
 };
 
 const chatDateKey = (value) => {
@@ -438,6 +453,7 @@ export default function MessagesPage() {
   const [forwardSelection, setForwardSelection] = useState(() => new Set());
   const [groupMessageInfo, setGroupMessageInfo] = useState(null);
   const [inboxTab, setInboxTab] = useState(() => searchParams.get("tab") === "direct" ? "direct" : "all");
+  const [directAccessNow, setDirectAccessNow] = useState(Date.now);
   const [inboxFilter, setInboxFilter] = useState(() => (
     INBOX_FILTERS.some((item) => item.id === searchParams.get("filter")) ? searchParams.get("filter") : "all"
   ));
@@ -639,6 +655,12 @@ export default function MessagesPage() {
     enabled: ["all", "direct"].includes(inboxTab) || creatorMode,
     refetchInterval: ["all", "direct"].includes(inboxTab) ? 10000 : false,
   });
+  useEffect(() => {
+    if (!(inboxTab === "direct" || creatorMode)) return undefined;
+    setDirectAccessNow(Date.now());
+    const timer = window.setInterval(() => setDirectAccessNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, [creatorMode, inboxTab]);
   const creatorDirectAccessQuery = useQuery({
     queryKey: ["messages", "direct-access-settings"],
     queryFn: () => messageService.getDirectAccessOffer(myId).then((response) => response.data.data),
@@ -670,13 +692,10 @@ export default function MessagesPage() {
       if (!other?.id) return;
       const key = `${viewingAsCreator ? "received" : "purchased"}:${other.id}`;
       const current = byPerson.get(key);
-      const isUnanswered = viewingAsCreator
-        && ["HELD", "INCLUDED"].includes(windowItem.settlementStatus)
-        && !windowItem.firstCreatorReplyAt;
+      const isUnanswered = viewingAsCreator && directAccessIsActionable(windowItem, directAccessNow);
       const currentIsUnanswered = current
         && String(current.creatorId) === myId
-        && ["HELD", "INCLUDED"].includes(current.settlementStatus)
-        && !current.firstCreatorReplyAt;
+        && directAccessIsActionable(current, directAccessNow);
       const isNewer = !current || new Date(windowItem.createdAt) > new Date(current.createdAt);
       if (!current || (isUnanswered && !currentIsUnanswered) || (isUnanswered === currentIsUnanswered && isNewer)) {
         byPerson.set(key, windowItem);
@@ -684,7 +703,7 @@ export default function MessagesPage() {
     });
     return [...byPerson.values()]
       .sort((left, right) => new Date(right.updatedAt || right.createdAt) - new Date(left.updatedAt || left.createdAt));
-  }, [directWindowsQuery.data, myId]);
+  }, [directAccessNow, directWindowsQuery.data, myId]);
   const reopenedCreatorQuestionIds = useMemo(() => new Set(
     (directWindowsQuery.data || [])
       .filter((windowItem) => windowItem.source === "CREATOR_REOPEN" && windowItem.creatorQuestionMessageId)
@@ -780,11 +799,12 @@ export default function MessagesPage() {
     const purchased = windows.filter((item) => String(item.fanId) === myId);
     const received = windows.filter((item) => String(item.creatorId) === myId);
     return [
-      { label: "INCOMING · PAID", items: received.filter((item) => ["HELD", "INCLUDED"].includes(item.settlementStatus) && !item.firstCreatorReplyAt) },
+      { label: "INCOMING · PAID", items: received.filter((item) => directAccessIsActionable(item, directAccessNow)) },
       { label: "ANSWERED", items: received.filter((item) => ["CAPTURED", "INCLUDED"].includes(item.settlementStatus) && Boolean(item.firstCreatorReplyAt)) },
+      { label: "EXPIRED", items: received.filter((item) => !item.firstCreatorReplyAt && directAccessIsExpired(item, directAccessNow)) },
       { label: "MY DIRECT ACCESS", items: purchased },
     ];
-  }, [creatorMode, directConversations, myId]);
+  }, [creatorMode, directAccessNow, directConversations, myId]);
   const participant = selected?.type === "group"
     ? { ...(messagesQuery.data?.group || selected), displayName: messagesQuery.data?.group?.name || selected?.name || "Group", avatarUrl: messagesQuery.data?.group?.avatarUrl || selected?.avatarUrl, members: (messagesQuery.data?.group?.members || selected?.members || []).map((member) => ({ ...member, presence: presence[member.id] })) }
     : messagesQuery.data?.participant || selected?.participant || selected;
@@ -2245,7 +2265,10 @@ export default function MessagesPage() {
                 ? conversations.filter((item) => item.status === "REQUEST" && item.requestReceived).length
                 : tab.id === "groups" ? (groupsQuery.data || []).filter((item) => !item.archived && Number(item.unreadCount) > 0).length
                 : tab.id === "direct"
-                  ? creatorMode ? directConversations.filter((item) => String(item.creatorId) === myId && ["HELD", "INCLUDED"].includes(item.settlementStatus) && !item.firstCreatorReplyAt).length : directConversations.length
+                  ? directConversations.filter((item) => (
+                    (creatorMode ? String(item.creatorId) === myId : String(item.fanId) === myId)
+                    && directAccessIsActionable(item, directAccessNow)
+                  )).length
                   : 0;
               return <button className={`message-inbox-tab min-w-0 rounded-lg px-1 py-2.5 text-[10px] font-bold transition min-[390px]:px-2 min-[390px]:text-xs ${inboxTab === tab.id ? "bg-white/[0.09] text-white shadow-sm" : "text-atseen-muted hover:text-white"}`} key={tab.id} onClick={() => { setInboxTab(tab.id); if (tab.id !== "all") setInboxFilter("all"); }} type="button"><span className="break-words">{tab.label}</span>{count ? <span className="message-folder-count">{count}</span> : null}</button>;
             })}
@@ -2277,9 +2300,10 @@ export default function MessagesPage() {
           {inboxTab === "direct" ? directWindowSections.map((section) => section.items.length ? <section className="mb-7" key={section.label}><h2 className="px-5 pb-2 pt-1 text-[10px] font-black tracking-[0.16em] text-atseen-muted">{section.label} <span className="text-atseen-blue">{section.items.length}</span></h2>{section.items.map((windowItem) => {
             const other = directWindowParticipant(windowItem, myId);
             if (!other) return null;
-            const hoursLeft = Math.max(0, Math.ceil((new Date(windowItem.expiresAt).getTime() - Date.now()) / 3600000));
+            const hoursLeft = Math.max(1, Math.ceil((directAccessExpiresAt(windowItem) - directAccessNow) / 3600000));
             const viewerIsCreator = String(windowItem.creatorId) === myId;
-            const incoming = viewerIsCreator && ["HELD", "INCLUDED"].includes(windowItem.settlementStatus) && !windowItem.firstCreatorReplyAt;
+            const incoming = viewerIsCreator && directAccessIsActionable(windowItem, directAccessNow);
+            const expired = directAccessIsExpired(windowItem, directAccessNow);
             const answered = directAccessDisplayStatus(windowItem) === "Answered";
             const myStatus = directAccessDisplayStatus(windowItem, { includePending: true });
             return <button className="group flex w-full items-start gap-3 px-5 py-3 text-left transition hover:bg-white/[0.03]" key={windowItem.id} onClick={() => chooseConversation({ id: other.id, participant: other, directAccessWindowId: windowItem.id })} type="button">
@@ -2288,7 +2312,8 @@ export default function MessagesPage() {
                 <span className="flex items-center gap-1.5"><strong className="truncate text-[13px] leading-5 text-white">{other.displayName || other.username || "Member"}</strong>{presence[other.id]?.online ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
                 <span className="block truncate text-[11px] leading-5 text-atseen-muted">{incoming && windowItem.questionQuote ? `“${windowItem.questionQuote}”` : directWindowSnippet(windowItem, myId)}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[9px]">
-                  {incoming ? <><span className="rounded-full bg-[#202734] px-2 py-1 font-bold text-atseen-muted">Message · <img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{windowItem.priceStars}</span><span className="font-bold text-atseen-success">≈ ${Number(windowItem.creatorNetUsd || 0).toFixed(2)} {__msg("messages.toYou")}</span><span className="text-atseen-muted">◷ {hoursLeft}{__msg("fan.hLeft")}</span></> : null}
+                  {incoming ? <><span className="rounded-full bg-[#202734] px-2 py-1 font-bold text-atseen-muted">Message · {windowItem.settlementStatus === "INCLUDED" ? __msg("profile.included") : <><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{windowItem.priceStars}</>}</span>{windowItem.settlementStatus !== "INCLUDED" ? <span className="font-bold text-atseen-success">≈ ${Number(windowItem.creatorNetUsd || 0).toFixed(2)} {__msg("messages.toYou")}</span> : null}<span className="text-atseen-muted">◷ {hoursLeft}{__msg("fan.hLeft")}</span></> : null}
+                  {viewerIsCreator && expired ? <span className="rounded-full bg-atseen-success/10 px-2 py-1 font-bold text-atseen-success">{windowItem.settlementStatus === "REFUNDED" || windowItem.refundedAt ? `${__msg("Expired")} · ${__msg("Refunded")}` : __msg("Expired")}</span> : null}
                   {viewerIsCreator && answered ? <span className="rounded-full bg-[#202734] px-2 py-1 font-bold text-atseen-muted">+${Number(windowItem.creatorNetUsd || 0).toFixed(2)} {__msg("social.earned")}</span> : null}
                 </span>
               </span>
@@ -2545,9 +2570,9 @@ export default function MessagesPage() {
           <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[10px] text-[#9aa6b6]"><span className="flex items-center gap-1"><FiClock /> replies within {Number(directAccessOffer.typicalReplyHours || 1)}h</span><span className="flex items-center gap-1"><FiHeart /> 98% warm calls</span><span className="flex items-center gap-1"><FiShield /> 48h or refund</span></div>
           {directAccessOffer.callEnabled ? <div className="mt-3 flex items-center gap-3 rounded-2xl border border-[#6ecf97]/25 bg-[#6ecf97]/[0.05] px-4 py-3"><FiPhone className="shrink-0 text-lg text-[#ff4d9d]" /><div className="min-w-0 flex-1"><b className="block text-[13px]">{__msg("profile.callWith")} {participant?.displayName?.split(" ")[0] || "creator"}</b><p className="mt-0.5 text-[10px] text-[#a1acbb]">{__msg("profile.aRealVoiceJustYouAnd")} {participant?.displayName?.split(" ")[0] || "them"}</p><p className="mt-1 text-[9px] text-[#768699]"><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{directAccessOffer.callPriceStars} · {directAccessOffer.callDurationMinutes} {__msg("profile.minGuaranteedOrRefunded")}</p></div><button className="rounded-full bg-[#8bbcf3] px-4 py-2.5 text-[11px] font-black text-[#05080c]" onClick={() => { setDirectAccessOffer(null); startCall(participant, "AUDIO"); }} type="button">{__msg("profile.request")}</button></div> : null}
           <div className="mt-4 text-center"><div className="mx-auto grid h-[76px] w-[76px] place-items-center rounded-full border border-[#5279a5] bg-[#101923] shadow-[0_0_32px_rgba(112,169,255,.12)]"><span className="text-2xl text-[#8bbcff]">✦</span></div><h3 className="mt-5 text-[25px] font-black">{__msg("profile.aRealConversation")}</h3><p className="mx-auto mt-2 max-w-[280px] text-[13px] leading-[1.65] text-[#a1acbb]">{__msg("profile.notOneReplyIntoTheVoidAPrivate48")} {participant?.displayName?.split(" ")[0] || "this creator"}{__msg("profile.withAPromiseAttached")}</p></div>
-          <div className="mt-6 space-y-5">{[[FiMessageCircle, "A 48-hour private window", `Up to 3 messages from you — ${participant?.displayName?.split(" ")[0] || "the creator"} replies to each. A back-and-forth, not a ticket.`], [FiInbox, "Top of the priority inbox", `Your message is placed above everything else ${participant?.displayName?.split(" ")[0] || "the creator"} sees — it can’t get lost.`], [FiClock, "First reply within 48 hours", `${participant?.displayName?.split(" ")[0] || "The creator"} guarantees a personal reply. Usually much faster — within ${Number(directAccessOffer.typicalReplyHours || 1)}h.`], [FiRefreshCw, "Refunded if unanswered", "No reply in 48 hours? Your coins come back automatically. Every time."]].map(([Icon, title, description]) => <div className="flex gap-4" key={title}><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#42678e] bg-[#101923] text-[#8bbcff]"><Icon /></span><div><h4 className="text-[13px] font-black">{title}</h4><p className="mt-1 text-[11px] leading-[1.55] text-[#a1acbb]">{description}</p></div></div>)}</div>
+          <div className="mt-6 space-y-5">{[[FiMessageCircle, "A 48-hour private window", `Up to 3 messages from you — ${participant?.displayName?.split(" ")[0] || "the creator"} replies to each. A back-and-forth, not a ticket.`], [FiInbox, "Top of the priority inbox", `Your message is placed above everything else ${participant?.displayName?.split(" ")[0] || "the creator"} sees — it can’t get lost.`], [FiClock, "First reply within 48 hours", `${participant?.displayName?.split(" ")[0] || "The creator"} guarantees a personal reply. Usually much faster — within ${Number(directAccessOffer.typicalReplyHours || 1)}h.`], [FiRefreshCw, "Returned if unanswered", "Your coins are reserved when you open Direct Access. If there is no reply within 48 hours, they return automatically."]].map(([Icon, title, description]) => <div className="flex gap-4" key={title}><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#42678e] bg-[#101923] text-[#8bbcff]"><Icon /></span><div><h4 className="text-[13px] font-black">{title}</h4><p className="mt-1 text-[11px] leading-[1.55] text-[#a1acbb]">{description}</p></div></div>)}</div>
           <div className="mt-5 rounded-[18px] border border-[#2a313a] bg-[#15191e] px-[18px] py-1.5"><div className="flex items-center justify-between border-b border-[#2a313a] py-3 text-sm"><span className="text-[#a5adba]">{__msg("fan.price")}</span><b><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{directAccessOffer.priceStars}</b></div><div className="flex items-center justify-between border-b border-[#2a313a] py-3 text-sm"><span className="text-[#a5adba]">{__msg("profile.usuallyReplies")}</span><b className="text-[#8bbcff]">{__msg("profile.within")} {Number(directAccessOffer.typicalReplyHours || 1)}h</b></div><div className="flex items-center justify-between py-3 text-sm"><span className="text-[#a5adba]">{__msg("profile.guarantee")}</span><b className="text-[#6ecf97]">{__msg("profile.48hOrRefunded")}</b></div></div>
-          <p className="mt-4 text-center text-[11px] text-[#778497]">{__msg("profile.youReOnlyChargedWhen")} {participant?.displayName?.split(" ")[0] || "the creator"} {__msg("profile.replies")}</p>
+          <p className="mt-4 text-center text-[11px] text-[#778497]">Reserved now · charged only when {participant?.displayName?.split(" ")[0] || "the creator"} replies.</p>
         </div>
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-b from-transparent via-[#080b0f]/95 to-[#080b0f] px-5 pb-5 pt-9">{error ? <p className="mb-2 rounded-xl border border-red-400/20 bg-[#2a1115] px-3 py-2 text-center text-[10px] leading-4 text-red-200" role="alert">{error}</p> : null}{!directAccessOffer.reopenQuestionId && directAccessOffer.premiumAllowance?.available ? <button className="mb-2 w-full rounded-full border border-[#5885b5] py-2.5 text-xs font-bold text-[#8bbcff]" disabled={directAccessBusy} onClick={() => confirmDirectAccess("PREMIUM_INCLUDED")} type="button">{__msg("fan.useIncludedPremiumWindow")}</button> : null}<button className="w-full rounded-[14px] bg-[#8bbcf3] py-3.5 text-sm font-black text-[#05080c] shadow-[0_8px_24px_rgba(139,188,243,.18)] transition hover:bg-[#9bc7f7] disabled:opacity-40" disabled={directAccessBusy || Number(directAccessOffer.walletBalance || 0) < directAccessOffer.priceStars} onClick={() => confirmDirectAccess("PAID")} type="button">{directAccessBusy ? "Unlocking…" : directAccessOffer.reopenQuestionId ? <>Answer · New window <CoinAmount value={directAccessOffer.priceStars} /></> : "Unlock Direct Access"}</button>{Number(directAccessOffer.walletBalance || 0) < directAccessOffer.priceStars && !directAccessOffer.premiumAllowance?.available ? <button className="mt-2 w-full text-xs font-bold text-atseen-warning" onClick={() => navigate("/fan/wallet")} type="button">{__msg("profile.notEnoughStarsOpenWallet")}</button> : null}</div>
       </section>
