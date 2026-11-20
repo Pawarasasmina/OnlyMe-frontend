@@ -19,22 +19,12 @@ import { dreamFallbackCover, dreamProgress } from "../../utils/dreamPresentation
 import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import FanAvatar from "../fanWeb/shared/FanAvatar";
 import GiftArt, { prototypeGiftPreset, resolvedGiftTier } from "../gifts/GiftArt";
+import ProfileImageCropper from "./ProfileImageCropper";
 
 const GOALS = [500, 900, 1500, 2500, 5000];
 const SPARKLE = String.fromCharCode(10024);
 const STAR = String.fromCharCode(10022);
 const celebrationParticles = Array.from({ length: 28 }, (_, index) => ({ angle: index * (360 / 28), delay: (index % 7) * 34, distance: 92 + (index % 5) * 18, size: 8 + (index % 4) * 3 }));
-async function croppedDreamPhoto(file, url, crop) {
-  const image = await new Promise((resolve, reject) => { const value = new Image(); value.onload = () => resolve(value); value.onerror = reject; value.src = url; });
-  const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = 720;
-  const context = canvas.getContext("2d"); const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) * crop.zoom;
-  const width = image.naturalWidth * scale; const height = image.naturalHeight * scale;
-  context.drawImage(image, (canvas.width - width) / 2 + crop.x * canvas.width, (canvas.height - height) / 2 + crop.y * canvas.height, width, height);
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .9));
-  if (!blob) throw new Error(__msg("profile.couldNotPrepareDreamPhoto"));
-  return new File([blob], "dream-photo.jpg", { type: "image/jpeg" });
-}
-
 export function GiftCelebration({ caption = "", detail, gift, message = __msg("profile.youRePartOfThisDreamNow"), onDismiss, recipientName = "", senderName = "", note = "", showSuccessToast = true, variant = "" }) {
   __useUiLanguage();
   const tier = resolvedGiftTier(gift);
@@ -94,8 +84,8 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
   const [error, setError] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoUrl, setPhotoUrl] = useState(dream?.photo?.url || "");
+  const [cropSource, setCropSource] = useState("");
   const [removePhoto, setRemovePhoto] = useState(false);
-  const [crop, setCrop] = useState({ zoom: 1, x: 0, y: 0 });
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPosition, setPreviewPosition] = useState(undefined);
   const previewProgress = Math.min(100, Math.round((Number(dream?.receivedStars || 0) / Math.max(1, Number(form.goalStars || 0))) * 100));
@@ -118,6 +108,11 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
     };
   }, [previewOpen]);
 
+  const closeCropper = () => {
+    if (cropSource) URL.revokeObjectURL(cropSource);
+    setCropSource("");
+  };
+
   const save = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -126,7 +121,7 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
     try {
       const response = await dreamService.saveMine(form);
       const saved = response.data.data.dream;
-      if (photoFile) await dreamService.savePhoto(saved.id, await croppedDreamPhoto(photoFile, photoUrl, crop));
+      if (photoFile) await dreamService.savePhoto(saved.id, photoFile);
       else if (removePhoto && dream?.id) await dreamService.removePhoto(dream.id);
       onSaved(saved);
     } catch (requestError) {
@@ -188,14 +183,13 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
 
         <span className="profile-dream-label">{__msg("profile.dreamPhoto")}</span>
         <div className="dream-photo-editor">
-          {photoUrl && !removePhoto ? <div className="dream-photo-crop"><img alt={__msg("profile.dreamCropPreview")} src={photoUrl} style={{ transform: `translate(${crop.x * 100}%, ${crop.y * 100}%) scale(${crop.zoom})` }} /></div> : <span className="dream-photo-empty">{__msg("profile.addOnePhoto")}</span>}
-          <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { setPhotoFile(event.target.files?.[0] || null); setRemovePhoto(false); setCrop({ zoom: 1, x: 0, y: 0 }); }} ref={photoInput} type="file" />
+          {photoUrl && !removePhoto ? <div className="dream-photo-crop"><img alt={__msg("profile.dreamCropPreview")} src={photoUrl} /></div> : <span className="dream-photo-empty">{__msg("profile.addOnePhoto")}</span>}
+          <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; setCropSource(URL.createObjectURL(file)); }} ref={photoInput} type="file" />
           <div className="dream-photo-actions">
             <button onClick={() => photoInput.current?.click()} type="button">{fullPage ? <><FiUpload /> {__msg("profile.upload")}</> : photoUrl && !removePhoto ? __msg("profile.replace") : __msg("profile.upload")}</button>
             {fullPage ? <button onClick={() => setError(__msg("profile.dreamPhotoGenerationIsComingSoon"))} type="button"><FiRefreshCw /> {__msg("profile.generate")}</button> : null}
             {!fullPage && photoUrl && !removePhoto ? <button onClick={() => { setPhotoFile(null); setPhotoUrl(""); setRemovePhoto(true); }} type="button">{__msg("profile.remove")}</button> : null}
           </div>
-          {photoFile ? <div className="dream-photo-adjust"><label>{__msg("profile.zoom")} <input max="2.5" min="1" onChange={(e) => setCrop({ ...crop, zoom: Number(e.target.value) })} step="0.05" type="range" value={crop.zoom} /></label><label>{__msg("profile.leftRight")} <input max="0.4" min="-0.4" onChange={(e) => setCrop({ ...crop, x: Number(e.target.value) })} step="0.02" type="range" value={crop.x} /></label><label>{__msg("profile.upDown")} <input max="0.4" min="-0.4" onChange={(e) => setCrop({ ...crop, y: Number(e.target.value) })} step="0.02" type="range" value={crop.y} /></label></div> : null}
         </div>
 
         <span className="profile-dream-label">{__msg("profile.goal")}</span>
@@ -241,6 +235,7 @@ export function DreamEditor({ dream, fullPage = false, onClose, onSaved }) {
           </div>
         ) : null}
       </form>
+      {cropSource ? <ProfileImageCropper actionLabel={__msg("comments.done")} constrainToCenter kind="dream" onCancel={closeCropper} onSave={(file) => { setPhotoFile(file); setRemovePhoto(false); closeCropper(); }} source={cropSource} /> : null}
     </div>
   );
 }
