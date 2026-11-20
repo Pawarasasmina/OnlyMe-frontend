@@ -46,6 +46,7 @@ async function copyText(value) {
 function RecipientItem({ person, selected, onToggle }) {
   __useUiLanguage();
   const displayName = person.displayName || person.name || person.username || __msg("branding.atseen");
+  const username = String(person.username || "").replace(/^@/, "");
   return (
     <button
       aria-label={`${selected ? __msg("profile.remove") : __msg("content.select")} ${displayName}`}
@@ -58,7 +59,7 @@ function RecipientItem({ person, selected, onToggle }) {
         <FanAvatar alt={__msg("fan.avatar", { value0: displayName })} name={displayName} size="h-[52px] w-[52px]" src={person.avatarUrl} />
         {selected || person.isVerified || person.statusEmoji ? <span className="share-recipient-badge">{selected || person.isVerified ? <FiCheck aria-hidden="true" /> : person.statusEmoji}</span> : null}
       </span>
-      <span className="share-recipient-name">{firstName(displayName)}</span>
+      <span className="share-recipient-name">{username ? <><i className="identity-at">@</i>{username}</> : firstName(displayName)}</span>
     </button>
   );
 }
@@ -101,7 +102,7 @@ function ShareContentPreview({ payload, canonicalUrl }) {
       </div>
       <div className="share-chat-copy">
         <strong>{previewTitle}</strong>
-        <span>{isNote ? __msg("social.note_2c924e") : payload.contentType === "dream" ? __msg("profile.dream") : payload.contentType === "invitation" ? __msg("messages.realStoriesFromRealPeopleJoinMeThere") : <>{__msg("share.a")} {typeLabel} {__msg("share.by")} {firstName(authorName)}</>}</span>
+        <span>{isNote ? __msg("social.note_2c924e") : payload.contentType === "dream" ? __msg("profile.dream") : payload.contentType === "invitation" ? __msg("messages.realStoriesFromRealPeopleJoinMeThere") : <>{__msg("share.a")} {typeLabel} {__msg("share.by")} {author.username ? <><i className="identity-at">@</i>{String(author.username).replace(/^@/, "")}</> : firstName(authorName)}</>}</span>
         <small><svg aria-hidden="true" width="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12C5.3 7.8 18.7 7.8 22 12 18.7 16.2 5.3 16.2 2 12z"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>{shortUrl || __msg("share.seenCom")}</small>
       </div>
     </div>
@@ -109,7 +110,7 @@ function ShareContentPreview({ payload, canonicalUrl }) {
 }
 
 function selectedLabel(recipients = []) {
-  const names = recipients.map((item) => firstName(item.displayName || item.name || item.username));
+  const names = recipients.map((item) => item.username ? `@${String(item.username).replace(/^@/, "")}` : firstName(item.displayName || item.name));
   if (names.length <= 2) return names.join(", ");
   return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
 }

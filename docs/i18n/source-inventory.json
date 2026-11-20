@@ -11,6 +11,11 @@
       "strings": []
     },
     {
+      "file": "src/components/activity/ActivityAcknowledgement.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/activity/ActivityContentPreview.jsx",
       "count": 0,
       "strings": []
@@ -22,8 +27,27 @@
     },
     {
       "file": "src/components/activity/ActivityGiftPreview.jsx",
-      "count": 0,
-      "strings": []
+      "count": 3,
+      "strings": [
+        {
+          "text": "Thanks sent",
+          "file": "src/components/activity/ActivityGiftPreview.jsx",
+          "line": 97,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Sending…",
+          "file": "src/components/activity/ActivityGiftPreview.jsx",
+          "line": 97,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Say thanks",
+          "file": "src/components/activity/ActivityGiftPreview.jsx",
+          "line": 97,
+          "kind": "render-expression"
+        }
+      ]
     },
     {
       "file": "src/components/activity/ActivitySparkMark.jsx",
@@ -82,7 +106,7 @@
         {
           "text": "Seen",
           "file": "src/components/admin/PostReportPreview.jsx",
-          "line": 49,
+          "line": 50,
           "kind": "render-expression"
         }
       ]
@@ -98,14 +122,32 @@
       "strings": []
     },
     {
+      "file": "src/components/admin/WallReportReviewFields.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/auth/LegalDocumentSheet.jsx",
       "count": 0,
       "strings": []
     },
     {
       "file": "src/components/branding/AtseenLogo.jsx",
-      "count": 0,
-      "strings": []
+      "count": 2,
+      "strings": [
+        {
+          "text": "seen",
+          "file": "src/components/branding/AtseenLogo.jsx",
+          "line": 14,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "@seen",
+          "file": "src/components/branding/AtseenLogo.jsx",
+          "line": 15,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/components/branding/CoinIcon.jsx",
@@ -123,6 +165,21 @@
       "strings": []
     },
     {
+      "file": "src/components/comments/CommentIdentity.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/comments/commentIdentityUtils.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/comments/MemberCommentBadge.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/comments/VoiceCommentRecorder.jsx",
       "count": 0,
       "strings": []
@@ -134,6 +191,11 @@
     },
     {
       "file": "src/components/common/CenterRouteLoading.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/common/FirstTimeHints.jsx",
       "count": 0,
       "strings": []
     },
@@ -358,8 +420,33 @@
     },
     {
       "file": "src/components/fanWeb/home/FeedPost.jsx",
-      "count": 0,
-      "strings": []
+      "count": 4,
+      "strings": [
+        {
+          "text": "Comment deleted.",
+          "file": "src/components/fanWeb/home/FeedPost.jsx",
+          "line": 865,
+          "kind": "notification"
+        },
+        {
+          "text": "Deleting…",
+          "file": "src/components/fanWeb/home/FeedPost.jsx",
+          "line": 1155,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Delete comment",
+          "file": "src/components/fanWeb/home/FeedPost.jsx",
+          "line": 1155,
+          "kind": "render-expression"
+        },
+        {
+          "text": "This removes the comment and its replies.",
+          "file": "src/components/fanWeb/home/FeedPost.jsx",
+          "line": 1155,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/components/fanWeb/home/HomeHeader.jsx",
@@ -392,6 +479,11 @@
       "strings": []
     },
     {
+      "file": "src/components/fanWeb/home/WallCategoryRow.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/fanWeb/home/WallCommentList.jsx",
       "count": 0,
       "strings": []
@@ -418,6 +510,11 @@
     },
     {
       "file": "src/components/fanWeb/home/WallLocationPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallMarketplaceTile.jsx",
       "count": 0,
       "strings": []
     },
@@ -458,6 +555,11 @@
     },
     {
       "file": "src/components/fanWeb/home/WallTopicSheet.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/fanWeb/home/WallViewSwitch.jsx",
       "count": 0,
       "strings": []
     },
@@ -552,6 +654,18 @@
       "strings": []
     },
     {
+      "file": "src/components/financial/CoinAmount.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/financial/CoinAmount.jsx",
+          "line": 4,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
       "file": "src/components/financial/FinancialConfirmDialog.jsx",
       "count": 0,
       "strings": []
@@ -568,13 +682,27 @@
     },
     {
       "file": "src/components/financial/LedgerList.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/financial/LedgerList.jsx",
+          "line": 6,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/components/financial/MembershipCard.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/financial/MembershipCard.jsx",
+          "line": 7,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/components/financial/PayoutFlow.jsx",
@@ -588,13 +716,57 @@
     },
     {
       "file": "src/components/financial/PurchaseWorldModal.jsx",
-      "count": 0,
-      "strings": []
+      "count": 3,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/financial/PurchaseWorldModal.jsx",
+          "line": 40,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/components/financial/PurchaseWorldModal.jsx",
+          "line": 42,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/components/financial/PurchaseWorldModal.jsx",
+          "line": 121,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/components/financial/WalletBalance.jsx",
-      "count": 0,
-      "strings": []
+      "count": 2,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/financial/WalletBalance.jsx",
+          "line": 6,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/components/financial/WalletBalance.jsx",
+          "line": 6,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/components/gifts/GiftArt.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "Gift",
+          "file": "src/components/gifts/GiftArt.jsx",
+          "line": 37,
+          "kind": "render-expression"
+        }
+      ]
     },
     {
       "file": "src/components/layout/Footer.jsx",
@@ -650,8 +822,21 @@
     },
     {
       "file": "src/components/messaging/VoiceRecorder.jsx",
-      "count": 0,
-      "strings": []
+      "count": 2,
+      "strings": [
+        {
+          "text": "Tap to record · up to 60s",
+          "file": "src/components/messaging/VoiceRecorder.jsx",
+          "line": 162,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Voice keeps it human — fans hear you.",
+          "file": "src/components/messaging/VoiceRecorder.jsx",
+          "line": 169,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/components/onboarding/AccountTypePicker.jsx",
@@ -685,18 +870,16 @@
     },
     {
       "file": "src/components/onboarding/OnboardingTicket.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "seen",
-          "file": "src/components/onboarding/OnboardingTicket.jsx",
-          "line": 29,
-          "kind": "jsx-text"
-        }
-      ]
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/components/onboarding/PrototypeInterestPicker.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/onboarding/ShowYourFace.jsx",
       "count": 0,
       "strings": []
     },
@@ -719,6 +902,18 @@
           "text": "seen",
           "file": "src/components/onboarding/WelcomeCarousel.jsx",
           "line": 206,
+          "kind": "jsx-text"
+        }
+      ]
+    },
+    {
+      "file": "src/components/onboarding/WelcomeMoment.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "seen",
+          "file": "src/components/onboarding/WelcomeMoment.jsx",
+          "line": 11,
           "kind": "jsx-text"
         }
       ]
@@ -830,8 +1025,14 @@
     },
     {
       "file": "src/components/profile/DirectAccessOfferModal.jsx",
-      "count": 1,
+      "count": 2,
       "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/profile/DirectAccessOfferModal.jsx",
+          "line": 19,
+          "kind": "attribute"
+        },
         {
           "text": "Direct Access",
           "file": "src/components/profile/DirectAccessOfferModal.jsx",
@@ -861,6 +1062,11 @@
       "strings": []
     },
     {
+      "file": "src/components/profile/MemberTicketViewer.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/components/profile/OwnerLibrary.jsx",
       "count": 0,
       "strings": []
@@ -877,8 +1083,15 @@
     },
     {
       "file": "src/components/profile/PlanetSlot.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/profile/PlanetSlot.jsx",
+          "line": 22,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/components/profile/ProfileCompletionCard.jsx",
@@ -897,15 +1110,34 @@
         {
           "text": "Seen",
           "file": "src/components/profile/ProfileContentGrid.jsx",
-          "line": 618,
+          "line": 628,
           "kind": "render-expression"
         }
       ]
     },
     {
       "file": "src/components/profile/ProfileDream.jsx",
-      "count": 0,
-      "strings": []
+      "count": 3,
+      "strings": [
+        {
+          "text": "THE VAULT",
+          "file": "src/components/profile/ProfileDream.jsx",
+          "line": 52,
+          "kind": "render-expression"
+        },
+        {
+          "text": "LEGENDARY",
+          "file": "src/components/profile/ProfileDream.jsx",
+          "line": 52,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Not enough coins for this gift.",
+          "file": "src/components/profile/ProfileDream.jsx",
+          "line": 418,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/components/profile/ProfileExperiences.jsx",
@@ -954,13 +1186,19 @@
     },
     {
       "file": "src/components/profile/ProfileSocialActions.jsx",
-      "count": 1,
+      "count": 2,
       "strings": [
         {
           "text": "Direct Access",
           "file": "src/components/profile/ProfileSocialActions.jsx",
           "line": 53,
           "kind": "jsx-text"
+        },
+        {
+          "text": "coins",
+          "file": "src/components/profile/ProfileSocialActions.jsx",
+          "line": 54,
+          "kind": "attribute"
         }
       ]
     },
@@ -1011,23 +1249,41 @@
     },
     {
       "file": "src/components/publication/PricingSelector.jsx",
-      "count": 0,
-      "strings": []
-    },
-    {
-      "file": "src/components/publication/PublicationComposerShell.jsx",
       "count": 1,
       "strings": [
         {
+          "text": "coins",
+          "file": "src/components/publication/PricingSelector.jsx",
+          "line": 17,
+          "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/components/publication/PublicationComposerShell.jsx",
+      "count": 2,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/publication/PublicationComposerShell.jsx",
+          "line": 417,
+          "kind": "attribute"
+        },
+        {
           "text": "https://",
           "file": "src/components/publication/PublicationComposerShell.jsx",
-          "line": 1089,
+          "line": 1080,
           "kind": "attribute"
         }
       ]
     },
     {
       "file": "src/components/publication/PublicationCoverMedia.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/PublishBanner.jsx",
       "count": 0,
       "strings": []
     },
@@ -1049,9 +1305,26 @@
       "strings": []
     },
     {
-      "file": "src/components/publication/WorldCard.jsx",
+      "file": "src/components/publication/SuccessMoment.jsx",
       "count": 0,
       "strings": []
+    },
+    {
+      "file": "src/components/publication/UploadProgress.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/components/publication/WorldCard.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/components/publication/WorldCard.jsx",
+          "line": 5,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/components/saved/SavedCategoryCard.jsx",
@@ -1122,8 +1395,20 @@
         {
           "text": "Instagram",
           "file": "src/components/share/ShareSheet.jsx",
-          "line": 473,
+          "line": 509,
           "kind": "attribute"
+        }
+      ]
+    },
+    {
+      "file": "src/components/share/TicketChatCard.jsx",
+      "count": 1,
+      "strings": [
+        {
+          "text": "atseen.com",
+          "file": "src/components/share/TicketChatCard.jsx",
+          "line": 22,
+          "kind": "jsx-text"
         }
       ]
     },
@@ -1193,8 +1478,15 @@
     },
     {
       "file": "src/components/stories/StoryGiftPicker.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "creator",
+          "file": "src/components/stories/StoryGiftPicker.jsx",
+          "line": 183,
+          "kind": "render-expression"
+        }
+      ]
     },
     {
       "file": "src/components/stories/StoryHighlightPicker.jsx",
@@ -1263,8 +1555,39 @@
     },
     {
       "file": "src/components/verification/ManualIdentityApplication.jsx",
-      "count": 0,
-      "strings": []
+      "count": 5,
+      "strings": [
+        {
+          "text": "The selected file is empty. Choose a complete image file.",
+          "file": "src/components/verification/ManualIdentityApplication.jsx",
+          "line": 41,
+          "kind": "notification"
+        },
+        {
+          "text": "Document uploaded successfully.",
+          "file": "src/components/verification/ManualIdentityApplication.jsx",
+          "line": 49,
+          "kind": "notification"
+        },
+        {
+          "text": "Uploading…",
+          "file": "src/components/verification/ManualIdentityApplication.jsx",
+          "line": 78,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Please wait while this file is securely uploaded.",
+          "file": "src/components/verification/ManualIdentityApplication.jsx",
+          "line": 78,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Uploading documents…",
+          "file": "src/components/verification/ManualIdentityApplication.jsx",
+          "line": 95,
+          "kind": "render-expression"
+        }
+      ]
     },
     {
       "file": "src/components/verification/ProtectedDocumentPreview.jsx",
@@ -1302,6 +1625,11 @@
       "strings": []
     },
     {
+      "file": "src/components/world/MinimalWorldIcon.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/constants/contentEntityTypes.js",
       "count": 0,
       "strings": []
@@ -1328,8 +1656,15 @@
     },
     {
       "file": "src/context/CallContext.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/context/CallContext.jsx",
+          "line": 334,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/context/callContextBase.js",
@@ -1541,6 +1876,11 @@
       "strings": []
     },
     {
+      "file": "src/hooks/useReactionSelection.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/hooks/useRecommendationTracking.js",
       "count": 0,
       "strings": []
@@ -1557,6 +1897,11 @@
     },
     {
       "file": "src/hooks/useStories.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useStoryPersonTransition.js",
       "count": 0,
       "strings": []
     },
@@ -1581,14 +1926,47 @@
       "strings": []
     },
     {
+      "file": "src/hooks/useWallEditClock.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useWallLifecycleClock.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/hooks/useWallNeedHints.jsx",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/hooks/useWallTranslation.js",
       "count": 0,
       "strings": []
     },
     {
-      "file": "src/layouts/AdminLayout.jsx",
+      "file": "src/hooks/useWallViewPreference.js",
       "count": 0,
       "strings": []
+    },
+    {
+      "file": "src/layouts/AdminLayout.jsx",
+      "count": 2,
+      "strings": [
+        {
+          "text": "Security & 2FA",
+          "file": "src/layouts/AdminLayout.jsx",
+          "line": 45,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "READ-ONLY TEST",
+          "file": "src/layouts/AdminLayout.jsx",
+          "line": 53,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/layouts/AuthLayout.jsx",
@@ -1632,13 +2010,63 @@
     },
     {
       "file": "src/pages/admin/AdminAnalyticsPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 4,
+      "strings": [
+        {
+          "text": "Platform intelligence",
+          "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+          "line": 231,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Aggregate platform trends and performance. Individual moderation complaints are managed under Trust & Safety reports.",
+          "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+          "line": 231,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Reports by status",
+          "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+          "line": 299,
+          "kind": "attribute"
+        },
+        {
+          "text": "Report volume over time",
+          "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+          "line": 300,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/AdminDashboard.jsx",
-      "count": 0,
-      "strings": []
+      "count": 4,
+      "strings": [
+        {
+          "text": "Current operational totals, safety queues, account environments, and priority actions.",
+          "file": "src/pages/admin/AdminDashboard.jsx",
+          "line": 33,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Live database · all current accounts",
+          "file": "src/pages/admin/AdminDashboard.jsx",
+          "line": 33,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Account environment",
+          "file": "src/pages/admin/AdminDashboard.jsx",
+          "line": 36,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Headline totals include every current database account. This split shows exactly how much comes from production, controlled seed data, and QA automation.",
+          "file": "src/pages/admin/AdminDashboard.jsx",
+          "line": 36,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/AdminProfilePage.jsx",
@@ -1657,13 +2085,207 @@
     },
     {
       "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 21,
+      "strings": [
+        {
+          "text": "Two-factor authentication is enabled",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 47,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Your password and a current authenticator code protect this admin account when you sign in.",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 47,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Turn off 2FA",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 49,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Turn off two-factor authentication?",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 52,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "The saved authenticator will be removed and all active sessions will be revoked. You can enroll a new authenticator later.",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 53,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Authenticator code",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 54,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Turning off…",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 55,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Turn off 2FA",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 55,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Admin security",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 62,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Two-factor authentication is off",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 63,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Add a new authenticator",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 63,
+          "kind": "render-expression"
+        },
+        {
+          "text": "2FA is optional for this account. You can use all role-appropriate read-only areas without setting it up.",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 64,
+          "kind": "render-expression"
+        },
+        {
+          "text": "A Main Admin requires this account to enroll a fresh authenticator before using the admin console.",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 64,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Preparing…",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Add authenticator (optional)",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Set up authenticator",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Scan this QR code",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Authenticator QR code",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "attribute"
+        },
+        {
+          "text": "Enter key manually",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Verifying…",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Verify and enable 2FA",
+          "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+          "line": 66,
+          "kind": "render-expression"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/AdminStaffPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 11,
+      "strings": [
+        {
+          "text": "2FA enabled",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 99,
+          "kind": "render-expression"
+        },
+        {
+          "text": "New setup required",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 99,
+          "kind": "render-expression"
+        },
+        {
+          "text": "2FA off",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 99,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Read-only test",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 99,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Remove / turn off 2FA",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 100,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Add new 2FA",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 100,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Delete test account",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 100,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Role-wide 2FA control",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 104,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Apply a security reset to every account in a role. Existing authenticator secrets are permanently removed and sessions are revoked.",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 104,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Turn off all",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 104,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Require new setup",
+          "file": "src/pages/admin/AdminStaffPage.jsx",
+          "line": 104,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/AdminUserDetailPage.jsx",
@@ -1672,8 +2294,75 @@
     },
     {
       "file": "src/pages/admin/BankReviewPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 11,
+      "strings": [
+        {
+          "text": "Review queue",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 30,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "applications in this view",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 30,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Applications could not be loaded.",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 31,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Queue is clear",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 31,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Opening…",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 31,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Previous page",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 32,
+          "kind": "attribute"
+        },
+        {
+          "text": "Next page",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 32,
+          "kind": "attribute"
+        },
+        {
+          "text": "Back to queue",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 36,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Review sensitive payout information carefully before deciding.",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 36,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Required when requesting changes or rejecting",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 36,
+          "kind": "attribute"
+        },
+        {
+          "text": "This application has already been reviewed.",
+          "file": "src/pages/admin/BankReviewPage.jsx",
+          "line": 36,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/ContentExportPage.jsx",
@@ -1702,18 +2391,177 @@
     },
     {
       "file": "src/pages/admin/FinanceUserPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/pages/admin/FinanceUserPage.jsx",
+          "line": 20,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/FinancialAdminPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 6,
+      "strings": [
+        {
+          "text": "Set the Stars exchange value and web purchase tax. Users manage their own top-ups from their Wallet.",
+          "file": "src/pages/admin/FinancialAdminPage.jsx",
+          "line": 50,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Unable to load financial settings.",
+          "file": "src/pages/admin/FinancialAdminPage.jsx",
+          "line": 53,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Stars value",
+          "file": "src/pages/admin/FinancialAdminPage.jsx",
+          "line": 60,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Number of Stars users receive for each US dollar.",
+          "file": "src/pages/admin/FinancialAdminPage.jsx",
+          "line": 61,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Web purchase tax",
+          "file": "src/pages/admin/FinancialAdminPage.jsx",
+          "line": 68,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Tax percentage applied when users purchase Stars on the web.",
+          "file": "src/pages/admin/FinancialAdminPage.jsx",
+          "line": 69,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/GiftManagementPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 19,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 27,
+          "kind": "attribute"
+        },
+        {
+          "text": "Send animation preview",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 37,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "THE VAULT",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 40,
+          "kind": "render-expression"
+        },
+        {
+          "text": "LEGENDARY",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 40,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Gift animation",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 87,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Choose its idle motion and the scene fans see when it is sent.",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 87,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Idle motion",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 89,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Send scene",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 90,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Cinematic style",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 91,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Object movement",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 92,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Light sweep",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 94,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Halo",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 94,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "How these controls work",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 100,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Idle motion, light sweep and halo affect the gift wherever it is displayed. Send scene, cinematic style and object movement affect the full-screen moment after sending or replaying the gift.",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 100,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Drag categories into the order fans should see in the gift picker.",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 117,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Saving order…",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 117,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Order saved",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 117,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 131,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/admin/GiftManagementPage.jsx",
+          "line": 146,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/GovernancePage.jsx",
@@ -1747,8 +2595,45 @@
     },
     {
       "file": "src/pages/admin/RecommendationSettingsPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 6,
+      "strings": [
+        {
+          "text": "Tune what people see, how behavior affects ranking, and how varied each delivery batch feels. Changes stay in draft until activated.",
+          "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+          "line": 68,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Unsaved changes",
+          "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+          "line": 68,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Set the balance of personalized, related, and discovery content. Every surface must total 100%.",
+          "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+          "line": 70,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Feed composition",
+          "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+          "line": 70,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Positive signals promote similar content; negative signals reduce it.",
+          "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+          "line": 71,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Control batch size, variety, repetition, and freshness.",
+          "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+          "line": 71,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/pages/admin/SafetyCenterPage.jsx",
@@ -1787,13 +2672,13 @@
         {
           "text": "seen",
           "file": "src/pages/auth/LoginPage.jsx",
-          "line": 76,
+          "line": 80,
           "kind": "jsx-text"
         },
         {
           "text": "G",
           "file": "src/pages/auth/LoginPage.jsx",
-          "line": 90,
+          "line": 94,
           "kind": "jsx-text"
         }
       ]
@@ -1855,13 +2740,25 @@
     },
     {
       "file": "src/pages/creator/CreatorStudio.jsx",
-      "count": 1,
+      "count": 3,
       "strings": [
         {
           "text": "Seen",
           "file": "src/pages/creator/CreatorStudio.jsx",
-          "line": 227,
+          "line": 229,
           "kind": "copy-property"
+        },
+        {
+          "text": "Your Seens were shared",
+          "file": "src/pages/creator/CreatorStudio.jsx",
+          "line": 493,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "times this week.",
+          "file": "src/pages/creator/CreatorStudio.jsx",
+          "line": 493,
+          "kind": "jsx-text"
         }
       ]
     },
@@ -1887,55 +2784,79 @@
     },
     {
       "file": "src/pages/creator/SeenComposerPage.jsx",
-      "count": 8,
+      "count": 12,
       "strings": [
         {
+          "text": "coins",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 130,
+          "kind": "attribute"
+        },
+        {
           "text": "B",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1641,
+          "line": 1653,
           "kind": "jsx-text"
         },
         {
           "text": "I",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1649,
+          "line": 1661,
           "kind": "jsx-text"
         },
         {
           "text": "S",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1656,
+          "line": 1668,
           "kind": "jsx-text"
         },
         {
           "text": "L",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1664,
+          "line": 1676,
           "kind": "jsx-text"
         },
         {
           "text": "B",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1865,
+          "line": 1877,
           "kind": "jsx-text"
         },
         {
           "text": "I",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1873,
+          "line": 1885,
           "kind": "jsx-text"
         },
         {
           "text": "S",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1880,
+          "line": 1892,
           "kind": "jsx-text"
         },
         {
           "text": "L",
           "file": "src/pages/creator/SeenComposerPage.jsx",
-          "line": 1888,
+          "line": 1900,
           "kind": "jsx-text"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 3927,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 4176,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/creator/SeenComposerPage.jsx",
+          "line": 4189,
+          "kind": "attribute"
         }
       ]
     },
@@ -1966,31 +2887,93 @@
     },
     {
       "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "coins",
+          "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
+          "line": 26,
+          "kind": "attribute"
+        }
+      ]
     },
     {
       "file": "src/pages/creator/WorldPublishingPage.jsx",
-      "count": 2,
+      "count": 4,
       "strings": [
         {
-          "text": "OK",
+          "text": "coins",
           "file": "src/pages/creator/WorldPublishingPage.jsx",
-          "line": 255,
-          "kind": "render-expression"
+          "line": 1624,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/creator/WorldPublishingPage.jsx",
+          "line": 1795,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/creator/WorldPublishingPage.jsx",
+          "line": 1796,
+          "kind": "attribute"
         },
         {
           "text": "Direct Access",
           "file": "src/pages/creator/WorldPublishingPage.jsx",
-          "line": 1878,
+          "line": 1957,
           "kind": "jsx-text"
         }
       ]
     },
     {
       "file": "src/pages/fan/ActivityPage.jsx",
-      "count": 0,
-      "strings": []
+      "count": 7,
+      "strings": [
+        {
+          "text": "Add a profile photo",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 743,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Set your status",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 744,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Follow people you care about",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 745,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Post your first Seen",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 746,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Write a note on the Wall",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 747,
+          "kind": "copy-property"
+        },
+        {
+          "text": "See who's around",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 748,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Your first week on @seen",
+          "file": "src/pages/fan/ActivityPage.jsx",
+          "line": 749,
+          "kind": "copy-property"
+        }
+      ]
     },
     {
       "file": "src/pages/fan/FanDashboard.jsx",
@@ -2009,19 +2992,1333 @@
     },
     {
       "file": "src/pages/fan/MessagesPage.jsx",
-      "count": 2,
+      "count": 221,
       "strings": [
+        {
+          "text": "Online",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 203,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Story replied to",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "attribute"
+        },
+        {
+          "text": "Story unavailable",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Answered your question",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "render-expression"
+        },
+        {
+          "text": "You replied to their story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Replied to your story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "render-expression"
+        },
+        {
+          "text": "This story has expired",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Tap to view story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 210,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Shared post preview",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 227,
+          "kind": "attribute"
+        },
+        {
+          "text": "Group crop preview",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 284,
+          "kind": "attribute"
+        },
+        {
+          "text": "Uploading…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 292,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Use photo",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 292,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Shared content",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 356,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Open shared content",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 361,
+          "kind": "render-expression"
+        },
+        {
+          "text": "MY DIRECT ACCESS",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 646,
+          "kind": "copy-property"
+        },
+        {
+          "text": "INCOMING · PAID",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 650,
+          "kind": "copy-property"
+        },
+        {
+          "text": "ANSWERED",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 651,
+          "kind": "copy-property"
+        },
+        {
+          "text": "MY DIRECT ACCESS",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 652,
+          "kind": "copy-property"
+        },
+        {
+          "text": "captured ·",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 733,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Could not share this profile.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1228,
+          "kind": "notification"
+        },
+        {
+          "text": "Group created, but its photo could not be uploaded. You can add it from group info.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1256,
+          "kind": "notification"
+        },
+        {
+          "text": "Choose an image smaller than 10 MB.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1321,
+          "kind": "notification"
+        },
+        {
+          "text": "Choose an image smaller than 10 MB.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1329,
+          "kind": "notification"
+        },
+        {
+          "text": "Remove this group photo?",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1353,
+          "kind": "notification"
+        },
+        {
+          "text": "Delete this chat? It will disappear only for you. New messages can start the chat again.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1858,
+          "kind": "notification"
+        },
+        {
+          "text": "Could not copy this message.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1968,
+          "kind": "notification"
+        },
+        {
+          "text": "This answer cannot be shared as a story.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 1974,
+          "kind": "notification"
+        },
+        {
+          "text": "Disappearing message viewer",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2011,
+          "kind": "attribute"
+        },
+        {
+          "text": "View once",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2011,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close disappearing message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2011,
+          "kind": "attribute"
+        },
+        {
+          "text": "Disappearing",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2011,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2011,
+          "kind": "attribute"
+        },
+        {
+          "text": "Close share picker",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2014,
+          "kind": "attribute"
+        },
+        {
+          "text": "Search chats and people",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2015,
+          "kind": "attribute"
+        },
+        {
+          "text": "Recent chat",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2017,
+          "kind": "render-expression"
+        },
+        {
+          "text": "you",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2025,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close filters",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2046,
+          "kind": "attribute"
+        },
+        {
+          "text": "Member",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2075,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Message ·",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2078,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2078,
+          "kind": "attribute"
+        },
+        {
+          "text": "No Priority messages",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2085,
+          "kind": "render-expression"
+        },
+        {
+          "text": "No Direct Access messages",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2085,
+          "kind": "render-expression"
+        },
+        {
+          "text": "No message requests",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "No matching conversations",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "No conversations yet",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Messages from non-following fans appear here.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Try another filter or return to All.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Start a private chat with a creator.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Accepted fan conversations appear here.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2087,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Back to chat",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2116,
+          "kind": "attribute"
+        },
+        {
+          "text": "Chat options",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2117,
+          "kind": "attribute"
+        },
+        {
+          "text": "At seen",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2123,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Away",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2123,
+          "kind": "render-expression"
+        },
+        {
+          "text": "from you",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2132,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close preview",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2142,
+          "kind": "attribute"
+        },
+        {
+          "text": "Shared media preview",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2142,
+          "kind": "attribute"
+        },
+        {
+          "text": "Back to conversations",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2146,
+          "kind": "attribute"
+        },
+        {
+          "text": "Chat options",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2153,
+          "kind": "attribute"
+        },
+        {
+          "text": "Unmute notifications",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2155,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Mute notifications",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2155,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Remove from profile",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2156,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Add group to profile",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2156,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Unarchive chat",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2158,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Archive chat",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2158,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Unblock account",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2161,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Block account",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2161,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2166,
+          "kind": "attribute"
+        },
+        {
+          "text": "Direct Access ended",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2166,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Direct Access ·",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2170,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "h ·",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2170,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "At seen",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2174,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Loading…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2176,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Load older messages",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2176,
+          "kind": "render-expression"
+        },
+        {
+          "text": "creator",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2177,
+          "kind": "render-expression"
+        },
+        {
+          "text": "fan",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2177,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Double-tap to react with ❤️; hold for more reactions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2197,
+          "kind": "attribute"
+        },
+        {
+          "text": "You",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2199,
+          "kind": "render-expression"
+        },
+        {
+          "text": "You reacted to their story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Reacted to your story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "This story expired or was removed",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Story reacted to",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "attribute"
+        },
+        {
+          "text": "Disappearing message expired",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Disappearing message opened",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Disappearing message sent",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Open disappearing message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "View once",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "· tap to view",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "You deleted this message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "This message was deleted",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "You sent",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "You received",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "attribute"
+        },
+        {
+          "text": "Shared in chat",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2204,
+          "kind": "attribute"
+        },
+        {
+          "text": "· Sending…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2206,
+          "kind": "render-expression"
+        },
+        {
+          "text": "· Failed",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2206,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Read",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2207,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Sent",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2207,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Read",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2207,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Sent",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2207,
+          "kind": "render-expression"
+        },
+        {
+          "text": "You",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2222,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Participant",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2222,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Remove is available for your reaction.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2223,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Reactions from this chat.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2223,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Open all reactions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2227,
+          "kind": "attribute"
+        },
+        {
+          "text": "All reactions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2227,
+          "kind": "attribute"
+        },
+        {
+          "text": "Open all reactions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2228,
+          "kind": "attribute"
+        },
+        {
+          "text": "All reactions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2228,
+          "kind": "attribute"
+        },
+        {
+          "text": "Selected story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2228,
+          "kind": "attribute"
+        },
+        {
+          "text": "Selected message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2228,
+          "kind": "attribute"
+        },
+        {
+          "text": "Open message info",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2245,
+          "kind": "attribute"
+        },
+        {
+          "text": "Call confirmed ✦",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2258,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Reschedule requested",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2258,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Call unavailable",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2258,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Call requested",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2258,
+          "kind": "render-expression"
+        },
+        {
+          "text": "video",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2260,
+          "kind": "render-expression"
+        },
+        {
+          "text": "audio",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2260,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2260,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2261,
+          "kind": "attribute"
+        },
+        {
+          "text": "The other person can choose a new time within 24h",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2261,
+          "kind": "render-expression"
+        },
+        {
+          "text": "This request is no longer active",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2261,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Coins held · answer within 24h",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2261,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Confirming…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2263,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Confirm new time",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2263,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Confirm call time",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2263,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Window ended · ask",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2266,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "them",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2266,
+          "kind": "render-expression"
+        },
+        {
+          "text": "a question — they see it free, replying opens a new window",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2266,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2266,
+          "kind": "attribute"
+        },
+        {
+          "text": "Delete selected messages",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2269,
+          "kind": "attribute"
+        },
+        {
+          "text": "You blocked this account. Unblock them to send messages.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2270,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Messaging is unavailable for this conversation.",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2270,
+          "kind": "render-expression"
+        },
+        {
+          "text": "The creator",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "render-expression"
+        },
+        {
+          "text": "asked you a question",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Your window with",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "this creator",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "render-expression"
+        },
+        {
+          "text": "has ended",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Opening…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Answer ·",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "render-expression"
+        },
+        {
+          "text": "New window ·",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "attribute"
+        },
+        {
+          "text": "Reading the thread is always free",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2274,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Close disappearing message options",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2276,
+          "kind": "attribute"
+        },
+        {
+          "text": "yourself",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2278,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Cancel reply",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2278,
+          "kind": "attribute"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2280,
+          "kind": "attribute"
+        },
+        {
+          "text": "Dismiss gift tip",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2285,
+          "kind": "attribute"
+        },
+        {
+          "text": "Message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2288,
+          "kind": "attribute"
+        },
+        {
+          "text": "Message…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2288,
+          "kind": "attribute"
+        },
+        {
+          "text": "Choose an attachment",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2289,
+          "kind": "attribute"
+        },
+        {
+          "text": "Attach a file",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2290,
+          "kind": "attribute"
+        },
+        {
+          "text": "Attach photo",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2290,
+          "kind": "attribute"
+        },
+        {
+          "text": "Disappearing message timer",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2291,
+          "kind": "attribute"
+        },
+        {
+          "text": "Send message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2295,
+          "kind": "attribute"
+        },
+        {
+          "text": "Priority message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2297,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "· Direct Access — guaranteed answer ›",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2297,
+          "kind": "jsx-text"
+        },
         {
           "text": "Direct Access",
           "file": "src/pages/fan/MessagesPage.jsx",
-          "line": 1950,
+          "line": 2316,
+          "kind": "attribute"
+        },
+        {
+          "text": "Back to chat",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2317,
+          "kind": "attribute"
+        },
+        {
+          "text": "Direct Access",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2317,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Direct Access",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2317,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "World members get priority replies",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2319,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "RECENT PRIVATE REPLIES",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2321,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Private reply preview",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2322,
+          "kind": "attribute"
+        },
+        {
+          "text": "How did you start when you had…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2323,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Honestly? The first month I was terrified, but…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2323,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "What would you tell someone who…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2324,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Stop waiting for the perfect moment and…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2324,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "replies within",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2327,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "h",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2327,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "98% warm calls",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2327,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "48h or refund",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2327,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "creator",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2328,
+          "kind": "render-expression"
+        },
+        {
+          "text": "them",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2328,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2328,
+          "kind": "attribute"
+        },
+        {
+          "text": "this creator",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2329,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2331,
+          "kind": "attribute"
+        },
+        {
+          "text": "h",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2331,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "the creator",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2332,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Unlocking…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2334,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Answer · New window",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2334,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Unlock Direct Access",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2334,
+          "kind": "render-expression"
+        },
+        {
+          "text": "SEEN BY",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2338,
           "kind": "copy-property"
+        },
+        {
+          "text": "DELIVERED TO",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2338,
+          "kind": "copy-property"
+        },
+        {
+          "text": "Search people",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2339,
+          "kind": "attribute"
+        },
+        {
+          "text": "Group details",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2341,
+          "kind": "attribute"
+        },
+        {
+          "text": "Group photo options",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2345,
+          "kind": "attribute"
+        },
+        {
+          "text": "Group name",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2350,
+          "kind": "attribute"
+        },
+        {
+          "text": "(you)",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2362,
+          "kind": "render-expression"
         },
         {
           "text": "Admin",
           "file": "src/pages/fan/MessagesPage.jsx",
-          "line": 2274,
+          "line": 2362,
           "kind": "jsx-text"
+        },
+        {
+          "text": "Remove admin",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2364,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Make admin",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2364,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Find people",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2374,
+          "kind": "attribute"
+        },
+        {
+          "text": "Remove from Profile",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2380,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Add to Profile",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2380,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Stop showing this group on your profile",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2380,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Show this group on your profile",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2380,
+          "kind": "render-expression"
+        },
+        {
+          "text": "All reactions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2386,
+          "kind": "attribute"
+        },
+        {
+          "text": "Conversation actions",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2387,
+          "kind": "attribute"
+        },
+        {
+          "text": "Unarchive",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2387,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Archive",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2387,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Change photo",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2388,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Add photo",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2388,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close photo",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2389,
+          "kind": "attribute"
+        },
+        {
+          "text": "Search people",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2394,
+          "kind": "attribute"
+        },
+        {
+          "text": "Choose group photo",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2395,
+          "kind": "attribute"
+        },
+        {
+          "text": "New group",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2395,
+          "kind": "attribute"
+        },
+        {
+          "text": "Group name",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2395,
+          "kind": "attribute"
+        },
+        {
+          "text": "Creating…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2395,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Create Group",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2395,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Confirm deletion",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Delete message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close delete message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "attribute"
+        },
+        {
+          "text": "Deleting…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Delete",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Unsending…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Unsend for everyone",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2396,
+          "kind": "render-expression"
+        },
+        {
+          "text": "message",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2398,
+          "kind": "render-expression"
+        },
+        {
+          "text": "conversation",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2398,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close report",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2398,
+          "kind": "attribute"
+        },
+        {
+          "text": "Submitting…",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2398,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Submit report",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2398,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close story",
+          "file": "src/pages/fan/MessagesPage.jsx",
+          "line": 2408,
+          "kind": "attribute"
         }
       ]
     },
@@ -2141,7 +4438,7 @@
         {
           "text": "Direct Access",
           "file": "src/pages/settings/MonetizationPage.jsx",
-          "line": 101,
+          "line": 103,
           "kind": "attribute"
         }
       ]
@@ -2153,8 +4450,15 @@
     },
     {
       "file": "src/pages/settings/NotificationSettingsSheet.jsx",
-      "count": 0,
-      "strings": []
+      "count": 1,
+      "strings": [
+        {
+          "text": "Views and shares are always silent — never a notification.",
+          "file": "src/pages/settings/NotificationSettingsSheet.jsx",
+          "line": 172,
+          "kind": "jsx-text"
+        }
+      ]
     },
     {
       "file": "src/pages/settings/PrivacyQuickSettingsSheet.jsx",
@@ -2175,18 +4479,30 @@
     },
     {
       "file": "src/pages/settings/ProfileSettingsPage.jsx",
-      "count": 2,
+      "count": 4,
       "strings": [
+        {
+          "text": "coins",
+          "file": "src/pages/settings/ProfileSettingsPage.jsx",
+          "line": 316,
+          "kind": "attribute"
+        },
+        {
+          "text": "collections on · The Vault is where legends live",
+          "file": "src/pages/settings/ProfileSettingsPage.jsx",
+          "line": 317,
+          "kind": "jsx-text"
+        },
         {
           "text": "Email",
           "file": "src/pages/settings/ProfileSettingsPage.jsx",
-          "line": 653,
+          "line": 673,
           "kind": "attribute"
         },
         {
           "text": "WhatsApp",
           "file": "src/pages/settings/ProfileSettingsPage.jsx",
-          "line": 655,
+          "line": 675,
           "kind": "attribute"
         }
       ]
@@ -2198,15 +4514,8 @@
     },
     {
       "file": "src/pages/settings/SettingsPage.jsx",
-      "count": 1,
-      "strings": [
-        {
-          "text": "Direct Access",
-          "file": "src/pages/settings/SettingsPage.jsx",
-          "line": 165,
-          "kind": "attribute"
-        }
-      ]
+      "count": 0,
+      "strings": []
     },
     {
       "file": "src/pages/settings/SettingsPayments.jsx",
@@ -2329,19 +4638,67 @@
     },
     {
       "file": "src/pages/social/SeenFeedPage.jsx",
-      "count": 2,
+      "count": 10,
       "strings": [
         {
           "text": "Seen",
           "file": "src/pages/social/SeenFeedPage.jsx",
-          "line": 229,
+          "line": 266,
           "kind": "jsx-text"
         },
         {
           "text": "@seen",
           "file": "src/pages/social/SeenFeedPage.jsx",
-          "line": 547,
+          "line": 584,
           "kind": "jsx-text"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 607,
+          "kind": "attribute"
+        },
+        {
+          "text": "Remove reaction",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 779,
+          "kind": "render-expression"
+        },
+        {
+          "text": "No comments yet",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 802,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Start the conversation.",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 802,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Quick emoji",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 806,
+          "kind": "attribute"
+        },
+        {
+          "text": "Change reaction",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 939,
+          "kind": "render-expression"
+        },
+        {
+          "text": "React to Seen",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 939,
+          "kind": "render-expression"
+        },
+        {
+          "text": "coins",
+          "file": "src/pages/social/SeenFeedPage.jsx",
+          "line": 1432,
+          "kind": "attribute"
         }
       ]
     },
@@ -2352,43 +4709,91 @@
     },
     {
       "file": "src/pages/social/SeenReaderPage.jsx",
-      "count": 6,
+      "count": 14,
       "strings": [
+        {
+          "text": "Remove reaction",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 257,
+          "kind": "render-expression"
+        },
+        {
+          "text": "No comments yet",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 272,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Start the conversation.",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 272,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Quick emoji",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 276,
+          "kind": "attribute"
+        },
         {
           "text": "@seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 342,
+          "line": 412,
           "kind": "jsx-text"
         },
         {
           "text": "Spam",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 727,
+          "line": 797,
           "kind": "copy-property"
         },
         {
           "text": "@seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 767,
+          "line": 837,
           "kind": "jsx-text"
+        },
+        {
+          "text": "PDF downloaded",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1027,
+          "kind": "notification"
         },
         {
           "text": "@seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 1306,
+          "line": 1410,
           "kind": "jsx-text"
         },
         {
           "text": "Seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 1308,
+          "line": 1412,
           "kind": "render-expression"
         },
         {
+          "text": "coins",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1483,
+          "kind": "attribute"
+        },
+        {
           "text": "Seen",
           "file": "src/pages/social/SeenReaderPage.jsx",
-          "line": 1399,
+          "line": 1505,
           "kind": "jsx-text"
+        },
+        {
+          "text": "Preparing PDF…",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1512,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Download PDF",
+          "file": "src/pages/social/SeenReaderPage.jsx",
+          "line": 1512,
+          "kind": "render-expression"
         }
       ]
     },
@@ -2412,10 +4817,10 @@
       "count": 1,
       "strings": [
         {
-          "text": "Direct Access",
+          "text": "coins",
           "file": "src/pages/social/UnifiedProfilePage.jsx",
-          "line": 568,
-          "kind": "jsx-text"
+          "line": 952,
+          "kind": "attribute"
         }
       ]
     },
@@ -2446,60 +4851,108 @@
     },
     {
       "file": "src/pages/social/WorldReaderPage.jsx",
-      "count": 9,
+      "count": 17,
       "strings": [
         {
           "text": "s",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 241,
+          "line": 247,
+          "kind": "jsx-text"
+        },
+        {
+          "text": "Memberships aren’t available yet",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 358,
           "kind": "jsx-text"
         },
         {
           "text": "s",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 438,
+          "line": 444,
           "kind": "render-expression"
         },
         {
           "text": "s",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 443,
+          "line": 449,
           "kind": "render-expression"
         },
         {
           "text": "Spam",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 488,
+          "line": 494,
           "kind": "copy-property"
-        },
-        {
-          "text": "OK",
-          "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 812,
-          "kind": "render-expression"
         },
         {
           "text": "WhatsApp",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 1232,
+          "line": 1221,
           "kind": "attribute"
+        },
+        {
+          "text": "hide text",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1449,
+          "kind": "render-expression"
+        },
+        {
+          "text": "show text",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1449,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Remove heart",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1453,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Heart this comment",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1453,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Open comment options",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1458,
+          "kind": "attribute"
+        },
+        {
+          "text": "Comment",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1465,
+          "kind": "render-expression"
+        },
+        {
+          "text": "Close comment options",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1466,
+          "kind": "attribute"
+        },
+        {
+          "text": "This removes the comment and its replies.",
+          "file": "src/pages/social/WorldReaderPage.jsx",
+          "line": 1469,
+          "kind": "jsx-text"
         },
         {
           "text": "Spam",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 1609,
+          "line": 1613,
           "kind": "copy-property"
         },
         {
           "text": "Direct Access",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 2846,
+          "line": 2845,
           "kind": "jsx-text"
         },
         {
           "text": "s",
           "file": "src/pages/social/WorldReaderPage.jsx",
-          "line": 2932,
+          "line": 2931,
           "kind": "render-expression"
         }
       ]
@@ -2720,7 +5173,17 @@
       "strings": []
     },
     {
+      "file": "src/services/wallHintService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/services/wallService.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/services/wallViewService.js",
       "count": 0,
       "strings": []
     },
@@ -2746,6 +5209,11 @@
     },
     {
       "file": "src/utils/discoverFriends.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/dreamPresentation.js",
       "count": 0,
       "strings": []
     },
@@ -2845,7 +5313,17 @@
       "strings": []
     },
     {
+      "file": "src/utils/publicationFeedback.js",
+      "count": 0,
+      "strings": []
+    },
+    {
       "file": "src/utils/publicationValidation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/reactionMotion.js",
       "count": 0,
       "strings": []
     },
@@ -2926,6 +5404,36 @@
     },
     {
       "file": "src/utils/wallFilters.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallHaptics.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallLifecycle.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallLifetimePresentation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallMarketplace.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallModerationPresentation.js",
+      "count": 0,
+      "strings": []
+    },
+    {
+      "file": "src/utils/wallModerationReview.js",
       "count": 0,
       "strings": []
     },
@@ -3502,10 +6010,31 @@
     }
   ],
   "strings": {
+    "Thanks sent": [
+      {
+        "file": "src/components/activity/ActivityGiftPreview.jsx",
+        "line": 97,
+        "kind": "render-expression"
+      }
+    ],
+    "Sending…": [
+      {
+        "file": "src/components/activity/ActivityGiftPreview.jsx",
+        "line": 97,
+        "kind": "render-expression"
+      }
+    ],
+    "Say thanks": [
+      {
+        "file": "src/components/activity/ActivityGiftPreview.jsx",
+        "line": 97,
+        "kind": "render-expression"
+      }
+    ],
     "Seen": [
       {
         "file": "src/components/admin/PostReportPreview.jsx",
-        "line": 49,
+        "line": 50,
         "kind": "render-expression"
       },
       {
@@ -3525,7 +6054,7 @@
       },
       {
         "file": "src/components/profile/ProfileContentGrid.jsx",
-        "line": 618,
+        "line": 628,
         "kind": "render-expression"
       },
       {
@@ -3540,7 +6069,7 @@
       },
       {
         "file": "src/pages/creator/CreatorStudio.jsx",
-        "line": 227,
+        "line": 229,
         "kind": "copy-property"
       },
       {
@@ -3560,18 +6089,344 @@
       },
       {
         "file": "src/pages/social/SeenFeedPage.jsx",
-        "line": 229,
+        "line": 266,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 1308,
+        "line": 1412,
         "kind": "render-expression"
       },
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 1399,
+        "line": 1505,
         "kind": "jsx-text"
+      }
+    ],
+    "seen": [
+      {
+        "file": "src/components/branding/AtseenLogo.jsx",
+        "line": 14,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/onboarding/WelcomeCarousel.jsx",
+        "line": 189,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/onboarding/WelcomeCarousel.jsx",
+        "line": 206,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/onboarding/WelcomeMoment.jsx",
+        "line": 11,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/auth/LoginPage.jsx",
+        "line": 80,
+        "kind": "jsx-text"
+      }
+    ],
+    "@seen": [
+      {
+        "file": "src/components/branding/AtseenLogo.jsx",
+        "line": 15,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/components/publication/SeenCard.jsx",
+        "line": 48,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/settings/FirstWeekNotifications.jsx",
+        "line": 32,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 584,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 412,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 837,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1410,
+        "kind": "jsx-text"
+      }
+    ],
+    "Comment deleted.": [
+      {
+        "file": "src/components/fanWeb/home/FeedPost.jsx",
+        "line": 865,
+        "kind": "notification"
+      }
+    ],
+    "Deleting…": [
+      {
+        "file": "src/components/fanWeb/home/FeedPost.jsx",
+        "line": 1155,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "render-expression"
+      }
+    ],
+    "Delete comment": [
+      {
+        "file": "src/components/fanWeb/home/FeedPost.jsx",
+        "line": 1155,
+        "kind": "render-expression"
+      }
+    ],
+    "This removes the comment and its replies.": [
+      {
+        "file": "src/components/fanWeb/home/FeedPost.jsx",
+        "line": 1155,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1469,
+        "kind": "jsx-text"
+      }
+    ],
+    "coins": [
+      {
+        "file": "src/components/financial/CoinAmount.jsx",
+        "line": 4,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/LedgerList.jsx",
+        "line": 6,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/MembershipCard.jsx",
+        "line": 7,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/PurchaseWorldModal.jsx",
+        "line": 40,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/PurchaseWorldModal.jsx",
+        "line": 42,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/PurchaseWorldModal.jsx",
+        "line": 121,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/WalletBalance.jsx",
+        "line": 6,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/financial/WalletBalance.jsx",
+        "line": 6,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/profile/DirectAccessOfferModal.jsx",
+        "line": 19,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/profile/PlanetSlot.jsx",
+        "line": 22,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/profile/ProfileSocialActions.jsx",
+        "line": 54,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/publication/PricingSelector.jsx",
+        "line": 17,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/publication/PublicationComposerShell.jsx",
+        "line": 417,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/components/publication/WorldCard.jsx",
+        "line": 5,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/context/CallContext.jsx",
+        "line": 334,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/admin/FinanceUserPage.jsx",
+        "line": 20,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 27,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 131,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 146,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 130,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 3927,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 4176,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/SeenComposerPage.jsx",
+        "line": 4189,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/WorldOwnerDetailPage.jsx",
+        "line": 26,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1624,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1795,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/creator/WorldPublishingPage.jsx",
+        "line": 1796,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2011,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2078,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2166,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2260,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2261,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2266,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2280,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2328,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2331,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/settings/ProfileSettingsPage.jsx",
+        "line": 316,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 607,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 1432,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1483,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/UnifiedProfilePage.jsx",
+        "line": 952,
+        "kind": "attribute"
+      }
+    ],
+    "Gift": [
+      {
+        "file": "src/components/gifts/GiftArt.jsx",
+        "line": 37,
+        "kind": "render-expression"
       }
     ],
     "Direct Access": [
@@ -3607,101 +6462,156 @@
       },
       {
         "file": "src/pages/creator/WorldPublishingPage.jsx",
-        "line": 1878,
+        "line": 1957,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/fan/MessagesPage.jsx",
-        "line": 1950,
-        "kind": "copy-property"
+        "line": 2316,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2317,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2317,
+        "kind": "jsx-text"
       },
       {
         "file": "src/pages/settings/MonetizationPage.jsx",
-        "line": 101,
+        "line": 103,
         "kind": "attribute"
-      },
-      {
-        "file": "src/pages/settings/SettingsPage.jsx",
-        "line": 165,
-        "kind": "attribute"
-      },
-      {
-        "file": "src/pages/social/UnifiedProfilePage.jsx",
-        "line": 568,
-        "kind": "jsx-text"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 2846,
+        "line": 2845,
         "kind": "jsx-text"
       }
     ],
-    "seen": [
+    "Tap to record · up to 60s": [
       {
-        "file": "src/components/onboarding/OnboardingTicket.jsx",
-        "line": 29,
+        "file": "src/components/messaging/VoiceRecorder.jsx",
+        "line": 162,
         "kind": "jsx-text"
+      }
+    ],
+    "Voice keeps it human — fans hear you.": [
+      {
+        "file": "src/components/messaging/VoiceRecorder.jsx",
+        "line": 169,
+        "kind": "jsx-text"
+      }
+    ],
+    "THE VAULT": [
+      {
+        "file": "src/components/profile/ProfileDream.jsx",
+        "line": 52,
+        "kind": "render-expression"
       },
       {
-        "file": "src/components/onboarding/WelcomeCarousel.jsx",
-        "line": 189,
-        "kind": "jsx-text"
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 40,
+        "kind": "render-expression"
+      }
+    ],
+    "LEGENDARY": [
+      {
+        "file": "src/components/profile/ProfileDream.jsx",
+        "line": 52,
+        "kind": "render-expression"
       },
       {
-        "file": "src/components/onboarding/WelcomeCarousel.jsx",
-        "line": 206,
-        "kind": "jsx-text"
-      },
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 40,
+        "kind": "render-expression"
+      }
+    ],
+    "Not enough coins for this gift.": [
       {
-        "file": "src/pages/auth/LoginPage.jsx",
-        "line": 76,
+        "file": "src/components/profile/ProfileDream.jsx",
+        "line": 418,
         "kind": "jsx-text"
       }
     ],
     "https://": [
       {
         "file": "src/components/publication/PublicationComposerShell.jsx",
-        "line": 1089,
+        "line": 1080,
         "kind": "attribute"
-      }
-    ],
-    "@seen": [
-      {
-        "file": "src/components/publication/SeenCard.jsx",
-        "line": 48,
-        "kind": "jsx-text"
-      },
-      {
-        "file": "src/pages/settings/FirstWeekNotifications.jsx",
-        "line": 32,
-        "kind": "jsx-text"
-      },
-      {
-        "file": "src/pages/social/SeenFeedPage.jsx",
-        "line": 547,
-        "kind": "jsx-text"
-      },
-      {
-        "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 342,
-        "kind": "jsx-text"
-      },
-      {
-        "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 767,
-        "kind": "jsx-text"
-      },
-      {
-        "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 1306,
-        "kind": "jsx-text"
       }
     ],
     "Instagram": [
       {
         "file": "src/components/share/ShareSheet.jsx",
-        "line": 473,
+        "line": 509,
         "kind": "attribute"
+      }
+    ],
+    "atseen.com": [
+      {
+        "file": "src/components/share/TicketChatCard.jsx",
+        "line": 22,
+        "kind": "jsx-text"
+      }
+    ],
+    "creator": [
+      {
+        "file": "src/components/stories/StoryGiftPicker.jsx",
+        "line": 183,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2177,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2328,
+        "kind": "render-expression"
+      }
+    ],
+    "The selected file is empty. Choose a complete image file.": [
+      {
+        "file": "src/components/verification/ManualIdentityApplication.jsx",
+        "line": 41,
+        "kind": "notification"
+      }
+    ],
+    "Document uploaded successfully.": [
+      {
+        "file": "src/components/verification/ManualIdentityApplication.jsx",
+        "line": 49,
+        "kind": "notification"
+      }
+    ],
+    "Uploading…": [
+      {
+        "file": "src/components/verification/ManualIdentityApplication.jsx",
+        "line": 78,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 292,
+        "kind": "render-expression"
+      }
+    ],
+    "Please wait while this file is securely uploaded.": [
+      {
+        "file": "src/components/verification/ManualIdentityApplication.jsx",
+        "line": 78,
+        "kind": "render-expression"
+      }
+    ],
+    "Uploading documents…": [
+      {
+        "file": "src/components/verification/ManualIdentityApplication.jsx",
+        "line": 95,
+        "kind": "render-expression"
       }
     ],
     "Real people. Real worlds.": [
@@ -3830,78 +6740,2058 @@
         "kind": "copy-property"
       }
     ],
+    "Security & 2FA": [
+      {
+        "file": "src/layouts/AdminLayout.jsx",
+        "line": 45,
+        "kind": "jsx-text"
+      }
+    ],
+    "READ-ONLY TEST": [
+      {
+        "file": "src/layouts/AdminLayout.jsx",
+        "line": 53,
+        "kind": "jsx-text"
+      }
+    ],
+    "Platform intelligence": [
+      {
+        "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+        "line": 231,
+        "kind": "jsx-text"
+      }
+    ],
+    "Aggregate platform trends and performance. Individual moderation complaints are managed under Trust & Safety reports.": [
+      {
+        "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+        "line": 231,
+        "kind": "jsx-text"
+      }
+    ],
+    "Reports by status": [
+      {
+        "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+        "line": 299,
+        "kind": "attribute"
+      }
+    ],
+    "Report volume over time": [
+      {
+        "file": "src/pages/admin/AdminAnalyticsPage.jsx",
+        "line": 300,
+        "kind": "attribute"
+      }
+    ],
+    "Current operational totals, safety queues, account environments, and priority actions.": [
+      {
+        "file": "src/pages/admin/AdminDashboard.jsx",
+        "line": 33,
+        "kind": "jsx-text"
+      }
+    ],
+    "Live database · all current accounts": [
+      {
+        "file": "src/pages/admin/AdminDashboard.jsx",
+        "line": 33,
+        "kind": "jsx-text"
+      }
+    ],
+    "Account environment": [
+      {
+        "file": "src/pages/admin/AdminDashboard.jsx",
+        "line": 36,
+        "kind": "jsx-text"
+      }
+    ],
+    "Headline totals include every current database account. This split shows exactly how much comes from production, controlled seed data, and QA automation.": [
+      {
+        "file": "src/pages/admin/AdminDashboard.jsx",
+        "line": 36,
+        "kind": "jsx-text"
+      }
+    ],
+    "Two-factor authentication is enabled": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 47,
+        "kind": "jsx-text"
+      }
+    ],
+    "Your password and a current authenticator code protect this admin account when you sign in.": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 47,
+        "kind": "jsx-text"
+      }
+    ],
+    "Turn off 2FA": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 49,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 55,
+        "kind": "render-expression"
+      }
+    ],
+    "Turn off two-factor authentication?": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 52,
+        "kind": "jsx-text"
+      }
+    ],
+    "The saved authenticator will be removed and all active sessions will be revoked. You can enroll a new authenticator later.": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 53,
+        "kind": "jsx-text"
+      }
+    ],
+    "Authenticator code": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 54,
+        "kind": "jsx-text"
+      }
+    ],
+    "Turning off…": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 55,
+        "kind": "render-expression"
+      }
+    ],
+    "Admin security": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 62,
+        "kind": "jsx-text"
+      }
+    ],
+    "Two-factor authentication is off": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 63,
+        "kind": "render-expression"
+      }
+    ],
+    "Add a new authenticator": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 63,
+        "kind": "render-expression"
+      }
+    ],
+    "2FA is optional for this account. You can use all role-appropriate read-only areas without setting it up.": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 64,
+        "kind": "render-expression"
+      }
+    ],
+    "A Main Admin requires this account to enroll a fresh authenticator before using the admin console.": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 64,
+        "kind": "render-expression"
+      }
+    ],
+    "Preparing…": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "render-expression"
+      }
+    ],
+    "Add authenticator (optional)": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "render-expression"
+      }
+    ],
+    "Set up authenticator": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "render-expression"
+      }
+    ],
+    "Scan this QR code": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "jsx-text"
+      }
+    ],
+    "Authenticator QR code": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "attribute"
+      }
+    ],
+    "Enter key manually": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "jsx-text"
+      }
+    ],
+    "Verifying…": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "render-expression"
+      }
+    ],
+    "Verify and enable 2FA": [
+      {
+        "file": "src/pages/admin/AdminSecuritySetupPage.jsx",
+        "line": 66,
+        "kind": "render-expression"
+      }
+    ],
+    "2FA enabled": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 99,
+        "kind": "render-expression"
+      }
+    ],
+    "New setup required": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 99,
+        "kind": "render-expression"
+      }
+    ],
+    "2FA off": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 99,
+        "kind": "render-expression"
+      }
+    ],
+    "Read-only test": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 99,
+        "kind": "jsx-text"
+      }
+    ],
+    "Remove / turn off 2FA": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 100,
+        "kind": "jsx-text"
+      }
+    ],
+    "Add new 2FA": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 100,
+        "kind": "jsx-text"
+      }
+    ],
+    "Delete test account": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 100,
+        "kind": "jsx-text"
+      }
+    ],
+    "Role-wide 2FA control": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 104,
+        "kind": "jsx-text"
+      }
+    ],
+    "Apply a security reset to every account in a role. Existing authenticator secrets are permanently removed and sessions are revoked.": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 104,
+        "kind": "jsx-text"
+      }
+    ],
+    "Turn off all": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 104,
+        "kind": "jsx-text"
+      }
+    ],
+    "Require new setup": [
+      {
+        "file": "src/pages/admin/AdminStaffPage.jsx",
+        "line": 104,
+        "kind": "jsx-text"
+      }
+    ],
+    "Review queue": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 30,
+        "kind": "jsx-text"
+      }
+    ],
+    "applications in this view": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 30,
+        "kind": "jsx-text"
+      }
+    ],
+    "Applications could not be loaded.": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 31,
+        "kind": "jsx-text"
+      }
+    ],
+    "Queue is clear": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 31,
+        "kind": "jsx-text"
+      }
+    ],
+    "Opening…": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 31,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "render-expression"
+      }
+    ],
+    "Previous page": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 32,
+        "kind": "attribute"
+      }
+    ],
+    "Next page": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 32,
+        "kind": "attribute"
+      }
+    ],
+    "Back to queue": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 36,
+        "kind": "jsx-text"
+      }
+    ],
+    "Review sensitive payout information carefully before deciding.": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 36,
+        "kind": "jsx-text"
+      }
+    ],
+    "Required when requesting changes or rejecting": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 36,
+        "kind": "attribute"
+      }
+    ],
+    "This application has already been reviewed.": [
+      {
+        "file": "src/pages/admin/BankReviewPage.jsx",
+        "line": 36,
+        "kind": "jsx-text"
+      }
+    ],
+    "Set the Stars exchange value and web purchase tax. Users manage their own top-ups from their Wallet.": [
+      {
+        "file": "src/pages/admin/FinancialAdminPage.jsx",
+        "line": 50,
+        "kind": "jsx-text"
+      }
+    ],
+    "Unable to load financial settings.": [
+      {
+        "file": "src/pages/admin/FinancialAdminPage.jsx",
+        "line": 53,
+        "kind": "jsx-text"
+      }
+    ],
+    "Stars value": [
+      {
+        "file": "src/pages/admin/FinancialAdminPage.jsx",
+        "line": 60,
+        "kind": "jsx-text"
+      }
+    ],
+    "Number of Stars users receive for each US dollar.": [
+      {
+        "file": "src/pages/admin/FinancialAdminPage.jsx",
+        "line": 61,
+        "kind": "jsx-text"
+      }
+    ],
+    "Web purchase tax": [
+      {
+        "file": "src/pages/admin/FinancialAdminPage.jsx",
+        "line": 68,
+        "kind": "jsx-text"
+      }
+    ],
+    "Tax percentage applied when users purchase Stars on the web.": [
+      {
+        "file": "src/pages/admin/FinancialAdminPage.jsx",
+        "line": 69,
+        "kind": "jsx-text"
+      }
+    ],
+    "Send animation preview": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 37,
+        "kind": "jsx-text"
+      }
+    ],
+    "Gift animation": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 87,
+        "kind": "jsx-text"
+      }
+    ],
+    "Choose its idle motion and the scene fans see when it is sent.": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 87,
+        "kind": "jsx-text"
+      }
+    ],
+    "Idle motion": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 89,
+        "kind": "jsx-text"
+      }
+    ],
+    "Send scene": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 90,
+        "kind": "jsx-text"
+      }
+    ],
+    "Cinematic style": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 91,
+        "kind": "jsx-text"
+      }
+    ],
+    "Object movement": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 92,
+        "kind": "jsx-text"
+      }
+    ],
+    "Light sweep": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 94,
+        "kind": "jsx-text"
+      }
+    ],
+    "Halo": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 94,
+        "kind": "jsx-text"
+      }
+    ],
+    "How these controls work": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 100,
+        "kind": "jsx-text"
+      }
+    ],
+    "Idle motion, light sweep and halo affect the gift wherever it is displayed. Send scene, cinematic style and object movement affect the full-screen moment after sending or replaying the gift.": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 100,
+        "kind": "jsx-text"
+      }
+    ],
+    "Drag categories into the order fans should see in the gift picker.": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 117,
+        "kind": "jsx-text"
+      }
+    ],
+    "Saving order…": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 117,
+        "kind": "render-expression"
+      }
+    ],
+    "Order saved": [
+      {
+        "file": "src/pages/admin/GiftManagementPage.jsx",
+        "line": 117,
+        "kind": "render-expression"
+      }
+    ],
+    "Tune what people see, how behavior affects ranking, and how varied each delivery batch feels. Changes stay in draft until activated.": [
+      {
+        "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+        "line": 68,
+        "kind": "jsx-text"
+      }
+    ],
+    "Unsaved changes": [
+      {
+        "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+        "line": 68,
+        "kind": "jsx-text"
+      }
+    ],
+    "Set the balance of personalized, related, and discovery content. Every surface must total 100%.": [
+      {
+        "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+        "line": 70,
+        "kind": "jsx-text"
+      }
+    ],
+    "Feed composition": [
+      {
+        "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+        "line": 70,
+        "kind": "jsx-text"
+      }
+    ],
+    "Positive signals promote similar content; negative signals reduce it.": [
+      {
+        "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+        "line": 71,
+        "kind": "jsx-text"
+      }
+    ],
+    "Control batch size, variety, repetition, and freshness.": [
+      {
+        "file": "src/pages/admin/RecommendationSettingsPage.jsx",
+        "line": 71,
+        "kind": "jsx-text"
+      }
+    ],
     "G": [
       {
         "file": "src/pages/auth/LoginPage.jsx",
-        "line": 90,
+        "line": 94,
+        "kind": "jsx-text"
+      }
+    ],
+    "Your Seens were shared": [
+      {
+        "file": "src/pages/creator/CreatorStudio.jsx",
+        "line": 493,
+        "kind": "jsx-text"
+      }
+    ],
+    "times this week.": [
+      {
+        "file": "src/pages/creator/CreatorStudio.jsx",
+        "line": 493,
         "kind": "jsx-text"
       }
     ],
     "B": [
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1641,
+        "line": 1653,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1865,
+        "line": 1877,
         "kind": "jsx-text"
       }
     ],
     "I": [
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1649,
+        "line": 1661,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1873,
+        "line": 1885,
         "kind": "jsx-text"
       }
     ],
     "S": [
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1656,
+        "line": 1668,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1880,
+        "line": 1892,
         "kind": "jsx-text"
       }
     ],
     "L": [
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1664,
+        "line": 1676,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/creator/SeenComposerPage.jsx",
-        "line": 1888,
+        "line": 1900,
         "kind": "jsx-text"
       }
     ],
-    "OK": [
+    "Add a profile photo": [
       {
-        "file": "src/pages/creator/WorldPublishingPage.jsx",
-        "line": 255,
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 743,
+        "kind": "copy-property"
+      }
+    ],
+    "Set your status": [
+      {
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 744,
+        "kind": "copy-property"
+      }
+    ],
+    "Follow people you care about": [
+      {
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 745,
+        "kind": "copy-property"
+      }
+    ],
+    "Post your first Seen": [
+      {
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 746,
+        "kind": "copy-property"
+      }
+    ],
+    "Write a note on the Wall": [
+      {
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 747,
+        "kind": "copy-property"
+      }
+    ],
+    "See who's around": [
+      {
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 748,
+        "kind": "copy-property"
+      }
+    ],
+    "Your first week on @seen": [
+      {
+        "file": "src/pages/fan/ActivityPage.jsx",
+        "line": 749,
+        "kind": "copy-property"
+      }
+    ],
+    "Online": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 203,
+        "kind": "render-expression"
+      }
+    ],
+    "Story replied to": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "attribute"
+      }
+    ],
+    "Story unavailable": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "render-expression"
+      }
+    ],
+    "Answered your question": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "render-expression"
+      }
+    ],
+    "You replied to their story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "render-expression"
+      }
+    ],
+    "Replied to your story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "render-expression"
+      }
+    ],
+    "This story has expired": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "render-expression"
+      }
+    ],
+    "Tap to view story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 210,
+        "kind": "render-expression"
+      }
+    ],
+    "Shared post preview": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 227,
+        "kind": "attribute"
+      }
+    ],
+    "Group crop preview": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 284,
+        "kind": "attribute"
+      }
+    ],
+    "Use photo": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 292,
+        "kind": "render-expression"
+      }
+    ],
+    "Shared content": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 356,
+        "kind": "render-expression"
+      }
+    ],
+    "Open shared content": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 361,
+        "kind": "render-expression"
+      }
+    ],
+    "MY DIRECT ACCESS": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 646,
+        "kind": "copy-property"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 652,
+        "kind": "copy-property"
+      }
+    ],
+    "INCOMING · PAID": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 650,
+        "kind": "copy-property"
+      }
+    ],
+    "ANSWERED": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 651,
+        "kind": "copy-property"
+      }
+    ],
+    "captured ·": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 733,
+        "kind": "jsx-text"
+      }
+    ],
+    "Could not share this profile.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1228,
+        "kind": "notification"
+      }
+    ],
+    "Group created, but its photo could not be uploaded. You can add it from group info.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1256,
+        "kind": "notification"
+      }
+    ],
+    "Choose an image smaller than 10 MB.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1321,
+        "kind": "notification"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1329,
+        "kind": "notification"
+      }
+    ],
+    "Remove this group photo?": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1353,
+        "kind": "notification"
+      }
+    ],
+    "Delete this chat? It will disappear only for you. New messages can start the chat again.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1858,
+        "kind": "notification"
+      }
+    ],
+    "Could not copy this message.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1968,
+        "kind": "notification"
+      }
+    ],
+    "This answer cannot be shared as a story.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 1974,
+        "kind": "notification"
+      }
+    ],
+    "Disappearing message viewer": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2011,
+        "kind": "attribute"
+      }
+    ],
+    "View once": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2011,
         "kind": "render-expression"
       },
       {
-        "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 812,
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "Close disappearing message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2011,
+        "kind": "attribute"
+      }
+    ],
+    "Disappearing": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2011,
+        "kind": "attribute"
+      }
+    ],
+    "Close share picker": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2014,
+        "kind": "attribute"
+      }
+    ],
+    "Search chats and people": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2015,
+        "kind": "attribute"
+      }
+    ],
+    "Recent chat": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2017,
+        "kind": "render-expression"
+      }
+    ],
+    "you": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2025,
+        "kind": "render-expression"
+      }
+    ],
+    "Close filters": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2046,
+        "kind": "attribute"
+      }
+    ],
+    "Member": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2075,
+        "kind": "render-expression"
+      }
+    ],
+    "Message ·": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2078,
+        "kind": "jsx-text"
+      }
+    ],
+    "No Priority messages": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2085,
+        "kind": "render-expression"
+      }
+    ],
+    "No Direct Access messages": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2085,
+        "kind": "render-expression"
+      }
+    ],
+    "No message requests": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "No matching conversations": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "No conversations yet": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "Messages from non-following fans appear here.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "Try another filter or return to All.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "Start a private chat with a creator.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "Accepted fan conversations appear here.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2087,
+        "kind": "render-expression"
+      }
+    ],
+    "Back to chat": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2116,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2317,
+        "kind": "attribute"
+      }
+    ],
+    "Chat options": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2117,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2153,
+        "kind": "attribute"
+      }
+    ],
+    "At seen": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2123,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2174,
+        "kind": "render-expression"
+      }
+    ],
+    "Away": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2123,
+        "kind": "render-expression"
+      }
+    ],
+    "from you": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2132,
+        "kind": "render-expression"
+      }
+    ],
+    "Close preview": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2142,
+        "kind": "attribute"
+      }
+    ],
+    "Shared media preview": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2142,
+        "kind": "attribute"
+      }
+    ],
+    "Back to conversations": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2146,
+        "kind": "attribute"
+      }
+    ],
+    "Unmute notifications": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2155,
+        "kind": "render-expression"
+      }
+    ],
+    "Mute notifications": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2155,
+        "kind": "render-expression"
+      }
+    ],
+    "Remove from profile": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2156,
+        "kind": "render-expression"
+      }
+    ],
+    "Add group to profile": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2156,
+        "kind": "render-expression"
+      }
+    ],
+    "Unarchive chat": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2158,
+        "kind": "render-expression"
+      }
+    ],
+    "Archive chat": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2158,
+        "kind": "render-expression"
+      }
+    ],
+    "Unblock account": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2161,
+        "kind": "render-expression"
+      }
+    ],
+    "Block account": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2161,
+        "kind": "render-expression"
+      }
+    ],
+    "Direct Access ended": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2166,
+        "kind": "jsx-text"
+      }
+    ],
+    "Direct Access ·": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2170,
+        "kind": "jsx-text"
+      }
+    ],
+    "h ·": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2170,
+        "kind": "jsx-text"
+      }
+    ],
+    "Loading…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2176,
+        "kind": "render-expression"
+      }
+    ],
+    "Load older messages": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2176,
+        "kind": "render-expression"
+      }
+    ],
+    "fan": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2177,
+        "kind": "render-expression"
+      }
+    ],
+    "Double-tap to react with ❤️; hold for more reactions": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2197,
+        "kind": "attribute"
+      }
+    ],
+    "You": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2199,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2222,
+        "kind": "render-expression"
+      }
+    ],
+    "You reacted to their story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "Reacted to your story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "This story expired or was removed": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "jsx-text"
+      }
+    ],
+    "Story reacted to": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "attribute"
+      }
+    ],
+    "Disappearing message expired": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "Disappearing message opened": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "Disappearing message sent": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "Open disappearing message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "· tap to view": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "You deleted this message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "This message was deleted": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "You sent": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "You received": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "render-expression"
+      }
+    ],
+    "Shared in chat": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2204,
+        "kind": "attribute"
+      }
+    ],
+    "· Sending…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2206,
+        "kind": "render-expression"
+      }
+    ],
+    "· Failed": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2206,
+        "kind": "render-expression"
+      }
+    ],
+    "Read": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2207,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2207,
+        "kind": "render-expression"
+      }
+    ],
+    "Sent": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2207,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2207,
+        "kind": "render-expression"
+      }
+    ],
+    "Participant": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2222,
+        "kind": "render-expression"
+      }
+    ],
+    "Remove is available for your reaction.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2223,
+        "kind": "render-expression"
+      }
+    ],
+    "Reactions from this chat.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2223,
+        "kind": "render-expression"
+      }
+    ],
+    "Open all reactions": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2227,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2228,
+        "kind": "attribute"
+      }
+    ],
+    "All reactions": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2227,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2228,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2386,
+        "kind": "attribute"
+      }
+    ],
+    "Selected story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2228,
+        "kind": "attribute"
+      }
+    ],
+    "Selected message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2228,
+        "kind": "attribute"
+      }
+    ],
+    "Open message info": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2245,
+        "kind": "attribute"
+      }
+    ],
+    "Call confirmed ✦": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2258,
+        "kind": "render-expression"
+      }
+    ],
+    "Reschedule requested": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2258,
+        "kind": "render-expression"
+      }
+    ],
+    "Call unavailable": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2258,
+        "kind": "render-expression"
+      }
+    ],
+    "Call requested": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2258,
+        "kind": "render-expression"
+      }
+    ],
+    "video": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2260,
+        "kind": "render-expression"
+      }
+    ],
+    "audio": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2260,
+        "kind": "render-expression"
+      }
+    ],
+    "The other person can choose a new time within 24h": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2261,
+        "kind": "render-expression"
+      }
+    ],
+    "This request is no longer active": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2261,
+        "kind": "render-expression"
+      }
+    ],
+    "Coins held · answer within 24h": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2261,
+        "kind": "render-expression"
+      }
+    ],
+    "Confirming…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2263,
+        "kind": "render-expression"
+      }
+    ],
+    "Confirm new time": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2263,
+        "kind": "render-expression"
+      }
+    ],
+    "Confirm call time": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2263,
+        "kind": "render-expression"
+      }
+    ],
+    "Window ended · ask": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2266,
+        "kind": "jsx-text"
+      }
+    ],
+    "them": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2266,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2328,
+        "kind": "render-expression"
+      }
+    ],
+    "a question — they see it free, replying opens a new window": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2266,
+        "kind": "jsx-text"
+      }
+    ],
+    "Delete selected messages": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2269,
+        "kind": "attribute"
+      }
+    ],
+    "You blocked this account. Unblock them to send messages.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2270,
+        "kind": "render-expression"
+      }
+    ],
+    "Messaging is unavailable for this conversation.": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2270,
+        "kind": "render-expression"
+      }
+    ],
+    "The creator": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "render-expression"
+      }
+    ],
+    "asked you a question": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "jsx-text"
+      }
+    ],
+    "Your window with": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "jsx-text"
+      }
+    ],
+    "this creator": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2329,
+        "kind": "render-expression"
+      }
+    ],
+    "has ended": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "jsx-text"
+      }
+    ],
+    "Answer ·": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "render-expression"
+      }
+    ],
+    "New window ·": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "jsx-text"
+      }
+    ],
+    "Reading the thread is always free": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2274,
+        "kind": "jsx-text"
+      }
+    ],
+    "Close disappearing message options": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2276,
+        "kind": "attribute"
+      }
+    ],
+    "yourself": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2278,
+        "kind": "render-expression"
+      }
+    ],
+    "Cancel reply": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2278,
+        "kind": "attribute"
+      }
+    ],
+    "Dismiss gift tip": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2285,
+        "kind": "attribute"
+      }
+    ],
+    "Message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2288,
+        "kind": "attribute"
+      }
+    ],
+    "Message…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2288,
+        "kind": "attribute"
+      }
+    ],
+    "Choose an attachment": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2289,
+        "kind": "attribute"
+      }
+    ],
+    "Attach a file": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2290,
+        "kind": "attribute"
+      }
+    ],
+    "Attach photo": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2290,
+        "kind": "attribute"
+      }
+    ],
+    "Disappearing message timer": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2291,
+        "kind": "attribute"
+      }
+    ],
+    "Send message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2295,
+        "kind": "attribute"
+      }
+    ],
+    "Priority message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2297,
+        "kind": "jsx-text"
+      }
+    ],
+    "· Direct Access — guaranteed answer ›": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2297,
+        "kind": "jsx-text"
+      }
+    ],
+    "World members get priority replies": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2319,
+        "kind": "jsx-text"
+      }
+    ],
+    "RECENT PRIVATE REPLIES": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2321,
+        "kind": "jsx-text"
+      }
+    ],
+    "Private reply preview": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2322,
+        "kind": "attribute"
+      }
+    ],
+    "How did you start when you had…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2323,
+        "kind": "jsx-text"
+      }
+    ],
+    "Honestly? The first month I was terrified, but…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2323,
+        "kind": "jsx-text"
+      }
+    ],
+    "What would you tell someone who…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2324,
+        "kind": "jsx-text"
+      }
+    ],
+    "Stop waiting for the perfect moment and…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2324,
+        "kind": "jsx-text"
+      }
+    ],
+    "replies within": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2327,
+        "kind": "jsx-text"
+      }
+    ],
+    "h": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2327,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2331,
+        "kind": "jsx-text"
+      }
+    ],
+    "98% warm calls": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2327,
+        "kind": "jsx-text"
+      }
+    ],
+    "48h or refund": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2327,
+        "kind": "jsx-text"
+      }
+    ],
+    "the creator": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2332,
+        "kind": "render-expression"
+      }
+    ],
+    "Unlocking…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2334,
+        "kind": "render-expression"
+      }
+    ],
+    "Answer · New window": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2334,
+        "kind": "jsx-text"
+      }
+    ],
+    "Unlock Direct Access": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2334,
+        "kind": "render-expression"
+      }
+    ],
+    "SEEN BY": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2338,
+        "kind": "copy-property"
+      }
+    ],
+    "DELIVERED TO": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2338,
+        "kind": "copy-property"
+      }
+    ],
+    "Search people": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2339,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2394,
+        "kind": "attribute"
+      }
+    ],
+    "Group details": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2341,
+        "kind": "attribute"
+      }
+    ],
+    "Group photo options": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2345,
+        "kind": "attribute"
+      }
+    ],
+    "Group name": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2350,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2395,
+        "kind": "attribute"
+      }
+    ],
+    "(you)": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2362,
         "kind": "render-expression"
       }
     ],
     "Admin": [
       {
         "file": "src/pages/fan/MessagesPage.jsx",
-        "line": 2274,
+        "line": 2362,
         "kind": "jsx-text"
+      }
+    ],
+    "Remove admin": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2364,
+        "kind": "render-expression"
+      }
+    ],
+    "Make admin": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2364,
+        "kind": "render-expression"
+      }
+    ],
+    "Find people": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2374,
+        "kind": "attribute"
+      }
+    ],
+    "Remove from Profile": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2380,
+        "kind": "render-expression"
+      }
+    ],
+    "Add to Profile": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2380,
+        "kind": "render-expression"
+      }
+    ],
+    "Stop showing this group on your profile": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2380,
+        "kind": "render-expression"
+      }
+    ],
+    "Show this group on your profile": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2380,
+        "kind": "render-expression"
+      }
+    ],
+    "Conversation actions": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2387,
+        "kind": "attribute"
+      }
+    ],
+    "Unarchive": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2387,
+        "kind": "render-expression"
+      }
+    ],
+    "Archive": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2387,
+        "kind": "render-expression"
+      }
+    ],
+    "Change photo": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2388,
+        "kind": "render-expression"
+      }
+    ],
+    "Add photo": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2388,
+        "kind": "render-expression"
+      }
+    ],
+    "Close photo": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2389,
+        "kind": "attribute"
+      }
+    ],
+    "Choose group photo": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2395,
+        "kind": "attribute"
+      }
+    ],
+    "New group": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2395,
+        "kind": "attribute"
+      }
+    ],
+    "Creating…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2395,
+        "kind": "render-expression"
+      }
+    ],
+    "Create Group": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2395,
+        "kind": "render-expression"
+      }
+    ],
+    "Confirm deletion": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "render-expression"
+      }
+    ],
+    "Delete message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "render-expression"
+      }
+    ],
+    "Close delete message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "attribute"
+      }
+    ],
+    "Delete": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "render-expression"
+      }
+    ],
+    "Unsending…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "render-expression"
+      }
+    ],
+    "Unsend for everyone": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2396,
+        "kind": "render-expression"
+      }
+    ],
+    "message": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2398,
+        "kind": "render-expression"
+      }
+    ],
+    "conversation": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2398,
+        "kind": "render-expression"
+      }
+    ],
+    "Close report": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2398,
+        "kind": "attribute"
+      }
+    ],
+    "Submitting…": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2398,
+        "kind": "render-expression"
+      }
+    ],
+    "Submit report": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2398,
+        "kind": "render-expression"
+      }
+    ],
+    "Close story": [
+      {
+        "file": "src/pages/fan/MessagesPage.jsx",
+        "line": 2408,
+        "kind": "attribute"
       }
     ],
     "AI": [
@@ -3911,62 +8801,215 @@
         "kind": "jsx-text"
       }
     ],
+    "Views and shares are always silent — never a notification.": [
+      {
+        "file": "src/pages/settings/NotificationSettingsSheet.jsx",
+        "line": 172,
+        "kind": "jsx-text"
+      }
+    ],
+    "collections on · The Vault is where legends live": [
+      {
+        "file": "src/pages/settings/ProfileSettingsPage.jsx",
+        "line": 317,
+        "kind": "jsx-text"
+      }
+    ],
     "Email": [
       {
         "file": "src/pages/settings/ProfileSettingsPage.jsx",
-        "line": 653,
+        "line": 673,
         "kind": "attribute"
       }
     ],
     "WhatsApp": [
       {
         "file": "src/pages/settings/ProfileSettingsPage.jsx",
-        "line": 655,
+        "line": 675,
         "kind": "attribute"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 1232,
+        "line": 1221,
         "kind": "attribute"
+      }
+    ],
+    "Remove reaction": [
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 779,
+        "kind": "render-expression"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 257,
+        "kind": "render-expression"
+      }
+    ],
+    "No comments yet": [
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 802,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 272,
+        "kind": "jsx-text"
+      }
+    ],
+    "Start the conversation.": [
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 802,
+        "kind": "jsx-text"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 272,
+        "kind": "jsx-text"
+      }
+    ],
+    "Quick emoji": [
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 806,
+        "kind": "attribute"
+      },
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 276,
+        "kind": "attribute"
+      }
+    ],
+    "Change reaction": [
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 939,
+        "kind": "render-expression"
+      }
+    ],
+    "React to Seen": [
+      {
+        "file": "src/pages/social/SeenFeedPage.jsx",
+        "line": 939,
+        "kind": "render-expression"
       }
     ],
     "Spam": [
       {
         "file": "src/pages/social/SeenReaderPage.jsx",
-        "line": 727,
+        "line": 797,
         "kind": "copy-property"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 488,
+        "line": 494,
         "kind": "copy-property"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 1609,
+        "line": 1613,
         "kind": "copy-property"
+      }
+    ],
+    "PDF downloaded": [
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1027,
+        "kind": "notification"
+      }
+    ],
+    "Preparing PDF…": [
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1512,
+        "kind": "render-expression"
+      }
+    ],
+    "Download PDF": [
+      {
+        "file": "src/pages/social/SeenReaderPage.jsx",
+        "line": 1512,
+        "kind": "render-expression"
       }
     ],
     "s": [
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 241,
+        "line": 247,
         "kind": "jsx-text"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 438,
+        "line": 444,
         "kind": "render-expression"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 443,
+        "line": 449,
         "kind": "render-expression"
       },
       {
         "file": "src/pages/social/WorldReaderPage.jsx",
-        "line": 2932,
+        "line": 2931,
         "kind": "render-expression"
+      }
+    ],
+    "Memberships aren’t available yet": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 358,
+        "kind": "jsx-text"
+      }
+    ],
+    "hide text": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1449,
+        "kind": "render-expression"
+      }
+    ],
+    "show text": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1449,
+        "kind": "render-expression"
+      }
+    ],
+    "Remove heart": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1453,
+        "kind": "render-expression"
+      }
+    ],
+    "Heart this comment": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1453,
+        "kind": "render-expression"
+      }
+    ],
+    "Open comment options": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1458,
+        "kind": "attribute"
+      }
+    ],
+    "Comment": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1465,
+        "kind": "render-expression"
+      }
+    ],
+    "Close comment options": [
+      {
+        "file": "src/pages/social/WorldReaderPage.jsx",
+        "line": 1466,
+        "kind": "attribute"
       }
     ]
   },

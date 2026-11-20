@@ -1,6 +1,6 @@
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
-import { msg as __msg } from "../../i18n/runtime.js";
+import { msg as __msg, systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
@@ -14,6 +14,10 @@ function formatCount(value = 0) {
 
 function profileRoute(person = {}) {
   return person.profileUrl || (person.username ? `/profile/${encodeURIComponent(person.username)}` : "/search");
+}
+
+function identity(person = {}, fallback = "") {
+  return person.username ? `@${person.username}` : person.displayName || person.name || fallback;
 }
 
 function DiscoverFollowButton({ disabled, onToggle, person }) {
@@ -46,7 +50,7 @@ function DiscoverActivityCard({ activity }) {
       <FanAvatar className="ring-2 ring-atseen-blue" name={actor.displayName || actor.name} size="h-[54px] w-[54px]" src={actor.avatar} />
       <span className="min-w-0 flex-1">
         <strong>{__msg("discover.beingSeenRightNow")}</strong>
-        <small>{activity.text || __msg("discover.isAtSeen", { value0: actor.displayName || actor.name })}</small>
+        <small>{activity.text || __msg("discover.isAtSeen", { value0: identity(actor) })}</small>
       </span>
       {activity.online ? <i className="presence-blink" aria-label={__msg("discover.online")} /> : null}
     </Link>
@@ -66,10 +70,10 @@ function SuggestedForYou({ disabled, onFollowToggle, people = [] }) {
             <FanAvatar name={person.displayName || person.name} size="h-[50px] w-[50px]" src={person.avatar} />
             <span className="min-w-0 flex-1">
               <strong>
-                {person.displayName || person.name || person.username}
+                {person.username ? <><i className="identity-at">@</i>{person.username}</> : person.displayName || person.name}
                 {person.isVerified ? <VerifiedBadge /> : null}
               </strong>
-              <small>{person.recommendationReason || [person.category, person.city || person.country].filter(Boolean).join(" \u00b7 ") || `@${person.username}`}</small>
+              <small>{person.recommendationReason ? __systemMessage(person.recommendationReason) : [person.category ? __systemMessage(person.category) : "", person.city || person.country].filter(Boolean).join(" \u00b7 ")}</small>
             </span>
             <DiscoverFollowButton disabled={disabled} onToggle={onFollowToggle} person={person} />
           </Link>
@@ -91,7 +95,7 @@ function TrendingSeen({ seen }) {
       <span className="discover-seen-copy">
         <small>{__msg("discover.trendingSeen")}</small>
         <strong dir="auto">{seen.title}</strong>
-        <em>{seen.creator?.name || seen.creator?.displayName || __msg("discover.creator")}{" \u00b7 "}{formatCount(seen.engagementCount ?? seen.viewCount)} {__msg("discover.interactions")}</em>
+        <em>{identity(seen.creator, __msg("discover.creator"))}{" \u00b7 "}{formatCount(seen.engagementCount ?? seen.viewCount)} {__msg("discover.interactions")}</em>
       </span>
     </Link>
   );
@@ -112,7 +116,7 @@ function FreshSeens({ seens = [] }) {
               {cover ? <PublicationCoverMedia autoPlay loop alt={__msg("discover.cover", { value0: seen.title })} loading="lazy" media={seen.coverMedia || { secureUrl: cover }} /> : <span aria-hidden="true" />}
               <span className="min-w-0">
                 <strong dir="auto">{seen.title}</strong>
-                <small>{seen.creator?.name || seen.creator?.displayName || __msg("discover.creator")}{" \u00b7 "}{seen.chapterCount} {__msg("discover.chapters")}</small>
+                <small>{identity(seen.creator, __msg("discover.creator"))}{" \u00b7 "}{seen.chapterCount} {__msg("discover.chapters")}</small>
               </span>
             </Link>
           );
@@ -127,7 +131,13 @@ function DiscoverRailFooter() {
   return (
     <footer className="discover-rail-footer" aria-label={__msg("discover.discoverLinks")}>
       <nav aria-label={__msg("discover.aboutSeen")}>
-        {["About", "Creators", "Terms", "Privacy", "Help"].map((item) => <span key={item}>{item}</span>)}
+        {[
+          ["about", __msg("settings.about")],
+          ["creators", __msg("admin.creators")],
+          ["terms", __msg("system.LoginPage.a55a275aa6")],
+          ["privacy", __msg("settings.privacy")],
+          ["help", __msg("profile.help")],
+        ].map(([key, label]) => <span key={key}>{label}</span>)}
       </nav>
       <p>{__msg("discover.seenWeSeeYouEveryDay")}</p>
     </footer>

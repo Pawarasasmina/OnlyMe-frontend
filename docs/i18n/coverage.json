@@ -1,34 +1,17 @@
 {
   "locales": {
     "en": {
-      "keys": 7274,
-      "required": 7274,
+      "keys": 7292,
+      "required": 7292,
       "missing": [],
       "invalid": [],
       "identical": [],
       "unexpectedEnglish": []
     },
     "ar": {
-      "keys": 7258,
-      "required": 7274,
-      "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
-      ],
+      "keys": 7292,
+      "required": 7292,
+      "missing": [],
       "invalid": [],
       "identical": [
         {
@@ -248,26 +231,9 @@
       ]
     },
     "ru": {
-      "keys": 7258,
-      "required": 7274,
-      "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
-      ],
+      "keys": 7292,
+      "required": 7292,
+      "missing": [],
       "invalid": [],
       "identical": [
         {
@@ -471,25 +437,10 @@
       ]
     },
     "uk": {
-      "keys": 7258,
-      "required": 7274,
+      "keys": 7291,
+      "required": 7292,
       "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
+        "discover.inviteDescription"
       ],
       "invalid": [],
       "identical": [
@@ -706,26 +657,9 @@
       ]
     },
     "es": {
-      "keys": 7258,
-      "required": 7274,
-      "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
-      ],
+      "keys": 7292,
+      "required": 7292,
+      "missing": [],
       "invalid": [],
       "identical": [
         {
@@ -1041,26 +975,9 @@
       ]
     },
     "pt": {
-      "keys": 7258,
-      "required": 7274,
-      "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
-      ],
+      "keys": 7292,
+      "required": 7292,
+      "missing": [],
       "invalid": [],
       "identical": [
         {
@@ -1356,26 +1273,9 @@
       ]
     },
     "fr": {
-      "keys": 7258,
-      "required": 7274,
-      "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
-      ],
+      "keys": 7292,
+      "required": 7292,
+      "missing": [],
       "invalid": [],
       "identical": [
         {
@@ -1923,26 +1823,9 @@
       ]
     },
     "de": {
-      "keys": 7258,
-      "required": 7274,
-      "missing": [
-        "admin.wallReview.automated",
-        "admin.wallReview.matchingNote",
-        "admin.wallReview.similarity",
-        "admin.wallReview.automatedExplanation",
-        "admin.wallReview.falseReport",
-        "admin.wallReview.falseReportExplanation",
-        "admin.wallReview.approve",
-        "admin.wallReview.approveExplanation",
-        "admin.wallReview.reject",
-        "admin.wallReview.hide",
-        "admin.wallReview.hideExplanation",
-        "admin.wallReview.remove",
-        "admin.wallReview.removeExplanation",
-        "wallGrid.pricePrecision",
-        "wallGrid.invalidPrice",
-        "wallGrid.priceCountryRequired"
-      ],
+      "keys": 7292,
+      "required": 7292,
+      "missing": [],
       "invalid": [],
       "identical": [
         {
@@ -2439,7 +2322,7 @@
     }
   },
   "source": {
-    "modules": 525,
+    "modules": 532,
     "routeDeclarations": 136,
     "routes": [
       "/explore",
@@ -2581,49 +2464,9 @@
     ],
     "unregistered": [
       {
-        "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
-        "line": 1281,
-        "key": "admin.edit"
-      },
-      {
-        "file": "src\\components\\profile\\ProfileLanguagesField.jsx",
-        "line": 15,
-        "key": "Spoken language"
-      },
-      {
-        "file": "src\\components\\profile\\ProfileLanguagesField.jsx",
-        "line": 16,
-        "key": "Spoken language"
-      },
-      {
-        "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
-        "line": 1840,
-        "key": "Paid items stay Only you until Verification"
-      },
-      {
-        "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
-        "line": 1840,
-        "key": "Seller info once — takes a minute"
-      },
-      {
-        "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
-        "line": 1840,
-        "key": "Your draft remains Only you until you can sell"
-      },
-      {
-        "file": "src\\pages\\creator\\WorldPublishingPage.jsx",
-        "line": 1841,
-        "key": "Set up"
-      },
-      {
-        "file": "src\\pages\\fan\\ActivityPage.jsx",
-        "line": 758,
-        "key": "Your first week"
-      },
-      {
-        "file": "src\\pages\\fan\\ActivityPage.jsx",
-        "line": 758,
-        "key": "Day"
+        "file": "src\\pages\\social\\UnifiedProfilePage.jsx",
+        "line": 495,
+        "key": "admin.copyLink"
       }
     ],
     "rawJsx": [
@@ -2631,11 +2474,6 @@
         "file": "src\\components\\fanWeb\\home\\FeedPost.jsx",
         "line": 1155,
         "text": "This removes the comment and its replies."
-      },
-      {
-        "file": "src\\components\\messaging\\VoiceRecorder.jsx",
-        "line": 161,
-        "text": "Voice message"
       },
       {
         "file": "src\\components\\messaging\\VoiceRecorder.jsx",
@@ -2658,31 +2496,6 @@
         "text": "atseen.com"
       },
       {
-        "file": "src\\components\\stories\\StoryGiftPicker.jsx",
-        "line": 182,
-        "text": "Send"
-      },
-      {
-        "file": "src\\components\\stories\\StoryGiftPicker.jsx",
-        "line": 182,
-        "text": "a gift"
-      },
-      {
-        "file": "src\\components\\stories\\StoryGiftPicker.jsx",
-        "line": 186,
-        "text": "All gifts"
-      },
-      {
-        "file": "src\\components\\stories\\StoryGiftPicker.jsx",
-        "line": 188,
-        "text": "Your gift appears on"
-      },
-      {
-        "file": "src\\components\\stories\\StoryGiftPicker.jsx",
-        "line": 188,
-        "text": "’s profile with your name — or send it privately."
-      },
-      {
         "file": "src\\layouts\\AdminLayout.jsx",
         "line": 45,
         "text": "Security & 2FA"
@@ -2696,11 +2509,6 @@
         "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
         "line": 231,
         "text": "Platform intelligence"
-      },
-      {
-        "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
-        "line": 231,
-        "text": "Analytics"
       },
       {
         "file": "src\\pages\\admin\\AdminAnalyticsPage.jsx",
@@ -2773,11 +2581,6 @@
         "text": "Enter key manually"
       },
       {
-        "file": "src\\pages\\admin\\AdminSecuritySetupPage.jsx",
-        "line": 66,
-        "text": "Six-digit code"
-      },
-      {
         "file": "src\\pages\\admin\\AdminStaffPage.jsx",
         "line": 99,
         "text": "Read-only test"
@@ -2819,16 +2622,6 @@
       },
       {
         "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 27,
-        "text": "Financial operations"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 27,
-        "text": "Refresh"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
         "line": 30,
         "text": "Review queue"
       },
@@ -2836,11 +2629,6 @@
         "file": "src\\pages\\admin\\BankReviewPage.jsx",
         "line": 30,
         "text": "applications in this view"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 30,
-        "text": "Status"
       },
       {
         "file": "src\\pages\\admin\\BankReviewPage.jsx",
@@ -2854,31 +2642,6 @@
       },
       {
         "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 31,
-        "text": "· ending"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 31,
-        "text": "Submitted"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 32,
-        "text": "Page"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 32,
-        "text": "of"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 32,
-        "text": "records"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
         "line": 36,
         "text": "Back to queue"
       },
@@ -2886,26 +2649,6 @@
         "file": "src\\pages\\admin\\BankReviewPage.jsx",
         "line": 36,
         "text": "Review sensitive payout information carefully before deciding."
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 36,
-        "text": "Review decision"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 36,
-        "text": "Approve bank"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 36,
-        "text": "Request changes"
-      },
-      {
-        "file": "src\\pages\\admin\\BankReviewPage.jsx",
-        "line": 36,
-        "text": "Reject"
       },
       {
         "file": "src\\pages\\admin\\BankReviewPage.jsx",
@@ -2944,68 +2687,78 @@
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 37,
+        "line": 38,
         "text": "Send animation preview"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 37,
-        "text": "Replay"
+        "line": 81,
+        "text": "Caption"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 87,
-        "text": "Gift animation"
-      },
-      {
-        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 87,
-        "text": "Choose its idle motion and the scene fans see when it is sent."
+        "line": 81,
+        "text": "(optional)"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
         "line": 89,
-        "text": "Idle motion"
+        "text": "Gift animation"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 90,
-        "text": "Send scene"
+        "line": 89,
+        "text": "Choose its idle motion and the scene fans see when it is sent."
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
         "line": 91,
-        "text": "Cinematic style"
+        "text": "Idle motion"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
         "line": 92,
+        "text": "Send scene"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 93,
+        "text": "Cinematic style"
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 94,
         "text": "Object movement"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 94,
+        "line": 96,
         "text": "Light sweep"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 94,
+        "line": 96,
         "text": "Halo"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 100,
+        "line": 102,
         "text": "How these controls work"
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 100,
+        "line": 102,
         "text": "Idle motion, light sweep and halo affect the gift wherever it is displayed. Send scene, cinematic style and object movement affect the full-screen moment after sending or replaying the gift."
       },
       {
         "file": "src\\pages\\admin\\GiftManagementPage.jsx",
-        "line": 117,
+        "line": 119,
         "text": "Drag categories into the order fans should see in the gift picker."
+      },
+      {
+        "file": "src\\pages\\admin\\GiftManagementPage.jsx",
+        "line": 148,
+        "text": "No caption"
       },
       {
         "file": "src\\pages\\admin\\RecommendationSettingsPage.jsx",
@@ -3049,1028 +2802,213 @@
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 203,
-        "text": "At seen"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 222,
-        "text": "Shared post"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 222,
-        "text": "Open this post"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 227,
-        "text": "Video post"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 231,
-        "text": "Open post"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 254,
-        "text": "Forwarded"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 254,
-        "text": "Open this"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 282,
-        "text": "Position group photo"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 282,
-        "text": "Zoom and move the image inside the circle."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 288,
-        "text": "Zoom"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 289,
-        "text": "Left/right"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 290,
-        "text": "Up/down"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 292,
-        "text": "Cancel"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 733,
+        "line": 866,
         "text": "captured ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 733,
-        "text": "earned"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2011,
-        "text": "Voice message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2014,
-        "text": "Send in message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2014,
-        "text": "Choose a recent chat, group, or another person."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2017,
-        "text": "Recent"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2018,
-        "text": "Other people"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2019,
-        "text": "Loading people…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2020,
-        "text": "No chats or people found."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2042,
-        "text": "People you don’t follow yet. They won’t know you’ve seen it until you accept."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2046,
-        "text": "Filter"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2060,
-        "text": "Set up Direct Access"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2060,
-        "text": "Your prices for messages and calls"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2061,
-        "text": "Loading Direct Access…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2062,
-        "text": "Loading conversations…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2063,
-        "text": "Conversations are unavailable."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2063,
-        "text": "Retry"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2078,
-        "text": "Message ·"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2078,
-        "text": "to you"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2078,
-        "text": "h left"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2079,
-        "text": "earned"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2085,
-        "text": "Direct Access conversations will appear here."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2087,
-        "text": "Show all"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2095,
-        "text": "Accept"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2096,
-        "text": "Delete"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2106,
-        "text": "Pending"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2124,
-        "text": "Open profile ›"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2131,
-        "text": "Shared"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2131,
-        "text": "Links you share appear here."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2132,
-        "text": "No gifts yet."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2132,
-        "text": "Send a gift ›"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2133,
-        "text": "members"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2133,
-        "text": "No groups together yet."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2148,
-        "text": "Reconnecting…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2157,
-        "text": "Change group photo"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2159,
-        "text": "Report conversation"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2160,
-        "text": "Dispute Direct Access"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2162,
-        "text": "Delete chat"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "held"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "· awaiting creator reply · ⏳"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "· 0/3 used"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "Free follow-up pending"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "· no Stars charged yet"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "3/3 fan messages used"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "· You can still answer · ⏳"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "Direct Access ended"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2166,
-        "text": "· History remains readable"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2167,
-        "text": "They won’t know you’ve seen it until you accept."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2170,
-        "text": "Direct Access ·"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2170,
-        "text": "of"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2175,
-        "text": "Answer honestly · earn $"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2175,
-        "text": "Your first reply completes this paid request and releases your net earnings."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2177,
-        "text": "Text messages are private between you and this"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2178,
-        "text": "Loading messages…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2179,
-        "text": "Messages could not be loaded."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2179,
-        "text": "Retry"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2180,
-        "text": "Start the conversation"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2180,
-        "text": "Send a message when you are ready."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2204,
-        "text": "Story unavailable"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2204,
-        "text": "This story expired or was removed"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2208,
-        "text": "Retry"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2211,
-        "text": "Send a gift"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2222,
-        "text": "Remove"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2228,
-        "text": "Media message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2229,
-        "text": "Reply"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2230,
-        "text": "Copy"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2231,
-        "text": "Share as Story"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2232,
-        "text": "Message info"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2233,
-        "text": "Select messages"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2234,
-        "text": "Forward"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2235,
-        "text": "Delete"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2236,
-        "text": "Report"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2260,
-        "text": "min"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2261,
-        "text": "· reminder 10 min before"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2262,
-        "text": "No-show by them—full refund. Once connected—the time is paid, however short the call. ·"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2262,
-        "text": "reschedule"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2266,
-        "text": "Window ended · ask"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2266,
-        "text": "a question — they see it free, replying opens a new window"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2269,
+        "line": 2216,
         "text": "Cancel"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2269,
-        "text": "selected"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2269,
-        "text": "Forward"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2270,
-        "text": "Unblock"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2271,
-        "text": "Accept this request before replying."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2273,
-        "text": "Delete"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2273,
-        "text": "Accept"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
-        "text": "Message request sent. You can continue after they accept it."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
-        "text": "asked you a question"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
-        "text": "Your window with"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
-        "text": "has ended"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
-        "text": "New window ·"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2274,
-        "text": "Reading the thread is always free"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2276,
-        "text": "Disappearing message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2276,
-        "text": "The timer starts when they open it"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2276,
-        "text": "Disappearing messages are removed for both people after opening. Recipients may still capture content before it disappears."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2278,
-        "text": "Replying to"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2279,
-        "text": "You used all 3 messages."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2279,
-        "text": "Open a new Direct Access window to continue. Your previous messages and replies stay in this chat."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2280,
-        "text": "Waiting for the creator"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2280,
-        "text": "is held and will be fully refunded if they do not reply in time."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2281,
-        "text": "Waiting for the creator"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2281,
-        "text": "· No Stars have been charged. The configured Direct Access price is charged only when the creator replies."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2282,
-        "text": "Free fan question"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2282,
-        "text": "· Your reply opens and settles a new paid window at your configured price."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2283,
-        "text": "Answer the actual question — specific and real. Your reply remains available even after the fan reaches 3/3."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2284,
-        "text": "This Direct Access window is closed. Its message history remains visible to both people."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2285,
-        "text": "Send a gift from the chat"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2285,
-        "text": "Add an optional note and it will stay in this conversation."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2297,
-        "text": "Priority message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2297,
-        "text": "· Direct Access — guaranteed answer ›"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2319,
-        "text": "World members get priority replies"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2320,
-        "text": "“Write as you are — I read everything myself.”"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2320,
-        "text": "· Direct Access"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2321,
-        "text": "RECENT PRIVATE REPLIES"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2323,
-        "text": "How did you start when you had…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2323,
-        "text": "Honestly? The first month I was terrified, but…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2324,
-        "text": "What would you tell someone who…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2324,
-        "text": "Stop waiting for the perfect moment and…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2326,
-        "text": "Private stays private — yours will look like this to everyone else"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2327,
-        "text": "replies within"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2327,
-        "text": "98% warm calls"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2327,
-        "text": "48h or refund"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2328,
-        "text": "Call with"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2328,
-        "text": "A real voice — just you and"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2328,
-        "text": "min · guaranteed or refunded"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2328,
-        "text": "Request"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2329,
-        "text": "A real conversation."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2329,
-        "text": "Not one reply into the void — a private 48-hour window with"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2329,
-        "text": ", with a promise attached."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2331,
-        "text": "Price"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2331,
-        "text": "Usually replies"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2331,
-        "text": "within"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2331,
-        "text": "Guarantee"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2331,
-        "text": "48h or refunded"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2332,
-        "text": "You’re only charged when"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2332,
-        "text": "replies."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2334,
-        "text": "Use included Premium window"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2334,
-        "text": "Answer · New window"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2334,
-        "text": "Not enough Stars · Open Wallet"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2338,
-        "text": "Message info"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2338,
-        "text": "No members yet."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2339,
-        "text": "Forward message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2351,
-        "text": "Save"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2355,
-        "text": "Members ·"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2372,
-        "text": "Add members"
+        "line": 2291,
+        "text": "Message ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
         "line": 2379,
-        "text": "Group permissions"
+        "text": "Share profile"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
         "line": 2379,
-        "text": "Choose who can edit group info and add members"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2381,
-        "text": "Leave group"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2382,
-        "text": "Delete group"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2382,
-        "text": "Creator only · removes it for everyone"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2386,
-        "text": "One reaction — make it yours"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2387,
-        "text": "Conversation"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2387,
-        "text": "Open chat"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2388,
-        "text": "Group photo"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2388,
-        "text": "View photo"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2388,
-        "text": "Remove photo"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2388,
-        "text": "Only permitted group members can change this photo."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2392,
-        "text": "Group permissions"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2392,
-        "text": "Admins can always perform these actions."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2393,
-        "text": "New message"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2393,
-        "text": "New Chat"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2393,
-        "text": "Message someone directly"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2393,
-        "text": "New Group"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2393,
-        "text": "A private group with the people you choose"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2394,
-        "text": "New Chat"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2394,
-        "text": "Finding people…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2394,
-        "text": "No people found."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2395,
-        "text": "New Group"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2395,
-        "text": "Add members"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2396,
-        "text": "This disappears only from your chat."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2396,
-        "text": "Back"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2396,
-        "text": "Choose an option."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2396,
-        "text": "Delete for me"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2396,
-        "text": "Only removes it from your chat."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2396,
-        "text": "Replaces it for both people."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "Delete"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "messages?"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "Choose where the selected messages should disappear."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "Delete for me"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "Only removes the selected messages from your chat."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "Delete for everyone"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "All selected messages were sent by you."
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2397,
-        "text": "Deleting messages…"
-      },
-      {
-        "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2398,
         "text": "Report"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2398,
-        "text": "Your report is private and will be reviewed."
+        "line": 2379,
+        "text": "Delete chat"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2398,
-        "text": "Reason"
+        "line": 2380,
+        "text": "Direct Access ended"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2398,
-        "text": "Additional details"
+        "line": 2384,
+        "text": "Direct Access ·"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2398,
-        "text": "(optional)"
+        "line": 2418,
+        "text": "This story expired or was removed"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2409,
-        "text": "Loading story..."
+        "line": 2480,
+        "text": "Window ended · ask"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2410,
-        "text": "Story unavailable"
+        "line": 2480,
+        "text": "a question — they see it free, replying opens a new window"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2410,
-        "text": "This story expired after 24 hours or was deleted by its creator."
+        "line": 2488,
+        "text": "asked you a question"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2411,
-        "text": "Unable to open story"
+        "line": 2488,
+        "text": "Your window with"
       },
       {
         "file": "src\\pages\\fan\\MessagesPage.jsx",
-        "line": 2411,
-        "text": "Please check your connection and try again."
+        "line": 2488,
+        "text": "has ended"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2488,
+        "text": "New window ·"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2488,
+        "text": "Reading the thread is always free"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2502,
+        "text": "Disappearing photo or message"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2502,
+        "text": "Opens once, then it’s gone"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2503,
+        "text": "Gift"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2503,
+        "text": "Something that lands"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2504,
+        "text": "Video circle"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2504,
+        "text": "Up to 60 seconds"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2505,
+        "text": "Priority message"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2505,
+        "text": "Direct Access — guaranteed answer"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2515,
+        "text": "Priority message"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2515,
+        "text": "· Direct Access — guaranteed answer ›"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2537,
+        "text": "World members get priority replies"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2539,
+        "text": "RECENT PRIVATE REPLIES"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2541,
+        "text": "How did you start when you had…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2541,
+        "text": "Honestly? The first month I was terrified, but…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2542,
+        "text": "What would you tell someone who…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2542,
+        "text": "Stop waiting for the perfect moment and…"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2545,
+        "text": "replies within"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2545,
+        "text": "98% warm calls"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2545,
+        "text": "48h or refund"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2552,
+        "text": "Answer · New window"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2618,
+        "text": "Report conversation"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2618,
+        "text": "Why are you reporting this?"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2619,
+        "text": "Thank you"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2619,
+        "text": "Our team will review this shortly."
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2619,
+        "text": "Done"
+      },
+      {
+        "file": "src\\pages\\fan\\MessagesPage.jsx",
+        "line": 2620,
+        "text": "Cancel"
       },
       {
         "file": "src\\pages\\settings\\NotificationSettingsSheet.jsx",
@@ -4079,7 +3017,7 @@
       },
       {
         "file": "src\\pages\\settings\\ProfileSettingsPage.jsx",
-        "line": 317,
+        "line": 318,
         "text": "collections on · The Vault is where legends live"
       },
       {
@@ -4093,11 +3031,6 @@
         "text": "Start the conversation."
       },
       {
-        "file": "src\\pages\\social\\SeenFeedPage.jsx",
-        "line": 1432,
-        "text": "More from"
-      },
-      {
         "file": "src\\pages\\social\\SeenReaderPage.jsx",
         "line": 272,
         "text": "No comments yet"
@@ -4109,22 +3042,12 @@
       },
       {
         "file": "src\\pages\\social\\WorldReaderPage.jsx",
-        "line": 358,
+        "line": 359,
         "text": "Memberships aren’t available yet"
       },
       {
         "file": "src\\pages\\social\\WorldReaderPage.jsx",
-        "line": 1465,
-        "text": "Comment options"
-      },
-      {
-        "file": "src\\pages\\social\\WorldReaderPage.jsx",
-        "line": 1469,
-        "text": "Delete comment"
-      },
-      {
-        "file": "src\\pages\\social\\WorldReaderPage.jsx",
-        "line": 1469,
+        "line": 1470,
         "text": "This removes the comment and its replies."
       }
     ]

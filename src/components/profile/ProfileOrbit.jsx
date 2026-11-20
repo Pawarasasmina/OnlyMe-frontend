@@ -53,6 +53,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   );
   const isInside = !owner && Boolean(primaryPlanet?.viewer?.isMember || ["ACTIVE_PREMIUM_MEMBER", "ENTITLED_WORLD"].includes(primaryPlanet?.access));
   const memberPreview = primaryPlanet?.memberPreview || [];
+  const activeResidents = Number(primaryPlanet?.activeMemberCount ?? primaryPlanet?.onlineMemberCount ?? 0);
 
   if (owner) {
     const members = Number(primaryPlanet?.memberCount ?? primaryPlanet?.subscribers ?? 0);
@@ -105,14 +106,15 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
         <MinimalWorldIcon />
         <span className="profile-world-compact-copy">
           <strong>{owner ? __msg("profile.yourWorld") : __msg("profile.sWorld_9663ba", { value0: creatorName })}</strong>
-          <small>{title}</small>
+          <small>{__msg("profile.everythingCreatorSharesMonthly", { value0: creatorName })}</small>
           {primaryPlanet ? <span className="profile-world-compact-members">
-            {memberPreview.length ? <i>{memberPreview.map((member) => <b key={member.id}>{member.avatar ? <img alt="" src={resolveMediaUrl(member.avatar)} /> : String(member.name || member.username || "?")[0]}</b>)}</i> : null}
+            {memberPreview.length ? <i>{memberPreview.slice(0, 3).map((member) => <b key={member.id}>{member.avatar ? <img alt="" src={resolveMediaUrl(member.avatar)} /> : String(member.name || member.username || "?")[0]}</b>)}</i> : null}
             <em>{numberLabel(residents)} {residents === 1 ? __msg("profile.member_6467ba") : __msg("discover.members")}</em>
-
+            <span aria-hidden="true" className="profile-world-online-dot" />
+            <em>{numberLabel(activeResidents)} {__msg("profile.now")}</em>
           </span> : <span className="profile-world-compact-members"><em>{__msg("profile.storiesExperiencesAndMembersLiveHere")}</em></span>}
         </span>
-        <span className="profile-world-join">{__msg("profile.join")} · {numberLabel(price)} <span className="sr-only">{__msg("social.coins")}</span></span>
+        <span className="profile-world-join">{__msg("profile.join")} · <img alt="" aria-hidden="true" src="/brand/goldcoin.png" /> {numberLabel(price)}<span className="sr-only"> {__msg("social.coins")}</span></span>
       </Link>
     </section>
   );

@@ -37,6 +37,11 @@ export const socialPrimaryNavItems = [
   { get label() { return __msg("social.profile"); }, to: "/profile", icon: FiUser },
 ];
 
+// Navigation membership is structural. Never derive it from `label`, because
+// labels are localized getters and therefore change when the UI language does.
+const MOBILE_PRIMARY_PATHS = new Set(["/seen", "/discover", "/wall", "/messages", "/profile"]);
+export const socialMobileNavItems = socialPrimaryNavItems.filter(item => MOBILE_PRIMARY_PATHS.has(item.to));
+
 export function socialSecondaryNavItems(capabilities) {
   const items = [];
 

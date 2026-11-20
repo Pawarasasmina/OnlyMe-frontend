@@ -23,6 +23,7 @@ import FeedPost from "../../components/fanWeb/home/FeedPost";
 import FanAvatar from "../../components/fanWeb/shared/FanAvatar";
 import LoadingSkeleton from "../../components/fanWeb/shared/LoadingSkeleton";
 import SeenCard from "../../components/publication/SeenCard";
+import { CommentAuthorIdentity } from "../../components/comments/CommentIdentity";
 import UnifiedProfilePage from "./UnifiedProfilePage";
 import VerifiedBadge from "../../components/fanWeb/shared/VerifiedBadge";
 import { profileService } from "../../services/profileService";
@@ -234,7 +235,7 @@ function SavedCommentCard({ item }) {
         <FanAvatar name={item.author?.name || "Fan"} size="h-full w-full" src={item.author?.avatar} />
       </Link>
       <div className="saved-list-copy">
-        <Link to={item.parent?.route || "/wall"}>{item.author?.name || __msg("profile.fan")} {__msg("social.on")} {item.parent?.author?.name || item.parent?.title || __msg("social.aNote")}</Link>
+        <span><CommentAuthorIdentity author={item.author} fallback={__msg("profile.fan")} /> {__msg("social.on")} {item.parent?.author?.username ? `@${item.parent.author.username}` : item.parent?.title || __msg("social.aNote")}</span>
         <p dir="auto">{item.text}</p>
         <small>{dateLabel(item.savedAt)}</small>
       </div>

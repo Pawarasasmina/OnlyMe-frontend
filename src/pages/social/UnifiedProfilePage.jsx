@@ -1,7 +1,9 @@
 import PublishBanner from "../../components/publication/PublishBanner";
+import { syncDiscoverFollowState } from "../../hooks/useDiscoverQuery";
 import { useFanToast } from "../../components/fanWeb/shared/FanToastContext";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
+import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
@@ -490,10 +492,11 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
         </div>
         <div className="profile-copy">
           <h1 dir="auto">
-            {profile.displayName}
+            <button className="profile-handle-copy" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/profile/${profile.username}`)} title={__msg("admin.copyLink")} type="button"><span className="identity-at">@</span>{profile.username}</button>
             {isOwner ? <MemberTicket profile={profile} /> : null}
             {profile.verified ? <ProfileVerifiedSeal isOwner={isOwner} name={profile.displayName} /> : null}
           </h1>
+          {profile.displayName ? <p className="profile-real-name" dir="auto">{profile.displayName}</p> : null}
           <div className="profile-identity-metrics" aria-label={__msg("social.profileMetrics")}>
             {identityMetrics.map(([key, label, value, onClick]) => (
               <button aria-label={label} key={key} onClick={onClick} type="button">
@@ -512,7 +515,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
           {isOwner ? <FiChevronRight data-ui-directional="true" aria-hidden="true" /> : null}
         </button>
       ) : null}
-      {profile.profileCategory ? <p className="profile-account-category">{profile.profileCategory}</p> : null}
+      {profile.profileCategory ? <p className="profile-account-category">{__enumLabel(profile.profileCategory)}</p> : null}
       <div className={`profile-action-row ${isOwner ? "is-owner-actions" : ""}`}>
         {isOwner ? <Link className="profile-action-chip" to="/settings/profile">{__msg("profile.edit")}</Link> : null}
         {!isOwner ? <button aria-label={__msg("social.letKnowYouSawThem", { value0: profile.displayName })} className={`profile-visitor-eye ${relationship.seeSignalSent ? "is-seen" : ""}`} disabled={seeSignal.isPending} onClick={markProfileSeen} type="button"><ShowMoreEyeIcon /></button> : null}
@@ -534,7 +537,10 @@ function VisitorFollowButton({ profile, relationship = {} }) {
   const client = useQueryClient();
   const follow = useMutation({
     mutationFn: () => profileService.toggleFollow(profile.username),
-    onSuccess: () => invalidateFollowSurfaces(client),
+    onSuccess: (response) => {
+      syncDiscoverFollowState(client, profile.username, Boolean(response.data?.data?.relationship?.active ?? !relationship.following));
+      return invalidateFollowSurfaces(client);
+    },
   });
   const following = Boolean(relationship.following);
   return <button className={`profile-action-chip profile-follow-action ${following ? "is-following" : ""}`} disabled={follow.isPending} onClick={() => follow.mutate()} type="button">{following ? __msg("activity.following") : __msg("discover.follow")}</button>;
@@ -554,7 +560,7 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
   if (!viewerCapabilities.isOwner && !viewerCapabilities.canMessage) return null;
   if (!viewerCapabilities.isOwner && !profile.directAccess?.enabled && !profile.directAccess?.callEnabled) return null;
   const waiting = (windows.data || []).filter((item) => item.settlementStatus === "HELD").length;
-  const meta = [
+  const ownerMeta = [
     profile.directAccess?.enabled ? __msg("social.messagesValue0Value1", { value0: String.fromCharCode(10022), value1: profile.directAccess.priceStars }) : "",
     profile.directAccess?.callEnabled ? __msg("social.callsValue0Value1Value2Min", { value0: String.fromCharCode(10022), value1: profile.directAccess.callPriceStars, value2: profile.directAccess.callDurationMinutes }) : "",
     "chats & requests",
@@ -567,8 +573,8 @@ function DirectAccessRow({ profile, viewerCapabilities }) {
       <button className="profile-row profile-direct-row" onClick={open} type="button">
         <span className="profile-row-orb"><FiMessageCircle /></span>
         <span className="min-w-0 flex-1">
-          <b>Direct Access {waiting ? <i> - {waiting} {__msg("profile.waiting")}</i> : null}</b>
-          <small>{meta}</small>
+          <b>{__msg("Direct Access")} {viewerCapabilities.isOwner ? waiting ? <i> - {waiting} {__msg("profile.waiting")}</i> : null : profile.directAccess?.typicalReplyHours ? <i className="profile-direct-response">{__msg("fan.repliesWithinValue0H", { value0: profile.directAccess.typicalReplyHours }).replace(/^\s*[·•]\s*/, "")}</i> : null}</b>
+          <small>{viewerCapabilities.isOwner ? ownerMeta : __msg("profile.askMeAPrivateQuestionGuaranteedPriorityReply")}</small>
         </span>
         {viewerCapabilities.isOwner ? <Link aria-label={__msg("settings.directAccessSettings")} onClick={(event) => event.stopPropagation()} state={{ returnTo: "/profile" }} to="/settings/direct-access"><FiSettings /></Link> : null}
         <FiChevronRight data-ui-directional="true" />
@@ -756,7 +762,7 @@ function ProfileGiftStrip({ profile, viewerCapabilities, viewerId }) {
         {!gifts.length ? <i><FiGift /></i> : null}
       </span>
       <span className="profile-gift-copy">
-        <b>{viewerCapabilities.isOwner ? `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}` : `${compact(count || gifts.length)} ${(count || gifts.length) === 1 ? "gift" : "gifts"}`}</b>
+        <b>{compact(count || gifts.length)} {__msg("gifts")}</b>
       </span>
       <FiChevronRight data-ui-directional="true" />
     </button>
@@ -948,7 +954,7 @@ function ReceivedGiftsSheet({ isOpen, isOwner, onClose, onSendGift, profile, vie
       {detailGift.message ? <blockquote>&ldquo;{detailGift.message}&rdquo;</blockquote> : null}
       <button className="profile-gift-detail-replay" onClick={() => { setDetailGift(null); setPreviewGift({ ...detailGift, celebrationId: `${detailGift.id}-${Date.now()}` }); }} type="button">{__msg("social.replay")}</button>
       <p className="profile-gift-detail-sender">{__msg("activity.from")} {selectedSender.name || detailGift.source || __msg("social.aSupporter")}{relativeTime(detailGift.createdAt) ? ` · ${relativeTime(detailGift.createdAt)}` : ""}</p>
-      {giftValue > 0 ? <p className="profile-gift-detail-balance">+<img alt="coins" className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{giftValue.toLocaleString(__uiLocale())} <span>{isOwner ? __msg("social.alreadyOnYourBalance") : __msg("social.giftValue")}</span></p> : null}
+      {giftValue > 0 ? <p className="profile-gift-detail-balance">+<img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{giftValue.toLocaleString(__uiLocale())} <span>{isOwner ? __msg("social.alreadyOnYourBalance") : __msg("social.giftValue")}</span></p> : null}
       <p className="profile-gift-detail-source">{detailGift.visibility === "RECIPIENT_ONLY" ? __msg("social.senderVisibleOnlyToYou") : detailGift.hiddenFromProfile ? __msg("social.onlyYouCanSeeThisGift") : __msg("social.senderVisibleOnYourProfile")}<br />{detailGift.hiddenFromProfile ? __msg("social.hiddenFromProfile") : __msg("social.onYourProfile")}</p>
       {selectedSender.avatar || selectedSender.name ? (selectedSender.username ? <Link className="profile-gift-detail-person" onClick={onClose} to={`/profile/${encodeURIComponent(selectedSender.username)}`}><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || __msg("social.supporter")).split(" ")[0]} ›</span></Link> : <div className="profile-gift-detail-person"><FanAvatar name={selectedSender.name || "Supporter"} size="h-7 w-7" src={selectedSender.avatar} /><span>{String(selectedSender.name || __msg("social.supporter")).split(" ")[0]} ›</span></div>) : null}
       <div className="profile-gift-detail-actions">
