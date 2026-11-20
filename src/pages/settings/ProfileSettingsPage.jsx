@@ -18,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { profileService } from "../../services/profileService";
 import { resolveMediaUrl } from "../../utils/media";
 import { hasCreatorAccess } from "../../utils/socialAccess";
+import { usernameValidationError } from "../../utils/username";
 
 const emptyForm = {
   firstName: "",
@@ -107,7 +108,7 @@ function UsernameField({ onChange, status, value }) {
     <span>{__msg("auth.username")}</span>
     <span className={`edit-profile-username-input ${status.state ? `is-${status.state}` : ""}`}>
       <b aria-hidden="true">@</b>
-      <input aria-describedby="username-status" autoCapitalize="none" autoCorrect="off" maxLength={30} name="username" onChange={(event) => onChange({ target: { name: "username", value: event.target.value.replace(/^@/, "").toLowerCase() } })} placeholder={__msg("settings.yourUsername")} spellCheck="false" value={value || ""} />
+      <input aria-describedby="username-status" autoCapitalize="none" autoCorrect="off" maxLength={30} name="username" onChange={(event) => onChange({ target: { name: "username", value: event.target.value.replace(/^@+/, "").toLowerCase().slice(0, 30) } })} placeholder={__msg("settings.yourUsername")} spellCheck="false" value={value || ""} />
     </span>
     <small className={`edit-profile-username-status ${valid ? "is-valid" : status.state === "checking" ? "is-checking" : "is-invalid"}`} id="username-status" role="status">{status.message}</small>
   </label>;
@@ -313,7 +314,7 @@ export function GiftSettingsSheet({ anchorRef, isOpen, onClose }) {
         <span aria-hidden="true" className="profile-notification-grab" />
         <h2 className="text-[18px] font-black text-white" id="gift-settings-title">{__msg("creator.gifts")}</h2>
         <p className="mt-1 text-[11px] text-white/45">{__msg("settings.whatFansCanSendYouCoinsGoToYour")}</p>
-        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-4 divide-y divide-white/[0.08]">{collections.map((collection) => { const preview = collection.gifts[0]; const enabled = collection.gifts.every((gift) => gift.enabled); const prices = collection.gifts.map((gift) => Number(gift.stars || 0)); const minimum = Math.min(...prices); const maximum = Math.max(...prices); return <button aria-pressed={enabled} className="flex w-full items-center gap-3 py-3 text-left disabled:opacity-60" disabled={mutation.isPending} key={collection.id} onClick={() => toggleGroup(collection)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden"><img alt="" className="h-8 w-8 object-contain" src={preview.imageUrl} style={{ transform: `translate(${preview.imagePositionX || 0}%, ${preview.imagePositionY || 0}%) scale(${(preview.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{collection.name}</b><small className="mt-1 block text-xs text-atseen-muted">{collection.gifts.length} · <img alt="coins" className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{minimum.toLocaleString(__uiLocale())}{maximum !== minimum ? `–${maximum.toLocaleString(__uiLocale())}` : ""}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${enabled ? "left-6" : "left-1"}`} /></i></button>; })}</div>}
+        {query.isLoading ? <LoadingSkeleton className="mt-5 h-56" /> : query.isError ? <p className="py-10 text-center text-sm text-atseen-danger">{__msg("settings.unableToLoadGiftSettings")}</p> : <div className="mt-4 divide-y divide-white/[0.08]">{collections.map((collection) => { const preview = collection.gifts[0]; const enabled = collection.gifts.every((gift) => gift.enabled); const prices = collection.gifts.map((gift) => Number(gift.stars || 0)); const minimum = Math.min(...prices); const maximum = Math.max(...prices); return <button aria-pressed={enabled} className="flex w-full items-center gap-3 py-3 text-left disabled:opacity-60" disabled={mutation.isPending} key={collection.id} onClick={() => toggleGroup(collection)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden"><img alt="" className="h-8 w-8 object-contain" src={preview.imageUrl} style={{ transform: `translate(${preview.imagePositionX || 0}%, ${preview.imagePositionY || 0}%) scale(${(preview.displayScale || 100) / 100})` }} /></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-white">{collection.name}</b><small className="mt-1 block text-xs text-atseen-muted">{collection.gifts.length} · <img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{minimum.toLocaleString(__uiLocale())}{maximum !== minimum ? `–${maximum.toLocaleString(__uiLocale())}` : ""}</small></span><i aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition ${enabled ? "bg-[#9ccbff]" : "bg-white/15"}`}><em className={`absolute top-1 h-5 w-5 rounded-full bg-[#111722] shadow transition ${enabled ? "left-6" : "left-1"}`} /></i></button>; })}</div>}
         {!query.isLoading && !query.isError && collections.length ? <p className="mt-3 text-center text-[10px] text-white/35">{collections.filter((collection) => collection.gifts.every((gift) => gift.enabled)).length}/{collections.length} collections on · The Vault is where legends live</p> : null}
         {error ? <p className="mt-3 text-center text-xs text-atseen-danger">{__systemMessage(error)}</p> : null}
       </section>
@@ -396,20 +397,17 @@ function ProfileSettingsPage() {
   useEffect(() => {
     const username = form.username.trim().toLowerCase();
     const currentUsername = String(account.username || "").toLowerCase();
-    if (!username) {
-      setUsernameStatus({ message: __msg("settings.usernameIsRequired"), state: "invalid" });
+    const formatError = usernameValidationError(username);
+    if (formatError) {
+      setUsernameStatus({ message: formatError, state: "invalid" });
       return undefined;
     }
-    if (!/^[a-z0-9_.]+$/.test(username)) {
-      setUsernameStatus({ message: __msg("settings.useOnlyLettersNumbersUnderscoresAndPeriods"), state: "invalid" });
-      return undefined;
-    }
-    if (["admin", "administrator", "support", "api", "login", "register", "settings", "dashboard", "creator", "creators", "user", "users", "onlyme"].includes(username)) {
+    if (["seen", "atseen", "admin", "administrator", "support", "help", "official", "team", "api", "app", "me", "login", "register", "settings", "dashboard", "creator", "creators", "user", "users", "onlyme", "about", "www"].includes(username)) {
       setUsernameStatus({ message: __msg("settings.thisUsernameIsReserved"), state: "invalid" });
       return undefined;
     }
     if (username === currentUsername) {
-      setUsernameStatus({ message: __msg("settings.thisIsYourCurrentUsername"), state: "current" });
+      setUsernameStatus({ message: `✓ atseen.com/${username}`, state: "current" });
       return undefined;
     }
     setUsernameStatus({ message: __msg("settings.checkingAvailability"), state: "checking" });
@@ -420,7 +418,7 @@ function ProfileSettingsPage() {
         if (!active) return;
         const available = Boolean(response.data?.data?.available);
         setUsernameStatus(available
-          ? { message: __msg("settings.value0IsAvailable", { value0: username }), state: "available" }
+          ? { message: `✓ atseen.com/${username}`, state: "available" }
           : { message: __msg("settings.value0IsAlreadyTaken", { value0: username }), state: "taken" });
       } catch (requestError) {
         if (!active) return;
@@ -660,7 +658,6 @@ function ProfileSettingsPage() {
         <Field label={__msg("settings.firstName")} name="firstName" onChange={updateField} value={form.firstName} />
         <Field label={__msg("settings.lastName")} name="lastName" onChange={updateField} value={form.lastName} />
         <UsernameField onChange={updateField} status={usernameStatus} value={form.username} />
-        <p className="edit-profile-help edit-profile-field-wide">{__msg("settings.yourProfileLinkIsCreatedAutomaticallyFromYourUsername")}{form.username}</p>
         <BioField onChange={updateField} value={form.bio} />
         <label className="edit-profile-field"><span>{__msg("fanWeb.location")}</span><button className="edit-profile-location-picker" onClick={() => setLocationPickerOpen(true)} type="button">{form.locationText || __msg("creator.addALocation")}</button></label>
         <ProfileLanguagesField preferredLanguage={form.preferredLanguage} onChange={updateField} />
@@ -670,9 +667,9 @@ function ProfileSettingsPage() {
       {locationPickerOpen ? <UniversalLocationPicker onClose={() => setLocationPickerOpen(false)} onSelect={(locationText) => { setDirty(true); setForm((current) => ({ ...current, locationText })); }} value={form.locationText} /> : null}
       <section className="edit-profile-fields">
         <h2 className="edit-profile-field-wide">{__msg("settings.contactOptions")}</h2>
-        <Field className="edit-profile-field-wide" label="Email" name="email" onChange={updateField} type="email" value={form.email} />
+        <Field className="edit-profile-field-wide" label={__msg("auth.email")} name="email" onChange={updateField} type="email" value={form.email} />
         <Field label={__msg("admin.phoneNumber")} name="phoneNumber" onChange={updateField} value={form.phoneNumber} />
-        <Field label="WhatsApp" name="whatsapp" onChange={updateField} value={form.whatsapp} />
+        <Field label={__msg("share.whatsapp")} name="whatsapp" onChange={updateField} value={form.whatsapp} />
       </section>
 
       <section className="edit-profile-settings-list">

@@ -3,6 +3,7 @@ import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
+import { CommentAuthorIdentity } from "../../components/comments/CommentIdentity";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1218,7 +1219,7 @@ function LegacyWorldShareSheet({ onClose, publication, viewerId }) {
           <div className="world-share-actions">
             <WorldShareAction label={__msg("activity.story")} onClick={shareToStory}><FiPlusCircle /></WorldShareAction>
             <WorldShareAction label={copied ? __msg("creator.copied") : __msg("profile.copyLink")} onClick={copy}>{copied ? <FiCheck /> : <FiCopy />}</WorldShareAction>
-            <WorldShareAction label="WhatsApp" onClick={shareWhatsApp}><FaWhatsapp /></WorldShareAction>
+            <WorldShareAction label={__msg("share.whatsapp")} onClick={shareWhatsApp}><FaWhatsapp /></WorldShareAction>
             <WorldShareAction label={__msg("social.snapchat")} onClick={shareSnapchat}><FaSnapchatGhost /></WorldShareAction>
             <WorldShareAction label={__msg("discover.more")} onClick={more}><FiMoreHorizontal /></WorldShareAction>
           </div>
@@ -1442,7 +1443,7 @@ function WorldInsideComments({ noteOwner, engagement, mutationBusy, onCommentRea
     return <article className={`world-inside-detail__comment ${isReply ? "is-reply" : ""} ${canManage ? "can-moderate" : ""}`} key={item.id}>
       <FanAvatar name={item.author?.name || item.author?.username || "User"} size="h-7 w-7" src={item.author?.avatar} />
       <div className="world-inside-detail__comment-body">
-        <p><Link to={item.author?.username ? `/profile/${item.author.username}` : "#"}>{item.author?.name || item.author?.username || __msg("admin.user")}</Link><MemberCommentBadge author={item.author} noteOwner={noteOwner} /> {showText ? item.text : null}</p>
+        <p><CommentAuthorIdentity author={item.author} fallback={__msg("admin.user")} /><MemberCommentBadge author={item.author} noteOwner={noteOwner} /> {showText ? item.text : null}</p>
         {item.audio ? (
           <div className="voice-comment-bubble-row">
             <VoiceMessageBubble audio={item.audio} className="world-voice-comment-player" compact label={__msg("comments.voiceComment")} variant="chip" />
@@ -1462,11 +1463,11 @@ function WorldInsideComments({ noteOwner, engagement, mutationBusy, onCommentRea
     <div className="world-inside-detail__comment-list">{comments.map((item) => renderComment(item))}</div>
     {menuTarget ? <BottomSheet labelledBy="world-comment-options-title" onClose={() => setMenuTarget(null)} sheetClassName="world-comment-options-sheet">
       <header className="world-comment-options-head">
-        <div><h2 id="world-comment-options-title">Comment options</h2><p>{menuTarget.author?.name || menuTarget.author?.username || "Comment"}</p></div>
-        <button aria-label="Close comment options" onClick={() => setMenuTarget(null)} type="button"><FiX /></button>
+        <div><h2 id="world-comment-options-title">{__msg("system.FeedPost.dc57782ca4")}</h2><p>{menuTarget.author?.name || menuTarget.author?.username || "Comment"}</p></div>
+        <button aria-label={__msg("system.FeedPost.f5508161f2")} onClick={() => setMenuTarget(null)} type="button"><FiX /></button>
       </header>
       <button className="world-comment-delete-option" disabled={mutationBusy === menuTarget.id} onClick={() => { const target = menuTarget; setMenuTarget(null); onRemove(target); }} type="button">
-        <FiTrash2 /><span><b>Delete comment</b><small>This removes the comment and its replies.</small></span>
+        <FiTrash2 /><span><b>{__msg("social.deleteComment")}</b><small>This removes the comment and its replies.</small></span>
       </button>
     </BottomSheet> : null}
   </>;

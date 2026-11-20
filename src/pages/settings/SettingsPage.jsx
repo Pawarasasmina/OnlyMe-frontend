@@ -156,7 +156,7 @@ export default function SettingsPage() {
     <SettingsGroup title={__msg("layouts.account")}>
       <AccountTypeSetting />
       <SettingsRow onClick={() => changeOwnershipStep("ownership")} subtitle={__msg("settings.deactivateOrDelete")} title={__msg("settings.accountOwnershipAndControl")} />
-      <SettingsRow title={__msg("settings.monetization")} subtitle={monetizationQuery.isPending ? __msg("fanWeb.loading_5fabab") : monetizationQuery.isError ? __msg("settings.manageEarningAndPayouts") : monetizationQuery.data?.enabled ? __msg("settings.giftsAndDreamOn", { value0: monetizationQuery.data.payoutsReady ? "payouts ready" : "set up payouts" }) : __msg("settings.offCompleteEligibility")} to="/settings/monetization" />
+      <SettingsRow title={__msg("settings.monetization")} subtitle={monetizationQuery.isPending ? __msg("fanWeb.loading_5fabab") : monetizationQuery.isError ? __msg("settings.manageEarningAndPayouts") : monetizationQuery.data?.enabled ? __msg("settings.giftsAndDreamOn", { value0: monetizationQuery.data.payoutsReady ? __msg("settings.payoutsReady") : __msg("settings.setUpPayouts") }) : __msg("settings.offCompleteEligibility")} to="/settings/monetization" />
       {professionalProfile ? <SettingsRow icon={FiShield} onClick={() => { setVerificationView("verify"); setCreatorApplyOpen(true); }} subtitle={user?.isVerified ? __msg("settings.verifiedReviewedBySeen") : __msg("settings.identityReviewByTheSeenTeam")} title={__msg("social.verification")} /> : null}
       <SettingsRow icon={FiEdit3} title={__msg("fan.editProfile_15141e")} to="/settings/profile?from=settings" />
       <LanguageSetting />
@@ -164,7 +164,7 @@ export default function SettingsPage() {
     </SettingsGroup>
 
     {professionalProfile ? <SettingsGroup title={professionalProfileType(user) === "business" ? __msg("profile.business") : __msg("discover.creator")}>
-      <SettingsRow icon={FiMessageCircle} subtitle={__msg("settings.messagesCallsAndPricing")} title="Direct Access" to="/settings/direct-access" />
+      <SettingsRow icon={FiMessageCircle} subtitle={__msg("settings.messagesCallsAndPricing")} title={__msg("language.directAccess")} to="/settings/direct-access" />
       <SettingsRow icon={FiBarChart2} subtitle={__msg("settings.insightsAudienceAndEarnings")} title={__msg("settings.professionalDashboard")} to="/studio" />
       {user?.creatorApprovalStatus === "approved" ? <button className="settings-index-row" role="switch" aria-checked={previewEnabled} onClick={toggleCreatorPreview} type="button">
         <span className="settings-index-row-copy"><b>{__msg("settings.previewAsANewCreator")}</b><small>{__msg("settings.seeTheOnboardingAndEarningExamples")}</small></span>

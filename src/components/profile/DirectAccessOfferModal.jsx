@@ -16,7 +16,7 @@ const benefitRows = [
   __uiTuple([FiClock, { __uiMessage: "profile.firstReplyWithin48Hours" }, { __uiMessage: "profile.aPersonalReplyUsuallyMuchFasterWithinThe" }]),
   __uiTuple([FiRefreshCw, { __uiMessage: "profile.refundedIfUnanswered" }, { __uiMessage: "profile.noReplyIn48HoursYourCoinsCome" }]),
 ];
-const CoinAmount = ({ value }) => <span className="inline-flex items-center gap-1 whitespace-nowrap"><img alt="coins" className="h-3.5 w-3.5 object-contain" src="/brand/goldcoin.png" />{value}</span>;
+const CoinAmount = ({ value }) => <span className="inline-flex items-center gap-1 whitespace-nowrap"><img alt={__msg("profile.coins")} className="h-3.5 w-3.5 object-contain" src="/brand/goldcoin.png" />{value}</span>;
 
 export default function DirectAccessOfferModal({ onClose, profile }) {
   __useUiLanguage();

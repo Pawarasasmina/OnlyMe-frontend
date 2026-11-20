@@ -8,6 +8,7 @@ import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { walletService } from "../../services/walletService";
 import { walletRate, walletPacks, ledgerUsd } from "../../utils/walletPresentation";
+import { createIdempotencyKey } from "../../utils/idempotencyKey";
 import { resolveMediaUrl } from "../../utils/media";
 import "./WalletPage.css";
 import PayoutFlow from "../../components/financial/PayoutFlow";
@@ -92,8 +93,19 @@ export default function WalletPage() {
 
   const topUp = async (pack) => {
     setTopUpBusy(pack.usd);
-    setTopUpMessage("Top-ups open soon");
-    window.setTimeout(() => setTopUpBusy(null), 350);
+    setTopUpMessage("");
+    try {
+      const response = await walletService.topUp(pack.usd, createIdempotencyKey("wallet-topup"));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallet"] }),
+        queryClient.invalidateQueries({ queryKey: ["wallet-ledger"] }),
+      ]);
+      setTopUpMessage(response.data?.message || __msg("social.coinPack"));
+    } catch (error) {
+      setTopUpMessage(error.response?.data?.message || __msg("financial.topUpOrSubscriptionCouldNotBeCompleted"));
+    } finally {
+      setTopUpBusy(null);
+    }
   };
   const saveLimit = async (value) => {
     setLimitBusy(true);

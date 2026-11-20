@@ -78,7 +78,7 @@ export default function LanguageSetting({ renderTrigger } = {}) {
   return <>
     {renderTrigger ? <span ref={trigger}>{renderTrigger(() => { mutation.reset(); setSaved(false); setOpen(true); }, current)}</span> : <button ref={trigger} className="settings-index-row" type="button" onClick={() => { mutation.reset(); setSaved(false); setOpen(true); }}><span className="settings-index-row-copy"><b>{label("Language")}</b><small dir="auto">{current.name}</small></span><FiChevronRight data-ui-directional="true" /></button>}
     {saved && <p className="language-saved" role="status">{syncError ? __msg(syncError) : `${label("Language")} · ${current.name}`}</p>}
-    {open && createPortal(<div className="language-layer" style={bounds}>
+    {open && createPortal(<div className="language-layer" style={{ ...bounds, right: "auto" }}>
       <button className="language-dim" type="button" aria-label={__msg("profile.closeLanguage")} disabled={mutation.isPending} onClick={() => setOpen(false)} />
       <section className="language-sheet" role="dialog" aria-modal="true" aria-labelledby="language-title" aria-describedby="language-description" dir={language === "ar" ? "rtl" : "ltr"} ref={panel} tabIndex={-1} onKeyDown={keys}>
         <span className="language-handle" aria-hidden="true" /><h2 id="language-title">{label("Language")}</h2><p id="language-description">{label(description)}</p>

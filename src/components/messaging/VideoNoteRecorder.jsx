@@ -2,6 +2,7 @@ import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FiCheck, FiPause, FiPlay, FiRotateCcw, FiSend, FiSquare, FiVideo, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 
 const MAX_DURATION_MS = 60000;
@@ -11,7 +12,7 @@ const clock = (milliseconds = 0) => {
 };
 const supportedMime = () => ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/mp4", "video/webm"].find((type) => window.MediaRecorder?.isTypeSupported(type)) || "";
 
-export default function VideoNoteRecorder({ compact = false, disabled = false, onSend }) {
+export default function VideoNoteRecorder({ compact = false, disabled = false, onSend, onTrigger, triggerClassName = "", triggerContent = null, wrapperClassName = "shrink-0" }) {
   __useUiLanguage();
   const [mode, setMode] = useState("idle");
   const [elapsed, setElapsed] = useState(0);
@@ -166,15 +167,16 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
     if (player.paused) player.play().catch(() => {});
   };
 
-  if (mode === "idle") return <div className="shrink-0"><button aria-label={__msg("messaging.recordVideoNote")} className={compact ? "grid h-8 w-8 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-atseen-blue disabled:opacity-40" : "grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10 hover:text-atseen-blue disabled:opacity-40"} disabled={disabled} onClick={openCamera} title={__msg("messaging.recordVideoNote")} type="button"><FiVideo /></button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs leading-5 text-atseen-danger shadow-xl">{__systemMessage(error)}<button aria-label={__msg("messaging.dismissCameraError")} className="float-right ml-2" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div>;
+  if (mode === "idle") return <div className={wrapperClassName}><button aria-label={__msg("messaging.recordVideoNote")} className={triggerClassName || (compact ? "grid h-8 w-8 place-items-center rounded-full text-atseen-muted transition hover:bg-white/5 hover:text-atseen-blue disabled:opacity-40" : "grid h-11 w-11 place-items-center rounded-full border border-atseen-line text-atseen-muted transition hover:border-atseen-blue/50 hover:bg-atseen-blue/10 hover:text-atseen-blue disabled:opacity-40")} disabled={disabled} onClick={() => { onTrigger?.(); openCamera(); }} title={__msg("messaging.recordVideoNote")} type="button">{triggerContent || <FiVideo />}</button>{error ? <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-atseen-danger/20 bg-atseen-bg-2 p-3 text-xs leading-5 text-atseen-danger shadow-xl">{__systemMessage(error)}<button aria-label={__msg("messaging.dismissCameraError")} className="float-right ml-2" onClick={() => setError("")} type="button"><FiX /></button></div> : null}</div>;
 
   const showingCamera = ["opening", "ready", "recording"].includes(mode);
   const reviewing = ["preview", "failed"].includes(mode);
   const ringProgress = mode === "uploading" ? uploadProgress / 100 : reviewing && previewDuration > 0 ? previewCurrent / previewDuration : elapsed / MAX_DURATION_MS;
   const displayedTime = reviewing ? previewCurrent * 1000 : elapsed;
   const displayedLimit = reviewing && previewDuration > 0 ? clock(previewDuration * 1000) : "1:00";
-  return <div className="absolute bottom-3 left-3 right-3 z-40 overflow-hidden rounded-[28px] border border-atseen-blue/20 bg-[linear-gradient(145deg,#101722,#080b10)] p-4 shadow-[0_24px_80px_rgba(0,0,0,.7)] sm:bottom-4 sm:left-4 sm:right-auto sm:w-[330px]">
-    <div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-extrabold">{__msg("messaging.videoNote")}</p><p className="text-[10px] text-atseen-muted">{mode === "recording" ? __msg("messaging.recordingWithFrontCamera") : mode === "uploading" ? __msg("messaging.sendingSecurely") : mode === "failed" ? __msg("messaging.uploadPaused") : showingCamera ? __msg("messaging.cameraAndMicrophoneReady") : __msg("messaging.reviewBeforeSending")}</p></div><button aria-label={__msg("messaging.cancelVideoNote")} className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-atseen-muted hover:text-white" disabled={mode === "uploading"} onClick={cancel} type="button"><FiX /></button></div>
+  return createPortal(<div className="video-circle-recorder-overlay">
+    <div className="video-circle-recorder-panel">
+    <div className="video-circle-recorder-heading"><div><p>{__msg("messaging.videoNote")}</p><small>{mode === "recording" ? __msg("messaging.recordingWithFrontCamera") : mode === "uploading" ? __msg("messaging.sendingSecurely") : mode === "failed" ? __msg("messaging.uploadPaused") : showingCamera ? "Tap to record · up to 60s" : __msg("messaging.reviewBeforeSending")}</small></div><button aria-label={__msg("messaging.cancelVideoNote")} disabled={mode === "uploading"} onClick={cancel} type="button">{__msg("admin.cancel")}</button></div>
     <div className="relative mx-auto h-52 w-52">
       <div className={`absolute inset-0 rounded-full bg-atseen-blue/20 blur-2xl ${mode === "recording" ? "animate-pulse" : ""}`} />
       <div className={`relative h-full w-full overflow-hidden rounded-full border-[3px] bg-black shadow-2xl ${mode === "recording" ? "border-atseen-danger" : "border-atseen-blue/70"}`}>
@@ -182,8 +184,8 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
         {mode === "opening" ? <div className="absolute inset-0 grid place-items-center bg-black/75"><span className="h-7 w-7 animate-spin rounded-full border-2 border-white/20 border-t-atseen-blue" /></div> : null}
         {mode === "uploading" ? <div className="absolute inset-0 grid place-items-center bg-black/60 backdrop-blur-[2px]"><div className="text-center"><p className="text-2xl font-black">{uploadProgress}%</p><p className="mt-1 text-[10px] text-white/70">{__msg("messaging.uploading")}</p></div></div> : null}
         {!showingCamera && mode !== "uploading" ? <button aria-label={previewPlaying ? __msg("messaging.pausePreview") : __msg("messaging.playPreview")} className="absolute inset-0 grid place-items-center bg-black/10 transition hover:bg-black/20" onClick={togglePreviewPlayback} type="button"><span className="grid h-12 w-12 place-items-center rounded-full bg-black/55 text-lg text-white shadow-xl backdrop-blur-sm">{previewPlaying ? <FiPause /> : <FiPlay className="ml-1" />}</span></button> : null}
-        {!showingCamera && mode !== "uploading" ? <button aria-label={previewMuted ? __msg("messaging.unmutePreview") : __msg("messaging.mutePreview")} className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/65 text-white shadow-lg backdrop-blur-sm transition hover:bg-black/80" onClick={togglePreviewSound} title={previewMuted ? __msg("messaging.unmutePreview") : __msg("messaging.mutePreview")} type="button">{previewMuted ? <FiVolumeX /> : <FiVolume2 />}</button> : null}
       </div>
+      {!showingCamera && mode !== "uploading" ? <button aria-label={previewMuted ? __msg("messaging.unmutePreview") : __msg("messaging.mutePreview")} className="video-circle-sound-button" onClick={togglePreviewSound} title={previewMuted ? __msg("messaging.unmutePreview") : __msg("messaging.mutePreview")} type="button">{previewMuted ? <FiVolumeX /> : <FiVolume2 />}</button> : null}
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 -rotate-90" viewBox="0 0 208 208"><circle cx="104" cy="104" fill="none" r="101" stroke="#9CCBFF" strokeDasharray={2 * Math.PI * 101} strokeDashoffset={(2 * Math.PI * 101) * (1 - ringProgress)} strokeLinecap="round" strokeWidth="4" /></svg>
       <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-3 py-1 font-mono text-xs font-bold tabular-nums text-white backdrop-blur-sm">{clock(displayedTime)} / {displayedLimit}</span>
     </div>
@@ -195,5 +197,6 @@ export default function VideoNoteRecorder({ compact = false, disabled = false, o
     </div>
     {mode === "failed" ? <p className="mt-2 text-center text-[10px] leading-4 text-atseen-danger">{__systemMessage(error)}</p> : null}
     {mode === "ready" ? <p className="mt-2 text-center text-[10px] text-atseen-muted">{__msg("messaging.eyeToEyeTheySeeYouUpTo60")}</p> : null}
-  </div>;
+    </div>
+  </div>, document.body);
 }

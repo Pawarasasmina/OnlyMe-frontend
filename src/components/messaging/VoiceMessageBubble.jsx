@@ -15,7 +15,7 @@ const finiteDuration = (value, fallback = 0) => {
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
 };
 
-export default function VoiceMessageBubble({ audio, className = "", label = __msg("fan.voiceMessage"), mine = false, compact = false, variant = "default" }) {
+export default function VoiceMessageBubble({ audio, className = "", label = __msg("fan.voiceMessage"), mine, compact = false, variant = "default" }) {
   __useUiLanguage();
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
@@ -32,6 +32,8 @@ export default function VoiceMessageBubble({ audio, className = "", label = __ms
     const end = Number(waveform[Math.min(lower + 1, waveform.length - 1)]) || 0;
     return Math.min(1, Math.max(0, start + (end - start) * (position - lower)));
   }) : waveform.slice(0, 36);
+  const chatWaveform = visibleWaveform.slice(0, 28);
+  const chatWaveformPeak = Math.max(0.01, ...chatWaveform.map((level) => Number(level) || 0));
 
   useEffect(() => () => audioRef.current?.pause(), []);
   const toggle = async () => {
@@ -59,6 +61,15 @@ export default function VoiceMessageBubble({ audio, className = "", label = __ms
     if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) return;
     seekFromWaveform(event);
   };
+
+  // Message threads pass `mine` explicitly for both participants. Other uses omit it.
+  // This keeps chat notes on the compact prototype player without changing Wall/comments.
+  if (variant === "chat" || mine !== undefined) return <div className="chat-voice-note-player">
+    <audio onDurationChange={(event) => setDuration(finiteDuration(event.currentTarget.duration, suppliedDuration))} onEnded={() => { setPlaying(false); setCurrent(0); }} onError={() => setFailed(true)} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onTimeUpdate={(event) => setCurrent(finiteDuration(event.currentTarget.currentTime))} preload="metadata" ref={audioRef} src={audio?.url} />
+    <button aria-label={playing ? __msg("messaging.pause", { value0: label }) : __msg("messaging.play", { value0: label })} className="chat-voice-note-play" disabled={failed} onClick={toggle} type="button">{playing ? <FiPause /> : <FiPlay />}</button>
+    <button aria-label={__msg("messaging.seekCurrentPositionOf", { value0: label, value1: clock(current), value2: clock(duration) })} className="chat-voice-note-wave" disabled={failed || duration <= 0} onDoubleClick={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); seek(current - 5); } if (event.key === "ArrowRight") { event.preventDefault(); seek(current + 5); } }} onPointerDown={startWaveformDrag} onPointerMove={dragWaveform} style={{ appearance: "none", background: "transparent", border: 0, boxShadow: "none", padding: 0 }} type="button">{chatWaveform.map((level, index) => <span className={index / Math.max(1, chatWaveform.length - 1) <= (duration > 0 ? current / duration : 0) ? "is-played" : ""} key={index} style={{ height: `${Math.max(6, Math.round(((Number(level) || 0) / chatWaveformPeak) * 20))}px` }} />)}</button>
+    <span className="chat-voice-note-duration">{failed ? "--:--" : clock(playing ? current : duration)}</span>
+  </div>;
 
   const playerClassName = compact
     ? `wall-audio-player ${variant === "chip" ? "wall-audio-chip" : ""}`

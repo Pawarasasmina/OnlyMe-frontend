@@ -179,13 +179,13 @@ export default function StoryGiftPicker({ landing = false, onClose, onSent, prev
         {!selectedGift ? landing ? <div className="gift-link-landing">
           <button aria-label={__msg("stories.closeGiftPicker")} className="gift-link-landing-close" onClick={onClose} type="button"><FiX /></button>
           <FanAvatar name={recipient?.name || "Creator"} size="h-24 w-24" src={recipient?.avatar} />
-          <h2>Send {String(recipient?.name || "them").split(" ")[0]} a gift</h2>
+          <h2>{__msg("fanWeb.send")} {String(recipient?.name || "them").split(" ")[0]} {__msg("stories.aGift")}</h2>
           <p>@{recipient?.username || "creator"}</p>
           {giftsQuery.isLoading ? <p className="dream-gift-empty">{__msg("stories.loadingGifts")}</p> : giftsQuery.isError ? <p className="dream-gift-empty">{giftsQuery.error?.response?.data?.message || __msg("stories.giftsCouldNotBeLoaded")}</p> : <div className="gift-link-landing-grid">
             {(showAllLandingGifts ? gifts : gifts.slice(0, 5)).map((gift) => <button disabled={previewOnly} key={gift.id} onClick={() => { setSelectedGift(gift); setError(""); }} type="button"><span><GiftArt className="h-full w-full" gift={gift} imageClassName="h-full w-full" /></span><b>{gift.name}</b><small><CoinIcon />{Number(gift.stars || 0).toLocaleString(__uiLocale())}</small></button>)}
-            {!showAllLandingGifts && gifts.length > 5 ? <button className="gift-link-all" onClick={() => setShowAllLandingGifts(true)} type="button"><span>＋</span><b>All gifts</b></button> : null}
+            {!showAllLandingGifts && gifts.length > 5 ? <button className="gift-link-all" onClick={() => setShowAllLandingGifts(true)} type="button"><span>＋</span><b>{__msg("system.StoryGiftPicker.dfefef78e5")}</b></button> : null}
           </div>}
-          <small className="gift-link-landing-note">Your gift appears on {String(recipient?.name || "their").split(" ")[0]}’s profile with your name — or send it privately.</small>
+          <small className="gift-link-landing-note">{__msg("system.StoryGiftPicker.e9af74466a")} {String(recipient?.name || "their").split(" ")[0]}{__msg("system.StoryGiftPicker.b7bcf06a34")}</small>
         </div> : <>
         <div className="dream-gift-header is-direct-profile-gift">
           <FanAvatar name={recipient?.name || "Creator"} size="h-8 w-8" src={recipient?.avatar} />

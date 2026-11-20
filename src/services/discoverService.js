@@ -209,7 +209,11 @@ function normalizeDiscover(data = {}) {
     followingCount: Number(data.followingCount) || 0,
     localTonight: data.localTonight || null,
     friends: (data.friends || []).map(normalizeCreator),
-    following: (data.following || []).map(normalizeCreator),
+    following: (data.following || []).map(person => normalizeCreator({
+      ...person,
+      following: person.following ?? person.isFollowing ?? true,
+      isFollowing: person.isFollowing ?? person.following ?? true,
+    })),
     suggestedUsers: (data.suggestedUsers || []).map(normalizeCreator),
     activity: normalizeActivity(data.activity),
     trendingSeen: normalizeSeen(data.trendingSeen),

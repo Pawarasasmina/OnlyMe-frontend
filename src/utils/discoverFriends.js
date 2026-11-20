@@ -4,7 +4,9 @@ export function friendDisplayName(friend = {}) {
 }
 
 export function friendFirstName(friend = {}) {
-  return friend.firstName || friendDisplayName(friend).split(" ").filter(Boolean)[0] || __msg("discoverFriends.friend");
+  // Story circles are intentionally tiny, so the product spec uses the
+  // current handle without the @ mark instead of a person's real name.
+  return friend.username || friend.firstName || friendDisplayName(friend).split(" ").filter(Boolean)[0] || __msg("discoverFriends.friend");
 }
 
 export function friendProfileRoute(friend = {}) {

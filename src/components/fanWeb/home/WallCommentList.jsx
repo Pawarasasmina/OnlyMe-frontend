@@ -1,7 +1,7 @@
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { msg as __msg } from "../../../i18n/runtime.js";
 import MemberCommentBadge from "../../comments/MemberCommentBadge";
-import { CommentReplyMention } from "../../comments/CommentIdentity";
+import { CommentAuthorIdentity, CommentReplyMention } from "../../comments/CommentIdentity";
 import { commentFirstName } from "../../comments/commentIdentityUtils";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -24,7 +24,7 @@ const wallCommentReactionIcons = {
 function CommentRow({ noteOwner, comment, children, onReply, onReactPress, onReactionCancel, onReactionStart, onReactionSelect, onRepost, onOpenOptions, options, parentAuthor, reactionPickerId, userId, repostingId, reactingId }) {
   __useUiLanguage();
   const author = comment.author || { name: "Creator" };
-  const name = commentFirstName(author, __msg("discover.creator"));
+  const name = author.username ? `@${author.username}` : commentFirstName(author, __msg("discover.creator"));
   const selected = Boolean(comment.viewerReaction);
   const selectedIcon = wallCommentReactionIcons[comment.viewerReaction];
   const count = Number(comment.reactionCount || 0);
@@ -32,7 +32,7 @@ function CommentRow({ noteOwner, comment, children, onReply, onReactPress, onRea
   return <article className="wall-comment-row" data-comment-id={comment.id}>
     <FanAvatar alt="" name={name} size="h-6 w-6" src={author.avatar || author.avatarUrl} />
     <div className="seen-comment-copy">
-      <p><Link title={name} to={author.username ? `/profile/${encodeURIComponent(author.username)}` : "/wall"}>{name}</Link><MemberCommentBadge author={author} noteOwner={noteOwner} /><CommentReplyMention author={parentAuthor} replyingAuthor={author} />{comment.text}</p>
+      <p><CommentAuthorIdentity author={author} fallback={commentFirstName(author, __msg("discover.creator"))} /><MemberCommentBadge author={author} noteOwner={noteOwner} /><CommentReplyMention author={parentAuthor} replyingAuthor={author} />{comment.text}</p>
       {comment.audio ? <VoiceMessageBubble audio={comment.audio} label={__msg("comments.voiceComment")} /> : null}
       <div className="wall-comment-actions">
         <button aria-label={`${selected ? "Remove reaction from" : "React to"} ${name}'s reply`} aria-pressed={selected} className={selected ? "is-selected" : ""} disabled={reactingId === comment.id} onClick={() => onReactPress(comment)} onContextMenu={(event) => event.preventDefault()} onPointerCancel={onReactionCancel} onPointerDown={() => onReactionStart(comment)} onPointerLeave={onReactionCancel} onPointerUp={onReactionCancel} type="button">{selectedIcon ? <span aria-hidden="true" className="wall-comment-selected-reaction">{selectedIcon}</span> : <FiHeart aria-hidden="true" />}<span>{visibleCount}</span></button>

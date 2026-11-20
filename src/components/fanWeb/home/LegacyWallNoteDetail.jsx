@@ -1,9 +1,9 @@
 import MemberCommentBadge from "../../comments/MemberCommentBadge";
+import { CommentAuthorIdentity } from "../../comments/CommentIdentity";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import FanCard from "../shared/FanCard";
 import FanAvatar from "../shared/FanAvatar";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
@@ -17,11 +17,11 @@ export default function LegacyWallNoteDetail({ post }) {
   const closedLabel = wallClosedLabel(post, now);
   const comments = useQuery({ queryKey: ["legacy-wall-comments", post.id], queryFn: () => wallService.comments(post.id).then((response) => response.data?.data?.comments || []), retry: false });
   return <FanCard>
-    <header className="flex items-center gap-3"><FanAvatar name={post.creator?.name} src={post.creator?.avatar} /><div><Link className="font-bold" to={`/profile/${encodeURIComponent(post.creator?.username || "")}`}>{post.creator?.name || __msg("fanWeb.author")}</Link><p className="text-xs text-atseen-muted">{post.location}</p></div></header>
+    <header className="flex items-center gap-3"><FanAvatar name={post.creator?.name} src={post.creator?.avatar} /><div><CommentAuthorIdentity author={post.creator} fallback={__msg("fanWeb.author")} /><p className="text-xs text-atseen-muted">{post.location}</p></div></header>
     <p dir="auto" className="my-4 whitespace-pre-wrap text-sm leading-7">{post.text}</p>
     {closedLabel ? <p className="wall-note-closed-status text-sm text-atseen-muted">{closedLabel}</p> : null}
     <ContentEntityList entities={post.attachedEntities || []} />
     {post.media?.map((item) => <img alt={__msg("fanWeb.wallNoteAttachment")} className="my-3 max-w-full rounded-xl" key={item.assetId || item.url} src={item.url} />)}
-    <section className="mt-5 border-t border-atseen-line pt-4"><h2 className="text-sm font-bold">{__msg("fanWeb.replies")}</h2>{comments.isLoading ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.loadingReplies")}</p> : comments.isError ? <button className="mt-3 text-sm text-atseen-blue" onClick={() => comments.refetch()} type="button">{__msg("fanWeb.retryLoadingReplies")}</button> : !comments.data?.length ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.noRepliesYet")}</p> : comments.data.map((comment) => <div className="mt-3" key={comment.id}><strong className="text-xs">{comment.author?.name || __msg("fanWeb.member")}</strong><MemberCommentBadge author={comment.author} noteOwner={post.creator} /><p dir="auto" className="whitespace-pre-wrap text-sm text-atseen-muted">{comment.text}</p></div>)}</section>
+    <section className="mt-5 border-t border-atseen-line pt-4"><h2 className="text-sm font-bold">{__msg("fanWeb.replies")}</h2>{comments.isLoading ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.loadingReplies")}</p> : comments.isError ? <button className="mt-3 text-sm text-atseen-blue" onClick={() => comments.refetch()} type="button">{__msg("fanWeb.retryLoadingReplies")}</button> : !comments.data?.length ? <p className="mt-3 text-sm text-atseen-muted">{__msg("fanWeb.noRepliesYet")}</p> : comments.data.map((comment) => <div className="mt-3" key={comment.id}><CommentAuthorIdentity author={comment.author} fallback={__msg("fanWeb.member")} /><MemberCommentBadge author={comment.author} noteOwner={post.creator} /><p dir="auto" className="whitespace-pre-wrap text-sm text-atseen-muted">{comment.text}</p></div>)}</section>
   </FanCard>;
 }
