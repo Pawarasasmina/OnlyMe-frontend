@@ -1,3 +1,5 @@
+import presenceApi from "../../api/axiosInstance";
+import { clearReadReceipts } from "../../utils/privacyPresentation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
@@ -34,14 +36,7 @@ import { resolveMediaUrl } from "../../utils/media";
 import { CHAT_GIFT_TIP_KEY, classifySharedUrl, isGiftRequestMessage, shouldKeepLatestVisible } from "../../utils/messagePresentation";
 import { hasCreatorAccess } from "../../utils/socialAccess";
 
-const relative = (value) => {
-  if (!value) return "Offline";
-  const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
-  if (seconds < 60) return "Last seen just now";
-  if (seconds < 3600) return `Last seen ${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `Last seen ${Math.floor(seconds / 3600)}h ago`;
-  return `Last seen ${new Date(value).toLocaleDateString(__uiLocale())}`;
-};
+
 
 const callScheduleLabel = (value) => {
   if (!value) return "Confirmed";
@@ -156,12 +151,12 @@ const messagesAreGrouped = (left, right) => {
   return Number.isFinite(leftTime) && Number.isFinite(rightTime) && rightTime - leftTime >= 0 && rightTime - leftTime <= 5 * 60 * 1000;
 };
 
-const replyEstimateLabel = (minutes) => {
-  if (!Number.isFinite(minutes) || minutes < 0) return "no reply history yet";
-  if (minutes < 1) return "replies in under 1m";
-  if (minutes < 60) return `replies in ${Math.max(1, Math.round(minutes))}m`;
-  if (minutes < 1440) return `replies in ${Math.max(1, Math.round(minutes / 60))}h`;
-  return `replies in ${Math.max(1, Math.round(minutes / 1440))}d`;
+const replyEstimateLabel = minutes => {
+  if (!Number.isFinite(minutes) || minutes < 0) return __msg("presence.noReplyEstimate");
+  const unit = minutes < 60 ? "minute" : minutes < 1440 ? "hour" : "day";
+  const value = Math.max(1, Math.round(minutes / (unit === "minute" ? 1 : unit === "hour" ? 60 : 1440)));
+  const time = new Intl.NumberFormat(__uiLocale(), { style: "unit", unit, unitDisplay: "narrow" }).format(value);
+  return __msg("presence.usuallyReplies", { time });
 };
 
 const MESSAGE_REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
@@ -223,17 +218,19 @@ const newClientMessageId = () => globalThis.crypto?.randomUUID?.()
 
 function Identity({ person, presence, compact = false, showPresence = true, subtitle = "" }) {
   const resolvedPresence = presence || person.presence;
-  const online = resolvedPresence?.online;
+  const { user } = useAuth();
+  const online = user?.activity_status !== false && resolvedPresence?.active_now;
+  const chosenOnline = Boolean(person.atSeenActive || person.activeStatus?.presetKey === "at_seen" || person.activeStatus?.label === "At seen");
   const atSeenSubtitle = subtitle.startsWith("● At seen");
   const replyLabel = atSeenSubtitle ? subtitle.replace("● At seen", "").replace(/^\s*·\s*/, "") : "";
   return <>
     <span className="message-identity-avatar relative shrink-0">
       <FanAvatar name={person.displayName} size={compact ? "h-10 w-10" : "h-12 w-12"} src={person.avatarUrl} />
-      {showPresence ? <span className={`message-identity-presence absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 ${online ? "bg-atseen-success" : "bg-atseen-dim"}`} /> : null}
+      {showPresence && (online || chosenOnline) ? <span className={`message-identity-presence absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-atseen-bg-2 ${online || chosenOnline ? "bg-atseen-success" : "bg-atseen-dim"}`} /> : null}
     </span>
     <span className="min-w-0 flex-1">
       <span className="message-identity-name flex items-center gap-1 truncate text-sm font-bold">{person.username ? <b className="message-username"><bdi dir="ltr"><i className="identity-at">@</i>{person.username}</bdi></b> : person.displayName}{person.isVerified ? <VerifiedBadge /> : null}</span>
-      {atSeenSubtitle ? <span className="mt-0.5 flex min-w-0 items-center gap-1.5"><span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-atseen-blue/25 bg-atseen-blue/[0.07] px-2 py-0.5 text-[9px] font-bold text-atseen-blue"><span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" />{__msg("constants.atSeen")}</span>{replyLabel ? <span className="message-identity-preview truncate text-[10px] text-atseen-muted">{replyLabel}</span> : null}</span> : <span className={`message-identity-preview block truncate text-[11px] ${online && !subtitle ? "text-atseen-success" : "text-atseen-muted"}`}>{subtitle || (online ? "Online" : relative(resolvedPresence?.lastSeenAt || person.lastSeenAt))}</span>}
+      {atSeenSubtitle ? <span className="mt-0.5 flex min-w-0 items-center gap-1.5"><span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-atseen-blue/25 bg-atseen-blue/[0.07] px-2 py-0.5 text-[9px] font-bold text-atseen-blue"><span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" />{__msg("constants.atSeen")}</span>{replyLabel ? <span className="message-identity-preview truncate text-[10px] text-atseen-muted">{replyLabel}</span> : null}</span> : <span className={`message-identity-preview block truncate text-[11px] ${online && !subtitle ? "text-atseen-success" : "text-atseen-muted"}`}>{subtitle || (online && person.role !== "creator" && !person.isCreator ? __msg("presence.activeNow") : "")}</span>}
     </span>
   </>;
 }
@@ -471,6 +468,8 @@ export default function MessagesPage() {
   const inboxScrollLockUntilRef = useRef(0);
   const inboxPointerYRef = useRef(null);
   const [presence, setPresence] = useState({});
+  const [appVisible, setAppVisible] = useState(document.visibilityState !== "hidden");
+  useEffect(() => { const update = () => setAppVisible(document.visibilityState !== "hidden"); document.addEventListener("visibilitychange", update); return () => document.removeEventListener("visibilitychange", update); }, []);
   const [socketConnected, setSocketConnected] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
@@ -628,7 +627,7 @@ export default function MessagesPage() {
         pageInfo: current.pageInfo?.nextCursor ? current.pageInfo : fresh.pageInfo,
       };
     },
-    enabled: Boolean(selected?.id),
+    enabled: Boolean(selected?.id) && appVisible,
     refetchOnWindowFocus: "always",
     staleTime: 10000,
   });
@@ -820,7 +819,7 @@ export default function MessagesPage() {
       ? (messagesQuery.data?.group?.members || selected?.members || []).map((member) => member.id)
       : []
   ), [messagesQuery.data?.group?.members, selected?.members, selected?.type]);
-  const messages = useMemo(() => messagesQuery.data?.messages || [], [messagesQuery.data?.messages]);
+  const messages = useMemo(() => (messagesQuery.data?.messages || []).map(message => user?.read_receipts === false ? { ...message, readAt: null, readBy: [] } : message), [messagesQuery.data?.messages, user?.read_receipts]);
   const liveReplyMinutes = useMemo(() => {
     let awaitingSince = null;
     const samples = [];
@@ -841,6 +840,8 @@ export default function MessagesPage() {
     return Number.isFinite(historicalHours) && historicalHours > 0 ? historicalHours * 60 : null;
   }, [messages, myId, participant?.typicalReplyHours, selected?.id]);
   const liveReplyLabel = replyEstimateLabel(liveReplyMinutes);
+  const selectedActiveNow = user?.activity_status !== false && presence[selected?.id]?.active_now;
+  const selectedCreator = participant?.role === "creator" || participant?.isCreator;
   const chatInfoMedia = useMemo(() => messages.flatMap((message) => {
     if (message.deletedAt) return [];
     if (message.image?.url) return [{ id: message.id, type: "image", url: message.image.url }];
@@ -1068,13 +1069,21 @@ export default function MessagesPage() {
     socket.on("group:reaction", receiveGroupReaction);
     socket.on("group:receipt", receiveGroupReceipt);
     socket.on("group:message-deleted", receiveGroupDelete);
+    const markDelivered = ({ byUserId }) => {
+      queryClient.setQueriesData({ queryKey: ["messages"] }, current => {
+        if (!current || typeof current !== "object") return current;
+        if (Array.isArray(current)) return current.map(row => row.id === byUserId && row.lastMessage?.senderId === myId ? { ...row, lastMessage: { ...row.lastMessage, delivered: true } } : row);
+        return current.messages ? { ...current, messages: current.messages.map(message => message.senderId === myId && message.recipientId === byUserId ? { ...message, delivered: true } : message) } : current;
+      });
+    };
     const markMessagesRead = ({ byUserId, readAt }) => {
+      if (user?.read_receipts === false) return;
       if (!byUserId) return;
       queryClient.setQueryData(["messages", byUserId], (current) => current ? {
         ...current,
         messages: current.messages.map((message) => (
           message.senderId === myId && message.recipientId === byUserId && !message.readAt
-            ? { ...message, readAt: readAt || new Date().toISOString() }
+            ? { ...message, readAt: Boolean(readAt) }
             : message
         )),
       } : current);
@@ -1082,7 +1091,7 @@ export default function MessagesPage() {
         conversation.id === byUserId
           && conversation.lastMessage?.senderId === myId
           && !conversation.lastMessage.readAt
-          ? { ...conversation, lastMessage: { ...conversation.lastMessage, readAt: readAt || new Date().toISOString() } }
+          ? { ...conversation, lastMessage: { ...conversation.lastMessage, readAt: Boolean(readAt) } }
           : conversation
       )));
     };
@@ -1141,6 +1150,7 @@ export default function MessagesPage() {
       setDirectAccessNotice(`⚡ New Direct Access — ${fanName} · +$${Number(windowItem?.creatorNetUsd || 0).toFixed(2)}`);
       window.setTimeout(() => setDirectAccessNotice(""), 5000);
     };
+    socket.on("messages:delivered", markDelivered);
     socket.on("messages:read", markMessagesRead);
     socket.on("message:reaction", updateReaction);
     socket.on("presence:update", updatePresence);
@@ -1151,8 +1161,8 @@ export default function MessagesPage() {
     socket.on("account:block", updateBlock);
     socket.on("direct-access:updated", updateDirectAccess);
     socket.on("direct-access:opened", openDirectAccessRealtime);
-    return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("message:disappearing-opened", markDisappearingOpened); socket.off("group:message", receiveGroupMessage); socket.off("group:created", receiveGroupCreated); socket.off("group:reaction", receiveGroupReaction); socket.off("group:receipt", receiveGroupReceipt); socket.off("group:message-deleted", receiveGroupDelete); socket.off("messages:read", markMessagesRead); socket.off("message:reaction", updateReaction); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); socket.off("message:deleted", deleteRealtimeMessage); socket.off("message:hidden", hideRealtimeMessage); socket.off("conversation:hidden", hideRealtimeConversation); socket.off("account:block", updateBlock); socket.off("direct-access:updated", updateDirectAccess); socket.off("direct-access:opened", openDirectAccessRealtime); };
-  }, [creatorMode, myId, queryClient, selected?.directAccessWindowId, selected?.id, selected?.type, setSearchParams]);
+    return () => { socket.off("connect", onConnected); socket.off("disconnect", disconnected); socket.off("connect_error", disconnected); socket.off("message:new", receiveMessage); socket.off("message:disappearing-opened", markDisappearingOpened); socket.off("group:message", receiveGroupMessage); socket.off("group:created", receiveGroupCreated); socket.off("group:reaction", receiveGroupReaction); socket.off("group:receipt", receiveGroupReceipt); socket.off("group:message-deleted", receiveGroupDelete); socket.off("messages:delivered", markDelivered); socket.off("messages:read", markMessagesRead); socket.off("message:reaction", updateReaction); socket.off("presence:update", updatePresence); socket.off("conversation:status", updateConversationStatus); socket.off("message:deleted", deleteRealtimeMessage); socket.off("message:hidden", hideRealtimeMessage); socket.off("conversation:hidden", hideRealtimeConversation); socket.off("account:block", updateBlock); socket.off("direct-access:updated", updateDirectAccess); socket.off("direct-access:opened", openDirectAccessRealtime); };
+  }, [creatorMode, myId, queryClient, selected?.directAccessWindowId, selected?.id, selected?.type, setSearchParams, user?.read_receipts]);
 
   useEffect(() => {
     if (!selected?.id) return;
@@ -1181,8 +1191,28 @@ export default function MessagesPage() {
       });
     } else if (selected?.id && !ids.includes(selected.id)) ids.push(selected.id);
     const socket = getMessageSocket();
-    if (socket && ids.length) socket.emit("presence:query", ids, (rows) => setPresence((current) => ({ ...current, ...Object.fromEntries(rows.map((row) => [row.userId, { ...current[row.userId], ...row }])) })));
+    const update = rows => setPresence(Object.fromEntries(rows.map(row => [row.userId, row])));
+    const refresh = () => {
+      if (!ids.length) return;
+      if (socket.connected) socket.emit("presence:query", ids, update);
+      else presenceApi.get("/presence", { params: { ids: ids.join(",") } }).then(response => update(response.data.data.items || [])).catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 30000);
+    return () => { clearInterval(timer); socket.emit("presence:query", []); };
   }, [conversations, groupPresenceIds, myId, selected?.id, selected?.type]);
+
+  useEffect(() => {
+    const refreshPrivacy = () => {
+      setPresence({}); setGroupMessageInfo(null);
+      queryClient.setQueriesData({ queryKey: ["messages"] }, clearReadReceipts);
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      const ids = [...new Set([...conversations.map(row => row.id), ...groupPresenceIds, selected?.type !== "group" ? selected?.id : null].filter(Boolean))];
+      getMessageSocket().emit("presence:query", ids, rows => setPresence(Object.fromEntries(rows.map(row => [row.userId, row]))));
+    };
+    window.addEventListener("onlyme-privacy-updated", refreshPrivacy);
+    return () => window.removeEventListener("onlyme-privacy-updated", refreshPrivacy);
+  }, [conversations, groupPresenceIds, selected?.id, selected?.type, queryClient]);
 
   const latestMessageId = messages[messages.length - 1]?.id || null;
   const scrollToLatest = useCallback((behavior = "auto") => {
@@ -2313,7 +2343,7 @@ export default function MessagesPage() {
             return <button className="group flex w-full items-start gap-3 px-5 py-3 text-left transition hover:bg-white/[0.03]" key={windowItem.id} onClick={() => chooseConversation({ id: other.id, participant: other, directAccessWindowId: windowItem.id })} type="button">
               <FanAvatar className="mt-0.5 h-11 w-11 shrink-0" name={other.displayName || other.username} src={other.avatarUrl} />
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5"><strong className="truncate text-[13px] leading-5 text-white">{other.displayName || other.username || "Member"}</strong>{presence[other.id]?.online ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
+                <span className="flex items-center gap-1.5"><strong className="truncate text-[13px] leading-5 text-white">{other.displayName || other.username || "Member"}</strong>{presence[other.id]?.active_now ? <span className="h-1.5 w-1.5 rounded-full bg-atseen-blue" /> : null}</span>
                 <span className="block truncate text-[11px] leading-5 text-atseen-muted">{incoming && windowItem.questionQuote ? `“${windowItem.questionQuote}”` : directWindowSnippet(windowItem, myId)}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[9px]">
                   {incoming ? <><span className="rounded-full bg-[#202734] px-2 py-1 font-bold text-atseen-muted">Message · {windowItem.settlementStatus === "INCLUDED" ? __msg("profile.included") : <><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] shrink-0 object-contain align-[-0.12em]" src="/brand/goldcoin.png" />{windowItem.priceStars}</>}</span>{windowItem.settlementStatus !== "INCLUDED" ? <span className="font-bold text-atseen-success">≈ ${Number(windowItem.creatorNetUsd || 0).toFixed(2)} {__msg("messages.toYou")}</span> : null}<span className="text-atseen-muted">◷ {hoursLeft}{__msg("fan.hLeft")}</span></> : null}
@@ -2348,7 +2378,7 @@ export default function MessagesPage() {
               <button className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-2 pl-1 pr-2 text-left" onClick={() => openInboxConversation(conversation)} onContextMenu={(event) => { event.preventDefault(); setInboxRowMenu(conversation); }} onPointerCancel={endInboxHold} onPointerDown={(event) => beginInboxHold(event, conversation)} onPointerMove={moveInboxHold} onPointerUp={endInboxHold} type="button">
                 <Identity compact person={rowPerson} presence={null} showPresence={false} subtitle={subtitle} />
                 <span className="ml-auto flex max-w-[95px] flex-col items-end gap-1">
-                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className={last.readAt ? "message-read-ticks is-read" : "message-read-ticks"}>{last.readAt ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
+                  <span className="message-inbox-time text-[10px] text-atseen-muted">{last?.senderId === myId && !isGroup ? <span className={last.readAt && user?.read_receipts !== false ? "message-read-ticks is-read" : "message-read-ticks"}>{last.readAt && user?.read_receipts !== false || last.delivered ? "✓✓" : "✓"}</span> : null}{inboxTime(last?.createdAt)}</span>
                   <span className="message-row-state-icons">
                     {conversation.directAccessStatus ? <span className={`message-direct-access-state is-${conversation.directAccessStatus.toLowerCase()}`}>{__msg(conversation.directAccessStatus)}</span> : requestPending ? <span className="rounded-full bg-atseen-warning/10 px-2 py-0.5 text-[9px] font-black text-atseen-warning">{__msg("fan.pending")}</span> : conversation.manualUnread ? <span aria-label="Marked as unread" className={`message-unread-count is-manual ${conversation.muted ? "is-muted" : ""}`} /> : conversation.unreadCount ? <span className={`message-unread-count ${conversation.muted ? "is-muted" : ""}`}>{conversation.unreadCount}</span> : null}
                     {conversation.muted ? <FiVolumeX aria-label="Muted" /> : null}
@@ -2372,7 +2402,7 @@ export default function MessagesPage() {
             <button className="mx-auto block text-center" onClick={() => participant.username && navigate(`/profile/${encodeURIComponent(participant.username)}`)} type="button">
               <span className="mx-auto block w-fit drop-shadow-[0_10px_26px_rgba(0,0,0,0.5)]"><FanAvatar name={participant.displayName} size="h-20 w-20" src={participant.avatarUrl} /></span>
               <span className="mt-3 flex items-center justify-center gap-1 text-xl font-black tracking-tight">{participant.displayName}{participant.isVerified ? <VerifiedBadge /> : null}</span>
-              <span className="mt-2 flex items-center justify-center gap-2 text-[11px]"><span className="rounded-full bg-white/[0.05] px-2.5 py-1 text-atseen-text">{presence[selected.id]?.online ? "At seen" : participant.statusLine || "Away"}</span><span className="text-atseen-muted">{liveReplyLabel}</span></span>
+              <span className="mt-2 flex items-center justify-center gap-2 text-[11px]"><span className="rounded-full bg-white/[0.05] px-2.5 py-1 text-atseen-text">{participant.atSeenActive ? __msg("constants.atSeen") : participant.statusLine === "At seen" ? "" : participant.statusLine || ""}</span><span className="text-atseen-muted">{liveReplyLabel}</span></span>
               <span className="mt-2 block text-[10px] font-bold text-atseen-blue">{__msg("system.MessagesPage.f4a7e4ed5b")}</span>
             </button>
             <nav className="mt-5 grid grid-cols-5 border-b border-atseen-line" aria-label={__msg("system.MessagesPage.476c5e21b3")}>
@@ -2396,7 +2426,7 @@ export default function MessagesPage() {
         {selected ? <>
           <header className="relative z-50 flex shrink-0 items-center gap-1.5 overflow-visible border-b border-atseen-line bg-atseen-bg-2/95 px-2 py-2.5 backdrop-blur sm:gap-3 sm:px-4 sm:py-3">
             <button aria-label={__msg("fan.backToConversations")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-white/5" onClick={closeConversation}><FiArrowLeft /></button>
-            {participant ? <button className="message-chat-header-identity flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else { setChatInfoTab("media"); setChatInfoOpen(true); } }} type="button"><FanAvatar name={participant.displayName} size="h-10 w-10" src={participant.avatarUrl} /><span className="min-w-0"><span className="flex min-w-0 items-center gap-1 text-[15px] font-bold leading-5 text-white">{selected.type === "group" ? <span className="truncate">{participant.displayName}</span> : <span className="message-username truncate"><bdi dir="ltr"><i className="identity-at">@</i>{participant.username || participant.displayName}</bdi></span>}{participant.isVerified ? <VerifiedBadge /> : null}</span><span className="mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold text-atseen-muted"><FiEye className="text-[10px]" />{selected.type === "group" ? `${participant.members?.length || 0} members` : presence[selected.id]?.online ? "At seen" : relative(presence[selected.id]?.lastSeenAt || participant.lastSeenAt)}</span></span></button> : null}
+            {participant ? <button className="message-chat-header-identity flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atseen-blue" onClick={() => { if (selected.type === "group") { setGroupInfoName(participant.displayName || ""); setGroupMemberPickerOpen(false); setGroupInfoOpen(true); } else { setChatInfoTab("media"); setChatInfoOpen(true); } }} type="button"><span className="relative shrink-0"><FanAvatar name={participant.displayName} size="h-10 w-10" src={participant.avatarUrl} />{selected.type !== "group" && (selectedActiveNow || participant.atSeenActive) ? <i className="message-presence-dot" aria-label={participant.atSeenActive ? __msg("constants.atSeen") : __msg("presence.activeNow")} /> : null}</span><span className="min-w-0"><span className="flex min-w-0 items-center gap-1 text-[15px] font-bold leading-5 text-white">{selected.type === "group" ? <span className="truncate">{participant.displayName}</span> : <span className="message-username truncate"><bdi dir="ltr"><i className="identity-at">@</i>{participant.username || participant.displayName}</bdi></span>}{participant.isVerified ? <VerifiedBadge /> : null}</span><span className="message-presence-line">{selected.type === "group" ? `${participant.members?.length || 0} members` : <>{selectedCreator ? <span className="message-reply-estimate">{liveReplyLabel}</span> : selectedActiveNow ? <span className="message-active-now"><i />{__msg("presence.activeNow")}</span> : null}{participant.atSeenActive ? <span className="message-at-seen-pill"><FiEye />{__msg("constants.atSeen")}</span> : null}</>}</span></span></button> : null}
             {!socketConnected ? <span className="ml-auto hidden text-[10px] font-semibold text-atseen-warning sm:block">{__msg("fan.reconnecting")}</span> : null}
             {canCallParticipant ? <div className="flex shrink-0 items-center gap-1">
               <button aria-label={`Audio call ${participant.displayName}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm text-atseen-blue transition hover:bg-atseen-blue/10" onClick={() => startCall(participant, "AUDIO")} type="button"><FiPhone /></button>
@@ -2447,7 +2477,7 @@ export default function MessagesPage() {
                     {storyReaction ? <div className={mine ? "text-right" : "text-left"}><p className="mb-1 whitespace-nowrap text-[10px] text-atseen-muted">{mine ? "You reacted to their story" : "Reacted to your story"}</p><button className={`relative inline-block h-44 w-28 overflow-hidden rounded-[14px] border border-white/10 bg-atseen-surface-2 shadow-lg ${storyUnavailable ? "cursor-default" : ""}`} disabled={storyUnavailable} onClick={() => openStoryReply(message.storyReply, storyUnavailable)} type="button">{storyUnavailable ? <span className="flex h-full w-full flex-col items-center justify-center bg-[#171b21] px-3 text-center"><span className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-atseen-muted">⌛</span><b className="mt-3 text-[11px] text-atseen-text">{__msg("fan.storyUnavailable")}</b><span className="mt-1 text-[9px] leading-3 text-atseen-muted">This story expired or was removed</span></span> : <img alt="Story reacted to" className="h-full w-full object-cover" onError={() => setExpiredStoryIds((current) => new Set(current).add(message.storyReply.storyId))} src={resolveMediaUrl(message.storyReply.imageUrl)} />}<span className="absolute bottom-1.5 right-2 text-[9px] font-bold text-white drop-shadow-md">{chatTimeLabel(message.createdAt, chatLanguage)}{mine ? " ✓✓" : ""}</span></button><span className={`-mt-3 block text-[28px] leading-none drop-shadow-lg ${mine ? "-mr-1 text-right" : "-ml-1 text-left"}`}>{storyReaction[1]}</span></div> : message.disappearAfterSeconds !== null ? <button className="flex min-w-48 items-center gap-3 py-1 text-left" disabled={mine || disappearingViewerBusy || Boolean(message.expiresAt && new Date(message.expiresAt).getTime() <= clock)} onClick={() => openDisappearingViewer(message)} type="button"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-atseen-blue/15 text-atseen-blue"><FiClock /></span><span><b className="block text-xs">{message.expiresAt && new Date(message.expiresAt).getTime() <= clock ? "Disappearing message expired" : message.openedAt ? "Disappearing message opened" : mine ? "Disappearing message sent" : "Open disappearing message"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{message.disappearAfterSeconds === 0 ? "View once" : `${message.disappearAfterSeconds} seconds`}{!mine && !message.openedAt ? " · tap to view" : ""}</span></span></button> : message.deletedAt ? <p className="flex items-center gap-1.5 italic opacity-65"><FiTrash2 className="shrink-0" />{mine ? "You deleted this message" : "This message was deleted"}</p> : message.mediaType === "gift" && message.gift ? <div className="min-w-40 py-1 text-center"><GiftArt className="mx-auto h-24 w-24" gift={message.gift} imageClassName="h-full w-full object-contain" /><p className="mt-1 font-black" dir="auto">{message.gift.name}</p><p className="message-gift-from"><span>{mine ? "Gift from you" : `Gift from @${participant?.username || "user"}`}</span><span aria-hidden="true"> · </span><img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain align-[-0.12em]" src="/brand/goldcoin.png" /><span>{Number(message.gift.stars).toLocaleString()}</span></p>{message.body && message.body !== message.gift.name ? <p className={`mx-auto mt-2 max-w-52 border-t pt-2 text-left text-xs italic ${mine ? "border-atseen-bg/15 text-atseen-bg/80" : "border-white/10 text-atseen-text"}`}>“{message.body}”</p> : null}</div> : message.sharedContent ? <div><SharedContentMessageCard content={message.sharedContent} mine={mine} onOpen={openSharedContent} />{message.body && message.body !== defaultSharedBody(message) ? <p className="whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "image" && message.image ? <div><img alt={__msg("fan.sharedInChat")} className="max-h-80 w-full rounded-xl object-cover" loading="lazy" src={message.image.url} />{message.body && message.body !== "Image" ? <p className="mt-2 whitespace-pre-wrap break-words">{message.body}</p> : null}</div> : message.mediaType === "audio" && message.audio ? <VoiceMessageBubble audio={message.audio} mine={mine} /> : message.mediaType === "video" && message.video ? <VideoNoteBubble mine={mine} video={message.video} /> : <MessageText body={message.body} mine={mine} />}
                     {!storyReaction ? <p className={`mt-0.5 flex items-center justify-end gap-1 text-right text-[9px] ${mine ? "text-atseen-bg/60" : "text-atseen-muted"}`}>
                       <span>{chatTimeLabel(message.createdAt, chatLanguage)}{mine && message.deliveryState === "sending" ? " · Sending…" : mine && message.deliveryState === "failed" ? " · Failed" : ""}</span>
-                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some((receipt) => receipt.userId !== myId) ? "Read" : "Sent" : message.readAt ? "Read" : "Sent"} className="font-black">{selected.type === "group" ? (message.readBy || []).some((receipt) => receipt.userId !== myId) ? "✓✓" : "✓" : message.readAt ? "✓✓" : "✓"}</span> : null}
+                      {mine && message.deliveryState !== "sending" && message.deliveryState !== "failed" ? <span aria-label={selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) ? "Read" : (message.deliveredBy || []).some(receipt => receipt.userId !== myId) ? "Delivered" : "Sent" : message.readAt ? "Read" : message.delivered ? "Delivered" : "Sent"} className={`message-delivery-ticks font-black${(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) : message.readAt) ? " is-read" : ""}`}>{(selected.type === "group" ? (message.readBy || []).some(receipt => receipt.userId !== myId) || (message.deliveredBy || []).some(receipt => receipt.userId !== myId) : message.readAt || message.delivered) ? "\u2713\u2713" : "\u2713"}</span> : null}
                       {mine && message.deliveryState === "failed" ? <button className="inline-flex items-center gap-1 font-bold text-atseen-bg underline" onClick={() => retryText(message)} type="button"><FiRefreshCw /> {__msg("activity.retry")}</button> : null}
                     </p> : null}
                   </div>
@@ -2582,7 +2612,7 @@ export default function MessagesPage() {
       </section>
     </div>, document.body) : null}
 
-    {groupMessageInfo && selected?.type === "group" ? <div className="absolute inset-0 z-[66] flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><div className="max-h-[78vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between border-b border-atseen-line p-5"><div><h2 className="text-lg font-bold">{__msg("fan.messageInfo")}</h2><p className="mt-1 max-w-[280px] truncate text-xs text-atseen-muted">{groupMessageInfo.body}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setGroupMessageInfo(null)} type="button"><FiX /></button></header><div className="atseen-hide-scrollbar max-h-[60vh] overflow-y-auto p-4">{[{ label: "SEEN BY", rows: (groupMessageInfo.readBy || []).filter((receipt) => receipt.userId !== myId).map((receipt) => ({ ...receipt, at: receipt.readAt })) }, { label: "DELIVERED TO", rows: (groupMessageInfo.deliveredBy || []).filter((receipt) => receipt.userId !== myId && !(groupMessageInfo.readBy || []).some((read) => read.userId === receipt.userId)).map((receipt) => ({ ...receipt, at: receipt.deliveredAt })) }].map((section) => <section className="mb-5" key={section.label}><h3 className="mb-2 text-[10px] font-black tracking-[0.16em] text-atseen-muted">{section.label} <span className="text-atseen-blue">{section.rows.length}</span></h3>{section.rows.length ? section.rows.map((receipt) => { const member = participant.members?.find((item) => item.id === receipt.userId); return <div className="flex items-center gap-3 rounded-xl px-2 py-2" key={receipt.userId}><Identity compact person={member || { displayName: "Former member" }} subtitle="" /><span className="ml-auto text-[10px] text-atseen-muted">{receipt.at ? new Date(receipt.at).toLocaleString(__uiLocale(), { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</span></div>; }) : <p className="px-2 py-2 text-xs text-atseen-muted">{__msg("fan.noMembersYet")}</p>}</section>)}</div></div></div> : null}
+    {groupMessageInfo && selected?.type === "group" ? <div className="absolute inset-0 z-[66] flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><div className="max-h-[78vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between border-b border-atseen-line p-5"><div><h2 className="text-lg font-bold">{__msg("fan.messageInfo")}</h2><p className="mt-1 max-w-[280px] truncate text-xs text-atseen-muted">{groupMessageInfo.body}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setGroupMessageInfo(null)} type="button"><FiX /></button></header><div className="atseen-hide-scrollbar max-h-[60vh] overflow-y-auto p-4">{[{ label: "SEEN BY", rows: (groupMessageInfo.readBy || []).filter((receipt) => receipt.userId !== myId).map((receipt) => ({ ...receipt, at: receipt.readAt })) }, { label: "DELIVERED TO", rows: (groupMessageInfo.deliveredBy || []).filter((receipt) => receipt.userId !== myId && !(groupMessageInfo.readBy || []).some((read) => read.userId === receipt.userId)).map((receipt) => ({ ...receipt, at: receipt.deliveredAt })) }].map((section) => <section className="mb-5" key={section.label}><h3 className="mb-2 text-[10px] font-black tracking-[0.16em] text-atseen-muted">{section.label} <span className="text-atseen-blue">{section.rows.length}</span></h3>{section.rows.length ? section.rows.map((receipt) => { const member = participant.members?.find((item) => item.id === receipt.userId); return <div className="flex items-center gap-3 rounded-xl px-2 py-2" key={receipt.userId}><Identity compact person={member || { displayName: "Former member" }} subtitle="" /><span className="ml-auto text-[10px] text-atseen-muted"></span></div>; }) : <p className="px-2 py-2 text-xs text-atseen-muted">{__msg("fan.noMembersYet")}</p>}</section>)}</div></div></div> : null}
     {forwardingMessage ? <div className="absolute inset-0 z-[65] flex items-end bg-black/75 p-3 sm:items-center sm:justify-center"><div className="max-h-[78vh] w-full max-w-md overflow-hidden rounded-3xl border border-atseen-line bg-atseen-bg-2 shadow-2xl"><header className="flex items-center justify-between p-5"><div><h2 className="text-lg font-bold">{__msg("fan.forwardMessage")}</h2><p className="mt-1 max-w-[280px] truncate text-xs text-atseen-muted">{forwardingMessage.body}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" onClick={() => setForwardingMessage(null)} type="button"><FiX /></button></header><label className="mx-4 mb-3 flex items-center gap-2 rounded-2xl border border-atseen-line bg-atseen-surface-2 px-4"><FiSearch className="text-atseen-muted" /><input className="w-full bg-transparent py-3 text-sm outline-none" onChange={(event) => setSearch(event.target.value)} placeholder={__msg("stories.searchPeople")} value={search} /></label><div className="atseen-hide-scrollbar max-h-[50vh] overflow-y-auto pb-3">{(groupsQuery.data || []).filter((group) => group.id !== selected?.id).map((group) => <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" disabled={actionBusy} key={`group:${group.id}`} onClick={() => forwardSelectedMessage(group)} type="button"><Identity compact person={{ displayName: group.name, avatarUrl: group.avatarUrl }} subtitle={`${group.members?.length || 0} members`} /><FiShare2 /></button>)}{orderedPeople.filter((person) => person.id !== selected?.id).map((person) => <button className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/[0.04]" disabled={actionBusy} key={person.id} onClick={() => forwardSelectedMessage({ ...person, type: "direct" })} type="button"><Identity compact person={person} presence={presence[person.id]} /><FiShare2 /></button>)}</div></div></div> : null}
     {groupInfoOpen && selected?.type === "group" ? <div className="absolute inset-0 z-50 flex items-end bg-black/60" onMouseDown={(event) => { if (event.target === event.currentTarget) setGroupInfoOpen(false); }} role="presentation">
       <section aria-label={__msg("fan.groupDetails")} aria-modal="true" className="relative max-h-[86%] w-full overflow-hidden rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] shadow-[0_-22px_60px_rgba(0,0,0,.45)]" role="dialog">

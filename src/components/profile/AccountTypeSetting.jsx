@@ -28,7 +28,7 @@ const categories = {
   business: ["Shop", "Café & restaurant", "Studio & salon", "Fitness club", "Hotel & travel", "Media & news", "Services", "Brand"],
 };
 
-export default function AccountTypeSetting({ renderTrigger } = {}) {
+export default function AccountTypeSetting({ renderTrigger, openRequest = 0 } = {}) {
   __useUiLanguage();
   const { user, setUser } = useAuth();
   const { showToast } = useFanToast();
@@ -47,6 +47,7 @@ export default function AccountTypeSetting({ renderTrigger } = {}) {
   const dashboardLabel = __msg(draftType === "business" ? "profile.openBusinessDashboard" : "profile.openCreatorDashboard");
   const [position, setPosition] = useState({});
   const [error, setError] = useState("");
+  useEffect(() => { if (openRequest) { setStep("types"); setError(""); } }, [openRequest]);
   const mutation = useMutation({
     mutationFn: ({ type, category: selected, buttons }) => profileService.updateAccountSettings({ profileAccountType: type, profileCategory: selected, confirmSwitch: type !== current, ...(buttons ? { businessContactButtons: buttons } : {}) }),
     onSuccess: (response, variables) => {

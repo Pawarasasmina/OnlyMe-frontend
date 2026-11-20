@@ -1,3 +1,4 @@
+import { isAtSeenStatus } from "../utils/privacyPresentation";
 import { msg as __msg } from "../i18n/runtime.js";
 import axiosInstance from "../api/axiosInstance";
 import { resolveMediaUrl } from "../utils/media";
@@ -194,7 +195,7 @@ function normalizeActivity(raw = null) {
     ...raw,
     actor: raw.actor || {},
     count: Number(raw.count) || 0,
-    online: Boolean(raw.online),
+    online: isAtSeenStatus(raw.activeStatus || raw.actor?.activeStatus),
     text: raw.text || "",
   };
 }

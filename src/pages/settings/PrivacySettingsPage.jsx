@@ -1,3 +1,4 @@
+import PresencePrivacyControls from "../../components/profile/PresencePrivacyControls";
 import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
 import { localizedTuple as __uiTuple } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
@@ -17,16 +18,12 @@ import { resolveMediaUrl } from "../../utils/media";
 
 const roleOptions = {
   fan: [
-    __uiTuple(["showOnlineStatus", { __uiMessage: "settings.showOnlineStatus" }]),
-    __uiTuple(["showActivityStatus", { __uiMessage: "settings.showActivityStatus" }]),
     __uiTuple(["showLocation", { __uiMessage: "settings.showLocation" }]),
     __uiTuple(["allowDiscovery", { __uiMessage: "settings.allowProfileDiscovery" }]),
     __uiTuple(["allowDirectMessages", { __uiMessage: "settings.allowDirectMessages" }]),
     __uiTuple(["allowMentions", { __uiMessage: "settings.allowMentions" }]),
   ],
   creator: [
-    __uiTuple(["showOnlineStatus", { __uiMessage: "settings.showOnlineStatus" }]),
-    __uiTuple(["showActivityStatus", { __uiMessage: "settings.showActivityStatus" }]),
     __uiTuple(["showLocation", { __uiMessage: "settings.showLocation" }]),
     __uiTuple(["allowDiscovery", { __uiMessage: "settings.allowCreatorDiscovery" }]),
     __uiTuple(["allowDirectMessages", { __uiMessage: "settings.allowDirectMessages" }]),
@@ -35,8 +32,6 @@ const roleOptions = {
     __uiTuple(["showFollowers", { __uiMessage: "settings.showFollowers" }]),
   ],
   admin: [
-    __uiTuple(["showOnlineStatus", { __uiMessage: "settings.showOnlineStatus" }]),
-    __uiTuple(["showActivityStatus", { __uiMessage: "settings.showActivityStatus" }]),
     __uiTuple(["allowDirectMessages", { __uiMessage: "settings.allowDirectMessages" }]),
   ],
 };
@@ -174,13 +169,16 @@ function PrivacySettingsPage() {
 
   const submit = (event) => {
     event.preventDefault();
-    mutation.mutate(form);
+    const privacySettings = { ...form.privacySettings };
+    delete privacySettings.activityStatus; delete privacySettings.readReceipts;
+    mutation.mutate({ ...form, privacySettings });
   };
 
   return (
     <div className="space-y-6">
       <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand-mist/70 transition hover:text-white" to="/settings">
         <FiArrowLeft data-ui-directional="true" />{__msg("settings.backToSettings")}</Link>
+      <PresencePrivacyControls />
       <form className="space-y-6" onSubmit={submit}>
         <section className="space-y-5 rounded-3xl border border-white/10 bg-brand-dark/60 p-5">
           <div>

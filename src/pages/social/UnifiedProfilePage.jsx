@@ -1,3 +1,4 @@
+import { isAtSeenStatus } from "../../utils/privacyPresentation";
 import { businessContactHrefs } from "../../utils/businessContacts";
 import { storyStartIndex } from "../../utils/storyStartIndex";
 import PublishBanner from "../../components/publication/PublishBanner";
@@ -489,7 +490,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
             <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
           </button>
           {activeStatus?.emoji ? <span className="profile-avatar-world-rotor"><span aria-label={activeStatus.label || __msg("financial.status")} className="profile-avatar-world-planet" role="img" title={activeStatus.label || __msg("financial.status")}>{activeStatus.emoji}</span></span> : null}
-          {activeStatus ? <span aria-label={__msg("social.onlineNow")} className="profile-avatar-now-dot" role="img" /> : null}
+          {isAtSeenStatus(activeStatus) ? <span aria-label={__msg("constants.atSeen")} className="profile-avatar-now-dot" role="img" /> : null}
           {isOwner ? <button aria-label={__msg("social.createAStory")} className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
         </div>
         <div className="profile-copy">

@@ -222,6 +222,7 @@ function ProfileStatusPage() {
         <button className="profile-status-show" disabled={!canShow || saveStatus.isPending} type="submit">
           {saveStatus.isPending ? __msg("stories.showing") : __msg("stories.show")}
         </button>
+        <p className="mt-4 text-center text-xs text-atseen-muted">{__msg("presence.atSeenHint")}</p>
       </form>
     </section>
   );

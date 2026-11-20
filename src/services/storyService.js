@@ -209,8 +209,7 @@ function normalizeWallStoryGroup(group = {}) {
     activeStatus: normalizeStatus(group.activeStatus || group.user?.activeStatus) || storyStatus,
     hasUnseenStories: stories.some((story) => !story.viewed),
     presence: {
-      isOnline: Boolean(group.presence?.isOnline),
-      lastActiveAt: group.presence?.lastActiveAt || null,
+      isOnline: false,
     },
     stories,
     storyCount: Number(group.storyCount ?? stories.length),
@@ -226,8 +225,7 @@ function normalizeWallStories(data, fallbackUser = {}) {
     activeStatus: normalizeStatus(payload.viewer?.activeStatus || fallbackUser.activeStatus),
     hasActiveStories: Boolean(payload.viewer?.hasActiveStories || viewerStories.length),
     presence: {
-      isOnline: Boolean(payload.viewer?.presence?.isOnline),
-      lastActiveAt: payload.viewer?.presence?.lastActiveAt || fallbackUser.lastSeenAt || null,
+      isOnline: false,
     },
     stories: viewerStories,
     storyCount: Number(payload.viewer?.storyCount ?? viewerStories.length),

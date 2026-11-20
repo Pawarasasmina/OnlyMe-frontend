@@ -1,3 +1,4 @@
+import PresencePrivacyControls from "../../components/profile/PresencePrivacyControls";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 /* i18n-source-migrated */
 import { msg as __msg } from "../../i18n/runtime.js";
@@ -79,7 +80,7 @@ export default function SettingsPage() {
     || (privacyQuery.data?.privacySettings?.allowDirectMessages === false ? "no_one" : "everyone");
   const messageLabels = { everyone: __msg("onboarding.everyone"), following: __msg("settings.peopleIFollow"), no_one: __msg("settings.noOne") };
   const messageAudienceMutation = useMutation({
-    mutationFn: audience => profileService.updatePrivacySettings({ privacySettings: { ...(privacyQuery.data?.privacySettings || {}), messageAudience: audience } }),
+    mutationFn: audience => profileService.updatePrivacySettings({ privacySettings: { messageAudience: audience } }),
     onMutate: async audience => {
       await queryClient.cancelQueries({ queryKey: ["settings", "privacy"] });
       const previous = queryClient.getQueryData(["settings", "privacy"]);
@@ -97,7 +98,7 @@ export default function SettingsPage() {
     },
   });
   const supportersMutation = useMutation({
-    mutationFn: (showFollowers) => profileService.updatePrivacySettings({ privacySettings: { ...(privacyQuery.data?.privacySettings || {}), showFollowers } }),
+    mutationFn: (showFollowers) => profileService.updatePrivacySettings({ privacySettings: { showFollowers } }),
     onSuccess: (response) => {
       queryClient.setQueryData(["settings", "privacy"], response.data.data);
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
@@ -173,7 +174,7 @@ export default function SettingsPage() {
     </SettingsGroup> : null}
     <SettingsGroup title={__msg("orbit.preferences")}><SettingsRow icon={FiBell} onClick={() => setNotificationsOpen(true)} subtitle={__msg("settings.commentsReactionsMessagesAndIncome")} title={__msg("settings.notifications")} /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.topicsPeopleAndWhatYouSee")} title={__msg("settings.contentPreferences")} to="/settings/content" /><SettingsRow icon={FiGlobe} subtitle={__msg("settings.timeZoneAndPassword")} title={__msg("settings.accountPreferences")} to="/settings/account" /></SettingsGroup>
     <SettingsPayments />
-    <SettingsGroup title={__msg("settings.privacySafety")}>
+    <SettingsGroup title={__msg("settings.privacySafety")}><PresencePrivacyControls />
       <SettingsRow icon={FiUserX} onClick={() => setPrivacySheet("blocked")} subtitle={blockedQuery.isLoading ? __msg("admin.loading") : blockedQuery.data?.length ? __msg("settings.blocked", { value0: blockedQuery.data.length }) : __msg("settings.youHavenTBlockedAnyone")} title={__msg("settings.blockedUsers")} />
       <SettingsRow icon={FiVolumeX} onClick={() => setPrivacySheet("muted")} subtitle={mutedQuery.isLoading ? __msg("admin.loading") : mutedQuery.data?.length ? __msg("settings.muted_548bb9", { value0: mutedQuery.data.length }) : __msg("settings.noOneMuted")} title={__msg("settings.muted")} />
       <SettingsRow icon={FiMessageCircle} disabled={privacyQuery.isPending || privacyQuery.isError || messageAudienceMutation.isPending} onClick={() => messageAudienceMutation.mutate({ everyone: "following", following: "no_one", no_one: "everyone" }[messageAudience])} subtitle={privacyQuery.isPending ? __msg("admin.loading") : messageLabels[messageAudience]} title={__msg("settings.whoCanMessageMe")} />
