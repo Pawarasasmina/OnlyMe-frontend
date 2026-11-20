@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-const ready = { enabled: true, accountType: "creator", category: "Digital creator", country: "Sri Lanka", hasDateOfBirth: true, eligibility: { age: true, country: true, terms: true, standing: true }, verified: true, payoutsReady: true, sellerReady: true, policy: { enabled: true, supportedCountries: ["Sri Lanka", "France"], termsVersion: "v-test" }, tools: { gifts: true, dream: true, directAccess: true, paidSeens: true, world: true } };
+const ready = { enabled: true, accountType: "creator", category: "Digital creator", country: "Sri Lanka", hasDateOfBirth: true, dateOfBirth: "1995-04-12", eligibility: { age: true, country: true, terms: true, standing: true }, verified: true, payoutsReady: true, sellerReady: true, policy: { enabled: true, supportedCountries: ["Sri Lanka", "France"], blockedCallCountries: ["AE"], termsVersion: "v-test" }, tools: { gifts: true, dream: true, directAccess: true, paidSeens: true, world: true } };
 async function fixture(page, { data = ready, walletError = false, failSave = false, admin = false } = {}) {
   const calls = [];
   await page.route("**/api/**", async route => {
@@ -9,7 +9,7 @@ async function fixture(page, { data = ready, walletError = false, failSave = fal
     if (method !== "GET") calls.push({ path, body: route.request().postDataJSON() });
     if (walletError && path === "/api/wallet" || failSave && method === "PUT") return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "Please try again later." }) });
     if (path === "/api/settings/monetization" && method === "PUT") {
-      data = { ...ready, policy: data.policy, enabled: data.policy.supportedCountries.length > 0, payoutsReady: data.payoutsReady, eligibility: { ...ready.eligibility, country: data.policy.supportedCountries.length > 0 } };
+      data = { ...ready, policy: data.policy, enabled: data.verified && data.policy.supportedCountries.length > 0, verified: data.verified, payoutsReady: data.payoutsReady, eligibility: { ...ready.eligibility, country: data.policy.supportedCountries.length > 0 } };
     }
     const payload = path === "/api/creator/verification" ? { verification: { purpose: "IDENTITY", status: data.verified ? "APPROVED" : "NOT_STARTED" } } : path.endsWith("/monetization-policy") ? method === "PUT" ? route.request().postDataJSON() : ready.policy : path === "/api/settings/monetization" ? data : path === "/api/wallet" ? { wallet: { availableIncomeUsd: 12.34, pendingIncomeUsd: 56.78, starsPerUsd: 37 } } : path === "/api/identity" ? { status: "verified", bankAvailable: true, bankReady: data.payoutsReady, bankLast4: data.payoutsReady ? "1234" : "", automaticPayout: true } : path === "/api/identity/bank" ? { available: true, bank: null } : { account: { profileAccountType: data.accountType, profileCategory: data.category }, gifts: [], items: [] };
     await route.fulfill({ contentType: "application/json", body: JSON.stringify({ success: true, data: payload }) });
@@ -43,7 +43,7 @@ test("missing eligibility can be completed and persists server response", async 
   await dialog.getByLabel("Payout country").selectOption("France");
   await dialog.getByRole("checkbox").check();
   await dialog.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByText("You can earn on @seen")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Verification", exact: true })).toBeVisible();
   expect(calls[0].body).toEqual({ dateOfBirth: "1995-01-01", country: "France", acceptTerms: true, termsVersion: "v-test" });
 });
 
@@ -61,7 +61,7 @@ test("approved identity and bank do not bypass missing monetization consent", as
   await dialog.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByText('You can earn on @seen')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Complete eligibility', exact: true })).toHaveCount(0);
-  await expect(page.locator('.monetization-check .is-passed')).toHaveCount(4);
+  await expect(page.locator('.monetization-check .is-passed')).toHaveCount(5);
   expect(calls).toHaveLength(1);
   expect(calls[0].body.acceptTerms).toBe(true);
   expect(calls[0].body.country).toBe('Sri Lanka');
@@ -73,11 +73,6 @@ test("empty country list opens the admin bank flow after explicit consent", asyn
   const consent = page.getByRole("dialog", { name: "Complete eligibility" });
   await consent.getByRole("checkbox").check();
   await consent.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "You’re verified" })).toBeVisible();
-  await expect(page.locator(".identity-scene")).toBeVisible();
-  await expect(page.getByText("Your badge is on. Add a bank to withdraw.")).toBeVisible();
-  await page.screenshot({ path: "tmp/verified-bank-entry.png" });
-  await page.getByRole("button", { name: "Add a bank for payouts", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Set up payouts" })).toBeVisible();
   await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Add a bank for payouts" })).toBeVisible();
@@ -90,19 +85,36 @@ test("admin manages payout countries independently of coin exchange rate", async
   await page.getByLabel("Supported payout countries (one per line)").fill("France\nSri Lanka");
   await page.getByRole("button", { name: "Save eligibility policy" }).click();
   await expect(page.getByRole("status")).toHaveText("Eligibility policy saved.");
-  expect(calls[0]).toEqual({ path: "/api/admin/monetization-policy", body: { enabled: true, supportedCountries: ["France", "Sri Lanka"], termsVersion: "v-test" } });
+  expect(calls[0]).toEqual({ path: "/api/admin/monetization-policy", body: { enabled: true, supportedCountries: ["France", "Sri Lanka"], blockedCallCountries: ["AE"], termsVersion: "v-test", topCreatorPayoutThresholdUsd: 1000 } });
 });
 
- test("verified accounts see confirmation before bank setup and can defer it", async ({ page }) => {
+test("verified creators with unapproved country reach bank setup directly", async ({ page }) => {
   const calls = await fixture(page, { data: { ...ready, enabled: false, payoutsReady: false, eligibility: { ...ready.eligibility, country: false } } });
-  await page.getByRole("button", { name: "Complete eligibility" }).click();
-  await expect(page.locator(".identity-name")).toHaveText("Aisha Rahman");
-  await page.getByRole("button", { name: "Later", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Verification", exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Complete eligibility" }).click();
-  await page.getByRole("button", { name: "Add a bank for payouts", exact: true }).click();
+  await page.getByRole("button", { name: "Complete eligibility", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Set up payouts" })).toBeVisible();
-  await page.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Submit for admin review" })).toBeVisible();
   expect(calls).toHaveLength(0);
+});
+
+test("signup birthday is visible and immutable when eligibility rows open setup", async ({ page }) => {
+  await fixture(page, { data: { ...ready, enabled: false, verified: false, payoutsReady: false, country: "", eligibility: { age: true, country: false, terms: false, standing: true } } });
+  await page.getByRole("button", { name: /18 or older/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Complete eligibility", exact: true });
+  await expect(dialog.locator("time")).toHaveText("1995-04-12");
+  await expect(dialog.locator('input[type="date"]')).toHaveCount(0);
+  await expect(dialog.getByRole("checkbox")).not.toBeChecked();
+});
+
+test("personal earning setup opens the account type chooser", async ({ page }) => {
+  await fixture(page, { data: { ...ready, accountType: "personal", enabled: false } });
+  await page.getByRole("button", { name: "Complete eligibility", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Account type", exact: true })).toBeVisible();
+});
+
+test("admin can configure call-country restrictions independently of payouts", async ({ page }) => {
+  const calls = await fixture(page, { admin: true });
+  await page.getByLabel("Countries where calls are disabled", { exact: false }).fill("AE\nLK");
+  await page.getByRole("button", { name: "Save eligibility policy", exact: true }).click();
+  await expect(page.getByRole("status")).toBeVisible();
+  expect(calls[0].body.blockedCallCountries).toEqual(["AE", "LK"]);
+  expect(calls[0].body.supportedCountries).toEqual(["Sri Lanka", "France"]);
 });

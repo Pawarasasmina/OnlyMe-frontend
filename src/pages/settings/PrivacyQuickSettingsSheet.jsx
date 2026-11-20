@@ -91,8 +91,7 @@ export default function PrivacyQuickSettingsSheet({ anchorRef, isOpen, onClose, 
 
   const messagingMutation = useMutation({
     mutationFn: (allowDirectMessages) => {
-      const current = privacyQuery.data?.privacySettings || {};
-      return profileService.updatePrivacySettings({ privacySettings: { ...current, allowDirectMessages } });
+      return profileService.updatePrivacySettings({ privacySettings: { allowDirectMessages } });
     },
     onSuccess: (response) => {
       queryClient.setQueryData(["settings", "privacy"], response.data.data);

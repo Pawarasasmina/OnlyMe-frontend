@@ -43280,3 +43280,12 @@ html[dir="rtl"] textarea {
   .discover-quick-layer .wall-topic-scrim { animation: none; }
 }
 
+
+.message-presence-dot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border:2px solid #0a0c0f;border-radius:50%;background:#6ecf97}
+.message-presence-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:3px;font-size:11px;color:#8b919a}
+.message-active-now{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#6ecf97}
+.message-active-now i{width:7px;height:7px;border-radius:50%;background:#6ecf97}
+.message-at-seen-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.05);font-size:10px;color:#969da7}
+.message-at-seen-pill svg{width:12px;height:12px}
+
+.message-delivery-ticks{color:#697987}.message-delivery-ticks.is-read{color:#246bb2}

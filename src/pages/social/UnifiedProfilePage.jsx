@@ -1,3 +1,4 @@
+import { isAtSeenStatus } from "../../utils/privacyPresentation";
 import { businessContactHrefs } from "../../utils/businessContacts";
 import { storyStartIndex } from "../../utils/storyStartIndex";
 import PublishBanner from "../../components/publication/PublishBanner";
@@ -491,7 +492,7 @@ function IdentitySection({ hasStories = false, metrics = {}, onConnectionsOpen, 
             <FanAvatar name={profile.displayName} size="h-[70px] w-[70px]" src={avatar} />
           </button>
           {orbitWorld ? <span className="profile-avatar-world-rotor"><Link aria-label={`Open ${orbitWorld.title || "World"}`} className="profile-avatar-world-planet" onClick={(event) => event.stopPropagation()} title={orbitWorld.title || "World"} to={`/world/${orbitWorld.id}`}><MinimalWorldIcon size={22} /></Link></span> : null}
-          {activeStatus ? <span aria-label={__msg("social.onlineNow")} className="profile-avatar-now-dot" role="img" /> : null}
+          {isAtSeenStatus(activeStatus) ? <span aria-label={__msg("constants.atSeen")} className="profile-avatar-now-dot" role="img" /> : null}
           {isOwner ? <button aria-label={__msg("social.createAStory")} className="profile-avatar-story-create" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStoriesCreate?.(); }} type="button">+</button> : null}
         </div>
         <div className="profile-copy">

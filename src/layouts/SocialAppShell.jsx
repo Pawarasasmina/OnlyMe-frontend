@@ -1,3 +1,4 @@
+import PresenceNotice from "../components/profile/PresenceNotice";
 import "../styles/tabletLayout.css";
 import { useRouteMotion } from "../hooks/useRouteMotion";
 import FirstTimeHints from "../components/common/FirstTimeHints";
@@ -240,6 +241,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
       />
       <StoryCreator isOpen={storyCreatorOpen} onClose={() => setStoryCreatorOpen(false)} />
       {verificationOpen ? <CreatorVerificationPage onClose={() => setVerificationOpen(false)} /> : null}
+      <PresenceNotice />
       </CallProvider>
     </FanToastProvider>
   );

@@ -1,0 +1,5 @@
+.presence-return-bar { position:fixed;z-index:550;left:16px;right:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);display:flex;align-items:center;gap:10px;width:calc(100vw - 32px);padding:11px 14px;border-radius:16px;background:rgba(26,29,36,.92);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);color:#edeff3;font-size:13.5px; }
+.presence-return-bar > span { flex:1; }
+.presence-return-bar button { color:#9ccbff;font-weight:700; }
+.presence-return-bar button:last-child { color:#7b818a;padding-inline-start:4px; }
+.presence-return-bar button:focus-visible { outline:2px solid #9ccbff;outline-offset:3px; }

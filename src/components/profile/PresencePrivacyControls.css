@@ -1,0 +1,11 @@
+.presence-privacy-row { display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;padding:13px 20px;text-align:start; }
+.presence-privacy-row b { display:block;font-size:14.5px;font-weight:600; }
+.presence-privacy-row small { display:block;margin-top:4px;color:rgba(255,255,255,.45);font-size:12.5px;line-height:1.4; }
+.presence-privacy-switch { flex:none;display:block;width:46px;height:28px;padding:4px;border-radius:999px;background:#343840;transition:background .18s;direction:ltr; }
+.presence-privacy-switch i { display:block;width:20px;height:20px;border-radius:50%;background:#090c10;transition:transform .18s; }
+.presence-privacy-switch.is-on { background:#9ccbff; }
+.presence-privacy-switch.is-on i { transform:translateX(18px); }
+html[dir="rtl"] .presence-privacy-switch { transform:scaleX(-1); }
+.presence-privacy-row:focus-visible { outline:2px solid #9ccbff;outline-offset:-2px;border-radius:8px; }
+.presence-privacy-row:disabled { opacity:.55; }
+@media(prefers-reduced-motion:reduce) { .presence-privacy-switch,.presence-privacy-switch i { transition:none; } }

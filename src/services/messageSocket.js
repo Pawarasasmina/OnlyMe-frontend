@@ -4,6 +4,8 @@ import axiosInstance from "../api/axiosInstance";
 let socket;
 let presenceInterval;
 let visibilityHandler;
+let activityHandler;
+let hasInteraction = true;
 
 function startPresenceTracking(activeSocket) {
   clearInterval(presenceInterval);
@@ -11,14 +13,26 @@ function startPresenceTracking(activeSocket) {
   const sync = () => {
     const visible = document.visibilityState === "visible";
     activeSocket.emit("presence:active", visible);
-    if (visible) activeSocket.emit("presence:heartbeat");
+    if (visible) { activeSocket.emit("presence:heartbeat", { interaction: true }); hasInteraction = false; }
   };
+  let lastInteraction = 0;
+  activityHandler = () => {
+    if (document.visibilityState !== "visible") return;
+    hasInteraction = true;
+    if (activeSocket.connected && Date.now() - lastInteraction > 15000) {
+      lastInteraction = Date.now(); activeSocket.emit("presence:heartbeat", { interaction: true }); hasInteraction = false;
+    }
+  };
+  for (const event of ["pointerdown", "keydown", "touchstart", "touchmove", "wheel"]) document.addEventListener(event, activityHandler, { passive: true, capture: true });
   visibilityHandler = sync;
   document.addEventListener("visibilitychange", visibilityHandler);
   activeSocket.on("connect", sync);
   presenceInterval = window.setInterval(() => {
-    if (document.visibilityState === "visible" && activeSocket.connected) activeSocket.emit("presence:heartbeat");
-  }, 10000);
+    if (document.visibilityState !== "visible") return;
+    if (activeSocket.connected) activeSocket.emit("presence:heartbeat", { interaction: hasInteraction });
+    else axiosInstance.post("/presence/heartbeat", { foreground: true, interaction: hasInteraction }).then(response => window.dispatchEvent(new CustomEvent("onlyme-presence-self", { detail: response.data.data }))).catch(() => {});
+    hasInteraction = false;
+  }, 30000);
   sync();
 }
 
@@ -29,6 +43,7 @@ function startGlobalMessageReceipts(activeSocket) {
     });
   };
   activeSocket.on("connect", syncDeliveries);
+  activeSocket.on("message:new", () => activeSocket.emit("messages:delivered"));
   activeSocket.on("group:message", ({ message }) => {
     if (!message?.id) return;
     axiosInstance.put(`/messages/groups/messages/${message.id}/delivered`, { read: false }).catch(() => {
@@ -61,6 +76,8 @@ export function disconnectMessageSocket() {
   presenceInterval = undefined;
   if (visibilityHandler) document.removeEventListener("visibilitychange", visibilityHandler);
   visibilityHandler = undefined;
+  for (const event of ["pointerdown", "keydown", "touchstart", "touchmove", "wheel"]) if (activityHandler) document.removeEventListener(event, activityHandler, true);
+  activityHandler = undefined;
   socket?.disconnect();
   socket = undefined;
 }

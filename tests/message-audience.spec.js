@@ -7,7 +7,7 @@ test('messaging audience cycles and saves inline without opening a dialog',async
     if(!path.startsWith('/api/')) return route.continue();
     if(path.endsWith('/privacy') && route.request().method()!=='GET') {
       const payload=route.request().postDataJSON();saves.push(payload);
-      privacy={...payload.privacySettings,allowDirectMessages:payload.privacySettings.messageAudience!=='no_one'};
+      privacy={...privacy,...payload.privacySettings,allowDirectMessages:payload.privacySettings.messageAudience!=='no_one'};
     }
     const data=path.endsWith('/privacy')?{privacySettings:privacy}:path.endsWith('/wallet')?{wallet:{balance:0}}:path.endsWith('/monetization')?{enabled:false}:{items:[]};
     return route.fulfill({contentType:'application/json',body:JSON.stringify({data})});
@@ -20,7 +20,9 @@ test('messaging audience cycles and saves inline without opening a dialog',async
     await expect(row).toContainText(label);
     await expect(row).toBeEnabled();
     expect(saves.at(-1).privacySettings.messageAudience).toBe(value);
-    expect(saves.at(-1).privacySettings.showOnlineStatus).toBe(false);
+    expect(privacy.showOnlineStatus).toBe(false);
+    expect(saves.at(-1).privacySettings.readReceipts).toBeUndefined();
+    expect(saves.at(-1).privacySettings.activityStatus).toBeUndefined();
     await expect(page.getByRole('dialog')).toHaveCount(0);
   }
 });

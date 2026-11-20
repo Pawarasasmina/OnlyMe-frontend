@@ -91,6 +91,8 @@ export default function RegisterPage() {
     const dateOfBirth = `${year}-${month}-${day}`;
     const parsedBirthday = new Date(`${dateOfBirth}T00:00:00Z`);
     if (Number.isNaN(parsedBirthday.getTime()) || parsedBirthday.getUTCDate() !== Number(day) || parsedBirthday.getUTCMonth() + 1 !== Number(month) || parsedBirthday.getUTCFullYear() !== Number(year) || parsedBirthday > new Date()) return setError(__msg("system.RegisterPage.ee46b7d1cf"));
+    const adultCutoff = new Date(); adultCutoff.setUTCFullYear(adultCutoff.getUTCFullYear() - 18);
+    if (parsedBirthday > adultCutoff) return setError(__msg("settings.minimumAgeRequired"));
     setSubmitting(true);
     try {
       const usernameError = usernameValidationError(form.username);

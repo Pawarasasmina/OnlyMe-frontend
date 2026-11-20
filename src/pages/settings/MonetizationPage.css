@@ -41,3 +41,8 @@
 .monetization-consent a { color:#9CCBFF;text-decoration:underline; }
 .monetization-cancel { display:block;margin:12px auto 0;font-size:13px;color:rgba(255,255,255,.62); }
 .monetization-setup .monetization-error { color:#F17878; }
+
+button.monetization-check { width:100%;text-align:start;border:0;background:transparent;cursor:pointer; }
+button.monetization-check > div { flex:1; }
+button.monetization-check > svg { flex:none;width:16px; }
+button.monetization-check:focus-visible { outline:2px solid #9ccbff;border-radius:8px; }
