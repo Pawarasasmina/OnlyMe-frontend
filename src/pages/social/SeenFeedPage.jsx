@@ -34,6 +34,7 @@ import { publicationService } from "../../services/publicationService";
 import { analyticsService } from "../../services/analyticsService";
 import { repostService } from "../../services/repostService";
 import { useRecommendationTracking } from "../../hooks/useRecommendationTracking";
+import { useChapterCompletion } from "../../hooks/useChapterCompletion";
 import { resolveMediaUrl } from "../../utils/media";
 import { canCreateFeedPost } from "../../utils/postPermissions";
 import ContentEmptyState from "../../components/shared/ContentEmptyState";
@@ -643,8 +644,10 @@ function InlineChapterBlock({ block }) {
   return block?.text || block?.label ? <p>{block.text || block.label}</p> : null;
 }
 
-function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onJoinWorld, onOverview, onPurchase, onSelect }) {
+function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onJoinWorld, onOverview, onPurchase, onSelect, trackingEnabled = false }) {
   __useUiLanguage();
+  const chapterLocation = useLocation();
+  const completion = useChapterCompletion({ publicationId: item.id, chapterId: chapter?.id, enabled: trackingEnabled && !chapter?.locked && Boolean(chapter?.blocks?.length) && !(chapter?.blocks || []).some(block => /AUDIO|VOICE/.test(block.type || "")), accessToken: new URLSearchParams(chapterLocation.search).get("access") || new URLSearchParams(chapterLocation.search).get("token") || "" });
   const blocks = chapter?.blocks || [];
   const nextChapter = chapters[chapterIndex + 1];
   if (chapter?.worldBonus && chapter?.locked && item.bonusWorld) return <section className="seen-inline-chapter is-world-bonus" aria-live="polite">
@@ -661,11 +664,11 @@ function InlineSeenChapter({ chapter, chapterIndex, chapters, item, onJoinWorld,
     <div className="seen-paid-locked-card"><span><FiLock /></span><h2>{__msg("system.SeenFeedPage.7898d6a540")}</h2>{item.ownerCount > 0 ? <p>{__msg("celebrations.ownerCount", { count: item.ownerCount })}</p> : null}<button onClick={onPurchase} type="button">{__msg("system.SeenFeedPage.8c6ae9a2fd")} {Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</button></div>
     {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>{__msg("onboarding.next")}</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label={__msg("system.SeenFeedPage.2a02ed17e8")} /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>{__msg("comments.done")}</small><strong>{__msg("creator.backToOverview")}</strong><FiChevronRight /></button>}
   </section>;
-  return <section className="seen-inline-chapter" aria-live="polite">
+  return <section ref={completion.rootRef} className="seen-inline-chapter" aria-live="polite">
     <div className="seen-inline-chapter-kicker"><b>{String(chapterIndex + 1).padStart(2, "0")}</b><span>{__msg("profile.chapter")} {chapterIndex + 1} {__msg("onboarding.of")} {chapters.length}</span></div>
     <h2>{chapter?.title || item.title}</h2>
     <i className="seen-inline-accent" />
-    <div className="seen-inline-blocks">{blocks.length ? blocks.map((block, index) => <InlineChapterBlock block={block} key={block.id || `${chapter.id}-${index}`} />) : <p>{__msg("social.thisChapterHasNoContentYet")}</p>}</div>
+    <div className="seen-inline-blocks">{blocks.length ? blocks.map((block, index) => <InlineChapterBlock block={block} key={block.id || `${chapter.id}-${index}`} />) : <p>{__msg("social.thisChapterHasNoContentYet")}</p>}<div aria-hidden="true" ref={completion.endRef} style={{ height: 1 }} /></div>
     {nextChapter ? <button className="seen-inline-next" onClick={() => onSelect(chapterIndex + 1)} type="button"><small>{__msg("onboarding.next")}</small><strong>{String(chapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> {nextChapter.locked ? <FiLock aria-label={__msg("system.SeenFeedPage.2a02ed17e8")} /> : null}{nextChapter.title}</strong><FiChevronRight /></button> : <button className="seen-inline-next" onClick={onOverview} type="button"><small>{__msg("comments.done")}</small><strong>{__msg("creator.backToOverview")}</strong><FiChevronRight /></button>}
   </section>;
 }
@@ -1309,7 +1312,7 @@ export function SeenFeedItem({ animateOnScroll = true, batchId = "", currentUser
   const nextChapterPanel = activeChapter < item.chapters.length - 1 ? activeChapter + 1 : item.chapters.length ? -1 : null;
   const renderInlinePanel = (panel) => panel == null ? <span /> : panel < 0
     ? <SeenSummary item={item} onOpenChapter={selectChapter} onPurchase={() => setPurchaseOpen(true)} />
-    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} onJoinWorld={() => navigate(`/world/${encodeURIComponent(item.bonusWorld.id)}?join=1`)} onOverview={() => selectChapter(-1, -1)} onPurchase={() => setPurchaseOpen(true)} onSelect={selectChapter} />;
+    : <InlineSeenChapter chapter={item.chapters[panel]} chapterIndex={panel} chapters={item.chapters} item={item} trackingEnabled={Boolean(currentUser && !isOwn && panel === activeChapter)} onJoinWorld={() => navigate(`/world/${encodeURIComponent(item.bonusWorld.id)}?join=1`)} onOverview={() => selectChapter(-1, -1)} onPurchase={() => setPurchaseOpen(true)} onSelect={selectChapter} />;
 
   return <motion.article
     className={reactionPickerOpen || reactionsSheetOpen ? "has-reaction-picker seen-feed-item" : "seen-feed-item"}
