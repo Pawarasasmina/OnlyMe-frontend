@@ -3,7 +3,7 @@ import { msg as __msg } from "../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
 import { Suspense, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { FiActivity, FiAlertTriangle, FiBarChart2, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiSliders, FiStar, FiUsers, FiX } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiBarChart2, FiBell, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiSliders, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
@@ -13,7 +13,7 @@ const navigation = [
   { get title() { return __msg("search.people"); }, links: [{ get label() { return __msg("layouts.users"); }, to: "/admin/users", icon: FiUsers }, { get label() { return __msg("layouts.identityVerification"); }, to: "/admin/identity-verifications", icon: FiShield }, { get label() { return __msg("layouts.creatorApplications"); }, to: "/admin/creator-verifications", icon: FiShield }, { get label() { return __msg("layouts.verifiedCreators"); }, to: "/admin/verified-creators", icon: FiStar }] },
   { get title() { return __msg("layouts.trustSafety"); }, links: [{ get label() { return __msg("system.AdminLayout.b624760088"); }, to: "/admin/safety", icon: FiAlertTriangle }, { get label() { return __msg("layouts.messageReports"); }, to: "/admin/message-reports", icon: FiAlertTriangle }, { get label() { return __msg("layouts.userReports"); }, to: "/admin/user-reports", icon: FiAlertTriangle }, { get label() { return __msg("layouts.postReports"); }, to: "/admin/post-reports", icon: FiFileText }] },
   { get title() { return __msg("layouts.commerce"); }, links: [{ get label() { return __msg("layouts.financialOperations"); }, to: "/admin/financial", icon: FiCreditCard }, { get label() { return __msg("system.AdminLayout.7ecd315515"); }, to: "/admin/finance/users", icon: FiCreditCard }, { get label() { return __msg("layouts.bankReviews"); }, to: "/admin/bank-reviews", icon: FiCreditCard }, { get label() { return __msg("layouts.giftCatalog"); }, to: "/admin/gifts", icon: FiGift }] },
-  { get title() { return __msg("layouts.communication"); }, links: [{ get label() { return __msg("layouts.welcomeEmail"); }, to: "/admin/welcome-email", icon: FiMail }] },
+  { get title() { return __msg("layouts.communication"); }, links: [{ label: "Creator announcements", to: "/admin/creator-announcements", icon: FiBell }, { get label() { return __msg("layouts.welcomeEmail"); }, to: "/admin/welcome-email", icon: FiMail }] },
   { get title() { return __msg("layouts.administration"); }, links: [{ get label() { return __msg("system.AdminLayout.428dd57903"); }, to: "/admin/staff", icon: FiUsers }, { get label() { return __msg("system.AdminLayout.823619e079"); }, to: "/admin/governance", icon: FiShield }, { get label() { return __msg("system.AdminLayout.ee833cade6"); }, to: "/admin/content-export", icon: FiFileText }] },
 ];
 
