@@ -21,7 +21,8 @@ export function useRecommendationTracking({ batchId = "", creatorId = "", enable
         const elapsed = Date.now() - state.startedAt;
         state.visibleMs += elapsed;
         state.startedAt = 0;
-        if (!root.querySelector("video")) void payload(elapsed < 2000 ? "FAST_SKIP" : "CONTENT_WATCH", { watchMs: elapsed });
+        const media = root.querySelector("video");
+        if (!media || !state.completed) void payload(state.visibleMs < 2000 ? "FAST_SKIP" : "CONTENT_WATCH", { watchMs: state.visibleMs, durationMs: Number.isFinite(media?.duration) ? Math.round(media.duration * 1000) : 0 });
       }
     }, { threshold: [0, 0.5, 0.8] });
     observer.observe(root);

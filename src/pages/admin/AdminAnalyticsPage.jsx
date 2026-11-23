@@ -9,6 +9,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { FiActivity, FiBarChart2, FiCalendar, FiDownload, FiEye, FiFileText, FiPieChart, FiRefreshCw, FiSearch, FiShield, FiTrendingUp, FiUsers } from "react-icons/fi";
 import Loader from "../../components/common/Loader";
 import { adminAnalyticsService } from "../../services/adminAnalyticsService";
+import { analyticsDubaiDate as localDate, analyticsRangeForPreset as rangeForPreset } from "../../utils/analyticsReportingRange";
 
 const DAY = 24 * 60 * 60 * 1000;
 const colors = ["#f97316", "#2563eb", "#10b981", "#8b5cf6", "#f59e0b", "#64748b"];
@@ -23,33 +24,6 @@ const presets = [
   { get label() { return __msg("admin.thisYear"); }, value: "this_year" },
   { get label() { return __msg("admin.customRange"); }, value: "custom" },
 ];
-
-function localDate(value) {
-  return value.toISOString().slice(0, 10);
-}
-
-function rangeForPreset(preset, customStart, customEnd) {
-  const now = new Date();
-  const end = new Date(now);
-  const start = new Date(now);
-  if (preset === "today") start.setHours(0, 0, 0, 0);
-  else if (preset === "7d") start.setDate(start.getDate() - 6);
-  else if (preset === "90d") start.setDate(start.getDate() - 89);
-  else if (preset === "this_month") start.setDate(1);
-  else if (preset === "last_month") {
-    start.setMonth(start.getMonth() - 1, 1);
-    end.setDate(0);
-  } else if (preset === "this_year") {
-    start.setMonth(0, 1);
-  } else if (preset === "custom") {
-    const customStartDate = customStart ? new Date(`${customStart}T00:00:00`) : start;
-    const customEndDate = customEnd ? new Date(`${customEnd}T23:59:59.999`) : end;
-    return { startDate: customStartDate.toISOString(), endDate: customEndDate.toISOString() };
-  } else start.setDate(start.getDate() - 29);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
-  return { startDate: start.toISOString(), endDate: end.toISOString() };
-}
 
 const formatNumber = (value) => Number(value || 0).toLocaleString(__uiLocale());
 const formatPct = (value) => value == null ? __msg("admin.noBaseline") : `${value > 0 ? "+" : ""}${value}%`;
@@ -183,7 +157,8 @@ export default function AdminAnalyticsPage() {
   const customStart = params.get("start") || localDate(new Date(Date.now() - 29 * DAY));
   const customEnd = params.get("end") || localDate(new Date());
   const range = useMemo(() => rangeForPreset(preset, customStart, customEnd), [preset, customEnd, customStart]);
-  const queryParams = { ...range, page, limit: 10, sort };
+  const productAccountType = params.get("productAccountType") === "TEST" ? "TEST" : "NON_TEST";
+  const queryParams = { ...range, page, limit: 10, sort, productAccountType };
   const reportQuery = useQuery({ queryKey: ["adminAnalytics", queryParams], queryFn: () => adminAnalyticsService.getReport(queryParams).then((response) => response.data.data), staleTime: 60_000 });
 
   const setParam = (key, value) => {
@@ -206,6 +181,13 @@ export default function AdminAnalyticsPage() {
 
   const data = reportQuery.data;
   const summary = data?.summary || {};
+  const productMetrics = [
+    { key: "world_open", label: __msg("admin.worldOpens") },
+    { key: "chapter_complete", label: __msg("admin.chapterCompletions") },
+    { key: "scroll_skip", label: __msg("admin.scrollSkips") },
+    { key: "support", label: __msg("admin.supportGifts") },
+    { key: "save", label: __msg("admin.saves") },
+  ];
   const activePeakUsageRows = (data?.platformActivity?.hours || []).filter((item) => Number(item.count || 0) > 0);
   const visiblePeakUsageRows = activePeakUsageRows.length ? activePeakUsageRows : (data?.platformActivity?.hours || []).slice(0, 8);
   const funnelRateText = (value, fallback = "N/A") => value == null ? fallback : rate(value);
@@ -242,6 +224,14 @@ export default function AdminAnalyticsPage() {
     {reportQuery.isError ? <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{__msg("admin.unableToLoadAnalytics")} <button className="font-bold underline" onClick={() => reportQuery.refetch()} type="button">{__msg("activity.retry")}</button></div> : null}
 
     {data ? <>
+      {["overview", "content", "engagement"].includes(tab) ? <Card className="mt-6">
+        <SectionHeader eyebrow={__msg("admin.dubaiTime")} title={__msg("admin.productEvents")} icon={FiActivity} />
+        <label className="mb-4 flex flex-wrap items-center gap-3 text-sm font-bold text-slate-600">{__msg("admin.productAudience")}<select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" value={productAccountType} onChange={event => setParam("productAccountType", event.target.value)}><option value="NON_TEST">{__msg("admin.nonTestActivity")}</option><option value="TEST">{__msg("admin.testActivity")}</option></select></label>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{productMetrics.map(({ key, label }) => <div className="rounded-xl bg-slate-50 p-4" key={key}><p className="text-sm font-bold text-slate-600">{label}</p><code className="text-xs text-slate-400">{key}</code><p className="mt-2 text-2xl font-black">{data.productEvents ? formatNumber(data.productEvents.totals[key]) : "—"}</p></div>)}</div>
+        <p className="mt-3 text-sm font-semibold text-slate-600">{__msg("admin.supportCoins")}: {data.productEvents ? formatNumber(data.productEvents.supportCoins) : "—"}</p>
+        <p className="mt-2 text-xs text-slate-500">{__msg(productAccountType === "TEST" ? "admin.productTestNote" : "admin.productNote")}</p>
+        <div className="mt-5"><LineChart data={data.productEvents?.trend || []} series={productMetrics} /></div>
+      </Card> : null}
       {tab === "overview" ? <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{kpis.map((card) => <KpiCard key={card.label} {...card} />)}</div> : null}
 
       {["overview", "users"].includes(tab) ? <div className="mt-6 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
@@ -273,13 +263,13 @@ export default function AdminAnalyticsPage() {
       {tab === "overview" ? <div className="mt-6 grid items-start gap-5 xl:grid-cols-2">
         <Card><SectionHeader eyebrow="Engagement Overview" title={__msg("admin.engagementTrend")} icon={FiBarChart2} /><LineChart data={data.engagement.trend} series={[{ key: "engagements", label: __msg("admin.engagements") }, { key: "messages", label: __msg("share.messages") }, { key: "reports", label: __msg("admin.reports") }]} /></Card>
         <Card><SectionHeader eyebrow="Funnel" title={__msg("admin.impressionFunnel")} icon={FiBarChart2} /><BarChart data={[{ label: __msg("admin.impressions"), value: data.funnel?.impressions }, { label: __msg("admin.viewsOpens"), value: data.funnel?.views }, { label: __msg("admin.engagements"), value: data.funnel?.engagements }, { label: __msg("admin.follows"), value: data.funnel?.follows }, { label: __msg("admin.subscriptionsSupport"), value: Number(data.funnel?.subscriptions || 0) + Number(data.funnel?.support || 0) }]} keys={["value"]} /></Card>
-        <Card><SectionHeader eyebrow="Activity by Time" title={__msg("admin.peakUsage")} icon={FiCalendar} /><BarChart data={visiblePeakUsageRows} keys={["count"]} /></Card>
+        <Card><SectionHeader eyebrow="Activity by Time" title={`${__msg("admin.peakUsage")} · ${__msg("admin.dubaiTime")}`} icon={FiCalendar} /><BarChart data={visiblePeakUsageRows} keys={["count"]} /></Card>
         <Card><SectionHeader eyebrow="Funnel" title={__msg("admin.rates")} icon={FiPieChart} /><div className="grid gap-3 sm:grid-cols-2">{funnelRateCards.map(({ label, key, unavailable }) => <div className="rounded-xl bg-slate-50 p-4" key={label}><p className="text-xs font-bold uppercase text-slate-400">{label}</p><p className="mt-1 text-xl font-black">{funnelRateText(data.funnel?.[key], unavailable)}</p></div>)}</div></Card>
       </div> : null}
 
       {tab === "engagement" ? <div className="mt-6 grid items-start gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card><SectionHeader eyebrow="Engagement Overview" title={__msg("admin.engagementTrend")} icon={FiBarChart2} /><LineChart data={data.engagement.trend} series={[{ key: "engagements", label: __msg("admin.engagements") }, { key: "messages", label: __msg("share.messages") }, { key: "reports", label: __msg("admin.reports") }]} /></Card>
-        <Card><SectionHeader eyebrow="Activity by Time" title={__msg("admin.peakUsage")} icon={FiCalendar} /><BarChart data={visiblePeakUsageRows} keys={["count"]} /></Card>
+        <Card><SectionHeader eyebrow="Activity by Time" title={`${__msg("admin.peakUsage")} · ${__msg("admin.dubaiTime")}`} icon={FiCalendar} /><BarChart data={visiblePeakUsageRows} keys={["count"]} /></Card>
       </div> : null}
 
       {tab === "funnel" ? <div className="mt-6 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
