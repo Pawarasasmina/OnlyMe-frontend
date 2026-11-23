@@ -579,6 +579,10 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
     if (!target || ownsPost || !mongoIdPattern.test(String(actionPostId || ""))) return undefined;
     let impressionTimer = null;
     let visibleAt = 0;
+    let visibleMs = 0;
+    const video = target.querySelector("video");
+    const watched = new Set();
+    let completed = false;
     const topics = [normalized.context, normalized.location].filter(Boolean);
     const signal = (eventType, extra = {}) => analyticsService.trackRecommendationSignal({ creatorId: creator.id, entityId: actionPostId, entityType: "feed_post", eventType, position: Number(normalized.position || 0), topics, ...extra });
 
@@ -589,7 +593,8 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
         if (visibleAt) {
           const watchMs = Date.now() - visibleAt;
           visibleAt = 0;
-          if (!target.querySelector("video")) void signal(watchMs < 2000 ? "FAST_SKIP" : "CONTENT_WATCH", { watchMs });
+          visibleMs += watchMs;
+          if (!video || !completed) void signal(visibleMs < 2000 ? "FAST_SKIP" : "CONTENT_WATCH", { watchMs: visibleMs, durationMs: Number.isFinite(video?.duration) ? Math.round(video.duration * 1000) : 0 });
         }
         return;
       }
@@ -620,9 +625,6 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
     }, { threshold: 0.55 });
 
     observer.observe(target);
-    const video = target.querySelector("video");
-    const watched = new Set();
-    let completed = false;
     const onTime = () => watched.add(Math.floor(video.currentTime));
     const onEnded = () => { completed = true; void signal("CONTENT_COMPLETED", { completion: 1, durationMs: Math.round((video.duration || 0) * 1000), watchMs: watched.size * 1000 }); };
     const onPlay = () => { if (completed && video.currentTime < 1) { completed = false; void signal("CONTENT_REPLAY", { completion: 1, durationMs: Math.round((video.duration || 0) * 1000), watchMs: watched.size * 1000 }); } };

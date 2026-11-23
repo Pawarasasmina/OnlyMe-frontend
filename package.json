@@ -10,6 +10,8 @@
     "test": "node --test src/utils/socialAccess.test.js src/utils/profileCapabilities.test.js src/utils/publicationValidation.test.js src/utils/worldValidation.test.js src/utils/financialAccess.test.js src/utils/idempotencyKey.test.js src/utils/financialErrorMessages.test.js src/utils/discoverFriends.test.js src/utils/savedPeople.test.js src/utils/relativeTime.test.js src/utils/profileStatus.test.js src/utils/seenOwnership.test.js src/utils/messagePresentation.test.js src/utils/publicationFeedback.test.js src/utils/dreamPresentation.test.js src/utils/usernameSuggestions.test.js",
     "preview": "vite preview",
     "test:wall:browser": "playwright test --config playwright.wall.config.js",
+    "test:analytics": "node --test src/utils/analyticsReportingRange.test.js",
+    "test:analytics:browser": "playwright test --config playwright.product-analytics.config.js",
     "i18n:audit": "node scripts/i18n/audit.mjs",
     "i18n:check": "node scripts/i18n/coverage.mjs",
     "i18n:review": "node scripts/i18n/review-quality.mjs",

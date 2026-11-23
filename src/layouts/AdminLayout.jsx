@@ -51,7 +51,7 @@ function AdminLayout() {
       {open && <button aria-label={__msg("layouts.closeNavigation")} className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden" onClick={() => setOpen(false)} type="button" />}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
-          <Link className="flex items-center gap-3" to="/admin/dashboard"><span className="grid h-9 w-9 place-items-center rounded-xl bg-orange-500 font-black text-white">{__msg("layouts.o")}</span><span><strong className="block leading-none">{__msg("layout.onlyme")}</strong><small className="text-xs text-slate-400">{__msg("layouts.adminConsole")}</small></span></Link>
+          <Link className="flex items-center gap-3" to="/admin/dashboard"><span className="grid h-9 w-9 place-items-center rounded-xl bg-orange-500 font-black text-white">@</span><span><strong className="block leading-none">{__msg("layout.onlyme")}</strong><small className="text-xs text-slate-400">{__msg("layouts.adminConsole")}</small></span></Link>
           <button className="rounded-lg p-2 text-slate-500 lg:hidden" onClick={() => setOpen(false)} type="button"><FiX /></button>
         </div>
         <nav className="admin-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">

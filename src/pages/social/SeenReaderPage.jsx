@@ -22,6 +22,7 @@ import { commentFirstName } from "../../components/comments/commentIdentityUtils
 import VoiceMessageBubble from "../../components/messaging/VoiceMessageBubble";
 import { useAuth } from "../../hooks/useAuth";
 import { analyticsService } from "../../services/analyticsService";
+import { useChapterCompletion } from "../../hooks/useChapterCompletion";
 import { publicationService } from "../../services/publicationService";
 import { profileService } from "../../services/profileService";
 import { repostService } from "../../services/repostService";
@@ -1055,6 +1056,7 @@ export default function SeenReaderPage() {
   const checklistPoints = explicitChecklistPoints.length >= 2 ? explicitChecklistPoints : pointBlocks.length >= 3 ? pointBlocks.slice(1, 5) : [];
   const checklistIds = new Set(checklistPoints.map(blockKey));
   const hasChapterContent = visibleBlocks.some((block) => block.text?.trim() || block.url || block.media?.secureUrl || block.type === "POLL");
+  const chapterCompletion = useChapterCompletion({ publicationId: id, chapterId: chapter?.stableChapterId, enabled: Boolean(currentUser && !isOwner && hasChapterContent && !chapter?.locked && searchParams.get("overview") !== "1"), accessToken, rootRef: chapterTurn.surfaceRef });
   const shareUrl = useMemo(() => (typeof window === "undefined" ? "" : `${window.location.origin}/seen/${id}`), [id]);
   const sharePayload = useMemo(() => ({
     author: {
@@ -1481,6 +1483,7 @@ export default function SeenReaderPage() {
         {chapters[safeChapterIndex + 1] ? <button className="seen-paid-locked-next" onClick={(event) => { event.stopPropagation(); changeChapter(safeChapterIndex + 1); }} type="button"><small>{__msg("system.SeenReaderPage.1992d5e8d5")}</small><b>{String(safeChapterIndex + 2).padStart(2, "0")} <span aria-hidden="true">&middot;</span> <FiLock /> {chapters[safeChapterIndex + 1].title}</b><FiChevronRight /></button> : null}
       </section> : hasChapterContent ? <>
         {chapterContent}
+        <div aria-hidden="true" ref={chapterCompletion.endRef} style={{ height: 1 }} />
       </> : <section className="seen-reader-empty-chapter">
         {mediaUrl(publication.coverMedia) ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: publication.title })} className="seen-reader-media" controls media={publication.coverMedia} /> : null}
         <h2>{isOwner ? __msg("social.thisChapterNeedsContent") : __msg("social.thisChapterIsEmpty")}</h2>
