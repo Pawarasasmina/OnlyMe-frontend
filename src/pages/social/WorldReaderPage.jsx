@@ -5,6 +5,8 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import MemberCommentBadge from "../../components/comments/MemberCommentBadge";
 import { CommentAuthorIdentity } from "../../components/comments/CommentIdentity";
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useChapterCompletion } from "../../hooks/useChapterCompletion";
+import { analyticsService } from "../../services/analyticsService";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaSnapchatGhost, FaWhatsapp } from "react-icons/fa";
@@ -1314,8 +1316,9 @@ function ChapterBlock({ block, chapterId, publicationId }) {
   return null;
 }
 
-function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, onBack, onSelect, publicationId }) {
+function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, onBack, onSelect, publicationId, trackCompletion = false, accessToken = "" }) {
   __useUiLanguage();
+  const completion = useChapterCompletion({ publicationId, chapterId: chapter.stableChapterId, enabled: trackCompletion && !chapter.locked && Boolean(chapter.blocks?.length), accessToken });
   const blocks = [...(chapter.blocks || [])].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
   const nextChapter = () => {
     if (chapterIndex < chapters.length - 1) onSelect(chapterIndex + 1);
@@ -1328,7 +1331,7 @@ function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, o
     else nextChapter();
   };
   return (
-    <article className="experience-chapter-preview experience-public-chapter">
+    <article ref={completion.rootRef} className="experience-chapter-preview experience-public-chapter">
       <header>
         <button aria-label={__msg("social.backToExperienceOverview")} onClick={onBack} type="button"><FiX /></button>
         <div><small>{__msg("creator.chapter")} {chapterIndex + 1} {__msg("creator.of_0cf81c")} {chapters.length} {"\u00b7"} {experienceTitle}</small><h1>{chapter.title || __msg("profile.chapter_7c635d", { value0: chapterIndex + 1 })}</h1></div>
@@ -1336,7 +1339,7 @@ function ChapterExperience({ chapter, chapterIndex, chapters, experienceTitle, o
       </header>
       <div className="experience-chapter-preview-progress">{chapters.map((item, index) => <button aria-label={__msg("creator.openChapter", { value0: index + 1 })} className={index <= chapterIndex ? "is-active" : ""} key={item.stableChapterId || item.id || index} onClick={() => onSelect(index)} type="button" />)}</div>
       <main onClick={handleScreenClick}>
-        <section className="experience-chapter-preview-content">{blocks.length ? blocks.map((block, index) => <ChapterBlock block={block} chapterId={chapter.stableChapterId} key={block.id || index} publicationId={publicationId} />) : <p>{__msg("social.thisChapterHasNoPublishedContentYet")}</p>}</section>
+        <section className="experience-chapter-preview-content">{blocks.length ? blocks.map((block, index) => <ChapterBlock block={block} chapterId={chapter.stableChapterId} key={block.id || index} publicationId={publicationId} />) : <p>{__msg("social.thisChapterHasNoPublishedContentYet")}</p>}<div aria-hidden="true" ref={completion.endRef} style={{ height: 1 }} /></section>
         <div className="experience-chapter-preview-adjacent"><button disabled={chapterIndex === 0} onClick={() => chapterIndex > 0 && onSelect(chapterIndex - 1)} type="button">{chapterIndex > 0 ? `‹ ${chapters[chapterIndex - 1]?.title}` : ""}</button><button disabled={chapterIndex === chapters.length - 1} onClick={() => chapterIndex < chapters.length - 1 && onSelect(chapterIndex + 1)} type="button">{chapterIndex < chapters.length - 1 ? `${chapters[chapterIndex + 1]?.title} ›` : __msg("creator.experienceComplete")}</button></div>
         <div className="experience-chapter-preview-actions"><button aria-label={__msg("social.backToExperienceOverview")} onClick={onBack} type="button">←</button><button onClick={nextChapter} type="button">{chapterIndex < chapters.length - 1 ? __msg("creator.next") : __msg("creator.backToOverview")}</button></div>
       </main>
@@ -2002,6 +2005,10 @@ export default function WorldReaderPage() {
   const editingWorld = Boolean(owner && !experience);
   const explicitWorldEdit = Boolean(editingWorld && new URLSearchParams(location.search).get("edit") === "1");
   const accessToken = new URLSearchParams(location.search).get("access") || "";
+  useEffect(() => {
+    if (!publicationId || !user || owner || !["WORLD", "PREMIUM_WORLD"].includes(publication?.kind)) return;
+    void analyticsService.trackEvent({ eventType: "WORLD_OPEN", entityType: "world", entityId: publicationId, source: "world", metadata: { accessToken } });
+  }, [accessToken, owner, publication?.kind, publicationId, user]);
   const returnTo = new URLSearchParams(location.search).get("returnTo") || "";
   const returnFromExperience = () => returnTo
     ? navigate(returnTo, { replace: true })
@@ -2381,6 +2388,8 @@ export default function WorldReaderPage() {
   if (insideDetailRequested && premium && canViewMemberContent) {
     if (activeChapterIndex !== null && experienceChapters[activeChapterIndex]) {
       return <ChapterExperience
+        accessToken={accessToken}
+        trackCompletion={Boolean(user && !owner)}
         chapter={experienceChapters[activeChapterIndex]}
         chapterIndex={activeChapterIndex}
         chapters={experienceChapters}
@@ -2465,6 +2474,8 @@ export default function WorldReaderPage() {
       setActiveChapterIndex(index);
     };
     return <ChapterExperience
+      accessToken={accessToken}
+      trackCompletion={Boolean(user && !owner)}
       chapter={experienceChapters[activeChapterIndex]}
       chapterIndex={activeChapterIndex}
       chapters={experienceChapters}

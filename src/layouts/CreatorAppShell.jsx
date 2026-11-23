@@ -8,6 +8,8 @@ import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 import { CallProvider } from "../context/CallContext";
 import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
+import { FanToastProvider } from "../components/fanWeb/shared/FanToast";
+import CreatorAnnouncementLiveNotice from "../components/activity/CreatorAnnouncementLiveNotice";
 
 const nav = [
   { to: "/creator/dashboard", get label() { return __msg("stories.overview"); }, icon: FiHome },
@@ -36,7 +38,7 @@ export default function CreatorAppShell() {
     </NavLink>
   ));
 
-  return <CallProvider user={user}><div className="user-app-shell creator-shell">
+  return <FanToastProvider><CreatorAnnouncementLiveNotice /><CallProvider user={user}><div className="user-app-shell creator-shell">
     <header className="creator-mobile-header"><NavLink className="creator-logo" to="/creator/studio">{__msg("layouts.onlyme")}</NavLink><button aria-label={__msg("layouts.openNavigation")} onClick={() => setOpen(true)}><FiMenu /></button></header>
     <aside className={`creator-sidebar ${open ? "is-open" : ""}`}>
       <div className="flex items-center justify-between"><NavLink className="creator-logo" to="/creator/studio">{__msg("layouts.onlyme")}</NavLink><button className="lg:hidden" aria-label={__msg("layouts.closeNavigation")} onClick={() => setOpen(false)}><FiX /></button></div>
@@ -50,5 +52,5 @@ export default function CreatorAppShell() {
     {open ? <button aria-label={__msg("layouts.closeNavigation")} className="creator-backdrop" onClick={() => setOpen(false)} /> : null}
     <main className="creator-main relative"><CenterRefreshOverlay /><Suspense fallback={<CenterRouteLoading />}><Outlet /></Suspense></main>
     <nav className="creator-bottom-nav">{visibleNav.slice(0, 5).map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => isActive ? "active" : ""}><Icon /><span>{label}</span></NavLink>)}</nav>
-  </div></CallProvider>;
+  </div></CallProvider></FanToastProvider>;
 }
