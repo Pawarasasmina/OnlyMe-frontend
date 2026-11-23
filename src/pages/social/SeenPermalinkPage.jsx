@@ -8,7 +8,6 @@ import { FiChevronLeft } from "react-icons/fi";
 import { SeenFeedItem } from "./SeenFeedPage";
 import { useAuth } from "../../hooks/useAuth";
 import { publicationService } from "../../services/publicationService";
-import { profileService } from "../../services/profileService";
 import SeenReaderPage from "./SeenReaderPage";
 
 export default function SeenPermalinkPage() {
@@ -32,14 +31,6 @@ export default function SeenPermalinkPage() {
   const publication = localPublication && String(localPublication.id || localPublication._id) === String(id)
     ? localPublication
     : query.data;
-  const creatorUsername = publication?.creator?.username || "";
-  const creatorProfileQuery = useQuery({
-    enabled: Boolean(creatorUsername),
-    queryKey: ["seen-permalink-creator", creatorUsername],
-    queryFn: () => profileService.getUnifiedProfile(creatorUsername).then((response) => response.data.data),
-    retry: false,
-  });
-  const followingFreeSeens = (creatorProfileQuery.data?.seens || []).filter((item) => String(item.id || item._id) !== String(id) && item.pricing?.mode !== "ONE_TIME" && item.status !== "DRAFT");
   const paidSeen = publication?.pricing?.mode === "ONE_TIME";
 
   // Paid profile tiles deliberately open the chapter overview instead of the
@@ -97,7 +88,6 @@ export default function SeenPermalinkPage() {
         onFeedReplace={replacePublication}
         onFeedUpdate={updateEngagement}
       />
-      {followingFreeSeens.map((item, index) => <SeenFeedItem animateOnScroll={false} currentUser={user} item={item} key={item.id || item._id} onFeedRemove={() => {}} onFeedRemoveByCreator={() => {}} onFeedReplace={() => {}} onFeedUpdate={() => {}} position={index + 1} />)}
     </div>
   </section>;
 }
