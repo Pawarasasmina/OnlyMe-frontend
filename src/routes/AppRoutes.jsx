@@ -75,6 +75,7 @@ const StoryPermalinkPage = lazyPage("../pages/social/StoryPermalinkPage");
 const PublicationModeration = lazyPage("../pages/admin/PublicationModeration");
 const PublicationModerationDetail = lazyPage("../pages/admin/PublicationModerationDetail");
 const WelcomeEmailSettingsPage = lazyPage("../pages/admin/WelcomeEmailSettingsPage");
+const CreatorAnnouncementsPage = lazyPage("../pages/admin/CreatorAnnouncementsPage");
 const WorldComposerPage = lazyPage("../pages/creator/WorldComposerPage");
 const WorldReaderPage = lazyPage("../pages/social/WorldReaderPage");
 const OrbitPage = lazyPage("../pages/social/OrbitPage");
@@ -331,8 +332,9 @@ function AppRoutes() {
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
+          <Route path="/admin/creator-announcements" element={<CreatorAnnouncementsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
-          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "FINANCE"]} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "MODERATOR", "FINANCE"]} />}>
             <Route path="/admin/financial" element={<FinancialAdminPage />} />
             <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
             <Route path="/admin/finance/users" element={<FinanceUserPage />} />

@@ -44,12 +44,12 @@ export function FanToastProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!["gift-thanks", "gift-shelf"].includes(toast.variant)) return undefined;
-    const column = document.querySelector(".social-center-scroll");
+    if (!["gift-thanks", "gift-shelf", "announcement"].includes(toast.variant)) return undefined;
+    const column = document.querySelector(".social-center-scroll, .creator-main");
     if (!column) return undefined;
     const update = () => {
       const bounds = column.getBoundingClientRect();
-      setThanksPosition({ left: `${bounds.left + bounds.width / 2}px`, width: `${Math.min(416, bounds.width - 24)}px` });
+      setThanksPosition({ left: `${bounds.left + bounds.width / 2}px`, ...(toast.variant === "announcement" ? { top: `${Math.max(14, bounds.top + 14)}px` } : {}), width: `${Math.min(416, bounds.width - 24)}px` });
     };
     update();
     window.addEventListener("resize", update);
@@ -72,6 +72,17 @@ export function FanToastProvider({ children }) {
         <button aria-label={toast.title} onClick={toast.onAction} tabIndex={toast.message ? 0 : -1} type="button">
           <span className="fan-gift-thanks-avatar">{toast.avatar ? <img alt="" src={toast.avatar} /> : <span>{toast.title?.slice(0, 1)}</span>}</span>
           <span className="fan-gift-thanks-copy"><strong>{toast.title}</strong><small>{"\u201c"}{toast.message}{"\u201d"}</small></span>
+        </button>
+      </div> : toast.variant === "announcement" ? <div
+        aria-live="assertive"
+        className={`fixed z-[240] -translate-x-1/2 overflow-hidden rounded-2xl border border-[#9ccbff]/25 bg-[#171d27]/[.98] text-white shadow-[0_18px_60px_rgba(0,0,0,.5)] backdrop-blur-xl transition duration-300 ${toast.message && thanksPosition.left ? "translate-y-0 opacity-100" : "pointer-events-none invisible -translate-y-3 opacity-0"}`}
+        role="alert"
+        style={thanksPosition}
+      >
+        <button className="flex w-full items-center gap-3 p-4 text-start" onClick={toast.onAction} type="button">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#9ccbff]/15 text-xl text-[#9ccbff]">@</span>
+          <span className="min-w-0 flex-1"><strong className="block truncate text-sm font-black">{__systemMessage(toast.title)}</strong><small className="mt-1 line-clamp-2 block text-xs leading-5 text-white/60">{__systemMessage(toast.message)}</small></span>
+          {toast.action ? <span className="shrink-0 rounded-full bg-[#9ccbff] px-3 py-2 text-[10px] font-black text-[#07101a]">{__systemMessage(toast.action)}</span> : null}
         </button>
       </div> : toast.variant === "gift-shelf" ? <div
         aria-live="polite"

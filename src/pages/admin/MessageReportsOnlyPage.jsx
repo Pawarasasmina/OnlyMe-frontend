@@ -10,6 +10,7 @@ import { FiMessageSquare, FiRefreshCw } from "react-icons/fi";
 import ModerationChecklist from "../../components/admin/ModerationChecklist";
 import { EMPTY_REVIEW_CHECKS, reviewIsComplete } from "../../utils/moderationReview";
 import { adminService } from "../../services/adminService";
+import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 
 const durations = [__uiTuple(["1_HOUR", { __uiMessage: "system.copy.f030c3d66765" }]), __uiTuple(["5_HOURS", { __uiMessage: "system.copy.1fe288aa5f69" }]), __uiTuple(["24_HOURS", { __uiMessage: "system.copy.2d8a6f7c3446" }]), __uiTuple(["7_DAYS", { __uiMessage: "system.copy.0a8dd6adce7a" }]), __uiTuple(["30_DAYS", { __uiMessage: "system.copy.42fa50c1524a" }])];
 const outcomes = [__uiTuple(["NO_ACTION", { __uiMessage: "admin.dismiss" }, { __uiMessage: "admin.noViolationFound" }]), __uiTuple(["WARNING", { __uiMessage: "admin.sendWarning" }, { __uiMessage: "admin.notifyTheAccountOwner" }]), __uiTuple(["MESSAGING_RESTRICTED", { __uiMessage: "admin.restrictMessaging" }, { __uiMessage: "admin.temporarilyDisableMessaging" }])];
@@ -23,6 +24,7 @@ function MessageEvidence({ report }) {
 
 export default function MessageReportsOnlyPage() {
   __useUiLanguage();
+  const dialog = useAdminDialog();
   const client = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedReportId, setSelectedReportId] = useState(null);
@@ -45,7 +47,7 @@ export default function MessageReportsOnlyPage() {
   const decide = async () => {
     if (!reviewIsComplete(checks)) return setError(__msg("admin.completeAllFourReviewChecksBeforeDeciding"));
     if (!note.trim()) return setError(__msg("admin.addAModerationNoteExplainingTheDecision"));
-    if (action === "MESSAGING_RESTRICTED" && !window.confirm(__msg("admin.restrictMessagingForValue0", { value0: title(duration) }))) return;
+    if (action === "MESSAGING_RESTRICTED" && !await dialog.confirm({ title: "Restrict messaging?", description: __msg("admin.restrictMessagingForValue0", { value0: title(duration) }), confirmLabel: "Restrict messaging", tone: "warning" })) return;
     setBusy(true); setError("");
     try { await adminService.resolveMessageReport(report._id, { action, note: note.trim(), ...(action === "MESSAGING_RESTRICTED" ? { duration } : {}) }); clearReview(); await refresh(); }
     catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.couldNotResolveReport")); }

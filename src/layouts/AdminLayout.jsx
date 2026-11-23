@@ -1,25 +1,33 @@
 /* i18n-source-migrated */
 import { msg as __msg } from "../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../hooks/useLanguage.js";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { FiActivity, FiAlertTriangle, FiBarChart2, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiSliders, FiStar, FiUsers, FiX } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiBarChart2, FiBell, FiCreditCard, FiFileText, FiGift, FiHome, FiLogOut, FiMail, FiMenu, FiSettings, FiShield, FiSliders, FiStar, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { resolveMediaUrl } from "../utils/media";
 import CenterRouteLoading, { CenterRefreshOverlay } from "../components/common/CenterRouteLoading";
+import { adminService } from "../services/adminService";
+import AdminDialogProvider from "../components/admin/AdminDialogProvider";
 
 const navigation = [
   { get title() { return __msg("stories.overview"); }, links: [{ get label() { return __msg("layouts.dashboard"); }, to: "/admin/dashboard", icon: FiHome }, { get label() { return __msg("layouts.analytics"); }, to: "/admin/analytics", icon: FiBarChart2 }, { get label() { return __msg("discover.recommendations"); }, to: "/admin/recommendations", icon: FiSliders }] },
   { get title() { return __msg("search.people"); }, links: [{ get label() { return __msg("layouts.users"); }, to: "/admin/users", icon: FiUsers }, { get label() { return __msg("layouts.identityVerification"); }, to: "/admin/identity-verifications", icon: FiShield }, { get label() { return __msg("layouts.creatorApplications"); }, to: "/admin/creator-verifications", icon: FiShield }, { get label() { return __msg("layouts.verifiedCreators"); }, to: "/admin/verified-creators", icon: FiStar }] },
   { get title() { return __msg("layouts.trustSafety"); }, links: [{ get label() { return __msg("system.AdminLayout.b624760088"); }, to: "/admin/safety", icon: FiAlertTriangle }, { get label() { return __msg("layouts.messageReports"); }, to: "/admin/message-reports", icon: FiAlertTriangle }, { get label() { return __msg("layouts.userReports"); }, to: "/admin/user-reports", icon: FiAlertTriangle }, { get label() { return __msg("layouts.postReports"); }, to: "/admin/post-reports", icon: FiFileText }] },
   { get title() { return __msg("layouts.commerce"); }, links: [{ get label() { return __msg("layouts.financialOperations"); }, to: "/admin/financial", icon: FiCreditCard }, { get label() { return __msg("system.AdminLayout.7ecd315515"); }, to: "/admin/finance/users", icon: FiCreditCard }, { get label() { return __msg("layouts.bankReviews"); }, to: "/admin/bank-reviews", icon: FiCreditCard }, { get label() { return __msg("layouts.giftCatalog"); }, to: "/admin/gifts", icon: FiGift }] },
-  { get title() { return __msg("layouts.communication"); }, links: [{ get label() { return __msg("layouts.welcomeEmail"); }, to: "/admin/welcome-email", icon: FiMail }] },
+  { get title() { return __msg("layouts.communication"); }, links: [{ label: "Creator announcements", to: "/admin/creator-announcements", icon: FiBell }, { get label() { return __msg("layouts.welcomeEmail"); }, to: "/admin/welcome-email", icon: FiMail }] },
   { get title() { return __msg("layouts.administration"); }, links: [{ get label() { return __msg("system.AdminLayout.428dd57903"); }, to: "/admin/staff", icon: FiUsers }, { get label() { return __msg("system.AdminLayout.823619e079"); }, to: "/admin/governance", icon: FiShield }, { get label() { return __msg("system.AdminLayout.ee833cade6"); }, to: "/admin/content-export", icon: FiFileText }] },
 ];
 
-const financePaths = new Set(["/admin/financial", "/admin/finance/users", "/admin/bank-reviews"]);
-const mainOnlyPaths = new Set(["/admin/staff", "/admin/content-export", "/admin/recommendations", "/admin/gifts", "/admin/welcome-email"]);
-const canSee = (role, path) => role === "MAIN_ADMIN" || (role === "FINANCE" ? financePaths.has(path) : !financePaths.has(path) && !mainOnlyPaths.has(path));
+const pathPermissions = {
+  "/admin/dashboard": "dashboard.view", "/admin/analytics": "analytics.view", "/admin/recommendations": "recommendations.manage",
+  "/admin/users": "users.view", "/admin/identity-verifications": "verification.view", "/admin/creator-verifications": "verification.view", "/admin/verified-creators": "verification.view",
+  "/admin/safety": "moderation.view", "/admin/message-reports": "moderation.view", "/admin/user-reports": "moderation.view", "/admin/post-reports": "moderation.view",
+  "/admin/financial": "finance.view", "/admin/finance/users": "finance.view", "/admin/bank-reviews": "finance.view", "/admin/gifts": "gifts.manage",
+  "/admin/creator-announcements": "announcements.view", "/admin/welcome-email": "welcome_email.manage", "/admin/governance": "governance.view", "/admin/content-export": "exports.manage",
+};
+const permissionForPath = (path) => Object.entries(pathPermissions).sort((a, b) => b[0].length - a[0].length).find(([route]) => path === route || path.startsWith(`${route}/`))?.[1];
 
 function AdminLayout() {
   __useUiLanguage();
@@ -27,11 +35,19 @@ function AdminLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const adminRole = user?.adminRole || "MAIN_ADMIN";
-  const visibleNavigation = navigation.map((section) => ({ ...section, links: section.links.filter((item) => canSee(adminRole, item.to)) })).filter((section) => section.links.length);
+  const accessQuery = useQuery({ queryKey: ["admin", "my-access", adminRole], queryFn: () => adminService.getMyAccess().then((response) => response.data.data), staleTime: 30000 });
+  const accessErrorStatus = accessQuery.error?.response?.status;
+  useEffect(() => { if (accessErrorStatus === 401) void logout(); }, [accessErrorStatus, logout]);
+  const permissions = new Set(accessQuery.data?.permissions || []);
+  const canSee = (path) => adminRole === "MAIN_ADMIN" || (permissionForPath(path) && permissions.has(permissionForPath(path)));
+  const visibleNavigation = navigation.map((section) => ({ ...section, links: section.links.filter((item) => item.to === "/admin/staff" ? adminRole === "MAIN_ADMIN" : canSee(item.to)) })).filter((section) => section.links.length);
   const activeItem = visibleNavigation.flatMap((section) => section.links).find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
+  const currentPermission = permissionForPath(location.pathname);
+  const denied = adminRole !== "MAIN_ADMIN" && currentPermission && accessQuery.isSuccess && !permissions.has(currentPermission);
+  const accessUnavailable = adminRole !== "MAIN_ADMIN" && accessQuery.isError && accessErrorStatus !== 401;
 
   return (
-    <div className="admin-shell min-h-screen bg-slate-100 text-slate-900">
+    <AdminDialogProvider><div className="admin-shell min-h-screen bg-slate-100 text-slate-900">
       {open && <button aria-label={__msg("layouts.closeNavigation")} className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden" onClick={() => setOpen(false)} type="button" />}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
@@ -52,9 +68,9 @@ function AdminLayout() {
           <div className="flex items-center gap-3"><button aria-label={__msg("layouts.openAdminNavigation")} className="rounded-lg border border-slate-200 p-2 text-slate-600 lg:hidden" onClick={() => setOpen(true)} type="button"><FiMenu /></button><div><p className="text-sm font-bold">{activeItem?.label || __msg("layouts.administration")}</p><p className="hidden text-xs text-slate-400 sm:block">{__msg("layouts.onlymeAdminConsole")}</p></div></div>
           <div className="flex items-center gap-3">{user?.adminReadOnly ? <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black text-blue-700">READ-ONLY TEST</span> : null}<div className="hidden text-end sm:block"><p dir="auto" className="text-sm font-semibold">{user?.name}</p><p className="text-xs capitalize text-slate-400">{adminRole.replace("_", " ").toLowerCase()}</p></div><span className="grid h-9 w-9 overflow-hidden rounded-full bg-slate-900 text-sm font-bold text-white">{user?.avatar ? <img alt={user.name} className="h-full w-full object-cover" src={resolveMediaUrl(user.avatar)} /> : <span className="grid place-items-center">{user?.name?.slice(0, 1)}</span>}</span></div>
         </header>
-        <main className="admin-main relative min-h-[calc(100vh-4rem)] p-4 sm:p-6 xl:p-8"><CenterRefreshOverlay light /><Suspense fallback={<CenterRouteLoading light />}><Outlet /></Suspense></main>
+        <main className="admin-main relative min-h-[calc(100vh-4rem)] p-4 sm:p-6 xl:p-8"><CenterRefreshOverlay light />{accessQuery.isLoading ? <CenterRouteLoading light /> : accessUnavailable ? <section className="mx-auto mt-16 max-w-xl rounded-3xl border border-red-200 bg-white p-10 text-center shadow-sm"><FiAlertTriangle className="mx-auto text-4xl text-red-300" /><h1 className="mt-4 text-2xl font-black">Could not load role access</h1><p className="mt-2 text-sm leading-6 text-slate-500">Your permissions could not be checked. No access decision was made.</p><button className="mt-6 rounded-xl bg-slate-900 px-5 py-3 text-sm font-black text-white" onClick={() => accessQuery.refetch()} type="button">Try again</button></section> : denied ? <section className="mx-auto mt-16 max-w-xl rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm"><FiShield className="mx-auto text-4xl text-slate-300" /><h1 className="mt-4 text-2xl font-black">Access not assigned</h1><p className="mt-2 text-sm leading-6 text-slate-500">Your role does not currently include this page. Ask a Main Admin to update the role access policy.</p>{visibleNavigation[0]?.links[0] ? <Link className="mt-6 inline-flex rounded-xl bg-slate-900 px-5 py-3 text-sm font-black text-white" to={visibleNavigation[0].links[0].to}>Open an available page</Link> : null}</section> : <Suspense fallback={<CenterRouteLoading light />}><Outlet /></Suspense>}</main>
       </div>
-    </div>
+    </div></AdminDialogProvider>
   );
 }
 

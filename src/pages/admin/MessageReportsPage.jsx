@@ -13,6 +13,7 @@ import ModerationChecklist from "../../components/admin/ModerationChecklist";
 import { EMPTY_REVIEW_CHECKS, reviewIsComplete } from "../../utils/moderationReview";
 import PostReportPreview from "../../components/admin/PostReportPreview";
 import { adminService } from "../../services/adminService";
+import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 
 const baseOutcomes = [__uiTuple(["NO_ACTION", { __uiMessage: "admin.dismiss" }, { __uiMessage: "admin.noViolationFound" }]), __uiTuple(["WARNING", { __uiMessage: "admin.sendWarning" }, { __uiMessage: "admin.notifyTheAccountOwner" }]), __uiTuple(["ACCOUNT_RESTRICTED", { __uiMessage: "admin.restrictLogin" }, { __uiMessage: "options.Temporarily_block_platform_access" }])];
 const durations = [__uiTuple(["1_HOUR", { __uiMessage: "system.copy.f030c3d66765" }]), __uiTuple(["5_HOURS", { __uiMessage: "system.copy.1fe288aa5f69" }]), __uiTuple(["24_HOURS", { __uiMessage: "system.copy.2d8a6f7c3446" }]), __uiTuple(["7_DAYS", { __uiMessage: "system.copy.0a8dd6adce7a" }]), __uiTuple(["30_DAYS", { __uiMessage: "system.copy.42fa50c1524a" }])];
@@ -27,6 +28,7 @@ function Evidence({ report }) {
 
 export default function UserReportsPage({ reportType = "profile" }) {
   __useUiLanguage();
+  const dialog = useAdminDialog();
   const isPost = reportType === "post";
   const client = useQueryClient();
   const [userId, setUserId] = useState(null);
@@ -58,13 +60,13 @@ export default function UserReportsPage({ reportType = "profile" }) {
   const run = async (operation) => { setBusy(true); setError(""); try { await operation(); await refresh(); } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.couldNotSaveThisModerationDecision")); } finally { setBusy(false); } };
   const resolveReport = isPost ? adminService.resolvePostReport : adminService.resolveUserReport;
   const startReview = isPost ? adminService.startPostReportReview : adminService.startUserReportReview;
-  const decide = () => {
+  const decide = async () => {
     if (!reviewIsComplete(checks)) return setError(__msg("admin.completeAllFourReviewChecksBeforeDeciding"));
     if (!note.trim()) return setError(__msg("admin.addAModerationNoteExplainingTheDecision"));
-    if (action === "ACCOUNT_RESTRICTED" && !window.confirm(__msg("admin.restrictThisAccountForValue0", { value0: label(duration) }))) return;
+    if (action === "ACCOUNT_RESTRICTED" && !await dialog.confirm({ title: "Restrict this account?", description: __msg("admin.restrictThisAccountForValue0", { value0: label(duration) }), confirmLabel: "Restrict account", tone: "warning" })) return;
     return run(() => resolveReport(report._id, { action, note: note.trim(), ...wallReviewDecision(report, action, falseReport), ...(action === "ACCOUNT_RESTRICTED" ? { duration } : {}) }).then(clearReview));
   };
-  const lift = () => { const reason = window.prompt(__msg("admin.whyAreYouLiftingThisLoginRestriction")); if (reason?.trim()) run(() => resolveReport(restrictionReport._id, { action: "RESTRICTION_LIFTED", note: reason.trim() })); };
+  const lift = async () => { const reason = await dialog.prompt({ title: "Lift login restriction?", inputLabel: __msg("admin.whyAreYouLiftingThisLoginRestriction"), confirmLabel: "Lift restriction" }); if (reason?.trim()) run(() => resolveReport(restrictionReport._id, { action: "RESTRICTION_LIFTED", note: reason.trim() })); };
 
   return <div className="mx-auto max-w-[1800px]">
     <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-orange-500">{__msg("admin.trustAndSafety")}</p><h1 className="mt-1 text-3xl font-black">{isPost ? __msg("admin.reportedPosts") : __msg("admin.reportedUserProfiles")}</h1><p className="mt-1 text-sm text-slate-500">{__msg("admin.chooseAReportReviewItsEvidenceCompleteTheChecks")}</p></div><button className="flex items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-sm font-bold" onClick={refresh}><FiRefreshCw /> {__msg("discover.refresh")}</button></header>

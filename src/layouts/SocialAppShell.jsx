@@ -15,6 +15,7 @@ import FanWebSidebar from "../components/fanWeb/FanWebSidebar";
 import FanModal from "../components/fanWeb/shared/FanModal";
 import GiftThanksNotice from "../components/fanWeb/shared/GiftThanksNotice";
 import { FanToastProvider } from "../components/fanWeb/shared/FanToast";
+import CreatorAnnouncementLiveNotice from "../components/activity/CreatorAnnouncementLiveNotice";
 import StoryCreator from "../components/stories/StoryCreator";
 import { useAuth } from "../hooks/useAuth";
 import { useUnreadMessageCount } from "../hooks/useUnreadMessageCount";
@@ -179,6 +180,7 @@ function SocialAppShell({ children = null, suppressOnboardingTicket = false }) {
 
   return (
     <FanToastProvider>
+      <CreatorAnnouncementLiveNotice />
       <GiftThanksNotice />
       <CallProvider user={user}>
       {currentWarning ? <div className="fixed inset-0 z-[300] grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="moderation-warning-title"><section className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#210b0d] p-6 text-white shadow-[0_24px_90px_rgba(220,38,38,.35)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-500/20 text-3xl text-red-400">!</div><p className="mt-5 text-center text-xs font-black uppercase tracking-[.2em] text-red-400">{__msg("layouts.accountWarning")}</p><h2 dir="auto" className="mt-2 text-center text-2xl font-black" id="moderation-warning-title">{currentWarning.title}</h2><p className="mt-4 text-center text-sm leading-6 text-red-50/80">{currentWarning.message}</p><p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">{__msg("layouts.futureViolationsMayLeadToTemporaryRestrictionOrAccount")}</p><button className="mt-6 w-full rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white disabled:opacity-50" disabled={acknowledgeWarning.isPending} onClick={() => acknowledgeWarning.mutate()} type="button">{acknowledgeWarning.isPending ? __msg("financial.saving") : __msg("layouts.iUnderstand")}</button></section></div> : null}

@@ -6,12 +6,14 @@ import { FiFileText, FiLock, FiRefreshCw, FiSettings, FiShield } from "react-ico
 import GovernanceTargetPicker from "../../components/admin/GovernanceTargetPicker";
 import { useAuth } from "../../hooks/useAuth";
 import { adminOperationsService as service } from "../../services/adminOperationsService";
+import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 
 const message = (error) => error?.response?.data?.message || error?.message || __msg("admin.requestFailed");
 const input = "mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-orange-400";
 
 export default function GovernancePage() {
   __useUiLanguage();
+  const dialog = useAdminDialog();
   const { user } = useAuth(); const main = (user?.adminRole || "MAIN_ADMIN") === "MAIN_ADMIN";
   const [tab, setTab] = useState("policy"); const [policy, setPolicy] = useState(null); const [audit, setAudit] = useState([]);
   const [activeHolds, setActiveHolds] = useState([]);
@@ -19,9 +21,9 @@ export default function GovernancePage() {
   const [hold, setHold] = useState({ targetType: "USER", targetId: "", reason: "" });
   const load = async () => { try { setPolicy((await service.policy()).data.data.policy); if (main) { const [auditResponse, holdsResponse] = await Promise.all([service.audit(), service.holds()]); setAudit(auditResponse.data.data.items || []); setActiveHolds(holdsResponse.data.data.items || []); } } catch (error) { setAlert({ text: message(error), error: true }); } };
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const save = async () => { const reason = window.prompt(__msg("admin.reasonForUpdatingTheModerationPolicy"), __msg("admin.operationalPolicyUpdate")); if (!reason) return; try { setPolicy((await service.updatePolicy({ ...policy, reason })).data.data.policy); setAlert({ text: __msg("admin.policySettingsUpdated"), error: false }); } catch (error) { setAlert({ text: message(error), error: true }); } };
+  const save = async () => { const reason = await dialog.prompt({ title: "Update moderation policy?", inputLabel: __msg("admin.reasonForUpdatingTheModerationPolicy"), defaultValue: __msg("admin.operationalPolicyUpdate"), confirmLabel: "Update policy" }); if (!reason) return; try { setPolicy((await service.updatePolicy({ ...policy, reason })).data.data.policy); setAlert({ text: __msg("admin.policySettingsUpdated"), error: false }); } catch (error) { setAlert({ text: message(error), error: true }); } };
   const placeHold = async (event) => { event.preventDefault(); try { await service.createHold(hold); setAlert({ text: __msg("admin.deletionHoldPlacedAndAudited"), error: false }); setHold({ targetType: "USER", targetId: "", reason: "" }); await load(); } catch (error) { setAlert({ text: message(error), error: true }); } };
-  const releaseHold = async (item) => { const reason = window.prompt(__msg("admin.reasonForReleasingThisDeletionHold")); if (!reason?.trim()) return; try { await service.releaseHold(item._id, { reason }); setAlert({ text: __msg("admin.deletionHoldReleasedAndAudited"), error: false }); await load(); } catch (error) { setAlert({ text: message(error), error: true }); } };
+  const releaseHold = async (item) => { const reason = await dialog.prompt({ title: "Release deletion hold?", description: "The protected record can become eligible for deletion again.", inputLabel: __msg("admin.reasonForReleasingThisDeletionHold"), confirmLabel: "Release hold", tone: "warning" }); if (!reason?.trim()) return; try { await service.releaseHold(item._id, { reason }); setAlert({ text: __msg("admin.deletionHoldReleasedAndAudited"), error: false }); await load(); } catch (error) { setAlert({ text: message(error), error: true }); } };
   if (!policy) return <div className="p-10 text-center text-slate-400">{__msg("system.GovernancePage.d3ae7bc911")}</div>;
   return <div className="mx-auto max-w-7xl space-y-6">
     <header className="rounded-3xl bg-slate-950 p-7 text-white"><p className="text-xs font-black uppercase tracking-[.18em] text-orange-400">{__msg("system.GovernancePage.ef25b56ecc")}</p><h1 className="mt-2 text-3xl font-black">{__msg("system.GovernancePage.83c91762a8")}</h1><p className="mt-2 text-sm text-slate-300">{__msg("system.GovernancePage.078407e0b7")}</p></header>

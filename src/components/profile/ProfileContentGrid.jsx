@@ -329,14 +329,12 @@ function SeriesSeenRow({ item, onMore, owner, showChapterList = false }) {
 
 function SeenListDetailView({ currentUser, focusSeenId = "", items, onBack, onFeedRemove, onFeedRemoveByCreator, onFeedReplace, onFeedUpdate }) {
   __useUiLanguage();
-  useEffect(() => {
-    if (!focusSeenId || focusSeenId === "all") return undefined;
-    const frame = window.requestAnimationFrame(() => {
-      const selector = `[data-profile-seen-row="${CSS.escape(String(focusSeenId))}"]`;
-      document.querySelector(selector)?.scrollIntoView({ block: "start" });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [focusSeenId]);
+  const orderedItems = useMemo(() => {
+    if (!focusSeenId || focusSeenId === "all") return items;
+    const selectedIndex = items.findIndex((item) => String(item.id || item._id) === String(focusSeenId));
+    if (selectedIndex <= 0) return items;
+    return [items[selectedIndex], ...items.slice(0, selectedIndex), ...items.slice(selectedIndex + 1)];
+  }, [focusSeenId, items]);
 
   return (
     <section className="profile-series-feed-view profile-seen-list-feed-view seen-shell-main">
@@ -346,7 +344,7 @@ function SeenListDetailView({ currentUser, focusSeenId = "", items, onBack, onFe
         <b>{items.length}</b>
       </header>
       <div className="seen-feed-list profile-my-seens-feed">
-        {items.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={currentUser} item={item} key={item.id} onFeedRemove={onFeedRemove} onFeedRemoveByCreator={onFeedRemoveByCreator} onFeedReplace={onFeedReplace} onFeedUpdate={onFeedUpdate} />)}
+        {orderedItems.map((item, index) => <SeenFeedItem animateOnScroll={index > 0} currentUser={currentUser} item={item} key={item.id || item._id} onFeedRemove={onFeedRemove} onFeedRemoveByCreator={onFeedRemoveByCreator} onFeedReplace={onFeedReplace} onFeedUpdate={onFeedUpdate} />)}
       </div>
       {!items.length ? <p className="profile-empty-state">{__msg("profile.noSeensYet")}</p> : null}
     </section>
