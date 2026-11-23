@@ -1,6 +1,9 @@
 import axiosInstance from "../api/axiosInstance";
 
 export const adminService = {
+  getMyAccess: () => axiosInstance.get("/admin/access/me"),
+  getRolePolicies: () => axiosInstance.get("/admin/access/roles"),
+  updateRolePolicy: (role, payload) => axiosInstance.put(`/admin/access/roles/${role}`, payload),
   getDashboard: () => axiosInstance.get("/admin/dashboard"),
   getStaff: () => axiosInstance.get("/admin/staff"),
   createStaff: (payload) => axiosInstance.post("/admin/staff", payload),

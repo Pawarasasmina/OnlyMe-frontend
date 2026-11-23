@@ -13,6 +13,7 @@ import { Link, useParams } from "react-router-dom";
 import ModerationChecklist from "../../components/admin/ModerationChecklist";
 import PostReportPreview from "../../components/admin/PostReportPreview";
 import { adminService } from "../../services/adminService";
+import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 import { EMPTY_REVIEW_CHECKS, reviewIsComplete } from "../../utils/moderationReview";
 
 const durations = [__uiTuple(["1_HOUR", { __uiMessage: "system.copy.f030c3d66765" }]), __uiTuple(["5_HOURS", { __uiMessage: "system.copy.1fe288aa5f69" }]), __uiTuple(["24_HOURS", { __uiMessage: "system.copy.2d8a6f7c3446" }]), __uiTuple(["7_DAYS", { __uiMessage: "system.copy.0a8dd6adce7a" }]), __uiTuple(["30_DAYS", { __uiMessage: "system.copy.42fa50c1524a" }])];
@@ -26,6 +27,7 @@ function MessagePreview({ report }) {
 
 export default function AdminReportDetailPage({ type }) {
   __useUiLanguage();
+  const dialog = useAdminDialog();
   const { reportId } = useParams();
   const client = useQueryClient();
   const [action, setAction] = useState("NO_ACTION");
@@ -41,7 +43,7 @@ export default function AdminReportDetailPage({ type }) {
   const restrictionAction = type === "message" ? "MESSAGING_RESTRICTED" : "ACCOUNT_RESTRICTED";
   const automated = isAutomatedWallReview(report);
   const outcomes = [["NO_ACTION", __msg(automated ? "admin.wallReview.approve" : "admin.dismiss"), __msg(automated ? "admin.wallReview.approveExplanation" : "admin.noViolationFound")], ...(type === "post" && report?.scope === "FEED_POST" ? [["HIDDEN", __msg(automated ? "admin.wallReview.reject" : "admin.wallReview.hide"), __msg("admin.wallReview.hideExplanation")], ["REMOVED", __msg("admin.wallReview.remove"), __msg("admin.wallReview.removeExplanation")]] : []), ...(!automated ? [["WARNING", __msg("admin.sendWarning"), __msg("admin.notifyTheAccountOwner")], [restrictionAction, type === "message" ? __msg("admin.restrictMessaging") : __msg("admin.restrictLogin"), __msg("system.copy.f476983ac962")]] : [])];
-  const decide = async () => { if (!reviewIsComplete(checks)) return setError(__msg("admin.completeAllFourChecks")); if (!note.trim()) return setError(__msg("admin.addAnAdminDecisionNote")); if (action === restrictionAction && !window.confirm(__msg("admin.applyThisRestrictionForValue0", { value0: label(duration) }))) return; setBusy(true); setError(""); try { const payload = { action, note: note.trim(), ...wallReviewDecision(report, action, falseReport), ...(action === restrictionAction ? { duration } : {}) }; if (type === "message") await adminService.resolveMessageReport(reportId, payload); else if (type === "post") await adminService.resolvePostReport(reportId, payload); else await adminService.resolveUserReport(reportId, payload); await query.refetch(); await client.invalidateQueries({ queryKey: ["admin", `${type}-reports-list`] }); } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.couldNotSaveDecision")); } finally { setBusy(false); } };
+  const decide = async () => { if (!reviewIsComplete(checks)) return setError(__msg("admin.completeAllFourChecks")); if (!note.trim()) return setError(__msg("admin.addAnAdminDecisionNote")); if (action === restrictionAction && !await dialog.confirm({ title: "Apply account restriction?", description: __msg("admin.applyThisRestrictionForValue0", { value0: label(duration) }), confirmLabel: "Apply restriction", tone: "warning" })) return; setBusy(true); setError(""); try { const payload = { action, note: note.trim(), ...wallReviewDecision(report, action, falseReport), ...(action === restrictionAction ? { duration } : {}) }; if (type === "message") await adminService.resolveMessageReport(reportId, payload); else if (type === "post") await adminService.resolvePostReport(reportId, payload); else await adminService.resolveUserReport(reportId, payload); await query.refetch(); await client.invalidateQueries({ queryKey: ["admin", `${type}-reports-list`] }); } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.couldNotSaveDecision")); } finally { setBusy(false); } };
   if (query.isLoading) return <p>{__msg("admin.loadingReport")}</p>;
   if (!report) return <p className="rounded-2xl border bg-white p-8">{__msg("admin.reportNotFound")}</p>;
   const snapshot = report.snapshot || {};

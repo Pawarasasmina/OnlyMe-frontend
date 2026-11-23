@@ -12,6 +12,7 @@ import AdminVerificationStatusBadge from "../../components/admin/AdminVerificati
 import { adminService } from "../../services/adminService";
 import { adminVerificationService } from "../../services/adminVerificationService";
 import { useAuth } from "../../hooks/useAuth";
+import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 
 const actionClass = "rounded-lg px-3 py-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-40";
 const isApprovedCreator = (user) => ["fan", "creator"].includes(user.role) && user.creatorApprovalStatus === "approved";
@@ -19,6 +20,7 @@ const effectiveRole = (user) => isApprovedCreator(user) ? "creator" : user.role 
 
 function UserManagement({ fixedRole = null }) {
   __useUiLanguage();
+  const dialog = useAdminDialog();
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -42,7 +44,7 @@ function UserManagement({ fixedRole = null }) {
   const bulkMutation = useMutation({ mutationFn: adminService.bulkUpdateUsers, onSuccess: () => { setSelectedIds([]); refresh(); } });
   const verificationByCreator = useMemo(() => new Map((verificationsQuery.data || []).map((item) => [item.creator?._id, item])), [verificationsQuery.data]);
   const users = useMemo(() => (usersQuery.data || []).filter((user) => selectedRole === "all" || effectiveRole(user) === selectedRole), [selectedRole, usersQuery.data]);
-  const applyBulk = (change) => { const reason = window.prompt(__msg("admin.reasonForThisBulkAccountChange")); if (!reason?.trim()) return; bulkMutation.mutate({ userIds: selectedIds, reason: reason.trim(), ...change }); };
+  const applyBulk = async (change) => { const reason = await dialog.prompt({ title: `Update ${selectedIds.length} selected account(s)?`, description: "This bulk change will be recorded in the audit log.", inputLabel: __msg("admin.reasonForThisBulkAccountChange"), confirmLabel: "Apply bulk change", tone: change.status === "suspended" ? "danger" : "warning" }); if (!reason?.trim()) return; bulkMutation.mutate({ userIds: selectedIds, reason: reason.trim(), ...change }); };
 
   if (usersQuery.isLoading) return <div className="text-slate-600"><Loader label={__msg("admin.loadingUsers")} /></div>;
   if (usersQuery.isError) return <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{__msg("admin.unableToLoadUsers")}</p>;

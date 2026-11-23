@@ -334,7 +334,7 @@ function AppRoutes() {
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
           <Route path="/admin/creator-announcements" element={<CreatorAnnouncementsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
-          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "FINANCE"]} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "MODERATOR", "FINANCE"]} />}>
             <Route path="/admin/financial" element={<FinancialAdminPage />} />
             <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
             <Route path="/admin/finance/users" element={<FinanceUserPage />} />
