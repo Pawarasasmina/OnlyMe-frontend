@@ -1,0 +1,13 @@
+import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { AuthContext } from "../../src/context/AuthContext";
+import BusinessVerificationPage from "../../src/pages/admin/BusinessVerificationPage";
+import BusinessSupportInboxPage from "../../src/pages/admin/BusinessSupportInboxPage";
+import BusinessSettingsPage from "../../src/pages/settings/BusinessSettingsPage";
+import UserManagement from "../../src/pages/admin/UserManagement";
+import AdminDialogProvider from "../../src/components/admin/AdminDialogProvider";
+import "../../src/index.css";
+const view=new URLSearchParams(location.search).get("view") || "verification";
+const owner=view==="owner";
+createRoot(document.getElementById("root")).render(<AuthContext.Provider value={{user:{id:owner?"business":"admin",name:"Reviewer",role:owner?"fan":"admin",adminRole:"MAIN_ADMIN",profileAccountType:owner?"business":"personal"}}}><QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><AdminDialogProvider><main className={`p-4 ${owner?"bg-[#0a0c0f]":"text-slate-900"}`}>{view==="support"?<BusinessSupportInboxPage/>:owner?<BusinessSettingsPage/>:view==="users"?<UserManagement/>:<BusinessVerificationPage/>}</main></AdminDialogProvider></MemoryRouter></QueryClientProvider></AuthContext.Provider>);

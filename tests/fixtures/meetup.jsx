@@ -1,0 +1,14 @@
+import { createRoot } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthContext } from "../../src/context/AuthContext";
+import { FanToastProvider } from "../../src/components/fanWeb/shared/FanToast";
+import AdminDialogProvider from "../../src/components/admin/AdminDialogProvider";
+import GovernancePage from "../../src/pages/admin/GovernancePage";
+import PostComposer from "../../src/components/fanWeb/home/PostComposer";
+import FeedPost from "../../src/components/fanWeb/home/FeedPost";
+import "../../src/index.css";
+const admin=new URLSearchParams(location.search).has("admin");
+const user={id:"507f1f77bcf86cd799439011",name:"Meetup Tester",username:"tester",role:admin?"admin":"fan",adminRole:"MAIN_ADMIN",status:"active",location:new URLSearchParams(location.search).has("saved")?"Dubai":"",onboarding:{status:"completed"}};
+const post={id:"507f1f77bcf86cd799439012",author:{id:"507f1f77bcf86cd799439099",name:"Neighbour",username:"neighbour"},postType:"Company",text:"Company for coffee in a public place",location:"Dubai, UAE",createdAt:new Date().toISOString(),media:[],comments:[]};
+createRoot(document.getElementById("root")).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><AuthContext.Provider value={{user}}><FanToastProvider><AdminDialogProvider><main style={{padding:16,maxWidth:admin?1100:600,margin:"auto",color:admin?"#0f172a":"white",background:admin?"#f1f5f9":"#0a0c0f"}}>{admin?<GovernancePage/>:new URLSearchParams(location.search).has("compose")?<PostComposer initialType="Company" openSignal={1} currentUser={user}/>:<FeedPost post={post}/>}</main></AdminDialogProvider></FanToastProvider></AuthContext.Provider></MemoryRouter></QueryClientProvider>);

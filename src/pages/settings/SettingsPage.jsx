@@ -156,6 +156,7 @@ export default function SettingsPage() {
 
     <SettingsGroup title={__msg("layouts.account")}>
       <AccountTypeSetting />
+      <SettingsRow title="Business & bookings" subtitle="Business licence review, bookings and booking disputes" to="/settings/business" />
       <SettingsRow onClick={() => changeOwnershipStep("ownership")} subtitle={__msg("settings.deactivateOrDelete")} title={__msg("settings.accountOwnershipAndControl")} />
       <SettingsRow title={__msg("settings.monetization")} subtitle={monetizationQuery.isPending ? __msg("fanWeb.loading_5fabab") : monetizationQuery.isError ? __msg("settings.manageEarningAndPayouts") : monetizationQuery.data?.enabled ? __msg("settings.giftsAndDreamOn", { value0: monetizationQuery.data.payoutsReady ? __msg("settings.payoutsReady") : __msg("settings.setUpPayouts") }) : __msg("settings.offCompleteEligibility")} to="/settings/monetization" />
       {professionalProfile ? <SettingsRow icon={FiShield} onClick={() => { setVerificationView("verify"); setCreatorApplyOpen(true); }} subtitle={user?.isVerified ? __msg("settings.verifiedReviewedBySeen") : __msg("settings.identityReviewByTheSeenTeam")} title={__msg("social.verification")} /> : null}

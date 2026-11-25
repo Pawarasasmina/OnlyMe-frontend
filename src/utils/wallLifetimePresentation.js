@@ -4,7 +4,7 @@ export function wallLifetimeMessage(postType, rightNow = false) {
   if (rightNow || postType === "Right Now") return { key: "wallLifetime.rightNow" };
   if (postType === "Recommendation") return { key: "wallLifetime.recommendation" };
   if (postType === "Event") return { key: "wallLifetime.event" };
-  const days = { "Need Help": 7, "Looking for": 14, Question: 30, "Buy & Sell": 30, Offering: 30 }[postType];
+  const days = { Company: 7, "Need Help": 7, "Looking for": 14, Question: 30, "Buy & Sell": 30, Offering: 30 }[postType];
   return days ? { key: "wallLifetime.days", values: { days } } : null;
 }
 

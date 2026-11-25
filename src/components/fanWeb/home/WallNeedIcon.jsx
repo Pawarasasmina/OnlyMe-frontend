@@ -1,6 +1,7 @@
 import { enumLabel as __enumLabel } from "../../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../../hooks/useLanguage.js";
 const shapes = {
+  company: <><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-3a6 6 0 0 1 12 0v3M16 15a5 5 0 0 1 6 5"/></>,
   need_help: <><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M6 6l3.4 3.4M14.6 14.6 18 18M18 6l-3.4 3.4M9.4 14.6 6 18"/></>,
   looking_for: <><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></>,
   offering: <><path d="M20 12v8.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V12"/><path d="M2.5 7.5h19V12h-19z"/><path d="M12 21V7.5"/><path d="M12 7.5H8a2.5 2.5 0 1 1 0-5c2.6 0 4 5 4 5zM12 7.5h4a2.5 2.5 0 1 0 0-5c-2.6 0-4 5-4 5z"/></>,
