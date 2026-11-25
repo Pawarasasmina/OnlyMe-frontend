@@ -89,6 +89,7 @@ const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
 const MembershipCancellationPage = lazyPage("../pages/social/MembershipCancellationPage");
 const BankReviewPage = lazyPage("../pages/admin/BankReviewPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
+const CountryFeatureSettingsPage = lazyPage("../pages/admin/CountryFeatureSettingsPage");
 const SavedPage = lazyPage("../pages/social/SavedPage");
 const JoinedInvitationsPage = lazyPage("../pages/social/JoinedInvitationsPage");
 const ArchivePage = lazyPage("../pages/social/ArchivePage");
@@ -341,6 +342,7 @@ function AppRoutes() {
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "MODERATOR", "FINANCE"]} />}>
             <Route path="/admin/financial" element={<FinancialAdminPage />} />
+            <Route path="/admin/country-features" element={<CountryFeatureSettingsPage />} />
             <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
             <Route path="/admin/finance/users" element={<FinanceUserPage />} />
             <Route path="/admin/world-memberships" element={<WorldMembershipsPage />} />
