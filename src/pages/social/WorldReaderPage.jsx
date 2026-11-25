@@ -2299,6 +2299,14 @@ export default function WorldReaderPage() {
     },
     onError: (error) => showToast(error?.response?.data?.message || __msg("social.worldCouldNotBePublished")),
   });
+  const reopenWorldReview = useMutation({
+    mutationFn: () => api.startPublishedRevision(publicationId, managedPublication.statusVersion),
+    onSuccess: async () => {
+      await Promise.all([query.refetch(), managementQuery.refetch()]);
+      navigate(`/world/${publicationId}?edit=1`);
+    },
+    onError: (error) => showToast(error?.response?.data?.message || "This submission could not be reopened."),
+  });
 
   useEffect(() => {
     if (!introPriceToast) return undefined;
@@ -3019,6 +3027,16 @@ export default function WorldReaderPage() {
               <button onClick={async () => { await Promise.all([query.refetch(), managementQuery.refetch()]); showToast(__msg("social.worldChangesSaved")); navigate(`/world/${publicationId}`, { replace: true }); }} type="button"><FiCheck /> {__msg("posts.saveChanges")}</button>
             )}
           </div>
+        ) : null}
+        {owner && !explicitWorldEdit && managedPublication.status === "CHANGES_REQUESTED" ? (
+          <div className="world-owner-save-actions is-revision-prompt" role="status">
+            <div className="world-owner-revision-copy"><strong>Unpublished changes</strong><small>Your edits are saved as a draft. Submit them for admin approval when ready.</small></div>
+            <button onClick={() => navigate(`/world/${publicationId}?edit=1`)} type="button"><FiEdit3 /> Continue editing</button>
+            <button disabled={worldPublish.isPending} onClick={() => worldPublish.mutate()} type="button"><FiCheck /> {worldPublish.isPending ? "Submitting..." : "Submit for approval"}</button>
+          </div>
+        ) : null}
+        {owner && !explicitWorldEdit && managedPublication.status === "PENDING_REVIEW" ? (
+          <div className="world-owner-review-notice" role="status"><span><strong>Pending approval</strong>Your latest World changes are waiting for admin review.</span><button disabled={reopenWorldReview.isPending} onClick={() => reopenWorldReview.mutate()} type="button"><FiEdit3 /> {reopenWorldReview.isPending ? "Opening..." : "Edit submission"}</button></div>
         ) : null}
         {activeMembership ? <p className="world-prototype-membership">{__msg("social.memberWindowRenews")} {new Date(activeMembership.currentPeriodEnd).toLocaleDateString(__uiLocale())} · <Link to="/memberships">{__msg("verification.manage")}</Link></p> : null}
       </article>

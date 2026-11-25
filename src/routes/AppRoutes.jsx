@@ -329,7 +329,11 @@ function AppRoutes() {
           <Route path="/admin/verified-creators" element={<Navigate replace to="/admin/identity-verifications" />} />
           <Route path="/admin/content-moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/content-moderation/:id" element={<Navigate replace to="/admin/publication-moderation" />} />
-          <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
+          <Route path="/admin/world-approvals" element={<PublicationModeration reviewType="WORLD" />} />
+          <Route path="/admin/world-approvals/:id" element={<PublicationModerationDetail />} />
+          <Route path="/admin/paid-seen-approvals" element={<PublicationModeration reviewType="PAID_SEEN" />} />
+          <Route path="/admin/paid-seen-approvals/:id" element={<PublicationModerationDetail />} />
+          <Route path="/admin/publication-moderation" element={<Navigate replace to="/admin/world-approvals" />} />
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />

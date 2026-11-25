@@ -5,7 +5,7 @@ import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FiChevronRight } from "react-icons/fi";
+import { FiChevronRight, FiClock } from "react-icons/fi";
 import { WaysToEarnDetailSheet } from "../../pages/creator/WaysToEarnPage";
 import { authService } from "../../services/authService";
 import { creatorService } from "../../services/creatorService";
@@ -56,6 +56,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
   const activeResidents = Number(primaryPlanet?.activeMemberCount ?? primaryPlanet?.onlineMemberCount ?? 0);
 
   if (owner) {
+    const pendingApproval = primaryPlanet?.status === "PENDING_REVIEW";
     const members = Number(primaryPlanet?.memberCount ?? primaryPlanet?.subscribers ?? 0);
     const income = primaryPlanet?.monthlyIncomeUsd;
     const incomeLabel = Number.isFinite(income)
@@ -66,7 +67,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
         <span className="profile-owner-world-copy">
           <strong>{primaryPlanet ? __msg("profile.yourWorld") : __msg("profile.openYourWorld")}</strong>
           <small>{primaryPlanet ? title : __msg("profile.aMonthlySubscriptionToEverythingYouShare")}</small>
-          {primaryPlanet ? <span className="profile-owner-world-members">
+          {pendingApproval ? <span className="profile-owner-world-review-status"><FiClock /> Pending approval</span> : primaryPlanet ? <span className="profile-owner-world-members">
             {memberPreview.length ? <span className="profile-owner-world-faces">{memberPreview.slice(0, 3).map(member => <span key={member.id}>{member.avatar ? <img alt="" src={resolveMediaUrl(member.avatar)} /> : <span>{String(member.name || member.username || "?")[0]}</span>}</span>)}</span> : null}
             <span>{numberLabel(members)} {members === 1 ? __msg("profile.member_6467ba") : __msg("discover.members")}</span>
             {incomeLabel ? <><span aria-hidden="true">·</span><b>{incomeLabel}</b><span>{__msg("profile.aMonth")}</span></> : null}
@@ -77,7 +78,7 @@ export default function ProfileOrbit({ capabilities, planets = [], profile, role
     return <section className="profile-owner-world-section">
       {showWorldPitch
         ? <button aria-label={__msg("profile.openYourWorld")} className="profile-owner-world-card is-empty" onClick={() => setWorldPitchOpen(true)} type="button">{worldCardContent}</button>
-        : <Link aria-label={primaryPlanet ? __msg("contentEntities.open", { value0: title }) : __msg("profile.openYourWorld")} className={`profile-owner-world-card ${primaryPlanet ? "" : "is-empty"}`} to={worldTarget}>{worldCardContent}</Link>}
+        : <Link aria-label={primaryPlanet ? __msg("contentEntities.open", { value0: title }) : __msg("profile.openYourWorld")} className={`profile-owner-world-card ${primaryPlanet ? "" : "is-empty"} ${primaryPlanet?.status === "PENDING_REVIEW" ? "is-pending-review" : ""}`} to={worldTarget}>{worldCardContent}</Link>}
       {worldPitchOpen ? <WaysToEarnDetailSheet example={earnings.data?.example || { name: profile.displayName, username: profile.username, avatar: profile.avatar, followers: 0, world: {}, paidSeen: {}, gifts: {} }} onClose={() => setWorldPitchOpen(false)} profile={profile} rate={Number(earnings.data?.dashboard?.exchangeRate?.starsPerUsd) || 10} type="world" /> : null}
     </section>;
   }

@@ -520,7 +520,7 @@ export default function WorldPublishingPage({ experience = false, publicationId 
         return;
       }
       let publication = publicationId ? existing : (await api.getMyPublication(existing.id)).data.data.publication;
-      if (publication.status === "PUBLISHED") publication = (await api.startPublishedRevision(publication.id, publication.statusVersion)).data.data.publication;
+      if (["PUBLISHED", "PENDING_REVIEW"].includes(publication.status)) publication = (await api.startPublishedRevision(publication.id, publication.statusVersion)).data.data.publication;
       publication = { ...freshWorld(experience), ...publication };
       if (experience && publication.pricing?.mode !== "ONE_TIME") publication.pricing = { mode: "ONE_TIME", presetId: "ONE_TIME_190", starsAmount: 190 };
       setWorld(publication);

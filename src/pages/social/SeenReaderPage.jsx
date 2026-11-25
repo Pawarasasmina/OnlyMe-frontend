@@ -904,6 +904,7 @@ export default function SeenReaderPage() {
   const { user: currentUser } = useAuth();
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const adminPreview = searchParams.get("adminPreview") === "1";
   const location = useLocation();
   const accessToken = searchParams.get("access") || searchParams.get("token") || "";
   const navigate = useNavigate();
@@ -959,13 +960,13 @@ export default function SeenReaderPage() {
 
   const publication = publicationQuery.data;
   useEffect(() => {
-    if (!publication?.id && !publication?._id) return;
+    if (adminPreview || (!publication?.id && !publication?._id)) return;
     void analyticsService.trackContentView({
       entityId: String(publication.id || publication._id),
       entityType: "seen",
       source: "seen",
     });
-  }, [publication?.id, publication?._id]);
+  }, [adminPreview, publication?.id, publication?._id]);
 
   useEffect(() => {
     if (!publication?.id && !publication?._id) return;
@@ -1056,7 +1057,7 @@ export default function SeenReaderPage() {
   const checklistPoints = explicitChecklistPoints.length >= 2 ? explicitChecklistPoints : pointBlocks.length >= 3 ? pointBlocks.slice(1, 5) : [];
   const checklistIds = new Set(checklistPoints.map(blockKey));
   const hasChapterContent = visibleBlocks.some((block) => block.text?.trim() || block.url || block.media?.secureUrl || block.type === "POLL");
-  const chapterCompletion = useChapterCompletion({ publicationId: id, chapterId: chapter?.stableChapterId, enabled: Boolean(currentUser && !isOwner && hasChapterContent && !chapter?.locked && searchParams.get("overview") !== "1"), accessToken, rootRef: chapterTurn.surfaceRef });
+  const chapterCompletion = useChapterCompletion({ publicationId: id, chapterId: chapter?.stableChapterId, enabled: Boolean(!adminPreview && currentUser && !isOwner && hasChapterContent && !chapter?.locked && searchParams.get("overview") !== "1"), accessToken, rootRef: chapterTurn.surfaceRef });
   const shareUrl = useMemo(() => (typeof window === "undefined" ? "" : `${window.location.origin}/seen/${id}`), [id]);
   const sharePayload = useMemo(() => ({
     author: {
