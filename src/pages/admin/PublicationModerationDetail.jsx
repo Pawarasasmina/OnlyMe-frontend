@@ -1,3 +1,4 @@
+import { RecommendationExclusionButton } from "../../components/admin/RecommendationTools";
 import { enumLabel as __enumLabel } from "../../i18n/runtime.js";
 import { systemMessage as __systemMessage } from "../../i18n/runtime.js";
 import { getLocale as __uiLocale } from "../../i18n/runtime.js";
@@ -117,7 +118,7 @@ export default function PublicationModerationDetail() {
 
   return <div className="mx-auto max-w-[1700px]">
     <Link className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-950" to="/admin/publication-moderation"><FiArrowLeft data-ui-directional="true" /> {__msg("admin.planetApprovals")}</Link>
-    <header className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-black sm:text-3xl">{__msg("admin.reviewPlanet")}</h1><StatusBadge status={publication.status} /></div><p className="mt-2 max-w-2xl text-sm text-slate-500">{__msg("admin.reviewTheExactMediaAndChapterExperienceAPaying")}</p></div><div className="flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-xl border border-slate-200 bg-white px-3 py-2">{__msg("admin.submittedV")}{publication.submittedVersion ?? "—"}</span><span className="rounded-xl border border-slate-200 bg-white px-3 py-2">{__msg("admin.statusV")}{publication.statusVersion ?? "—"}</span></div></header>
+    <header className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-black sm:text-3xl">{__msg("admin.reviewPlanet")}</h1><StatusBadge status={publication.status} /></div><p className="mt-2 max-w-2xl text-sm text-slate-500">{__msg("admin.reviewTheExactMediaAndChapterExperienceAPaying")}</p></div><div className="flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-xl border border-slate-200 bg-white px-3 py-2">{__msg("admin.submittedV")}{publication.submittedVersion ?? "—"}</span><span className="rounded-xl border border-slate-200 bg-white px-3 py-2">{__msg("admin.statusV")}{publication.statusVersion ?? "—"}</span></div></header><RecommendationExclusionButton targetModel="Publication" targetId={id} />
     {error ? <div className="mt-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700"><FiAlertCircle className="mt-0.5 shrink-0" />{__systemMessage(error)}</div> : null}
     {notice ? <div className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700"><FiCheck />{__systemMessage(notice)}</div> : null}
     <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">

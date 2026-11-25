@@ -1,3 +1,5 @@
+import { isMeetupNote, MEETUP_SAFETY_TIPS } from "../../../../shared/wallMeetupSafety.js";
+import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { wallEditMinutesRemaining } from "../../../utils/wallEditTime";
 import { useWallEditClock, wallCanEdit } from "../../../hooks/useWallEditClock";
@@ -30,6 +32,7 @@ import { formatWallPriceInput, normalizeWallPriceInput, wallCurrencyLabel, wallC
 import { isWallHeld } from "../../../utils/wallModerationPresentation";
 
 const POST_TYPES = [
+  { value: "Company", context: "Looking for", icon: FiHeart, color: "blue", description: "Find company for a public meet-up" },
   { value: "Buy & Sell", context: "Buy/Sell", icon: FiShoppingBag, color: "blue", get description() { return __msg("fanWeb.sellOrFindSomethingSecondHand"); } },
   { value: "Looking for", context: "Looking for", icon: FiLink, color: "blue", get description() { return __msg("fanWeb.findPeoplePlacesOrRecommendations"); } },
   { value: "Offering", context: "Buy/Sell", icon: FiBriefcase, color: "amber", get description() { return __msg("fanWeb.shareWhatYouOfferServicesItemsOrHelp"); } },
@@ -50,7 +53,7 @@ const NEED_PLACEHOLDERS = {
 
 function LocationPicker({ onClose, onSelect, selected, anchorRef, suggestions = [] }) {
   __useUiLanguage();
-  return <UniversalLocationPicker anchorRef={anchorRef} onClose={onClose} onSelect={onSelect} value={selected || suggestions[0] || ""} />;
+  return <UniversalLocationPicker areaOnly allowCustom={false} anchorRef={anchorRef} onClose={onClose} onSelect={onSelect} value={selected || suggestions[0] || ""} />;
 }
 
 function fileError(file) {
@@ -95,6 +98,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [topicPickerOpen, setTopicPickerOpen] = useState(false);
   const [text, setText] = useState(initialDraft?.text || initialQuestion || "");
+  const [offerRulesAccepted, setOfferRulesAccepted] = useState(false);
   const [price, setPrice] = useState(initialDraft?.price ?? "");
   const changePrice = (event) => {
     const input = event.target;
@@ -118,6 +122,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
   const [screen, setScreen] = useState(editPost ? "compose" : "needs");
   const [retainedPhotos, setRetainedPhotos] = useState(() => (editPost?.media || []).filter(item => item.type === "image"));
   const [location, setLocation] = useState(initialDraft?.location ?? defaultLocation);
+  const [wallAreaToken, setWallAreaToken] = useState("");
   const [countryCode, setCountryCode] = useState(initialDraft?.countryCode || "");
   const [files, setFiles] = useState(() => (initialDraft?.files || []).map(previewFile));
   const [voiceAttachment, setVoiceAttachment] = useState(() => initialDraft?.voice?.file ? { ...initialDraft.voice, url: URL.createObjectURL(initialDraft.voice.file) } : (editPost?.media || []).find(item => item.type === "audio") || null);
@@ -135,6 +140,8 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
   const categoryLabel = needLabel || selectedType.value;
   const lifetimeMessage = wallLifetimeMessage(selectedType.value, rightNow);
   const effectiveTopic = topic || autoTopic(text);
+  const businessOffer = (user?.profileAccountType || user?.profileType) === "business" && ["Offering", "Buy & Sell"].includes(selectedType.value);
+  const pricedNote = selectedType.value === "Buy & Sell" || businessOffer;
   const canPublish = (!editPost || wallCanEdit(editPost, editNow)) && canPostToHome && !cropQueue.length && !voiceRecorderOpen && (trimmedText.length > 0 || voiceAttachment) && trimmedText.length <= POST_TEXT_MAX_LENGTH && !createMutation.isPending;
   const hasDraft = Boolean(trimmedText || files.length || voiceAttachment);
 
@@ -330,11 +337,12 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
 
   const publish = () => {
     if (publishingRef.current) return;
-    if (selectedType.value === "Buy & Sell" && String(price).trim() && (!/^\d+$/.test(String(price)) || !Number.isFinite(Number(price)) || Number(price) > 999999999)) {
+    if (businessOffer && (!offerRulesAccepted || !Number.isSafeInteger(Number(price)) || Number(price) <= 0)) { setError("Business offers need a real price greater than zero and confirmation of the offer rules."); return; }
+    if (pricedNote && String(price).trim() && (!/^\d+$/.test(String(price)) || !Number.isFinite(Number(price)) || Number(price) > 999999999)) {
       setError(__msg("wallGrid.invalidPrice"));
       return;
     }
-    if (selectedType.value === "Buy & Sell" && String(price).trim() && !wallCurrencyOfLocation(countryCode || location)) {
+    if (pricedNote && String(price).trim() && !wallCurrencyOfLocation(countryCode || location)) {
       setError(__msg("wallGrid.priceCountryRequired"));
       return;
     }
@@ -344,6 +352,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
     }
 
     const formData = new FormData();
+    if (businessOffer) formData.append("offerRulesAccepted", String(offerRulesAccepted));
     formData.append("text", trimmedText);
     formData.append("context", editPost ? editPost.context || "" : validContextValue);
     formData.append("postType", selectedType.value);
@@ -351,12 +360,13 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
     formData.append("rightNow", String(rightNow));
     formData.append("location", location.trim());
     if (countryCode) formData.append("countryCode", countryCode);
-    if (selectedType.value === "Buy & Sell" && price !== "") formData.append("price", price);
+    if (wallAreaToken) formData.append("wallAreaToken", wallAreaToken);
+    if (pricedNote && price !== "") formData.append("price", price);
     formData.append("entityRefs", JSON.stringify(editPost?.entityRefs || []));
     if (editPost) {
       formData.append("retainedMedia", JSON.stringify([...retainedPhotos, ...(voiceAttachment && !voiceAttachment.file ? [voiceAttachment] : [])].map(item => String(item.id || item._id || item.assetId))));
       formData.append("editVersion", String(editPost.editVersion || 0));
-      if (selectedType.value === "Buy & Sell" && price === "") formData.append("price", "");
+      if (pricedNote && price === "") formData.append("price", "");
     }
     files.forEach((item) => formData.append("media", item.file));
     if (voiceAttachment?.file) {
@@ -445,7 +455,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
             ref={textRef}
             value={text}
           />
-          {selectedType.value === "Buy & Sell" ? <div className="wall-compose-price"><label><span>{wallCurrencyLabel(wallCurrencyOfLocation(countryCode || location))}</span><input aria-label={__msg("wallGrid.optionalPrice")} inputMode="numeric" maxLength={11} onChange={changePrice} placeholder={__msg("wallGrid.optionalPrice")} value={formatWallPriceInput(price)} /></label><small>{__msg("wallGrid.priceHint")}</small></div> : null}
+          {pricedNote ? <div className="wall-compose-price"><label><span>{wallCurrencyLabel(wallCurrencyOfLocation(countryCode || location))}</span><input aria-label={businessOffer ? "Real offer price (required)" : __msg("wallGrid.optionalPrice")} inputMode="numeric" maxLength={11} onChange={changePrice} placeholder={businessOffer ? "Real offer price (required)" : __msg("wallGrid.optionalPrice")} value={formatWallPriceInput(price)} /></label><small>{businessOffer ? "Enter the real total price, including required fees. Business offers cannot use a zero price." : __msg("wallGrid.priceHint")}</small></div> : null}
           {voiceAttachment ? <div className="wall-composer-voice-chip">
             <VoiceMessageBubble compact variant="chip" audio={{ duration: voiceAttachment.duration, url: voiceAttachment.url, waveform: voiceAttachment.waveform }} label={__msg("fanWeb.voiceNote")} />
             <button aria-label={__msg("fanWeb.reviewVoiceTextAndTranslations")} onClick={() => { setVoiceReview(true); setVoiceRecorderOpen(true); }} type="button"><FiMoreHorizontal /></button>
@@ -453,6 +463,8 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
             <span className="sr-only" role="status">{voiceAttachment.transcriptStatus === "loading" ? __msg("fanWeb.generatingTranscript") : voiceAttachment.transcriptStatus === "error" ? voiceAttachment.transcriptError : __msg("fanWeb.voiceAddedTextIsAvailableBehindShowTextAfter")}</span>
           </div> : null}
 
+          {isMeetupNote({ postType: selectedType.value, rightNow, topic }) && <aside aria-label="Meet-up safety tips" className="my-3 rounded-xl border border-[#9CCBFF]/25 bg-[#9CCBFF]/5 p-3 text-sm"><b>Meet-up safety</b><ul className="mt-2 list-disc space-y-1 pl-4">{MEETUP_SAFETY_TIPS.map(tip=><li key={tip}>{tip}</li>)}</ul></aside>}
+          {businessOffer && <div className="my-3 rounded-xl border border-white/15 p-3 text-sm"><p>Your business licence must be approved before publishing offers. <Link className="text-[#9CCBFF] underline" to="/settings/business">Verify business</Link></p><label className="mt-3 flex items-start gap-2"><input type="checkbox" checked={offerRulesAccepted} onChange={e => setOfferRulesAccepted(e.target.checked)} /><span>I confirm the price is real, all costs and conditions are clear, and this offer contains no misleading claims.</span></label></div>}
           <div className="wall-create-attachments home-note-tools">
             <button aria-label={__msg("fanWeb.attachImage")} onClick={() => fileInputRef.current?.click()} type="button"><FiImage /><span>{__msg("fanWeb.photo")}</span></button>
             {!voiceAttachment ? <button aria-label={__msg("fanWeb.recordVoiceNote")} onClick={() => { setVoiceReview(false); setVoiceRecorderOpen(true); }} type="button"><FiMic /><span>{__msg("fanWeb.voice")}</span></button> : null}
@@ -496,7 +508,7 @@ function PostComposer({ editPost = null, onEditClose, initialQuestion = null, in
         </div>
       )}
       {topicPickerOpen ? <WallTopicSheet selected={topic} inferred={autoTopic(text)} location={location || defaultLocation} viewerId={user?.id || user?._id} anchorRef={hostRef} onClose={() => setTopicPickerOpen(false)} onSelect={(value) => { setTopic(value); setTopicPickerOpen(false); }} /> : null}
-      {locationPickerOpen ? <LocationPicker anchorRef={hostRef} suggestions={[defaultLocation, currentUser.location]} onClose={() => setLocationPickerOpen(false)} onSelect={(label, code, place) => { setLocation(label); setCountryCode(place?.countryCode || place?.country_code || code || ""); }} selected={location} /> : null}
+      {locationPickerOpen ? <LocationPicker anchorRef={hostRef} suggestions={[defaultLocation, currentUser.location]} onClose={() => setLocationPickerOpen(false)} onSelect={(label, code, place) => { setLocation(label); setWallAreaToken(place?.wallAreaToken || ""); setCountryCode(place?.countryCode || place?.country_code || code || ""); }} selected={location} /> : null}
       <WallVoiceRecorder onDelete={removeVoiceNote} quick={!voiceReview} initialRecording={voiceReview ? voiceAttachment : null} isOpen={voiceRecorderOpen} onClose={() => setVoiceRecorderOpen(false)} onUse={attachVoiceNote} />
     </div>
   );

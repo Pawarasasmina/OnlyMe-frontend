@@ -18,6 +18,10 @@ import Loader from "../components/common/Loader";
 
 const pageModules = import.meta.glob("../pages/**/*.jsx");
 const lazyPage = (path) => lazy(pageModules[`${path}.jsx`]);
+const BusinessVerificationPage = lazyPage("../pages/admin/BusinessVerificationPage");
+const BusinessSupportInboxPage = lazyPage("../pages/admin/BusinessSupportInboxPage");
+const BusinessSettingsPage = lazyPage("../pages/settings/BusinessSettingsPage");
+
 const ExplorePage = lazyPage("../pages/public/ExplorePage");
 const LoginPage = lazyPage("../pages/auth/LoginPage");
 const RegisterPage = lazyPage("../pages/auth/RegisterPage");
@@ -232,6 +236,7 @@ function AppRoutes() {
           <Route path="/profile/status" element={<ProfileStatusPage />} />
           <Route path="/profile/dream" element={<DreamEditorPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/business" element={<BusinessSettingsPage />} />
           <Route path="/settings/monetization" element={<MonetizationPage />} />
           <Route path="/settings/profile" element={<ProfileSettingsPage />} />
           <Route path="/settings/direct-access" element={<DirectAccessSettingsPage />} />
@@ -311,6 +316,8 @@ function AppRoutes() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/security" element={<AdminSecuritySetupPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/business-verifications" element={<BusinessVerificationPage />} />
+          <Route path="/admin/support-inbox" element={<BusinessSupportInboxPage />} />
           <Route path="/admin/recommendations" element={<RecommendationSettingsPage />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/users/:userId" element={<AdminUserDetailPage />} />

@@ -240,7 +240,7 @@ function FanHomePage() {
   const selectedLabels = [
     filters.rightNow ? __msg("constants.rightNow") : "",
     selectedTopics.includes("meet_people") ? __msg("wallNeeds.company") : "",
-    ...["need_help", "looking_for", "buy_sell", "recommendation", "offering", "question", "event"].filter(key => selectedTypes.includes(key)).map(key => ({ need_help: __msg("fanWeb.needHelp"), recommendation: __msg("wallNeeds.tips"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[key] || WALL_FILTER_TYPES.find(item => item.value === key)?.label)),
+    ...["company", "need_help", "looking_for", "buy_sell", "recommendation", "offering", "question", "event"].filter(key => selectedTypes.includes(key)).map(key => ({ need_help: __msg("fanWeb.needHelp"), recommendation: __msg("wallNeeds.tips"), buy_sell: __msg("fanWeb.buySell"), looking_for: __msg("fanWeb.lookingFor") }[key] || WALL_FILTER_TYPES.find(item => item.value === key)?.label)),
     ...WALL_FILTER_TOPICS.filter(item => item.value !== "meet_people" && selectedTopics.includes(item.value)).map(item => item.label),
   ].filter(Boolean);
   const feedTitle = selectedLabels.join(" \u00b7 ") || (activeFilter !== "all" ? HOME_FILTERS.find((item) => item.key === activeFilter)?.label : __msg("fan.forYou"));

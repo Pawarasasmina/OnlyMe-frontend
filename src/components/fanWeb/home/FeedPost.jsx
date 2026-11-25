@@ -1,3 +1,4 @@
+import { isMeetupNote, MEETUP_SAFETY_TIPS } from "../../../../shared/wallMeetupSafety.js";
 import { wallEditMinutesRemaining } from "../../../utils/wallEditTime";
 import { useReactionSelection } from "../../../hooks/useReactionSelection";
 import { popReactionCapsule } from "../../../utils/reactionMotion";
@@ -20,7 +21,7 @@ import { WallTextContent, WallVoiceNote } from "./WallPostContent";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiArchive, FiEdit2, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMapPin, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
+import { FiShield, FiChevronDown, FiArchive, FiEdit2, FiBookmark, FiCheck, FiEyeOff, FiFlag, FiMessageCircle, FiMic, FiMapPin, FiMoreHorizontal, FiPlusCircle, FiRepeat, FiSend, FiShare2, FiSlash, FiTrash2, FiUserMinus } from "react-icons/fi";
 import PostComposer from "./PostComposer";
 import { useWallEditClock, wallCanEdit } from "../../../hooks/useWallEditClock";
 import ContentEntityList from "../../contentEntities/ContentEntityList";
@@ -295,6 +296,8 @@ function normalizeFeedPost(post = {}) {
     isClosed: Boolean(post.isClosed),
     rightNow: Boolean(post.rightNow || post.postType === "Right Now" || post.context === "Right now"),
     canResolve: Boolean(post.canResolve),
+    businessOffer: Boolean(post.businessOffer),
+    offerRulesAccepted: Boolean(post.offerRulesAccepted),
     postType: post.postType || "",
     topic: post.topic || "",
     context: post.context || "",
@@ -823,7 +826,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
     if (!requireDatabasePost()) return;
 
     reportMutation.mutate(
-      { postId: actionPostId, payload: { reason } },
+      { postId: actionPostId, payload: { reason: reason === "I feel unsafe" ? "UNSAFE_MEETUP" : reason } },
       {
         onError: (error) => showToast(error?.response?.data?.message || __msg("social.reportCouldNotBeSubmitted")),
         onSuccess: () => {
@@ -1045,7 +1048,23 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
 
         {ownsPost && (normalized.moderationHiddenAt || ["PENDING_REVIEW", "REJECTED"].includes(normalized.moderationStatus)) ? <p className="wall-note-review-status" role="status">{__msg(normalized.moderationStatus === "REJECTED" ? "wallPublishing.notApproved" : "wallPublishing.underReview")}</p> : null}
         {listingPrice ? <p className="wall-note-price">{listingPrice}</p> : null}
+        {normalized.businessOffer && !ownsPost && !wallIsClosed(normalized) ? <Link className="my-3 inline-flex rounded-xl bg-[#9CCBFF] px-4 py-2 text-sm font-bold text-slate-950" to={`/settings/business?offer=${encodeURIComponent(actionPostId)}`}>Request booking</Link> : null}
         <WallTextContent postId={actionPostId} text={caption} fullText={fullText} noteTo={noteTo} noteState={noteState} />
+        {isMeetupNote(normalized) && (
+          <aside aria-label="Meet-up safety tips" className="my-3 text-sm">
+            <details className="group rounded-xl open:bg-white/[0.03]">
+              <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-lg py-2 text-xs font-medium text-white/55 transition-colors hover:text-[#9CCBFF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9CCBFF] [&::-webkit-details-marker]:hidden">
+                <FiShield aria-hidden="true" className="h-3.5 w-3.5 text-[#9CCBFF]/80" />
+                Meet safely
+                <FiChevronDown aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-3 pb-3 pt-1 text-white/65">
+                <ul className="list-disc space-y-2 pl-4 text-xs leading-relaxed">{MEETUP_SAFETY_TIPS.map(tip => <li key={tip}>{tip}</li>)}</ul>
+                <button className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-xs font-medium text-[#9CCBFF] hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9CCBFF]" onClick={() => {setReportDone(false);setReportOpen(true);}} type="button"><FiFlag aria-hidden="true" />I feel unsafe - report urgently</button>
+              </div>
+            </details>
+          </aside>
+        )}
         <ContentEntityList entities={normalized.attachedEntities} onNotice={showToast} />
         {normalized.result ? (
           <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-atseen-success/25 bg-atseen-success/10 px-3 py-1.5 text-[11.5px] font-semibold text-atseen-success">
@@ -1343,7 +1362,7 @@ function FeedPost({ post, profileMenu = false, profileNote = false, fullText = f
           <div>
             <p className="text-xs text-atseen-muted">{__msg("fanWeb.whyAreYouReportingThis")}</p>
             <div className="mt-2 divide-y divide-white/[0.05]">
-              {atseenReportReasons.map((reason) => (
+              {["I feel unsafe", ...atseenReportReasons].map((reason) => (
                 <button
                   className="block w-full px-1 py-3 text-left text-sm font-semibold text-atseen-text transition hover:text-atseen-blue"
                   key={reason}
