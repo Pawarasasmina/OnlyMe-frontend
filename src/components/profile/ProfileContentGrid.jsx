@@ -488,7 +488,7 @@ function ProfileContentGrid({
   const [actionSeen, setActionSeen] = useState(null);
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [localActiveSeriesId, setLocalActiveSeriesId] = useState("");
-  const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt || (owner && item.status === "DRAFT")) : content || [], [content, kind, owner]);
+  const visibleContent = useMemo(() => kind === "seens" ? (content || []).filter((item) => item.status === "PUBLISHED" || item.publishedAt || (owner && ["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "REJECTED"].includes(item.status))) : content || [], [content, kind, owner]);
   const [localContent, setLocalContent] = useState(null);
   const effectiveContent = localContent || visibleContent;
   const highlighted = useRef("");
@@ -629,11 +629,21 @@ function ProfileContentGrid({
           {featuredSeens.map((item) => {
             const chapters = item.chapters?.length || 0;
             const paid = item.pricing?.mode === "ONE_TIME" && Number(item.pricing?.starsAmount) > 0;
-            const tile = (
+            const ownerPaid = paid && owner;
+            const reviewLabel = item.status === "PENDING_REVIEW" ? "Pending approval" : item.status === "CHANGES_REQUESTED" ? "Changes requested" : item.status === "REJECTED" ? "Not approved" : "";
+            const tile = ownerPaid ? <>
+              <span className="profile-paid-seen-artwork">
+                {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: item.title })} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
+                <span className="profile-seen-chapter-count"><FiBookOpen />{chapters}</span>
+                <span className="profile-paid-seen-title">{item.title}</span>
+                <span className="profile-paid-seen-rail">{reviewLabel || <><FiLock /> <b>PAID</b><i>·</i><img alt={__msg("profile.coins")} src="/brand/goldcoin.png" /> <strong>{Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</strong></>}</span>
+              </span>
+            </> : (
               <>
                 {item.coverMedia?.secureUrl ? <PublicationCoverMedia alt={__msg("discover.cover", { value0: item.title })} autoPlay loop media={item.coverMedia} /> : <span className="profile-seen-fallback"><FiBookOpen /></span>}
                 <span className="profile-seen-shade" />
-                <span className="profile-seen-badge">{paid ? <>{__msg("system.ProfileContentGrid.645017bd05")}<img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" />{Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</> : reposted ? <><FiRepeat /> {__msg("profile.repost_ed0fe2")}</> : __msg("profile.pinned")}</span>
+                <span className="profile-seen-chapter-count"><FiBookOpen />{chapters}</span>
+                <span className="profile-seen-badge">{reviewLabel || (paid ? <>{__msg("system.ProfileContentGrid.645017bd05")}<img alt={__msg("profile.coins")} className="inline-block h-[1em] w-[1em] object-contain" src="/brand/goldcoin.png" />{Number(item.pricing?.starsAmount || 0).toLocaleString(__uiLocale())}</> : reposted ? <><FiRepeat /> {__msg("profile.repost_ed0fe2")}</> : __msg("profile.pinned"))}</span>
                 <span className="profile-seen-copy">
                   <strong>{item.title}</strong>
                   <small>{chapters} {chapters === 1 ? __msg("profile.chapter_09d4c7") : __msg("discover.chapters")}</small>
@@ -646,7 +656,7 @@ function ProfileContentGrid({
               return (
                 <Link
                   aria-label={__msg("search.openSeen", { value0: item.title || __msg("profile.untitledSeen") })}
-                  className="profile-seen-tile"
+                  className={`profile-seen-tile ${paid ? "is-paid" : ""} ${ownerPaid ? "is-owner-paid" : ""}`}
                   key={seenId}
                   to={`/seen/${seenId}`}
                 >
@@ -669,7 +679,7 @@ function ProfileContentGrid({
             }
 
             return (
-              <button className={`profile-seen-tile ${paid ? "is-paid" : ""} ${String(highlightSeenId) === String(item.id || item._id) ? "is-newly-published" : ""}`} key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
+              <button className={`profile-seen-tile ${paid ? "is-paid" : ""} ${ownerPaid ? "is-owner-paid" : ""} ${reviewLabel ? "is-pending-review" : ""} ${String(highlightSeenId) === String(item.id || item._id) ? "is-newly-published" : ""}`} key={item.id} onClick={() => onActiveSeenListChange ? onActiveSeenListChange(item.id) : setActiveSeen(item)} type="button">
                 {tile}
               </button>
             );

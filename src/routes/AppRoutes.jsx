@@ -44,9 +44,11 @@ const EarningsPage = lazyPage("../pages/creator/EarningsPage");
 const AdminDashboard = lazyPage("../pages/admin/AdminDashboard");
 const AdminStaffPage = lazyPage("../pages/admin/AdminStaffPage");
 const SafetyCenterPage = lazyPage("../pages/admin/SafetyCenterPage");
+const UsernameProtectionPage = lazyPage("../pages/admin/UsernameProtectionPage");
 const GovernancePage = lazyPage("../pages/admin/GovernancePage");
 const AdminUserDetailPage = lazyPage("../pages/admin/AdminUserDetailPage");
 const FinanceUserPage = lazyPage("../pages/admin/FinanceUserPage");
+const WorldMembershipsPage = lazyPage("../pages/admin/WorldMembershipsPage");
 const AdminSecuritySetupPage = lazyPage("../pages/admin/AdminSecuritySetupPage");
 const ModerationAppealPage = lazyPage("../pages/social/ModerationAppealPage");
 const ContentExportPage = lazyPage("../pages/admin/ContentExportPage");
@@ -88,6 +90,11 @@ const MembershipsPage = lazyPage("../pages/social/MembershipsPage");
 const MembershipCancellationPage = lazyPage("../pages/social/MembershipCancellationPage");
 const BankReviewPage = lazyPage("../pages/admin/BankReviewPage");
 const FinancialAdminPage = lazyPage("../pages/admin/FinancialAdminPage");
+const CountryFeatureSettingsPage = lazyPage("../pages/admin/CountryFeatureSettingsPage");
+const DirectAccessEscrowPage = lazyPage("../pages/admin/DirectAccessEscrowPage");
+const CreatorReferralOperationsPage = lazyPage("../pages/admin/CreatorReferralOperationsPage");
+const MoneyOverviewPage = lazyPage("../pages/admin/MoneyOverviewPage");
+const PayoutOperationsPage = lazyPage("../pages/admin/PayoutOperationsPage");
 const SavedPage = lazyPage("../pages/social/SavedPage");
 const JoinedInvitationsPage = lazyPage("../pages/social/JoinedInvitationsPage");
 const ArchivePage = lazyPage("../pages/social/ArchivePage");
@@ -315,6 +322,7 @@ function AppRoutes() {
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/users/:userId" element={<AdminUserDetailPage />} />
           <Route path="/admin/safety" element={<SafetyCenterPage />} />
+          <Route path="/admin/username-protection" element={<UsernameProtectionPage />} />
           <Route path="/admin/governance" element={<GovernancePage />} />
           <Route path="/admin/content-export" element={<ContentExportPage />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN"]} />}>
@@ -328,7 +336,11 @@ function AppRoutes() {
           <Route path="/admin/verified-creators" element={<Navigate replace to="/admin/identity-verifications" />} />
           <Route path="/admin/content-moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/content-moderation/:id" element={<Navigate replace to="/admin/publication-moderation" />} />
-          <Route path="/admin/publication-moderation" element={<PublicationModeration />} />
+          <Route path="/admin/world-approvals" element={<PublicationModeration reviewType="WORLD" />} />
+          <Route path="/admin/world-approvals/:id" element={<PublicationModerationDetail />} />
+          <Route path="/admin/paid-seen-approvals" element={<PublicationModeration reviewType="PAID_SEEN" />} />
+          <Route path="/admin/paid-seen-approvals/:id" element={<PublicationModerationDetail />} />
+          <Route path="/admin/publication-moderation" element={<Navigate replace to="/admin/world-approvals" />} />
           <Route path="/admin/publication-moderation/:id" element={<PublicationModerationDetail />} />
           <Route path="/admin/moderation" element={<Navigate replace to="/admin/publication-moderation" />} />
           <Route path="/admin/welcome-email" element={<WelcomeEmailSettingsPage />} />
@@ -336,8 +348,14 @@ function AppRoutes() {
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN", "MODERATOR", "FINANCE"]} />}>
             <Route path="/admin/financial" element={<FinancialAdminPage />} />
+            <Route path="/admin/country-features" element={<CountryFeatureSettingsPage />} />
+            <Route path="/admin/direct-access-escrow" element={<DirectAccessEscrowPage />} />
+            <Route path="/admin/creator-referrals" element={<CreatorReferralOperationsPage />} />
+            <Route path="/admin/money-overview" element={<MoneyOverviewPage />} />
+            <Route path="/admin/payouts" element={<PayoutOperationsPage />} />
             <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
             <Route path="/admin/finance/users" element={<FinanceUserPage />} />
+            <Route path="/admin/world-memberships" element={<WorldMembershipsPage />} />
           </Route>
           <Route path="/admin/message-reports" element={<AdminReportListPage type="message" />} />
           <Route path="/admin/message-reports/:reportId" element={<AdminReportDetailPage type="message" />} />

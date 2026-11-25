@@ -1249,6 +1249,13 @@ function UnifiedProfilePage({ embedded = false, owner = false }) {
     enabled: owner || Boolean(username),
     retry: (failureCount, error) => failureCount < 1 && (!error.response || error.response.status >= 500),
     staleTime: 30_000,
+    refetchInterval: (query) => {
+      if (!owner) return false;
+      const data = query.state.data;
+      const reviewableItems = [...(data?.planets || []), ...(data?.seens || [])];
+      return reviewableItems.some((item) => item.status === "PENDING_REVIEW") ? 10_000 : false;
+    },
+    refetchOnWindowFocus: true,
   });
 
   const refetchProfile = profileQuery.refetch;

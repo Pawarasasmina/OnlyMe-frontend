@@ -3,7 +3,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useLanguage as __useUiLanguage } from "../../hooks/useLanguage.js";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FiCheckCircle, FiDollarSign, FiPercent, FiUsers } from "react-icons/fi";
+import { FiCheckCircle, FiDollarSign, FiPercent } from "react-icons/fi";
 import { adminFinancialService } from "../../services/adminFinancialService";
 
 const inputClass = "mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-lg font-black outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100";
@@ -14,17 +14,13 @@ export default function FinancialAdminPage() {
   const [taxPercent, setTaxPercent] = useState("");
   const [rateBusy, setRateBusy] = useState(false);
   const [taxBusy, setTaxBusy] = useState(false);
-  const [referralBusy, setReferralBusy] = useState(false);
-  const [referral, setReferral] = useState({ enabled: false, creatorMarginCapPercent: 50, monthlyNetRevenueCapPercent: 35, assumedPlatformMarginPercent: 20 });
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
   const rateQuery = useQuery({ queryKey: ["admin", "star-exchange-rate"], queryFn: () => adminFinancialService.getExchangeRate().then((response) => response.data.data) });
   const taxQuery = useQuery({ queryKey: ["admin", "coin-tax-rate"], queryFn: () => adminFinancialService.getCoinTaxRate().then((response) => response.data.data) });
-  const referralQuery = useQuery({ queryKey: ["admin", "creator-referral-settings"], queryFn: () => adminFinancialService.getCreatorReferralSettings().then((response) => response.data.data) });
 
   useEffect(() => { if (rateQuery.data?.starsPerUsd != null) setStarsPerUsd(String(rateQuery.data.starsPerUsd)); }, [rateQuery.data?.starsPerUsd]);
   useEffect(() => { if (taxQuery.data?.percent != null) setTaxPercent(String(taxQuery.data.percent)); }, [taxQuery.data?.percent]);
-  useEffect(() => { if (referralQuery.data) setReferral(referralQuery.data); }, [referralQuery.data]);
 
   const saveRate = async (event) => {
     event.preventDefault(); setRateBusy(true); setError(""); setResult("");
@@ -44,15 +40,8 @@ export default function FinancialAdminPage() {
     } catch (requestError) { setError(requestError.response?.data?.message || __msg("admin.unableToUpdateWebCoinTax")); }
     finally { setTaxBusy(false); }
   };
-  const saveReferral = async (event) => {
-    event.preventDefault(); setReferralBusy(true); setError(""); setResult("");
-    try { const response = await adminFinancialService.updateCreatorReferralSettings(referral); setReferral(response.data.data); setResult("Creator referral settings updated."); }
-    catch (requestError) { setError(requestError.response?.data?.message || "Unable to update creator referral settings."); }
-    finally { setReferralBusy(false); }
-  };
-
-  const loading = rateQuery.isLoading || taxQuery.isLoading || referralQuery.isLoading;
-  const loadError = rateQuery.isError || taxQuery.isError || referralQuery.isError;
+  const loading = rateQuery.isLoading || taxQuery.isLoading;
+  const loadError = rateQuery.isError || taxQuery.isError;
   return <div className="mx-auto max-w-4xl">
     <header>
       <p className="text-xs font-black uppercase tracking-[.18em] text-orange-500">{__msg("admin.commerceControlCenter")}</p>
@@ -79,19 +68,6 @@ export default function FinancialAdminPage() {
         <p className="mt-1 text-sm text-slate-500">Tax percentage applied when users purchase coins on the web.</p>
         <label className="mt-5 block text-xs font-bold uppercase text-slate-500">{__msg("system.FinancialAdminPage.3cd190362c")}<input className={inputClass} disabled={loading || taxBusy} min="0" max="100" onChange={(event) => setTaxPercent(event.target.value)} required step="0.001" type="number" value={taxPercent} /></label>
         <button className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-40" disabled={loading || taxBusy} type="submit">{taxBusy ? __msg("financial.saving") : __msg("system.FinancialAdminPage.3d49b0256c")}</button>
-      </form>
-      <form className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:col-span-2" onSubmit={saveReferral}>
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-violet-50 text-violet-600"><FiUsers /></span>
-        <h2 className="mt-4 text-lg font-black">Creator referrals</h2>
-        <p className="mt-1 text-sm text-slate-500">$1 per $10 earned for 12 months. Rewards use cleared money, wait 60 days for the first payout, and never reduce creator earnings.</p>
-        <label className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 p-4 text-sm font-bold">Money rewards enabled<input checked={Boolean(referral.enabled)} className="h-5 w-5" onChange={(event) => setReferral((value) => ({ ...value, enabled: event.target.checked }))} type="checkbox" /></label>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <label className="text-xs font-bold uppercase text-slate-500">Per creator: % of our margin<input className={inputClass} max="50" min="0" onChange={(event) => setReferral((value) => ({ ...value, creatorMarginCapPercent: Number(event.target.value) }))} step="0.1" type="number" value={referral.creatorMarginCapPercent} /></label>
-          <label className="text-xs font-bold uppercase text-slate-500">Monthly: % of net revenue<input className={inputClass} max="35" min="0" onChange={(event) => setReferral((value) => ({ ...value, monthlyNetRevenueCapPercent: Number(event.target.value) }))} step="0.1" type="number" value={referral.monthlyNetRevenueCapPercent} /></label>
-          <label className="text-xs font-bold uppercase text-slate-500">Platform margin assumption %<input className={inputClass} max="100" min="0" onChange={(event) => setReferral((value) => ({ ...value, assumedPlatformMarginPercent: Number(event.target.value) }))} step="0.1" type="number" value={referral.assumedPlatformMarginPercent} /></label>
-        </div>
-        <p className="mt-4 text-xs text-slate-500">Hard limits: 50% per creator and 35% platform-wide monthly. Referred creators below $25/month produce no reward.</p>
-        <button className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-40" disabled={loading || referralBusy} type="submit">{referralBusy ? __msg("financial.saving") : "Save referral settings"}</button>
       </form>
     </div>
   </div>;
