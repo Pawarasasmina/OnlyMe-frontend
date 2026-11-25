@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { FiExternalLink, FiEye, FiFile, FiX, FiZoomIn, FiZoomOut } from "react-icons/fi";
 import { adminVerificationService } from "../../services/adminVerificationService";
 
-function AdminProtectedDocumentViewer({ verificationId, documentType, label, metadata }) {
+function AdminProtectedDocumentViewer({ verificationId, documentType, label, metadata, loadDocument }) {
   __useUiLanguage();
   const [objectUrl, setObjectUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ function AdminProtectedDocumentViewer({ verificationId, documentType, label, met
   const load = async () => {
     setLoading(true); setError("");
     try {
-      const response = await adminVerificationService.getDocument(verificationId, documentType);
+      const response = await (loadDocument ? loadDocument() : adminVerificationService.getDocument(verificationId, documentType));
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       const url = URL.createObjectURL(response.data);
       setObjectUrl(url);

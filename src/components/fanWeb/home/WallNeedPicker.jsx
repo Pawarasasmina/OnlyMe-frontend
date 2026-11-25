@@ -7,6 +7,7 @@ import { FiX } from "react-icons/fi";
 import WallNeedIcon from "./WallNeedIcon";
 
 const NEEDS = [
+  { key: "company", label: "Company", type: "Company", description: "Find company for a public meet-up" },
   { key: "need_help", get label() { return __msg("fanWeb.needHelp"); }, type: "Need Help", get description() { return __msg("fanWeb.somethingWentWrongPeopleNearbyCanStepIn"); } },
   { key: "looking_for", get label() { return __msg("fanWeb.lookingFor"); }, type: "Looking for", get description() { return __msg("fanWeb.aPersonAServiceOrAThing"); } },
   { key: "offering", get label() { return __msg("fanWeb.offering"); }, type: "Offering", get description() { return __msg("fanWeb.yourHelpSkillOrService"); } },

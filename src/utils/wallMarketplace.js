@@ -22,7 +22,7 @@ export function firstWallPhoto(post) {
   return media.map(item => typeof item === "string" ? { type: "image", url: item } : item).find(item => ["image", "photo"].includes(String(item.type || item.mediaType || "image").toLowerCase()) && (item.url || item.secureUrl));
 }
 export function wallPricePresentation(post, { locale = "en-US", freeLabel = "Free", location = "" } = {}) {
-  if (!["buy & sell", "buy/sell"].includes(String(post.postType || post.context || "").toLowerCase())) return "";
+  if (!["buy & sell", "buy/sell", "offering"].includes(String(post.postType || post.context || "").toLowerCase())) return "";
   const price = post.price;
   let currency = post.currency || post.cur;
   if (price == null || String(price).trim() === "") return "";

@@ -7,6 +7,7 @@ import "./BusinessTools.css";
 export default function BusinessTools() {
   useLanguage();
   return <section className="business-dashboard-tools" aria-label={msg("settings.offers")}>
+    <Link to="/settings/business"><FiTag aria-hidden="true" /><span>Business verification & bookings</span><FiChevronRight aria-hidden="true" /></Link>
     <h2>{msg("settings.offers")}</h2>
     <p>{msg("settings.contactButtonsAndOffersOnTheWall")}</p>
     <Link to="/wall?compose=note&composeType=Offering"><FiTag aria-hidden="true" /><span>{msg("fanWeb.offering")}</span><FiChevronRight aria-hidden="true" /></Link>

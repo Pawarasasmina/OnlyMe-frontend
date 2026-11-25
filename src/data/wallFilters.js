@@ -1,6 +1,7 @@
 /* i18n-source-migrated */
 import { msg as __msg } from "../i18n/runtime.js";
 export const WALL_FILTER_TYPES = [
+  { value: "company", sourceLabel: "Company", label: "Company" },
   { value: "buy_sell", sourceLabel: "Buy & Sell", get label() { return __msg("fanWeb.buySell"); } },
   { value: "all", sourceLabel: "All posts", get label() { return __msg("data.allPosts"); } },
   { value: "looking_for", sourceLabel: "Looking for", get label() { return __msg("fanWeb.lookingFor"); } },
