@@ -24,4 +24,9 @@ export const adminOperationsService = {
   worldMemberships: (worldId, params = {}) => api.get(`/admin/world-memberships/worlds/${worldId}`, { params }),
   cancelWorldMembership: (id, payload) => api.post(`/admin/world-memberships/${id}/cancel`, payload),
   refundMembershipPayment: (id, payload) => api.post(`/admin/world-memberships/payments/${id}/refund`, payload),
+  usernameProtections: (params = {}) => api.get("/admin/username-protection", { params }),
+  createUsernameProtection: (payload) => api.post("/admin/username-protection", payload),
+  updateUsernameProtection: (id, payload) => api.patch(`/admin/username-protection/${id}`, payload),
+  usernameAccounts: (params = {}) => api.get("/admin/username-protection/accounts", { params }),
+  actionUsernameAccount: (id, payload) => api.post(`/admin/username-protection/accounts/${id}/action`, payload),
 };

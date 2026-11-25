@@ -11,6 +11,12 @@ export const adminFinancialService = {
   updateCoinTaxRate: (payload) => api.put("/admin/coin-tax-rate", payload),
   getCreatorReferralSettings: () => api.get("/admin/creator-referral-settings"),
   updateCreatorReferralSettings: (payload) => api.put("/admin/creator-referral-settings", payload),
+  getCreatorReferralOperations: (params = {}) => api.get("/admin/creator-referrals", { params }),
+  getDirectAccessEscrow: (params = {}) => api.get("/admin/direct-access-escrow", { params }),
+  getMoneyOverview: (params = {}) => api.get("/admin/money-overview", { params }),
+  exportMoneyOverview: (params = {}) => api.get("/admin/money-overview/export", { params, responseType: "blob" }),
+  listPayouts: (params = {}) => api.get("/admin/payouts", { params }),
+  updatePayoutStatus: (id, payload) => api.patch(`/admin/payouts/${id}/status`, payload),
   activateWallet: (userId, payload) => api.post(`/admin/wallets/${userId}/activate-ledger`, payload),
   creditStars: (userId, payload) => api.post(`/admin/wallets/${userId}/credit-stars`, payload),
 };
