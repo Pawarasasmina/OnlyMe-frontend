@@ -47,6 +47,7 @@ const SafetyCenterPage = lazyPage("../pages/admin/SafetyCenterPage");
 const GovernancePage = lazyPage("../pages/admin/GovernancePage");
 const AdminUserDetailPage = lazyPage("../pages/admin/AdminUserDetailPage");
 const FinanceUserPage = lazyPage("../pages/admin/FinanceUserPage");
+const WorldMembershipsPage = lazyPage("../pages/admin/WorldMembershipsPage");
 const AdminSecuritySetupPage = lazyPage("../pages/admin/AdminSecuritySetupPage");
 const ModerationAppealPage = lazyPage("../pages/social/ModerationAppealPage");
 const ContentExportPage = lazyPage("../pages/admin/ContentExportPage");
@@ -338,6 +339,7 @@ function AppRoutes() {
             <Route path="/admin/financial" element={<FinancialAdminPage />} />
             <Route path="/admin/bank-reviews" element={<BankReviewPage />} />
             <Route path="/admin/finance/users" element={<FinanceUserPage />} />
+            <Route path="/admin/world-memberships" element={<WorldMembershipsPage />} />
           </Route>
           <Route path="/admin/message-reports" element={<AdminReportListPage type="message" />} />
           <Route path="/admin/message-reports/:reportId" element={<AdminReportDetailPage type="message" />} />

@@ -20,4 +20,8 @@ export const adminOperationsService = {
   financialUser: (id) => api.get(`/admin/finance/users/${id}`),
   holdPayouts: (id, reason) => api.post(`/admin/finance/users/${id}/payout-hold`, { reason }),
   releasePayouts: (id, reason) => api.post(`/admin/finance/users/${id}/payout-release`, { reason }),
+  membershipWorlds: (params = {}) => api.get("/admin/world-memberships/worlds", { params }),
+  worldMemberships: (worldId, params = {}) => api.get(`/admin/world-memberships/worlds/${worldId}`, { params }),
+  cancelWorldMembership: (id, payload) => api.post(`/admin/world-memberships/${id}/cancel`, payload),
+  refundMembershipPayment: (id, payload) => api.post(`/admin/world-memberships/payments/${id}/refund`, payload),
 };
