@@ -155,7 +155,7 @@ function ProfileRoute() {
   __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user?.role === ROLES.ADMIN) return <UnifiedProfilePage />;
+  if (user?.role === ROLES.ADMIN) return <div className="min-h-[100dvh] bg-[#0a0c0f]"><main className="mx-auto min-h-[100dvh] w-full max-w-[440px] border-x border-white/10 bg-[#0a0c0f] shadow-2xl"><UnifiedProfilePage embedded /></main></div>;
   return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
 }
 

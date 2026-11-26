@@ -342,10 +342,17 @@ export const atseenStatuses = [
 export const atseenReportReasons = [
   "Spam",
   "False information",
+  "Defamation",
   "Harassment",
   "Hate",
   "Nudity",
+  "Sexual content",
+  "Violence",
+  "Self harm",
   "Illegal content",
   "Copyright",
+  "Impersonation",
+  "Child safety",
+  "Scam",
   "Other",
 ];

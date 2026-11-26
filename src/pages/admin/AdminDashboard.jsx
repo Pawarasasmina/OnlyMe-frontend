@@ -25,7 +25,9 @@ function AdminDashboard() {
     { label: __msg("admin.published"), value: stats.publishedContent, detail: __msg("admin.value0Drafts", { value0: stats.draftContent }), icon: FiFileText, color: "bg-violet-50 text-violet-600" },
     { label: __msg("admin.subscriptions"), value: stats.activeSubscriptions, detail: __msg("admin.activePlatformSubscriptions"), icon: FiShield, color: "bg-emerald-50 text-emerald-600" },
     { label: __msg("system.AdminDashboard.3b1bb4d541"), value: operations.reports.open || 0, detail: `${operations.reports.urgent || 0} urgent`, overdue: operations.reports.overdue || 0, icon: FiShield, color: "bg-red-50 text-red-600" },
-    { label: __msg("system.AdminDashboard.57c083c4f1"), value: operations.reports.medianActionMinutes == null ? "—" : `${operations.reports.medianActionMinutes}m`, detail: operations.reports.within24Percent == null ? "No resolved reports yet" : __msg("admin.value0HandledWithin24h", { value0: operations.reports.within24Percent }), icon: FiCheckCircle, color: "bg-amber-50 text-amber-600" },
+    { label: "Unclaimed reports", value: operations.reports.unacknowledged || 0, detail: `${operations.reports.dueSoon || 0} due within 4 hours`, icon: FiCheckCircle, color: operations.reports.unacknowledged ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-600" },
+    { label: "Urgent SLA", value: operations.reports.urgentWithin4Percent == null ? "—" : `${operations.reports.urgentWithin4Percent}%`, detail: "Resolved within 4 hours", icon: FiShield, color: "bg-red-50 text-red-600" },
+    { label: "Standard SLA", value: operations.reports.standardWithin24Percent == null ? "—" : `${operations.reports.standardWithin24Percent}%`, detail: "Resolved within 24 hours", icon: FiCheckCircle, color: "bg-blue-50 text-blue-600" },
     { label: __msg("system.AdminDashboard.76e9f63035"), value: operations.appeals.open || 0, detail: __msg("admin.value0ReversedDecisions", { value0: operations.appeals.reversed || 0 }), icon: FiFileText, color: "bg-violet-50 text-violet-600" },
   ];
 
