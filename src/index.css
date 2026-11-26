@@ -13811,6 +13811,90 @@ section[class*="rounded-t-[24px]"][class*="bg-[#1C212B]"] > div.text-center + di
   letter-spacing: 0;
 }
 
+/* Disappearing messages use one compact card layout in both directions. */
+.messages-page [data-message-id]:has(> button) {
+  position: relative;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  border-radius: 19px !important;
+  padding: 7px 64px 7px 8px !important;
+  box-shadow: none !important;
+}
+
+.messages-page .items-end [data-message-id]:has(> button) {
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-bottom-right-radius: 6px !important;
+  background: #2f6cb3 !important;
+}
+
+.messages-page .items-start [data-message-id]:has(> button) {
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-bottom-left-radius: 6px !important;
+  background: #1d222b !important;
+}
+
+.messages-page [data-message-id]:has(> button) > button {
+  width: 100%;
+  min-width: 0 !important;
+  gap: 10px;
+  padding: 0 !important;
+}
+
+.messages-page [data-message-id]:has(> button) > button > span:first-child {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+}
+
+.messages-page [data-message-id]:has(> button) > button b {
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.messages-page [data-message-id]:has(> button) > button b + span {
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.messages-page [data-message-id]:has(> button) > p.mt-0\.5:last-child {
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  margin: 0;
+  white-space: nowrap;
+  color: rgba(255,255,255,.72) !important;
+}
+
+/* Deleted-message tombstones are neutral system states, not active blue messages. */
+.messages-page [data-message-id]:has(> p:first-child > svg) {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 56px;
+  align-items: center;
+  gap: 12px;
+  border-color: rgba(255,255,255,.08) !important;
+  border-radius: 19px !important;
+  background: #1d222b !important;
+  padding: 10px 15px 8px !important;
+  color: rgba(255,255,255,.62) !important;
+  box-shadow: none !important;
+}
+
+.messages-page [data-message-id]:has(> p:first-child > svg) > p:first-child {
+  min-width: 0;
+  flex: 1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.messages-page [data-message-id]:has(> p:first-child > svg) > p.mt-0\.5:last-child {
+  flex: 0 0 auto;
+  margin: 0 0 1px auto !important;
+  white-space: nowrap;
+  color: rgba(255,255,255,.5) !important;
+}
+
 .messages-page div:has(> span > button[aria-label*=" reaction by "]) {
   margin-top: 3px !important;
 }
@@ -13860,7 +13944,12 @@ body > [data-chat-popover].fixed.bottom-3 {
 
 /* Story reactions use the compact portrait card from the messaging prototype. */
 .messages-page [data-message-id]:has(img[alt="Story reacted to"]) {
-  overflow: visible;
+  min-width: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
 
 .messages-page [data-message-id] > div:has(> button img[alt="Story reacted to"]) {

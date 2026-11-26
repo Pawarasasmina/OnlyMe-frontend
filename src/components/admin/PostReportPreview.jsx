@@ -26,7 +26,7 @@ function MediaPreview({ media }) {
 export default function PostReportPreview({ report }) {
   __useUiLanguage();
   const snapshot = report.snapshot || {};
-  const owner = report.reportedUser || {};
+  const owner = report.reportedUser || report.author || report.creator || {};
   const publication = report.publication || {};
   const isSeen = report.scope === "SEEN";
   const isStory = report.scope === "STORY";

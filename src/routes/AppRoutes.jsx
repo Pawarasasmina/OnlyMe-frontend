@@ -50,6 +50,7 @@ const AdminStaffPage = lazyPage("../pages/admin/AdminStaffPage");
 const SafetyCenterPage = lazyPage("../pages/admin/SafetyCenterPage");
 const UsernameProtectionPage = lazyPage("../pages/admin/UsernameProtectionPage");
 const GovernancePage = lazyPage("../pages/admin/GovernancePage");
+const AdminAlertSettingsPage = lazyPage("../pages/admin/AdminAlertSettingsPage");
 const AdminUserDetailPage = lazyPage("../pages/admin/AdminUserDetailPage");
 const FinanceUserPage = lazyPage("../pages/admin/FinanceUserPage");
 const WorldMembershipsPage = lazyPage("../pages/admin/WorldMembershipsPage");
@@ -154,7 +155,7 @@ function ProfileRoute() {
   __useUiLanguage();
   const { loading, user } = useAuth();
   if (loading) return null;
-  if (user?.role === ROLES.ADMIN) return <UnifiedProfilePage />;
+  if (user?.role === ROLES.ADMIN) return <div className="min-h-[100dvh] bg-[#0a0c0f]"><main className="mx-auto min-h-[100dvh] w-full max-w-[440px] border-x border-white/10 bg-[#0a0c0f] shadow-2xl"><UnifiedProfilePage embedded /></main></div>;
   return <SocialAppShell><UnifiedProfilePage embedded /></SocialAppShell>;
 }
 
@@ -331,6 +332,7 @@ function AppRoutes() {
           <Route path="/admin/safety" element={<SafetyCenterPage />} />
           <Route path="/admin/username-protection" element={<UsernameProtectionPage />} />
           <Route path="/admin/governance" element={<GovernancePage />} />
+          <Route path="/admin/alert-settings" element={<AdminAlertSettingsPage />} />
           <Route path="/admin/content-export" element={<ContentExportPage />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN"]} />}>
             <Route path="/admin/staff" element={<AdminStaffPage />} />

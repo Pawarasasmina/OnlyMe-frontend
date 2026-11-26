@@ -486,7 +486,9 @@ export default function MessagesPage() {
   const [bulkDeleteDialog, setBulkDeleteDialog] = useState(null);
   const [reportTarget, setRawReportTarget] = useState(null);
   const [conversationReportOpen, setConversationReportOpen] = useState(false);
+  const [reportError, setReportError] = useState("");
   const setReportTarget = (target) => {
+    setReportError("");
     if (target?.type === "conversation") {
       setRawReportTarget(null);
       setConversationReportOpen(true);
@@ -1626,16 +1628,36 @@ export default function MessagesPage() {
       setDisappearingViewer(opened);
       queryClient.setQueryData(["messages", selected.id], (data) => data ? { ...data, messages: data.messages.map((item) => item.id === opened.id ? { ...item, openedAt: opened.openedAt, expiresAt: opened.expiresAt, locked: true } : item) } : data);
     } catch (requestError) {
-      queryClient.setQueryData(["messages", selected.id], (data) => data ? { ...data, messages: data.messages.filter((item) => item.id !== message.id) } : data);
+      queryClient.setQueryData(["messages", selected.id], (data) => data ? {
+        ...data,
+        messages: data.messages.map((item) => item.id === message.id ? {
+          ...item,
+          body: "Disappearing message",
+          expiresAt: item.expiresAt || new Date().toISOString(),
+          locked: true,
+        } : item),
+      } : data);
       setError(requestError.response?.data?.message || "This disappearing message is no longer available.");
     } finally { setDisappearingViewerBusy(false); }
   };
   useEffect(() => {
     if (!disappearingViewer?.expiresAt || disappearingViewer.disappearAfterSeconds === 0) return undefined;
     const remaining = Math.max(0, new Date(disappearingViewer.expiresAt).getTime() - Date.now());
-    const timer = window.setTimeout(() => { setDisappearingViewer(null); setClock(Date.now()); }, remaining);
+    const timer = window.setTimeout(() => {
+      queryClient.setQueryData(["messages", selected?.id], (data) => data ? {
+        ...data,
+        messages: data.messages.map((message) => message.id === disappearingViewer.id ? {
+          ...message,
+          body: "Disappearing message",
+          expiresAt: disappearingViewer.expiresAt,
+          locked: true,
+        } : message),
+      } : data);
+      setDisappearingViewer(null);
+      setClock(Date.now());
+    }, remaining);
     return () => window.clearTimeout(timer);
-  }, [disappearingViewer]);
+  }, [disappearingViewer, queryClient, selected?.id]);
   useEffect(() => {
     if (!disappearingViewer) return undefined;
     const closeOnExit = () => { if (document.visibilityState === "hidden") closeDisappearingViewer(); };
@@ -2208,6 +2230,7 @@ export default function MessagesPage() {
     if (!reportTarget) return;
     setActionBusy(true);
     setError("");
+    setReportError("");
     try {
       const payload = { reason: reportReason, details: reportDetails };
       if (reportTarget.type === "message") {
@@ -2220,7 +2243,7 @@ export default function MessagesPage() {
       setReportReason("SPAM");
       setReportDetails("");
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Could not submit this report.");
+      setReportError(requestError.response?.data?.message || "Could not submit this report.");
     } finally {
       setActionBusy(false);
     }
@@ -2229,6 +2252,7 @@ export default function MessagesPage() {
     if (!selected?.id || actionBusy) return;
     setActionBusy(true);
     setError("");
+    setReportError("");
     try {
       await messageService.reportConversation(selected.id, { reason, details: "" });
       setReportTarget(null);
@@ -2236,7 +2260,7 @@ export default function MessagesPage() {
       setReportReason("SPAM");
       setReportSubmitted(true);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Could not submit this report.");
+      setReportError(requestError.response?.data?.message || "Could not submit this report.");
     } finally {
       setActionBusy(false);
     }
@@ -2647,7 +2671,33 @@ export default function MessagesPage() {
     {newGroup ? <div className="absolute inset-0 z-50 flex items-end bg-black/75" onMouseDown={(event) => { if (event.target === event.currentTarget && !actionBusy) setNewGroup(false); }}><form className="flex max-h-[76vh] w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-5 pt-2.5 shadow-2xl" onSubmit={createGroup}><div className="mx-auto mb-4 h-1 w-8 shrink-0 rounded-full bg-white/35" /><h2 className="mb-3 shrink-0 text-lg font-black">{__msg("fan.newGroup")}</h2><div className="flex shrink-0 items-center gap-3"><input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={chooseNewGroupAvatar} ref={newGroupAvatarInputRef} type="file" /><button aria-label={__msg("fan.chooseGroupPhoto")} className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border border-dashed border-atseen-muted text-atseen-muted" onClick={() => newGroupAvatarInputRef.current?.click()} type="button">{newGroupAvatar?.url ? <img alt={__msg("fan.newGroup_f9850c")} className="h-full w-full object-cover" src={newGroupAvatar.url} /> : <FiCamera />}</button><input className="min-w-0 flex-1 rounded-xl border border-atseen-line bg-atseen-surface-2 px-4 py-3 text-sm outline-none focus:border-atseen-blue/50" maxLength={60} onChange={(event) => setGroupName(event.target.value)} placeholder={__msg("fan.groupName")} value={groupName} /></div><h3 className="mb-1 mt-4 shrink-0 text-sm font-black">{__msg("fan.addMembers")}</h3><div className="atseen-hide-scrollbar min-h-0 flex-1 overflow-y-auto">{orderedPeople.map((person) => { const checked = groupMembers.includes(person.id); return <button className="flex w-full items-center gap-3 border-b border-white/[0.07] py-3 text-left last:border-0 hover:bg-white/[0.03]" key={person.id} onClick={() => setGroupMembers((current) => checked ? current.filter((id) => id !== person.id) : [...current, person.id])} type="button"><Identity compact person={person} presence={presence[person.id]} /><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[10px] ${checked ? "border-atseen-blue bg-atseen-blue text-atseen-bg" : "border-atseen-muted"}`}>{checked ? "✓" : ""}</span></button>; })}</div><button className="mt-4 w-full shrink-0 rounded-xl bg-atseen-blue py-3 text-sm font-black text-atseen-bg shadow-[0_8px_24px_rgba(112,169,255,0.25)] disabled:opacity-40" disabled={!groupName.trim() || !groupMembers.length || actionBusy} type="submit">{actionBusy ? "Creating…" : "Create Group"}</button></form></div> : null}
     {deleteDialog ? <div className="absolute inset-0 z-[75] flex items-end justify-center bg-black/70 p-3 sm:items-center"><div aria-labelledby="delete-message-title" aria-modal="true" className="w-full max-w-[300px] rounded-2xl border border-atseen-line bg-atseen-bg-2 p-4 shadow-2xl" role="dialog"><div className="flex items-center justify-between"><h2 className="text-base font-bold" id="delete-message-title">{deleteDialog.scope ? "Confirm deletion" : "Delete message"}</h2><button aria-label={__msg("fan.closeDeleteMessage")} className="grid h-7 w-7 place-items-center rounded-full text-sm hover:bg-white/5" disabled={actionBusy} onClick={() => setDeleteDialog(null)} type="button"><FiX /></button></div>{deleteDialog.scope ? <><p className="mt-2 text-xs leading-5 text-atseen-muted">{__msg("fan.thisDisappearsOnlyFromYourChat")}</p><div className="mt-4 flex gap-2"><button className="flex-1 rounded-full border border-atseen-line py-2 text-xs font-bold" disabled={actionBusy} onClick={() => setDeleteDialog((current) => ({ ...current, scope: null }))} type="button">{__msg("discover.back")}</button><button className="flex-[1.3] rounded-full bg-atseen-danger px-3 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={actionBusy} onClick={deleteSelectedMessage} type="button">{actionBusy ? "Deleting…" : "Delete"}</button></div></> : <><p className="mt-1 text-xs text-atseen-muted">{__msg("fan.chooseAnOption")}</p><div className="mt-3 grid gap-1"><button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/5" onClick={() => setDeleteDialog((current) => ({ ...current, scope: "me" }))} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs">{__msg("fan.deleteForMe")}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{__msg("fan.onlyRemovesItFromYourChat")}</span></span></button>{deleteDialog.message.senderId === myId ? <button className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-atseen-danger/5 disabled:opacity-50" disabled={actionBusy} onClick={() => deleteSelectedMessage({ message: deleteDialog.message, scope: "everyone" })} type="button"><FiTrash2 className="shrink-0 text-sm text-atseen-danger" /><span><b className="block text-xs text-atseen-danger">{actionBusy ? "Unsending…" : "Unsend for everyone"}</b><span className="mt-0.5 block text-[10px] text-atseen-muted">{__msg("fan.replacesItForBothPeople")}</span></span></button> : null}</div></>}</div></div> : null}
     {bulkDeleteDialog ? <div className="absolute inset-0 z-[76] flex items-end bg-black/70" onMouseDown={(event) => { if (event.target === event.currentTarget && !actionBusy) setBulkDeleteDialog(null); }} role="presentation"><section aria-modal="true" className="w-full rounded-t-[22px] border border-b-0 border-atseen-line bg-[#1b212c] px-5 pb-8 pt-2.5 shadow-2xl" role="dialog"><div className="mx-auto mb-4 h-1 w-8 rounded-full bg-white/35" /><div className="flex items-center justify-between"><div><h2 className="text-base font-black">{__msg("posts.delete")} {bulkDeleteDialog.messages.length} {__msg("fan.messages")}</h2><p className="mt-1 text-[11px] text-atseen-muted">{__msg("fan.chooseWhereTheSelectedMessagesShouldDisappear")}</p></div><button className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setBulkDeleteDialog(null)} type="button"><FiX /></button></div><button className="mt-4 flex w-full items-center gap-4 border-b border-white/[0.07] py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("me")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm">{__msg("fan.deleteForMe")}</b><span className="mt-1 block text-[10px] text-atseen-muted">{__msg("fan.onlyRemovesTheSelectedMessagesFromYourChat")}</span></span></button>{bulkDeleteDialog.messages.every((message) => message.senderId === myId && !message.deletedAt) ? <button className="flex w-full items-center gap-4 py-4 text-left" disabled={actionBusy} onClick={() => deleteSelectedMessages("everyone")} type="button"><FiTrash2 className="text-atseen-danger" /><span><b className="block text-sm text-atseen-danger">{__msg("fan.deleteForEveryone")}</b><span className="mt-1 block text-[10px] text-atseen-muted">{__msg("fan.allSelectedMessagesWereSentByYou")}</span></span></button> : null}{actionBusy ? <p className="pt-3 text-center text-xs font-bold text-atseen-muted">{__msg("fan.deletingMessages")}</p> : null}</section></div> : null}
-    {reportTarget ? <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/75 p-3 sm:items-center"><form className="w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-bg-2 p-5 shadow-2xl" onSubmit={submitReport}><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">{__msg("discover.report")} {reportTarget.type === "message" ? "message" : "conversation"}</h2><p className="mt-1 text-xs text-atseen-muted">{__msg("fan.yourReportIsPrivateAndWillBeReviewed")}</p></div><button aria-label={__msg("fan.closeReport")} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setReportTarget(null)} type="button"><FiX /></button></div><label className="mt-5 block text-xs font-bold text-atseen-muted">{__msg("discover.reason")}<select className="mt-2 w-full rounded-xl border border-atseen-line bg-atseen-surface-2 px-3 py-3 text-sm text-white [color-scheme:dark] outline-none" onChange={(event) => setReportReason(event.target.value)} value={reportReason}>{REPORT_REASONS.map(([value, label]) => <option className="bg-atseen-bg-2 text-white" key={value} value={value}>{label}</option>)}</select></label><label className="mt-4 block text-xs font-bold text-atseen-muted">{__msg("discover.additionalDetails")} <span className="font-normal">{__msg("admin.optional")}</span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface-2 p-3 text-sm text-white outline-none" maxLength={1000} onChange={(event) => setReportDetails(event.target.value)} value={reportDetails} /></label><button className="mt-5 w-full rounded-full bg-atseen-danger py-3 text-sm font-bold text-white disabled:opacity-50" disabled={actionBusy} type="submit">{actionBusy ? "Submitting…" : "Submit report"}</button></form></div> : null}
+    {reportTarget ? (
+      <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/75 p-3 sm:items-center">
+        <form className="w-full max-w-md rounded-3xl border border-atseen-line bg-atseen-bg-2 p-5 shadow-2xl" onSubmit={submitReport}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">{__msg("discover.report")} {reportTarget.type === "message" ? "message" : "conversation"}</h2>
+              <p className="mt-1 text-xs text-atseen-muted">{__msg("fan.yourReportIsPrivateAndWillBeReviewed")}</p>
+            </div>
+            <button aria-label={__msg("fan.closeReport")} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/5" disabled={actionBusy} onClick={() => setReportTarget(null)} type="button"><FiX /></button>
+          </div>
+          {reportError ? (
+            <p aria-live="polite" className="mt-4 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-300" role="alert">
+              {reportError}
+            </p>
+          ) : null}
+          <label className="mt-5 block text-xs font-bold text-atseen-muted">{__msg("discover.reason")}
+            <select className="mt-2 w-full rounded-xl border border-atseen-line bg-atseen-surface-2 px-3 py-3 text-sm text-white [color-scheme:dark] outline-none" onChange={(event) => setReportReason(event.target.value)} value={reportReason}>
+              {REPORT_REASONS.map(([value, label]) => <option className="bg-atseen-bg-2 text-white" key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          <label className="mt-4 block text-xs font-bold text-atseen-muted">{__msg("discover.additionalDetails")} <span className="font-normal">{__msg("admin.optional")}</span>
+            <textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-atseen-line bg-atseen-surface-2 p-3 text-sm text-white outline-none" maxLength={1000} onChange={(event) => setReportDetails(event.target.value)} value={reportDetails} />
+          </label>
+          <button className="mt-5 w-full rounded-full bg-atseen-danger py-3 text-sm font-bold text-white disabled:opacity-50" disabled={actionBusy} type="submit">{actionBusy ? "Submitting…" : "Submit report"}</button>
+        </form>
+      </div>
+    ) : null}
     {replayGift ? <div className="message-gift-replay-host" style={{ "--profile-gifts-center-x": replayGiftPosition?.["--message-sheet-center-x"] || "50%", "--profile-gifts-column-width": replayGiftPosition?.["--message-sheet-column-width"] || "440px" }}><GiftCelebration caption={replayGift.gift.caption || replayGift.gift.tagline || replayGift.gift.description || ""} gift={{ ...replayGift.gift, celebrationId: `${replayGift.gift.id || "gift"}-${Date.now()}` }} onDismiss={() => setReplayGift(null)} senderName={replayGift.mine ? "you" : participant?.username ? `@${participant.username}` : participant?.displayName || ""} showSuccessToast={false} variant="is-profile-gift" /></div> : null}
     {conversationReportOpen ? <div className="message-chat-sheet-overlay" onMouseDown={(event) => event.target === event.currentTarget && !actionBusy && setConversationReportOpen(false)} role="presentation"><section aria-labelledby="report-conversation-title" aria-modal="true" className="message-report-sheet" role="dialog"><div className="message-chat-sheet-grab" /><h2 id="report-conversation-title">Report conversation</h2><p>Why are you reporting this?</p>{[["SPAM", "Spam"], ["DEFAMATION", "False information"], ["HARASSMENT", "Harassment"], ["HATE", "Hate"], ["SEXUAL_CONTENT", "Nudity"], ["SCAM", "Illegal content"], ["COPYRIGHT", "Copyright"], ["OTHER", "Other"]].map(([value, label]) => <button disabled={actionBusy} key={value} onClick={() => submitConversationReport(value)} type="button"><span>{label}</span><span aria-hidden="true">›</span></button>)}</section></div> : null}
     {reportSubmitted ? <div className="message-chat-sheet-overlay" role="presentation"><section aria-labelledby="report-thanks-title" aria-modal="true" className="message-result-sheet" role="dialog"><div className="message-chat-sheet-grab" /><FiEye /><h2 id="report-thanks-title">Thank you</h2><p>Our team will review this shortly.</p><button onClick={() => setReportSubmitted(false)} type="button">Done</button></section></div> : null}
