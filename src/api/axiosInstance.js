@@ -1,4 +1,6 @@
 import axios from "axios";
+import { captureApiFailure, captureApiRequest } from "../services/monitoring";
+import { beginMonitoredRequest, endMonitoredRequest } from "../services/requestActivity";
 import { getAnalyticsSessionId } from "../services/analyticsSession";
 import { localizedApiError, localizedValidationErrors } from "../i18n/errors.js";
 import { rememberSessionReturnTo } from "../utils/sessionExpiry.js";
@@ -30,13 +32,18 @@ function clearExpiredSessionAndRedirect() {
 axiosInstance.interceptors.request.use((config) => {
   config.headers["X-Requested-With"] = "XMLHttpRequest";
   config.headers["X-Analytics-Session-Id"] = getAnalyticsSessionId();
+  config._monitoringStarted = performance.now();
+  beginMonitoredRequest(config);
 
   return config;
 });
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => { endMonitoredRequest(response.config); captureApiRequest(response.config, response.status); return response; },
   async (error) => {
+    endMonitoredRequest(error.config);
+    if (error.code !== "ERR_CANCELED") captureApiRequest(error.config, error.response?.status);
+    if (error.code !== "ERR_CANCELED") captureApiFailure(error.config?.url, error.config?.method, error.response?.status);
     const request = error.config;
     const isPublicAuthRequest = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/forgot-password", "/auth/reset-password"].some((path) => request?.url?.includes(path));
     if (error.response?.status === 401 && !request?._retried && !isPublicAuthRequest) {

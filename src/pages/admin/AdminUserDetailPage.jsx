@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FiAlertTriangle, FiArrowLeft, FiDollarSign, FiMonitor, FiShield, FiUser } from "react-icons/fi";
 import { adminOperationsService as service } from "../../services/adminOperationsService";
+import { confirmAccountAction } from "../../utils/confirmAccountAction";
 import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 
 const label = (value) => String(value ?? "").replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -16,7 +17,7 @@ export default function AdminUserDetailPage() {
   const [data, setData] = useState(null), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const load = useCallback(async () => { try { setError(""); setData((await service.user(userId)).data.data); } catch (e) { setError(e.response?.data?.message || e.message); } }, [userId]);
   useEffect(() => { void load(); }, [load]);
-  const enforce = async (action, asksDuration = false) => { const reason = await dialog.prompt({ title: `${label(action)} this account?`, inputLabel: "Required reason", confirmLabel: label(action), tone: ["SUSPEND", "BAN"].includes(action) ? "danger" : "warning" }); if (!reason) return; let durationDays; if (asksDuration) { durationDays = Number(await dialog.prompt({ title: "Restriction duration", inputLabel: "Number of days", inputType: "number", defaultValue: "7", min: 1, confirmLabel: "Continue" })); if (!durationDays) return; } try { await service.enforceUser(userId, { action, reason, durationDays }); setNotice(`${label(action)} completed and audited.`); await load(); } catch (e) { setError(e.response?.data?.message || e.message); } };
+  const enforce = async (action, asksDuration = false) => { const reason = await confirmAccountAction(dialog, { title: `${label(action)} @${data?.user?.username || userId}?`, description: "This account action is recorded in the audit log.", inputLabel: "Required reason", confirmLabel: label(action), tone: ["SUSPEND", "BAN"].includes(action) ? "danger" : "warning" }); if (!reason) return; let durationDays; if (asksDuration) { durationDays = Number(await dialog.prompt({ title: "Restriction duration", inputLabel: "Number of days", inputType: "number", defaultValue: "7", min: 1, confirmLabel: "Continue" })); if (!durationDays) return; } try { await service.enforceUser(userId, { action, reason, durationDays, confirmed: true }); setNotice(`${label(action)} completed and audited.`); await load(); } catch (e) { setError(e.response?.data?.message || e.message); } };
   if (!data && error) return <p className="rounded-2xl bg-red-50 p-6 font-bold text-red-700">{error}</p>;
   if (!data) return <div className="p-10 text-center">Loading account record...</div>;
   const { user, reports, actions, logins, holds, payoutHold, strikeSummary = { activeCount: 0, strikes: [] } } = data;

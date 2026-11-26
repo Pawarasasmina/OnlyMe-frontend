@@ -13,7 +13,7 @@ export const adminService = {
   updateRoleTwoFactor: (payload) => axiosInstance.post("/admin/staff/2fa-policy", payload),
   deleteTestStaff: (id, payload) => axiosInstance.delete(`/admin/staff/${id}`, { data: payload }),
   getUsers: (params = {}) => axiosInstance.get("/admin/users", { params }),
-  updateUserStatus: (userId, status) => axiosInstance.patch(`/admin/users/${userId}/status`, { status }),
+  updateUserStatus: (userId, status, reason) => axiosInstance.patch(`/admin/users/${userId}/status`, { status, reason, confirmed: true }),
   bulkUpdateUsers: (payload) => axiosInstance.patch("/admin/users/bulk", payload),
   getMessageReports: (params) => axiosInstance.get("/admin/message-reports", { params }),
   getReportedMessageUsers: () => axiosInstance.get("/admin/message-report-users"),

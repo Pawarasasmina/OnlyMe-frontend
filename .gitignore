@@ -1,6 +1,8 @@
 node_modules
 dist
 .env
+/ops/monitor.env
+/ops/monitor-state*.json
 
 # Local browser verification artifacts
 test-results/

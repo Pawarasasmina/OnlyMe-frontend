@@ -1,9 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+
+
 export default defineConfig({
   plugins: [react()],
   build: {
+    sourcemap: false,
     // Keep stable framework code in a long-lived browser cache across deploys.
     rollupOptions: {
       output: {
