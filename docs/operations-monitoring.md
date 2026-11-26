@@ -27,11 +27,11 @@ cannot claim to be API observations or independent watchdog results.
 
 - Web: React boundary errors, unhandled JavaScript errors/rejections, API request
   statuses/durations, and route load durations.
-- iOS/Android: React boundary and JavaScript runtime errors, API requests, and main
-  tab/startup load durations. Restart/rebuild the mobile app to load these changes.
 - API: observed request statuses/durations, handled 5xx exceptions, worker failures,
   and a redacted process-fatal record in local supervisor logs.
-- Independent watchdog: web/API readiness status and latency every 60 seconds.
+
+Mobile monitoring is intentionally deferred. Independent uptime is also shown as
+**not configured** until the optional checker below is deployed outside the API.
 
 No raw error messages, legal names, document contents, payment data, message text,
 request bodies, headers, cookies or query parameters are intentionally collected.
@@ -40,16 +40,14 @@ line and column. Production bundles need matching locally retained build artifac
 for detailed source debugging; this system does not upload source maps anywhere.
 
 Screen loads end after tracked API requests/React Query settle plus a 200 ms web
-or 250 ms mobile render grace. The 30-second timeout is included and flagged.
+render grace. The 30-second timeout is included and flagged.
 Median/p95 figures are **histogram upper bounds**, clearly labelled `≤` in the
 UI, rather than exact samples. API failure rates use server-observed completed
 requests (5xx); client request failure rates also include network failures. Missing
 coverage is shown as missing data, not zero errors. Timing data identifies slow
 screens; it does not automatically fix the reported 4–7-second delay.
 
-Native iOS/Android process crashes are **not captured by JavaScript logging**.
-Use device/Xcode crash logs and matching native build symbols to investigate
-those. A fatal JavaScript event is buffered/persisted best effort; sudden OS
+A fatal JavaScript event is buffered/persisted best effort; sudden browser or OS
 termination can prevent JavaScript from flushing. Server fatal events are written
 to supervisor logs because a dying process cannot guarantee a database write.
 
@@ -85,7 +83,7 @@ MONITOR_SMTP_PASSWORD=your-mailbox-password-or-app-password
 
 These are examples; supply your actual mail-server settings. Port 587 uses
 STARTTLS; set `MONITOR_SMTP_SECURE=true` for implicit TLS such as port 465.
-Store passwords only in server secrets/environment, never in browser/mobile
+Store passwords only in server secrets/environment, never in browser
 variables or source control. Leave SMTP unset to keep dashboard-only alerts and
 weekly reports; notification jobs remain queued. Existing unrelated application
 email features retain their existing delivery setup.
@@ -108,7 +106,7 @@ third-party uptime API is involved. If this separate machine is not available,
    ```
 
    Set it as `MONITOR_WATCHDOG_TOKEN` on both the API and the separate checker.
-   This authenticates checker uploads; do not put it in web/mobile environment.
+   This authenticates checker uploads; do not put it in the web environment.
 4. Set a durable, writable `MONITOR_STATE_FILE` and optional SMTP values on the
    checker. Local notifications and samples are retained without SMTP; email is
    necessary to notify someone who is not watching the dashboard/local logs.
