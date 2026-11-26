@@ -1,5 +1,6 @@
 import api from "../api/axiosInstance";
 export const adminOperationsService = {
+  monitoring: () => api.get("/admin/monitoring"),
   dashboard: () => api.get("/admin/operations/dashboard"),
   reports: (params = {}) => api.get("/admin/reports", { params }),
   report: (model, id) => api.get(`/admin/reports/${model}/${id}`),

@@ -5,7 +5,7 @@ import { financialErrorCode, financialErrorMessage } from "./financialErrorMessa
 test("financial errors use backend codes without exposing internals", () => {
   const error = { response: { data: { code: "INSUFFICIENT_STARS" } } };
   assert.equal(financialErrorCode(error), "INSUFFICIENT_STARS");
-  assert.match(financialErrorMessage(error), /Stars/i);
+  assert.match(financialErrorMessage(error), /coins/i);
   assert.match(financialErrorMessage({}), /unavailable/i);
   assert.match(financialErrorMessage({ response: { data: { code: "CREATOR_REVERSAL_INSUFFICIENT_STARS" } } }), /manual review/i);
 });
