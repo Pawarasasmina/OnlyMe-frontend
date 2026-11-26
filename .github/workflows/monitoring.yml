@@ -1,0 +1,14 @@
+name: Monitoring checks
+on:
+  pull_request:
+  push:
+    branches: [Dev-stable, Nethmi-last-New]
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test ops/monitor.test.mjs shared/monitoringPrivacy.test.js shared/internalTelemetry.test.js src/services/requestActivity.test.js

@@ -6,6 +6,7 @@ import { msg as __msg } from "../../i18n/runtime.js";
 import { useEffect, useState } from "react";
 import { FiCheck, FiKey, FiLock, FiPlus, FiSave, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
 import { adminService } from "../../services/adminService";
+import { confirmAccountAction } from "../../utils/confirmAccountAction";
 import { useAdminDialog } from "../../components/admin/AdminDialogProvider";
 
 const roleCopy = {
@@ -52,7 +53,7 @@ export default function AdminStaffPage() {
     return { ...current, [selectedRole]: [...selected] };
   });
   const saveRolePolicy = async () => {
-    const reason = await dialog.prompt({ title: `Save ${roleCopy[selectedRole][0]} access?`, description: "This changes available pages and API capabilities. Affected staff will need to sign in again.", inputLabel: "Audit reason", defaultValue: "Role access policy updated by Main Admin", confirmLabel: "Save access" });
+    const reason = await confirmAccountAction(dialog, { title: `Save ${roleCopy[selectedRole][0]} access?`, description: "This changes available pages and API capabilities. Affected staff will need to sign in again.", inputLabel: "Audit reason", defaultValue: "Role access policy updated by Main Admin", confirmLabel: "Save access" });
     if (!reason?.trim()) return;
     setPolicySaving(true); setError(""); setNotice("");
     try { await adminService.updateRolePolicy(selectedRole, { permissions: rolePolicies[selectedRole] || [], reason }); setNotice(`${roleCopy[selectedRole][0]} access saved. Affected staff must sign in again.`); await load(); }
@@ -61,14 +62,14 @@ export default function AdminStaffPage() {
   };
 
   const create = async (event) => {
-    event.preventDefault(); setSaving(true); setError(""); setNotice("");
+    event.preventDefault(); if (!await dialog.confirm({ title: `Create staff account for ${form.email}?`, description: `Role: ${form.adminRole}. Reason: ${form.reason}`, confirmLabel: "Create account" })) return; setSaving(true); setError(""); setNotice("");
     try { await adminService.createStaff(form); setForm(empty); setNotice(__msg("system.AdminStaffPage.bf21d38d35")); await load(); }
     catch (err) { setError(messageOf(err)); }
     finally { setSaving(false); }
   };
 
   const update = async (member, change) => {
-    const reason = await dialog.prompt({ title: __msg("admin.reasonForThisStaffAccountChange"), inputLabel: "Audit reason", defaultValue: change.status === "suspended" ? __msg("admin.accessSuspendedByMainAdmin") : __msg("admin.staffPermissionsUpdated"), confirmLabel: "Apply change" });
+    const reason = await confirmAccountAction(dialog, { title: __msg("admin.reasonForThisStaffAccountChange"), inputLabel: "Audit reason", defaultValue: change.status === "suspended" ? __msg("admin.accessSuspendedByMainAdmin") : __msg("admin.staffPermissionsUpdated"), confirmLabel: "Apply change" });
     if (!reason?.trim()) return;
     setError("");
     try { await adminService.updateStaff(member.id, { ...change, reason }); setNotice(__msg("system.AdminStaffPage.61b9dbf969")); await load(); }
@@ -79,7 +80,7 @@ export default function AdminStaffPage() {
     const password = await dialog.prompt({ title: `Reset password for ${member.name}`, description: __msg("admin.enterANewTemporaryPasswordForValue0Minimum", { value0: member.name }), inputLabel: "Temporary password", inputType: "password", confirmLabel: "Continue" });
     if (!password) return;
     if (password.length < 8) { setError(__msg("system.AdminStaffPage.b49016f994")); return; }
-    const reason = await dialog.prompt({ title: __msg("admin.reasonForResettingThisPassword"), inputLabel: "Audit reason", defaultValue: __msg("admin.mainAdminPasswordReset"), confirmLabel: "Reset password" });
+    const reason = await confirmAccountAction(dialog, { title: __msg("admin.reasonForResettingThisPassword"), inputLabel: "Audit reason", defaultValue: __msg("admin.mainAdminPasswordReset"), confirmLabel: "Reset password" });
     if (!reason?.trim()) return;
     setError("");
     try { await adminService.resetStaffPassword(member.id, { password, reason }); setNotice(__msg("system.AdminStaffPage.d3d4f6b38a")); }
@@ -88,7 +89,7 @@ export default function AdminStaffPage() {
 
   const changeTwoFactor = async (member, action) => {
     const label = action === "DISABLE" ? "turn off and remove the current authenticator" : "remove the current authenticator and require a new setup";
-    const reason = await dialog.prompt({ title: `${label[0].toUpperCase()}${label.slice(1)}?`, description: `${member.name} will be signed out of active sessions.`, inputLabel: "Audit reason", defaultValue: action === "DISABLE" ? "2FA disabled by Main Admin" : "New authenticator enrollment required by Main Admin", confirmLabel: action === "DISABLE" ? "Turn off 2FA" : "Require new setup", tone: "warning" });
+    const reason = await confirmAccountAction(dialog, { title: `${label[0].toUpperCase()}${label.slice(1)}?`, description: `${member.name} will be signed out of active sessions.`, inputLabel: "Audit reason", defaultValue: action === "DISABLE" ? "2FA disabled by Main Admin" : "New authenticator enrollment required by Main Admin", confirmLabel: action === "DISABLE" ? "Turn off 2FA" : "Require new setup", tone: "warning" });
     if (!reason?.trim()) return;
     setError(""); setNotice("");
     try { await adminService.updateStaffTwoFactor(member.id, { action, reason }); setNotice(action === "DISABLE" ? `2FA turned off for ${member.name}.` : `${member.name} must enroll a new authenticator.`); await load(); }
@@ -98,7 +99,7 @@ export default function AdminStaffPage() {
   const changeRoleTwoFactor = async (adminRole, action) => {
     const roleName = roleCopy[adminRole][0];
     const operation = action === "DISABLE" ? "turn off 2FA" : "require a new authenticator";
-    const reason = await dialog.prompt({ title: `${operation} for every ${roleName} account?`, description: "All affected staff will be signed out of active sessions.", inputLabel: "Audit reason", defaultValue: `${operation} for ${roleName} accounts`, confirmLabel: "Apply to role", tone: "warning" });
+    const reason = await confirmAccountAction(dialog, { title: `${operation} for every ${roleName} account?`, description: "All affected staff will be signed out of active sessions.", inputLabel: "Audit reason", defaultValue: `${operation} for ${roleName} accounts`, confirmLabel: "Apply to role", tone: "warning" });
     if (!reason?.trim()) return;
     setError(""); setNotice("");
     try { const response = await adminService.updateRoleTwoFactor({ adminRole, action, reason }); setNotice(`${response.data.data.affected} ${roleName} account(s) updated.`); await load(); }
@@ -106,7 +107,7 @@ export default function AdminStaffPage() {
   };
 
   const deleteTestAccount = async (member) => {
-    const reason = await dialog.prompt({ title: "Delete test account?", description: `${member.email} will be permanently deleted. This cannot be undone.`, inputLabel: "Audit reason", defaultValue: "Read-only AI test account no longer needed", confirmLabel: "Delete account", tone: "danger" });
+    const reason = await confirmAccountAction(dialog, { title: "Delete test account?", description: `${member.email} will be permanently deleted. This cannot be undone.`, inputLabel: "Audit reason", defaultValue: "Read-only AI test account no longer needed", confirmLabel: "Delete account", tone: "danger" });
     if (!reason?.trim()) return;
     setError(""); setNotice("");
     try { await adminService.deleteTestStaff(member.id, { reason }); setNotice(`${member.email} was deleted.`); await load(); }

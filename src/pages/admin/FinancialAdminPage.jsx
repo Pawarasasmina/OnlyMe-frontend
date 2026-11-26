@@ -57,7 +57,7 @@ export default function FinancialAdminPage() {
     <header>
       <p className="text-xs font-black uppercase tracking-[.18em] text-orange-500">{__msg("admin.commerceControlCenter")}</p>
       <h1 className="mt-1 text-3xl font-black">{__msg("layouts.financialOperations")}</h1>
-      <p className="mt-2 text-sm text-slate-500">Set the coin exchange rate and web purchase tax. Users manage their own top-ups from their Wallet.</p>
+      <p className="mt-2 text-sm text-slate-500">The exchange rate is fixed at 10 coins = $1. Set the web purchase tax. Users manage their own top-ups from their Wallet.</p>
     </header>
 
     {loadError ? <p className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Unable to load financial settings. <button className="font-bold underline" onClick={() => { rateQuery.refetch(); taxQuery.refetch(); }} type="button">{__msg("activity.retry")}</button></p> : null}
@@ -68,9 +68,9 @@ export default function FinancialAdminPage() {
       <form className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" onSubmit={saveRate}>
         <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-blue-600"><FiDollarSign /></span>
         <h2 className="mt-4 text-lg font-black">{__msg("states.star_exchange_rate")}</h2>
-        <p className="mt-1 text-sm text-slate-500">Number of coins users receive for each US dollar.</p>
-        <label className="mt-5 block text-xs font-bold uppercase text-slate-500">{__msg("admin.starsPer1")}<input className={inputClass} disabled={loading || rateBusy} min="0.01" onChange={(event) => setStarsPerUsd(event.target.value)} required step="0.01" type="number" value={starsPerUsd} /></label>
-        <button className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-40" disabled={loading || rateBusy} type="submit">{rateBusy ? __msg("financial.saving") : __msg("admin.updateRate")}</button>
+        <p className="mt-1 text-sm text-slate-500">Fixed at 10 coins = $1. Creator earnings are displayed in USD.</p>
+        <label className="mt-5 block text-xs font-bold uppercase text-slate-500">{__msg("admin.starsPer1")}<input className={inputClass} disabled={loading || rateBusy} min="0.01" readOnly onChange={(event) => setStarsPerUsd(event.target.value)} required step="0.01" type="number" value={starsPerUsd} /></label>
+        <button className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-40" disabled type="submit">Fixed exchange rate</button>
       </form>
 
       <form className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" onSubmit={saveTax}>

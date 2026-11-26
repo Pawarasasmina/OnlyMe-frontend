@@ -49,6 +49,7 @@ const AdminDashboard = lazyPage("../pages/admin/AdminDashboard");
 const AdminStaffPage = lazyPage("../pages/admin/AdminStaffPage");
 const SafetyCenterPage = lazyPage("../pages/admin/SafetyCenterPage");
 const GovernancePage = lazyPage("../pages/admin/GovernancePage");
+const MonitoringPage = lazyPage("../pages/admin/MonitoringPage");
 const AdminUserDetailPage = lazyPage("../pages/admin/AdminUserDetailPage");
 const FinanceUserPage = lazyPage("../pages/admin/FinanceUserPage");
 const AdminSecuritySetupPage = lazyPage("../pages/admin/AdminSecuritySetupPage");
@@ -323,6 +324,7 @@ function AppRoutes() {
           <Route path="/admin/users/:userId" element={<AdminUserDetailPage />} />
           <Route path="/admin/safety" element={<SafetyCenterPage />} />
           <Route path="/admin/governance" element={<GovernancePage />} />
+          <Route path="/admin/monitoring" element={<MonitoringPage />} />
           <Route path="/admin/content-export" element={<ContentExportPage />} />
           <Route element={<RoleProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminRoles={["MAIN_ADMIN"]} />}>
             <Route path="/admin/staff" element={<AdminStaffPage />} />

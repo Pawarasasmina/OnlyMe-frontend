@@ -17,7 +17,7 @@ const navigation = [
   { get title() { return __msg("layouts.trustSafety"); }, links: [{ get label() { return __msg("system.AdminLayout.b624760088"); }, to: "/admin/safety", icon: FiAlertTriangle }, { get label() { return __msg("layouts.messageReports"); }, to: "/admin/message-reports", icon: FiAlertTriangle }, { get label() { return __msg("layouts.userReports"); }, to: "/admin/user-reports", icon: FiAlertTriangle }, { get label() { return __msg("layouts.postReports"); }, to: "/admin/post-reports", icon: FiFileText }] },
   { get title() { return __msg("layouts.commerce"); }, links: [{ get label() { return __msg("layouts.financialOperations"); }, to: "/admin/financial", icon: FiCreditCard }, { get label() { return __msg("system.AdminLayout.7ecd315515"); }, to: "/admin/finance/users", icon: FiCreditCard }, { get label() { return __msg("layouts.bankReviews"); }, to: "/admin/bank-reviews", icon: FiCreditCard }, { get label() { return __msg("layouts.giftCatalog"); }, to: "/admin/gifts", icon: FiGift }] },
   { get title() { return __msg("layouts.communication"); }, links: [{ label: "Support inbox", to: "/admin/support-inbox", icon: FiMail },{ label: "Creator announcements", to: "/admin/creator-announcements", icon: FiBell }, { get label() { return __msg("layouts.welcomeEmail"); }, to: "/admin/welcome-email", icon: FiMail }] },
-  { get title() { return __msg("layouts.administration"); }, links: [{ get label() { return __msg("system.AdminLayout.428dd57903"); }, to: "/admin/staff", icon: FiUsers }, { get label() { return __msg("system.AdminLayout.823619e079"); }, to: "/admin/governance", icon: FiShield }, { get label() { return __msg("system.AdminLayout.ee833cade6"); }, to: "/admin/content-export", icon: FiFileText }] },
+  { get title() { return __msg("layouts.administration"); }, links: [{ get label() { return __msg("system.AdminLayout.428dd57903"); }, to: "/admin/staff", icon: FiUsers }, { get label() { return __msg("system.AdminLayout.823619e079"); }, to: "/admin/governance", icon: FiShield }, { label: "Monitoring", to: "/admin/monitoring", icon: FiActivity }, { get label() { return __msg("system.AdminLayout.ee833cade6"); }, to: "/admin/content-export", icon: FiFileText }] },
 ];
 
 const pathPermissions = { "/admin/business-verifications": "verification.view", "/admin/support-inbox": "moderation.view",
@@ -25,7 +25,7 @@ const pathPermissions = { "/admin/business-verifications": "verification.view", 
   "/admin/users": "users.view", "/admin/identity-verifications": "verification.view", "/admin/creator-verifications": "verification.view", "/admin/verified-creators": "verification.view",
   "/admin/safety": "moderation.view", "/admin/message-reports": "moderation.view", "/admin/user-reports": "moderation.view", "/admin/post-reports": "moderation.view",
   "/admin/financial": "finance.view", "/admin/finance/users": "finance.view", "/admin/bank-reviews": "finance.view", "/admin/gifts": "gifts.manage",
-  "/admin/creator-announcements": "announcements.view", "/admin/welcome-email": "welcome_email.manage", "/admin/governance": "governance.view", "/admin/content-export": "exports.manage",
+  "/admin/creator-announcements": "announcements.view", "/admin/welcome-email": "welcome_email.manage", "/admin/governance": "governance.view", "/admin/monitoring": "governance.view", "/admin/content-export": "exports.manage",
 };
 const permissionForPath = (path) => Object.entries(pathPermissions).sort((a, b) => b[0].length - a[0].length).find(([route]) => path === route || path.startsWith(`${route}/`))?.[1];
 
@@ -39,11 +39,13 @@ function AdminLayout() {
   const accessErrorStatus = accessQuery.error?.response?.status;
   useEffect(() => { if (accessErrorStatus === 401) void logout(); }, [accessErrorStatus, logout]);
   const permissions = new Set(accessQuery.data?.permissions || []);
-  const canSee = (path) => adminRole === "MAIN_ADMIN" || (permissionForPath(path) && permissions.has(permissionForPath(path)));
-  const visibleNavigation = navigation.map((section) => ({ ...section, links: section.links.filter((item) => item.to === "/admin/staff" ? adminRole === "MAIN_ADMIN" : canSee(item.to)) })).filter((section) => section.links.length);
+  const identityAccess = !user?.adminReadOnly && ["MAIN_ADMIN", "MODERATOR"].includes(adminRole);
+  const isIdentityPath = (path) => ["/admin/business-verifications", "/admin/identity-verifications", "/admin/creator-verifications"].some((route) => path === route || path.startsWith(`${route}/`));
+  const canSee = (path) => (!isIdentityPath(path) || identityAccess) && (adminRole === "MAIN_ADMIN" || (permissionForPath(path) && permissions.has(permissionForPath(path))));
+  const visibleNavigation = navigation.map((section) => ({ ...section, links: section.links.filter((item) => ["/admin/staff", "/admin/monitoring"].includes(item.to) ? adminRole === "MAIN_ADMIN" : canSee(item.to)) })).filter((section) => section.links.length);
   const activeItem = visibleNavigation.flatMap((section) => section.links).find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
   const currentPermission = permissionForPath(location.pathname);
-  const denied = adminRole !== "MAIN_ADMIN" && currentPermission && accessQuery.isSuccess && !permissions.has(currentPermission);
+  const denied = (isIdentityPath(location.pathname) && !identityAccess) || (adminRole !== "MAIN_ADMIN" && currentPermission && accessQuery.isSuccess && !permissions.has(currentPermission));
   const accessUnavailable = adminRole !== "MAIN_ADMIN" && accessQuery.isError && accessErrorStatus !== 401;
 
   return (
