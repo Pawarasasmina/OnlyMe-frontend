@@ -1,10 +1,10 @@
 import axiosInstance from "../api/axiosInstance";
+import { API_BASE_URL } from "../config/api.js";
 
 async function uploadVerificationDocument(documentType, file) {
   const formData = new FormData();
   formData.append("document", file, file.name);
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api";
-  const response = await fetch(`${baseUrl}/creator/verification/upload/${encodeURIComponent(documentType)}`, {
+  const response = await fetch(`${API_BASE_URL}/creator/verification/upload/${encodeURIComponent(documentType)}`, {
     method: "POST",
     credentials: "include",
     headers: { "X-Requested-With": "XMLHttpRequest" },

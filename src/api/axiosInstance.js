@@ -4,13 +4,14 @@ import { beginMonitoredRequest, endMonitoredRequest } from "../services/requestA
 import { getAnalyticsSessionId } from "../services/analyticsSession";
 import { localizedApiError, localizedValidationErrors } from "../i18n/errors.js";
 import { rememberSessionReturnTo } from "../utils/sessionExpiry.js";
+import { API_BASE_URL } from "../config/api.js";
 
 // Remove credentials left by pre-cookie releases. Authentication now lives
 // exclusively in Secure, HttpOnly cookies that application JavaScript cannot read.
 localStorage.removeItem("onlyme_access_token");
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api",
+  baseURL: API_BASE_URL,
   withCredentials: true,
   timeout: 15000,
 });
