@@ -1,3 +1,5 @@
+import { API_ORIGIN } from "../config/api.js";
+
 export function resolveMediaUrl(url) {
   if (!url) {
     return "";
@@ -7,8 +9,5 @@ export function resolveMediaUrl(url) {
     return url;
   }
 
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api";
-  const origin = apiBase.replace(/\/api\/?$/, "");
-
-  return `${origin}${url.startsWith("/") ? url : `/${url}`}`;
+  return `${API_ORIGIN}${url.startsWith("/") ? url : `/${url}`}`;
 }

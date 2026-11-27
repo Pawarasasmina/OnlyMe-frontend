@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 import axiosInstance from "../api/axiosInstance";
+import { API_ORIGIN } from "../config/api.js";
 
 let socket;
 let presenceInterval;
@@ -53,8 +54,7 @@ function startGlobalMessageReceipts(activeSocket) {
 }
 export function getMessageSocket() {
   if (!socket) {
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api";
-    socket = io(apiUrl.replace(/\/api\/?$/, ""), {
+    socket = io(API_ORIGIN, {
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: Infinity,

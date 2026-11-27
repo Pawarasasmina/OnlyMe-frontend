@@ -1,5 +1,7 @@
 import { createTelemetryClient } from "../../shared/internalTelemetry.js";
-const endpoint = `${(import.meta.env.VITE_API_BASE_URL || "http://localhost:3104/api").replace(/\/$/, "")}/monitoring/events`;
+import { API_BASE_URL } from "../config/api.js";
+
+const endpoint = `${API_BASE_URL.replace(/\/$/, "")}/monitoring/events`;
 const telemetry = createTelemetryClient({ surface: "web", endpoint, release: import.meta.env.VITE_APP_RELEASE || "" });
 let initialized = false;
 const seen = new WeakSet();

@@ -12,6 +12,7 @@ import { destinationForUser } from "../../utils/socialAccess";
 import { onboardingService } from "../../services/onboardingService";
 import { clearPreAuthInterests, readPreAuthInterests } from "../../utils/preAuthOnboarding";
 import { consumeSessionReturnTo } from "../../utils/sessionExpiry";
+import { API_BASE_URL } from "../../config/api.js";
 
 export default function LoginPage() {
   __useUiLanguage();
@@ -91,7 +92,7 @@ export default function LoginPage() {
       <Link className="mt-4 text-center text-[13px] text-white/55" to="/forgot-password">{__msg("auth.forgotPassword")}</Link>
       <div className="my-6 flex items-center gap-3"><i className="h-px flex-1 bg-white/10" /><span className="text-[10px] font-bold text-white/30">{__msg("system.LoginPage.f579c52396")}</span><i className="h-px flex-1 bg-white/10" /></div>
       <button className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[.045] py-3.5 text-sm font-bold active:scale-[.97]" type="button"><FaApple aria-hidden="true" className="shrink-0 text-[17px] text-white" /> {__msg("system.LoginPage.01ca4c21ba")}</button>
-      <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[.045] py-3.5 text-sm font-bold active:scale-[.97]" onClick={() => { const api = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"; window.location.assign(`${api}/auth/google`); }} type="button"><b className="text-[#9CCBFF]">G</b> {__msg("system.LoginPage.ccc5b0edaa")}</button>
+      <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[.045] py-3.5 text-sm font-bold active:scale-[.97]" onClick={() => window.location.assign(`${API_BASE_URL}/auth/google`)} type="button"><b className="text-[#9CCBFF]">G</b> {__msg("system.LoginPage.ccc5b0edaa")}</button>
       <p className="mt-4 text-center text-[10px] leading-4 text-white/30">{__msg("system.LoginPage.2678dfa154")} <button className="text-[#9CCBFF]" onClick={() => setLegalDocument("tos")} type="button">{__msg("system.LoginPage.a55a275aa6")}</button> · <button className="text-[#9CCBFF]" onClick={() => setLegalDocument("priv")} type="button">{__msg("settings.privacy")}</button></p>
     </div>
     <Link className="mt-8 block w-full rounded-[14px] border border-[#9CCBFF]/40 py-3.5 text-center text-sm font-black text-[#9CCBFF] active:scale-[.97]" to="/start/interests">{__msg("welcome.createNewAccount")}</Link>
